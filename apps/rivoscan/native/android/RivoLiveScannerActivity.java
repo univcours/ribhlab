@@ -83,7 +83,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void layout(View body,String hint,Button... buttons){
         content.removeAllViews();
-        content.addView(body,new FrameLayout.LayoutParams(-1,-1));
+        FrameLayout.LayoutParams imageParams=new FrameLayout.LayoutParams(-1,-1);
+        // Keep draggable corners visible above the bottom action buttons.
+        if(body instanceof RivoCropEditor)imageParams.bottomMargin=(int)(150*getResources().getDisplayMetrics().density);
+        content.addView(body,imageParams);
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setPadding(14,9,14,18);bottom.setBackgroundColor(Color.argb(215,14,22,39));
         message=new TextView(this);message.setText(hint);message.setTextColor(Color.WHITE);
