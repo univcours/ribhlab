@@ -1,4 +1,4 @@
-# Safely rebuild and update the user's existing RivoScan installation.
+# Safe deployment on any compatible Android device accessible through adb.
 # Does not uninstall or clear app data.
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
@@ -31,17 +31,26 @@ try {
     if($_ -match '^\s*([^\s]+)\s+device(?:\s|$)'){$matches[1]}
   })
   if($serials.Count -eq 0) {
-    throw "No Android phone connected and authorized. Connect Samsung via Wi-Fi debugging or USB and approve the prompt."
+    throw "No Android phone connected and authorized. Connect your phone via USB or wireless debugging and approve the prompt."
   }
-  $samsung = @()
-  foreach($serial in $serials) {
-    $model = ((& $adb -s $serial shell getprop ro.product.model) -join "").Trim()
-    if($LASTEXITCODE -eq 0 -and $model -like "*SM-S908B*"){$samsung += $serial}
+  $targetSerial=$env:RIVOSCAN_DEVICE_SERIAL
+  if($targetSerial) {
+    $targetSerial=$targetSerial.Trim()
+    if($serials -notcontains $targetSerial) {
+      throw "Selected Android device $targetSerial is not connected/authorized. Online devices: $($serials -join ', ')."
+    }
+    $serial=$targetSerial
+  } elseif($serials.Count -eq 1) {
+    $serial=$serials[0]
+  } else {
+    throw "Multiple Android devices are connected: $($serials -join ', '). Set the RIVOSCAN_DEVICE_SERIAL environment variable to the target device ID and retry to avoid installing to the wrong phone."
   }
-  if($samsung.Count -ne 1){
-    throw "Expected one online Samsung SM-S908B but found $($samsung.Count). Devices: $($serials -join ', '). Connect just the target Samsung and retry."
-  }
-  $serial=$samsung[0]
+  $model = ((& $adb -s $serial shell getprop ro.product.model) -join "").Trim()
+  if($LASTEXITCODE -ne 0) { throw "Unable to read Android device model." }
+  $sdk = ((& $adb -s $serial shell getprop ro.build.version.sdk) -join "").Trim()
+  if($LASTEXITCODE -ne 0) { throw "Unable to read Android SDK version." }
+  if(-not $model) { $model="Android device" }
+  Write-Host "Selected: $model ($serial), Android SDK $sdk" -ForegroundColor Cyan
   function Get-RivoVersion {
     $details=@(& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan)
     if($LASTEXITCODE -ne 0 -or -not ($details -match 'versionName=')) { return '<not installed>' }
@@ -52,7 +61,7 @@ try {
   }
   $before=Get-RivoVersion
   Write-Host "BEFORE install: $before" -ForegroundColor Yellow
-  Write-Host "Samsung detected ($serial). Updating RivoScan in place, preserving app data..." -ForegroundColor Cyan
+  Write-Host "Updating RivoScan on $model ($serial), preserving app data..." -ForegroundColor Cyan
   $result = & $adb -s $serial install -r $apk 2>&1
   $code = $LASTEXITCODE
   $result | Out-Host
@@ -62,14 +71,14 @@ try {
   $after=Get-RivoVersion
   Write-Host "AFTER install: $after" -ForegroundColor Green
   if($after -notmatch 'versionName=0\.9\.0' -or $after -notmatch 'versionCode=9(?:\D|$)') {
-    throw "Samsung does not report RivoScan v0.9.0 / versionCode 9 after installation. DO NOT uninstall or clear app data. Check the APK build version and install output above."
+    throw "Android device does not report RivoScan v0.9.0 / versionCode 9 after installation. DO NOT uninstall or clear app data. Check the APK build version and install output above."
   }
-  Write-Host "VERIFIED: Samsung has the newly installed RivoScan 0.9.0 package." -ForegroundColor Green
+  Write-Host "VERIFIED: $model has the newly installed RivoScan 0.9.0 package." -ForegroundColor Green
   & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
   Write-Host ""
-  Write-Host "SUCCESS: New RivoScan is installed and started on Samsung SM-S908B. The app launcher now uses the new scanner artwork." -ForegroundColor Green
-  Write-Host "If One UI shows a cached shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the apps list." -ForegroundColor Yellow
+  Write-Host "SUCCESS: RivoScan installed and started on $model ($serial)." -ForegroundColor Green
+  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Do not uninstall to fix an icon." -ForegroundColor Yellow
   exit 0
 } catch {
   Write-Host ""
