@@ -369,6 +369,176 @@ async function handleLibraryAction(type,index){
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
 
+
+/** In-app document viewer. File bytes stay on device. */
+function closeDocumentViewer(){
+  const v=documentViewer;
+  if(!v)return;
+  documentViewer=null;
+  if(v.url)URL.revokeObjectURL(v.url);
+  if(v.pdf)Promise.resolve(v.pdf.destroy()).catch(()=>{});
+  v.root?.remove();
+  v.onKey&&document.removeEventListener('keydown',v.onKey);
+  v.priorFocus?.focus?.();
+}
+const isPdfDocument=doc=>doc.mimeType==='application/pdf'||/\.pdf$/i.test(doc.name);
+const isImageDocument=doc=>/^image\//.test(doc.mimeType||'')||/\.(?:png|jpe?g|webp)$/i.test(doc.name);
+const base64ToBytes=raw=>Uint8Array.from(atob(raw),c=>c.charCodeAt(0));
+async function openDocumentViewer(doc){
+  closeDocumentViewer();
+  const root=document.createElement('div');
+  root.className='rivo-viewer-layer';
+  root.dir=language==='ar'?'rtl':'ltr';
+  const canEdit=isPdfDocument(doc)||isImageDocument(doc);
+  root.innerHTML=`<div class="rivo-viewer-backdrop" data-view-close></div>
+    <section class="rivo-viewer" role="dialog" aria-modal="true" aria-label="${{lt('preview')}">
+      <header class="rivo-viewer-header">
+        <button class="rivo-icon-button" type="button" data-view-close aria-label="${{lt('close')}">${{ico('back',23)}</button>
+        <div class="rivo-viewer-heading"><strong id="rivo-viewer-name">${{escapeHTML(doc.name)}</strong>
+          <small>${{formatSize(doc.size||0)} · ${{lt('local')}</small></div>
+        <button class="rivo-icon-button" type="button" data-view-action="external" aria-label="${{lt('openExternal')}">${{ico('upload',21)}</button>
+      </header>
+      <div id="rivo-viewer-content" class="rivo-viewer-content" aria-live="polite">
+        <div class="rivo-viewer-loading">${{ico('file',38)}<span>${{lt('loading')}</span></div>
+      </div>
+      <div id="rivo-viewer-pagination" class="rivo-viewer-pagination" hidden>
+        <button type="button" data-view-action="previous" aria-label="${{lt('previous')}">${{ico('back',19)}</button>
+        <span id="rivo-viewer-page-label"></span>
+        <button type="button" data-view-action="next" aria-label="${{lt('next')}">${{ico('back',19)}</button>
+      </div>
+      <div id="rivo-viewer-editor" class="rivo-viewer-editor" hidden>
+        <p>${{lt('editHelp')}</p>
+        <div class="rivo-viewer-editor-actions">
+          ${{isPdfDocument(doc)?[['rotate','rotate'],['delete','removePages'],['sign','sign'],['text','addText']].map(([tool,key])=>`<button type="button" data-view-tool="${{tool}">${{ico(tool==='delete'?'delete':tool==='rotate'?'rotate':tool==='sign'?'sign':'text',18)} ${{lt(key)}</button>`).join(''):`<button type="button" data-view-tool="images">${{ico('image',19)} ${{lt('imageToPdf')}</button>`}
+        </div>
+      </div>
+      <form id="rivo-viewer-rename" class="rivo-viewer-rename" hidden>
+        <label for="rivo-new-doc-name">${{lt('enterName')}</label>
+        <div class="rivo-rename-inputs"><input required id="rivo-new-doc-name" maxlength="110" value="${{escapeHTML(doc.name)}">
+          <button type="submit" class="rivo-primary-button">${{ico('check',18)} ${{lt('rename')}</button>
+        </div>
+      </form>
+      <footer class="rivo-viewer-actions">
+        <button type="button" class="rivo-viewer-action primary" data-view-action="share">${{ico('upload',22)}<span>${{lt('share')}</span></button>
+        ${{canEdit?`<button type="button" class="rivo-viewer-action" data-view-action="edit">${{ico('text',22)}<span>${{lt('edit')}</span></button>`:''}
+        <button type="button" class="rivo-viewer-action" data-view-action="rename">${{ico('file',22)}<span>${{lt('rename')}</span></button>
+        <button type="button" class="rivo-viewer-action danger" data-view-action="delete">${{ico('delete',22)}<span>${{lt('delete')}</span></button>
+      </footer>
+    </section>`;
+  const priorFocus=document.activeElement;
+  document.body.appendChild(root);
+  const viewer={root,doc:{...doc},priorFocus,token:++documentViewerCounter,page:1,count:1,url:null,pdf:null,bytes:null};
+  documentViewer=viewer;
+  viewer.onKey=e=>{if(e.key==='Escape')closeDocumentViewer();};
+  document.addEventListener('keydown',viewer.onKey);
+  root.querySelector('[data-view-close]')?.focus();
+  root.addEventListener('click',async e=>{
+    if(e.target.closest('[data-view-close]')){closeDocumentViewer();return;}
+    const tool=e.target.closest('[data-view-tool]')?.dataset.viewTool;
+    if(tool){await editDocumentWithTool(viewer,tool);return;}
+    const action=e.target.closest('[data-view-action]')?.dataset.viewAction;
+    if(!action||documentViewer!==viewer)return;
+    try{
+      if(action==='share')await RivoDocuments.shareFile({uri:viewer.doc.uri});
+      else if(action==='external')await RivoDocuments.openFile({uri:viewer.doc.uri});
+      else if(action==='edit'){
+        const editor=root.querySelector('#rivo-viewer-editor');
+        editor.hidden=!editor.hidden;
+        root.querySelector('#rivo-viewer-rename').hidden=true;
+      }else if(action==='rename'){
+        const form=root.querySelector('#rivo-viewer-rename');
+        form.hidden=!form.hidden;
+        root.querySelector('#rivo-viewer-editor').hidden=true;
+        if(!form.hidden)root.querySelector('#rivo-new-doc-name').focus();
+      }else if(action==='delete'){
+        if(!confirm(lt('confirmDelete')))return;
+        await RivoDocuments.deleteFile({uri:viewer.doc.uri});
+        closeDocumentViewer();
+        await loadLibrary(activeTool?.id==='library');
+        toast(lt('delete')+' ✓');
+      }else if(action==='next'||action==='previous'){
+        if(!viewer.pdf)return;
+        viewer.page=Math.max(1,Math.min(viewer.count,viewer.page+(action==='next'?1:-1)));
+        await showDocumentPdfPage(viewer);
+      }
+    }catch(err){console.error('Document operation:',err);toast(err?.message||lt('error'),true);}
+  });
+  root.querySelector('#rivo-viewer-rename')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const name=root.querySelector('#rivo-new-doc-name').value.trim();
+    if(!name||documentViewer!==viewer)return;
+    try{
+      const result=await RivoDocuments.renameFile({uri:viewer.doc.uri,name});
+      viewer.doc.name=result.name||name;
+      root.querySelector('#rivo-viewer-name').textContent=viewer.doc.name;
+      root.querySelector('#rivo-viewer-rename').hidden=true;
+      await loadLibrary(activeTool?.id==='library');
+      toast(lt('saved')+' ✓');
+    }catch(error){toast(error.message||lt('error'),true);}
+  });
+  try{
+    if(!Capacitor.isPluginAvailable('RivoDocuments'))throw new Error('RivoDocuments is unavailable. Update RivoScan.');
+    if(!isPdfDocument(doc)&&!isImageDocument(doc)){
+      root.querySelector('#rivo-viewer-content').innerHTML=`<div class="rivo-preview-unavailable">${{ico('file',52)}<p>${{lt('noPreview')}</p><button class="rivo-secondary-button" type="button" data-view-action="external">${{lt('openExternal')}</button></div>`;
+      return;
+    }
+    const result=await RivoDocuments.readFile({uri:doc.uri});
+    if(documentViewer!==viewer)return;
+    viewer.bytes=base64ToBytes(result.base64);
+    const container=root.querySelector('#rivo-viewer-content');
+    if(isImageDocument(doc)){
+      viewer.url=URL.createObjectURL(new Blob([viewer.bytes],{type:result.mimeType||doc.mimeType||'image/jpeg'}));
+      const img=document.createElement('img');
+      img.alt=doc.name;img.className='rivo-viewer-image';img.src=viewer.url;
+      container.replaceChildren(img);
+    }else{
+      viewer.pdf=await pdfjs.getDocument({data:viewer.bytes.slice()}).promise;
+      if(documentViewer!==viewer)return;
+      viewer.count=viewer.pdf.numPages;
+      root.querySelector('#rivo-viewer-pagination').hidden=viewer.count<=1;
+      await showDocumentPdfPage(viewer);
+    }
+  }catch(error){
+    if(documentViewer!==viewer)return;
+    console.warn('Document preview:',error);
+    root.querySelector('#rivo-viewer-content').innerHTML=`<div class="rivo-preview-unavailable">${{ico('file',52)}<p>${{escapeHTML(/PREVIEW_TOO_LARGE/.test(error.message||'')?lt('tooLarge'):lt('error'))}</p><button class="rivo-secondary-button" type="button" data-view-action="external">${{lt('openExternal')}</button></div>`;
+  }
+}
+async function showDocumentPdfPage(viewer){
+  if(documentViewer!==viewer||!viewer.pdf)return;
+  const container=viewer.root.querySelector('#rivo-viewer-content');
+  const num=viewer.page;
+  const pdfPage=await viewer.pdf.getPage(num);
+  if(documentViewer!==viewer||viewer.page!==num)return;
+  const base=pdfPage.getViewport({scale:1});
+  const targetWidth=Math.min(1100,Math.max(300,(window.innerWidth-38)*Math.min(window.devicePixelRatio||1,2)));
+  const viewport=pdfPage.getViewport({scale:Math.min(2.6,targetWidth/base.width)});
+  const canvas=document.createElement('canvas');
+  canvas.className='rivo-viewer-pdf';
+  canvas.width=Math.floor(viewport.width);
+  canvas.height=Math.floor(viewport.height);
+  container.replaceChildren(canvas);
+  const context=canvas.getContext('2d');
+  if(!context)throw new Error('PDF preview rendering unavailable.');
+  await pdfPage.render({canvasContext:context,canvas,viewport}).promise;
+  if(documentViewer!==viewer||viewer.page!==num)return;
+  viewer.root.querySelector('#rivo-viewer-page-label').textContent=`${{lt('page')} ${{num} ${{lt('of')} ${{viewer.count}`;
+  viewer.root.querySelector('[data-view-action="previous"]').disabled=num<=1;
+  viewer.root.querySelector('[data-view-action="next"]').disabled=num>=viewer.count;
+}
+async function editDocumentWithTool(viewer,tool){
+  if(documentViewer!==viewer)return;
+  try{
+    if(!viewer.bytes){
+      const result=await RivoDocuments.readFile({uri:viewer.doc.uri});
+      viewer.bytes=base64ToBytes(result.base64);
+    }
+    const selected=new File([viewer.bytes.slice()],viewer.doc.name,{type:viewer.doc.mimeType||'application/pdf'});
+    openTool(tool);
+    addSelectedFiles([selected]);
+  }catch(error){console.warn('Document edit:',error);toast(error?.message||lt('error'),true);}
+}
+
 function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
