@@ -11,6 +11,11 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.view.WindowManager;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -70,6 +75,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(15,23,41));
         content=new FrameLayout(this);
         root.addView(content,new FrameLayout.LayoutParams(-1,-1));
+        // Live scanner must not cover Samsung's clock, Wi-Fi, battery or nav bar.
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if(Build.VERSION.SDK_INT >= 35){
+            ViewCompat.setOnApplyWindowInsetsListener(root,(view,insets)->{
+                Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                view.setPadding(bars.left,bars.top,bars.right,bars.bottom);
+                return insets;
+            });
+            ViewCompat.requestApplyInsets(root);
+        }
         setContentView(root);
         showCamera();
         String imageUri=getIntent().getStringExtra("imageUri");
