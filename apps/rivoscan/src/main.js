@@ -88,6 +88,35 @@ const translations = {
 };
 let language = localStorage.getItem('rivo-language') || 'en';
 let activeTool = null;
+let soundsEnabled = localStorage.getItem('rivo-sounds') !== 'off';
+const soundWords={
+  en:['Button sounds','Play a different subtle sound for scan, save and navigation'],
+  ar:['أصوات الأزرار','أصوات خفيفة ومختلفة للتصوير والحفظ والتنقل'],
+  fr:['Sons des boutons','Sons discrets pour scanner, enregistrer et naviguer'],
+  es:['Sonidos de botones','Sonidos suaves al escanear, guardar y navegar'],
+  de:['Tastentöne','Leise Töne beim Scannen, Speichern und Navigieren'],
+  pt:['Sons dos botões','Sons leves ao digitalizar, guardar e navegar'],
+  it:['Suoni dei pulsanti','Suoni discreti per scansione, salvataggio e navigazione']
+};
+const soundWord=(i)=>(soundWords[language]||soundWords.en)[i];
+function soundFeedback(kind='tap'){
+  if(!soundsEnabled)return;
+  if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android' &&
+     Capacitor.isPluginAvailable('RivoLiveScanner')){
+    RivoLiveScanner.playFeedback({kind}).catch(()=>{});
+  }
+}
+function soundForButton(button){
+  if(button.hasAttribute('data-live-camera')||button.id==='smart-scanner')return 'camera';
+  if(button.id==='process'||button.hasAttribute('data-doc-share'))return 'saved';
+  if(button.hasAttribute('data-tool'))return 'tool';
+  return 'tap';
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest('button');
+  if(button && button.id!=='sound-toggle')soundFeedback(soundForButton(button));
+},true);
+
 let files = [];
 let scanRotations = [];
 let busy = false;
@@ -177,6 +206,7 @@ function settingsWorkspace(){
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
+ <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -374,6 +404,15 @@ function wire(){
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
+  document.getElementById('sound-toggle')?.addEventListener('change',async e=>{
+    soundsEnabled=Boolean(e.target.checked);
+    localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
+    if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoLiveScanner')){
+      try{await RivoLiveScanner.setSoundSettings({enabled:soundsEnabled})}
+      catch(error){console.warn('Native sound setting:',error)}
+    }
+    if(soundsEnabled)soundFeedback('saved');
+  });
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
@@ -535,6 +574,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
       record(activeTool?.name||'Saved document');
       await loadLibrary(false);
       toast(dl('savedNow')+' ✓');
+      soundFeedback('saved');
       return saved;
     }
     // Older Android fallback: persistent app Documents, never volatile Cache.
@@ -712,6 +752,9 @@ function initSignature(){
 }
 render();
 if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  if(Capacitor.isPluginAvailable('RivoLiveScanner')){
+    RivoLiveScanner.setSoundSettings({enabled:soundsEnabled}).catch(console.warn);
+  }
   loadLibrary(false);
   CapacitorApp.addListener('appStateChange',({isActive})=>{
     if(isActive)loadLibrary(activeTool?.id==='library');
