@@ -10,6 +10,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,12 @@ final class RivoEdgeDetector {
             // Adaptive Canny thresholds: fixed contrast thresholds miss
             // pale paper on dark desks and over-detect noisy dark surfaces.
             Imgproc.GaussianBlur(small,blur,new Size(5,5),1.2);
+            // Stage 1: bright sheets/receipts on darker desks can have
+            // wrinkled or torn edges, so a strict 4-corner edge fit fails.
+            // Segment a high-contrast central light object and estimate
+            // its bounding quadrilateral. Reject weakly contrasted surfaces.
+            Point[] lightPaper=detectLightPaper(blur);
+            if(lightPaper!=null)return lightPaper;
             MatOfDouble mean=new MatOfDouble(), stdDev=new MatOfDouble();
             double contrast=30;
             try{
@@ -96,6 +103,69 @@ final class RivoEdgeDetector {
         } finally {
             for(MatOfPoint c:contours)c.release();
             small.release();blur.release();edges.release();closed.release();kernel.release();hierarchy.release();
+        }
+    }
+
+    /**
+     * High-contrast pale paper or receipt over a dark surface.
+     * Uses Otsu + morphology to bridge small tears and folds; confidence checks
+     * prevent an entire desk or bright wall from being labeled as a document.
+     */
+    private static Point[] detectLightPaper(Mat gray) {
+        Mat mask=new Mat(),clean=new Mat(),kernel=new Mat(),inner=new Mat(),outer=new Mat(),hierarchy=new Mat();
+        List<MatOfPoint> contours=new ArrayList<>();
+        try {
+            int w=gray.width(),h=gray.height();
+            if(w<70||h<70)return null;
+            Imgproc.threshold(gray,mask,0,255,Imgproc.THRESH_BINARY+Imgproc.THRESH_OTSU);
+            kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(9,9));
+            Imgproc.morphologyEx(mask,clean,Imgproc.MORPH_CLOSE,kernel);
+            kernel.release();
+            kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5));
+            Imgproc.morphologyEx(clean,clean,Imgproc.MORPH_OPEN,kernel);
+            Imgproc.findContours(clean,contours,hierarchy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
+            double frameArea=(double)w*h,best=-1;
+            Point[] result=null;
+            for (int index=0;index<contours.size();index++) {
+                MatOfPoint candidate=contours.get(index);
+                double area=Imgproc.contourArea(candidate),fraction=area/frameArea;
+                if(fraction<0.055||fraction>0.78)continue;
+                Rect r=Imgproc.boundingRect(candidate);
+                double rw=r.width/(double)w,rh=r.height/(double)h;
+                if(rw<.22||rh<.19||rw>.94||rh>.94)continue;
+                // Cropping around a table edge is a dangerous false positive.
+                if(r.x<.025*w||r.y<.025*h||r.x+r.width>.975*w||r.y+r.height>.975*h)continue;
+                double fill=area/(r.width*(double)r.height);
+                if(fill<.58)continue;
+                double cx=(r.x+r.width*.5)/w,cy=(r.y+r.height*.5)/h;
+                if(Math.abs(cx-.5)>.30||Math.abs(cy-.5)>.31)continue;
+                inner=Mat.zeros(h,w,CvType.CV_8UC1);
+                Imgproc.drawContours(inner,contours,index,new org.opencv.core.Scalar(255),-1);
+                outer=new Mat();
+                Core.bitwise_not(inner,outer);
+                double inside=Core.mean(gray,inner).val[0],outside=Core.mean(gray,outer).val[0];
+                inner.release();inner=new Mat();
+                outer.release();outer=new Mat();
+                double contrast=inside-outside;
+                if(inside<115||contrast<32)continue;
+                double score=contrast*.6+fill*28+fraction*18
+                    -(Math.abs(cx-.5)+Math.abs(cy-.5))*24;
+                if(score<=best)continue;
+                best=score;
+                // Small safety margin around irregular sheet edges.
+                double pad=Math.max(2,Math.min(w,h)*.008);
+                double left=Math.max(0,(r.x-pad)/w),top=Math.max(0,(r.y-pad)/h);
+                double right=Math.min(1,(r.x+r.width+pad)/w);
+                double bottom=Math.min(1,(r.y+r.height+pad)/h);
+                result=new Point[]{new Point(left,top),new Point(right,top),
+                    new Point(right,bottom),new Point(left,bottom)};
+            }
+            return result;
+        } catch(Exception e) {
+            return null; // Gracefully fall back to the quadrilateral detector.
+        } finally {
+            for(MatOfPoint c:contours)c.release();
+            mask.release();clean.release();kernel.release();inner.release();outer.release();hierarchy.release();
         }
     }
 
