@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#4C4FF5"/><stop offset="1" stop-color="#15D8D0"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="#101833"/><path d="M148 90h142l74 74v251H148c-21 0-38-17-38-38V128c0-21 17-38 38-38z" fill="#fff"/><path d="M290 90v72h74" fill="#D5E7F0"/><path d="M174 274l55 55 109-114" fill="none" stroke="url(#g)" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/><path d="M168 370h138" stroke="#BED1E5" stroke-width="18" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RivoScan document scanner">
+ <defs>
+  <linearGradient id="scan" x1="0%" x2="100%" y1="0%" y2="100%"><stop offset="0" stop-color="#04bcf7"/><stop offset=".55" stop-color="#087dfa"/><stop offset="1" stop-color="#2328dd"/></linearGradient>
+  <linearGradient id="paper" x1="20%" y1="0%" x2="85%" y2="100%"><stop offset="0" stop-color="#ffffff"/><stop offset=".52" stop-color="#d8e9ff"/><stop offset="1" stop-color="#77beff"/></linearGradient>
+  <linearGradient id="fold" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#03aeec"/><stop offset="1" stop-color="#0056db"/></linearGradient>
+  <filter id="glow" x="-30%" y="-400%" width="160%" height="900%"><feGaussianBlur stdDeviation="8"/></filter>
+ </defs>
+ <rect width="512" height="512" rx="100" fill="#fff"/>
+ <g fill="none" stroke="url(#scan)" stroke-width="31" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M83 181v-60q0-39 39-39h57"/>
+  <path d="M333 82h57q39 0 39 39v60"/>
+  <path d="M83 331v60q0 39 39 39h57"/>
+  <path d="M333 430h57q39 0 39-39v-60"/>
+ </g>
+ <path d="M171 115h119l87 90v174q0 26-26 26H171q-27 0-27-27V142q0-27 27-27Z" fill="url(#paper)" stroke="#e3f0fc" stroke-width="3"/>
+ <path d="M290 115v67q0 24 26 24h61Z" fill="url(#fold)"/>
+ <path d="M191 215h94" stroke="#087dfb" stroke-width="20" stroke-linecap="round"/>
+ <path d="M192 263h139M192 306h139" stroke="#93adcf" stroke-width="16" stroke-linecap="round"/>
+ <rect x="98" y="321" width="316" height="13" rx="6" fill="#02d5ff" opacity=".7" filter="url(#glow)"/>
+ <rect x="83" y="323" width="346" height="4" rx="2" fill="#54e9ff"/>
+</svg>
