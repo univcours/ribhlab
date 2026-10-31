@@ -62,8 +62,11 @@ jobs:
           grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'versionCode 4' android/app/build.gradle
-      - name: Verify live scanner is registered in the Android APK sources
+      - name: Verify live scanner and persistent Documents storage are registered
         run: |
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'registerPlugin(RivoDocumentsPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'MediaStore.Downloads.EXTERNAL_CONTENT_URI' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
