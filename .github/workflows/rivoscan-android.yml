@@ -50,6 +50,9 @@ jobs:
           mkdir -p android/app/src/main/res/drawable-nodpi
           base64 -d assets/icon.png.b64 > android/app/src/main/res/drawable-nodpi/rivoscan_icon.png
           sed -i 's|@mipmap/ic_launcher_round|@drawable/rivoscan_icon|g; s|@mipmap/ic_launcher|@drawable/rivoscan_icon|g' android/app/src/main/AndroidManifest.xml
+      - name: Use AGP 9-compatible ProGuard default
+        run: |
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
       - name: Build debug APK
         run: |
           cd android
