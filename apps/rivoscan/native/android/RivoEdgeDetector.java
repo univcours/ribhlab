@@ -33,15 +33,24 @@ final class RivoEdgeDetector {
         if(source.empty() || source.width()<40 || source.height()<40) return null;
         int w=source.width(),h=source.height();
         double factor=Math.min(1.0,850.0/Math.max(w,h));
-        Mat small=new Mat(),blur=new Mat(),edges=new Mat(),closed=new Mat(),kernel=new Mat();
+        Mat small=new Mat(),blur=new Mat(),edges=new Mat(),closed=new Mat(),kernel=new Mat(),hierarchy=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();
         try {
             Imgproc.resize(source,small,new Size(Math.round(w*factor),Math.round(h*factor)));
-            Imgproc.GaussianBlur(small,blur,new Size(5,5),0);
-            Imgproc.Canny(blur,edges,45,125);
+            // Adaptive Canny thresholds: fixed contrast thresholds miss
+            // pale paper on dark desks and over-detect noisy dark surfaces.
+            Imgproc.GaussianBlur(small,blur,new Size(5,5),1.2);
+            Mat medianInput=new Mat(), medianStd=new Mat();
+            double contrast=30;
+            try{
+                Core.meanStdDev(blur,medianInput,medianStd);
+                contrast=medianStd.get(0,0)[0];
+            }finally{medianInput.release();medianStd.release();}
+            double low=Math.max(24,Math.min(90,contrast*0.9));
+            Imgproc.Canny(blur,edges,low,Math.max(80,Math.min(210,low*2.4)));
             kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(5,5));
             Imgproc.morphologyEx(edges,closed,Imgproc.MORPH_CLOSE,kernel);
-            Imgproc.findContours(closed,contours,new Mat(),Imgproc.RETR_LIST,Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(closed,contours,hierarchy,Imgproc.RETR_LIST,Imgproc.CHAIN_APPROX_SIMPLE);
             double imageArea=small.width()*(double)small.height();
             double bestScore=0;
             Point[] best=null;
@@ -62,15 +71,30 @@ final class RivoEdgeDetector {
                     double minX=1,minY=1,maxX=0,maxY=0;
                     for(Point p:pts){p.x/=small.width();p.y/=small.height();minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);}
                     if(maxX-minX<.25||maxY-minY<.25)continue;
-                    // Largest plausible quadrilateral, preferring a full page with a visible margin.
-                    double score=area/imageArea;
+                    // Reject strongly skewed/random quadrilaterals, weight
+                    // document-like right angles as well as coverage.
+                    double anglePenalty=0;
+                    for(int k=0;k<4;k++){
+                        Point prev=pts[(k+3)%4],now=pts[k],next=pts[(k+1)%4];
+                        double ax=prev.x-now.x,ay=prev.y-now.y;
+                        double bx=next.x-now.x,by=next.y-now.y;
+                        double denom=Math.hypot(ax,ay)*Math.hypot(bx,by);
+                        if(denom<1e-5){anglePenalty=4;break;}
+                        anglePenalty+=Math.abs((ax*bx+ay*by)/denom);
+                    }
+                    if(anglePenalty>1.55)continue;
+                    double coverage=area/imageArea;
+                    double centered=1.0-Math.min(1.0,
+                        Math.abs((minX+maxX)/2.0-0.5)+Math.abs((minY+maxY)/2.0-0.5));
+                    double score=coverage*(1.0-0.22*Math.min(1,anglePenalty))+
+                        0.08*centered;
                     if(score>bestScore){bestScore=score;best=pts;}
                 }finally{curve.release();approx.release();}
             }
             return best;
         } finally {
             for(MatOfPoint c:contours)c.release();
-            small.release();blur.release();edges.release();closed.release();kernel.release();
+            small.release();blur.release();edges.release();closed.release();kernel.release();hierarchy.release();
         }
     }
 
