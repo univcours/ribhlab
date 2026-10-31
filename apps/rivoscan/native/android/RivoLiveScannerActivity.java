@@ -75,6 +75,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private boolean highQuality=true;
     private boolean batchMode=false;
     private String scanMode="Document";
+    private String nativeLanguage="en";
+    private String trNative(String key){return RivoLocale.get(nativeLanguage,key);}
     private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
     private final ArrayList<CameraChoice> cameraChoices=new ArrayList<>();
     private CameraChoice selectedCamera=null; // null means the ordinary default rear camera
@@ -109,6 +111,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
+        String requestedLanguage=getIntent().getStringExtra("language");
+        if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
         try{openCvReady=OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
         if(!openCvReady){
@@ -179,7 +183,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         header.setPadding(dp(14),0,dp(14),0);
         TextView back=touchLabel("✕",27,Color.WHITE,()->showCamera());
         header.addView(back,new LinearLayout.LayoutParams(dp(44),dp(55)));
-        TextView title=text("Adjust document edges",17,Color.WHITE,true);
+        TextView title=text(trNative("title"),17,Color.WHITE,true);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
         shell.addView(header);
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
@@ -216,7 +220,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
-        cameraPickerButton=touchLabel(selectedCamera==null?"Cameras ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
+        cameraPickerButton=touchLabel(selectedCamera==null?trNative("cameras")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
         cameraPickerButton.setBackground(rounded(Color.rgb(37,51,91),11));
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
@@ -252,8 +256,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout switches=new LinearLayout(this);
         switches.setGravity(Gravity.CENTER);
         switches.setBackground(rounded(Color.rgb(37,51,91),23));
-        singleButton=touchLabel("Single",14,Color.WHITE,()->setBatch(false));
-        batchButton=touchLabel("Batch",14,Color.WHITE,()->setBatch(true));
+        singleButton=touchLabel(trNative("single"),14,Color.WHITE,()->setBatch(false));
+        batchButton=touchLabel(trNative("batch"),14,Color.WHITE,()->setBatch(true));
         switches.addView(singleButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
         switches.addView(batchButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
         LinearLayout switchRow=new LinearLayout(this);switchRow.setGravity(Gravity.CENTER);
@@ -264,7 +268,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER_VERTICAL);
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
-            TextView item=touchLabel(mode,13,scanMode.equals(mode)?Color.rgb(114,185,255):Color.rgb(190,193,202),()->{
+            TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(114,185,255):Color.rgb(190,193,202),()->{
                 scanMode=mode;
                 for(int i=0;i<modes.getChildCount();i++){
                     TextView tab=(TextView)modes.getChildAt(i);
@@ -281,7 +285,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
 
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER_VERTICAL);
-        TextView photos=touchLabel("▧\nPhotos",12,Color.WHITE,()->gallery.launch("image/*"));
+        TextView photos=touchLabel("▧\n"+trNative("photos"),12,Color.WHITE,()->gallery.launch("image/*"));
         photos.setGravity(Gravity.CENTER);
         actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
         Shutter shutter=new Shutter(this);
@@ -289,11 +293,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         shutter.setContentDescription("Capture document");
         LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
         actions.addView(shutter,buttonParams);
-        TextView browse=touchLabel("▤\nFiles",12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
+        TextView browse=touchLabel("▤\n"+trNative("files"),12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
         browse.setGravity(Gravity.CENTER);
         actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
         footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
-        TextView done=touchLabel(savedImages.size()>0?"✓  Finish · "+savedImages.size():"Scan & save",14,
+        TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
                 savedImages.size()>0?Color.rgb(114,185,255):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
@@ -331,8 +335,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
-        String[] options={"Choose rear camera","Import photo","Choose from Files",
-            "Finish scanning","Sounds: "+(RivoSounds.enabled(this)?"On":"Off"),"Scanner help"};
+        String[] options={trNative("chooseCamera"),trNative("importPhoto"),trNative("chooseFile"),
+            trNative("finishScan"),"Sounds: "+(RivoSounds.enabled(this)?"On":"Off"),trNative("scannerHelp")};
         new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
             if(which==0)showCameraPicker();
             else if(which==1)gallery.launch("image/*");
@@ -361,11 +365,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         private float dp(float n){return n*getResources().getDisplayMetrics().density;}
     }
     private String shortCameraName(CameraChoice choice){
-        if(choice==null)return "Cameras";
-        return "Rear "+choice.id;
+        if(choice==null)return trNative("cameras");
+        return trNative("rear")+" "+choice.id;
     }
     private String cameraLabel(CameraInfo info,String id,int facing){
-        String label="Rear camera";
+        String label=trNative("rear");
         String focal="";
         try{
             float[] lengths=Camera2CameraInfo.from(info).getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
@@ -433,7 +437,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boolean hasRear=false;
         try{hasRear=cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA);}
         catch(Exception ignored){}
-        if(hasRear && !unusableCameraIds.contains("default"))labels.add("Default rear camera (automatic)");
+        if(hasRear && !unusableCameraIds.contains("default"))labels.add(trNative("default"));
         else labels.add("Auto (choose available rear camera)");
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()){
@@ -536,7 +540,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(message!=null)message.setText("No working rear camera found. Import photos instead.");
         RivoSounds.play(this,"error");
         new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Camera unavailable")
+            .setTitle(trNative("noCamera"))
             .setMessage("RivoScan cannot open an accessible rear camera on this device. You can still import an image, adjust its corners and save a PDF.")
             .setPositiveButton("Import photo",(dialog,which)->gallery.launch("image/*"))
             .setNegativeButton("Close",null).show();
@@ -797,9 +801,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,found==null?"Document not found automatically · drag the 4 dots":"Drag the 4 green corners to adjust the detected paper",
-            button("Retake",this::showCamera),
-            button("Detect",()->{editor.useAutoCorners();message.setText("Adjust the four green dots if needed.");}),
-            button("Save page",this::saveCroppedPage));
+            button(trNative("retake"),this::showCamera),
+            button(trNative("detect"),()->{editor.useAutoCorners();message.setText("Adjust the four green dots if needed.");}),
+            button(trNative("savePage"),this::saveCroppedPage));
     }
     private void saveWithoutCrop(Bitmap bitmap){
         try{
