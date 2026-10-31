@@ -648,3 +648,21 @@ html,body,#app{background:var(--rivo-canvas)}
   .mobilebar button.active,.mobilebar button.mobile-scan.active{color:#3155da}
   .floating-scan{background:linear-gradient(145deg,#1876f2,#4050d7);border:2px solid #e2ebff;color:#fff;box-shadow:0 12px 25px #2651d34a}
 }
+
+/* Native sound preferences: accessible, touch-friendly and branded RivoScan blue. */
+.settings-sounds{cursor:pointer}
+.settings-sounds input[type=checkbox]{
+  appearance:none;-webkit-appearance:none;position:relative;
+  background:#c6d0e1;border:1px solid #a6b4cc;
+  width:49px;height:28px;min-width:49px;flex:none;
+  border-radius:30px;transition:background .15s ease;
+  margin:0 2px 0 8px;cursor:pointer;outline-offset:3px
+}
+.settings-sounds input[type=checkbox]::before{
+  content:"";position:absolute;left:3px;top:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px #14275b33;transition:transform .15s ease
+}
+.settings-sounds input[type=checkbox]:checked{background:#3155da;border-color:#3155da}
+.settings-sounds input[type=checkbox]:checked::before{transform:translateX(20px)}
+.settings-sounds input[type=checkbox]:focus-visible{outline:3px solid #7aabff}
