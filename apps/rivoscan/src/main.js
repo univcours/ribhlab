@@ -184,7 +184,26 @@ const bulkUI=createLibraryBulk({
   },
   onPreview:doc=>docViewerUI.open(doc),
   onOpenLibrary:()=>openLibrary(),
-  onDirectTransfer:()=>openTool('peerTransfer'),
+  onDirectTransfer:async docs=>{
+    openTool('peerTransfer');
+    const chooser=document.getElementById('peer-files');
+    if(!chooser||typeof DataTransfer==='undefined'||!Array.isArray(docs))return;
+    const staged=new DataTransfer();
+    let total=0;
+    for(const doc of docs){
+      if((doc.size||0)>15*1024*1024||total+(doc.size||0)>60*1024*1024)continue;
+      try{
+        const result=await RivoDocuments.readFile({uri:doc.uri});
+        const raw=atob(result.base64||'');
+        const bytes=new Uint8Array(raw.length);
+        for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+        staged.items.add(new File([bytes],doc.name,{type:doc.mimeType||'application/octet-stream'}));
+        total+=bytes.length;
+      }catch(error){console.warn('Direct transfer preselection:',error);}
+    }
+    chooser.files=staged.files;
+    if(staged.files.length)toast(staged.files.length+' '+dl('files')+' ✓');
+  },
   onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
   onRename:async doc=>{
     await docViewerUI.open(doc);
@@ -829,7 +848,34 @@ async function saveReceivedPeerFile(bytes,name,mime){
   await saveOut(bytes,name,mime);
 }
 function peerWorkspace(){
- return $PLACEHOLDER__;
+ const copy={
+  en:['Direct device transfer','Share your files privately using a one-time pairing code. Both devices must be connected.','Create sender code','Accept sender code','Complete connection','My code','Code from the other device','Copy code','Choose documents','Send selected files','Connection not yet established','No cloud link is generated. Pairing is manual and some networks may block direct connections.'],
+  ar:['نقل مباشر بين الأجهزة','صيفط الوثائق مباشرة برمز ربط مؤقت. خاص الجهازين يكونو متصلين.','إنشاء رمز الإرسال','قبول رمز المرسل','إتمام الربط','الكود ديالي','كود الجهاز الآخر','نسخ الرمز','اختار الوثائق','صيفط الوثائق','مازال ما اتصلناش','ما كننشئوش رابط سحابي عام؛ الربط يدوي وبعض الشبكات تقدر تمنع الاتصال المباشر.'],
+  fr:['Transfert direct','Envoyez vos documents via un code temporaire entre deux appareils connectés.','Créer un code','Accepter le code','Terminer la connexion','Mon code','Code du correspondant','Copier le code','Choisir des fichiers','Envoyer','Non connecté','Aucun lien cloud. L’appairage est manuel et certains réseaux peuvent bloquer la connexion.'],
+  es:['Transferencia directa','Comparte archivos usando un código temporal de vinculación.','Crear código','Aceptar código','Completar conexión','Mi código','Código remoto','Copiar código','Elegir documentos','Enviar','Sin conexión','No se crea enlace público. Puede fallar en ciertas redes.'],
+  de:['Direkte Übertragung','Dateien per einmaligem Kopplungscode austauschen.','Code erstellen','Code annehmen','Verbinden','Mein Code','Code des Partners','Code kopieren','Dateien auswählen','Senden','Nicht verbunden','Kein öffentlicher Cloud-Link. Einige Netzwerke verhindern direkte Verbindungen.'],
+  pt:['Transferência direta','Partilhe ficheiros com código temporário entre dispositivos.','Criar código','Aceitar código','Concluir ligação','O meu código','Código remoto','Copiar código','Selecionar ficheiros','Enviar','Desligado','Sem link público. Algumas redes bloqueiam ligações diretas.'],
+  it:['Trasferimento diretto','Condividi i file con un codice di collegamento temporaneo.','Crea codice','Accetta codice','Completa connessione','Il mio codice','Codice remoto','Copia codice','Seleziona file','Invia','Non connesso','Nessun link cloud pubblico. Alcune reti bloccano il collegamento diretto.']
+ };
+ const w=copy[language]||copy.en;
+ return `<section class="workspace rivo-peer-workspace">
+   <button class="back" data-go="home">${ico('back',18)} ${ut('home')}</button>
+   <div class="page-heading"><h1>${w[0]}</h1><p>${w[1]}</p></div>
+   <div class="panel rivo-peer-panel">
+     <p class="hint">${w[11]}</p>
+     <div class="rivo-peer-actions">
+       <button id="peer-offer" type="button">${w[2]}</button>
+       <button id="peer-answer" type="button">${w[3]}</button>
+       <button id="peer-connect" type="button">${w[4]}</button>
+     </div>
+     <label class="field"><span>${w[5]}</span><textarea id="peer-local" rows="3" readonly></textarea></label>
+     <button id="peer-copy" class="btn btn-outline" type="button">${ico('file',18)} ${w[7]}</button>
+     <label class="field"><span>${w[6]}</span><textarea id="peer-remote" rows="3" autocomplete="off" spellcheck="false"></textarea></label>
+     <p role="status" class="rivo-peer-status" id="peer-status">${w[10]}</p>
+     <label class="rivo-peer-file-picker"><span>${w[8]}</span><input type="file" id="peer-files" multiple></label>
+     <button class="btn operation" id="peer-send" type="button" disabled>${ico('upload',19)} ${w[9]}</button>
+   </div>
+ </section>`;
 }
 
 async function imagesToPdf(filter,sourceFiles=files){
