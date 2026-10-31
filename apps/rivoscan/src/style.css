@@ -1097,3 +1097,56 @@ html,body,#app{background:var(--rv-bg);color:var(--rv-white)}
 @media(prefers-reduced-motion:reduce){
   #app .rivo-home .rivo-tile{transition:none}
 }
+
+
+/* The same dark RivoScan palette continues into Documents, Tools, Scanner and Settings. */
+#app .rivo-dark-ui .page-heading h1,
+#app .rivo-dark-ui .library-heading h1,
+#app .rivo-dark-ui .work-title h1,
+#app .rivo-dark-ui .settings-identity h2,
+#app .rivo-dark-ui .home-section-heading h2,
+#app .rivo-dark-ui .tools-section h2,
+#app .rivo-dark-ui .settings-section h2{color:#f1f7ff}
+#app .rivo-dark-ui .page-heading p,
+#app .rivo-dark-ui .library-heading p,
+#app .rivo-dark-ui .work-title p{color:#a4b6c9}
+#app .rivo-dark-ui .panel,#app .rivo-dark-ui .library-panel,
+#app .rivo-dark-ui .settings-identity,#app .rivo-dark-ui .settings-row{
+  background:linear-gradient(140deg,#1a2836,#15212d);border:1.5px solid #345064;
+  color:#e9f5ff;box-shadow:0 8px 22px #02091340}
+#app .rivo-dark-ui .panel h3,#app .rivo-dark-ui .library-top strong,
+#app .rivo-dark-ui .settings-row strong,#app .rivo-dark-ui .document-description strong{color:#f1f7ff}
+#app .rivo-dark-ui .settings-row small,#app .rivo-dark-ui .settings-identity small,
+#app .rivo-dark-ui .document-description small,#app .rivo-dark-ui .hint{color:#a7bccb}
+#app .rivo-dark-ui .settings-row-icon{background:#123b44;color:#4bf4d8}
+#app .rivo-dark-ui .settings-lang select,
+#app .rivo-dark-ui .library-controls select,
+#app .rivo-dark-ui .library-controls button,
+#app .rivo-dark-ui .field input,
+#app .rivo-dark-ui .field select,
+#app .rivo-dark-ui .field textarea{background:#243341;border:1.5px solid #577186;color:#f4f8ff}
+#app .rivo-dark-ui .library-search{background:#24303b;border:1px solid #567285;color:#b9d3df}
+#app .rivo-dark-ui .library-search input{color:#f1f7fc}
+#app .rivo-dark-ui .document-entry{background:#21303d;border:1.5px solid #355165;box-shadow:0 5px 13px #07121d4f}
+#app .rivo-dark-ui .document-entry.doc-selected{background:#14434b;border-color:#13e2c7}
+#app .rivo-dark-ui .document-icon{background:#164047;color:#57ead6}
+#app .rivo-dark-ui .document-buttons button{background:#243e4d;color:#93fbeb;border:1.5px solid #3b9a96}
+#app .rivo-dark-ui .document-buttons .document-delete{color:#ffadbb;background:#462b36;border-color:#bc697c}
+#app .rivo-dark-ui .doc-empty{color:#a9bece}
+#app .rivo-dark-ui .mobile-tool-tile,
+#app .rivo-dark-ui .tool-card{background:linear-gradient(140deg,#172734,#1b2634);color:#f2f6ff;border:1.6px solid #447686;
+  box-shadow:0 5px 18px #030a1440}
+#app .rivo-dark-ui .mobile-tool-tile strong,#app .rivo-dark-ui .tool-card-title{color:#f2f8ff}
+#app .rivo-dark-ui .tools-banner,
+#app .rivo-dark-ui .scan-action-primary{background:linear-gradient(125deg,#056f78,#08847c);border-color:#48e8d6;color:#fff}
+#app .rivo-dark-ui .scan-action-secondary,
+#app .rivo-dark-ui .scan-documents-link,#app .rivo-dark-ui .scan-mlkit-link,
+#app .rivo-dark-ui .scan-upload-link,
+#app .rivo-dark-ui .library-heading-actions .btn{background:#1b3a48;color:#92f7e9;border:1.5px solid #438c92}
+#app .rivo-dark-ui .scan-runtime,#app .rivo-dark-ui .scan-session-panel .file{background:#19353d;color:#bcf0eb;border-color:#4a777d}
+#app .rivo-dark-ui .back{color:#71f0db}
+#app .rivo-dark-ui .library-selection-toolbar{background:#153a43;color:#effcff;border-color:#35bfb4}
+#app .rivo-dark-ui .library-selection-toolbar>small{color:#b5d6df}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-secondary button{background:#213e51;color:#e4f7ff;border-color:#487a93}
+#app .rivo-dark-ui .doc-select-box{border-color:#65a5b4;background:#1d2d3b}
+#app .rivo-dark-ui .doc-select-box:checked{background:#0fae9d;border-color:#29f1df}
