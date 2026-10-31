@@ -752,11 +752,21 @@ function initSignature(){
 }
 render();
 if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
-  if(Capacitor.isPluginAvailable('RivoLiveScanner')){
-    RivoLiveScanner.setSoundSettings({enabled:soundsEnabled}).catch(console.warn);
-  }
+  const syncNativeSoundSetting=()=>{
+    if(!Capacitor.isPluginAvailable('RivoLiveScanner'))return;
+    RivoLiveScanner.getSoundSettings().then(result=>{
+      soundsEnabled=result.enabled!==false;
+      localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
+      const control=document.getElementById('sound-toggle');
+      if(control)control.checked=soundsEnabled;
+    }).catch(console.warn);
+  };
+  syncNativeSoundSetting();
   loadLibrary(false);
   CapacitorApp.addListener('appStateChange',({isActive})=>{
-    if(isActive)loadLibrary(activeTool?.id==='library');
+    if(isActive){
+      loadLibrary(activeTool?.id==='library');
+      syncNativeSoundSetting();
+    }
   }).catch(console.warn);
 }
