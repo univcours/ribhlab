@@ -159,6 +159,7 @@ const bulkUI=createLibraryBulk({
   bridge:RivoDocuments,getLanguage:()=>language,getItems:()=>libraryItems,
   onRefresh:async()=>{await loadLibrary(false);refreshVisibleLibrary()},
   onPreview:doc=>docViewerUI.open(doc),
+  onOpenLibrary:()=>openLibrary(),
   onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
   showBusy,progress,clearBusy,saveOut,toast
 });
