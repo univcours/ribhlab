@@ -165,6 +165,51 @@ function addSelectedFiles(picked){
   if(proposed.reduce((sum,f)=>sum+f.size,0)>MAX_TOTAL_BYTES){toast('Files exceed 90 MB total. Try fewer files.',true);return;}
   files=proposed;scanRotations=files.map((_,i)=>scanRotations[i]||0);updateFileDisplay();
 }
+
+async function readScannedImage(uri,index){
+  const name='RivoScan_Page_'+Date.now()+'_'+(index+1)+'.jpg';
+  try {
+    const result=await Filesystem.readFile({path:uri});
+    if(typeof result.data==='string'){
+      const encoded=result.data.includes(',')?result.data.split(',').pop():result.data;
+      const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));
+      return new File([bytes],name,{type:'image/jpeg'});
+    }
+    if(result.data instanceof Blob)return new File([result.data],name,{type:'image/jpeg'});
+  } catch(err) {
+    const local=Capacitor.convertFileSrc(uri),response=await fetch(local);
+    if(!response.ok)throw new Error('Cannot read scanned page '+(index+1));
+    return new File([await response.blob()],name,{type:'image/jpeg'});
+  }
+  throw new Error('Unsupported scanner image output.');
+}
+async function consumeSmartScan(result){
+  if(!result?.scannedImages?.length){toast('No scanned pages were returned.',true);return;}
+  if(activeTool?.id!=='scan')openTool('scan');
+  const picked=[];
+  for(let i=0;i<result.scannedImages.length;i++)picked.push(await readScannedImage(result.scannedImages[i],i));
+  addSelectedFiles(picked);
+  toast(picked.length+' corrected page(s) added. Add more pages or tap Process & Save for a single PDF.');
+}
+async function openSmartScanner(){
+  if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
+    toast('Smart auto-crop needs the Android app. Use regular camera or photo upload on the web.',true);return;
+  }
+  try{
+    const result=await DocumentScanner.scanDocument({galleryImportAllowed:true,pageLimit:20,resultFormats:'JPEG',scannerMode:'FULL'});
+    await consumeSmartScan(result);
+  }catch(err){
+    if(!/cancel/i.test(String(err?.message||err)))toast('Smart scanner: '+(err?.message||'Unavailable. Check Google Play services.'),true);
+  }
+}
+CapacitorApp.addListener('appRestoredResult',async event=>{
+  if(event?.pluginId!=='DocumentScanner'||event?.methodName!=='scanDocument')return;
+  try{
+    if(event.success)await consumeSmartScan(event.data);
+    else if(event.error?.message)toast('Scanner was interrupted: '+event.error.message,true);
+  }catch(err){toast('Could not recover scan: '+err.message,true)}
+}).catch(console.warn);
+
 async function openCamera(){
  try{if(Capacitor.isNativePlatform()){
    const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
@@ -202,6 +247,50 @@ async function imageCanvas(file,filter='color',rotation=0){
  if(filter==='bw'){const im=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<im.data.length;i+=4){const v=im.data[i]>.64*255?255:0;im.data[i]=im.data[i+1]=im.data[i+2]=v}ctx.putImageData(im,0,0)}
  return canvas;
 }
+
+async function bundleDocuments(){
+  const output=await PDFDocument.create();
+  for(let i=0;i<files.length;i++){
+    const f=files[i];progress('Combining document '+(i+1)+'/'+files.length);
+    if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){
+      const source=await pdfFromFile(f);
+      const pages=await output.copyPages(source,source.getPageIndices());
+      for(const page of pages)output.addPage(page);
+    }else{
+      const canvas=await imageCanvas(f,'enhance',0);
+      const jpg=await output.embedJpg(await(await canvasBlob(canvas,'image/jpeg',.82)).arrayBuffer());
+      const pw=595.28,ph=841.89,margin=15;
+      const ratio=Math.min((pw-2*margin)/jpg.width,(ph-2*margin)/jpg.height);
+      const page=output.addPage([pw,ph]),w=jpg.width*ratio,h=jpg.height*ratio;
+      page.drawImage(jpg,{x:(pw-w)/2,y:(ph-h)/2,width:w,height:h});
+    }
+  }
+  if(output.getPageCount()===0)throw Error('Select documents first.');
+  return output.save({useObjectStreams:true});
+}
+async function shareSelectedFiles(){
+  requireFiles(1);
+  if(Capacitor.isNativePlatform()){
+    const uris=[];
+    for(let i=0;i<files.length;i++){
+      progress('Preparing attachment '+(i+1)+'/'+files.length);
+      const f=files[i],safe=f.name.replace(/[^\w.\-]/g,'_').slice(0,80)||'file';
+      const b64=toBase64(new Uint8Array(await f.arrayBuffer()));
+      const saved=await Filesystem.writeFile({directory:Directory.Cache,path:'RivoScanShare/'+Date.now()+'_'+i+'_'+safe,data:b64,recursive:true});
+      uris.push(saved.uri);
+    }
+    await Share.share({title:'RivoScan file share',files:uris,dialogTitle:'Choose where to share'});
+  }else if(typeof navigator.share==='function'&&navigator.canShare?.({files})){
+    await navigator.share({files,title:'RivoScan files'});
+  }else throw Error('Sharing attachments is not supported in this browser. Use Android.');
+}
+async function saveReceivedPeerFile(bytes,name,mime){
+  await saveOut(bytes,name,mime);
+}
+function peerWorkspace(){
+ return $PLACEHOLDER__;
+}
+
 async function imagesToPdf(filter){
  const pdf=await PDFDocument.create();for(let i=0;i<files.length;i++){
   progress(`Preparing image ${i+1} / ${files.length}`);
@@ -283,9 +372,11 @@ async function process(){
  try{
   requireFiles(activeTool?.id==='merge'?2:1);
   showBusy('Preparing your document…');
+  if(activeTool?.id==='shareFiles'){await shareSelectedFiles();return;}
   const id=activeTool.id;let bytes,name,mime='application/pdf';
   switch(id){
    case 'scan':case 'images':bytes=await imagesToPdf(id==='scan'?setting('filter'):'color');name=`RivoScan_${Date.now()}.pdf`;break;
+   case 'bundle':bytes=await bundleDocuments();name=`Combined_Documents_${Date.now()}.pdf`;break;
    case 'merge':bytes=await mergePdfs();name=`Merged_${Date.now()}.pdf`;break;
    case 'split':case 'delete':case 'reorder':case 'rotate':bytes=await editPages(id);name=`${fname(files[0].name)}_${id}.pdf`;break;
    case 'numbers':case 'watermark':case 'text':case 'sign':case 'metadata':bytes=await annotatePdf(id);name=`${fname(files[0].name)}_${id}.pdf`;break;
