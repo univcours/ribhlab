@@ -1,3 +1,4 @@
+import { translateStatus } from './i18n-extra.js';
 /**
  * RivoScan P2P beta: direct, encrypted WebRTC data channel.
  * Manual offer/answer exchange avoids a signaling server.
@@ -41,15 +42,15 @@ function waitDrain(channel) {
     channel.addEventListener('bufferedamountlow',onLow);channel.addEventListener('close',onClose);
   });
 }
-export function initPeerTransfer({onReceive,notify}){
+export function initPeerTransfer({onReceive,notify,getLanguage=()=> 'en'}){
   if(typeof RTCPeerConnection === 'undefined'){
-    const s=document.getElementById('peer-status');if(s)s.textContent='This device does not support WebRTC file transfer.';
+    const s=document.getElementById('peer-status');if(s)s.textContent=translateStatus(getLanguage(),'This device does not support WebRTC file transfer.');
     return ()=>{};
   }
   const find=id=>document.getElementById(id);
   let pc=null,channel=null,pending=null,disconnected=false,sendInProgress=false;
   let totalReceived=0;
-  const status=s=>{const el=find('peer-status');if(el)el.textContent=s};
+  const status=s=>{const el=find('peer-status');if(el)el.textContent=translateStatus(getLanguage(),s)};
   const buttons=()=>{const connected=channel?.readyState==='open';const send=find('peer-send');if(send)send.disabled=!connected||sendInProgress;};
   const cleanup=()=>{disconnected=true;try{channel?.close()}catch{}try{pc?.close()}catch{}channel=null;pc=null;pending=null;buttons()};
   const setup=()=>{

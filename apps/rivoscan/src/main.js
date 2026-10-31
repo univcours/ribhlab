@@ -463,7 +463,7 @@ function wire(){
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
   document.getElementById('mlkit-scanner')?.addEventListener('click',openSmartScanner);
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
-  if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast});
+  if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
   document.getElementById('scanpreview')?.addEventListener('click',e=>{const b=e.target.closest('[data-turn]');if(!b)return;const i=+b.dataset.turn;scanRotations[i]=((scanRotations[i]||0)+90)%360;drawPreview()});
   document.getElementById('process')?.addEventListener('click',process);
