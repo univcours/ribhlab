@@ -21,7 +21,7 @@ function fromBase64(encoded){
   for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
   return out;
 }
-export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onError}){
+export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onError,onShare}){
   let current=null,root=null,content=null,buttons=null,page=1,pdf=null,bytes=null,imageUrl=null,request=0;
   const lang=()=>getLanguage();
   const word=(key)=>tt(lang(),key);
@@ -174,7 +174,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     body.appendChild(pages);root.appendChild(body);
     const actionRow=tag('div','doc-detail-actions');
     actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',edit));
-    actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
+    actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
     actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
     actionRow.appendChild(button('⌫ '+word('delete'),'doc-action doc-action-danger',async()=>{
       if(!window.confirm(word('confirm')))return;
