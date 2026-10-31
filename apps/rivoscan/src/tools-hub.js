@@ -1,7 +1,7 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
 export const toolGroups=[
- {id:'scan',entries:['idcard','ocr','bookScan','slideScan','whiteboard','timestamp','enhance']},
+ {id:'scan',entries:['idcard','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
