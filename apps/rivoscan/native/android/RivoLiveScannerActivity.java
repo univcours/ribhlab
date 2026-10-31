@@ -11,6 +11,9 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.graphics.ImageFormat;
+import android.util.Size;
 import androidx.camera.camera2.interop.Camera2CameraInfo;
 import androidx.camera.core.CameraInfo;
 import java.util.Locale;
@@ -80,7 +83,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private String trNative(String key){return RivoLocale.get(nativeLanguage,key);}
     private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
     private final ArrayList<CameraChoice> cameraChoices=new ArrayList<>();
-    private CameraChoice selectedCamera=null; // null means the ordinary default rear camera
+    private CameraChoice selectedCamera=null; // null = automatic best supported rear camera
+    private String activeCameraId="default";
     private ProcessCameraProvider cameraProvider;
     private int cameraBindSerial=0;
     private final HashSet<String> unusableCameraIds=new HashSet<>();
@@ -95,7 +99,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private static final class CameraChoice {
         final String id,label;
         final int facing;
-        CameraChoice(String id,String label,int facing){this.id=id;this.label=label;this.facing=facing;}
+        final double score;
+        CameraChoice(String id,String label,int facing,double score){this.id=id;this.label=label;this.facing=facing;this.score=score;}
     }
     private ExecutorService analyzer;
     private RivoCropEditor editor;
@@ -225,7 +230,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
-        cameraPickerButton=touchLabel(selectedCamera==null?trNative("cameras")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
+        cameraPickerButton=touchLabel(selectedCamera==null?trNative("bestCamera")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
         cameraPickerButton.setBackground(rounded(Color.rgb(37,51,91),11));
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
@@ -373,6 +378,38 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(choice==null)return trNative("cameras");
         return trNative("rear")+" "+choice.id;
     }
+    /** Score only cameras CameraX exposes; high-resolution JPEG, autofocus and
+     * standard focal length are preferred over distorted ultrawide lenses. */
+    private double cameraScore(CameraInfo info){
+        try{
+            Camera2CameraInfo camera=Camera2CameraInfo.from(info);
+            StreamConfigurationMap map=camera.getCameraCharacteristic(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            long pixels=0;
+            if(map!=null){
+                Size[] jpeg=map.getOutputSizes(ImageFormat.JPEG);
+                if(jpeg!=null)for(Size size:jpeg)
+                    pixels=Math.max(pixels,(long)size.getWidth()*size.getHeight());
+            }
+            if(pixels==0){
+                Size sensor=camera.getCameraCharacteristic(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+                if(sensor!=null)pixels=(long)sensor.getWidth()*sensor.getHeight();
+            }
+            float[] focals=camera.getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            float focal=focals!=null&&focals.length>0?focals[0]:0;
+            Integer focus=camera.getCameraCharacteristic(CameraCharacteristics.CONTROL_MAX_REGIONS_AF);
+            double score=Math.log1p(pixels)/Math.log(2);
+            if(focal>=3.3f&&focal<=10f)score+=3;
+            else if(focal>0&&focal<2.6f)score-=4;
+            if(focus!=null&&focus>0)score+=1.3;
+            return score;
+        }catch(Exception ignored){return 0;}
+    }
+    private CameraChoice bestAvailableCamera(){
+        CameraChoice best=null;
+        for(CameraChoice choice:cameraChoices)
+            if(!unusableCameraIds.contains(choice.id)&&(best==null||choice.score>best.score))best=choice;
+        return best;
+    }
     private String cameraLabel(CameraInfo info,String id,int facing){
         String label=trNative("rear");
         String focal="";
@@ -401,7 +438,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             for(CameraChoice c:cameraChoices)if(c.id.equals(id)){duplicate=true;break;}
             if(!duplicate){
                 String label=id.startsWith("facing:")?"Rear camera":cameraLabel(info,id,CameraSelector.LENS_FACING_BACK);
-                cameraChoices.add(new CameraChoice(id,label,CameraSelector.LENS_FACING_BACK));
+                cameraChoices.add(new CameraChoice(id,label,CameraSelector.LENS_FACING_BACK,cameraScore(info)));
             }
         }
     }
@@ -419,7 +456,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }).build();
     }
     private CameraSelector cameraSelector(){
-        return selectedCamera==null?CameraSelector.DEFAULT_BACK_CAMERA:selectorFor(selectedCamera.id);
+        CameraChoice choice=selectedCamera!=null?selectedCamera:bestAvailableCamera();
+        activeCameraId=choice==null?"default":choice.id;
+        return choice==null?CameraSelector.DEFAULT_BACK_CAMERA:selectorFor(choice.id);
     }
     private void showCameraPicker(){
         if(editing||isFinishing())return;
@@ -442,10 +481,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boolean hasRear=false;
         try{hasRear=cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA);}
         catch(Exception ignored){}
-        if(hasRear && !unusableCameraIds.contains("default"))labels.add(trNative("default"));
-        else labels.add("Auto (choose available rear camera)");
+        labels.add(trNative("bestCamera"));
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
-        if(cameraChoices.isEmpty()){
+        if(cameraChoices.isEmpty()&&!hasRear){
             new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("No rear camera available")
                 .setMessage("Android did not expose an accessible rear camera. You can import a photo and scan its edges.")
                 .setPositiveButton("Import photo",(d,w)->gallery.launch("image/*"))
@@ -469,7 +507,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 torchOn=false;
                 RivoSounds.play(this,"switch");
                 if(flashButton!=null)flashButton.setText("ϟ Off");
-                if(cameraPickerButton!=null)cameraPickerButton.setText(next==null?"Cameras ▾":shortCameraName(next)+" ▾");
+                if(cameraPickerButton!=null)cameraPickerButton.setText(next==null?trNative("bestCamera")+" ▾":shortCameraName(next)+" ▾");
                 dialog.dismiss();
                 if(message!=null)message.setText(next==null?"Using the default rear camera":"Switching to "+next.label);
                 startCamera();
@@ -477,7 +515,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             .setNeutralButton("Default", (dialog,which)->{
                 selectedCamera=null;torchOn=false;
                 RivoSounds.play(this,"switch");
-                if(cameraPickerButton!=null)cameraPickerButton.setText("Cameras ▾");
+                if(cameraPickerButton!=null)cameraPickerButton.setText(trNative("bestCamera")+" ▾");
                 if(flashButton!=null)flashButton.setText("ϟ Off");
                 startCamera();
             })
@@ -520,25 +558,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void handleCameraFailure(String reason){
         capture=null;
         boundCamera=null;
-        String id=selectedCamera==null?"default":selectedCamera.id;
-        unusableCameraIds.add(id);
+        unusableCameraIds.add(activeCameraId);
         if(cameraProvider!=null){
             discoverCameras(cameraProvider);
-            if(cameraChoices.size()>0){
-                CameraChoice next=null;
-                for(CameraChoice option:cameraChoices){
-                    if(!unusableCameraIds.contains(option.id) &&
-                        (selectedCamera==null || !option.id.equals(selectedCamera.id))){
-                        next=option;break;
-                    }
-                }
-                if(next!=null){
-                    selectedCamera=next;
-                    if(cameraPickerButton!=null)cameraPickerButton.setText(shortCameraName(next)+" ▾");
-                    if(message!=null)message.setText("Trying another rear camera…");
-                    startCamera();
-                    return;
-                }
+            CameraChoice next=bestAvailableCamera();
+            if(next!=null){
+                selectedCamera=null;
+                if(cameraPickerButton!=null)cameraPickerButton.setText(trNative("bestCamera")+" ▾");
+                if(message!=null)message.setText(trNative("retryCamera"));
+                startCamera();
+                return;
             }
         }
         clearFrozenPreview();
@@ -569,9 +598,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(!provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)&&cameraChoices.isEmpty()){
                     handleCameraFailure("No accessible rear cameras");return;
                 }
-                if(selectedCamera==null && unusableCameraIds.contains("default")){
-                    if(cameraChoices.isEmpty()){handleCameraFailure("Rear cameras exhausted");return;}
-                    selectedCamera=cameraChoices.get(0);
+                if(selectedCamera!=null && unusableCameraIds.contains(selectedCamera.id))selectedCamera=null;
+                if(cameraChoices.isEmpty()&&unusableCameraIds.contains("default")){
+                    handleCameraFailure("Rear cameras exhausted");return;
                 }
                 CameraSelector selector=cameraSelector();
                 if(!provider.hasCamera(selector)){
@@ -627,8 +656,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 cameraView.getPreviewStreamState().observe(this,streamObserver);
                 mainHandler.postDelayed(()->{if(serial==cameraBindSerial)clearFrozenPreview();},2300);
                 if(message!=null){
-                    message.setText((selectedCamera==null?"Default rear":shortCameraName(selectedCamera))+
-                        (liveEdges?" · stable live edges":" · basic camera mode"));
+                    message.setText((selectedCamera==null?trNative("bestCamera"):shortCameraName(selectedCamera))+
+                        (liveEdges?trNative("liveEdges"):trNative("basicMode")));
                 }
             }catch(Exception error){
                 if(serial==cameraBindSerial)handleCameraFailure(error.getMessage());
