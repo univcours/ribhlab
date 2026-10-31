@@ -266,6 +266,13 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         <label class="bulk-field">${t('quality')}
           <select name="bulk-quality"><option value="original">${t('original')}</option>
             <option value="balanced">${t('balanced')}</option><option value="small">${t('small')}</option></select></label>
+        <label class="bulk-field" data-word-lang hidden>OCR
+          <select name="bulk-ocr-lang">
+            <option value="eng">English</option><option value="fra">Français</option>
+            <option value="ara">العربية</option><option value="spa">Español</option>
+            <option value="deu">Deutsch</option><option value="por">Português</option>
+            <option value="ita">Italiano</option>
+          </select></label>
         <p class="bulk-note" data-share-note>${t('loss')}</p>
         <button class="bulk-share-confirm" data-share-confirm>${t('send')}</button>
       </div>
@@ -285,11 +292,14 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       if(option.value!=='originalFile')option.disabled=true;
     });
     const qualitySelect=root.querySelector('[name="bulk-quality"]');
+    const ocrDefault={en:'eng',ar:'ara',fr:'fra',es:'spa',de:'deu',pt:'por',it:'ita'}[getLanguage()]||'eng';
+    root.querySelector('[name="bulk-ocr-lang"]').value=ocrDefault;
     const note=root.querySelector('[data-share-note]');
     formatSelect.addEventListener('change',()=>{
       const format=formatSelect.value;
       note.textContent=format==='word'?t('wordHint'):format==='long'?t('longHint'):t('loss');
       qualitySelect.disabled=format==='word'||format==='originalFile';
+      root.querySelector('[data-word-lang]').hidden=format!=='word';
     });
     root.querySelector('[data-direct-transfer]').addEventListener('click',()=>{
       closeSheet();onDirectTransfer?.(docs);
@@ -314,7 +324,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const saved=await saveOut(bytes,`RivoScan_Long_${Date.now()}.jpg`,'image/jpeg');
           uris=[saved.uri];mime='image/jpeg';
         }else if(format==='word'){
-          const bytes=await makeWordText(docs,fileFromDocument,isPDF,(now,total)=>progress(`${t('preparing')} ${now}/${total}`),'eng');
+          const chosenOcr=root.querySelector('[name="bulk-ocr-lang"]').value;
+          const bytes=await makeWordText(docs,fileFromDocument,isPDF,(now,total)=>progress(`${t('preparing')} ${now}/${total}`),chosenOcr);
           const saved=await saveOut(bytes,`RivoScan_Text_${Date.now()}.docx`,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
           uris=[saved.uri];mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         }else{
