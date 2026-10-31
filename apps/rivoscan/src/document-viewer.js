@@ -136,10 +136,11 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     chooser.appendChild(tag('strong','',word('chooseEdit')));
     const grid=tag('div','doc-edit-grid');
     const options=pdfType(current)?[
+      ['managePages','managePages'],
       ['rotate','rotate'],['sign','sign'],['text','text'],['watermark','watermark'],['reorder','reorder'],['split','extract']
     ]:imageType(current)?[['enhance','enhance'],['scan','crop'],['images','imagePdf']]:[];
     for(const [toolId,label] of options){
-      grid.appendChild(button(word(label),'doc-edit-choice',async()=>{
+      grid.appendChild(button(label==='managePages'?({en:'Manage Pages',ar:'إدارة الصفحات',fr:'Gérer les pages',es:'Gestionar páginas',de:'Seiten verwalten',pt:'Gerir páginas',it:'Gestisci pagine'})[getLanguage()]||'Manage Pages':word(label),'doc-edit-choice',async()=>{
         if(!current)return;
         if(!bytes && toolId!=='scan'){feedback(word('tooLarge'));return;}
         const selected={...current};
