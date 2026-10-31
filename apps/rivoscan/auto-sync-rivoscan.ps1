@@ -87,6 +87,9 @@ function Sync-Once {
     Say 'Installing live Android document-edge scanner...' 'Cyan'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'install-live-scanner.ps1')
     Check-Exit 'Native scanner integration'
+    Say 'Updating RivoScan Android launcher branding...' 'Cyan'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'apply-rivoscan-branding.ps1')
+    Check-Exit 'RivoScan Android icon'
     Say 'Checking Android Gradle ProGuard compatibility...' 'Cyan'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'fix-gradle-rivoscan.ps1')
     Check-Exit 'Gradle ProGuard compatibility'
