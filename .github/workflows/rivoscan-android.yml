@@ -74,6 +74,26 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+      - name: Verify final APK actually contains the RivoScan launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          if [ -z "$AAPT" ]; then echo "Android aapt not installed"; exit 1; fi
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='4' versionName='0.4.0'"
+          FILE=$(unzip -Z -1 "$APK" | grep -E '^res/mipmap-xxxhdpi[^/]*/ic_launcher\.png        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+ | head -1)
+          test -n "$FILE" || { echo "No packaged RivoScan launcher icon found"; exit 1; }
+          base64 -d assets/icon.png.b64 | sha256sum | cut -d' ' -f1 > /tmp/rivoscan-expected-icon-sha.txt
+          unzip -p "$APK" "$FILE" | sha256sum | cut -d' ' -f1 > /tmp/rivoscan-apk-icon-sha.txt
+          diff -u /tmp/rivoscan-expected-icon-sha.txt /tmp/rivoscan-apk-icon-sha.txt
+          echo "PASS: Compiled Android APK has correct package, version 0.4.0 and RivoScan scanner launcher bitmap"
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:
