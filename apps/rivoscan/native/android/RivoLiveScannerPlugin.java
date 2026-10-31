@@ -65,6 +65,7 @@ public class RivoLiveScannerPlugin extends Plugin {
         intent.putExtra("gallery", Boolean.TRUE.equals(call.getBoolean("gallery", false)));
         intent.putExtra("basic", Boolean.TRUE.equals(call.getBoolean("basic", false)));
         intent.putExtra("language", call.getString("language", "en"));
+        intent.putExtra("mode", "ID Card".equals(call.getString("mode", "Document")) ? "ID Card" : "Document");
         String imageUri = call.getString("imageUri");
         if (imageUri != null && !imageUri.isEmpty()) intent.putExtra("imageUri", imageUri);
         startActivityForResult(call, intent, "onResult");

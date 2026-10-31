@@ -33,8 +33,8 @@ public class MainActivity extends BridgeActivity {
         // Keep Android's real clock, network and battery bar visible.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
             WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        getWindow().setStatusBarColor(Color.rgb(16, 27, 50));
-        getWindow().setNavigationBarColor(Color.rgb(16, 27, 50));
+        getWindow().setStatusBarColor(Color.rgb(10, 18, 28));
+        getWindow().setNavigationBarColor(Color.rgb(10, 18, 28));
         new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
             .setAppearanceLightStatusBars(false);
         registerPlugin(RivoLiveScannerPlugin.class);

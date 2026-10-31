@@ -598,7 +598,7 @@ function addSelectedFiles(picked){
 
 
 /** Android native: live green edge outline and manual four-corner editor. */
-async function openLiveScanner({gallery=false,imageUri=null}={}){
+async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
     return;
@@ -610,7 +610,7 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
     return;
   }
   try{
-    const result=await RivoLiveScanner.scan({gallery,imageUri,language});
+    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode});
     await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);

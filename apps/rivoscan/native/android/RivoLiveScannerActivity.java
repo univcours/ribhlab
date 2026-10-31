@@ -121,6 +121,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // blue "RivoScan" AppCompat ActionBar seen above the crop editor.
         if(getSupportActionBar()!=null)getSupportActionBar().hide();
         basicCameraMode=getIntent().getBooleanExtra("basic",false);
+        scanMode="ID Card".equals(getIntent().getStringExtra("mode"))?"ID Card":"Document";
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
         try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
