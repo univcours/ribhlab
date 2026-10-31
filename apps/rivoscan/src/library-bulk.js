@@ -260,7 +260,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         <div class="rivo-share-preview"><div class="rivo-share-paper">▤</div><div><strong>${t('first')}</strong>
           <ul>${names}</ul>${docs.length>3?`<small>+ ${docs.length-3} ${t('files')}</small>`:''}</div></div>
         <label class="bulk-field">${t('format')}
-          <select name="bulk-format"><option value="pdf">${t('pdf')}</option>
+          <select name="bulk-format"><option value="originalFile">${t('asIs')}</option><option value="pdf">${t('pdf')}</option>
           <option value="image">${t('images')}</option><option value="long">${t('long')}</option>
           <option value="word">${t('word')}</option></select></label>
         <label class="bulk-field">${t('quality')}
@@ -279,12 +279,17 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       filePane.hidden=direct;directPane.hidden=!direct;
     }));
     const formatSelect=root.querySelector('[name="bulk-format"]');
+    const convertible=docs.every(doc=>isPDF(doc)||/^image\//i.test(doc.mimeType||'')||/\.(jpe?g|png|webp)$/i.test(doc.name||''));
+    formatSelect.value=convertible?'pdf':'originalFile';
+    if(!convertible)formatSelect.querySelectorAll('option').forEach(option=>{
+      if(option.value!=='originalFile')option.disabled=true;
+    });
     const qualitySelect=root.querySelector('[name="bulk-quality"]');
     const note=root.querySelector('[data-share-note]');
     formatSelect.addEventListener('change',()=>{
       const format=formatSelect.value;
       note.textContent=format==='word'?t('wordHint'):format==='long'?t('longHint'):t('loss');
-      qualitySelect.disabled=format==='word';
+      qualitySelect.disabled=format==='word'||format==='originalFile';
     });
     root.querySelector('[data-direct-transfer]').addEventListener('click',()=>{
       closeSheet();onDirectTransfer?.(docs);
@@ -294,7 +299,9 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       showBusy(t('preparing'));
       try{
         let uris,mime;
-        if(format==='pdf'&&q==='original'&&docs.every(isPDF)){
+        if(format==='originalFile'){
+          uris=docs.map(doc=>doc.uri);mime=docs.length===1?(docs[0].mimeType||'*/*'):'*/*';
+        }else if(format==='pdf'&&q==='original'&&docs.every(isPDF)){
           uris=docs.map(doc=>doc.uri);mime='application/pdf';
         }else if(format==='image'&&q==='original'&&docs.every(doc=>String(doc.mimeType||'').toLowerCase()==='image/jpeg'||String(doc.name||'').toLowerCase().endsWith('.jpg')||String(doc.name||'').toLowerCase().endsWith('.jpeg'))){
           uris=docs.map(doc=>doc.uri);mime='image/jpeg';
