@@ -20,6 +20,31 @@ import java.util.ArrayList;
     @Permission(alias = "camera", strings = { Manifest.permission.CAMERA })
 })
 public class RivoLiveScannerPlugin extends Plugin {
+    /** Shared audio setting for native camera and web-interface buttons. */
+    @PluginMethod
+    public void getSoundSettings(PluginCall call) {
+        JSObject result=new JSObject();
+        result.put("enabled",RivoSounds.enabled(getContext()));
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void setSoundSettings(PluginCall call) {
+        Boolean enabled=call.getBoolean("enabled");
+        if(enabled==null){call.reject("enabled must be true or false");return;}
+        RivoSounds.setEnabled(getContext(),enabled);
+        JSObject result=new JSObject();
+        result.put("enabled",enabled);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void playFeedback(PluginCall call) {
+        String kind=call.getString("kind","tap");
+        RivoSounds.play(getContext(),kind);
+        call.resolve();
+    }
+
     @PluginMethod
     public void scan(PluginCall call) {
         if (getPermissionState("camera") != PermissionState.GRANTED) {
