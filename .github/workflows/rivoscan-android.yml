@@ -1,6 +1,11 @@
 name: RivoScan Android debug build
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-android.yml'
   push:
     branches: [main]
     paths:
