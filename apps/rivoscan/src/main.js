@@ -219,7 +219,13 @@ function scannerWorkspace(){
 }
 function renderLibraryRows(needle=''){
   const q=String(needle||'').trim().toLocaleLowerCase();
-  const matched=libraryItems.map((item,index)=>({item,index})).filter(({item})=>!q||item.name.toLocaleLowerCase().includes(q));
+  const matched=libraryItems.map((item,index)=>({item,index}))
+    .filter(({item})=>(!q||item.name.toLocaleLowerCase().includes(q)) &&
+      (libraryFilter==='all'||(libraryFilter==='pdf'?/pdf/i.test(item.mimeType||''):/^image\//.test(item.mimeType||''))))
+    .sort((a,b)=>librarySort==='oldest'?(a.item.created||0)-(b.item.created||0)
+       :librarySort==='name'?a.item.name.localeCompare(b.item.name)
+       :librarySort==='size'?(b.item.size||0)-(a.item.size||0)
+       :(b.item.created||0)-(a.item.created||0));
   if(libraryLoading)return '<div class="doc-empty">Loading your documents…</div>';
   if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
   if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
@@ -238,7 +244,10 @@ function libraryWorkspace(){
     <button class="btn" data-tool="scan">${ico('scan',19)} ${dl('scan')}</button></div>
     <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} Refresh</button></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
-    <div id="library-list" class="library-list">${renderLibraryRows()}</div></div></section>`;
+    <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
+    <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
+    <button id="library-layout" type="button" aria-label="${libraryLayout==='list'?ut('grid'):ut('list')}">${ico(libraryLayout==='list'?'merge':'file',18)}</button></div>
+    <div id="library-list" class="library-list ${libraryLayout==='grid'?'documents-grid':''}">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
@@ -255,7 +264,28 @@ async function loadLibrary(show=true){
     libraryItems=Array.isArray(result.files)?result.files:[];
     libraryError='';
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
-  finally{libraryLoading=false;if(show&&activeTool?.id==='library')render();}
+  finally{
+    libraryLoading=false;
+    if(show&&activeTool?.id==='library')render();
+    else if(!activeTool){
+      const homeRows=document.getElementById('home-recents');
+      if(homeRows)homeRows.innerHTML=recentDocuments();
+    }
+  }
+}
+function openTab(tab){
+  if(tab==='library'){openLibrary();return;}
+  files=[];scanRotations=[];
+  activeTool=tab==='tools'?{id:'tools',name:ut('tools')}:tab==='me'?{id:'me',name:ut('me')}:null;
+  window.scrollTo({top:0,behavior:'instant'});render();
+}
+function refreshVisibleLibrary(){
+  const list=document.getElementById('library-list');
+  if(!list)return;
+  list.innerHTML=renderLibraryRows(document.getElementById('library-search')?.value||'');
+  list.classList.toggle('documents-grid',libraryLayout==='grid');
+  const toggle=document.getElementById('library-layout');
+  if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
 }
 function openLibrary(){
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];
@@ -288,18 +318,27 @@ async function drawPreview(){
   box.innerHTML=`<div class="preview">${files.slice(0,20).map((f,i)=>{const url=URL.createObjectURL(f);previewURLs.push(url);return `<div class="preview-item"><img src="${url}" alt="Page ${i+1}" style="transform:rotate(${scanRotations[i]||0}deg)"><div class="mini-actions"><button data-turn="${i}" title="Rotate">↻</button><span>${i+1}</span></div></div>`;}).join('')}</div>`;
 }
 function wire(){
-  document.querySelectorAll('[data-open-library]').forEach(el=>el.addEventListener('click',openLibrary));
+  document.querySelectorAll('[data-open-library]').forEach(el=>el.addEventListener('click',()=>{
+    openLibrary();
+    if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
+  }));
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>openTab(el.dataset.tab)));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
-  document.getElementById('library-search')?.addEventListener('input',e=>{const list=document.getElementById('library-list');if(list)list.innerHTML=renderLibraryRows(e.target.value);});
-  document.getElementById('library-list')?.addEventListener('click',e=>{
-    const b=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
-    if(!b)return;
-    const type=b.hasAttribute('data-doc-open')?'open':b.hasAttribute('data-doc-share')?'share':'delete';
-    handleLibraryAction(type,Number(b.getAttribute('data-doc-'+type)));
-  });
+  document.getElementById('library-search')?.addEventListener('input',refreshVisibleLibrary);
+  document.getElementById('library-filter')?.addEventListener('change',e=>{libraryFilter=e.target.value;refreshVisibleLibrary()});
+  document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
+  document.getElementById('library-layout')?.addEventListener('click',()=>{libraryLayout=libraryLayout==='list'?'grid':'list';refreshVisibleLibrary()});
+  for(const list of ['library-list','home-recents']){
+    document.getElementById(list)?.addEventListener('click',e=>{
+      const b=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
+      if(!b)return;
+      const type=b.hasAttribute('data-doc-open')?'open':b.hasAttribute('data-doc-share')?'share':'delete';
+      handleLibraryAction(type,Number(b.getAttribute('data-doc-'+type)));
+    });
+  }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
-  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];scanRotations=[];render()}));
-  document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];render();document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth'})}));
+  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
+  document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
 
@@ -638,3 +677,9 @@ function initSignature(){
  document.getElementById('clear-sign')?.addEventListener('click',()=>{ctx.clearRect(0,0,rect.width,rect.height);signatureHasInk=false});signatureHasInk=false;
 }
 render();
+if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  loadLibrary(false);
+  CapacitorApp.addListener('appStateChange',({isActive})=>{
+    if(isActive)loadLibrary(activeTool?.id==='library');
+  }).catch(console.warn);
+}
