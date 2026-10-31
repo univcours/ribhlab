@@ -441,6 +441,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 cameraChoices.add(new CameraChoice(id,label,CameraSelector.LENS_FACING_BACK,cameraScore(info)));
             }
         }
+        // Make higher-quality supported camera lenses appear first in the manual list.
+        cameraChoices.sort((first,second)->Double.compare(second.score,first.score));
     }
     private CameraSelector selectorFor(String cameraId){
         if(cameraId.startsWith("facing:"))return CameraSelector.DEFAULT_BACK_CAMERA;
