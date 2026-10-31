@@ -21,8 +21,8 @@ if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#191B1F'}))
-    .then(()=>StatusBar.setStyle({style:Style.Dark}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#F7F9FE'}))
+    .then(()=>StatusBar.setStyle({style:Style.Light}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
 
