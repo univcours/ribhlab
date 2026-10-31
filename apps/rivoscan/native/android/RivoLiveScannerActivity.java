@@ -143,7 +143,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             else if(rotation==270)Core.rotate(gray,oriented,Core.ROTATE_90_COUNTERCLOCKWISE);
             else oriented=gray;
             Point[] corners=RivoEdgeDetector.detectGray(oriented);
-            runOnUiThread(()->{if(!editing&&overlay!=null)overlay.update(corners);});
+            final int imageWidth=oriented.width(),imageHeight=oriented.height();
+            runOnUiThread(()->{if(!editing&&overlay!=null)overlay.update(corners,imageWidth,imageHeight);});
         }catch(Exception ignored){}finally{if(oriented!=gray)oriented.release();gray.release();frame.close();}
     }
     private void takePicture(){
@@ -218,13 +219,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     /** Live camera overlay; normalized corners from analyzed frame. */
     private static final class LiveEdges extends View{
         private Point[] points;
+        private int imageWidth=1,imageHeight=1;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         LiveEdges(Activity owner){super(owner);setWillNotDraw(false);}
-        void update(Point[] corners){points=corners;invalidate();}
+        void update(Point[] corners,int w,int h){points=corners;imageWidth=Math.max(1,w);imageHeight=Math.max(1,h);invalidate();}
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);if(points==null)return;
-            Path path=new Path();path.moveTo((float)points[0].x*getWidth(),(float)points[0].y*getHeight());
-            for(int i=1;i<4;i++)path.lineTo((float)points[i].x*getWidth(),(float)points[i].y*getHeight());path.close();
+            // CameraX PreviewView uses FILL_CENTER; map normalized analysis points through
+            // the same center-crop transform instead of stretching them to the screen.
+            float scale=Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight);
+            float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
+            Path path=new Path();path.moveTo(offsetX+(float)points[0].x*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
+            for(int i=1;i<4;i++)path.lineTo(offsetX+(float)points[i].x*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
             paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(40,18,255,163));canvas.drawPath(path,paint);
             paint.setColor(Color.rgb(30,255,158));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
         }
