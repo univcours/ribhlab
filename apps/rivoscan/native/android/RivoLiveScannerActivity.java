@@ -711,28 +711,61 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText("Capture failed: "+e.getMessage());}
         });
     }
-    private static Bitmap scaleDecode(InputStream stream) throws Exception {
-        Bitmap original=BitmapFactory.decodeStream(stream);
-        if(original==null)throw new Exception("Cannot decode photo.");
-        double scale=Math.min(1,2800.0/Math.max(original.getWidth(),original.getHeight()));
-        if(scale==1)return original;
-        Bitmap smaller=Bitmap.createScaledBitmap(original,(int)(original.getWidth()*scale),(int)(original.getHeight()*scale),true);
-        original.recycle();return smaller;
+    private static int sampleSize(int width,int height){
+        int sample=1;
+        while(Math.max(width,height)/sample>2800 && sample<16)sample*=2;
+        return sample;
+    }
+    private static Bitmap resizeForCrop(Bitmap input){
+        if(input==null)throw new IllegalArgumentException("Cannot decode photo.");
+        double scale=Math.min(1,2800.0/Math.max(input.getWidth(),input.getHeight()));
+        if(scale>=1)return input;
+        Bitmap resized=Bitmap.createScaledBitmap(input,
+            Math.max(1,(int)Math.round(input.getWidth()*scale)),
+            Math.max(1,(int)Math.round(input.getHeight()*scale)),true);
+        input.recycle();
+        return resized;
     }
     private Bitmap decodeFile(File file)throws Exception{
-        Bitmap bitmap;
-        try(InputStream in=new java.io.FileInputStream(file)){bitmap=scaleDecode(in);}
+        BitmapFactory.Options bounds=new BitmapFactory.Options();
+        bounds.inJustDecodeBounds=true;
+        BitmapFactory.decodeFile(file.getAbsolutePath(),bounds);
+        if(bounds.outWidth<=0||bounds.outHeight<=0)throw new Exception("Cannot read image dimensions.");
+        BitmapFactory.Options opts=new BitmapFactory.Options();
+        opts.inSampleSize=sampleSize(bounds.outWidth,bounds.outHeight);
+        Bitmap bitmap=resizeForCrop(BitmapFactory.decodeFile(file.getAbsolutePath(),opts));
         ExifInterface exif=new ExifInterface(file.getAbsolutePath());
         int orientation=exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL);
-        int deg=orientation==ExifInterface.ORIENTATION_ROTATE_90?90:orientation==ExifInterface.ORIENTATION_ROTATE_180?180:orientation==ExifInterface.ORIENTATION_ROTATE_270?270:0;
-        if(deg!=0){Matrix matrix=new Matrix();matrix.postRotate(deg);Bitmap fixed=Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);bitmap.recycle();return fixed;}
+        int deg=orientation==ExifInterface.ORIENTATION_ROTATE_90?90:
+            orientation==ExifInterface.ORIENTATION_ROTATE_180?180:
+            orientation==ExifInterface.ORIENTATION_ROTATE_270?270:0;
+        if(deg!=0){
+            Matrix matrix=new Matrix();matrix.postRotate(deg);
+            Bitmap fixed=Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
+            if(fixed!=bitmap)bitmap.recycle();
+            return fixed;
+        }
         return bitmap;
+    }
+    private Bitmap decodeUri(Uri uri)throws Exception{
+        BitmapFactory.Options bounds=new BitmapFactory.Options();
+        bounds.inJustDecodeBounds=true;
+        try(InputStream in=getContentResolver().openInputStream(uri)){
+            if(in==null)throw new Exception("Cannot open selected image.");
+            BitmapFactory.decodeStream(in,null,bounds);
+        }
+        if(bounds.outWidth<=0||bounds.outHeight<=0)throw new Exception("Unsupported image.");
+        BitmapFactory.Options opts=new BitmapFactory.Options();
+        opts.inSampleSize=sampleSize(bounds.outWidth,bounds.outHeight);
+        try(InputStream in=getContentResolver().openInputStream(uri)){
+            if(in==null)throw new Exception("Cannot read selected image.");
+            return resizeForCrop(BitmapFactory.decodeStream(in,null,opts));
+        }
     }
     private void importImage(Uri uri){
         try{
-            try(InputStream input=getContentResolver().openInputStream(uri)){
-                if(input==null)throw new Exception("Selected image cannot be opened.");
-                Bitmap img=scaleDecode(input);
+            {
+                Bitmap img=decodeUri(uri);
                 // Respect EXIF rotation for photos imported from gallery or another app.
                 try(InputStream exifStream=getContentResolver().openInputStream(uri)){
                     if(exifStream!=null){
