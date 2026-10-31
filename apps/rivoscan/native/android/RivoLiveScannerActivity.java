@@ -96,8 +96,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
-        openCvReady=OpenCVLoader.initLocal();
-        if(!openCvReady){Toast.makeText(this,"Document detection engine unavailable",Toast.LENGTH_LONG).show();finish();return;}
+        try{openCvReady=OpenCVLoader.initLocal();}
+        catch(Throwable failure){openCvReady=false;}
+        if(!openCvReady){
+            Toast.makeText(this,"Edge detection unavailable on this device. Basic capture remains available.",Toast.LENGTH_LONG).show();
+        }
         analyzer=Executors.newSingleThreadExecutor();
         root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(16,27,59));
         content=new FrameLayout(this);
@@ -579,6 +582,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }catch(Exception e){Toast.makeText(this,"Unable to import image: "+e.getMessage(),Toast.LENGTH_LONG).show();}
     }
     private void openEditor(Bitmap bitmap){
+        if(!openCvReady){
+            // If a vendor/CPU cannot load OpenCV, offer ordinary photo capture
+            // rather than closing the entire scanner.
+            saveWithoutCrop(bitmap);
+            return;
+        }
         editing=true;current=bitmap;
         // The same interactive four-point editor handles both camera images and gallery images.
         Point[] found=RivoEdgeDetector.detect(bitmap);
@@ -587,6 +596,22 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             button("Retake",this::showCamera),
             button("Detect",()->{editor.useAutoCorners();message.setText("Adjust the four green dots if needed.");}),
             button("Save page",this::saveCroppedPage));
+    }
+    private void saveWithoutCrop(Bitmap bitmap){
+        try{
+            File target=new File(getCacheDir(),"rivoscan_uncropped_"+
+                System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
+            try(FileOutputStream out=new FileOutputStream(target)){
+                bitmap.compress(Bitmap.CompressFormat.JPEG,90,out);
+            }
+            savedImages.add(Uri.fromFile(target).toString());
+            Toast.makeText(this,"Photo captured without auto-crop on this device.",Toast.LENGTH_SHORT).show();
+            if(batchMode)showCamera();else finishWithPages();
+        }catch(Exception error){
+            Toast.makeText(this,"Could not save photo: "+error.getMessage(),Toast.LENGTH_LONG).show();
+        }finally{
+            bitmap.recycle();
+        }
     }
     private void saveCroppedPage(){
         try{
