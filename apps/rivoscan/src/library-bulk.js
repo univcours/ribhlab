@@ -296,7 +296,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         let uris,mime;
         if(format==='pdf'&&q==='original'&&docs.every(isPDF)){
           uris=docs.map(doc=>doc.uri);mime='application/pdf';
-        }else if(format==='image'&&q==='original'&&docs.every(doc=>/^image\\/jpeg$/i.test(doc.mimeType||'')||/\\.jpe?g$/i.test(doc.name||''))){
+        }else if(format==='image'&&q==='original'&&docs.every(doc=>String(doc.mimeType||'').toLowerCase()==='image/jpeg'||String(doc.name||'').toLowerCase().endsWith('.jpg')||String(doc.name||'').toLowerCase().endsWith('.jpeg'))){
           uris=docs.map(doc=>doc.uri);mime='image/jpeg';
         }else if(format==='pdf'){
           const bytes=await createMergedPDF(docs,q);
