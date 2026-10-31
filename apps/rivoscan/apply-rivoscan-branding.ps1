@@ -9,7 +9,7 @@ if(-not (Test-Path -LiteralPath $source)){ throw 'Missing scanner icon asset: as
 if(-not (Test-Path -LiteralPath $manifest)){ throw 'Android wrapper is missing. Run npm run build and npx cap sync android first.' }
 $encoded = [System.IO.File]::ReadAllText($source).Trim()
 $bytes = [Convert]::FromBase64String($encoded)
-if($bytes.Length -lt 8 -or [Convert]::ToHexString($bytes[0..7]) -ne '89504E470D0A1A0A'){
+if($bytes.Length -lt 8 -or $bytes[0] -ne 137 -or $bytes[1] -ne 80 -or $bytes[2] -ne 78 -or $bytes[3] -ne 71){
   throw 'The branding asset is not a valid PNG signature.'
 }
 [System.IO.Directory]::CreateDirectory($resources) | Out-Null
