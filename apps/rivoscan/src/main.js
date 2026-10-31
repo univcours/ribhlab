@@ -169,7 +169,12 @@ const bulkUI=createLibraryBulk({
   },
   onPreview:doc=>docViewerUI.open(doc),
   onOpenLibrary:()=>openLibrary(),
+  onDirectTransfer:()=>openTool('peerTransfer'),
   onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
+  onRename:async doc=>{
+    await docViewerUI.open(doc);
+    document.querySelector('.doc-detail-actions button:nth-child(3)')?.click();
+  },
   showBusy,progress,clearBusy,saveOut,toast
 });
 let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'list';
