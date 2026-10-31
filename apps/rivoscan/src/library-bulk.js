@@ -1,7 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 
-export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,showBusy,progress,clearBusy,saveOut,toast}){
+export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
   let suppressUntil=0;
@@ -114,7 +114,9 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       pressed=getItems()[Number(row.dataset.docOpen)];
       startX=e.clientX;startY=e.clientY;stop();
       timer=setTimeout(()=>{
-        timer=null;suppressUntil=Date.now()+900;longPress(pressed);
+        timer=null;suppressUntil=Date.now()+900;
+        if(root.id==='home-recents')onOpenLibrary?.();
+        longPress(pressed);
         try{navigator.vibrate?.(25)}catch{}
       },550);
     });
@@ -122,7 +124,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     for(const name of ['pointerup','pointercancel','pointerleave'])root.addEventListener(name,stop);
     root.addEventListener('contextmenu',e=>{
       const row=e.target.closest('[data-doc-open]');
-      if(row&&root.contains(row)){e.preventDefault();suppressUntil=Date.now()+900;longPress(getItems()[Number(row.dataset.docOpen)])}
+      if(row&&root.contains(row)){
+        e.preventDefault();suppressUntil=Date.now()+900;
+        const doc=getItems()[Number(row.dataset.docOpen)];
+        if(root.id==='home-recents')onOpenLibrary?.();
+        longPress(doc);
+      }
     });
   }
   function suppressClick(){return Date.now()<suppressUntil}
@@ -230,6 +237,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         let uris,mime;
         if(format==='pdf'&&q==='original'&&docs.every(isPDF)){
           uris=docs.map(doc=>doc.uri);mime='application/pdf'; // lossless native sharing
+        }else if(format==='image'&&q==='original'&&docs.every(doc=>/^image\/jpeg$/i.test(doc.mimeType||'')||/\.jpe?g$/i.test(doc.name||''))){
+          uris=docs.map(doc=>doc.uri);mime='image/jpeg'; // preserve original JPEG bytes
         }else if(format==='pdf'){
           const bytes=await createMergedPDF(docs,q);
           const file=await saveOut(bytes,`RivoScan_Shared_${Date.now()}.pdf`,'application/pdf');
