@@ -588,16 +588,30 @@ CapacitorApp.addListener('appRestoredResult',async event=>{
 async function openCamera(){
   try{
     if(Capacitor.isNativePlatform()){
+      // Basic photo mode uses the same reliable CameraX preview, without cropping.
+      // Every captured photo is published to public Downloads/RivoScan as JPG;
+      // consumeSmartScan also assembles and saves its searchable PDF in that folder.
+      if(Capacitor.getPlatform()==='android' && Capacitor.isPluginAvailable('RivoLiveScanner')){
+        const result=await RivoLiveScanner.scan({basic:true,language});
+        await consumeSmartScan(result);
+        return;
+      }
+      // Backward compatibility for older APKs. The next installed build uses CameraX.
       const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
       if(!photo.dataUrl)throw new Error('Camera returned no image');
       const blob=await(await fetch(photo.dataUrl)).blob();
-      addSelectedFiles([new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
+      const original=new File([blob],`RivoScan_Photo_${Date.now()}.jpg`,{type:'image/jpeg'});
+      addSelectedFiles([original]);
+      await saveOut(new Uint8Array(await blob.arrayBuffer()),original.name,'image/jpeg');
+      const pdf=await imagesToPdf('color',[original]);
+      await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
+      openLibrary();
       return;
     }
     const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';
     el.onchange=()=>{const f=el.files?.[0];if(f)addSelectedFiles([f])};
     el.click();
-  }catch(err){if(!/cancel/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
+  }catch(err){if(!/cancel|SCAN_CANCELLED/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
 }
 function toast(text,error=false){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),5000)}
 function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(message)}</strong><p>Processing locally. Please keep this app open.</p></div>`;document.body.appendChild(el)}

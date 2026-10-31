@@ -75,6 +75,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private boolean highQuality=true;
     private boolean batchMode=false;
     private String scanMode="Document";
+    private boolean basicCameraMode=false;
     private String nativeLanguage="en";
     private String trNative(String key){return RivoLocale.get(nativeLanguage,key);}
     private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
@@ -114,11 +115,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // Native scanner already has its own toolbar: avoid the duplicated
         // blue "RivoScan" AppCompat ActionBar seen above the crop editor.
         if(getSupportActionBar()!=null)getSupportActionBar().hide();
+        basicCameraMode=getIntent().getBooleanExtra("basic",false);
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
-        try{openCvReady=OpenCVLoader.initLocal();}
+        try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
-        if(!openCvReady){
+        if(!openCvReady && !basicCameraMode){
             Toast.makeText(this,"Edge detection unavailable on this device. Basic capture remains available.",Toast.LENGTH_LONG).show();
         }
         analyzer=Executors.newSingleThreadExecutor();
@@ -240,8 +242,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         cameraFrame.setBackgroundColor(Color.rgb(18,28,54));
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
-        cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
-        message=text("Align your document inside the frame",12,Color.WHITE,false);
+        if(!basicCameraMode)cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
+        message=text(basicCameraMode?"Take a photo · stored in Downloads/RivoScan":"Align your document inside the frame",12,Color.WHITE,false);
         message.setPadding(dp(10),dp(5),dp(10),dp(5));
         message.setBackground(rounded(Color.argb(168,0,0,0),15));
         FrameLayout.LayoutParams hint=new FrameLayout.LayoutParams(-2,dp(33),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
@@ -285,7 +287,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             if(scanMode.equals(mode))item.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
             modes.addView(item,weighted());
         }
-        footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
+        if(!basicCameraMode)footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
 
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER_VERTICAL);
         TextView photos=touchLabel("▧\n"+trNative("photos"),12,Color.WHITE,()->gallery.launch("image/*"));
@@ -712,7 +714,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         message.setText("Capturing page…");
         capture.takePicture(options,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
-                try{Bitmap bmp=decodeFile(file);openEditor(bmp);}catch(Exception e){message.setText("Image error: "+e.getMessage());}
+                try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText("Image error: "+e.getMessage());}
                 finally{file.delete();}
             }
             @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText("Capture failed: "+e.getMessage());}
@@ -788,7 +790,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         }
                     }
                 }catch(Exception ignored){}
-                openEditor(img);
+                if(basicCameraMode)saveWithoutCrop(img);else openEditor(img);
             }
         }catch(Exception e){Toast.makeText(this,"Unable to import image: "+e.getMessage(),Toast.LENGTH_LONG).show();}
     }
@@ -818,7 +820,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             savedImages.add(Uri.fromFile(target).toString());
             publishPageCopy(target);
             RivoSounds.play(this,"saved");
-            Toast.makeText(this,"Photo captured without auto-crop on this device.",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,basicCameraMode?"Photo stored in Downloads/RivoScan":"Photo captured without auto-crop on this device.",Toast.LENGTH_SHORT).show();
             if(batchMode)showCamera();else finishWithPages();
         }catch(Exception error){
             Toast.makeText(this,"Could not save photo: "+error.getMessage(),Toast.LENGTH_LONG).show();
