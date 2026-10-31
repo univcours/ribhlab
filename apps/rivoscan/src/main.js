@@ -14,6 +14,8 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
+import { createDocumentViewer } from './document-viewer.js';
+import { localizeStaticUI } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
