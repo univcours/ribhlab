@@ -102,7 +102,7 @@ jobs:
           grep -F 'Environment.DIRECTORY_DOCUMENTS' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'legacyDownloadsCollection()' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'ViewCompat.setOnApplyWindowInsetsListener(content' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
-          grep -F 'StatusBar.setStyle({style:Style.Dark})' src/main.js
+          grep -F 'StatusBar.setStyle({style:Style.Light})' src/main.js
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'showCameraPicker()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
