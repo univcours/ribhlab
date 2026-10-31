@@ -475,76 +475,154 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             .setNegativeButton("Cancel",null)
             .show();
     }
-    private void startCamera(){
-        final int serial=++cameraBindSerial;
+    private void freezePreview(){
+        try{
+            if(cameraView==null||!(cameraView.getParent() instanceof FrameLayout))return;
+            if(frozenPreview!=null)return;
+            Bitmap last=cameraView.getBitmap();
+            if(last==null)return;
+            FrameLayout container=(FrameLayout)cameraView.getParent();
+            ImageView frozen=new ImageView(this);
+            frozen.setImageBitmap(last);
+            frozen.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            container.addView(frozen,1,new FrameLayout.LayoutParams(-1,-1));
+            frozenPreview=frozen;
+        }catch(Exception ignored){
+            // Snapshot is cosmetic; camera operation remains safe without it.
+        }
+    }
+    private void clearFrozenPreview(){
+        if(streamObserver!=null && cameraView!=null){
+            cameraView.getPreviewStreamState().removeObserver(streamObserver);
+            streamObserver=null;
+        }
+        if(frozenPreview!=null){
+            ImageView view=frozenPreview;
+            frozenPreview=null;
+            view.animate().alpha(0).setDuration(140).withEndAction(()->{
+                if(view.getParent() instanceof android.view.ViewGroup){
+                    ((android.view.ViewGroup)view.getParent()).removeView(view);
+                }
+                view.setImageDrawable(null);
+            }).start();
+        }
+        cameraSwitching=false;
+    }
+    private void handleCameraFailure(String reason){
         capture=null;
         boundCamera=null;
-        ListenableFuture<ProcessCameraProvider> providerFuture=ProcessCameraProvider.getInstance(this);
-        providerFuture.addListener(()->{
+        String id=selectedCamera==null?"default":selectedCamera.id;
+        unusableCameraIds.add(id);
+        if(cameraProvider!=null){
+            discoverCameras(cameraProvider);
+            if(cameraChoices.size()>0){
+                CameraChoice next=null;
+                for(CameraChoice option:cameraChoices){
+                    if(!unusableCameraIds.contains(option.id) &&
+                        (selectedCamera==null || !option.id.equals(selectedCamera.id))){
+                        next=option;break;
+                    }
+                }
+                if(next!=null){
+                    selectedCamera=next;
+                    if(cameraPickerButton!=null)cameraPickerButton.setText(shortCameraName(next)+" ▾");
+                    if(message!=null)message.setText("Trying another rear camera…");
+                    startCamera();
+                    return;
+                }
+            }
+        }
+        clearFrozenPreview();
+        if(message!=null)message.setText("No working rear camera found. Import photos instead.");
+        RivoSounds.play(this,"error");
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Camera unavailable")
+            .setMessage("RivoScan cannot open an accessible rear camera on this device. You can still import an image, adjust its corners and save a PDF.")
+            .setPositiveButton("Import photo",(dialog,which)->gallery.launch("image/*"))
+            .setNegativeButton("Close",null).show();
+    }
+    private void startCamera(){
+        final int serial=++cameraBindSerial;
+        if(capture!=null&&!editing){
+            freezePreview();cameraSwitching=true;
+        }
+        capture=null;
+        boundCamera=null;
+        smoothCorners=null;
+        lastValidEdgeTime=0;
+        final ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
+        future.addListener(()->{
             if(serial!=cameraBindSerial||editing||isFinishing()||isDestroyed()||cameraView==null)return;
             try{
-                ProcessCameraProvider provider=providerFuture.get();
+                ProcessCameraProvider provider=future.get();
                 cameraProvider=provider;
                 discoverCameras(provider);
-                provider.unbindAll();
+                if(!provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)&&cameraChoices.isEmpty()){
+                    handleCameraFailure("No accessible rear cameras");return;
+                }
+                if(selectedCamera==null && unusableCameraIds.contains("default")){
+                    if(cameraChoices.isEmpty()){handleCameraFailure("Rear cameras exhausted");return;}
+                    selectedCamera=cameraChoices.get(0);
+                }
                 CameraSelector selector=cameraSelector();
-                if(selectedCamera==null && !provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)){
-                    // Some tablets, damaged devices and external-camera setups
-                    // have no accessible rear camera. Pick a working available one.
-                    if(provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)){
-                        selectedCamera=new CameraChoice("facing:"+CameraSelector.LENS_FACING_FRONT,
-                            "Front camera (rear unavailable)",CameraSelector.LENS_FACING_FRONT);
-                    }else if(!cameraChoices.isEmpty()){
-                        selectedCamera=cameraChoices.get(0);
-                    }else{
-                        throw new IllegalStateException("Android did not expose a camera");
-                    }
-                    selector=cameraSelector();
-                    if(cameraPickerButton!=null)cameraPickerButton.setText(shortCameraName(selectedCamera)+" ▾");
-                    if(message!=null)message.setText("Rear camera unavailable · using "+shortCameraName(selectedCamera));
+                if(!provider.hasCamera(selector)){
+                    handleCameraFailure("Camera no longer available");return;
                 }
                 Preview preview=new Preview.Builder().build();
                 preview.setSurfaceProvider(cameraView.getSurfaceProvider());
-                ImageCapture newCapture=new ImageCapture.Builder()
-                    .setCaptureMode(highQuality?ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY:ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
+                ImageCapture nextCapture=new ImageCapture.Builder()
+                    .setCaptureMode(highQuality?ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY:
+                        ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
                 ImageAnalysis analysis=new ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
                 analysis.setAnalyzer(analyzer,this::analyze);
-                boolean hasLiveEdges=openCvReady;
-                if(hasLiveEdges){
+                provider.unbindAll();
+                boolean liveEdges=openCvReady;
+                if(liveEdges){
                     try{
-                        boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,newCapture);
-                    }catch(Exception limitedHardware){
-                        // CameraX stream-combination limits vary on older/low-end Android phones.
-                        // Preserve preview/capture rather than rejecting the whole device.
+                        boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,nextCapture);
+                    }catch(Exception unsupportedCombination){
                         provider.unbindAll();
-                        boundCamera=provider.bindToLifecycle(this,selector,preview,newCapture);
-                        hasLiveEdges=false;
+                        boundCamera=provider.bindToLifecycle(this,selector,preview,nextCapture);
+                        liveEdges=false;
                     }
                 }else{
-                    boundCamera=provider.bindToLifecycle(this,selector,preview,newCapture);
+                    boundCamera=provider.bindToLifecycle(this,selector,preview,nextCapture);
                 }
-                capture=newCapture;
-                if(overlay!=null){
-                    overlay.setMirrored(selectedCamera!=null && selectedCamera.facing==CameraSelector.LENS_FACING_FRONT);
-                    overlay.update(null,1,1);
-                }
+                capture=nextCapture;
                 frames=0;
-                if(boundCamera.getCameraInfo().hasFlashUnit() && torchOn){
-                    boundCamera.getCameraControl().enableTorch(true);
-                }else{
-                    torchOn=false;
-                    if(flashButton!=null)flashButton.setText("ϟ Off");
+                if(overlay!=null)overlay.update(null,1,1);
+                if(boundCamera!=null){
+                    torchOn=torchOn && boundCamera.getCameraInfo().hasFlashUnit();
+                    if(torchOn)boundCamera.getCameraControl().enableTorch(true);
+                    if(flashButton!=null)flashButton.setText(torchOn?"ϟ On":"ϟ Off");
+                    boundCamera.getCameraInfo().getCameraState().observe(this,state->{
+                        if(serial==cameraBindSerial && !editing && !isFinishing()
+                            && state.getError()!=null){
+                            mainHandler.post(()->{
+                                if(serial==cameraBindSerial)handleCameraFailure("Camera reported error");
+                            });
+                        }
+                    });
                 }
+                if(streamObserver!=null){
+                    cameraView.getPreviewStreamState().removeObserver(streamObserver);
+                }
+                streamObserver=new Observer<PreviewView.StreamState>(){
+                    @Override public void onChanged(PreviewView.StreamState state){
+                        if(serial==cameraBindSerial && state==PreviewView.StreamState.STREAMING){
+                            mainHandler.postDelayed(()->{if(serial==cameraBindSerial)clearFrozenPreview();},140);
+                        }
+                    }
+                };
+                cameraView.getPreviewStreamState().observe(this,streamObserver);
+                mainHandler.postDelayed(()->{if(serial==cameraBindSerial)clearFrozenPreview();},2300);
                 if(message!=null){
-                    String cameraName=selectedCamera==null?"Default rear":shortCameraName(selectedCamera);
-                    message.setText(hasLiveEdges?cameraName+" · live edges ready":
-                        cameraName+" · basic capture (live edges unsupported)");
+                    message.setText((selectedCamera==null?"Default rear":shortCameraName(selectedCamera))+
+                        (liveEdges?" · stable live edges":" · basic camera mode"));
                 }
-            }catch(Exception e){
-                capture=null;boundCamera=null;
-                if(message!=null)message.setText("This camera is unavailable. Tap Cameras ▾ to choose another.");
-                Toast.makeText(this,"This camera could not open. Choose another available camera.",Toast.LENGTH_LONG).show();
+            }catch(Exception error){
+                if(serial==cameraBindSerial)handleCameraFailure(error.getMessage());
             }
         },ContextCompat.getMainExecutor(this));
     }
