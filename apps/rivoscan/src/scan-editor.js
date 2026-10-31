@@ -1,7 +1,7 @@
 import {recognize} from 'tesseract.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
-export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify}){
+export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,preset='enhance'}){
  const labels={
   en:['Edit scan','Add / retake','Original','Enhance','Magic','Remove shadow','Grayscale','Black & white','Whiteboard','Compare','Rotate left','Rotate right','Crop','Extract text','Save copy','Brightness','Contrast','Original / edited','Cancel','Processing photo…','Saving a new copy; original stays unchanged.'],
   ar:['تعديل الوثيقة','إعادة التصوير','الأصلية','تحسين','تحسين ذكي','حذف الظلال','رمادي','أبيض وأسود','سبورة','مقارنة','دور لليسار','دور لليمين','قص الحواف','استخراج النص','حفظ نسخة','الإضاءة','التباين','قبل / بعد','إلغاء','كنصلحو الصورة…','غادي نحفظ نسخة جديدة والأصل يبقى كيفما هو.'],
@@ -32,17 +32,25 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    </div>
    <div class="rivo-editor-sliders"><label>${tr(15)} <input type="range" data-adjust="brightness" min="-35" max="35" value="0" step="1"></label>
      <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
+   <div class="rivo-eraser-control" hidden><label>${({ar:'حجم الممحاة',fr:'Taille de gomme',es:'Tamaño borrador',de:'Pinselgröße',pt:'Tamanho borracha',it:'Dimensione gomma',en:'Brush size'})[getLanguage()]||'Brush size'}
+     <input type="range" min="10" max="90" step="5" value="36" data-brush-size></label></div>
    <p class="rivo-editor-tip">${tr(20)}</p>
    <nav class="rivo-editor-actions">
      <button data-edit="compare">${tr(9)}</button><button data-edit="left">${tr(10)}</button>
      <button data-edit="right">${tr(11)}</button><button data-edit="crop">${tr(12)}</button>
-     <button data-edit="ocr">${tr(13)}</button><button data-edit="save" class="rivo-editor-save">✓ ${tr(14)}</button>
+     <button data-edit="ocr">${tr(13)}</button>
+     <button data-edit="eraser">✎ ${({ar:'ممحاة',fr:'Gomme',es:'Borrador',de:'Radierer',pt:'Borracha',it:'Gomma',en:'Eraser'})[getLanguage()]||'Eraser'}</button>
+     <button data-edit="date">◷ ${({ar:'تاريخ',fr:'Date',es:'Fecha',de:'Datum',pt:'Data',it:'Data',en:'Date'})[getLanguage()]||'Date'}</button>
+     <button data-edit="save" class="rivo-editor-save">✓ ${tr(14)}</button>
    </nav>
  </div>`;
  const preview=shell.querySelector('#rivo-editor-preview');
  const ctx=preview.getContext('2d',{willReadFrequently:true});
  const filters=['original','enhance','magic','shadow','gray','bw','whiteboard'];
- let filter='enhance',angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
+ let filter=['original','enhance','magic','shadow','gray','bw','whiteboard'].includes(preset)?preset:'enhance';
+ let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
+ let eraserActive=preset==='eraser',timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
+ const strokes=[];
  const abs=n=>Math.max(0,Math.min(255,n));
  const close=()=>{closed=true;shell.remove();document.body.classList.remove('rivo-editing');};
  function drawOriginal(){
@@ -55,7 +63,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   if(closed||rendering)return;rendering=true;renderCount++;
   try{
    drawOriginal();
-   if(filter==='original'&&brightness===0&&contrast===0)return;
+   if(filter==='original'&&brightness===0&&contrast===0&&!timestampOn&&!strokes.length)return;
    const base=filter==='magic'?'contrast(1.34) saturate(1.22) brightness(1.07)':filter==='enhance'?'contrast(1.19) saturate(1.06) brightness(1.05)':filter==='gray'?'grayscale(1) contrast(1.11)':filter==='bw'?'grayscale(1) contrast(1.6)':filter==='whiteboard'?'grayscale(1) contrast(1.65) brightness(1.12)':filter==='shadow'?'contrast(1.11)':'none';
    const current=ctx.getImageData(0,0,preview.width,preview.height);
    const auxiliary=document.createElement('canvas');auxiliary.width=preview.width;auxiliary.height=preview.height;
@@ -96,12 +104,33 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     ctx.putImageData(pixels,0,0);
    }
+   // Preserve hand-painted corrections between filter changes and during save.
+   if(strokes.length){
+     ctx.save();ctx.strokeStyle='#ffffff';ctx.fillStyle='#ffffff';
+     ctx.lineCap='round';ctx.lineJoin='round';
+     for(const stroke of strokes){
+       ctx.lineWidth=stroke.size;
+       ctx.beginPath();ctx.moveTo(stroke.a[0],stroke.a[1]);ctx.lineTo(stroke.b[0],stroke.b[1]);ctx.stroke();
+     }
+     ctx.restore();
+   }
+   if(timestampOn){
+     const text=new Date().toLocaleString(getLanguage());
+     const fontSize=Math.max(15,Math.min(34,Math.round(preview.width/28)));
+     ctx.save();ctx.font='bold '+fontSize+'px sans-serif';
+     const pad=Math.round(fontSize*.65),width=Math.ceil(ctx.measureText(text).width)+pad*2;
+     const x=Math.max(0,preview.width-width-14),y=preview.height-fontSize-28;
+     ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(x,y,width,fontSize*1.8);
+     ctx.fillStyle='#ffffff';ctx.fillText(text,x+pad,y+fontSize*1.2);ctx.restore();
+   }
   }finally{rendering=false;}
  }
  // Small real-document previews under each filter, not decorative stock artwork.
  const thumb=document.createElement('canvas');thumb.width=64;thumb.height=70;
  thumb.getContext('2d').drawImage(original,0,0,thumb.width,thumb.height);
  const thumbUrl=thumb.toDataURL('image/jpeg',.65);
+ shell.querySelectorAll('[data-filter]').forEach(node=>node.classList.toggle('active',node.dataset.filter===filter));
+ shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
  shell.querySelectorAll('.rivo-filter-thumb').forEach((node,i)=>{
   node.style.backgroundImage=`url("${thumbUrl}")`;
   node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)'][i];
@@ -114,6 +143,12 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   if(action==='crop'){close();await onCrop(doc);return;}
   if(action==='retake'){close();await onRetake();return;}
   if(action==='compare')return;
+  if(action==='eraser'){
+    eraserActive=!eraserActive;
+    shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
+    shell.querySelector('[data-edit="eraser"]').classList.toggle('active',eraserActive);return;
+  }
+  if(action==='date'){timestampOn=!timestampOn;await paint();return;}
   if(action==='save'){
    const output=await new Promise((resolve,reject)=>preview.toBlob(b=>b?resolve(b):reject(Error('Image export failed')),'image/jpeg',.92));
    const bytes=new Uint8Array(await output.arrayBuffer());
@@ -142,6 +177,25 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  const after=()=>{if(!compare)return;compare=false;paint();};
  btn.addEventListener('pointerdown',before);btn.addEventListener('pointerup',after);btn.addEventListener('pointercancel',after);
  btn.addEventListener('pointerleave',after);
+ shell.querySelector('[data-brush-size]').addEventListener('input',e=>{brushSize=Number(e.target.value)});
+ preview.style.touchAction='none';
+ const xy=e=>{const rect=preview.getBoundingClientRect();return [
+  Math.max(0,Math.min(preview.width,(e.clientX-rect.left)/rect.width*preview.width)),
+  Math.max(0,Math.min(preview.height,(e.clientY-rect.top)/rect.height*preview.height))
+ ]};
+ preview.addEventListener('pointerdown',e=>{
+   if(!eraserActive)return;e.preventDefault();drawing=true;lastPoint=xy(e);
+   preview.setPointerCapture(e.pointerId);
+ });
+ preview.addEventListener('pointermove',e=>{
+   if(!drawing||!eraserActive)return;
+   const next=xy(e);strokes.push({a:lastPoint,b:next,size:brushSize});
+   ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=brushSize;ctx.lineCap='round';
+   ctx.beginPath();ctx.moveTo(lastPoint[0],lastPoint[1]);ctx.lineTo(next[0],next[1]);ctx.stroke();ctx.restore();
+   lastPoint=next;
+ });
+ preview.addEventListener('pointerup',()=>{drawing=false;lastPoint=null});
+ preview.addEventListener('pointercancel',()=>{drawing=false;lastPoint=null});
  shell.querySelectorAll('[data-adjust]').forEach(input=>input.addEventListener('input',async()=>{
   brightness=Number(shell.querySelector('[data-adjust="brightness"]').value);
   contrast=Number(shell.querySelector('[data-adjust="contrast"]').value);
