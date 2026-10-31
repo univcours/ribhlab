@@ -104,8 +104,8 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 # Bump preview build version to make the new installation easier to distinguish.
 if(Test-Path -LiteralPath $gradle) {
   $settings=[IO.File]::ReadAllText($gradle)
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','$1'+'4')
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','$1'+'"0.4.0"')
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','${1}4')
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','${1}"0.4.0"')
   [IO.File]::WriteAllText($gradle,$settings,$utf8)
 }
 
