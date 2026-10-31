@@ -7,7 +7,7 @@ $source=Join-Path $root 'native\android'
 if(-not (Test-Path (Join-Path $android 'app\build.gradle'))) { throw 'Android wrapper not found. Run npm install, npm run build, npx cap add android (first time), npx cap sync android.' }
 $packageDir=Join-Path $android 'app\src\main\java\com\ribhlab\rivoscan'
 New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-foreach($filename in @('RivoLiveScannerPlugin.java','RivoDocumentsPlugin.java','RivoSounds.java','RivoEdgeDetector.java','RivoCropEditor.java','RivoLiveScannerActivity.java')) {
+foreach($filename in @('RivoLiveScannerPlugin.java','RivoDocumentsPlugin.java','RivoSounds.java','RivoLocale.java','RivoEdgeDetector.java','RivoCropEditor.java','RivoLiveScannerActivity.java')) {
   $src=Join-Path $source $filename
   if(-not(Test-Path $src)){throw "Missing native scanner source: $src"}
   Copy-Item -LiteralPath $src -Destination (Join-Path $packageDir $filename) -Force
