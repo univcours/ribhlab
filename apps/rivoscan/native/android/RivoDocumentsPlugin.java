@@ -1,6 +1,12 @@
 package com.ribhlab.rivoscan;
 
 import android.content.ContentResolver;
+import android.content.Context;
+import android.provider.DocumentsContract;
+import android.widget.Toast;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -19,7 +25,6 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Locale;
 
@@ -31,6 +36,63 @@ import java.util.Locale;
 @CapacitorPlugin(name = "RivoDocuments")
 public class RivoDocumentsPlugin extends Plugin {
     private static final String FOLDER = Environment.DIRECTORY_DOWNLOADS + "/RivoScan/";
+    private static boolean isRivoFolder(String relativePath) {
+        if(relativePath==null)return false;
+        return relativePath.replace('\\','/').replaceAll("/+$","")
+            .equals(FOLDER.replaceAll("/+$",""));
+    }
+
+    /**
+     * Native camera pages are published immediately, before the WebView combines
+     * them into a PDF. This preserves scans even if PDF creation later fails.
+     */
+    static Uri saveScannedImage(Context ctx,File image,String requestedName) throws Exception {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q)
+            throw new IllegalStateException("Public scanner storage requires Android 10+.");
+        ContentResolver resolver=ctx.getContentResolver();
+        ContentValues meta=new ContentValues();
+        meta.put(MediaStore.MediaColumns.DISPLAY_NAME,requestedName);
+        meta.put(MediaStore.MediaColumns.MIME_TYPE,"image/jpeg");
+        meta.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER);
+        meta.put(MediaStore.MediaColumns.IS_PENDING,1);
+        Uri uri=resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI,meta);
+        if(uri==null)throw new IllegalStateException("Downloads/RivoScan is unavailable.");
+        try {
+            try (InputStream in=new FileInputStream(image);
+                 OutputStream out=resolver.openOutputStream(uri,"w")) {
+                if(out==null)throw new IllegalStateException("Cannot write scan to Downloads.");
+                byte[] buf=new byte[32768];int n;
+                while((n=in.read(buf))!=-1)out.write(buf,0,n);
+                out.flush();
+            }
+            ContentValues committed=new ContentValues();
+            committed.put(MediaStore.MediaColumns.IS_PENDING,0);
+            if(resolver.update(uri,committed,null,null)<1)
+                throw new IllegalStateException("Scan was not published in Downloads.");
+            return uri;
+        }catch(Exception e){
+            try{resolver.delete(uri,null,null);}catch(Exception ignored){}
+            throw e;
+        }
+    }
+
+    @PluginMethod
+    public void openFolder(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        try{
+            Intent browse=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            Uri location=DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents","primary:Download/RivoScan");
+            browse.putExtra(DocumentsContract.EXTRA_INITIAL_URI,location);
+            browse.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(browse);
+            JSObject out=new JSObject();
+            out.put("path",FOLDER);
+            call.resolve(out);
+        }catch(Exception e){call.reject("Could not open Android file browser: "+e.getMessage(),e);}
+    }
+
+
     private static final int MAX_BYTES = 60 * 1024 * 1024;
 
     private void requireModernAndroid(PluginCall call) {
@@ -100,13 +162,15 @@ public class RivoDocumentsPlugin extends Plugin {
         try (Cursor cursor = getContext().getContentResolver().query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME,
-                        MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.DATE_ADDED, MediaStore.MediaColumns.MIME_TYPE},
-                MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.IS_PENDING + "=0",
-                new String[]{FOLDER},
+                        MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.DATE_ADDED,
+                        MediaStore.MediaColumns.MIME_TYPE,MediaStore.MediaColumns.RELATIVE_PATH},
+                MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ? AND " + MediaStore.MediaColumns.IS_PENDING + "=0",
+                new String[]{FOLDER.replaceAll("/+$","")+"%"},
                 MediaStore.MediaColumns.DATE_ADDED + " DESC")) {
             if (cursor != null) {
                 int count = 0;
                 while (cursor.moveToNext() && count++ < 400) {
+                    if(!isRivoFolder(cursor.getString(5)))continue;
                     long id = cursor.getLong(0);
                     JSObject doc = new JSObject();
                     doc.put("uri", ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id).toString());
@@ -134,7 +198,7 @@ public class RivoDocumentsPlugin extends Plugin {
         try (Cursor cursor = getContext().getContentResolver().query(uri,
                 new String[]{MediaStore.MediaColumns.RELATIVE_PATH},
                 null, null, null)) {
-            if (cursor == null || !cursor.moveToFirst() || !FOLDER.equals(cursor.getString(0))) {
+            if (cursor == null || !cursor.moveToFirst() || !isRivoFolder(cursor.getString(0))) {
                 call.reject("This document is not inside RivoScan Downloads."); return null;
             }
         } catch (Exception e) {
