@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "check": "node --check src/main.js && node --check src/pdf-utils.js && node --check src/file-transfer.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "capacitor:sync:after": "node scripts/after-capacitor-sync.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
