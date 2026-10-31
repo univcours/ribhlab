@@ -95,6 +95,7 @@ export function translateStatus(lang,message){
   const index=languagePositions[lang];
   if(index===undefined)return text;
   if(originalUI[text])return tt(lang,originalUI[text]);
+  if(replacements[lang]?.[text])return replacements[lang][text];
   if(extendedPhrases[text])return extendedPhrases[text][index];
   if(peerTranslations[text])return peerTranslations[text][index];
   for(const [source,translations] of Object.entries(peerTranslations)){
