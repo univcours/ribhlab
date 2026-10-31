@@ -103,7 +103,7 @@ function render(){
 }
 function home(){
   const groups=[['create','Scan & create'],['organize','Organize PDF'],['edit','Edit & protect'],['convert','Convert & extract']];
-  return `<div class="hero"><div class="hero-copy"><span class="eyebrow">SMART PDF WORKSPACE</span><h1>${tr('hero')}</h1><p>${tr('desc')}</p><div class="hero-actions"><button class="btn btn-white" data-tool="scan">${ico('scan')} ${tr('start')}</button><button class="btn btn-hero-secondary" data-tool="bundle">${ico('merge')} Combine documents</button></div></div><div class="hero-art" aria-hidden="true"><div class="hero-art-halo"></div><div class="hero-art-sheet"><img src="/icon.svg?v=20261101" alt=""><span class="hero-art-shine"></span></div><span class="hero-art-chip chip-left">${ico('check',16)} Edge detected</span><span class="hero-art-chip chip-right">${ico('file',16)} PDF ready</span></div></div><div class="stats-row"><div class="stat">${ico('shield',23)}<div><b>100% Local</b><small>Core PDF operations</small></div></div><div class="stat">${ico('file',23)}<div><b>${tools.length} Tools</b><small>Document toolkit</small></div></div><div class="stat">${ico('check',23)}<div><b>No account</b><small>Start immediately</small></div></div></div>${groups.map(([id,label])=>`<section id="section-${id}"><div class="section-head"><h2>${tr(id)}</h2><span>${tools.filter(t=>t.category===id).length} tools</span></div><div class="tools-grid">${tools.filter(t=>t.category===id).map(card).join('')}</div></section>`).join('')}<div class="section-head"><h2>${tr('files')}</h2><span>Recent actions, filenames not stored</span></div><div class="panel">${history.length?history.slice(0,5).map(h=>`<div class="file">${ico('clock',17)}<b>${escapeHTML(h.action)}</b><small>${new Date(h.time).toLocaleString()}</small></div>`).join(''):'<div class="empty">No activity yet. Choose a tool to start.</div>'}</div><div class="footer">RivoScan • RibhLab • Beta v0.4 • Documents stay on your device. OCR language data may be downloaded from Tesseract infrastructure when first used.</div>`;
+  return `<div class="hero"><div class="hero-copy"><span class="eyebrow">SMART PDF WORKSPACE</span><h1>${tr('hero')}</h1><p>${tr('desc')}</p><div class="hero-actions"><button class="btn btn-white" data-tool="scan">${ico('scan')} ${tr('start')}</button><button class="btn btn-hero-secondary" data-tool="bundle">${ico('merge')} Combine documents</button></div></div><div class="hero-art" aria-hidden="true"><div class="hero-art-halo"></div><div class="hero-art-sheet"><img src="/icon.svg?v=20261101" alt=""><span class="hero-art-shine"></span></div><span class="hero-art-chip chip-left">${ico('check',16)} Edge detected</span><span class="hero-art-chip chip-right">${ico('file',16)} PDF ready</span></div></div><div class="stats-row"><div class="stat">${ico('shield',23)}<div><b>100% Local</b><small>Core PDF operations</small></div></div><div class="stat">${ico('file',23)}<div><b>${tools.length} Tools</b><small>Document toolkit</small></div></div><div class="stat">${ico('check',23)}<div><b>No account</b><small>Start immediately</small></div></div></div>${groups.map(([id,label])=>`<section id="section-${id}"><div class="section-head"><h2>${tr(id)}</h2><span>${tools.filter(t=>t.category===id).length} tools</span></div><div class="tools-grid">${tools.filter(t=>t.category===id).map(card).join('')}</div></section>`).join('')}<div class="section-head"><h2>${tr('files')}</h2><span>Recent actions, filenames not stored</span></div><div class="panel">${history.length?history.slice(0,5).map(h=>`<div class="file">${ico('clock',17)}<b>${escapeHTML(h.action)}</b><small>${new Date(h.time).toLocaleString()}</small></div>`).join(''):'<div class="empty">No activity yet. Choose a tool to start.</div>'}</div><div class="footer">RivoScan • RibhLab • Beta v0.4 · UI 2026.10.31b • Documents stay on your device. OCR language data may be downloaded from Tesseract infrastructure when first used.</div>`;
 }
 function card(t){return `<button class="tool-card ${t.id==='scan'?'tool-card-featured':''}" data-tool="${t.id}"><span class="tool-card-header"><span class="tool-icon ${t.color}">${ico(t.icon,24)}</span><span class="tool-card-arrow">${ico('back',16)}</span></span><span class="tool-card-title">${escapeHTML(t.name)}</span><small>${escapeHTML(t.desc)}</small>${t.id==='scan'?'<span class="tool-feature-label">LIVE EDGE SCAN</span>':''}</button>`;}
 const opts = {
@@ -125,7 +125,7 @@ const opts = {
 function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
-  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
+  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('RivoLiveScanner')?'Live edge camera ready':'Live edge camera not registered in installed app — use Smart Scan below until the Android APK is updated'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31b</span></div><button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="mlkit-scanner" style="width:100%;margin-top:8px">${ico('scan')} Smart Scan · Auto-Crop (Google ML Kit)</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
@@ -144,6 +144,7 @@ function wire(){
   document.querySelector('.dropzone')?.addEventListener('click',e=>{if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){e.preventDefault();openLiveScanner({gallery:true});}});
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
+  document.getElementById('mlkit-scanner')?.addEventListener('click',openSmartScanner);
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
@@ -178,7 +179,7 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
   }
   if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
     console.warn('RivoLiveScanner is missing from this installed Android APK. Rebuild and reinstall the native app after running install-live-scanner.ps1.');
-    toast('Live camera needs a rebuilt Android app. Opening the available document scanner for now.',true);
+    toast('Live camera component missing in installed APK. Switching to Smart Scan.');
     await openSmartScanner();
     return;
   }
@@ -188,7 +189,7 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
   }catch(err){
     const message=String(err?.message||err);
     if(/not implemented on android/i.test(message)){
-      toast('Live camera native plugin is absent. Update and reinstall Android app; opening smart crop instead.',true);
+      toast('Live camera component missing. Switching to Smart Scan.');
       await openSmartScanner();
     }else if(!/cancel|SCAN_CANCELLED/i.test(message)){
       console.error('Rivo live scanner:',err);
@@ -197,6 +198,11 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
   }
 }
 async function editUploadedScanPhotos(selected){
+  if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
+    toast('Live corner editor is not installed. Open Smart Scan and choose the photo from your gallery.');
+    await openSmartScanner();
+    return;
+  }
   for(const [index,file] of selected.entries()){
     if(file.size>MAX_FILE_BYTES){toast('Image exceeds 30 MB size limit.',true);continue;}
     try{
@@ -253,12 +259,18 @@ CapacitorApp.addListener('appRestoredResult',async event=>{
 }).catch(console.warn);
 
 async function openCamera(){
- try{if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){await openLiveScanner();return;}
- if(Capacitor.isNativePlatform()){
-   const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
-   const blob=await (await fetch(photo.dataUrl)).blob();addSelectedFiles([new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
- }else{const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';el.onchange=()=>{const f=el.files?.[0];if(f){addSelectedFiles([f])}};el.click()}}
- catch(err){if(!/cancel/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
+  try{
+    if(Capacitor.isNativePlatform()){
+      const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
+      if(!photo.dataUrl)throw new Error('Camera returned no image');
+      const blob=await(await fetch(photo.dataUrl)).blob();
+      addSelectedFiles([new File([blob,],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
+      return;
+    }
+    const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';
+    el.onchange=()=>{const f=el.files?.[0];if(f)addSelectedFiles([f])};
+    el.click();
+  }catch(err){if(!/cancel/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
 }
 function toast(text,error=false){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),5000)}
 function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(message)}</strong><p>Processing locally. Please keep this app open.</p></div>`;document.body.appendChild(el)}
