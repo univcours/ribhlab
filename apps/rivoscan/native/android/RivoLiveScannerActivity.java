@@ -482,7 +482,20 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 ImageAnalysis analysis=new ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
                 analysis.setAnalyzer(analyzer,this::analyze);
-                boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,newCapture);
+                boolean hasLiveEdges=openCvReady;
+                if(hasLiveEdges){
+                    try{
+                        boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,newCapture);
+                    }catch(Exception limitedHardware){
+                        // CameraX stream-combination limits vary on older/low-end Android phones.
+                        // Preserve preview/capture rather than rejecting the whole device.
+                        provider.unbindAll();
+                        boundCamera=provider.bindToLifecycle(this,selector,preview,newCapture);
+                        hasLiveEdges=false;
+                    }
+                }else{
+                    boundCamera=provider.bindToLifecycle(this,selector,preview,newCapture);
+                }
                 capture=newCapture;
                 if(overlay!=null){
                     overlay.setMirrored(selectedCamera!=null && selectedCamera.facing==CameraSelector.LENS_FACING_FRONT);
@@ -496,8 +509,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     if(flashButton!=null)flashButton.setText("ϟ Off");
                 }
                 if(message!=null){
-                    message.setText(selectedCamera==null?"Default rear camera ready":
-                        shortCameraName(selectedCamera)+" ready");
+                    String cameraName=selectedCamera==null?"Default rear":shortCameraName(selectedCamera);
+                    message.setText(hasLiveEdges?cameraName+" · live edges ready":
+                        cameraName+" · basic capture (live edges unsupported)");
                 }
             }catch(Exception e){
                 capture=null;boundCamera=null;
