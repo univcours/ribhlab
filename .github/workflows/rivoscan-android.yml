@@ -53,6 +53,9 @@ jobs:
       - name: Use AGP 9-compatible ProGuard default
         run: |
           sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Integrate live camera edges and interactive crop editor
+        shell: pwsh
+        run: ./install-live-scanner.ps1
       - name: Build debug APK
         run: |
           cd android
