@@ -37,6 +37,9 @@ public class RivoLiveScannerPlugin extends Plugin {
 
     private void launch(PluginCall call) {
         Intent intent = new Intent(getActivity(), RivoLiveScannerActivity.class);
+        intent.putExtra("gallery", Boolean.TRUE.equals(call.getBoolean("gallery", false)));
+        String imageUri = call.getString("imageUri");
+        if (imageUri != null && !imageUri.isEmpty()) intent.putExtra("imageUri", imageUri);
         startActivityForResult(call, intent, "onResult");
     }
 
