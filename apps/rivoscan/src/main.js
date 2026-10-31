@@ -13,6 +13,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
+import { toolText, label as L } from './rivo-i18n.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
@@ -125,6 +126,8 @@ try { history = JSON.parse(localStorage.getItem('rivo-history') || '[]'); if (!A
 let previewURLs = [];
 let closeTransfer = null;
 let libraryItems = [], libraryLoading = false, libraryError = '';
+let documentViewer=null;
+let documentViewerCounter=0;
 let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'list';
 const uiText={
  en:{home:'Home',documents:'Documents',tools:'Tools',me:'Me',search:'Search your saved documents',recent:'Recent documents',seeAll:'See all',quick:'Quick tools',safe:'Private, saved on your phone',scan:'Smart Scan',pdf:'PDF Tools',import:'Import images',merge:'Merge documents',welcome:'Scan it. Find it. Share it.',myFiles:'My files',settings:'Settings',device:'Saved in Downloads/RivoScan',privacy:'Your documents stay on your phone',noAccount:'No account needed',general:'General',language:'App language',about:'About RivoScan',help:'Help & support',storage:'Storage',openDocuments:'Open My Documents',allFiles:'All files',pdfFiles:'PDF',images:'Images',sort:'Sort',newest:'Newest first',oldest:'Oldest first',name:'Name',size:'Size',list:'List',grid:'Grid',noRecent:'Your saved documents appear here after your first scan.'},
@@ -136,6 +139,9 @@ const uiText={
  it:{home:'Home',documents:'Documenti',tools:'Strumenti',me:'Profilo',search:'Cerca documenti',recent:'Documenti recenti',seeAll:'Vedi tutti',quick:'Strumenti rapidi',safe:'Salvati sul telefono',scan:'Scansiona',pdf:'Strumenti PDF',import:'Importa immagini',merge:'Unisci documenti',welcome:'Scansiona. Trova. Condividi.',myFiles:'I miei file',settings:'Impostazioni',device:'Downloads/RivoScan',privacy:'I documenti rimangono sul telefono',noAccount:'Nessun account richiesto',general:'Generale',language:'Lingua',about:'Informazioni',help:'Aiuto',storage:'Memoria',openDocuments:'Apri documenti',allFiles:'Tutti',pdfFiles:'PDF',images:'Immagini',sort:'Ordina',newest:'Recenti',oldest:'Meno recenti',name:'Nome',size:'Dimensione',list:'Elenco',grid:'Griglia',noRecent:'Le tue scansioni appariranno qui.'}
 };
 const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
+const tn=t=>toolText(language,t.id,'name');
+const td=t=>toolText(language,t.id,'desc');
+const lt=key=>L(language,key);
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -178,7 +184,7 @@ function render(){
 function recentDocuments(limit=6){
   const docs=libraryItems.slice(0,limit);
   if(!docs.length)return `<div class="recent-empty">${ico('file',29)} <span>${ut('noRecent')}</span><button class="btn" data-tool="scan">${ico('scan',18)} ${ut('scan')}</button></div>`;
-  return docs.map((doc,index)=>`<article class="recent-entry"><span class="recent-file-icon">${ico('file',25)}</span><div class="recent-file-meta"><strong>${escapeHTML(doc.name)}</strong><small>${doc.created?new Date(doc.created).toLocaleString(language):'RivoScan'} · ${formatSize(doc.size||0)}</small></div><button data-doc-open="${index}" class="recent-open" aria-label="${dl('open')}">${ico('back',18)}</button></article>`).join('');
+  return docs.map((doc,index)=>`<article class="recent-entry" data-doc-open="${index}" role="button" tabindex="0" aria-label="${lt('preview')} ${escapeHTML(doc.name)}"><span class="recent-file-icon">${ico('file',25)}</span><div class="recent-file-meta"><strong>${escapeHTML(doc.name)}</strong><small>${doc.created?new Date(doc.created).toLocaleString(language):'RivoScan'} · ${formatSize(doc.size||0)}</small></div><button data-doc-open="${index}" class="recent-open" aria-label="${dl('open')}">${ico('back',18)}</button></article>`).join('');
 }
 function home(){
   const short=[['scan','scan',ut('scan')],['bundle','merge',ut('merge')],['import-image','image',ut('import')],['ocr','ocr','OCR'],['import-file','file',ut('myFiles')],['shareFiles','upload',dl('share')],['sign','sign','Sign'],['peerTransfer','convert','Transfer']];
@@ -197,7 +203,7 @@ function toolsWorkspace(){
  const sections=[['create',tr('create')],['organize',tr('organize')],['edit',tr('edit')],['convert',tr('convert')]];
  return `<section class="app-tools"><div class="page-heading"><h1>${ut('tools')}</h1><p>${ut('quick')}</p></div>
  <button data-tool="scan" class="tools-banner"><span>${ico('scan',23)}</span><strong>${ut('scan')}</strong>${ico('back',17)}</button>
- ${sections.map(([id,label])=>`<section class="tools-section" id="section-${id}"><h2>${label}</h2><div class="mobile-tools-grid">${tools.filter(t=>t.category===id).map(t=>`<button class="mobile-tool-tile" data-tool="${t.id}"><span class="tool-icon ${t.color}">${ico(t.icon,25)}</span><strong>${escapeHTML(t.name)}</strong></button>`).join('')}</div></section>`).join('')}
+ ${sections.map(([id,label])=>`<section class="tools-section" id="section-${id}"><h2>${label}</h2><div class="mobile-tools-grid">${tools.filter(t=>t.category===id).map(t=>`<button class="mobile-tool-tile" data-tool="${t.id}"><span class="tool-icon ${t.color}">${ico(t.icon,25)}</span><strong>${escapeHTML(tn(t))}</strong></button>`).join('')}</div></section>`).join('')}
  </section>`;
 }
 function settingsWorkspace(){
@@ -210,7 +216,7 @@ function settingsWorkspace(){
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
-function card(t){return `<button class="tool-card ${t.id==='scan'?'tool-card-featured':''}" data-tool="${t.id}"><span class="tool-card-header"><span class="tool-icon ${t.color}">${ico(t.icon,24)}</span><span class="tool-card-arrow">${ico('back',16)}</span></span><span class="tool-card-title">${escapeHTML(t.name)}</span><small>${escapeHTML(t.desc)}</small>${t.id==='scan'?'<span class="tool-feature-label">LIVE EDGE SCAN</span>':''}</button>`;}
+function card(t){return `<button class="tool-card ${t.id==='scan'?'tool-card-featured':''}" data-tool="${t.id}"><span class="tool-card-header"><span class="tool-icon ${t.color}">${ico(t.icon,24)}</span><span class="tool-card-arrow">${ico('back',16)}</span></span><span class="tool-card-title">${escapeHTML(tn(t))}</span><small>${escapeHTML(td(t))}</small>${t.id==='scan'?'<span class="tool-feature-label">LIVE EDGE SCAN</span>':''}</button>`;}
 const opts = {
   split: `<div class="field"><label>Pages to keep (e.g. 1-3, 5, 8)</label><input name="pages" placeholder="1-3, 5, 8" value="1-3"></div><p class="hint">Select only the pages you want in the new PDF.</p>`,
   delete:`<div class="field"><label>Pages to remove</label><input name="pages" placeholder="2, 4-6" value="2"></div>`,
@@ -256,23 +262,22 @@ function renderLibraryRows(needle=''){
        :librarySort==='name'?a.item.name.localeCompare(b.item.name)
        :librarySort==='size'?(b.item.size||0)-(a.item.size||0)
        :(b.item.created||0)-(a.item.created||0));
-  if(libraryLoading)return '<div class="doc-empty">Loading your documents…</div>';
+  if(libraryLoading)return `<div class="doc-empty">${lt('loading')}</div>`;
   if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
   if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
-  return matched.map(({item,index})=>`<article class="document-entry">
-    <div class="document-icon">${ico('file',24)}</div>
+  return matched.map(({item,index})=>`<article class="document-entry" data-doc-open="${index}" role="button" tabindex="0" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+    <div class="document-icon">${ico('file',25)}</div>
     <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
     <div class="document-buttons">
-      <button data-doc-open="${index}" aria-label="${dl('open')} ${escapeHTML(item.name)}">${ico('file',17)}<span>${dl('open')}</span></button>
-      <button data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',17)}<span>${dl('share')}</span></button>
-      <button data-doc-delete="${index}" class="document-delete" aria-label="${dl('remove')} ${escapeHTML(item.name)}">${ico('delete',17)}</button>
+      <button type="button" data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',19)}<span>${dl('share')}</span></button>
+      <button type="button" data-doc-delete="${index}" class="document-delete" aria-label="${dl('remove')} ${escapeHTML(item.name)}">${ico('delete',19)}</button>
     </div></article>`).join('');
 }
 function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
-    <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} Refresh</button></div>
+    <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
@@ -333,6 +338,7 @@ async function chooseLibraryFiles(kind='file'){
   input.click();
 }
 function openTab(tab){
+  closeDocumentViewer();
   if(tab==='library'){openLibrary();return;}
   files=[];scanRotations=[];
   activeTool=tab==='tools'?{id:'tools',name:ut('tools')}:tab==='me'?{id:'me',name:ut('me')}:null;
@@ -347,6 +353,7 @@ function refreshVisibleLibrary(){
   if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
 }
 function openLibrary(){
+  closeDocumentViewer();
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];
   window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
 }
@@ -354,10 +361,10 @@ async function handleLibraryAction(type,index){
   const selected=libraryItems[index];if(!selected)return;
   try{
     if(type==='delete'){
-      if(!window.confirm(dl('confirm')))return;
+      if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
-      toast('Document deleted.');
-    } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
+      toast(dl('remove')+' ✓');
+    } else if(type==='open')await openDocumentViewer(selected);
     else if(type==='share')await RivoDocuments.shareFile({uri:selected.uri});
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
@@ -366,7 +373,7 @@ function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
   if(t.id==='scan')return scannerWorkspace();
-  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('RivoLiveScanner')?'Live edge camera ready':'Live edge camera not registered in installed app — use Smart Scan below until the Android APK is updated'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31b</span></div><button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="mlkit-scanner" style="width:100%;margin-top:8px">${ico('scan')} Smart Scan · Auto-Crop (Google ML Kit)</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
+  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('RivoLiveScanner')?'Live edge camera ready':'Live edge camera not registered in installed app — use Smart Scan below until the Android APK is updated'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31b</span></div><button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="mlkit-scanner" style="width:100%;margin-top:8px">${ico('scan')} Smart Scan · Auto-Crop (Google ML Kit)</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
@@ -393,12 +400,17 @@ function wire(){
   document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
   document.getElementById('library-layout')?.addEventListener('click',()=>{libraryLayout=libraryLayout==='list'?'grid':'list';refreshVisibleLibrary()});
   for(const list of ['library-list','home-recents']){
-    document.getElementById(list)?.addEventListener('click',e=>{
-      const b=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
-      if(!b)return;
-      const type=b.hasAttribute('data-doc-open')?'open':b.hasAttribute('data-doc-share')?'share':'delete';
-      handleLibraryAction(type,Number(b.getAttribute('data-doc-'+type)));
-    });
+    const el=document.getElementById(list);
+    const activate=e=>{
+      const target=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
+      if(!target || !el?.contains(target))return;
+      if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
+      if(e.type==='keydown')e.preventDefault();
+      const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
+      handleLibraryAction(type,Number(target.getAttribute('data-doc-'+type)));
+    };
+    el?.addEventListener('click',activate);
+    el?.addEventListener('keydown',activate);
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
@@ -425,7 +437,7 @@ function wire(){
   document.getElementById('process')?.addEventListener('click',process);
   if(activeTool?.id==='sign')initSignature();
 }
-function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
+function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;closeDocumentViewer();activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
 // Browser PDF libraries commonly keep multiple decoded copies in memory. Bound input sizes.
 const MAX_FILE_BYTES=30*1024*1024, MAX_TOTAL_BYTES=90*1024*1024;
 function addSelectedFiles(picked){
