@@ -9,6 +9,11 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.drawable.GradientDrawable;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Space;
+import androidx.camera.core.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
@@ -56,6 +61,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private PreviewView cameraView;
     private LiveEdges overlay;
     private ImageCapture capture;
+    private Camera boundCamera;
+    private boolean torchOn=false;
+    private boolean highQuality=true;
+    private boolean batchMode=false;
+    private String scanMode="Document";
+    private TextView batchButton,singleButton,flashButton,qualityButton,countLabel;
     private ExecutorService analyzer;
     private RivoCropEditor editor;
     private Bitmap current;
@@ -66,6 +77,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private final ArrayList<String> savedImages=new ArrayList<>();
     private final ActivityResultLauncher<String> gallery=registerForActivityResult(
         new ActivityResultContracts.GetContent(), uri->{if(uri!=null)importImage(uri);});
+    private final ActivityResultLauncher<String[]> documentPicker=registerForActivityResult(
+        new ActivityResultContracts.OpenDocument(), uri->{if(uri!=null)importImage(uri);});
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
@@ -92,41 +105,202 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         else if(getIntent().getBooleanExtra("gallery",false))gallery.launch("image/*");
     }
 
+
+    private int dp(float units){return Math.round(units*getResources().getDisplayMetrics().density);}
+    private GradientDrawable rounded(int color,int radius){
+        GradientDrawable drawable=new GradientDrawable();
+        drawable.setColor(color);drawable.setCornerRadius(dp(radius));return drawable;
+    }
+    private TextView text(String title,int size,int color,boolean bold){
+        TextView result=new TextView(this);
+        result.setText(title);result.setTextSize(size);result.setTextColor(color);
+        result.setGravity(Gravity.CENTER);
+        if(bold)result.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+        return result;
+    }
+    private TextView touchLabel(String title,int size,int color,Runnable action){
+        TextView label=text(title,size,color,false);label.setOnClickListener(v->action.run());
+        label.setClickable(true);label.setFocusable(true);
+        label.setContentDescription(title);
+        return label;
+    }
+    private LinearLayout.LayoutParams weighted(){
+        return new LinearLayout.LayoutParams(0,-1,1);
+    }
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
+        b.setTextColor(Color.WHITE);b.setBackground(rounded(Color.rgb(41,47,56),12));
         b.setOnClickListener(v->onTap.run());return b;
     }
     private void layout(View body,String hint,Button... buttons){
+        // A dedicated document-corners editor with a visible safe header and bottom actions.
         content.removeAllViews();
-        FrameLayout.LayoutParams imageParams=new FrameLayout.LayoutParams(-1,-1);
-        // Keep draggable corners visible above the bottom action buttons.
-        if(body instanceof RivoCropEditor)imageParams.bottomMargin=(int)(150*getResources().getDisplayMetrics().density);
-        content.addView(body,imageParams);
+        LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);
+        shell.setBackgroundColor(Color.BLACK);
+        content.addView(shell,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(14),0,dp(14),0);
+        TextView back=touchLabel("✕",27,Color.WHITE,()->showCamera());
+        header.addView(back,new LinearLayout.LayoutParams(dp(44),dp(55)));
+        TextView title=text("Adjust document edges",17,Color.WHITE,true);
+        header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
+        shell.addView(header);
+        shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
-        bottom.setPadding(14,9,14,18);bottom.setBackgroundColor(Color.argb(215,14,22,39));
-        message=new TextView(this);message.setText(hint);message.setTextColor(Color.WHITE);
-        message.setTextSize(14);message.setGravity(Gravity.CENTER);bottom.addView(message);
-        LinearLayout controls=new LinearLayout(this);
-        for(Button button:buttons){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.setMargins(3,7,3,0);controls.addView(button,p);}
-        bottom.addView(controls);
-        FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
-        content.addView(bottom,params);
+        bottom.setPadding(dp(14),dp(10),dp(14),dp(13));
+        bottom.setBackgroundColor(Color.rgb(15,17,21));
+        message=text(hint,12,Color.rgb(184,197,206),false);
+        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(45)));
+        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
+        for(int i=0;i<buttons.length;i++){
+            Button action=buttons[i];
+            if(i==buttons.length-1){action.setBackground(rounded(Color.rgb(9,191,173),13));action.setTextColor(Color.BLACK);}
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
+            p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
+        }
+        bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(57)));
+        shell.addView(bottom,new LinearLayout.LayoutParams(-1,-2));
     }
     private void showCamera(){
         editing=false;
         cameraView=new PreviewView(this);
-        // Use TextureView to ensure the green contour is visible above the live camera.
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+        content.removeAllViews();
+        content.setBackgroundColor(Color.BLACK);
+        LinearLayout frame=new LinearLayout(this);frame.setOrientation(LinearLayout.VERTICAL);
+        frame.setBackgroundColor(Color.BLACK);
+        content.addView(frame,new FrameLayout.LayoutParams(-1,-1));
+
+        // The native status bar (time, signal, battery) remains outside the scanner.
+        LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setPadding(dp(7),0,dp(7),0);
+        top.setBackgroundColor(Color.rgb(0,0,0));
+        TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
+        top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
+        top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
+        flashButton=touchLabel(torchOn?"ϟ On":"ϟ Off",13,Color.WHITE,this::toggleTorch);
+        top.addView(flashButton,new LinearLayout.LayoutParams(dp(64),dp(56)));
+        qualityButton=touchLabel(highQuality?"HD":"SD",15,Color.WHITE,this::toggleQuality);
+        qualityButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+        top.addView(qualityButton,new LinearLayout.LayoutParams(dp(43),dp(56)));
+        TextView help=touchLabel("?",22,Color.WHITE,this::showHelp);
+        top.addView(help,new LinearLayout.LayoutParams(dp(43),dp(56)));
+        TextView more=touchLabel("⋮",27,Color.WHITE,this::showMore);
+        top.addView(more,new LinearLayout.LayoutParams(dp(35),dp(56)));
+        frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
+
         FrameLayout cameraFrame=new FrameLayout(this);
+        cameraFrame.setBackgroundColor(Color.rgb(18,21,24));
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
-        overlay=new LiveEdges(this);cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
-        layout(cameraFrame,"Green outline follows detected document · "+savedImages.size()+" page(s)",
-            button("Close",()->finishWithPages()),
-            button("Gallery",()->gallery.launch("image/*")),
-            button("Capture",this::takePicture),
-            button("Done",this::finishWithPages));
+        overlay=new LiveEdges(this);
+        cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
+        message=text("Align your document inside the frame",12,Color.WHITE,false);
+        message.setPadding(dp(10),dp(5),dp(10),dp(5));
+        message.setBackground(rounded(Color.argb(168,0,0,0),15));
+        FrameLayout.LayoutParams hint=new FrameLayout.LayoutParams(-2,dp(33),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+        hint.topMargin=dp(12);cameraFrame.addView(message,hint);
+        countLabel=text(savedImages.size()+" page(s)",12,Color.WHITE,true);
+        countLabel.setPadding(dp(10),dp(4),dp(10),dp(4));
+        countLabel.setBackground(rounded(Color.argb(170,0,0,0),10));
+        FrameLayout.LayoutParams countParam=new FrameLayout.LayoutParams(dp(91),dp(33),Gravity.BOTTOM|Gravity.LEFT);
+        countParam.bottomMargin=dp(14);countParam.leftMargin=dp(14);
+        cameraFrame.addView(countLabel,countParam);
+        frame.addView(cameraFrame,new LinearLayout.LayoutParams(-1,0,1));
+
+        LinearLayout footer=new LinearLayout(this);footer.setOrientation(LinearLayout.VERTICAL);
+        footer.setBackgroundColor(Color.BLACK);footer.setPadding(dp(10),dp(3),dp(10),dp(8));
+        LinearLayout switches=new LinearLayout(this);
+        switches.setGravity(Gravity.CENTER);
+        switches.setBackground(rounded(Color.rgb(30,31,35),23));
+        singleButton=touchLabel("Single",14,Color.WHITE,()->setBatch(false));
+        batchButton=touchLabel("Batch",14,Color.WHITE,()->setBatch(true));
+        switches.addView(singleButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
+        switches.addView(batchButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
+        LinearLayout switchRow=new LinearLayout(this);switchRow.setGravity(Gravity.CENTER);
+        switchRow.addView(switches);
+        footer.addView(switchRow,new LinearLayout.LayoutParams(-1,dp(43)));
+        updateBatchButtons();
+
+        LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER_VERTICAL);
+        String[] modesList={"Document","ID Card","Whiteboard"};
+        for(String mode:modesList){
+            TextView item=touchLabel(mode,13,scanMode.equals(mode)?Color.rgb(0,226,195):Color.rgb(190,193,202),()->{
+                scanMode=mode;showCamera();
+            });
+            if(scanMode.equals(mode))item.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+            modes.addView(item,weighted());
+        }
+        footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
+
+        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER_VERTICAL);
+        TextView photos=touchLabel("▧\nPhotos",12,Color.WHITE,()->gallery.launch("image/*"));
+        photos.setGravity(Gravity.CENTER);
+        actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
+        Shutter shutter=new Shutter(this);
+        shutter.setOnClickListener(v->takePicture());
+        shutter.setContentDescription("Capture document");
+        LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
+        actions.addView(shutter,buttonParams);
+        TextView browse=touchLabel("▤\nFiles",12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
+        browse.setGravity(Gravity.CENTER);
+        actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
+        footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
+        TextView done=touchLabel(savedImages.size()>0?"✓  Finish · "+savedImages.size():"Scan & save",14,
+                savedImages.size()>0?Color.rgb(0,224,192):Color.rgb(134,143,149),this::finishWithPages);
+        done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+        footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
+        frame.addView(footer,new LinearLayout.LayoutParams(-1,-2));
         startCamera();
+    }
+    private void setBatch(boolean next){
+        batchMode=next;updateBatchButtons();
+        if(message!=null)message.setText(next?"Batch: capture as many pages as needed":"Single: save one page and return");
+    }
+    private void updateBatchButtons(){
+        if(singleButton==null||batchButton==null)return;
+        singleButton.setBackground(rounded(batchMode?Color.TRANSPARENT:Color.rgb(87,91,100),22));
+        batchButton.setBackground(rounded(batchMode?Color.rgb(87,91,100):Color.TRANSPARENT,22));
+    }
+    private void toggleTorch(){
+        torchOn=!torchOn;
+        if(boundCamera==null){torchOn=false;return;}
+        try{boundCamera.getCameraControl().enableTorch(torchOn);}
+        catch(Exception e){torchOn=false;Toast.makeText(this,"Flash unavailable",Toast.LENGTH_SHORT).show();}
+        if(flashButton!=null)flashButton.setText(torchOn?"ϟ On":"ϟ Off");
+    }
+    private void toggleQuality(){
+        highQuality=!highQuality;
+        if(qualityButton!=null)qualityButton.setText(highQuality?"HD":"SD");
+        startCamera();
+    }
+    private void showHelp(){
+        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("RivoScan Smart Scanner")
+            .setMessage("Point the camera at a page. The green outline follows detected borders. Tap the shutter, drag the four corners, and save. Use Batch for a multipage PDF. HD prioritizes image quality.")
+            .setPositiveButton("OK",null).show();
+    }
+    private void showMore(){
+        String[] options={"Import photo","Choose from Files","Finish scanning","Scanner help"};
+        new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
+            if(which==0)gallery.launch("image/*");
+            else if(which==1)documentPicker.launch(new String[]{"image/*"});
+            else if(which==2)finishWithPages();
+            else showHelp();
+        }).show();
+    }
+    private static final class Shutter extends View{
+        private final Paint ink=new Paint(Paint.ANTI_ALIAS_FLAG);
+        Shutter(Activity activity){super(activity);setClickable(true);setFocusable(true);}
+        @Override protected void onDraw(Canvas canvas){
+            super.onDraw(canvas);
+            float cx=getWidth()/2f,cy=getHeight()/2f;
+            float r=Math.min(getWidth(),getHeight())/2f;
+            ink.setStyle(Paint.Style.FILL);ink.setColor(Color.rgb(0,213,185));
+            canvas.drawCircle(cx,cy,r-dp(4),ink);
+            ink.setColor(Color.BLACK);canvas.drawCircle(cx,cy,r-dp(9),ink);
+            ink.setColor(Color.WHITE);canvas.drawCircle(cx,cy,r-dp(16),ink);
+        }
+        private float dp(float n){return n*getResources().getDisplayMetrics().density;}
     }
     private void startCamera(){
         ListenableFuture<ProcessCameraProvider> providerFuture=ProcessCameraProvider.getInstance(this);
@@ -135,11 +309,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             try{
                 ProcessCameraProvider provider=providerFuture.get();provider.unbindAll();
                 Preview preview=new Preview.Builder().build();preview.setSurfaceProvider(cameraView.getSurfaceProvider());
-                capture=new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
+                capture=new ImageCapture.Builder().setCaptureMode(highQuality?ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY:ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
                 ImageAnalysis analysis=new ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
                 analysis.setAnalyzer(analyzer,this::analyze);
-                provider.bindToLifecycle(this,CameraSelector.DEFAULT_BACK_CAMERA,preview,analysis,capture);
+                boundCamera=provider.bindToLifecycle(this,CameraSelector.DEFAULT_BACK_CAMERA,preview,analysis,capture);
+                if(torchOn)boundCamera.getCameraControl().enableTorch(true);
             }catch(Exception e){message.setText("Camera unavailable: "+e.getMessage());}
         },ContextCompat.getMainExecutor(this));
     }
@@ -238,7 +413,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             try(FileOutputStream out=new FileOutputStream(target)){output.compress(Bitmap.CompressFormat.JPEG,90,out);}
             output.recycle();savedImages.add(Uri.fromFile(target).toString());
             if(current!=null){current.recycle();current=null;}
-            showCamera();
+            if(batchMode)showCamera();else finishWithPages();
         }catch(Exception e){message.setText("Adjust the corners: "+e.getMessage());}
     }
     private void finishWithPages(){
