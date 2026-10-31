@@ -338,6 +338,49 @@ public class RivoDocumentsPlugin extends Plugin {
         } catch (Exception e) { call.reject("Sharing failed: " + e.getMessage(), e); }
     }
 
+    /** Share existing documents together; no copies and no loss of original quality.
+     * Each URI is verified against current or legacy RivoScan public folders. */
+    @PluginMethod
+    public void shareFiles(PluginCall call){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        JSArray input=call.getArray("uris");
+        if(input==null||input.length()<1||input.length()>30){
+            call.reject("Select between 1 and 30 documents to share.");return;
+        }
+        java.util.ArrayList<Uri> uris=new java.util.ArrayList<>();
+        try {
+            for(int i=0;i<input.length();i++){
+                String raw=input.getString(i);
+                Uri uri=validatedDocumentUri(raw);
+                if(uri==null){call.reject("Cannot share a file outside RivoScan folders.");return;}
+                uris.add(uri);
+            }
+            Intent share=new Intent(uris.size()==1?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE);
+            share.setType(call.getString("mimeType","*/*"));
+            if(uris.size()==1)share.putExtra(Intent.EXTRA_STREAM,uris.get(0));
+            else share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
+            android.content.ClipData grants=android.content.ClipData.newUri(
+                getContext().getContentResolver(),"RivoScan",uris.get(0));
+            for(int i=1;i<uris.size();i++)grants.addItem(new android.content.ClipData.Item(uris.get(i)));
+            share.setClipData(grants);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(Intent.createChooser(share,localized("shareDocument")));
+            call.resolve();
+        }catch(Exception error){call.reject("Could not share selected files: "+error.getMessage(),error);}
+    }
+    private Uri validatedDocumentUri(String raw){
+        if(raw==null)return null;
+        Uri uri=Uri.parse(raw);
+        String current=documentsCollection().toString()+"/";
+        String legacy=legacyDownloadsCollection().toString()+"/";
+        if(!raw.startsWith(current)&&!raw.startsWith(legacy))return null;
+        try(Cursor cursor=getContext().getContentResolver().query(uri,
+                new String[]{MediaStore.MediaColumns.RELATIVE_PATH},null,null,null)){
+            if(cursor==null||!cursor.moveToFirst()||!isRivoFolder(cursor.getString(0)))return null;
+            return uri;
+        }catch(Exception ignored){return null;}
+    }
+
     @PluginMethod
     public void deleteFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
