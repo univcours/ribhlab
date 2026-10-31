@@ -25,7 +25,7 @@ if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#101B32'}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#0A121C'}))
     .then(()=>StatusBar.setStyle({style:Style.Dark}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
@@ -57,7 +57,13 @@ const icons = {
   check:'<path d="m4 12 5 5 11-11"/>',
   sparkle:'<path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
-  lock:'<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
+  lock:'<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
+  idcard:'<rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M4 16c1-2 6-2 8 0m3-7h4m-4 4h4"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
+  more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'
 };
 const ico = (name,size=20) => `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.file}</svg>`;
 const tools = [
@@ -180,6 +186,10 @@ const lt=key=>L(language,key);
 const vivoFolderLabel=()=>({en:'Open phone folder',ar:'فتح المجلد فالهاتف',fr:'Ouvrir le dossier',es:'Abrir carpeta',de:'Ordner öffnen',pt:'Abrir pasta',it:'Apri cartella'})[language]||'Open phone folder';
 
 const localizeOptionMarkup=markup=>localizeOptions(language,markup);
+const homeVisualText={"en":{"search":"Search documents","id":"ID Cards","sign":"Sign PDF","all":"All","pdf":"PDF Tools","extract":"Extract Text","share":"Share","savePdf":"Save as PDF","view":"View","open":"Open","recentSubtitle":"Your recent scans and files, ready when you need them","hold":"Long press a document to select several","results":"Search results","noResults":"No matching documents yet","toolsTip":"Browse the tools","openFolder":"Open my documents","quickTools":"Quick actions","scan":"Smart Scan","importPhotos":"Import Images","importFiles":"Import Files","back":"Back","typePdf":"PDF","select":"Select","more":"More actions","size":"Size","edited":"Latest"},"ar":{"search":"قلب على الوثائق","id":"البطاقة الوطنية","sign":"توقيع PDF","all":"الكل","pdf":"أدوات PDF","extract":"استخراج النص","share":"مشاركة","savePdf":"حفظ PDF","view":"معاينة","open":"فتح","recentSubtitle":"آخر الوثائق ديالك جاهزة للفتح والمشاركة","hold":"ضغط مطوّل على الوثيقة باش تحدد عدة ملفات","results":"نتائج البحث","noResults":"ما لقينا حتى وثيقة بهاد الاسم","toolsTip":"شوف جميع الأدوات","openFolder":"فتح وثائقي","quickTools":"أدوات سريعة","scan":"سكانير ذكي","importPhotos":"استيراد الصور","importFiles":"استيراد الملفات","back":"رجوع","typePdf":"PDF","select":"تحديد","more":"المزيد","size":"الحجم","edited":"الأخير"},"fr":{"search":"Rechercher des documents","id":"Cartes d’identité","sign":"Signer PDF","all":"Tout","pdf":"Outils PDF","extract":"Extraire texte","share":"Partager","savePdf":"Enregistrer PDF","view":"Voir","open":"Ouvrir","recentSubtitle":"Vos documents récents à portée de main","hold":"Appui long pour sélectionner plusieurs documents","results":"Résultats","noResults":"Aucun document trouvé","toolsTip":"Voir tous les outils","openFolder":"Mes documents","quickTools":"Accès rapide","scan":"Scan intelligent","importPhotos":"Importer images","importFiles":"Importer fichiers","back":"Retour","typePdf":"PDF","select":"Sélectionner","more":"Plus d’actions","size":"Taille","edited":"Récent"},"es":{"search":"Buscar documentos","id":"Tarjetas de identidad","sign":"Firmar PDF","all":"Todo","pdf":"Herramientas PDF","extract":"Extraer texto","share":"Compartir","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Tus documentos recientes, a mano","hold":"Mantén pulsado para seleccionar varios archivos","results":"Resultados","noResults":"No se encontraron archivos","toolsTip":"Todas las herramientas","openFolder":"Mis documentos","quickTools":"Accesos rápidos","scan":"Escaneo inteligente","importPhotos":"Importar imágenes","importFiles":"Importar archivos","back":"Volver","typePdf":"PDF","select":"Seleccionar","more":"Más acciones","size":"Tamaño","edited":"Reciente"},"de":{"search":"Dokumente suchen","id":"Ausweise","sign":"PDF signieren","all":"Alle","pdf":"PDF-Werkzeuge","extract":"Text erkennen","share":"Teilen","savePdf":"PDF speichern","view":"Ansehen","open":"Öffnen","recentSubtitle":"Letzte Dokumente direkt verfügbar","hold":"Lange drücken, um mehrere Dateien auszuwählen","results":"Ergebnisse","noResults":"Keine passenden Dokumente","toolsTip":"Alle Werkzeuge","openFolder":"Meine Dokumente","quickTools":"Schnellaktionen","scan":"Smart-Scan","importPhotos":"Bilder importieren","importFiles":"Dateien importieren","back":"Zurück","typePdf":"PDF","select":"Auswählen","more":"Mehr Aktionen","size":"Größe","edited":"Neu"},"pt":{"search":"Pesquisar documentos","id":"Cartões de identidade","sign":"Assinar PDF","all":"Todos","pdf":"Ferramentas PDF","extract":"Extrair texto","share":"Partilhar","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Documentos recentes sempre disponíveis","hold":"Toque longo para selecionar vários ficheiros","results":"Resultados","noResults":"Nenhum documento encontrado","toolsTip":"Todas as ferramentas","openFolder":"Os meus documentos","quickTools":"Acesso rápido","scan":"Scanner inteligente","importPhotos":"Importar imagens","importFiles":"Importar ficheiros","back":"Voltar","typePdf":"PDF","select":"Selecionar","more":"Mais ações","size":"Tamanho","edited":"Recente"},"it":{"search":"Cerca documenti","id":"Carte d’identità","sign":"Firma PDF","all":"Tutti","pdf":"Strumenti PDF","extract":"Estrai testo","share":"Condividi","savePdf":"Salva PDF","view":"Apri","open":"Apri","recentSubtitle":"I tuoi documenti recenti a portata di mano","hold":"Tieni premuto per selezionare più file","results":"Risultati","noResults":"Nessun documento trovato","toolsTip":"Tutti gli strumenti","openFolder":"I miei documenti","quickTools":"Azioni rapide","scan":"Scansione intelligente","importPhotos":"Importa immagini","importFiles":"Importa file","back":"Indietro","typePdf":"PDF","select":"Seleziona","more":"Altre azioni","size":"Dimensione","edited":"Recente"}};
+const hv=key=>(homeVisualText[language]||homeVisualText.en)[key]||key;
+let homeSearchQuery='';
+let homeExpandedUri=null;
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -213,27 +223,67 @@ function render(){
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
   const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
-  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt="RivoScan"><strong>RivoScan</strong></span><div class="topright"><button class="top-documents" data-open-library aria-label="${ut('documents')}">${ico('file',17)} <span>${ut('documents')}</span></button><button class="top-profile" data-tab="me" aria-label="${ut('settings')}">${ico('info',19)}</button></div></header>`;
-  const mobile = `<nav class="mobilebar" aria-label="Main navigation"><button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button><button type="button" data-open-library class="${isDocs?'active':''}">${ico('file')}${ut('documents')}</button><button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('convert')}${ut('tools')}</button><button type="button" data-tab="me" class="${isMe?'active':''}">${ico('info')}${ut('me')}</button></nav>`;
+  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong></span><div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button><button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
+  const mobile = `<nav class="mobilebar" aria-label="Main navigation"><button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button><button type="button" data-open-library class="${isDocs?'active':''}">${ico('file')}${ut('documents')}</button><button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button><button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',27)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',29)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
 }
-function recentDocuments(limit=6){
-  const docs=libraryItems.slice(0,limit);
-  if(!docs.length)return `<div class="recent-empty">${ico('file',29)} <span>${ut('noRecent')}</span><button class="btn" data-tool="scan">${ico('scan',18)} ${ut('scan')}</button></div>`;
-  return docs.map((doc,index)=>`<article class="recent-entry" data-doc-open="${index}" role="button" tabindex="0" aria-label="${lt('preview')} ${escapeHTML(doc.name)}"><span class="recent-file-icon">${ico('file',25)}</span><div class="recent-file-meta"><strong>${escapeHTML(doc.name)}</strong><small>${doc.created?new Date(doc.created).toLocaleString(language):'RivoScan'} · ${formatSize(doc.size||0)}</small></div><button data-doc-open="${index}" class="recent-open" aria-label="${dl('open')}">${ico('back',18)}</button></article>`).join('');
+function visualFileType(doc){
+ const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
+ if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf'};
+ if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image'};
+ if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls'};
+ if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc'};
+ if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip'};
+ if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt'};
+ return {code:'FILE',klass:'generic'};
+}
+function recentDocuments(limit=6,query=homeSearchQuery){
+ const needle=String(query||'').trim().toLocaleLowerCase();
+ const matched=libraryItems.map((doc,index)=>({doc,index}))
+  .filter(({doc})=>!needle||doc.name.toLocaleLowerCase().includes(needle)).slice(0,needle?30:limit);
+ if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${hv('openFolder')}</button></div>`;
+ return matched.map(({doc,index},visibleIndex)=>{
+  const file=visualFileType(doc);
+  const expanded=homeExpandedUri?homeExpandedUri===doc.uri:visibleIndex===0;
+  const canPdf=file.klass==='pdf'||file.klass==='image';
+  return `<article class="recent-entry rivo-recent-card ${expanded?'rivo-recent-expanded':''} ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
+     <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" aria-hidden="true"><span>${file.code}</span></span>
+     <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong>
+       <small>${ico('clock',13)} ${doc.created?new Date(doc.created).toLocaleString(language,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'RivoScan'} <span class="rivo-metadata-dot">·</span> ${formatSize(doc.size||0)}</small></div>
+     <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
+     ${expanded?`<div class="rivo-recent-actions">
+       <button type="button" data-doc-share="${index}" class="rivo-recent-share">${ico('upload',18)} ${hv('share')}</button>
+       ${canPdf?`<button type="button" data-doc-savepdf="${index}" class="rivo-recent-pdf">${ico('file',18)} ${hv('savePdf')}</button>`:`<button type="button" data-doc-open="${index}" class="rivo-recent-pdf">${ico('folder',18)} ${hv('open')}</button>`}
+       <button type="button" data-doc-open="${index}" class="rivo-recent-view">${ico('eye',19)} ${hv('view')}</button>
+     </div>`:''}
+     <button type="button" data-expand-doc="${index}" class="rivo-expand-card" aria-label="${hv('more')}" aria-expanded="${expanded}">${ico('more',17)}</button>
+   </article>`;
+ }).join('');
 }
 function home(){
-  const short=[['scan','scan',ut('scan')],['bundle','merge',ut('merge')],['import-image','image',ut('import')],['ocr','ocr','OCR'],['import-file','file',ut('myFiles')],['shareFiles','upload',dl('share')],['sign','sign','Sign'],['peerTransfer','convert','Transfer']];
-  return `<section class="app-home">
-   <div class="home-top"><div><span class="home-eyebrow">${ut('home')} · RivoScan</span><h1>${ut('welcome')}</h1></div><span class="home-shield">${ico('shield',21)}</span></div>
-   <button class="home-search" data-open-library data-focus-search aria-label="${ut('search')}">${ico('search',21)} <span>${ut('search')}</span></button>
-   <div class="home-scan-banner"><div><span class="banner-chip">${ico('sparkle',15)} Smart Scanner</span><h2>${ut('scan')}</h2><p>${ut('safe')}</p><button data-tool="scan" class="banner-scan-btn">${ico('camera',19)} ${sl('title')}</button></div><div class="banner-scan-graphic" aria-hidden="true"><span class="banner-paper">${ico('file',63)}</span><span class="banner-corner corner-one"></span><span class="banner-corner corner-two"></span></div></div>
-   <div class="home-section-heading"><h2>${ut('quick')}</h2><button data-tab="tools">${ut('seeAll')} ${ico('back',17)}</button></div>
-   <div class="home-shortcuts">${short.map(([id,icon,label])=>`<button class="home-shortcut" ${id.startsWith('import-')?`data-import="${id==='import-image'?'image':'file'}"`:`data-tool="${id}"`}><span class="home-shortcut-icon">${ico(icon,24)}</span><span>${escapeHTML(label)}</span></button>`).join('')}</div>
-   <div class="home-section-heading"><h2>${ut('recent')}</h2><button data-open-library>${ut('seeAll')} ${ico('back',17)}</button></div>
+ const shortcuts=[
+  {id:'scan',icon:'scan',text:hv('scan'),action:'data-live-camera'},
+  {id:'pdf',icon:'file',text:hv('pdf'),action:'data-tab="tools"'},
+  {id:'import-image',icon:'image',text:hv('importPhotos'),action:'data-import="image"'},
+  {id:'import-file',icon:'folder',text:hv('importFiles'),action:'data-import="file"'},
+  {id:'id',icon:'idcard',text:hv('id'),action:'data-id-card-scan'},
+  {id:'ocr',icon:'ocr',text:hv('extract'),action:'data-tool="ocr"'},
+  {id:'sign',icon:'sign',text:hv('sign'),action:'data-tool="sign"'},
+  {id:'all',icon:'grid',text:hv('all'),action:'data-tab="tools"'}
+ ];
+ return `<section class="app-home rivo-home">
+   <div class="rivo-search-row">
+     <label class="rivo-home-search">${ico('search',23)} <input type="search" id="home-quick-search" placeholder="${hv('search')}" aria-label="${hv('search')}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"><span class="rivo-search-key" aria-hidden="true">${ico('search',14)}</span></label>
+   </div>
+   <div class="home-shortcuts rivo-shortcuts">${shortcuts.map(short=>`<button type="button" class="home-shortcut rivo-tile rivo-tile-${short.id}" ${short.action}>
+       <span class="home-shortcut-icon">${ico(short.icon,27)}</span><span>${escapeHTML(short.text)}</span>
+     </button>`).join('')}</div>
+   <div class="home-section-heading rivo-section-title"><div><h2 id="home-results-title">${homeSearchQuery?hv('results'):ut('recent')}</h2><small>${hv('recentSubtitle')}</small></div><button type="button" data-open-library>${ut('seeAll')} ${ico('back',18)}</button></div>
+   <div class="rivo-longpress-hint">${ico('info',19)} <span>${hv('hold')}</span></div>
+   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
    <div class="recent-panel" id="home-recents">${recentDocuments()}</div>
    <p class="home-footer-note">${ico('lock',15)} ${ut('privacy')}</p>
   </section>`;
