@@ -40,3 +40,62 @@ export function toolText(language,id,kind){
 }
 export function label(language,key){return (labels[language]||labels.en)[key]||labels.en[key]||key;}
 export const supportedLanguages=Object.keys(labels);
+
+/** Translate PDF settings without altering input names, values or numeric page ranges. */
+const optionPhrases=[
+'Pages to keep (e.g. 1-3, 5, 8)','Select only the pages you want in the new PDF.','Pages to remove','Pages to rotate (empty = all)','Rotation',
+'90° clockwise','270° clockwise','New page order (one-based)','Starting page number','Position','Bottom center','Top right',
+'Watermark text','Opacity','Text to add on each page','Top','Bottom','Center','Draw signature (finger / mouse)',
+'Clear signature','Page number','Bottom right','Scan appearance','Original color','Enhanced document','Black & white (grayscale)',
+'High contrast monochrome','Image quality','High','Balanced','Smaller file','Image format','Resolution','Standard','Extra high',
+'Compression quality','Higher quality','OCR language','Your annotation'
+];
+const optionTranslations={
+ ar:['الصفحات اللي بغيت تحتافظ بها','اختار غير الصفحات اللي بغيتي فالـPDF الجديد.','الصفحات للحذف','الصفحات للتدوير (خاوي يعني الكل)','زاوية التدوير',
+ '90° مع عقارب الساعة','270° مع عقارب الساعة','الترتيب الجديد للصفحات','رقم البداية','المكان','لتحت فالوسط','لفوق فاليمين',
+ 'نص العلامة المائية','الشفافية','النص اللي بغيتي تزيد','فوق','تحت','الوسط','رسم التوقيع بالإصبع',
+ 'مسح التوقيع','رقم الصفحة','لتحت فاليمين','مظهر السكانير','الألوان الأصلية','تحسين الوثيقة','أبيض وأسود (رمادي)',
+ 'تباين قوي','جودة الصورة','عالية','متوازنة','حجم أصغر','صيغة الصور','الدقة','عادية','عالية جداً',
+ 'جودة الضغط','جودة أفضل','لغة OCR','الملاحظة ديالك'],
+ fr:['Pages à conserver','Sélectionnez les pages du nouveau PDF.','Pages à supprimer','Pages à pivoter (vide = toutes)','Rotation',
+ '90° sens horaire','270° sens horaire','Nouvel ordre des pages','Numéro de départ','Position','En bas au centre','En haut à droite',
+ 'Texte du filigrane','Opacité','Texte à ajouter sur chaque page','Haut','Bas','Centre','Dessinez votre signature',
+ 'Effacer la signature','Numéro de page','En bas à droite','Aspect du scan','Couleurs d’origine','Document amélioré','Noir et blanc (gris)',
+ 'Noir et blanc contrasté','Qualité des images','Élevée','Équilibrée','Fichier réduit','Format des images','Résolution','Standard','Très élevée',
+ 'Qualité de compression','Meilleure qualité','Langue OCR','Votre annotation'],
+ es:['Páginas a conservar','Selecciona páginas para el nuevo PDF.','Páginas a eliminar','Páginas para girar (vacío = todas)','Rotación',
+ '90° horario','270° horario','Nuevo orden de páginas','Número inicial','Posición','Abajo centro','Arriba derecha',
+ 'Texto de marca de agua','Opacidad','Texto para cada página','Arriba','Abajo','Centro','Dibuja tu firma',
+ 'Borrar firma','Número de página','Abajo derecha','Aspecto del escaneo','Color original','Documento mejorado','Blanco y negro (gris)',
+ 'Alto contraste','Calidad de imagen','Alta','Equilibrada','Archivo pequeño','Formato de imagen','Resolución','Estándar','Muy alta',
+ 'Calidad de compresión','Mayor calidad','Idioma OCR','Tu anotación'],
+ de:['Seiten behalten','Gewünschte Seiten für neues PDF auswählen.','Seiten löschen','Seiten drehen (leer = alle)','Drehung',
+ '90° im Uhrzeigersinn','270° im Uhrzeigersinn','Neue Seitenreihenfolge','Startseitennummer','Position','Unten mittig','Oben rechts',
+ 'Wasserzeichentext','Deckkraft','Text auf jeder Seite','Oben','Unten','Mitte','Unterschrift zeichnen',
+ 'Unterschrift löschen','Seitennummer','Unten rechts','Scan-Darstellung','Originalfarben','Dokument verbessert','Graustufen',
+ 'Hoher Kontrast','Bildqualität','Hoch','Ausgewogen','Kleine Datei','Bildformat','Auflösung','Standard','Sehr hoch',
+ 'Kompressionsqualität','Höhere Qualität','OCR-Sprache','Ihre Notiz'],
+ pt:['Páginas a manter','Selecione páginas para o novo PDF.','Páginas a eliminar','Páginas a rodar (vazio = todas)','Rotação',
+ '90° horário','270° horário','Nova ordem das páginas','Número inicial','Posição','Inferior ao centro','Superior à direita',
+ 'Texto da marca de água','Opacidade','Texto em cada página','Superior','Inferior','Centro','Desenhar assinatura',
+ 'Limpar assinatura','Número da página','Inferior à direita','Aspeto do scan','Cores originais','Documento melhorado','Preto e branco (cinzento)',
+ 'Contraste elevado','Qualidade da imagem','Alta','Equilibrada','Ficheiro menor','Formato da imagem','Resolução','Normal','Muito alta',
+ 'Qualidade de compressão','Qualidade superior','Idioma OCR','A sua anotação'],
+ it:['Pagine da mantenere','Seleziona le pagine per il nuovo PDF.','Pagine da eliminare','Pagine da ruotare (vuoto = tutte)','Rotazione',
+ '90° orario','270° orario','Nuovo ordine delle pagine','Numero iniziale','Posizione','In basso al centro','In alto a destra',
+ 'Testo filigrana','Opacità','Testo su ogni pagina','In alto','In basso','Centro','Disegna la firma',
+ 'Cancella firma','Numero di pagina','In basso a destra','Aspetto scansione','Colori originali','Documento migliorato','Bianco e nero (grigio)',
+ 'Contrasto elevato','Qualità immagine','Alta','Bilanciata','File ridotto','Formato immagine','Risoluzione','Standard','Molto alta',
+ 'Qualità compressione','Qualità superiore','Lingua OCR','La tua annotazione']
+};
+export function localizeOptions(lang,markup){
+  if(lang==='en'||!optionTranslations[lang])return markup;
+  const phrases=optionTranslations[lang];
+  const replaceText=text=>{
+    const index=optionPhrases.indexOf(text.trim());
+    return index<0?text:phrases[index];
+  };
+  return String(markup).replace(/>([^<>]+)</g,(_,content)=>'>'+replaceText(content)+'<')
+    .replace(/placeholder="([^"]+)"/g,(_,value)=>'placeholder="'+replaceText(value)+'"')
+    .replace(/aria-label="([^"]+)"/g,(_,value)=>'aria-label="'+replaceText(value)+'"');
+}
