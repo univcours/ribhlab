@@ -800,9 +800,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // The same interactive four-point editor handles both camera images and gallery images.
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
-        layout(editor,found==null?"Document not found automatically · drag the 4 dots":"Drag the 4 green corners to adjust the detected paper",
+        layout(editor,found==null?trNative("notFound"):trNative("found"),
             button(trNative("retake"),this::showCamera),
-            button(trNative("detect"),()->{editor.useAutoCorners();message.setText("Adjust the four green dots if needed.");}),
+            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("savePage"),this::saveCroppedPage));
     }
     private void saveWithoutCrop(Bitmap bitmap){
