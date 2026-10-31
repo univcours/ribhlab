@@ -813,6 +813,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 bitmap.compress(Bitmap.CompressFormat.JPEG,90,out);
             }
             savedImages.add(Uri.fromFile(target).toString());
+            publishPageCopy(target);
             RivoSounds.play(this,"saved");
             Toast.makeText(this,"Photo captured without auto-crop on this device.",Toast.LENGTH_SHORT).show();
             if(batchMode)showCamera();else finishWithPages();
@@ -827,12 +828,28 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Bitmap output=RivoEdgeDetector.warp(current,editor.getCorners());
             File target=new File(getCacheDir(),"rivoscan_scan_"+System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
             try(FileOutputStream out=new FileOutputStream(target)){output.compress(Bitmap.CompressFormat.JPEG,90,out);}
-            output.recycle();savedImages.add(Uri.fromFile(target).toString());
+            output.recycle();
+            savedImages.add(Uri.fromFile(target).toString());
+            publishPageCopy(target);
             RivoSounds.play(this,"saved");
             if(current!=null){current.recycle();current=null;}
             if(batchMode)showCamera();else finishWithPages();
         }catch(Exception e){RivoSounds.play(this,"error");message.setText("Adjust the corners: "+e.getMessage());}
     }
+    private void publishPageCopy(File temporaryPage){
+        // Make the scan visible to Samsung My Files immediately after Save Page.
+        // The original temporary page is still used to assemble the final PDF.
+        try{
+            String publicName="RivoScan_Page_"+System.currentTimeMillis()
+                +"_"+(savedImages.size())+".jpg";
+            RivoDocumentsPlugin.saveScannedImage(this,temporaryPage,publicName);
+            Toast.makeText(this,trNative("pageStored"),Toast.LENGTH_SHORT).show();
+        }catch(Exception e){
+            android.util.Log.e("RivoScan","Could not publish scanned page to Downloads/RivoScan",e);
+            Toast.makeText(this,trNative("pageNotStored"),Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void finishWithPages(){
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
