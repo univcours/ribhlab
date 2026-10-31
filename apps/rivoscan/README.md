@@ -29,7 +29,7 @@ All core editing and conversion runs inside the device/browser, with no document
 
 ## Native live edge scanner (new experimental implementation)
 
-The current Android beta includes a custom native CameraX + OpenCV document camera, in addition to the existing Google ML Kit scanner. The custom mode **shows a moving green four-sided outline during camera preview**. Press **Capture** to use a high-resolution photo; the app opens an editor with **four draggable green corner handles**. Adjust all four corners, press **Save page**, scan more pages if needed, then press **Done** to return the cropped images to the Scan Document tool. Press **Process & Save** to create one multi-page PDF.
+The current Android beta includes a custom native CameraX + OpenCV document camera, in addition to the existing Google ML Kit scanner. The custom mode **shows a moving blue four-sided outline during camera preview**. Press **Capture** to use a high-resolution photo; the app opens an editor with **four draggable corner handles**. Adjust all four corners, press **Save page**, scan more pages if needed, then press **Done** to return the cropped images to the Scan Document tool. Press **Process & Save** to create one multi-page PDF.
 
 The **Gallery** button inside the live camera also imports images and opens the **same editable four-corner crop interface**. The main Scan Document screen exposes a separate **Import Photo · Adjust 4 Corners** action. Selecting images via Scan Document's file input also routes them through the Android native crop editor. The perspective warp uses OpenCV and can correct skewed quadrilaterals. If detection fails, a default quadrilateral appears; manually move the corners to cover the paper.
 
@@ -48,7 +48,27 @@ npx cap sync android
 
 The provided \`setup-android-studio.cmd\` and \`start-rivoscan-autosync.cmd\` pipeline also invoke \`install-live-scanner.ps1\` automatically after Capacitor synchronization. Then in Android Studio use **Sync Project with Gradle Files** and **Run** to install the new APK on the phone.
 
-Native integration adds CameraX 1.5.3 and OpenCV Android 4.12.0 to \`android/app/build.gradle\`, declares Camera permission and the private scanner Activity in \`AndroidManifest.xml\`, and registers \`RivoLiveScanner\` in \`MainActivity.java\`. Because these are Android-native changes, simply copying web files without re-syncing and rebuilding is not enough.
+Native integration adds CameraX 1.6.2 and OpenCV Android 4.12.0 to \`android/app/build.gradle\`, declares Camera permission and the private scanner Activity in \`AndroidManifest.xml\`, and registers \`RivoLiveScanner\` in \`MainActivity.java\`. Because these are Android-native changes, simply copying web files without re-syncing and rebuilding is not enough.
+
+## Android camera compatibility (RivoScan 0.10 beta)
+
+Camera selection is **not tied to Samsung or a specific device model**.
+On compatible Android devices, the default rear camera is selected at startup.
+Tap **Cameras ▾** in the native scanner for the cameras that Android's CameraX backend actually exposes, including the front camera. When a rear camera is not present, the scanner tries the front camera or another available camera. If the phone cannot bind live edge analysis and high-resolution photo capture together, it falls back to ordinary preview/capture. When OpenCV is unavailable, it can still capture photographs without automatic edge correction.
+
+Physical lenses are not guaranteed to appear individually: Samsung, Xiaomi, Redmi, Oppo, Vivo, Pixel, Motorola, OnePlus and other vendors may expose a combined/logical camera to apps instead of all physical sensors. This is determined by the phone's camera HAL/OS. The app cannot repair a damaged physical camera or override cameras blocked by Android.
+
+**Android only:** This Capacitor project produces an Android APK; iOS requires a separate iOS native project and camera implementation. The persistent public Downloads/RivoScan library currently relies on Android 10+ MediaStore; on earlier compatible Android versions, storage capabilities and app permissions differ.
+
+For Windows, after pulling the branch, run:
+```powershell
+cd apps\rivoscan
+.\install-rivoscan-android.cmd
+```
+
+The older `install-rivoscan-on-samsung.cmd` remains an alias but is no longer brand-locked. If more than one authorized Android device is connected, select the intended serial first via `$env:RIVOSCAN_DEVICE_SERIAL = 'your-adb-device-id'` to prevent deploying to the wrong device. Installation replaces the existing build only when signing permits and does not uninstall or wipe user data.
+
+**QA:** Verify camera chooser/front/rear fallback, manual corners, batch PDF, torch/no-flash behavior and storage separately on multiple actual phones. A successful CI build is not a substitute for device tests.
 
 ## New in 0.2 beta: smart scans, document bundles and transfer
 
