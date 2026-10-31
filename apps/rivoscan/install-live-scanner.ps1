@@ -38,7 +38,7 @@ public class MainActivity extends BridgeActivity {
         // overlaysWebView=false alone cannot keep the app below the system bar.
         if (Build.VERSION.SDK_INT >= 35) {
             View web = getBridge().getWebView();
-            web.setBackgroundColor(Color.rgb(247, 249, 254));
+            web.setBackgroundColor(Color.rgb(25, 27, 31));
             ViewCompat.setOnApplyWindowInsetsListener(web, (view, insets) -> {
                 Insets status = insets.getInsets(WindowInsetsCompat.Type.statusBars());
                 if (view.getPaddingTop() != status.top) {
