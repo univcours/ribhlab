@@ -9,12 +9,21 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
+const RivoDocuments = registerPlugin('RivoDocuments');
+if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
+  // Keep the real Android status bar on screen; do not draw the app under it.
+  StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#F7F9FE'}))
+    .then(()=>StatusBar.setStyle({style:Style.Light}))
+    .catch(error=>console.warn('Android status bar configuration:',error));
+}
 
 const icons = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-8h6v8"/>',
@@ -85,25 +94,37 @@ let history = [];
 try { history = JSON.parse(localStorage.getItem('rivo-history') || '[]'); if (!Array.isArray(history)) history = []; } catch { history = []; }
 let previewURLs = [];
 let closeTransfer = null;
+let libraryItems = [], libraryLoading = false, libraryError = '';
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fname = (name) => String(name).replace(/\.[^.]+$/,'').replace(/[^\w\- .]/g,'_').slice(0,60) || 'document';
 const formatSize = (n)=>n<1024*1024?`${(n/1024).toFixed(1)} KB`:`${(n/1024/1024).toFixed(1)} MB`;
+const libraryLabels={
+ en:{documents:'My Documents',saved:'Saved on your phone',open:'Open',share:'Share',remove:'Delete',empty:'Your saved scans and PDFs will appear here.',search:'Search documents',confirm:'Delete this file from Downloads/RivoScan? This cannot be undone.',folder:'Downloads / RivoScan',saving:'Saving PDF to your phone…',savedNow:'Saved to Downloads/RivoScan',scan:'Scan a document',files:'Files',all:'All tools'},
+ fr:{documents:'Mes documents',saved:'Enregistrés sur le téléphone',open:'Ouvrir',share:'Partager',remove:'Supprimer',empty:'Vos scans et PDF sauvegardés apparaîtront ici.',search:'Rechercher',confirm:'Supprimer ce fichier de Downloads/RivoScan ?',folder:'Téléchargements / RivoScan',saving:'Enregistrement du PDF…',savedNow:'Enregistré dans Downloads/RivoScan',scan:'Scanner un document',files:'Fichiers',all:'Tous les outils'},
+ ar:{documents:'وثائقي',saved:'محفوظة في ذاكرة الهاتف',open:'فتح',share:'مشاركة',remove:'حذف',empty:'الوثائق وملفات PDF اللي حفظتي غادي تلقاها هنا.',search:'قلب على وثيقة',confirm:'واش تحذف هاد الملف نهائياً من Downloads/RivoScan؟',folder:'التنزيلات / RivoScan',saving:'جاري حفظ PDF في الهاتف…',savedNow:'تحفظ الملف في Downloads/RivoScan',scan:'سكانير جديد',files:'ملفات',all:'جميع الأدوات'},
+ es:{documents:'Mis documentos',saved:'Guardados en el teléfono',open:'Abrir',share:'Compartir',remove:'Eliminar',empty:'Tus escaneos y PDF aparecerán aquí.',search:'Buscar documentos',confirm:'¿Eliminar este archivo de Downloads/RivoScan?',folder:'Descargas / RivoScan',saving:'Guardando PDF…',savedNow:'Guardado en Downloads/RivoScan',scan:'Escanear documento',files:'Archivos',all:'Todas las herramientas'},
+ de:{documents:'Meine Dokumente',saved:'Auf dem Smartphone gespeichert',open:'Öffnen',share:'Teilen',remove:'Löschen',empty:'Gespeicherte Scans und PDFs erscheinen hier.',search:'Dokumente suchen',confirm:'Datei aus Downloads/RivoScan löschen?',folder:'Downloads / RivoScan',saving:'PDF wird gespeichert…',savedNow:'Gespeichert in Downloads/RivoScan',scan:'Dokument scannen',files:'Dateien',all:'Alle Werkzeuge'},
+ pt:{documents:'Meus documentos',saved:'Guardados no telefone',open:'Abrir',share:'Compartilhar',remove:'Excluir',empty:'Digitalizações e PDFs guardados aparecem aqui.',search:'Procurar documentos',confirm:'Excluir de Downloads/RivoScan?',folder:'Downloads / RivoScan',saving:'A guardar PDF…',savedNow:'Guardado em Downloads/RivoScan',scan:'Digitalizar',files:'Ficheiros',all:'Todas as ferramentas'},
+ it:{documents:'I miei documenti',saved:'Salvati sul telefono',open:'Apri',share:'Condividi',remove:'Elimina',empty:'Le scansioni e i PDF salvati appariranno qui.',search:'Cerca documenti',confirm:'Eliminare questo file da Downloads/RivoScan?',folder:'Download / RivoScan',saving:'Salvataggio PDF…',savedNow:'Salvato in Downloads/RivoScan',scan:'Scansiona documento',files:'File',all:'Tutti gli strumenti'}
+};
+const dl=(key)=>libraryLabels[language]?.[key]||libraryLabels.en[key]||key;
+
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
 function render(){
   if(closeTransfer){closeTransfer();closeTransfer=null;}
   previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
   document.documentElement.lang=language; document.body.dir=language==='ar'?'rtl':'ltr';
-  const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
-  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""> RivoScan <span style="color:#c7cfdf">/</span> ${activeTool?escapeHTML(activeTool.name):tr('home')}</span><div class="topright"><select id="language" class="lang" aria-label="Language">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,label])=>`<option value="${id}" ${language===id?'selected':''}>${label}</option>`).join('')}</select><div class="avatar"><img src="/icon.svg?v=20261101" alt="RivoScan"></div></div></header>`;
-  const mobile = `<nav class="mobilebar"><button data-go="home" class="${!activeTool?'active':''}">${ico('home')}${tr('home')}</button><button data-tool="scan" class="${activeTool?.id==='scan'?'active':''}">${ico('scan')}Scan</button><button data-tool="merge">${ico('merge')}Merge</button><button data-tool="sign">${ico('sign')}Sign</button><button data-tool="ocr">${ico('ocr')}OCR</button></nav>`;
-  app.innerHTML=`<div class="shell">${aside}<main class="main">${header}<div class="content">${activeTool?workspace():home()}</div></main>${mobile}</div>`;
+  const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
+  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""> RivoScan <span style="color:#c7cfdf">/</span> ${activeTool?escapeHTML(activeTool.name):tr('home')}</span><div class="topright"><button class="top-documents" data-open-library>${ico('file',17)} <span>${dl('documents')}</span></button><select id="language" class="lang" aria-label="Language">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,label])=>`<option value="${id}" ${language===id?'selected':''}>${label}</option>`).join('')}</select><div class="avatar"><img src="/icon.svg?v=20261101" alt="RivoScan"></div></div></header>`;
+  const mobile = `<nav class="mobilebar" aria-label="Navigation"><button data-go="home" class="${!activeTool?'active':''}">${ico('home')}${tr('home')}</button><button data-open-library class="${activeTool?.id==='library'?'active':''}">${ico('file')}${dl('documents')}</button><button data-tool="scan" class="mobile-scan ${activeTool?.id==='scan'?'active':''}">${ico('scan')}${dl('scan')}</button><button data-tool="bundle">${ico('merge')}PDF</button><button data-go="home">${ico('convert')}${dl('all')}</button></nav>`;
+  app.innerHTML=`<div class="shell">${aside}<main class="main">${header}<div class="content">${activeTool?.id==='library'?libraryWorkspace():activeTool?workspace():home()}</div></main>${mobile}</div>`;
   wire();
 }
 function home(){
   const groups=[['create','Scan & create'],['organize','Organize PDF'],['edit','Edit & protect'],['convert','Convert & extract']];
-  return `<div class="hero"><div class="hero-copy"><span class="eyebrow">SMART PDF WORKSPACE</span><h1>${tr('hero')}</h1><p>${tr('desc')}</p><div class="hero-actions"><button class="btn btn-white" data-tool="scan">${ico('scan')} ${tr('start')}</button><button class="btn btn-hero-secondary" data-tool="bundle">${ico('merge')} Combine documents</button></div></div><div class="hero-art" aria-hidden="true"><div class="hero-art-halo"></div><div class="hero-art-sheet"><img src="/icon.svg?v=20261101" alt=""><span class="hero-art-shine"></span></div><span class="hero-art-chip chip-left">${ico('check',16)} Edge detected</span><span class="hero-art-chip chip-right">${ico('file',16)} PDF ready</span></div></div><div class="stats-row"><div class="stat">${ico('shield',23)}<div><b>100% Local</b><small>Core PDF operations</small></div></div><div class="stat">${ico('file',23)}<div><b>${tools.length} Tools</b><small>Document toolkit</small></div></div><div class="stat">${ico('check',23)}<div><b>No account</b><small>Start immediately</small></div></div></div>${groups.map(([id,label])=>`<section id="section-${id}"><div class="section-head"><h2>${tr(id)}</h2><span>${tools.filter(t=>t.category===id).length} tools</span></div><div class="tools-grid">${tools.filter(t=>t.category===id).map(card).join('')}</div></section>`).join('')}<div class="section-head"><h2>${tr('files')}</h2><span>Recent actions, filenames not stored</span></div><div class="panel">${history.length?history.slice(0,5).map(h=>`<div class="file">${ico('clock',17)}<b>${escapeHTML(h.action)}</b><small>${new Date(h.time).toLocaleString()}</small></div>`).join(''):'<div class="empty">No activity yet. Choose a tool to start.</div>'}</div><div class="footer">RivoScan • RibhLab • Beta v0.4 · UI 2026.10.31b • Documents stay on your device. OCR language data may be downloaded from Tesseract infrastructure when first used.</div>`;
+  return `<div class="hero"><div class="hero-copy"><span class="eyebrow">SMART PDF WORKSPACE</span><h1>${tr('hero')}</h1><p>${tr('desc')}</p><div class="hero-actions"><button class="btn btn-white" data-tool="scan">${ico('scan')} ${tr('start')}</button><button class="btn btn-hero-secondary" data-open-library>${ico('file')} ${dl('documents')}</button></div></div><div class="hero-art" aria-hidden="true"><div class="hero-art-halo"></div><div class="hero-art-sheet"><img src="/icon.svg?v=20261101" alt=""><span class="hero-art-shine"></span></div><span class="hero-art-chip chip-left">${ico('check',16)} Edge detected</span><span class="hero-art-chip chip-right">${ico('file',16)} PDF ready</span></div></div><div class="stats-row"><div class="stat">${ico('shield',23)}<div><b>100% Local</b><small>Core PDF operations</small></div></div><div class="stat">${ico('file',23)}<div><b>${tools.length} Tools</b><small>Document toolkit</small></div></div><div class="stat">${ico('check',23)}<div><b>No account</b><small>Start immediately</small></div></div></div>${groups.map(([id,label])=>`<section id="section-${id}"><div class="section-head"><h2>${tr(id)}</h2><span>${tools.filter(t=>t.category===id).length} tools</span></div><div class="tools-grid">${tools.filter(t=>t.category===id).map(card).join('')}</div></section>`).join('')}<div class="section-head"><h2>${tr('files')}</h2><span>Recent actions, filenames not stored</span></div><div class="panel">${history.length?history.slice(0,5).map(h=>`<div class="file">${ico('clock',17)}<b>${escapeHTML(h.action)}</b><small>${new Date(h.time).toLocaleString()}</small></div>`).join(''):'<div class="empty">No activity yet. Choose a tool to start.</div>'}</div><div class="footer">RivoScan • RibhLab • Beta v0.4 · UI 2026.10.31b • Documents stay on your device. OCR language data may be downloaded from Tesseract infrastructure when first used.</div>`;
 }
 function card(t){return `<button class="tool-card ${t.id==='scan'?'tool-card-featured':''}" data-tool="${t.id}"><span class="tool-card-header"><span class="tool-icon ${t.color}">${ico(t.icon,24)}</span><span class="tool-card-arrow">${ico('back',16)}</span></span><span class="tool-card-title">${escapeHTML(t.name)}</span><small>${escapeHTML(t.desc)}</small>${t.id==='scan'?'<span class="tool-feature-label">LIVE EDGE SCAN</span>':''}</button>`;}
 const opts = {
@@ -122,9 +143,86 @@ const opts = {
   ocr:`<div class="field"><label>OCR language</label><select name="ocrLang"><option value="eng" selected>English</option><option value="fra">Français</option><option value="ara">العربية</option><option value="spa">Español</option><option value="deu">Deutsch</option><option value="por">Português</option><option value="ita">Italiano</option></select></div><p class="hint">First OCR use may download trained language data. OCR depends on image quality and can take time.</p>`,
   metadata:`<p class="hint">Clears commonly used metadata fields. Not a guarantee of forensic sanitization; embedded content, comments or hidden data may remain.</p>`
 };
+
+function scannerWorkspace(){
+  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
+  return \`<section class="workspace scan-workspace">
+  <button class="back" data-go="home">\${ico('back')} \${dl('all')}</button>
+  <div class="work-title"><div class="tool-icon sky">\${ico('scan',27)}</div><div><h1>Smart Scanner</h1><p>Point your camera at a document, adjust its edges and save a clean PDF.</p></div></div>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">\${ico('camera',25)} <span><b>Scan document</b><small>Camera · Live edges · Auto crop</small></span><span class="scan-action-arrow">→</span></button>
+  <button class="scan-action-secondary" id="scanner-gallery">\${ico('image',24)} <span><b>Import a photo</b><small>Detect & adjust 4 corners</small></span></button></div>
+  <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">\${ico('file',20)} \${dl('documents')}</button>
+  <button id="mlkit-scanner" class="scan-mlkit-link">\${ico('sparkle',18)} Auto-crop with ML Kit</button></div>
+  <div class="scan-runtime" role="status">\${live?'CameraX ready · Live borders':'If live camera is unavailable, use Auto-crop with ML Kit below.'}</div>
+  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>Your pages <span class="scan-page-count">\${files.length}</span></h3><small>Scanner results are saved automatically after capture</small></div>
+  <div class="filelist" id="filelist">\${renderFiles()}</div><div id="scanpreview"></div>
+  <div class="scan-import-row"><label for="files" class="scan-upload-link">\${ico('upload',18)} Add photos manually<input id="files" type="file" accept="image/*" multiple></label>
+  <button id="camera" class="scan-upload-link">\${ico('camera',18)} Basic camera</button></div>
+  </div><div class="panel scan-export-panel"><div id="options">\${opts.scan||''}</div>
+  <button id="process" class="btn operation scan-save-pdf">\${ico('download',20)} Save all selected pages as PDF</button>
+  <p class="hint">Saved documents stay in \${dl('folder')} and can be opened anytime using \${dl('documents')}.</p></div>
+  </section>\`;
+}
+function renderLibraryRows(needle=''){
+  const q=String(needle||'').trim().toLocaleLowerCase();
+  const matched=libraryItems.map((item,index)=>({item,index})).filter(({item})=>!q||item.name.toLocaleLowerCase().includes(q));
+  if(libraryLoading)return '<div class="doc-empty">Loading your documents…</div>';
+  if(libraryError)return \`<div class="doc-empty doc-error">\${escapeHTML(libraryError)}</div>\`;
+  if(!matched.length)return \`<div class="doc-empty">\${ico('file',32)}<p>\${dl('empty')}</p><button class="btn" data-tool="scan">\${ico('scan')} \${dl('scan')}</button></div>\`;
+  return matched.map(({item,index})=>\`<article class="document-entry">
+    <div class="document-icon">\${ico('file',24)}</div>
+    <div class="document-description"><strong title="\${escapeHTML(item.name)}">\${escapeHTML(item.name)}</strong><small>\${formatSize(item.size||0)} · \${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
+    <div class="document-buttons">
+      <button data-doc-open="\${index}" aria-label="\${dl('open')} \${escapeHTML(item.name)}">\${ico('file',17)}<span>\${dl('open')}</span></button>
+      <button data-doc-share="\${index}" aria-label="\${dl('share')} \${escapeHTML(item.name)}">\${ico('upload',17)}<span>\${dl('share')}</span></button>
+      <button data-doc-delete="\${index}" class="document-delete" aria-label="\${dl('remove')} \${escapeHTML(item.name)}">\${ico('delete',17)}</button>
+    </div></article>\`).join('');
+}
+function libraryWorkspace(){
+  return \`<section class="workspace library-workspace"><button class="back" data-go="home">\${ico('back')} \${dl('all')}</button>
+    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">\${ico('file',26)}</div><div><h1>\${dl('documents')}</h1><p>\${dl('saved')} · \${dl('folder')}</p></div></div></div>
+    <button class="btn" data-tool="scan">\${ico('scan',19)} \${dl('scan')}</button></div>
+    <div class="panel library-panel"><div class="library-top"><strong>\${libraryItems.length} \${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">\${ico('rotate',17)} Refresh</button></div>
+    <label class="library-search">\${ico('search',19)}<input id="library-search" type="search" placeholder="\${dl('search')}"></label>
+    <div id="library-list" class="library-list">\${renderLibraryRows()}</div></div></section>\`;
+}
+async function loadLibrary(show=true){
+  if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
+    libraryItems=[];libraryLoading=false;libraryError='Saved files are accessible in the installed Android app.';
+    if(show&&activeTool?.id==='library')render();return;
+  }
+  if(!Capacitor.isPluginAvailable('RivoDocuments')){
+    libraryItems=[];libraryLoading=false;libraryError='Documents storage component is missing. Update the Android app.';
+    if(show&&activeTool?.id==='library')render();return;
+  }
+  libraryLoading=true;if(show&&activeTool?.id==='library')render();
+  try{
+    const result=await RivoDocuments.listFiles();
+    libraryItems=Array.isArray(result.files)?result.files:[];
+    libraryError='';
+  }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
+  finally{libraryLoading=false;if(show&&activeTool?.id==='library')render();}
+}
+function openLibrary(){
+  activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];
+  window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
+}
+async function handleLibraryAction(type,index){
+  const selected=libraryItems[index];if(!selected)return;
+  try{
+    if(type==='delete'){
+      if(!window.confirm(dl('confirm')))return;
+      await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
+      toast('Document deleted.');
+    } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
+    else if(type==='share')await RivoDocuments.shareFile({uri:selected.uri});
+  }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
+}
+
 function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
+  if(t.id==='scan')return scannerWorkspace();
   return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('RivoLiveScanner')?'Live edge camera ready':'Live edge camera not registered in installed app — use Smart Scan below until the Android APK is updated'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31b</span></div><button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="mlkit-scanner" style="width:100%;margin-top:8px">${ico('scan')} Smart Scan · Auto-Crop (Google ML Kit)</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
@@ -136,12 +234,21 @@ async function drawPreview(){
   box.innerHTML=`<div class="preview">${files.slice(0,20).map((f,i)=>{const url=URL.createObjectURL(f);previewURLs.push(url);return `<div class="preview-item"><img src="${url}" alt="Page ${i+1}" style="transform:rotate(${scanRotations[i]||0}deg)"><div class="mini-actions"><button data-turn="${i}" title="Rotate">↻</button><span>${i+1}</span></div></div>`;}).join('')}</div>`;
 }
 function wire(){
+  document.querySelectorAll('[data-open-library]').forEach(el=>el.addEventListener('click',openLibrary));
+  document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
+  document.getElementById('library-search')?.addEventListener('input',e=>{const list=document.getElementById('library-list');if(list)list.innerHTML=renderLibraryRows(e.target.value);});
+  document.getElementById('library-list')?.addEventListener('click',e=>{
+    const b=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
+    if(!b)return;
+    const type=b.hasAttribute('data-doc-open')?'open':b.hasAttribute('data-doc-share')?'share':'delete';
+    handleLibraryAction(type,Number(b.getAttribute('data-doc-'+type)));
+  });
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];scanRotations=[];render()}));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];render();document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
-  document.querySelector('.dropzone')?.addEventListener('click',e=>{if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){e.preventDefault();openLiveScanner({gallery:true});}});
+
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
   document.getElementById('mlkit-scanner')?.addEventListener('click',openSmartScanner);
@@ -282,7 +389,7 @@ const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());
 function record(action){history.unshift({action,time:Date.now()});history=history.slice(0,10);localStorage.setItem('rivo-history',JSON.stringify(history));}
 function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
-async function saveOut(bytes,name,mime='application/pdf'){
+async async function saveOut(bytes,name,mime='application/pdf'){
   const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
   if(Capacitor.isNativePlatform()){
     const safe=name.replace(/[^\w.\-]/g,'_');
