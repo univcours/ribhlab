@@ -18,16 +18,36 @@ $mainJava=@'
 package com.ribhlab.rivoscan;
 
 import android.os.Bundle;
+import android.os.Build;
+import android.view.View;
 import android.view.WindowManager;
+import android.graphics.Color;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
-        // Keep Android's clock, network and battery status bar visible.
+        // Keep Android's real clock, network and battery bar visible.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
         super.onCreate(savedInstanceState);
+        // Android 15/16 target SDK 35+ enforces edge-to-edge. Capacitor StatusBar
+        // overlaysWebView=false alone cannot keep the app below the system bar.
+        if (Build.VERSION.SDK_INT >= 35) {
+            View web = getBridge().getWebView();
+            web.setBackgroundColor(Color.rgb(247, 249, 254));
+            ViewCompat.setOnApplyWindowInsetsListener(web, (view, insets) -> {
+                Insets status = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+                if (view.getPaddingTop() != status.top) {
+                    view.setPadding(view.getPaddingLeft(), status.top, view.getPaddingRight(), view.getPaddingBottom());
+                }
+                return insets;
+            });
+            ViewCompat.requestApplyInsets(web);
+        }
     }
 }
 '@
