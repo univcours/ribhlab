@@ -494,7 +494,7 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
     return;
   }
   try{
-    const result=await RivoLiveScanner.scan({gallery,imageUri});
+    const result=await RivoLiveScanner.scan({gallery,imageUri,language});
     await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);
