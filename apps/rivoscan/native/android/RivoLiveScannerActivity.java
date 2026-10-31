@@ -627,28 +627,76 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         },ContextCompat.getMainExecutor(this));
     }
     private void analyze(@NonNull ImageProxy frame){
-        if(editing||!openCvReady){frame.close();return;}
-        // Analyze every third frame to preserve battery and preview responsiveness.
-        if(++frames%3!=0){frame.close();return;}
-        Mat gray=new Mat(),oriented=new Mat();
         try{
+            if(editing || !openCvReady || capture==null)return;
+            // Time-based throttling reduces CPU heat and prevents drawing stale
+            // polygons when different phones run at 15, 30 or 60 FPS.
+            long now=SystemClock.elapsedRealtime();
+            if(now-lastAnalysisTime<190)return;
+            lastAnalysisTime=now;
             ImageProxy.PlaneProxy plane=frame.getPlanes()[0];
-            ByteBuffer buf=plane.getBuffer().duplicate();buf.rewind();
-            int width=frame.getWidth(),height=frame.getHeight(),stride=plane.getRowStride();
-            byte[] input=new byte[width*height];
+            ByteBuffer buffer=plane.getBuffer().duplicate();
+            buffer.rewind();
+            int width=frame.getWidth(),height=frame.getHeight();
+            int stride=plane.getRowStride(),pixelStride=plane.getPixelStride();
+            if(width<60||height<60||pixelStride<1)return;
+            byte[] pixels=new byte[width*height];
+            // Camera Y planes may include row padding and pixel strides.
             for(int row=0;row<height;row++){
-                buf.position(row*stride);buf.get(input,row*width,width);
+                int start=row*stride;
+                if(start+(width-1)*pixelStride>=buffer.limit())return;
+                if(pixelStride==1){
+                    buffer.position(start);
+                    buffer.get(pixels,row*width,width);
+                }else{
+                    for(int col=0;col<width;col++)
+                        pixels[row*width+col]=buffer.get(start+col*pixelStride);
+                }
             }
-            gray=new Mat(height,width,CvType.CV_8UC1);gray.put(0,0,input);
-            int rotation=frame.getImageInfo().getRotationDegrees();
-            if(rotation==90)Core.rotate(gray,oriented,Core.ROTATE_90_CLOCKWISE);
-            else if(rotation==180)Core.rotate(gray,oriented,Core.ROTATE_180);
-            else if(rotation==270)Core.rotate(gray,oriented,Core.ROTATE_90_COUNTERCLOCKWISE);
-            else oriented=gray;
-            Point[] corners=RivoEdgeDetector.detectGray(oriented);
-            final int imageWidth=oriented.width(),imageHeight=oriented.height();
-            runOnUiThread(()->{if(!editing&&overlay!=null)overlay.update(corners,imageWidth,imageHeight);});
-        }catch(Exception ignored){}finally{if(oriented!=gray)oriented.release();gray.release();frame.close();}
+            Mat gray=new Mat(height,width,CvType.CV_8UC1);
+            Mat rotated=new Mat();
+            try{
+                gray.put(0,0,pixels);
+                int degrees=frame.getImageInfo().getRotationDegrees();
+                if(degrees==90)Core.rotate(gray,rotated,Core.ROTATE_90_CLOCKWISE);
+                else if(degrees==180)Core.rotate(gray,rotated,Core.ROTATE_180);
+                else if(degrees==270)Core.rotate(gray,rotated,Core.ROTATE_90_COUNTERCLOCKWISE);
+                Mat oriented=degrees==0?gray:rotated;
+                Point[] points=RivoEdgeDetector.detectGray(oriented);
+                final int observedW=oriented.width(),observedH=oriented.height();
+                final long analysisStamp=now;
+                runOnUiThread(()->{
+                    if(editing||overlay==null||capture==null)return;
+                    if(points!=null){
+                        if(smoothCorners!=null){
+                            for(int i=0;i<4;i++){
+                                double oldX=smoothCorners[i].x,oldY=smoothCorners[i].y;
+                                double diff=Math.hypot(points[i].x-oldX,points[i].y-oldY);
+                                if(diff<.16){
+                                    points[i].x=oldX*.58+points[i].x*.42;
+                                    points[i].y=oldY*.58+points[i].y*.42;
+                                }
+                            }
+                        }
+                        smoothCorners=points;
+                        lastValidEdgeTime=analysisStamp;
+                        overlay.update(points,observedW,observedH);
+                    }else if(analysisStamp-lastValidEdgeTime>650){
+                        smoothCorners=null;
+                        overlay.update(null,observedW,observedH);
+                    }
+                });
+            }finally{
+                rotated.release();
+                gray.release();
+            }
+        }catch(Throwable error){
+            // A native OpenCV frame can fail on individual vendor buffers.
+            // Never allow an analyzer exception to close the camera Activity.
+            android.util.Log.w("RivoScan","Skipping unsupported camera frame",error);
+        }finally{
+            frame.close();
+        }
     }
     private void takePicture(){
         if(capture==null||editing)return;
@@ -754,7 +802,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     @Override public void onBackPressed(){
         if(editing)showCamera();else finishWithPages();
     }
-    @Override protected void onDestroy(){cameraBindSerial++;super.onDestroy();if(analyzer!=null)analyzer.shutdownNow();}
+    @Override protected void onDestroy(){
+        cameraBindSerial++;
+        mainHandler.removeCallbacksAndMessages(null);
+        clearFrozenPreview();
+        if(cameraProvider!=null)cameraProvider.unbindAll();
+        if(analyzer!=null)analyzer.shutdownNow();
+        RivoSounds.release();
+        super.onDestroy();
+    }
 
     /** Live camera overlay; normalized corners from analyzed frame. */
     private static final class LiveEdges extends View{
