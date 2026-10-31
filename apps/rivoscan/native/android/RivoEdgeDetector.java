@@ -170,7 +170,7 @@ final class RivoEdgeDetector {
     }
 
     static Point[] fallback() {
-        return new Point[]{new Point(.07,.08),new Point(.93,.08),new Point(.93,.92),new Point(.07,.92)};
+        return new Point[]{new Point(.17,.20),new Point(.83,.20),new Point(.83,.80),new Point(.17,.80)};
     }
 
     static Point[] order(Point[] input) {
