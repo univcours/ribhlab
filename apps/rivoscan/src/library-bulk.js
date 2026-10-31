@@ -38,10 +38,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
       <strong>${items.length} ${t('selected')}</strong><small>${size(total)}</small>
       <div class="bulk-secondary"><button data-bulk="all">${t('all')}</button><button data-bulk="invert">${t('invert')}</button><button data-bulk="cancel">${t('cancel')}</button></div>
-      <div class="bulk-actions">
-        <button data-bulk="share" ${items.length?'':'disabled'}>↗ ${t('share')}</button>
-        <button data-bulk="merge" ${items.length>1?'':'disabled'}>▣ ${t('merge')}</button>
-        <button data-bulk="delete" ${items.length?'':'disabled'}>⌫ ${t('delete')}</button>
+      <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
+        <button data-bulk="share" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span> ${t('share')}</button>
+        <button data-bulk="organize" ${items.length?'':'disabled'}><span aria-hidden="true">▣</span> ${t('move')} / ${t('copy')}</button>
+        <button data-bulk="rename" ${items.length===1?'':'disabled'}><span aria-hidden="true">✎</span> ${t('rename')}</button>
+        <button data-bulk="delete" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span> ${t('delete')}</button>
+        <button data-bulk="merge" ${items.length>1?'':'disabled'}><span aria-hidden="true">⋯</span> ${t('merge')}</button>
       </div>
     </div>`;
   }
@@ -49,9 +51,10 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     if(!mode)return '';
     return `<input type="checkbox" class="doc-select-box" data-doc-select="${index}" aria-label="${t('select')}" ${chosen(doc)?'checked':''}>`;
   }
-  function clear(){mode=false;selected.clear();}
+  function clear(){mode=false;selected.clear();document.body.classList.remove('rivo-multiselect');}
   function prune(){const known=new Set(getItems().map(x=>x.uri));for(const uri of selected)if(!known.has(uri))selected.delete(uri);if(!selected.size)mode=false;}
   function sync(){
+    document.body.classList.toggle('rivo-multiselect',mode);
     for(const slotId of ['library-selection-root','home-selection-root']){
       const slot=document.getElementById(slotId);
       if(slot)slot.innerHTML=toolbar();
@@ -316,6 +319,38 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       finally{clearBusy();}
     });
   }
+  function organize(docs,defaultType='copy'){
+    if(!docs?.length){toast(t('none'),true);return;}
+    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('move')} / ${t('copy')} · ${docs.length}</strong><button data-close-sheet>✕</button></div>
+      <label class="bulk-field">${t('menuActions')}<select name="bulk-file-operation">
+        <option value="copy" ${defaultType==='copy'?'selected':''}>${t('copy')}</option>
+        <option value="move" ${defaultType==='move'?'selected':''}>${t('move')}</option></select></label>
+      <label class="bulk-field">${t('folder')}<select name="bulk-destination">
+        <option value="">${t('root')}</option><option value="Work">${t('work')}</option>
+        <option value="Personal">${t('personal')}</option><option value="Archive">${t('archive')}</option></select></label>
+      <p class="bulk-note">${t('info')}</p>
+      <button class="bulk-share-confirm" data-organize-confirm>${t('ready')}</button>`);
+    root.querySelector('[data-organize-confirm]').addEventListener('click',async()=>{
+      const move=root.querySelector('[name="bulk-file-operation"]').value==='move';
+      const folder=root.querySelector('[name="bulk-destination"]').value;
+      closeSheet();
+      showBusy(t('preparing'));
+      let completed=0;
+      try{
+        for(const doc of docs){
+          progress(`${move?t('move'):t('copy')} ${completed+1}/${docs.length}`);
+          await bridge.organizeFile({uri:doc.uri,folder,move});
+          if(move)selected.delete(doc.uri);
+          completed++;
+        }
+        await onRefresh();prune();sync();
+        toast(`${completed} ${t('done')}`);
+      }catch(error){
+        await onRefresh();prune();sync();
+        toast(`${completed}/${docs.length} · ${error?.message||t('stop')}`,true);
+      }finally{clearBusy();}
+    });
+  }
   async function savePdf(docs){
     if(!docs?.length){toast(t('none'),true);return;}
     showBusy(t('preparing'));
@@ -346,11 +381,13 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     if(name==='delete')await erase(docs);
     if(name==='share')share(docs);
     if(name==='merge')await merge();
+    if(name==='organize')organize(docs);
+    if(name==='rename'&&docs.length===1)await onRename?.(docs[0]);
   }
   function wireToolbar(root){
     root?.addEventListener('click',e=>{
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,action,wireToolbar};
+  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
 }
