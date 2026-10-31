@@ -152,13 +152,13 @@ function recentDocuments(limit=6){
   return docs.map((doc,index)=>`<article class="recent-entry"><span class="recent-file-icon">${ico('file',25)}</span><div class="recent-file-meta"><strong>${escapeHTML(doc.name)}</strong><small>${doc.created?new Date(doc.created).toLocaleString(language):'RivoScan'} · ${formatSize(doc.size||0)}</small></div><button data-doc-open="${index}" class="recent-open" aria-label="${dl('open')}">${ico('back',18)}</button></article>`).join('');
 }
 function home(){
-  const short=[['scan','scan',ut('scan')],['bundle','merge',ut('merge')],['images','image',ut('import')],['ocr','ocr','OCR'],['merge','file',ut('pdf')],['shareFiles','upload',dl('share')],['sign','sign','Sign'],['peerTransfer','convert','Transfer']];
+  const short=[['scan','scan',ut('scan')],['bundle','merge',ut('merge')],['import-image','image',ut('import')],['ocr','ocr','OCR'],['import-file','file',ut('myFiles')],['shareFiles','upload',dl('share')],['sign','sign','Sign'],['peerTransfer','convert','Transfer']];
   return `<section class="app-home">
    <div class="home-top"><div><span class="home-eyebrow">${ut('home')} · RivoScan</span><h1>${ut('welcome')}</h1></div><span class="home-shield">${ico('shield',21)}</span></div>
    <button class="home-search" data-open-library data-focus-search aria-label="${ut('search')}">${ico('search',21)} <span>${ut('search')}</span></button>
    <div class="home-scan-banner"><div><span class="banner-chip">${ico('sparkle',15)} Smart Scanner</span><h2>${ut('scan')}</h2><p>${ut('safe')}</p><button data-tool="scan" class="banner-scan-btn">${ico('camera',19)} ${sl('title')}</button></div><div class="banner-scan-graphic" aria-hidden="true"><span class="banner-paper">${ico('file',63)}</span><span class="banner-corner corner-one"></span><span class="banner-corner corner-two"></span></div></div>
    <div class="home-section-heading"><h2>${ut('quick')}</h2><button data-tab="tools">${ut('seeAll')} ${ico('back',17)}</button></div>
-   <div class="home-shortcuts">${short.map(([id,icon,label])=>`<button class="home-shortcut" data-tool="${id}"><span class="home-shortcut-icon">${ico(icon,24)}</span><span>${escapeHTML(label)}</span></button>`).join('')}</div>
+   <div class="home-shortcuts">${short.map(([id,icon,label])=>`<button class="home-shortcut" ${id.startsWith('import-')?`data-import="${id==='import-image'?'image':'file'}"`:`data-tool="${id}"`}><span class="home-shortcut-icon">${ico(icon,24)}</span><span>${escapeHTML(label)}</span></button>`).join('')}</div>
    <div class="home-section-heading"><h2>${ut('recent')}</h2><button data-open-library>${ut('seeAll')} ${ico('back',17)}</button></div>
    <div class="recent-panel" id="home-recents">${recentDocuments()}</div>
    <p class="home-footer-note">${ico('lock',15)} ${ut('privacy')}</p>
@@ -241,7 +241,7 @@ function renderLibraryRows(needle=''){
 function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p></div></div></div>
-    <button class="btn" data-tool="scan">${ico('scan',19)} ${dl('scan')}</button></div>
+    <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
     <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} Refresh</button></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
@@ -272,6 +272,35 @@ async function loadLibrary(show=true){
       if(homeRows)homeRows.innerHTML=recentDocuments();
     }
   }
+}
+async function chooseLibraryFiles(kind='file'){
+  if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'||!Capacitor.isPluginAvailable('RivoDocuments')){
+    toast('Import into My Documents requires the updated Android app.',true);return;
+  }
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept=kind==='image'?'image/*':'*/*';
+  input.multiple=true;
+  input.style.position='fixed';input.style.opacity='0';input.style.pointerEvents='none';
+  document.body.appendChild(input);
+  input.onchange=async ()=>{
+    const imported=[...input.files];input.remove();if(!imported.length)return;
+    showBusy('Importing into RivoScan…');
+    let success=0;
+    try{
+      for(const file of imported){
+        if(file.size>60*1024*1024){toast('File over 60 MB: '+file.name,true);continue;}
+        const bytes=new Uint8Array(await file.arrayBuffer());
+        await RivoDocuments.saveFile({name:file.name,mimeType:file.type||'application/octet-stream',base64:toBase64(bytes)});
+        success++;
+      }
+      await loadLibrary(false);
+      toast(success+' file(s) saved to Downloads/RivoScan.');
+      if(success)openLibrary();
+    }catch(error){console.error('Import to library:',error);toast(error?.message||'Import failed',true);}
+    finally{clearBusy();}
+  };
+  input.click();
 }
 function openTab(tab){
   if(tab==='library'){openLibrary();return;}
@@ -323,6 +352,7 @@ function wire(){
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
   }));
   document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>openTab(el.dataset.tab)));
+  document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
   document.getElementById('library-search')?.addEventListener('input',refreshVisibleLibrary);
   document.getElementById('library-filter')?.addEventListener('change',e=>{libraryFilter=e.target.value;refreshVisibleLibrary()});
