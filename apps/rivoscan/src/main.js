@@ -891,7 +891,7 @@ async function imageCanvas(file,filter='color',rotation=0){
  const url=URL.createObjectURL(file);let img;
  try{img=await new Promise((resolve,reject)=>{const el=new Image();el.onload=()=>resolve(el);el.onerror=()=>reject(Error('Unsupported image'));el.src=url})}finally{URL.revokeObjectURL(url)}
  const max=2100,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
- const canvas=document.createElement('canvas');const side=rotation%180!==0;canvas.width=side?h:w;canvas.height=side?w:h;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(rotation*Math.PI/180);ctx.filter=filter==='enhance'?'contrast(1.18) brightness(1.08) saturate(.85)':filter==='gray'?'grayscale(1) contrast(1.14)':filter==='bw'?'grayscale(1) contrast(1.7) brightness(1.2)':'none';ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();
+ const canvas=document.createElement('canvas');const side=rotation%180!==0;canvas.width=side?h:w;canvas.height=side?w:h;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.save();ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(rotation*Math.PI/180);ctx.filter=filter==='enhance'?'contrast(1.18) brightness(1.08) saturate(.85)':filter==='gray'?'grayscale(1) contrast(1.14)':filter==='bw'?'grayscale(1) contrast(1.7) brightness(1.2)':'none';ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();
  if(filter==='bw'){const im=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<im.data.length;i+=4){const v=im.data[i]>.64*255?255:0;im.data[i]=im.data[i+1]=im.data[i+2]=v}ctx.putImageData(im,0,0)}
  return canvas;
 }
