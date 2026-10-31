@@ -349,20 +349,34 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void discoverCameras(ProcessCameraProvider provider){
         cameraChoices.clear();
         for(CameraInfo info:provider.getAvailableCameraInfos()){
-            try{
-                String id=Camera2CameraInfo.from(info).getCameraId();
-                boolean exists=false;
-                for(CameraChoice c:cameraChoices){if(c.id.equals(id)){exists=true;break;}}
-                if(exists)continue;
-                int facing=info.getLensFacing();
-                cameraChoices.add(new CameraChoice(id,cameraLabel(info,id,facing),facing));
-            }catch(Exception ignored){
-                // Some devices expose virtual cameras that are not backed by Camera2.
+            // Use actual Camera2 IDs where Android exposes them; never assume how
+            // many cameras a phone has or a vendor-specific rear-camera ID.
+            String id;
+            try{id=Camera2CameraInfo.from(info).getCameraId();}
+            catch(Exception missingCamera2){
+                // Older/vendor camera adapters can expose only generic front/back.
+                // Keep them usable instead of silently dropping all options.
+                id="facing:"+info.getLensFacing();
             }
+            boolean exists=false;
+            for(CameraChoice c:cameraChoices){if(c.id.equals(id)){exists=true;break;}}
+            if(exists)continue;
+            int facing=info.getLensFacing();
+            String label=id.startsWith("facing:")
+                ?(facing==CameraSelector.LENS_FACING_FRONT?"Front camera":
+                  facing==CameraSelector.LENS_FACING_BACK?"Rear camera":"Other camera")
+                :cameraLabel(info,id,facing);
+            cameraChoices.add(new CameraChoice(id,label,facing));
         }
     }
     private CameraSelector cameraSelector(){
         if(selectedCamera==null)return CameraSelector.DEFAULT_BACK_CAMERA;
+        // Generic lens-facing fallback works on Android devices without
+        // separately exposed Camera2 sensor IDs.
+        if(selectedCamera.id.startsWith("facing:")){
+            if(selectedCamera.facing==CameraSelector.LENS_FACING_FRONT)return CameraSelector.DEFAULT_FRONT_CAMERA;
+            if(selectedCamera.facing==CameraSelector.LENS_FACING_BACK)return CameraSelector.DEFAULT_BACK_CAMERA;
+        }
         final String cameraId=selectedCamera.id;
         return new CameraSelector.Builder().addCameraFilter(infos->{
             ArrayList<CameraInfo> matched=new ArrayList<>();
@@ -440,6 +454,21 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 discoverCameras(provider);
                 provider.unbindAll();
                 CameraSelector selector=cameraSelector();
+                if(selectedCamera==null && !provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)){
+                    // Some tablets, damaged devices and external-camera setups
+                    // have no accessible rear camera. Pick a working available one.
+                    if(provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)){
+                        selectedCamera=new CameraChoice("facing:"+CameraSelector.LENS_FACING_FRONT,
+                            "Front camera (rear unavailable)",CameraSelector.LENS_FACING_FRONT);
+                    }else if(!cameraChoices.isEmpty()){
+                        selectedCamera=cameraChoices.get(0);
+                    }else{
+                        throw new IllegalStateException("Android did not expose a camera");
+                    }
+                    selector=cameraSelector();
+                    if(cameraPickerButton!=null)cameraPickerButton.setText(shortCameraName(selectedCamera)+" ▾");
+                    if(message!=null)message.setText("Rear camera unavailable · using "+shortCameraName(selectedCamera));
+                }
                 Preview preview=new Preview.Builder().build();
                 preview.setSurfaceProvider(cameraView.getSurfaceProvider());
                 ImageCapture newCapture=new ImageCapture.Builder()
@@ -466,8 +495,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 }
             }catch(Exception e){
                 capture=null;boundCamera=null;
-                if(message!=null)message.setText("Camera could not start · choose another camera");
-                Toast.makeText(this,"Cannot open this camera. Tap Cameras and select another.",Toast.LENGTH_LONG).show();
+                if(message!=null)message.setText("This camera is unavailable. Tap Cameras ▾ to choose another.");
+                Toast.makeText(this,"This camera could not open. Choose another available camera.",Toast.LENGTH_LONG).show();
             }
         },ContextCompat.getMainExecutor(this));
     }
