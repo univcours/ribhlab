@@ -61,7 +61,7 @@ jobs:
           grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          grep -F 'versionCode 9' android/app/build.gradle
+          grep -F 'versionCode 10' android/app/build.gradle
       - name: Verify live scanner and persistent Documents storage are registered
         run: |
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
@@ -89,7 +89,7 @@ jobs:
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='9' versionName='0.9.0'"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='10' versionName='0.10.0'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
           "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
@@ -98,7 +98,7 @@ jobs:
           while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
-          echo "PASS: APK 0.9.0 contains launcher resources and native scanner classes."
+          echo "PASS: APK 0.10.0 contains launcher resources and native scanner classes."
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:
