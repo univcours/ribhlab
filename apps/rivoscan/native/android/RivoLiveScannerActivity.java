@@ -409,7 +409,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         discoverCameras(cameraProvider);
         ArrayList<String> labels=new ArrayList<>();
-        labels.add("Default rear camera (automatic)");
+        boolean hasRear=false;
+        try{hasRear=cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA);}
+        catch(Exception ignored){}
+        labels.add(hasRear?"Default rear camera (automatic)":"Default available camera (automatic)");
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()){
             new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Choose camera")
