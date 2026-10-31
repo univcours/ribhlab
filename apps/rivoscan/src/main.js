@@ -143,7 +143,7 @@ function render(){
   const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt="RivoScan"><strong>RivoScan</strong></span><div class="topright"><button class="top-documents" data-open-library aria-label="${ut('documents')}">${ico('file',17)} <span>${ut('documents')}</span></button><button class="top-profile" data-tab="me" aria-label="${ut('settings')}">${ico('info',19)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation"><button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button><button type="button" data-open-library class="${isDocs?'active':''}">${ico('file')}${ut('documents')}</button><button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('convert')}${ut('tools')}</button><button type="button" data-tab="me" class="${isMe?'active':''}">${ico('info')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-tool="scan" aria-label="${ut('scan')}">${ico('camera',27)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',27)}</button>`:''}${mobile}</div>`;
   wire();
 }
 function recentDocuments(limit=6){
@@ -352,6 +352,10 @@ function wire(){
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
   }));
   document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>openTab(el.dataset.tab)));
+  document.querySelectorAll('[data-live-camera]').forEach(el=>el.addEventListener('click',async ()=>{
+    if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openLiveScanner();
+    else openTool('scan');
+  }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
   document.getElementById('library-search')?.addEventListener('input',refreshVisibleLibrary);
