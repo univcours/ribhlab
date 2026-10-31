@@ -344,7 +344,16 @@ async function consumeSmartScan(result){
   const picked=[];
   for(let i=0;i<result.scannedImages.length;i++)picked.push(await readScannedImage(result.scannedImages[i],i));
   addSelectedFiles(picked);
-  toast(picked.length+' corrected page(s) added. Add more pages or tap Process & Save for a single PDF.');
+  if(!picked.length)return;
+  showBusy(dl('saving'));
+  try{
+    const pdf=await imagesToPdf('enhance',picked);
+    const saved=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
+    toast(picked.length+' page(s) saved as PDF. Open '+dl('documents')+' to view.');
+  }catch(err){
+    console.error('Scan auto-save failed:',err);
+    toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
+  }finally{clearBusy();}
 }
 async function openSmartScanner(){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
@@ -391,14 +400,29 @@ function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
 async function saveOut(bytes,name,mime='application/pdf'){
   const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+  const safe=String(name||'RivoScan.pdf').replace(/[^\w.\-]/g,'_').slice(0,110);
   if(Capacitor.isNativePlatform()){
-    const safe=name.replace(/[^\w.\-]/g,'_');
-    const entry=await Filesystem.writeFile({path:`RivoScan/${Date.now()}_${safe}`,data:toBase64(data),directory:Directory.Cache,recursive:true});
-    await Share.share({title:`RivoScan • ${name}`,files:[entry.uri],dialogTitle:'Save or share file'});
-  } else {
-    const url=URL.createObjectURL(new Blob([data],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
+      // Genuine permanent public storage. MediaStore exposes Downloads/RivoScan in Samsung My Files.
+      const saved=await RivoDocuments.saveFile({name:safe,base64:toBase64(data),mimeType:mime});
+      record(activeTool?.name||'Saved document');
+      await loadLibrary(false);
+      toast(dl('savedNow')+' ✓');
+      return saved;
+    }
+    // Older Android fallback: persistent app Documents, never volatile Cache.
+    const output=await Filesystem.writeFile({
+      path:`RivoScan/${Date.now()}_${safe}`,data:toBase64(data),directory:Directory.Documents,recursive:true
+    });
+    record(activeTool?.name||'Saved document');
+    toast('Saved in app Documents. Public Downloads storage needs the updated Android app.');
+    return output;
   }
-  record(activeTool.name);toast('Document created. Save or share it now.');
+  const url=URL.createObjectURL(new Blob([data],{type:mime}));
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=safe;document.body.appendChild(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  record(activeTool?.name||'Download');
+  toast('File downloaded successfully.');
 }
 function canvasBlob(canvas,type='image/jpeg',quality=.85){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image conversion failed')),type,quality))}
 async function imageCanvas(file,filter='color',rotation=0){
@@ -453,10 +477,10 @@ function peerWorkspace(){
  return $PLACEHOLDER__;
 }
 
-async function imagesToPdf(filter){
- const pdf=await PDFDocument.create();for(let i=0;i<files.length;i++){
-  progress(`Preparing image ${i+1} / ${files.length}`);
-  const canvas=await imageCanvas(files[i],filter,scanRotations[i]||0),blob=await canvasBlob(canvas,'image/jpeg',Number(setting('quality')||.75));
+async function imagesToPdf(filter,sourceFiles=files){
+ const pdf=await PDFDocument.create();for(let i=0;i<sourceFiles.length;i++){
+  progress(`Preparing image ${i+1} / ${sourceFiles.length}`);
+  const canvas=await imageCanvas(sourceFiles[i],filter,sourceFiles===files?(scanRotations[i]||0):0),blob=await canvasBlob(canvas,'image/jpeg',Number(setting('quality')||.85));
   const image=await pdf.embedJpg(await blob.arrayBuffer());const pw=595.28,ph=841.89,margin=18;
   const ratio=Math.min((pw-2*margin)/image.width,(ph-2*margin)/image.height);const width=image.width*ratio,height=image.height*ratio;
   const page=pdf.addPage([pw,ph]);page.drawImage(image,{x:(pw-width)/2,y:(ph-height)/2,width,height});
