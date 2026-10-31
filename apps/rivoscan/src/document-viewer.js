@@ -137,7 +137,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     const grid=tag('div','doc-edit-grid');
     const options=pdfType(current)?[
       ['rotate','rotate'],['sign','sign'],['text','text'],['watermark','watermark'],['reorder','reorder'],['split','extract']
-    ]:imageType(current)?[['scan','crop'],['images','imagePdf']]:[];
+    ]:imageType(current)?[['enhance','enhance'],['scan','crop'],['images','imagePdf']]:[];
     for(const [toolId,label] of options){
       grid.appendChild(button(word(label),'doc-edit-choice',async()=>{
         if(!current)return;
