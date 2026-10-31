@@ -146,6 +146,68 @@ public class RivoDocumentsPlugin extends Plugin {
         return mime == null ? "*/*" : mime;
     }
 
+
+    /**
+     * Bounded local preview/edits, restricted to items already owned by RivoScan.
+     * Large files can still be opened in their usual native app without copying.
+     */
+    @PluginMethod
+    public void readFile(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
+        Uri uri = verifiedUri(call); if (uri == null) return;
+        final int previewLimit = 16 * 1024 * 1024;
+        ContentResolver resolver = getContext().getContentResolver();
+        try (Cursor cursor = resolver.query(uri,
+                new String[]{MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.SIZE},null,null,null)) {
+            if (cursor == null || !cursor.moveToFirst()) { call.reject("Document not found."); return; }
+            long size = cursor.getLong(1);
+            if (size > previewLimit) { call.reject("PREVIEW_TOO_LARGE: Open this document in another app."); return; }
+            try (java.io.InputStream in = resolver.openInputStream(uri);
+                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                if (in == null) { call.reject("Could not open document."); return; }
+                byte[] buffer=new byte[32768]; int count,total=0;
+                while ((count=in.read(buffer))!=-1) {
+                    total+=count;
+                    if (total > previewLimit) { call.reject("PREVIEW_TOO_LARGE: Open this document in another app."); return; }
+                    out.write(buffer,0,count);
+                }
+                JSObject result = new JSObject();
+                result.put("base64",Base64.encodeToString(out.toByteArray(),Base64.NO_WRAP));
+                result.put("name",cursor.getString(0));
+                result.put("mimeType",mimeOf(uri));
+                call.resolve(result);
+            }
+        } catch (Exception e) { call.reject("Cannot read document: " + e.getMessage(),e); }
+    }
+
+    @PluginMethod
+    public void renameFile(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
+        Uri uri = verifiedUri(call); if (uri == null) return;
+        String proposed=call.getString("name");
+        if(proposed==null||proposed.trim().isEmpty()) { call.reject("A document name is required."); return; }
+        String original;
+        try (Cursor cursor=getContext().getContentResolver().query(uri,
+                new String[]{MediaStore.MediaColumns.DISPLAY_NAME},null,null,null)) {
+            if(cursor==null||!cursor.moveToFirst()){call.reject("Document not found.");return;}
+            original=cursor.getString(0);
+        } catch(Exception e){call.reject("Cannot read document name.",e);return;}
+        String originalExt=original.contains(".")?original.substring(original.lastIndexOf('.')):"";
+        String base=proposed.replaceAll("[\\\\/\\x00-\\x1f:*?\"<>|]","_").trim();
+        if(base.lastIndexOf('.')>0)base=base.substring(0,base.lastIndexOf('.'));
+        base=base.replaceAll("^[. ]+|[. ]+$","");
+        if(base.isEmpty()) { call.reject("A valid document name is required."); return; }
+        if(base.length()>90)base=base.substring(0,90);
+        String newName=base+originalExt;
+        try{
+            ContentValues values=new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME,newName);
+            int updated=getContext().getContentResolver().update(uri,values,null,null);
+            if(updated<1){call.reject("Could not rename document.");return;}
+            JSObject response=new JSObject();response.put("name",newName);call.resolve(response);
+        }catch(Exception e){call.reject("Rename failed: "+e.getMessage(),e);}
+    }
+
     @PluginMethod
     public void openFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
