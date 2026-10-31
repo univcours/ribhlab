@@ -390,7 +390,7 @@ async function loadLibrary(show=true){
   libraryLoading=true;if(show&&activeTool?.id==='library')render();
   try{
     const result=await RivoDocuments.listFiles();
-    libraryItems=Array.isArray(result.files)?result.files:[];
+    libraryItems=(Array.isArray(result.files)?result.files:[]).sort((a,b)=>(b.created||0)-(a.created||0));
     bulkUI.prune();
     libraryError='';
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
