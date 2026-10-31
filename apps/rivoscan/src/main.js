@@ -18,6 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
+  document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
     .then(()=>StatusBar.setBackgroundColor({color:'#F7F9FE'}))
