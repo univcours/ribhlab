@@ -42,6 +42,16 @@ try {
     throw "Expected one online Samsung SM-S908B but found $($samsung.Count). Devices: $($serials -join ', '). Connect just the target Samsung and retry."
   }
   $serial=$samsung[0]
+  function Get-RivoVersion {
+    $details=@(& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan)
+    if($LASTEXITCODE -ne 0 -or -not ($details -match 'versionName=')) { return '<not installed>' }
+    $code=($details | Select-String -Pattern 'versionCode=\d+' | Select-Object -First 1)
+    $name=($details | Select-String -Pattern 'versionName=\S+' | Select-Object -First 1)
+    if(-not $code -or -not $name) { return '<version not detected>' }
+    return ($name.Matches[0].Value + ' / ' + $code.Matches[0].Value)
+  }
+  $before=Get-RivoVersion
+  Write-Host "BEFORE install: $before" -ForegroundColor Yellow
   Write-Host "Samsung detected ($serial). Updating RivoScan in place, preserving app data..." -ForegroundColor Cyan
   $result = & $adb -s $serial install -r $apk 2>&1
   $code = $LASTEXITCODE
@@ -49,10 +59,12 @@ try {
   if($code -ne 0 -or -not ($result -match '^Success$')) {
     throw "Android installation failed. If INSTALL_FAILED_UPDATE_INCOMPATIBLE appears, the old app uses another signing key. DO NOT uninstall before backing up RivoScan documents."
   }
-  $packageInfo = & $adb -s $serial shell dumpsys package com.ribhlab.rivoscan
-  $versionLine = $packageInfo | Where-Object {$_ -match 'versionName=|versionCode='} | Select-Object -First 2
-  Write-Host "Installed version:" -ForegroundColor Green
-  $versionLine | ForEach-Object {Write-Host $_.Trim()}
+  $after=Get-RivoVersion
+  Write-Host "AFTER install: $after" -ForegroundColor Green
+  if($after -notmatch 'versionName=0\.4\.0' -or $after -notmatch 'versionCode=4(?:\D|$)') {
+    throw "Samsung does not report RivoScan v0.4.0 / versionCode 4 after installation. DO NOT uninstall or clear app data. Check the APK build version and install output above."
+  }
+  Write-Host "VERIFIED: Samsung has the newly installed RivoScan 0.4.0 package." -ForegroundColor Green
   & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
   Write-Host ""
