@@ -146,45 +146,45 @@ const opts = {
 
 function scannerWorkspace(){
   const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
-  return \`<section class="workspace scan-workspace">
-  <button class="back" data-go="home">\${ico('back')} \${dl('all')}</button>
-  <div class="work-title"><div class="tool-icon sky">\${ico('scan',27)}</div><div><h1>Smart Scanner</h1><p>Point your camera at a document, adjust its edges and save a clean PDF.</p></div></div>
-  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">\${ico('camera',25)} <span><b>Scan document</b><small>Camera · Live edges · Auto crop</small></span><span class="scan-action-arrow">→</span></button>
-  <button class="scan-action-secondary" id="scanner-gallery">\${ico('image',24)} <span><b>Import a photo</b><small>Detect & adjust 4 corners</small></span></button></div>
-  <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">\${ico('file',20)} \${dl('documents')}</button>
-  <button id="mlkit-scanner" class="scan-mlkit-link">\${ico('sparkle',18)} Auto-crop with ML Kit</button></div>
-  <div class="scan-runtime" role="status">\${live?'CameraX ready · Live borders':'If live camera is unavailable, use Auto-crop with ML Kit below.'}</div>
-  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>Your pages <span class="scan-page-count">\${files.length}</span></h3><small>Scanner results are saved automatically after capture</small></div>
-  <div class="filelist" id="filelist">\${renderFiles()}</div><div id="scanpreview"></div>
-  <div class="scan-import-row"><label for="files" class="scan-upload-link">\${ico('upload',18)} Add photos manually<input id="files" type="file" accept="image/*" multiple></label>
-  <button id="camera" class="scan-upload-link">\${ico('camera',18)} Basic camera</button></div>
-  </div><div class="panel scan-export-panel"><div id="options">\${opts.scan||''}</div>
-  <button id="process" class="btn operation scan-save-pdf">\${ico('download',20)} Save all selected pages as PDF</button>
-  <p class="hint">Saved documents stay in \${dl('folder')} and can be opened anytime using \${dl('documents')}.</p></div>
-  </section>\`;
+  return `<section class="workspace scan-workspace">
+  <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
+  <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>Smart Scanner</h1><p>Point your camera at a document, adjust its edges and save a clean PDF.</p></div></div>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>Scan document</b><small>Camera · Live edges · Auto crop</small></span><span class="scan-action-arrow">→</span></button>
+  <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>Import a photo</b><small>Detect & adjust 4 corners</small></span></button></div>
+  <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
+  <button id="mlkit-scanner" class="scan-mlkit-link">${ico('sparkle',18)} Auto-crop with ML Kit</button></div>
+  <div class="scan-runtime" role="status">${live?'CameraX ready · Live borders':'If live camera is unavailable, use Auto-crop with ML Kit below.'}</div>
+  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>Your pages <span class="scan-page-count">${files.length}</span></h3><small>Scanner results are saved automatically after capture</small></div>
+  <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
+  <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} Add photos manually<input id="files" type="file" accept="image/*" multiple></label>
+  <button id="camera" class="scan-upload-link">${ico('camera',18)} Basic camera</button></div>
+  </div><div class="panel scan-export-panel"><div id="options">${opts.scan||''}</div>
+  <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} Save all selected pages as PDF</button>
+  <p class="hint">Saved documents stay in ${dl('folder')} and can be opened anytime using ${dl('documents')}.</p></div>
+  </section>`;
 }
 function renderLibraryRows(needle=''){
   const q=String(needle||'').trim().toLocaleLowerCase();
   const matched=libraryItems.map((item,index)=>({item,index})).filter(({item})=>!q||item.name.toLocaleLowerCase().includes(q));
   if(libraryLoading)return '<div class="doc-empty">Loading your documents…</div>';
-  if(libraryError)return \`<div class="doc-empty doc-error">\${escapeHTML(libraryError)}</div>\`;
-  if(!matched.length)return \`<div class="doc-empty">\${ico('file',32)}<p>\${dl('empty')}</p><button class="btn" data-tool="scan">\${ico('scan')} \${dl('scan')}</button></div>\`;
-  return matched.map(({item,index})=>\`<article class="document-entry">
-    <div class="document-icon">\${ico('file',24)}</div>
-    <div class="document-description"><strong title="\${escapeHTML(item.name)}">\${escapeHTML(item.name)}</strong><small>\${formatSize(item.size||0)} · \${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
+  if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
+  if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
+  return matched.map(({item,index})=>`<article class="document-entry">
+    <div class="document-icon">${ico('file',24)}</div>
+    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
     <div class="document-buttons">
-      <button data-doc-open="\${index}" aria-label="\${dl('open')} \${escapeHTML(item.name)}">\${ico('file',17)}<span>\${dl('open')}</span></button>
-      <button data-doc-share="\${index}" aria-label="\${dl('share')} \${escapeHTML(item.name)}">\${ico('upload',17)}<span>\${dl('share')}</span></button>
-      <button data-doc-delete="\${index}" class="document-delete" aria-label="\${dl('remove')} \${escapeHTML(item.name)}">\${ico('delete',17)}</button>
-    </div></article>\`).join('');
+      <button data-doc-open="${index}" aria-label="${dl('open')} ${escapeHTML(item.name)}">${ico('file',17)}<span>${dl('open')}</span></button>
+      <button data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',17)}<span>${dl('share')}</span></button>
+      <button data-doc-delete="${index}" class="document-delete" aria-label="${dl('remove')} ${escapeHTML(item.name)}">${ico('delete',17)}</button>
+    </div></article>`).join('');
 }
 function libraryWorkspace(){
-  return \`<section class="workspace library-workspace"><button class="back" data-go="home">\${ico('back')} \${dl('all')}</button>
-    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">\${ico('file',26)}</div><div><h1>\${dl('documents')}</h1><p>\${dl('saved')} · \${dl('folder')}</p></div></div></div>
-    <button class="btn" data-tool="scan">\${ico('scan',19)} \${dl('scan')}</button></div>
-    <div class="panel library-panel"><div class="library-top"><strong>\${libraryItems.length} \${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">\${ico('rotate',17)} Refresh</button></div>
-    <label class="library-search">\${ico('search',19)}<input id="library-search" type="search" placeholder="\${dl('search')}"></label>
-    <div id="library-list" class="library-list">\${renderLibraryRows()}</div></div></section>\`;
+  return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
+    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p></div></div></div>
+    <button class="btn" data-tool="scan">${ico('scan',19)} ${dl('scan')}</button></div>
+    <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} Refresh</button></div>
+    <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
+    <div id="library-list" class="library-list">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
@@ -389,7 +389,7 @@ const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());
 function record(action){history.unshift({action,time:Date.now()});history=history.slice(0,10);localStorage.setItem('rivo-history',JSON.stringify(history));}
 function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
-async async function saveOut(bytes,name,mime='application/pdf'){
+async function saveOut(bytes,name,mime='application/pdf'){
   const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
   if(Capacitor.isNativePlatform()){
     const safe=name.replace(/[^\w.\-]/g,'_');
