@@ -161,6 +161,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         GradientDrawable drawable=new GradientDrawable();
         drawable.setColor(color);drawable.setCornerRadius(dp(radius));return drawable;
     }
+    /** Contrasting colored stroke makes every native camera control recognizable. */
+    private GradientDrawable outlined(int fill,int radius,int frameColor){
+        GradientDrawable drawable=rounded(fill,radius);
+        drawable.setStroke(dp(1.7f),frameColor);
+        return drawable;
+    }
     private TextView text(String title,int size,int color,boolean bold){
         TextView result=new TextView(this);
         result.setText(title);result.setTextSize(size);result.setTextColor(color);
@@ -173,6 +179,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         label.setOnClickListener(v->{RivoSounds.play(this,"tap");action.run();});
         label.setClickable(true);label.setFocusable(true);
         label.setContentDescription(title);
+        label.setBackground(outlined(Color.rgb(26,43,82),11,Color.rgb(52,202,190)));
         return label;
     }
     private LinearLayout.LayoutParams weighted(){
@@ -180,7 +187,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
-        b.setTextColor(Color.WHITE);b.setBackground(rounded(Color.rgb(34,51,100),12));
+        b.setTextColor(Color.WHITE);
+        b.setBackground(outlined(Color.rgb(34,51,100),12,Color.rgb(102,155,255)));
         b.setOnClickListener(v->{RivoSounds.play(this,"tool");onTap.run();});return b;
     }
     private void layout(View body,String hint,Button... buttons){
@@ -205,7 +213,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
-            if(i==buttons.length-1){action.setBackground(rounded(Color.rgb(49,85,218),13));action.setTextColor(Color.WHITE);}
+            if(i==buttons.length-1){action.setBackground(outlined(Color.rgb(49,85,218),13,Color.rgb(77,223,206)));action.setTextColor(Color.WHITE);}
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
             p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
         }
@@ -231,7 +239,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
         cameraPickerButton=touchLabel(selectedCamera==null?trNative("bestCamera")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
-        cameraPickerButton.setBackground(rounded(Color.rgb(37,51,91),11));
+        cameraPickerButton.setBackground(outlined(Color.rgb(37,51,91),11,Color.rgb(102,155,255)));
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
         flashButton=touchLabel(torchOn?trNative("flashOn"):trNative("flashOff"),12,Color.WHITE,this::toggleTorch);
@@ -320,8 +328,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void updateBatchButtons(){
         if(singleButton==null||batchButton==null)return;
-        singleButton.setBackground(rounded(batchMode?Color.TRANSPARENT:Color.rgb(66,92,185),22));
-        batchButton.setBackground(rounded(batchMode?Color.rgb(66,92,185):Color.TRANSPARENT,22));
+        singleButton.setBackground(outlined(batchMode?Color.rgb(37,51,91):Color.rgb(66,92,185),
+            20,batchMode?Color.rgb(107,146,209):Color.rgb(77,223,206)));
+        batchButton.setBackground(outlined(batchMode?Color.rgb(66,92,185):Color.rgb(37,51,91),
+            20,batchMode?Color.rgb(77,223,206):Color.rgb(107,146,209)));
     }
     private void toggleTorch(){
         if(boundCamera==null||!boundCamera.getCameraInfo().hasFlashUnit()){
