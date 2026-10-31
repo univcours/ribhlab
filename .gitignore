@@ -1,3 +1,11 @@
-node_modules/
-dist/
-.DS_Store
+**/node_modules/
+**/dist/
+**/.vite/
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/*.keystore
+**/*.jks
+.env
+.env.*
+!.env.example

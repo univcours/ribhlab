@@ -1,0 +1,49 @@
+name: RivoScan Android debug build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-android.yml'
+permissions:
+  contents: read
+jobs:
+  android-debug:
+    name: Build Android debug APK (not for Play Store production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate JavaScript source
+        run: npm run check
+      - name: Bundle offline web assets
+        run: npm run build
+      - name: Generate Android wrapper and synchronize
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Save APK for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

@@ -1,99 +1,75 @@
-# RibhLab — ربح لاب | العربية · English · Français
+# RivoScan • Android PDF Toolkit (Beta)
 
-موقع نشر تعليمي بثلاث لغات، جاهز للبناء والاستضافة على Netlify أو أي خدمة تستضيف ملفات HTML. **المشروع مكتمل كموقع، لكنه غير منشور على الإنترنت بعد**. يلزمك دومين، وبريد تواصل حقيقي، وربط مستودع GitHub بلوحة الإدارة.
+**RivoScan** is a privacy-oriented PDF toolbox from RibhLab. This repository provides an editable, installable Android/Capacitor starter plus a responsive web interface. It is **not yet a tested or published Play Store release**.
 
-## ما الذي يضمّه المشروع؟
+## Implemented source code
 
-- **60 صفحة HTML**: ثلاث صفحات رئيسية، تسع صفحات أقسام، 27 صفحة مقالة، 18 صفحة تعريفية وقانونية، وثلاث صفحات أدوات تفاعلية.
-- **9 موضوعات مفيدة × 3 لغات** (27 نسخة لغوية أصلية/مترجمة بعناية)، قابلة للتعديل أو الحذف أو الإضافة.
-- إدارة محتوى مبنية على **Sveltia CMS** في `/admin/` مع محرر JSON قابل للتحرير، يتطلب ربط GitHub والاعتماد المناسب.
-- بحث سريع حسب اللغة، تصميم RTL بالعربية وLTR بالإنجليزية/الفرنسية، قائمة للهاتف وروابط لتغيير لغة المقال.
-- أدوات تعمل محلياً: حاسبة ميزانية مخاطرة التداول، حاسبة تسعير العمل الحر، ومولّد برومبت.
-- SEO: HTML جاهز للزحف، عناوين وأوصاف مختلفة، بيانات Article structured data، `robots.txt`، وملفات sitemap/canonical/hreflang تلقائية **بعد** إعداد الدومين.
-- صفحات: سياسة الخصوصية، شروط الاستخدام، من نحن، التواصل، إخلاء المسؤولية، السياسة التحريرية.
-- **AdSense غير مفعّل افتراضياً.** لا توجد إعلانات أو كوكيز تتبع أو تحليلات خارجية في هذا الإصدار.
+1. Scan photos with camera, reorder pages, rotate previews, and create PDF.
+2. Images → PDF.
+3. Merge PDFs.
+4. Extract specified pages.
+5. Rotate PDF pages.
+6. Delete pages.
+7. Reorder PDF pages with numeric sequence.
+8. Page numbers.
+9. Text watermarks.
+10. Text annotations.
+11. Hand-drawn visual signatures (NOT certificate-based digital signing).
+12. PDF → JPG/PNG exported as ZIP.
+13. Selectable PDF text → TXT.
+14. OCR → TXT in English, French, Arabic, Spanish, German, Portuguese, Italian (language packs may download on first use).
+15. Compress scanned PDFs by rasterization (may lose selectable text, links, forms; size reduction not guaranteed).
+16. Clear common PDF metadata (NOT secure redaction).
 
-## 1. تشغيل الموقع محلياً
+All core editing and conversion runs inside the device/browser, with no document-upload backend. **OCR language data** may be fetched from the library's training-data host on first use; no document needs to be sent to a remote server. Test this behavior before any privacy claim in production.
 
-يلزم **Node.js 20 أو أحدث**؛ لا توجد مكتبات npm ضرورية.
+## Requirements
+
+- Node.js 22+
+- Android SDK and Android Studio for native development (or GitHub Actions)
+- GitHub Actions for building debug APK
+- Google Play Console developer account for production publishing
+
+## Setup
 
 ```bash
-npm run build
-npm run check
+cd apps/rivoscan
+npm install
 npm run dev
 ```
 
-افتح `http://localhost:4173/ar/`، أو `/en/`، أو `/fr/`. أوقف الخادم بـ `Ctrl+C`.
+To build Android locally:
 
-يمكن أيضاً استضافة محتوى مجلد `dist/` على أي استضافة ثابتة. لا ترفع المشروع كاملاً كموقع جاهز؛ ارفع `dist` فقط بعد البناء.
-
-## 2. التحضير الفعلي للنشر — مطلوب
-
-حرّر `site.config.json`:
-
-```json
-{
-  "brand": "RibhLab",
-  "domain": "https://YOUR-REAL-DOMAIN.COM",
-  "contactEmail": "YOUR-REAL-EMAIL@YOUR-DOMAIN.COM",
-  "publisherName": "RibhLab Editorial Team",
-  "adsensePublisherId": "",
-  "social": {"youtube":"", "linkedin":""}
-}
+```bash
+npm run build
+npx cap add android
+npx cap sync android
+npx cap open android
 ```
 
-استعمل الدومين والبريد اللذين تملكهما فعلياً؛ لا تختلق بيانات اتصال. أدخل اسم الناشر الحقيقي والجهة المسؤولة عن المحتوى. بعد ذلك شغّل `npm run build` و `npm run check` من جديد. لا تنتج روابط canonical صحيحة أو sitemap إلا بعد تحديد الدومين.
+Android package ID: `com.ribhlab.rivoscan` (verify uniqueness and branding before release).
 
-**Netlify**: ضع المشروع في GitHub وأنشئ موقعاً من المستودع (Build command: `npm run build`; Publish directory: `dist`). ملف `netlify.toml` مهيأ. كل تغيير تُرسله إلى الفرع `main` يطلق إعادة بناء تلقائية وفق إعدادات الاستضافة.
+To get a **debug APK**, run GitHub Actions → **RivoScan Android debug build** → **Run workflow**. Download the artifact `RivoScan-debug-APK`. It is for QA only, **not a signed release AAB for Google Play**. Dependencies are installed at build time; commit a lockfile before production releases for reproducibility.
 
-## 3. لوحة إدارة المقالات (قابلة للتحديث)
+## Before Google Play release
 
-1. أنشئ مستودع GitHub واحفظ فيه محتويات هذا المشروع.
-2. حرّر `admin/config.yml` ثم غيّر `repo: YOUR_GITHUB_USERNAME/YOUR_REPOSITORY` إلى اسم المستودع الصحيح.
-3. افتح `https://YOUR-REAL-DOMAIN.COM/admin/` بعد النشر.
-4. لتسجيل الدخول كمالك مستودع GitHub، اختر **Sign In with Token** في Sveltia CMS واستعمل access token بحدود الوصول المناسبة إلى المستودع فقط. لا تشارك المفتاح مع أحد، ولا تضفه إلى ملفات الموقع.
-5. بعد حفظ أي مقالة، يكتب CMS المحتوى إلى GitHub ويعيد Netlify بناء الموقع. قد تحتاج إلى مراجعة صلاحيات المستودع وواجهة التحكم عند أول نشر.
+- Test every tool on actual Android devices, including large files, Arabic OCR and Native Share.
+- Add native image edge detection / perspective crop and true automatic scanner detection; current version uses enhance/grayscale filters, not automatic perspective correction.
+- Build a properly signed **release AAB** using upload key stored in GitHub Actions secrets; never commit keystore, JSON service account, or passwords.
+- Create the Play Console app entry, confirm package ID, app icon, and supported targets.
+- Prepare privacy policy at publicly accessible URL; check Data Safety, permissions, screenshots and declarations against real behavior.
+- Confirm RivoScan trademark/name availability. Avoid impersonating competitors.
+- Integrate Google Play publishing in a restricted test track once app and signing are ready; approval cannot be guaranteed.
 
-للفرق التي تفضّل دخولاً دون token، يمكن إعداد OAuth وفق توثيق Sveltia الرسمي. لوحة التحكم تعتمد على خدمة خارجية وقت التشغيل ولا تعمل بدون الربط والإنترنت.
+## Roadmap (NOT implemented)
 
-### تحرير مباشر دون لوحة تحكم
+- True PDF → Word/Excel with layout reconstruction.
+- AI translation / summary / PDF chat (requires explicitly opt-in network backend and pricing/privacy consent).
+- Cryptographic signatures, encryption and redaction.
+- Camera auto-edge detection, perspective correction and live document framing.
+- In-app purchases, AdMob ads and subscription entitlement checks.
+- Fully translated tool UI (7 locales currently cover primary navigation, not every action label).
 
-كل مقالة ملف في `content/articles/*.json`. يمكنك فتحه وتعديل محتوى `translations.ar` و`translations.en` و`translations.fr` و`sections`. لنسخ مقال جديد، انسخ ملفاً، غيّر اسمه و`slug` والفئة والتواريخ واللغات الثلاث، ثم أعد البناء. سيظهر في الأقسام والبحث والخريطة تلقائياً. **تحتوي كل مقالة على اللغات الثلاث كاملة**؛ البناء يمنع النشر إذا نقصت ترجمة أو ثلاثة أقسام على الأقل. حافظ على استقلالية التحرير وجودة الترجمة.
+## Security
 
-## 4. AdSense: التجهيز ≠ الموافقة
-
-تم تصميم التنقل والصفحات والمحتوى الأصلي والمراجعة لتسهيل استيفاء متطلبات شائعة، **لكن لا توجد أي طريقة تضمن القبول**؛ Google وحدها تقرر، وهي تتحقق من جودة الموقع الحقيقية وملاءمة المحتوى والالتزام بالسياسات. قبل تقديم الطلب:
-
-- انشر الموقع على دومين صالح مع SSL، واختبره على الهاتف، واملأ بريد التواصل باسم حقيقي يعمل، واكتب تعريفاً صادقاً عن الناشر.
-- راجع جميع المقالات وأضف محتوى أصلياً من خبرتك، أمثلة أو اختبارات حقيقية، روابط مرجعية موثوقة، وتحديثات منتظمة حيث يلزم. المحتوى الحالي نقطة بداية، وليس ضماناً للجودة المطلوبة.
-- أصلح أي صفحات ناقصة أو مكررة، وأبقِ روابط التنقل والفهرسة فعّالة؛ أرسل sitemap إلى Search Console.
-- لا تعرض وعوداً بتحقيق أرباح مضمونة أو نتائج تداول مضللة، ولا تشجّع النقر على الإعلانات.
-- أضف الإفصاحات المناسبة لأي روابط تسويق بالعمولة وشروط المنتجات قبل إطلاقها.
-- بعد قبول الحساب، أدخل معرف الناشر `ca-pub-XXXXXXXXXXXXXXXX` في `adsensePublisherId`، وسيولّد الموقع `ads.txt` عند البناء.
-- **لا تفعّل تحميل سكربت الإعلانات قبل إعداد الموافقات المطلوبة.** لخدمة إعلانات مخصّصة للمستخدمين في EEA/UK/سويسرا، تتطلب Google منصة إدارة موافقة معتمدة من Google ومتكاملة مع IAB TCF. استخدم Google Privacy & messaging أو مزوداً معتمداً. هذا المشروع لا يحتوي CMP معتمدة؛ ولا يُعد أي إشعار كوكيز عادي بديلاً عنها.
-- بعد التفعيل القانوني والصحيح للـ CMP وتحديث سياسة الخصوصية، أضف `"enableAdsense": true` إلى `site.config.json`، وأعد البناء. سيُحمّل سكربت Auto Ads إذا أدخلت معرف ناشر صالحاً.
-
-الوثائق الرسمية:
-
-- Google AdSense eligibility: https://support.google.com/adsense/answer/9724
-- Page readiness: https://support.google.com/adsense/answer/7299563
-- Certified consent platforms: https://support.google.com/adsense/answer/13554116
-- Sveltia CMS GitHub: https://sveltiacms.app/en/docs/backends/github
-
-## 5. حدود النسخة الحالية
-
-- لا يمكنني نشره على دومين أو ربطه بحساب Google/GitHub نيابة عنك دون الحسابات وصلاحياتك.
-- الإدارة تحتاج إعداد GitHub مرة واحدة. المستخدم النهائي يرى موقعاً ثابتاً سريعاً؛ التحديثات ليست تلقائية من مصادر الأخبار، بل تتم بالنشر والتحرير والتحقق.
-- لم يتم تفعيل نموذج إرسال مباشر؛ التواصل عبر البريد الفعلي الذي ستحدده. يجب تهيئته قبل تقديم الموقع للمراجعة.
-- أدوات التداول تعليمية ولا تقدم حساب حجم عقد فعلي أو إشارات تداول.
-- صفحة `privacy` تصف النسخة الافتراضية بدون أدوات تتبع. **يجب تحديثها** إذا أضفت خدمات تحليل أو إعلانات أو نماذج أو تقنيات تخزين بيانات.
-
----
-
-**EN**: Build with `npm run build`; preview with `npm run dev`; edit `site.config.json`, configure `admin/config.yml` for your GitHub repository, then deploy `dist/` (Netlify build is preconfigured). Ads are intentionally off; the site is not automatically accepted to AdSense.
-
-**FR** : Lancez `npm run build`, puis `npm run dev` pour prévisualiser. Renseignez le domaine et l’e-mail dans `site.config.json`, configurez GitHub dans `admin/config.yml`, puis publiez `dist/` avec Netlify. AdSense est désactivé par défaut et l’admission n’est jamais garantie.
-
-## Sharing and Google Search
-
-Every article has share links for WhatsApp, Facebook, X, LinkedIn, Telegram, Pinterest, Reddit and email. Native device sharing and copy-link also support Instagram/TikTok/Snapchat manually (they do not offer universal web prefilled sharing links). Metadata includes Open Graph image, Twitter/X card, canonical, hreflang and Article JSON-LD. Sitemap and robots.txt are produced from `SITE_URL` during builds. After deployment, submit `https://univcours.github.io/ribhlab-site/sitemap.xml` to Google Search Console and verify ownership. Indexation is determined by search engines, not guaranteed.
+Never share service-account JSON, release keystore or Play Console password in chat. Avoid assigning admin access to CI when the narrower release permissions suffice. Do not release this beta before independent QA.
