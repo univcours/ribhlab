@@ -25,28 +25,40 @@ import android.graphics.Color;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
         // Keep Android's real clock, network and battery bar visible.
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+            WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().setStatusBarColor(Color.rgb(16, 27, 50));
+        getWindow().setNavigationBarColor(Color.rgb(16, 27, 50));
+        new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
+            .setAppearanceLightStatusBars(false);
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
         super.onCreate(savedInstanceState);
         // Android 15/16 target SDK 35+ enforces edge-to-edge. Capacitor StatusBar
         // overlaysWebView=false alone cannot keep the app below the system bar.
         if (Build.VERSION.SDK_INT >= 35) {
+            // Keep the Android system status bar entirely outside the WebView.
+            // Its native dark band remains visible while HTML scrolls below it.
+            View content = findViewById(android.R.id.content);
             View web = getBridge().getWebView();
+            content.setBackgroundColor(Color.rgb(16, 27, 50));
             web.setBackgroundColor(Color.rgb(247, 249, 254));
-            ViewCompat.setOnApplyWindowInsetsListener(web, (view, insets) -> {
-                Insets status = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-                if (view.getPaddingTop() != status.top) {
-                    view.setPadding(view.getPaddingLeft(), status.top, view.getPaddingRight(), view.getPaddingBottom());
+            ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
+                Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars() |
+                    WindowInsetsCompat.Type.displayCutout());
+                if (view.getPaddingTop() != bars.top) {
+                    view.setPadding(view.getPaddingLeft(), bars.top,
+                        view.getPaddingRight(), view.getPaddingBottom());
                 }
                 return insets;
             });
-            ViewCompat.requestApplyInsets(web);
+            ViewCompat.requestApplyInsets(content);
         }
     }
 }

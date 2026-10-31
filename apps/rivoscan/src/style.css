@@ -840,3 +840,62 @@ body.document-sheet-active{overflow:hidden!important;touch-action:pan-y}
  .storage-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.75fr);width:100%}
  .storage-actions .scan-upload-link{width:100%;font-size:12px;justify-content:center}
 }
+
+
+/* RivoScan v0.14.1: readable colored outlines on touch controls.
+   Frames contrast with their fill; focus and disabled states stay recognizable. */
+:root{
+  --rivo-frame-blue:#6486e8;
+  --rivo-frame-teal:#1daaa0;
+  --rivo-frame-amber:#d79c47;
+  --rivo-frame-muted:#a5b6d3;
+}
+#app button:not(:disabled), .rivo-viewer-layer button:not(:disabled), .doc-viewer-layer button:not(:disabled){
+  border:2px solid var(--rivo-frame-blue);
+  border-radius:12px;
+  box-shadow:0 1px 0 #ffffff60,0 3px 10px #173f8014;
+}
+#app .scan-action-primary,
+#app .banner-scan-btn,
+#app .floating-scan,
+#app .btn-primary,
+#app .primary,
+#app .home-scan-banner button{
+  border:2px solid #50dfd1;
+  box-shadow:0 0 0 1px #0d8a8f44,0 7px 18px #2444ab25;
+}
+#app .scan-action-secondary,#app .scan-documents-link,
+#app .top-documents,#app .settings-row,#app .nav-button,
+#app .home-shortcut,#app .mobile-tool-tile,#app .tool-card{
+  border:2px solid var(--rivo-frame-blue);
+}
+#app .scan-mlkit-link,#app #mlkit-scanner,
+#app .library-heading-actions button,#app .scan-upload-link{
+  border:2px solid var(--rivo-frame-teal);
+}
+#app .document-buttons button:nth-child(3n+1){border-color:var(--rivo-frame-blue)}
+#app .document-buttons button:nth-child(3n+2){border-color:var(--rivo-frame-teal)}
+#app .document-buttons button:nth-child(3n){border-color:var(--rivo-frame-amber)}
+#app .mobilebar button{
+  border:1.5px solid var(--rivo-frame-muted);
+  border-radius:12px;
+  margin:2px;
+  width:calc(100% - 4px);
+}
+#app .mobilebar button.active{
+  border:2px solid var(--rivo-frame-teal);
+  box-shadow:inset 0 0 0 1px #21bbab30;
+}
+#app .nav-button.active,#app .nav-button:hover{border-color:#4addd0}
+#app button:focus-visible,.rivo-viewer-layer button:focus-visible,
+.doc-viewer-layer button:focus-visible{
+  outline:3px solid #f2b95f;outline-offset:3px;
+}
+#app button:disabled{border:1px solid #cad2de;opacity:.53}
+@media(max-width:780px){
+  /* App toolbar scrolls inside the native content region, never over the phone's status bar. */
+  body.rivo-native-android .topbar{
+    position:sticky;top:0;z-index:40;
+  }
+  #app .mobilebar button{min-width:0;max-width:none}
+}
