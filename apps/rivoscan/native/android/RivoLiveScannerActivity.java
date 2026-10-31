@@ -10,6 +10,12 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.drawable.GradientDrawable;
+import android.hardware.camera2.CameraCharacteristics;
+import androidx.camera.camera2.interop.Camera2CameraInfo;
+import androidx.camera.core.CameraInfo;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Space;
@@ -66,7 +72,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private boolean highQuality=true;
     private boolean batchMode=false;
     private String scanMode="Document";
-    private TextView batchButton,singleButton,flashButton,qualityButton,countLabel;
+    private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
+    private final ArrayList<CameraChoice> cameraChoices=new ArrayList<>();
+    private CameraChoice selectedCamera=null; // null means the ordinary default rear camera
+    private ProcessCameraProvider cameraProvider;
+    private int cameraBindSerial=0;
+    private boolean cameraChooserOpen=false;
+
+    private static final class CameraChoice {
+        final String id,label;
+        final int facing;
+        CameraChoice(String id,String label,int facing){this.id=id;this.label=label;this.facing=facing;}
+    }
     private ExecutorService analyzer;
     private RivoCropEditor editor;
     private Bitmap current;
@@ -185,15 +202,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
-        flashButton=touchLabel(torchOn?"ϟ On":"ϟ Off",13,Color.WHITE,this::toggleTorch);
-        top.addView(flashButton,new LinearLayout.LayoutParams(dp(64),dp(56)));
-        qualityButton=touchLabel(highQuality?"HD":"SD",15,Color.WHITE,this::toggleQuality);
+        cameraPickerButton=touchLabel(selectedCamera==null?"Cameras ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
+        cameraPickerButton.setBackground(rounded(Color.rgb(37,51,91),11));
+        cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+        top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
+        flashButton=touchLabel(torchOn?"ϟ On":"ϟ Off",12,Color.WHITE,this::toggleTorch);
+        top.addView(flashButton,new LinearLayout.LayoutParams(dp(52),dp(56)));
+        qualityButton=touchLabel(highQuality?"HD":"SD",14,Color.WHITE,this::toggleQuality);
         qualityButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
-        top.addView(qualityButton,new LinearLayout.LayoutParams(dp(43),dp(56)));
-        TextView help=touchLabel("?",22,Color.WHITE,this::showHelp);
-        top.addView(help,new LinearLayout.LayoutParams(dp(43),dp(56)));
-        TextView more=touchLabel("⋮",27,Color.WHITE,this::showMore);
-        top.addView(more,new LinearLayout.LayoutParams(dp(35),dp(56)));
+        top.addView(qualityButton,new LinearLayout.LayoutParams(dp(38),dp(56)));
+        TextView more=touchLabel("⋮",26,Color.WHITE,this::showMore);
+        top.addView(more,new LinearLayout.LayoutParams(dp(34),dp(56)));
         frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
 
         FrameLayout cameraFrame=new FrameLayout(this);
@@ -269,10 +288,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         batchButton.setBackground(rounded(batchMode?Color.rgb(66,92,185):Color.TRANSPARENT,22));
     }
     private void toggleTorch(){
-        torchOn=!torchOn;
-        if(boundCamera==null){torchOn=false;return;}
-        try{boundCamera.getCameraControl().enableTorch(torchOn);}
-        catch(Exception e){torchOn=false;Toast.makeText(this,"Flash unavailable",Toast.LENGTH_SHORT).show();}
+        if(boundCamera==null||!boundCamera.getCameraInfo().hasFlashUnit()){
+            torchOn=false;
+            Toast.makeText(this,"Flash is not available on this camera.",Toast.LENGTH_SHORT).show();
+        }else{
+            torchOn=!torchOn;
+            try{boundCamera.getCameraControl().enableTorch(torchOn);}
+            catch(Exception e){torchOn=false;Toast.makeText(this,"Flash unavailable",Toast.LENGTH_SHORT).show();}
+        }
         if(flashButton!=null)flashButton.setText(torchOn?"ϟ On":"ϟ Off");
     }
     private void toggleQuality(){
@@ -282,15 +305,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void showHelp(){
         new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("RivoScan Smart Scanner")
-            .setMessage("Point the camera at a page. The green outline follows detected borders. Tap the shutter, drag the four corners, and save. Use Batch for a multipage PDF. HD prioritizes image quality.")
+            .setMessage("Point the camera at a page. The blue outline follows detected borders. Tap the shutter, drag the four corners, and save. Use Batch for a multipage PDF. HD prioritizes image quality.")
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
-        String[] options={"Import photo","Choose from Files","Finish scanning","Scanner help"};
+        String[] options={"Choose camera / front camera","Import photo","Choose from Files","Finish scanning","Scanner help"};
         new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
-            if(which==0)gallery.launch("image/*");
-            else if(which==1)documentPicker.launch(new String[]{"image/*"});
-            else if(which==2)finishWithPages();
+            if(which==0)showCameraPicker();
+            else if(which==1)gallery.launch("image/*");
+            else if(which==2)documentPicker.launch(new String[]{"image/*"});
+            else if(which==3)finishWithPages();
             else showHelp();
         }).show();
     }
@@ -308,20 +332,144 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         private float dp(float n){return n*getResources().getDisplayMetrics().density;}
     }
+    private String shortCameraName(CameraChoice choice){
+        if(choice==null)return "Cameras";
+        return choice.facing==CameraSelector.LENS_FACING_FRONT?"Front":
+            choice.facing==CameraSelector.LENS_FACING_BACK?"Rear "+choice.id:"Cam "+choice.id;
+    }
+    private String cameraLabel(CameraInfo info,String id,int facing){
+        String label=facing==CameraSelector.LENS_FACING_FRONT?"Front camera":
+            facing==CameraSelector.LENS_FACING_BACK?"Rear camera":"External / other camera";
+        String focal="";
+        try{
+            float[] lengths=Camera2CameraInfo.from(info).getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            if(lengths!=null && lengths.length>0){
+                focal=String.format(Locale.US," · %.1f mm",lengths[0]);
+            }
+        }catch(Exception ignored){}
+        return label+" · ID "+id+focal;
+    }
+    private void discoverCameras(ProcessCameraProvider provider){
+        cameraChoices.clear();
+        for(CameraInfo info:provider.getAvailableCameraInfos()){
+            try{
+                String id=Camera2CameraInfo.from(info).getCameraId();
+                boolean exists=false;
+                for(CameraChoice c:cameraChoices){if(c.id.equals(id)){exists=true;break;}}
+                if(exists)continue;
+                int facing=info.getLensFacing();
+                cameraChoices.add(new CameraChoice(id,cameraLabel(info,id,facing),facing));
+            }catch(Exception ignored){
+                // Some devices expose virtual cameras that are not backed by Camera2.
+            }
+        }
+    }
+    private CameraSelector cameraSelector(){
+        if(selectedCamera==null)return CameraSelector.DEFAULT_BACK_CAMERA;
+        final String cameraId=selectedCamera.id;
+        return new CameraSelector.Builder().addCameraFilter(infos->{
+            ArrayList<CameraInfo> matched=new ArrayList<>();
+            for(CameraInfo info:infos){
+                try{
+                    if(cameraId.equals(Camera2CameraInfo.from(info).getCameraId()))matched.add(info);
+                }catch(Exception ignored){}
+            }
+            return matched;
+        }).build();
+    }
+    private void showCameraPicker(){
+        if(editing||isFinishing())return;
+        if(cameraProvider==null){
+            message.setText("Loading available cameras…");
+            ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
+            future.addListener(()->{
+                try{
+                    cameraProvider=future.get();
+                    discoverCameras(cameraProvider);
+                    showCameraPicker();
+                }catch(Exception e){
+                    if(message!=null)message.setText("Cameras unavailable: "+e.getMessage());
+                }
+            },ContextCompat.getMainExecutor(this));
+            return;
+        }
+        discoverCameras(cameraProvider);
+        ArrayList<String> labels=new ArrayList<>();
+        labels.add("Default rear camera (automatic)");
+        for(CameraChoice choice:cameraChoices)labels.add(choice.label);
+        if(cameraChoices.isEmpty()){
+            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Choose camera")
+                .setMessage("Android has not exposed another usable camera. Check camera permissions or connect an available camera.")
+                .setPositiveButton("OK",null).show();
+            return;
+        }
+        int selectedIndex=0;
+        if(selectedCamera!=null){
+            for(int i=0;i<cameraChoices.size();i++){
+                if(cameraChoices.get(i).id.equals(selectedCamera.id)){selectedIndex=i+1;break;}
+            }
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Choose camera · RivoScan")
+            .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,(dialog,which)->{
+                CameraChoice next=which==0?null:cameraChoices.get(which-1);
+                selectedCamera=next;
+                torchOn=false;
+                if(flashButton!=null)flashButton.setText("ϟ Off");
+                if(cameraPickerButton!=null)cameraPickerButton.setText(next==null?"Cameras ▾":shortCameraName(next)+" ▾");
+                dialog.dismiss();
+                if(message!=null)message.setText(next==null?"Using the default rear camera":"Switching to "+next.label);
+                startCamera();
+            })
+            .setNeutralButton("Default", (dialog,which)->{
+                selectedCamera=null;torchOn=false;
+                if(cameraPickerButton!=null)cameraPickerButton.setText("Cameras ▾");
+                if(flashButton!=null)flashButton.setText("ϟ Off");
+                startCamera();
+            })
+            .setNegativeButton("Cancel",null)
+            .setMessage("Only camera devices made accessible by Android/CameraX are listed. Some S22 Ultra lenses may be combined by Samsung.")
+            .show();
+    }
     private void startCamera(){
+        final int serial=++cameraBindSerial;
+        capture=null;
+        boundCamera=null;
         ListenableFuture<ProcessCameraProvider> providerFuture=ProcessCameraProvider.getInstance(this);
         providerFuture.addListener(()->{
-            if(editing||isFinishing())return;
+            if(serial!=cameraBindSerial||editing||isFinishing()||isDestroyed()||cameraView==null)return;
             try{
-                ProcessCameraProvider provider=providerFuture.get();provider.unbindAll();
-                Preview preview=new Preview.Builder().build();preview.setSurfaceProvider(cameraView.getSurfaceProvider());
-                capture=new ImageCapture.Builder().setCaptureMode(highQuality?ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY:ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
+                ProcessCameraProvider provider=providerFuture.get();
+                cameraProvider=provider;
+                discoverCameras(provider);
+                provider.unbindAll();
+                CameraSelector selector=cameraSelector();
+                Preview preview=new Preview.Builder().build();
+                preview.setSurfaceProvider(cameraView.getSurfaceProvider());
+                ImageCapture newCapture=new ImageCapture.Builder()
+                    .setCaptureMode(highQuality?ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY:ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build();
                 ImageAnalysis analysis=new ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build();
                 analysis.setAnalyzer(analyzer,this::analyze);
-                boundCamera=provider.bindToLifecycle(this,CameraSelector.DEFAULT_BACK_CAMERA,preview,analysis,capture);
-                if(torchOn)boundCamera.getCameraControl().enableTorch(true);
-            }catch(Exception e){message.setText("Camera unavailable: "+e.getMessage());}
+                boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,newCapture);
+                capture=newCapture;
+                if(overlay!=null)overlay.update(null,1,1);
+                frames=0;
+                if(boundCamera.getCameraInfo().hasFlashUnit() && torchOn){
+                    boundCamera.getCameraControl().enableTorch(true);
+                }else{
+                    torchOn=false;
+                    if(flashButton!=null)flashButton.setText("ϟ Off");
+                }
+                if(message!=null){
+                    message.setText(selectedCamera==null?"Default rear camera ready":
+                        shortCameraName(selectedCamera)+" ready");
+                }
+            }catch(Exception e){
+                capture=null;boundCamera=null;
+                if(message!=null)message.setText("Camera could not start · choose another camera");
+                Toast.makeText(this,"Cannot open this camera. Tap Cameras and select another.",Toast.LENGTH_LONG).show();
+            }
         },ContextCompat.getMainExecutor(this));
     }
     private void analyze(@NonNull ImageProxy frame){
@@ -430,7 +578,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     @Override public void onBackPressed(){
         if(editing)showCamera();else finishWithPages();
     }
-    @Override protected void onDestroy(){super.onDestroy();if(analyzer!=null)analyzer.shutdownNow();}
+    @Override protected void onDestroy(){cameraBindSerial++;super.onDestroy();if(analyzer!=null)analyzer.shutdownNow();}
 
     /** Live camera overlay; normalized corners from analyzed frame. */
     private static final class LiveEdges extends View{
