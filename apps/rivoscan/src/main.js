@@ -164,6 +164,8 @@ const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
 const tn=t=>toolText(language,t.id,'name');
 const td=t=>toolText(language,t.id,'desc');
 const lt=key=>L(language,key);
+const vivoFolderLabel=()=>({en:'Open phone folder',ar:'فتح المجلد فالهاتف',fr:'Ouvrir le dossier',es:'Abrir carpeta',de:'Ordner öffnen',pt:'Abrir pasta',it:'Apri cartella'})[language]||'Open phone folder';
+
 const localizeOptionMarkup=markup=>localizeOptions(language,markup);
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
@@ -301,7 +303,7 @@ function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
-    <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div>
+    <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
@@ -420,6 +422,11 @@ function wire(){
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
+  document.getElementById('open-storage-folder')?.addEventListener('click',async()=>{
+    if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments')){toast(dl('folder'),true);return;}
+    try{await RivoDocuments.openFolder();}
+    catch(error){toast((error?.message||'Unable to open file manager')+' · '+dl('folder'),true);}
+  });
   document.getElementById('library-search')?.addEventListener('input',refreshVisibleLibrary);
   document.getElementById('library-filter')?.addEventListener('change',e=>{libraryFilter=e.target.value;refreshVisibleLibrary()});
   document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
@@ -552,7 +559,8 @@ async function consumeSmartScan(result){
   try{
     const pdf=await imagesToPdf('enhance',picked);
     const saved=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
-    toast(picked.length+' page(s) saved as PDF. Open '+dl('documents')+' to view.');
+    openLibrary();
+    toast(dl('savedNow')+' · '+picked.length+' '+sl('pages'));
   }catch(err){
     console.error('Scan auto-save failed:',err);
     toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
