@@ -84,6 +84,9 @@ function Sync-Once {
     Say 'Copying updates into the Android project (Capacitor)...' 'Cyan'
     & npx.cmd cap sync android
     Check-Exit 'Capacitor sync'
+    Say 'Installing live Android document-edge scanner...' 'Cyan'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'install-live-scanner.ps1')
+    Check-Exit 'Native scanner integration'
     Say 'Checking Android Gradle ProGuard compatibility...' 'Cyan'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'fix-gradle-rivoscan.ps1')
     Check-Exit 'Gradle ProGuard compatibility'
