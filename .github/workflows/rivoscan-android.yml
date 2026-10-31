@@ -77,7 +77,9 @@ jobs:
           grep -F 'selectedCamera.id.startsWith("facing:")' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'limitedHardware' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           test -f install-rivoscan-android.cmd
-          ! grep -Fq 'SM-S908B' install-rivoscan-on-samsung.ps1
+          test -f install-rivoscan-android.ps1
+          ! grep -Fq 'SM-S908B' install-rivoscan-android.ps1
+          grep -F 'RIVOSCAN_DEVICE_SERIAL' install-rivoscan-android.ps1
           grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
           grep -F 'androidx.camera:camera-view' android/app/build.gradle
