@@ -56,6 +56,11 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
+import androidx.lifecycle.Observer;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -75,6 +80,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private CameraChoice selectedCamera=null; // null means the ordinary default rear camera
     private ProcessCameraProvider cameraProvider;
     private int cameraBindSerial=0;
+    private final HashSet<String> unusableCameraIds=new HashSet<>();
+    private boolean cameraSwitching=false;
+    private ImageView frozenPreview;
+    private long lastAnalysisTime=0;
+    private long lastValidEdgeTime=0;
+    private Point[] smoothCorners;
+    private Observer<PreviewView.StreamState> streamObserver;
+    private final Handler mainHandler=new Handler(Looper.getMainLooper());
 
     private static final class CameraChoice {
         final String id,label;
@@ -142,7 +155,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         return result;
     }
     private TextView touchLabel(String title,int size,int color,Runnable action){
-        TextView label=text(title,size,color,false);label.setOnClickListener(v->action.run());
+        TextView label=text(title,size,color,false);
+        label.setOnClickListener(v->{RivoSounds.play(this,"tap");action.run();});
         label.setClickable(true);label.setFocusable(true);
         label.setContentDescription(title);
         return label;
@@ -153,7 +167,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
         b.setTextColor(Color.WHITE);b.setBackground(rounded(Color.rgb(34,51,100),12));
-        b.setOnClickListener(v->onTap.run());return b;
+        b.setOnClickListener(v->{RivoSounds.play(this,"tool");onTap.run();});return b;
     }
     private void layout(View body,String hint,Button... buttons){
         // A dedicated document-corners editor with a visible safe header and bottom actions.
@@ -251,7 +265,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
             TextView item=touchLabel(mode,13,scanMode.equals(mode)?Color.rgb(114,185,255):Color.rgb(190,193,202),()->{
-                scanMode=mode;showCamera();
+                scanMode=mode;
+                for(int i=0;i<modes.getChildCount();i++){
+                    TextView tab=(TextView)modes.getChildAt(i);
+                    boolean selected=modesList[i].equals(scanMode);
+                    tab.setTextColor(selected?Color.rgb(114,185,255):Color.rgb(190,193,202));
+                    tab.setTypeface(android.graphics.Typeface.DEFAULT,
+                        selected?android.graphics.Typeface.BOLD:android.graphics.Typeface.NORMAL);
+                }
+                if(message!=null)message.setText(scanMode+" mode ready");
             });
             if(scanMode.equals(mode))item.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
             modes.addView(item,weighted());
@@ -263,7 +285,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         photos.setGravity(Gravity.CENTER);
         actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
         Shutter shutter=new Shutter(this);
-        shutter.setOnClickListener(v->takePicture());
+        shutter.setOnClickListener(v->{RivoSounds.play(this,"capture");takePicture();});
         shutter.setContentDescription("Capture document");
         LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
         actions.addView(shutter,buttonParams);
@@ -309,13 +331,19 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
-        String[] options={"Choose camera / front camera","Import photo","Choose from Files","Finish scanning","Scanner help"};
+        String[] options={"Choose rear camera","Import photo","Choose from Files",
+            "Finish scanning","Sounds: "+(RivoSounds.enabled(this)?"On":"Off"),"Scanner help"};
         new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
             if(which==0)showCameraPicker();
             else if(which==1)gallery.launch("image/*");
             else if(which==2)documentPicker.launch(new String[]{"image/*"});
             else if(which==3)finishWithPages();
-            else showHelp();
+            else if(which==4){
+                boolean newState=!RivoSounds.enabled(this);
+                RivoSounds.setEnabled(this,newState);
+                if(newState)RivoSounds.play(this,"saved");
+                Toast.makeText(this,"Button sounds "+(newState?"on":"off"),Toast.LENGTH_SHORT).show();
+            }else showHelp();
         }).show();
     }
     private static final class Shutter extends View{
@@ -334,12 +362,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private String shortCameraName(CameraChoice choice){
         if(choice==null)return "Cameras";
-        return choice.facing==CameraSelector.LENS_FACING_FRONT?"Front":
-            choice.facing==CameraSelector.LENS_FACING_BACK?"Rear "+choice.id:"Cam "+choice.id;
+        return "Rear "+choice.id;
     }
     private String cameraLabel(CameraInfo info,String id,int facing){
-        String label=facing==CameraSelector.LENS_FACING_FRONT?"Front camera":
-            facing==CameraSelector.LENS_FACING_BACK?"Rear camera":"External / other camera";
+        String label="Rear camera";
         String focal="";
         try{
             float[] lengths=Camera2CameraInfo.from(info).getCameraCharacteristic(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
@@ -352,44 +378,39 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void discoverCameras(ProcessCameraProvider provider){
         cameraChoices.clear();
         for(CameraInfo info:provider.getAvailableCameraInfos()){
-            // Use actual Camera2 IDs where Android exposes them; never assume how
-            // many cameras a phone has or a vendor-specific rear-camera ID.
+            if(info.getLensFacing()!=CameraSelector.LENS_FACING_BACK)continue;
             String id;
             try{id=Camera2CameraInfo.from(info).getCameraId();}
-            catch(Exception missingCamera2){
-                // Older/vendor camera adapters can expose only generic front/back.
-                // Keep them usable instead of silently dropping all options.
-                id="facing:"+info.getLensFacing();
+            catch(Exception ignored){id="facing:"+CameraSelector.LENS_FACING_BACK;}
+            if(unusableCameraIds.contains(id))continue;
+            final String cid=id;
+            CameraSelector candidate=selectorFor(cid);
+            try{
+                if(!provider.hasCamera(candidate))continue;
+            }catch(Exception unavailable){continue;}
+            boolean duplicate=false;
+            for(CameraChoice c:cameraChoices)if(c.id.equals(id)){duplicate=true;break;}
+            if(!duplicate){
+                String label=id.startsWith("facing:")?"Rear camera":cameraLabel(info,id,CameraSelector.LENS_FACING_BACK);
+                cameraChoices.add(new CameraChoice(id,label,CameraSelector.LENS_FACING_BACK));
             }
-            boolean exists=false;
-            for(CameraChoice c:cameraChoices){if(c.id.equals(id)){exists=true;break;}}
-            if(exists)continue;
-            int facing=info.getLensFacing();
-            String label=id.startsWith("facing:")
-                ?(facing==CameraSelector.LENS_FACING_FRONT?"Front camera":
-                  facing==CameraSelector.LENS_FACING_BACK?"Rear camera":"Other camera")
-                :cameraLabel(info,id,facing);
-            cameraChoices.add(new CameraChoice(id,label,facing));
         }
     }
-    private CameraSelector cameraSelector(){
-        if(selectedCamera==null)return CameraSelector.DEFAULT_BACK_CAMERA;
-        // Generic lens-facing fallback works on Android devices without
-        // separately exposed Camera2 sensor IDs.
-        if(selectedCamera.id.startsWith("facing:")){
-            if(selectedCamera.facing==CameraSelector.LENS_FACING_FRONT)return CameraSelector.DEFAULT_FRONT_CAMERA;
-            if(selectedCamera.facing==CameraSelector.LENS_FACING_BACK)return CameraSelector.DEFAULT_BACK_CAMERA;
-        }
-        final String cameraId=selectedCamera.id;
+    private CameraSelector selectorFor(String cameraId){
+        if(cameraId.startsWith("facing:"))return CameraSelector.DEFAULT_BACK_CAMERA;
         return new CameraSelector.Builder().addCameraFilter(infos->{
             ArrayList<CameraInfo> matched=new ArrayList<>();
             for(CameraInfo info:infos){
+                if(info.getLensFacing()!=CameraSelector.LENS_FACING_BACK)continue;
                 try{
                     if(cameraId.equals(Camera2CameraInfo.from(info).getCameraId()))matched.add(info);
                 }catch(Exception ignored){}
             }
             return matched;
         }).build();
+    }
+    private CameraSelector cameraSelector(){
+        return selectedCamera==null?CameraSelector.DEFAULT_BACK_CAMERA:selectorFor(selectedCamera.id);
     }
     private void showCameraPicker(){
         if(editing||isFinishing())return;
@@ -412,12 +433,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boolean hasRear=false;
         try{hasRear=cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA);}
         catch(Exception ignored){}
-        labels.add(hasRear?"Default rear camera (automatic)":"Default available camera (automatic)");
+        if(hasRear && !unusableCameraIds.contains("default"))labels.add("Default rear camera (automatic)");
+        else labels.add("Auto (choose available rear camera)");
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()){
-            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Choose camera")
-                .setMessage("Android has not exposed another usable camera. Check camera permissions or connect an available camera.")
-                .setPositiveButton("OK",null).show();
+            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("No rear camera available")
+                .setMessage("Android did not expose an accessible rear camera. You can import a photo and scan its edges.")
+                .setPositiveButton("Import photo",(d,w)->gallery.launch("image/*"))
+                .setNegativeButton("Cancel",null).show();
             return;
         }
         int selectedIndex=0;
@@ -430,8 +453,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             .setTitle("Choose camera · RivoScan")
             .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,(dialog,which)->{
                 CameraChoice next=which==0?null:cameraChoices.get(which-1);
+                if(next!=null && selectedCamera!=null && next.id.equals(selectedCamera.id)){
+                    dialog.dismiss();return;
+                }
                 selectedCamera=next;
                 torchOn=false;
+                RivoSounds.play(this,"switch");
                 if(flashButton!=null)flashButton.setText("ϟ Off");
                 if(cameraPickerButton!=null)cameraPickerButton.setText(next==null?"Cameras ▾":shortCameraName(next)+" ▾");
                 dialog.dismiss();
@@ -440,6 +467,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             })
             .setNeutralButton("Default", (dialog,which)->{
                 selectedCamera=null;torchOn=false;
+                RivoSounds.play(this,"switch");
                 if(cameraPickerButton!=null)cameraPickerButton.setText("Cameras ▾");
                 if(flashButton!=null)flashButton.setText("ϟ Off");
                 startCamera();
