@@ -47,7 +47,15 @@ try {
   if(-not ([System.IO.File]::ReadAllText($build).Contains('androidx.camera:camera-view'))) {
     throw 'CameraX dependency is missing from app/build.gradle. Rebuild aborted.'
   }
-  Write-Host 'PASS: RivoLiveScanner Java classes, registration, CameraX dependencies, and manifest are present.' -ForegroundColor Green
+  $adaptiveIcon=Join-Path $root 'android\app\src\main\res\mipmap-anydpi-v26\ic_launcher.xml'
+  $legacyIcon=Join-Path $root 'android\app\src\main\res\mipmap-xxxhdpi\ic_launcher.png'
+  if(-not (Test-Path -LiteralPath $adaptiveIcon) -or -not (Test-Path -LiteralPath $legacyIcon)) {
+    throw 'New RivoScan launcher resources are missing. Run apply-rivoscan-branding.ps1 and retry.'
+  }
+  if(-not ([System.IO.File]::ReadAllText($manifest).Contains('android:icon="@mipmap/ic_launcher"'))) {
+    throw 'Android manifest still references the old launcher icon. Rebuild aborted.'
+  }
+  Write-Host 'PASS: CameraX scanner, adaptive launcher, and new RivoScan icon are registered.' -ForegroundColor Green
   Write-Host '[6/6] Compiling a NEW Android debug APK including native scanner...' -ForegroundColor Cyan
   $gradle = Join-Path $root 'android\gradlew.bat'
   if(-not (Test-Path -LiteralPath $gradle)) { throw 'Gradle wrapper not found.' }
@@ -59,7 +67,7 @@ try {
   $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
   if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
   Write-Host ''
-  Write-Host 'SUCCESS! Native RivoScan debug APK compiled with live scanner.' -ForegroundColor Green
+  Write-Host 'SUCCESS! RivoScan v0.4 built with live scanner and new adaptive launcher icon.' -ForegroundColor Green
   Write-Host "APK: $apk"
   Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your Samsung.' -ForegroundColor Green
 } catch {
