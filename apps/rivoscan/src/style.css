@@ -9,3 +9,11 @@
 #smart-scanner{background:#3f51d9;border-color:#3f51d9}
 #smart-scanner:hover{background:#2a3dbb}
 @media(max-width:560px){.peer-actions{flex-direction:column}.peer-actions .btn{width:100%}.peer-panel textarea{min-height:96px}}
+
+/* RivoScan official scanner identity */
+.topbar .crumb{display:inline-flex;align-items:center;gap:8px}
+.topbar-brand-icon{height:28px;width:28px;object-fit:cover;border-radius:7px}
+.hero-art{position:relative;width:218px;height:184px;flex-shrink:0;transform:none;display:flex;align-items:center;justify-content:center;background:#fff;padding:8px;border-radius:22px;box-shadow:0 20px 40px #10193955;overflow:hidden}
+.hero-art img{width:100%;height:100%;object-fit:contain}
+.brand img{border-radius:12px;background:#fff;object-fit:cover}
+@media(max-width:780px){.topbar-brand-icon{height:25px;width:25px}}
