@@ -39,21 +39,26 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   function clear(){mode=false;selected.clear();}
   function prune(){const known=new Set(getItems().map(x=>x.uri));for(const uri of selected)if(!known.has(uri))selected.delete(uri);if(!selected.size)mode=false;}
   function sync(){
-    const slot=document.getElementById('library-selection-root');
-    if(slot)slot.innerHTML=toolbar();
-    const root=document.getElementById('library-list');
+    for(const slotId of ['library-selection-root','home-selection-root']){
+      const slot=document.getElementById(slotId);
+      if(slot)slot.innerHTML=toolbar();
+    }
+    for(const rootId of ['library-list','home-recents']){
+    const root=document.getElementById(rootId);
     if(root){
       for(const row of root.querySelectorAll('.document-entry[data-doc-open]')){
         const doc=getItems()[Number(row.dataset.docOpen)];
         row.classList.toggle('doc-selected',!!doc&&chosen(doc));
         row.setAttribute('aria-selected',String(!!doc&&chosen(doc)));
         const existing=row.querySelector('.doc-select-box');
+        const alwaysVisible=rootId==='home-recents';
         if(mode&&!existing){
           const div=document.createElement('div');div.innerHTML=doc?checkbox(doc,Number(row.dataset.docOpen)):'';
           if(div.firstElementChild)row.prepend(div.firstElementChild);
-        } else if(!mode&&existing)existing.remove();
+        } else if(!mode&&existing&&!alwaysVisible)existing.remove();
         else if(existing)existing.checked=!!doc&&chosen(doc);
       }
+    }
     }
   }
   function toggle(doc){
@@ -252,6 +257,17 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       finally{clearBusy()}
     });
   }
+  async function savePdf(docs){
+    if(!docs?.length){toast(t('none'),true);return;}
+    showBusy(t('preparing'));
+    try{
+      const bytes=await createMergedPDF(docs,'original');
+      await saveOut(bytes,`RivoScan_Export_${Date.now()}.pdf`,'application/pdf');
+      await onRefresh();
+      toast(t('done'));
+    }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
+    finally{clearBusy();}
+  }
   async function merge(){
     const docs=selectedDocs();if(docs.length<2){toast(t('needTwo'),true);return}
     showBusy(t('preparing'));
@@ -277,5 +293,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,action,wireToolbar};
+  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,action,wireToolbar};
 }
