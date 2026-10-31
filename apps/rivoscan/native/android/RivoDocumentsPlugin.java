@@ -46,10 +46,18 @@ public class RivoDocumentsPlugin extends Plugin {
     }
     private static boolean isRivoFolder(String relativePath) {
         if(relativePath==null)return false;
-        return relativePath.replace('\\','/').replaceAll("/+$","")
-            .equals(FOLDER.replaceAll("/+$","")) ||
-            relativePath.replace('\\','/').replaceAll("/+$","")
-                .equals(LEGACY_FOLDER.replaceAll("/+$",""));
+        String normalized=relativePath.replace('\\','/').replaceAll("/+$","");
+        String current=FOLDER.replaceAll("/+$","");
+        String old=LEGACY_FOLDER.replaceAll("/+$","");
+        return normalized.equals(current)||normalized.startsWith(current+"/")
+            ||normalized.equals(old)||normalized.startsWith(old+"/");
+    }
+    private static final String[] ORGANIZE_FOLDERS={"","Work","Personal","Archive"};
+    private static String safeSubfolder(String requested){
+        if(requested==null)return null;
+        for(String allowed:ORGANIZE_FOLDERS)if(allowed.equals(requested))
+            return FOLDER+(allowed.isEmpty()?"":allowed+"/");
+        return null;
     }
 
     /**
@@ -187,9 +195,10 @@ public class RivoDocumentsPlugin extends Plugin {
             new String[]{MediaStore.MediaColumns._ID,MediaStore.MediaColumns.DISPLAY_NAME,
                 MediaStore.MediaColumns.SIZE,MediaStore.MediaColumns.DATE_ADDED,
                 MediaStore.MediaColumns.MIME_TYPE,MediaStore.MediaColumns.RELATIVE_PATH},
-            MediaStore.MediaColumns.RELATIVE_PATH+" = ? AND "+
+            "(" + MediaStore.MediaColumns.RELATIVE_PATH+" = ? OR "+
+                MediaStore.MediaColumns.RELATIVE_PATH+" LIKE ?) AND "+
                 MediaStore.MediaColumns.IS_PENDING+" = 0",
-            new String[]{folder},MediaStore.MediaColumns.DATE_ADDED+" DESC")){
+            new String[]{folder,folder+"%"},MediaStore.MediaColumns.DATE_ADDED+" DESC")){
             if(cursor==null)return;
             int count=0;
             while(cursor.moveToNext()&&count<400){
@@ -201,6 +210,7 @@ public class RivoDocumentsPlugin extends Plugin {
                 item.put("created",cursor.isNull(3)?0:cursor.getLong(3)*1000L);
                 item.put("mimeType",cursor.getString(4));
                 item.put("legacy",LEGACY_FOLDER.equals(folder));
+                item.put("folder",cursor.getString(5));
                 items.put(item);
                 count++;
             }
@@ -379,6 +389,74 @@ public class RivoDocumentsPlugin extends Plugin {
             if(cursor==null||!cursor.moveToFirst()||!isRivoFolder(cursor.getString(0)))return null;
             return uri;
         }catch(Exception ignored){return null;}
+    }
+
+    /** Copy/move only between explicit RivoScan folders. The source is never removed
+     * until the new MediaStore entry has been fully written and published. */
+    @PluginMethod
+    public void organizeFile(PluginCall call){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        Uri source=verifiedUri(call);if(source==null)return;
+        String folder=safeSubfolder(call.getString("folder",""));
+        if(folder==null){call.reject("Invalid destination folder.");return;}
+        boolean move=Boolean.TRUE.equals(call.getBoolean("move",false));
+        ContentResolver resolver=getContext().getContentResolver();
+        Uri destination=null;
+        try{
+            String name;String mime;long size=0;
+            try(Cursor cursor=resolver.query(source,new String[]{
+                MediaStore.MediaColumns.DISPLAY_NAME,MediaStore.MediaColumns.MIME_TYPE,
+                MediaStore.MediaColumns.SIZE,MediaStore.MediaColumns.RELATIVE_PATH},null,null,null)){
+                if(cursor==null||!cursor.moveToFirst()||!isRivoFolder(cursor.getString(3)))
+                    throw new IllegalStateException("Cannot access document.");
+                name=cursor.getString(0);mime=cursor.getString(1);
+                size=cursor.isNull(2)?0:cursor.getLong(2);
+                if(move&&folder.equals(cursor.getString(3))){
+                    JSObject same=new JSObject();same.put("uri",source.toString());same.put("name",name);
+                    same.put("unchanged",true);call.resolve(same);return;
+                }
+            }
+            if(size>300L*1024*1024)throw new IllegalStateException("Files larger than 300 MB cannot be copied here.");
+            ContentValues values=new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
+            values.put(MediaStore.MediaColumns.MIME_TYPE,mime==null?"application/octet-stream":mime);
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH,folder);
+            values.put(MediaStore.MediaColumns.IS_PENDING,1);
+            destination=resolver.insert(documentsCollection(),values);
+            if(destination==null)throw new IllegalStateException("Could not create target document.");
+            long written=0;
+            try(InputStream in=resolver.openInputStream(source);
+                OutputStream out=resolver.openOutputStream(destination,"w")){
+                if(in==null||out==null)throw new IllegalStateException("Cannot read or write file.");
+                byte[] buffer=new byte[65536];int n;
+                while((n=in.read(buffer))!=-1){
+                    written+=n;if(written>300L*1024*1024)throw new IllegalStateException("File too large.");
+                    out.write(buffer,0,n);
+                }
+                out.flush();
+            }
+            if(size>0&&written!=size)throw new IllegalStateException("Copy size verification failed.");
+            ContentValues publish=new ContentValues();publish.put(MediaStore.MediaColumns.IS_PENDING,0);
+            if(resolver.update(destination,publish,null,null)<1)
+                throw new IllegalStateException("Could not publish copied document.");
+            if(move&&resolver.delete(source,null,null)<1)
+                throw new IllegalStateException("Copy completed, but original could not be removed. Both files were retained.");
+            JSObject result=new JSObject();result.put("uri",destination.toString());
+            result.put("name",name);result.put("folder",folder);result.put("moved",move);
+            call.resolve(result);
+        }catch(Exception error){
+            // A failed move must keep its source. Never erase the original here.
+            if(destination!=null){
+                try{
+                    // If the target was published but deletion of the source failed, keep the safe copy too.
+                    try(Cursor published=resolver.query(destination,new String[]{MediaStore.MediaColumns.IS_PENDING},null,null,null)){
+                        if(published!=null&&published.moveToFirst()&&published.getInt(0)==1)
+                            resolver.delete(destination,null,null);
+                    }
+                }catch(Exception ignored){}
+            }
+            call.reject("Organizing file failed: "+error.getMessage(),error);
+        }
     }
 
     @PluginMethod
