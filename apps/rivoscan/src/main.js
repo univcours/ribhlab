@@ -16,6 +16,7 @@ import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
+import { openScanEditor } from './scan-editor.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -150,6 +151,20 @@ const docViewerUI=createDocumentViewer({
     }
   },
   onEdit:async(tool,doc,bytes)=>{
+    if(tool==='enhance'&&/^image\//.test(doc.mimeType||'')){
+      await openScanEditor({
+        doc,bridge:RivoDocuments,getLanguage:()=>language,
+        onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
+        onRetake:()=>openLiveScanner(),
+        onRefresh:async()=>{
+          await loadLibrary(false);
+          if(activeTool?.id==='library')refreshVisibleLibrary();
+          else{const rows=document.getElementById('home-recents');if(rows)rows.innerHTML=recentDocuments();}
+        },
+        notify:toast
+      });
+      return;
+    }
     if(tool==='scan'&&/^image\//.test(doc.mimeType||'')){
       await openLiveScanner({imageUri:doc.uri});return;
     }
