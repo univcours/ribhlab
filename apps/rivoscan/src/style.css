@@ -515,3 +515,28 @@ input,textarea,select,button{min-width:0}
   .document-buttons{gap:3px}
   .document-buttons button{min-width:31px;min-height:35px;padding:5px}
 }
+
+/* Document import controls stay inside the viewport even at 320px. */
+.library-heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;max-width:100%}
+.library-heading-actions .btn{white-space:normal;text-align:center;font-size:11px;padding:9px 11px;min-height:43px}
+.library-heading{min-width:0}
+.library-heading>.work-title{min-width:0}
+.library-heading .work-title>div:last-child{min-width:0}
+.library-heading .work-title h1,.library-heading .work-title p{overflow-wrap:anywhere}
+@media(max-width:780px){
+  .library-heading{flex-direction:column;align-items:stretch;gap:12px}
+  .library-heading-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .library-heading-actions .btn{min-width:0;width:100%;background:#30383a;color:#79e6d8;border:1px solid #416663}
+  .library-heading-actions .btn svg{width:16px;flex:none}
+  .scan-workspace,.library-workspace,.app-tools,.app-settings,.app-home{width:100%;overflow-x:clip}
+  .work-grid{grid-template-columns:minmax(0,1fr)}
+  .scan-quick-actions{grid-template-columns:minmax(0,1fr)}
+  .tools-section,.tools-section .mobile-tools-grid,.home-shortcuts{max-width:100%;min-width:0}
+  .document-buttons{min-width:0;gap:3px}
+  .document-entry .document-description{flex:1 1 0}
+  .recent-entry .recent-file-meta{flex:1 1 0}
+  .mobile-tool-tile,.home-shortcut{min-width:0}
+  .library-panel,.panel{min-width:0;max-width:100%}
+  .scan-import-row>*{max-width:100%}
+  .home-scan-banner{max-width:100%;overflow:hidden}
+}
