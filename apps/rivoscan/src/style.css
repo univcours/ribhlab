@@ -826,3 +826,17 @@ body.document-sheet-active{overflow:hidden!important;touch-action:pan-y}
  .doc-edit-options,.doc-rename-form{margin-inline:9px}
 }
 @media(prefers-reduced-motion:reduce){.doc-action,.home-shortcut,.mobile-tool-tile{transition:none}}
+
+/* Persistent phone-storage shortcut: readable, safe touch targets on mobile. */
+.library-top{min-width:0;flex-wrap:wrap}
+.storage-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.storage-actions .scan-upload-link{min-height:45px;max-width:100%;white-space:normal;
+  padding:10px 13px;box-shadow:0 4px 11px #3155da16;border-radius:13px;
+  background:#eef3ff;color:#3155da;border:1px solid #d5e1fc}
+.storage-actions button svg{flex:none}
+@media(max-width:420px){
+ .library-top{align-items:stretch}
+ .library-top strong{width:100%}
+ .storage-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.75fr);width:100%}
+ .storage-actions .scan-upload-link{width:100%;font-size:12px;justify-content:center}
+}
