@@ -45,17 +45,23 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
-      - name: Apply RivoScan branded launcher icon
-        run: |
-          mkdir -p android/app/src/main/res/drawable-nodpi
-          base64 -d assets/icon.png.b64 > android/app/src/main/res/drawable-nodpi/rivoscan_icon.png
-          sed -i 's|@mipmap/ic_launcher_round|@drawable/rivoscan_icon|g; s|@mipmap/ic_launcher|@drawable/rivoscan_icon|g' android/app/src/main/AndroidManifest.xml
       - name: Use AGP 9-compatible ProGuard default
         run: |
           sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
       - name: Integrate live camera edges and interactive crop editor
         shell: pwsh
         run: ./install-live-scanner.ps1
+      - name: Install Android adaptive and themed RivoScan icon
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Verify adaptive launcher and app identity
+        run: |
+          grep -F 'android:icon="@mipmap/ic_launcher"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:roundIcon="@mipmap/ic_launcher_round"' android/app/src/main/AndroidManifest.xml
+          grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'versionCode 4' android/app/build.gradle
       - name: Verify live scanner is registered in the Android APK sources
         run: |
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
