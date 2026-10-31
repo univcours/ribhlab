@@ -15,6 +15,7 @@ import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
+import { createLibraryBulk } from './library-bulk.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -151,7 +152,15 @@ const docViewerUI=createDocumentViewer({
     files=[new File([bytes],doc.name,{type:doc.mimeType||'application/pdf'})];
     scanRotations=[0];updateFileDisplay();
   },
-  onError:message=>toast(message,true)
+  onError:message=>toast(message,true),
+  onShare:doc=>bulkUI.share([doc])
+});
+const bulkUI=createLibraryBulk({
+  bridge:RivoDocuments,getLanguage:()=>language,getItems:()=>libraryItems,
+  onRefresh:async()=>{await loadLibrary(false);refreshVisibleLibrary()},
+  onPreview:doc=>docViewerUI.open(doc),
+  onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
+  showBusy,progress,clearBusy,saveOut,toast
 });
 let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'list';
 const uiText={
@@ -236,7 +245,7 @@ function toolsWorkspace(){
  </section>`;
 }
 function settingsWorkspace(){
- return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.14.0</p></div>
+ return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.15.0</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
@@ -294,7 +303,8 @@ function renderLibraryRows(needle=''){
   if(libraryLoading)return `<div class="doc-empty">${lt('loading')}</div>`;
   if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
   if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
-  return matched.map(({item,index})=>`<article class="document-entry" data-doc-open="${index}" role="button" tabindex="0" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+  return matched.map(({item,index})=>`<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+    ${bulkUI.checkbox(item,index)}
     <div class="document-icon">${ico('file',25)}</div>
     <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
     <div class="document-buttons">
@@ -311,6 +321,7 @@ function libraryWorkspace(){
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
     <button id="library-layout" type="button" aria-label="${libraryLayout==='list'?ut('grid'):ut('list')}">${ico(libraryLayout==='list'?'merge':'file',18)}</button></div>
+    <div id="library-selection-root">${bulkUI.toolbar()}</div><p class="bulk-longpress-hint">${bulkUI.t('hint')}</p>
     <div id="library-list" class="library-list ${libraryLayout==='grid'?'documents-grid':''}">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
@@ -326,6 +337,7 @@ async function loadLibrary(show=true){
   try{
     const result=await RivoDocuments.listFiles();
     libraryItems=Array.isArray(result.files)?result.files:[];
+    bulkUI.prune();
     libraryError='';
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
   finally{
@@ -369,6 +381,7 @@ async function chooseLibraryFiles(kind='file'){
 function openTab(tab){
   docViewerUI.close();
   if(tab==='library'){openLibrary();return;}
+  bulkUI.clear();
   files=[];scanRotations=[];
   activeTool=tab==='tools'?{id:'tools',name:ut('tools')}:tab==='me'?{id:'me',name:ut('me')}:null;
   window.scrollTo({top:0,behavior:'instant'});render();
@@ -377,13 +390,14 @@ function refreshVisibleLibrary(){
   const list=document.getElementById('library-list');
   if(!list)return;
   list.innerHTML=renderLibraryRows(document.getElementById('library-search')?.value||'');
+  const slot=document.getElementById('library-selection-root');if(slot)slot.innerHTML=bulkUI.toolbar();
   list.classList.toggle('documents-grid',libraryLayout==='grid');
   const toggle=document.getElementById('library-layout');
   if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
 }
 function openLibrary(){
   docViewerUI.close();
-  activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];
+  activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];bulkUI.clear();
   window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
 }
 async function handleLibraryAction(type,index){
@@ -394,7 +408,7 @@ async function handleLibraryAction(type,index){
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
       toast(dl('remove')+' ✓');
     } else if(type==='open')await docViewerUI.open(selected);
-    else if(type==='share')await RivoDocuments.shareFile({uri:selected.uri});
+    else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
 
@@ -434,18 +448,24 @@ function wire(){
   document.getElementById('library-filter')?.addEventListener('change',e=>{libraryFilter=e.target.value;refreshVisibleLibrary()});
   document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
   document.getElementById('library-layout')?.addEventListener('click',()=>{libraryLayout=libraryLayout==='list'?'grid':'list';refreshVisibleLibrary()});
+  bulkUI.wireToolbar(document.getElementById('library-selection-root'));
   for(const list of ['library-list','home-recents']){
     const el=document.getElementById(list);
     const activate=e=>{
-      const target=e.target.closest('[data-doc-open],[data-doc-share],[data-doc-delete]');
+      if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
+      const target=e.target.closest('[data-doc-select],[data-doc-open],[data-doc-share],[data-doc-delete]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
+      if(target.hasAttribute('data-doc-select')){if(e.type==='click')bulkUI.toggle(libraryItems[Number(target.dataset.docSelect)]);return;}
       const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
-      handleLibraryAction(type,Number(target.getAttribute('data-doc-'+type)));
+      const index=Number(target.getAttribute('data-doc-'+type));
+      if(type==='open'&&bulkUI.mode()){bulkUI.toggle(libraryItems[index]);return;}
+      handleLibraryAction(type,index);
     };
     el?.addEventListener('click',activate);
     el?.addEventListener('keydown',activate);
+    bulkUI.wireLongPress(el);
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
