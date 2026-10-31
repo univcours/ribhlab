@@ -111,6 +111,16 @@ const libraryLabels={
  it:{documents:'I miei documenti',saved:'Salvati sul telefono',open:'Apri',share:'Condividi',remove:'Elimina',empty:'Le scansioni e i PDF salvati appariranno qui.',search:'Cerca documenti',confirm:'Eliminare questo file da Downloads/RivoScan?',folder:'Download / RivoScan',saving:'Salvataggio PDF…',savedNow:'Salvato in Downloads/RivoScan',scan:'Scansiona documento',files:'File',all:'Tutti gli strumenti'}
 };
 const dl=(key)=>libraryLabels[language]?.[key]||libraryLabels.en[key]||key;
+const scanLabels={
+ en:{title:'Scan document',live:'Camera · Live edges · Auto crop',import:'Import a photo',corners:'Detect and adjust 4 corners',pages:'Your pages',auto:'Scans are saved automatically after capture',add:'Add photos',basic:'Basic camera',save:'Save pages as PDF',hint:'Saved documents stay on your phone.',crop:'Auto-crop with ML Kit',ready:'Live borders ready',fallback:'If live camera fails, use ML Kit',refresh:'Refresh'},
+ fr:{title:'Scanner un document',live:'Caméra · Bords en direct · Recadrage',import:'Importer une photo',corners:'Détecter et ajuster les 4 coins',pages:'Vos pages',auto:'Les scans sont enregistrés automatiquement',add:'Ajouter des photos',basic:'Caméra simple',save:'Enregistrer en PDF',hint:'Les documents restent sur le téléphone.',crop:'Recadrage intelligent ML Kit',ready:'Détection des bords active',fallback:'Si la caméra échoue, utilisez ML Kit',refresh:'Actualiser'},
+ ar:{title:'سكانير الوثائق',live:'كاميرا · تحديد الحواف · قص تلقائي',import:'استيراد صورة',corners:'تحديد وتعديل الزوايا الأربعة',pages:'الصفحات المصورة',auto:'الوثائق كتتحفظ تلقائياً من بعد السكان',add:'زيادة صور',basic:'الكاميرا العادية',save:'حفظ الصفحات PDF',hint:'وثائقك محفوظة فالهاتف وتقدر ترجع ليها أي وقت.',crop:'قص تلقائي ذكي ML Kit',ready:'تحديد الحواف المباشر خدام',fallback:'إلا ما خدمتش الكاميرا جرب القص الذكي ML Kit',refresh:'تحديث'},
+ es:{title:'Escanear documento',live:'Cámara · Bordes · Recorte automático',import:'Importar foto',corners:'Detectar y ajustar 4 esquinas',pages:'Tus páginas',auto:'Los escaneos se guardan automáticamente',add:'Añadir fotos',basic:'Cámara básica',save:'Guardar PDF',hint:'Tus archivos se quedan en el teléfono.',crop:'Recorte ML Kit',ready:'Bordes detectados',fallback:'Si falla la cámara, usa ML Kit',refresh:'Actualizar'},
+ de:{title:'Dokument scannen',live:'Kamera · Kanten · Automatisch zuschneiden',import:'Foto importieren',corners:'Vier Ecken erkennen und anpassen',pages:'Deine Seiten',auto:'Scans werden automatisch gespeichert',add:'Fotos hinzufügen',basic:'Einfache Kamera',save:'Seiten als PDF speichern',hint:'Dateien bleiben auf dem Smartphone.',crop:'ML Kit Auto-Zuschnitt',ready:'Live-Kanten bereit',fallback:'Falls Kamera nicht startet, ML Kit verwenden',refresh:'Aktualisieren'},
+ pt:{title:'Digitalizar documento',live:'Câmara · Bordas · Recorte automático',import:'Importar foto',corners:'Detetar e ajustar 4 cantos',pages:'As suas páginas',auto:'As digitalizações são guardadas automaticamente',add:'Adicionar fotos',basic:'Câmara simples',save:'Guardar PDF',hint:'Os documentos ficam guardados no telemóvel.',crop:'Recorte ML Kit',ready:'Deteção ativa',fallback:'Se a câmara falhar, use ML Kit',refresh:'Atualizar'},
+ it:{title:'Scansiona documento',live:'Fotocamera · Bordi · Ritaglio automatico',import:'Importa foto',corners:'Rileva e regola i 4 angoli',pages:'Le tue pagine',auto:'Le scansioni vengono salvate automaticamente',add:'Aggiungi foto',basic:'Fotocamera base',save:'Salva PDF',hint:'I documenti rimangono salvati sul telefono.',crop:'Ritaglio ML Kit',ready:'Bordi in tempo reale attivi',fallback:'Se la fotocamera non funziona, usa ML Kit',refresh:'Aggiorna'}
+};
+const sl=(key)=>scanLabels[language]?.[key]||scanLabels.en[key]||key;
 
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
 function render(){
@@ -150,18 +160,18 @@ function scannerWorkspace(){
   return `<section class="workspace scan-workspace">
   <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>Smart Scanner</h1><p>Point your camera at a document, adjust its edges and save a clean PDF.</p></div></div>
-  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>Scan document</b><small>Camera · Live edges · Auto crop</small></span><span class="scan-action-arrow">→</span></button>
-  <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>Import a photo</b><small>Detect & adjust 4 corners</small></span></button></div>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>${sl('title')}</b><small>${sl('live')}</small></span><span class="scan-action-arrow">→</span></button>
+  <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
-  <button id="mlkit-scanner" class="scan-mlkit-link">${ico('sparkle',18)} Auto-crop with ML Kit</button></div>
-  <div class="scan-runtime" role="status">${live?'CameraX ready · Live borders':'If live camera is unavailable, use Auto-crop with ML Kit below.'}</div>
-  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>Your pages <span class="scan-page-count">${files.length}</span></h3><small>Scanner results are saved automatically after capture</small></div>
+  <button id="mlkit-scanner" class="scan-mlkit-link">${ico('sparkle',18)} ${sl('crop')}</button></div>
+  <div class="scan-runtime" role="status">${live?sl('ready'):sl('fallback')}</div>
+  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
-  <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} Add photos manually<input id="files" type="file" accept="image/*" multiple></label>
-  <button id="camera" class="scan-upload-link">${ico('camera',18)} Basic camera</button></div>
+  <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
+  <button id="camera" class="scan-upload-link">${ico('camera',18)} ${sl('basic')}</button></div>
   </div><div class="panel scan-export-panel"><div id="options">${opts.scan||''}</div>
-  <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} Save all selected pages as PDF</button>
-  <p class="hint">Saved documents stay in ${dl('folder')} and can be opened anytime using ${dl('documents')}.</p></div>
+  <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} ${sl('save')}</button>
+  <p class="hint">${sl('hint')} ${dl('folder')}</p></div>
   </section>`;
 }
 function renderLibraryRows(needle=''){
