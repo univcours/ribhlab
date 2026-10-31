@@ -40,6 +40,10 @@ echo [4/4] Syncing web assets and plugins...
 call npx cap sync android
 if errorlevel 1 goto :fail
 
+echo [Extra] Applying Gradle 9 compatibility fix...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix-gradle-rivoscan.ps1"
+if errorlevel 1 goto :fail
+
 echo.
 echo SUCCESS: Android Studio project prepared.
 echo Open this folder in Android Studio:
