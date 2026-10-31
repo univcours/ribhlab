@@ -133,42 +133,19 @@ try {
   $env:JAVA_HOME=$selectedJavaHome
   $env:Path=(Join-Path $selectedJavaHome 'bin') + ';' + $env:Path
   Write-Host ("Gradle will use JAVA_HOME=" + $env:JAVA_HOME) -ForegroundColor Green
-  Write-Host '[6/6] Locating Android SDK and configuring Gradle...' -ForegroundColor Cyan
-  $androidDir=Join-Path $root 'android'
-  $localProperties=Join-Path $androidDir 'local.properties'
-  $existingProperties=@()
-  if(Test-Path -LiteralPath $localProperties){
-    $existingProperties=@(Get-Content -LiteralPath $localProperties -ErrorAction Stop)
-  }
+  Write-Host 'Locating Android SDK for Gradle...' -ForegroundColor Cyan
   $sdkCandidates=[System.Collections.Generic.List[string]]::new()
-  # Prefer an explicitly configured SDK, then Android Studio's usual location.
-  foreach($configuredPath in @($env:ANDROID_HOME,$env:ANDROID_SDK_ROOT)){
-    if(-not [string]::IsNullOrWhiteSpace($configuredPath)){$sdkCandidates.Add($configuredPath)}
+  foreach($value in @($env:ANDROID_HOME,$env:ANDROID_SDK_ROOT)){
+    if(-not [string]::IsNullOrWhiteSpace($value)){$sdkCandidates.Add($value)}
   }
-  foreach($line in $existingProperties){
-    if($line -match '^\s*sdk\.dir\s*=\s*(.+?)\s*
-  $gradle = Join-Path $root 'android\gradlew.bat'
-  if(-not (Test-Path -LiteralPath $gradle)) { throw 'Gradle wrapper not found.' }
-  Push-Location -LiteralPath (Join-Path $root 'android')
-  try {
-    & $gradle ':app:assembleDebug' '--no-daemon'
-    FailIfBad 'Gradle assembleDebug'
-  } finally { Pop-Location }
-  $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
-  if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
-  Write-Host ''
-  Write-Host 'SUCCESS! RivoScan v0.14.0 built with live scanner and adaptive launcher icon.' -ForegroundColor Green
-  Write-Host "APK: $apk"
-  Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
-} catch {
-  Write-Host ''
-  Write-Host ('REPAIR FAILED: '+$_.Exception.Message) -ForegroundColor Red
-  exit 1
-} finally {
-  Pop-Location
-}
-){
-      $sdkCandidates.Add($matches[1].Replace('\:',':').Replace('\\','\'))
+  $localProperties=Join-Path $root 'android\local.properties'
+  $oldProperties=@()
+  if(Test-Path -LiteralPath $localProperties){
+    $oldProperties=@(Get-Content -LiteralPath $localProperties)
+    foreach($entry in $oldProperties){
+      if($entry -match '^\s*sdk\.dir\s*=\s*(.+)$'){
+        $sdkCandidates.Add($matches[1].Replace('\:',':').Replace('\\','\'))
+      }
     }
   }
   if($env:LOCALAPPDATA){$sdkCandidates.Add((Join-Path $env:LOCALAPPDATA 'Android\Sdk'))}
@@ -184,15 +161,14 @@ try {
     break
   }
   if(-not $selectedSdk){
-    throw 'Android SDK not found. In Android Studio open Settings > Languages & Frameworks > Android SDK, install a platform, copy the Android SDK Location and set ANDROID_HOME to that folder. The usual location is %LOCALAPPDATA%\Android\Sdk. Your app and documents were not deleted.'
+    throw 'Android SDK not found. In Android Studio > Settings > Languages & Frameworks > Android SDK, install an SDK platform and copy its SDK Location. Then set ANDROID_HOME to that location and retry. Normally: %LOCALAPPDATA%\Android\Sdk. The app and documents were not changed.'
   }
   $env:ANDROID_HOME=$selectedSdk
   $env:ANDROID_SDK_ROOT=$selectedSdk
-  # Gradle local.properties accepts forward slashes on Windows. Preserve other local settings.
-  $sdkProperty='sdk.dir='+$selectedSdk.Replace('\','/')
-  $otherProperties=@($existingProperties | Where-Object {$_ -notmatch '^\s*sdk\.dir\s*='})
-  [System.IO.File]::WriteAllLines($localProperties,[string[]](@($otherProperties)+@($sdkProperty)),
-    [System.Text.UTF8Encoding]::new($false))
+  # Preserve all other local.properties values, and use forward slashes for Gradle on Windows.
+  $lines=@($oldProperties | Where-Object {$_ -notmatch '^\s*sdk\.dir\s*='})
+  $lines+=('sdk.dir='+$selectedSdk.Replace('\','/'))
+  [System.IO.File]::WriteAllLines($localProperties,[string[]]$lines,[System.Text.UTF8Encoding]::new($false))
   Write-Host ('Verified Android SDK: '+$selectedSdk) -ForegroundColor Green
   Write-Host ('Gradle SDK configuration: '+$localProperties) -ForegroundColor Green
   Write-Host 'Compiling a NEW Android debug APK including native scanner...' -ForegroundColor Cyan
