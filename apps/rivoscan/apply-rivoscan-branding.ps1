@@ -2,9 +2,9 @@
 # Run after 'npx cap sync android'. Safe to run repeatedly.
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$source = Join-Path $root 'assets\icon.png.b64'
-$manifest = Join-Path $root 'android\app\src\main\AndroidManifest.xml'
-$resources = Join-Path $root 'android\app\src\main\res\drawable-nodpi'
+$source = Join-Path $root 'assets/icon.png.b64'
+$manifest = Join-Path $root 'android/app/src/main/AndroidManifest.xml'
+$resources = Join-Path $root 'android/app/src/main/res/drawable-nodpi'
 if(-not (Test-Path -LiteralPath $source)){ throw 'Missing scanner icon asset: assets/icon.png.b64' }
 if(-not (Test-Path -LiteralPath $manifest)){ throw 'Android wrapper is missing. Run npm run build and npx cap sync android first.' }
 $encoded = [System.IO.File]::ReadAllText($source).Trim()
