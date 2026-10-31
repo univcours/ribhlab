@@ -1,4 +1,5 @@
 import './style.css';
+import { parsePages } from './pdf-utils.js';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -73,7 +74,8 @@ let activeTool = null;
 let files = [];
 let scanRotations = [];
 let busy = false;
-let history = JSON.parse(localStorage.getItem('rivo-history') || '[]');
+let history = [];
+try { history = JSON.parse(localStorage.getItem('rivo-history') || '[]'); if (!Array.isArray(history)) history = []; } catch { history = []; }
 let previewURLs = [];
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
@@ -82,6 +84,7 @@ const fname = (name) => String(name).replace(/\.[^.]+$/,'').replace(/[^\w\- .]/g
 const formatSize = (n)=>n<1024*1024?`${(n/1024).toFixed(1)} KB`:`${(n/1024/1024).toFixed(1)} MB`;
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
 function render(){
+  previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
   document.documentElement.lang=language; document.body.dir=language==='ar'?'rtl':'ltr';
   const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg" alt=""><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const header = `<header class="topbar"><span class="crumb">RivoScan <span style="color:#c7cfdf">/</span> ${activeTool?escapeHTML(activeTool.name):tr('home')}</span><div class="topright"><select id="language" class="lang" aria-label="Language">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,label])=>`<option value="${id}" ${language===id?'selected':''}>${label}</option>`).join('')}</select><div class="avatar">R</div></div></header>`;
@@ -127,7 +130,7 @@ function wire(){
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];scanRotations=[];render()}));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];render();document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
-  document.getElementById('files')?.addEventListener('change',e=>{const picked=[...e.target.files];if(['scan','images','merge'].includes(activeTool.id)){files=[...files,...picked]}else{files=picked}scanRotations=files.map((_,i)=>scanRotations[i]||0);e.target.value='';updateFileDisplay()});
+  document.getElementById('files')?.addEventListener('change',e=>{addSelectedFiles([...e.target.files]);e.target.value='';});
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
   document.getElementById('scanpreview')?.addEventListener('click',e=>{const b=e.target.closest('[data-turn]');if(!b)return;const i=+b.dataset.turn;scanRotations[i]=((scanRotations[i]||0)+90)%360;drawPreview()});
@@ -135,11 +138,27 @@ function wire(){
   if(activeTool?.id==='sign')initSignature();
 }
 function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
+// Browser PDF libraries commonly keep multiple decoded copies in memory. Bound input sizes.
+const MAX_FILE_BYTES=30*1024*1024, MAX_TOTAL_BYTES=90*1024*1024;
+function addSelectedFiles(picked){
+  const additions=[];
+  for (const file of picked){
+    const image=/\.(png|jpe?g|webp|bmp)$/i.test(file.name)||file.type==='image/png'||file.type==='image/jpeg'||file.type==='image/webp';
+    const pdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf';
+    const allowed=activeTool?.id==='ocr'?(image||pdf):(['scan','images'].includes(activeTool?.id)?image:pdf);
+    if(!allowed){toast(`Unsupported file type: ${file.name}`,true);continue;}
+    if(file.size>MAX_FILE_BYTES){toast(`File too large (max 30 MB): ${file.name}`,true);continue;}
+    additions.push(file);
+  }
+  const multiple=activeTool?.multiple, proposed=multiple?[...files,...additions]:additions.slice(0,1);
+  if(proposed.reduce((sum,f)=>sum+f.size,0)>MAX_TOTAL_BYTES){toast('Files exceed 90 MB total. Try fewer files.',true);return;}
+  files=proposed;scanRotations=files.map((_,i)=>scanRotations[i]||0);updateFileDisplay();
+}
 async function openCamera(){
  try{if(Capacitor.isNativePlatform()){
    const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
-   const blob=await (await fetch(photo.dataUrl)).blob();files.push(new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'}));scanRotations.push(0);updateFileDisplay();
- }else{const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';el.onchange=()=>{const f=el.files?.[0];if(f){files.push(f);scanRotations.push(0);updateFileDisplay()}};el.click()}}
+   const blob=await (await fetch(photo.dataUrl)).blob();addSelectedFiles([new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
+ }else{const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';el.onchange=()=>{const f=el.files?.[0];if(f){addSelectedFiles([f])}};el.click()}}
  catch(err){if(!/cancel/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
 }
 function toast(text,error=false){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),5000)}
@@ -148,17 +167,6 @@ function progress(message){const el=document.getElementById('busytext');if(el)el
 function clearBusy(){busy=false;document.querySelector('.busy')?.remove()}
 function setting(name){return document.querySelector(`[name="${name}"]`)?.value?.trim()||''}
 function requireFiles(min=1){if(files.length<min)throw Error(`Select at least ${min} file${min===1?'':'s'} first.`)}
-function parsePages(spec,total,{allowEmpty=false,requireUnique=false}={}){
-  if(!spec.trim()&&allowEmpty)return Array.from({length:total},(_,i)=>i);
-  if(!spec.trim())throw Error('Enter the page numbers first.');
-  const result=[];for(const token of spec.split(',')){
-    const m=token.trim().match(/^(\d+)\s*(?:-\s*(\d+))?$/);if(!m)throw Error(`Invalid page range: ${token}`);
-    const a=Number(m[1]),b=m[2]?Number(m[2]):a;if(a<1||b<a||b>total)throw Error(`Page range outside 1–${total}: ${token}`);
-    for(let n=a;n<=b;n++)result.push(n-1);
-  }
-  if(requireUnique&&new Set(result).size!==result.length)throw Error('Each page can be listed only once.');
-  return result;
-}
 const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());
 function record(action){history.unshift({action,time:Date.now()});history=history.slice(0,10);localStorage.setItem('rivo-history',JSON.stringify(history));}
 function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}

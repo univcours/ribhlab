@@ -21,6 +21,8 @@
 15. Compress scanned PDFs by rasterization (may lose selectable text, links, forms; size reduction not guaranteed).
 16. Clear common PDF metadata (NOT secure redaction).
 
+**Beta safeguard:** selected files are limited to 30 MB each / 90 MB combined to reduce memory pressure. Basic page selection has automated unit tests.
+
 All core editing and conversion runs inside the device/browser, with no document-upload backend. **OCR language data** may be fetched from the library's training-data host on first use; no document needs to be sent to a remote server. Test this behavior before any privacy claim in production.
 
 ## Requirements
@@ -36,6 +38,7 @@ All core editing and conversion runs inside the device/browser, with no document
 cd apps/rivoscan
 npm install
 npm run dev
+npm test
 ```
 
 To build Android locally:
