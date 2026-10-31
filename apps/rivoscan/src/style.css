@@ -1237,3 +1237,23 @@ html,body,#app{background:var(--rv-bg);color:var(--rv-white)}
  .rivo-editor-actions{gap:2px;padding:7px 4px calc(8px + env(safe-area-inset-bottom,0px))}
  .rivo-editor-actions button{min-height:48px}
 }
+
+
+/* Real peer-to-peer transfer workflow opened by the Direct sharing tab. */
+#app .rivo-peer-workspace{width:min(100%,680px);margin:auto;color:#eaf8ff}
+#app .rivo-peer-workspace .rivo-peer-panel{display:flex;flex-direction:column;gap:17px;padding:19px}
+.rivo-peer-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#app .rivo-peer-actions button{min-height:51px;background:#183b45;color:#a8fff1;border:1.5px solid #3aaba7;
+ border-radius:12px;padding:7px 3px;font-size:12px;font-weight:760}
+#app .rivo-peer-workspace .field{display:flex;flex-direction:column;gap:8px;color:#c5d6e2;font-size:12px;font-weight:760}
+#app .rivo-peer-workspace textarea{width:100%;min-height:84px;padding:12px;font-size:11px;line-height:1.4;
+ resize:vertical;overflow-wrap:anywhere;background:#0d1b29;color:#c4f9e9;border:1px solid #40788a;border-radius:11px}
+#app .rivo-peer-workspace textarea:focus{outline:2px solid #00d8bd}
+#app .rivo-peer-workspace .rivo-peer-status{padding:12px;border-radius:12px;background:#183b42;border:1px solid #287b77;
+ color:#c7ffef;font-size:12px;min-height:44px;overflow-wrap:anywhere}
+#app .rivo-peer-file-picker{display:flex;flex-direction:column;gap:8px;padding:12px;background:#243544;
+ border:1.5px solid #476d7e;border-radius:12px;color:#eaf4ff;font-size:13px}
+#app .rivo-peer-file-picker input{width:100%;font-size:11px}
+#app .rivo-peer-workspace #peer-send{min-height:50px}
+#app .rivo-peer-workspace #peer-send:disabled{opacity:.48}
+@media(max-width:400px){#app .rivo-peer-actions button{font-size:10px}}
