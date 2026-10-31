@@ -93,6 +93,21 @@ public class RivoDocumentsPlugin extends Plugin {
     }
 
 
+    private String nativeLanguage(){
+        return getContext().getSharedPreferences("rivoscan-preferences",Context.MODE_PRIVATE)
+                .getString("language","en");
+    }
+    @PluginMethod
+    public void setLanguage(PluginCall call){
+        String chosen=call.getString("language","en");
+        if(chosen==null||!("en ar fr es de pt it").contains(chosen)
+            ||chosen.length()!=2){call.reject("Unsupported language.");return;}
+        getContext().getSharedPreferences("rivoscan-preferences",Context.MODE_PRIVATE)
+            .edit().putString("language",chosen).apply();
+        call.resolve();
+    }
+    private String localized(String key){return RivoLocale.get(nativeLanguage(),key);}
+
     private static final int MAX_BYTES = 60 * 1024 * 1024;
 
     private void requireModernAndroid(PluginCall call) {
@@ -282,7 +297,7 @@ public class RivoDocumentsPlugin extends Plugin {
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, mimeOf(uri));
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            getContext().startActivity(Intent.createChooser(open, "Open RivoScan document")
+            getContext().startActivity(Intent.createChooser(open, localized("openDocument"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             call.resolve();
         } catch (Exception e) { call.reject("No compatible app can open this document.", e); }
@@ -297,7 +312,7 @@ public class RivoDocumentsPlugin extends Plugin {
             share.setType(mimeOf(uri));
             share.putExtra(Intent.EXTRA_STREAM, uri);
             share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            getActivity().startActivity(Intent.createChooser(share, "Share RivoScan document"));
+            getActivity().startActivity(Intent.createChooser(share, localized("shareDocument")));
             call.resolve();
         } catch (Exception e) { call.reject("Sharing failed: " + e.getMessage(), e); }
     }

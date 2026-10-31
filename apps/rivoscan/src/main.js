@@ -90,6 +90,9 @@ const translations = {
   it:{welcome:'Benvenuto su RivoScan',hero:'Documenti, risolti.',desc:'Scansiona, modifica, converti e firma PDF in privato.',start:'Scansione intelligente',all:'Tutti gli strumenti',create:'Scansiona e crea',organize:'Organizza',edit:'Modifica e firma',convert:'Converti',quick:'Strumenti PDF',select:'Seleziona file',upload:'Scegli file',drop:'Seleziona documenti',ready:'Pronto',run:'Elabora e salva',secure:'Privacy',privacy:'I documenti vengono elaborati sul dispositivo.',home:'Home',files:'Attività recente',soon:'In arrivo',settings:'Lingue'}
 };
 let language = localStorage.getItem('rivo-language') || 'en';
+if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
+}
 let activeTool = null;
 let soundsEnabled = localStorage.getItem('rivo-sounds') !== 'off';
 const soundWords={
@@ -447,7 +450,7 @@ function wire(){
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
-  document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
+  document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
   document.getElementById('sound-toggle')?.addEventListener('change',async e=>{
     soundsEnabled=Boolean(e.target.checked);
     localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');

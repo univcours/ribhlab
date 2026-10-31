@@ -94,6 +94,8 @@ final class RivoLocale {
             "Falha ao guardar imagem; será tentado guardar PDF.",
             "Copia immagine non riuscita; si proverà a salvare il PDF."
         }[lang];
+        if("openDocument".equals(key))return new String[]{"Open RivoScan document","فتح وثيقة RivoScan","Ouvrir le document RivoScan","Abrir documento RivoScan","RivoScan-Dokument öffnen","Abrir documento RivoScan","Apri documento RivoScan"}[lang];
+        if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
         for(int i=0;i<EXTRA_KEYS.length;i++)if(EXTRA_KEYS[i].equals(key))return EXTRA_VALUES[lang][i];
         return key;
