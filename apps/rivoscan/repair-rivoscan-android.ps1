@@ -57,35 +57,79 @@ try {
   }
   Write-Host 'PASS: CameraX scanner, adaptive launcher, and new RivoScan icon are registered.' -ForegroundColor Green
   Write-Host '[6/6] Finding Java JDK for Gradle...' -ForegroundColor Cyan
-  # Windows Android Studio bundles JetBrains Runtime (Java JDK), but a plain
-  # PowerShell terminal may not inherit the IDE's Gradle JDK/JAVA_HOME setting.
+  # Android Studio may ship Java 25, which Gradle 8.14.3 cannot run.
+  # This Android project is built on GitHub Actions with Temurin JDK 21.
+  # Explicitly inspect the compiler version instead of accepting the first JDK.
   $javaHomes = [System.Collections.Generic.List[string]]::new()
-  if($env:JAVA_HOME) { $javaHomes.Add($env:JAVA_HOME) }
-  if($env:ProgramFiles) { $javaHomes.Add((Join-Path $env:ProgramFiles 'Android\Android Studio\jbr')) }
-  if($env:LOCALAPPDATA) { $javaHomes.Add((Join-Path $env:LOCALAPPDATA 'Programs\Android Studio\jbr')) }
-  $installedJava = Get-Command java.exe -ErrorAction SilentlyContinue
-  if($installedJava -and $installedJava.Source) {
-    $javaHomes.Add((Split-Path -Parent (Split-Path -Parent $installedJava.Source)))
+  function Add-JavaHome([string]$candidate) {
+    if([string]::IsNullOrWhiteSpace($candidate)){return}
+    $candidate=$candidate.Trim().Trim('"')
+    if(Test-Path -LiteralPath $candidate -PathType Container){$javaHomes.Add($candidate)}
   }
-  if($env:USERPROFILE) {
-    $jdksRoot=Join-Path $env:USERPROFILE '.jdks'
-    if(Test-Path -LiteralPath $jdksRoot) {
-      @(Get-ChildItem -LiteralPath $jdksRoot -Directory -ErrorAction SilentlyContinue) | ForEach-Object { $javaHomes.Add($_.FullName) }
+  Add-JavaHome $env:JAVA_HOME
+  Add-JavaHome $env:GRADLE_JAVA_HOME
+  if($env:ProgramFiles){Add-JavaHome (Join-Path $env:ProgramFiles 'Android\Android Studio\jbr')}
+  if($env:LOCALAPPDATA){Add-JavaHome (Join-Path $env:LOCALAPPDATA 'Programs\Android Studio\jbr')}
+  $installedJava=Get-Command java.exe -ErrorAction SilentlyContinue
+  if($installedJava -and $installedJava.Source){
+    Add-JavaHome (Split-Path -Parent (Split-Path -Parent $installedJava.Source))
+  }
+  $javaRoots=@()
+  if($env:ProgramFiles){
+    $javaRoots+=@(
+      (Join-Path $env:ProgramFiles 'Eclipse Adoptium'),
+      (Join-Path $env:ProgramFiles 'Microsoft'),
+      (Join-Path $env:ProgramFiles 'Java'),
+      (Join-Path $env:ProgramFiles 'Zulu'),
+      (Join-Path $env:ProgramFiles 'Amazon Corretto')
+    )
+  }
+  if($env:LOCALAPPDATA){
+    $javaRoots+=@(
+      (Join-Path $env:LOCALAPPDATA 'Programs\Eclipse Adoptium'),
+      (Join-Path $env:LOCALAPPDATA 'Programs\Java')
+    )
+  }
+  if($env:USERPROFILE){
+    $javaRoots+=@(
+      (Join-Path $env:USERPROFILE '.jdks'),
+      (Join-Path $env:USERPROFILE '.gradle\jdks')
+    )
+  }
+  foreach($parent in $javaRoots){
+    if(-not (Test-Path -LiteralPath $parent -PathType Container)){continue}
+    foreach($folder in @(Get-ChildItem -LiteralPath $parent -Directory -ErrorAction SilentlyContinue)){
+      Add-JavaHome $folder.FullName
     }
   }
+
   $selectedJavaHome=$null
-  foreach($candidateHome in $javaHomes) {
-    if(-not $candidateHome) { continue }
+  $selectedVersion=0
+  foreach($candidateHome in @($javaHomes | Select-Object -Unique)){
     $javaPath=Join-Path $candidateHome 'bin\java.exe'
     $javacPath=Join-Path $candidateHome 'bin\javac.exe'
-    if((Test-Path -LiteralPath $javaPath) -and (Test-Path -LiteralPath $javacPath)){
-      $selectedJavaHome=$candidateHome
-      break
+    if(-not (Test-Path -LiteralPath $javaPath) -or -not (Test-Path -LiteralPath $javacPath)){continue}
+    try{
+      $compilerVersion=((& $javacPath -version 2>&1) | Out-String).Trim()
+      if($LASTEXITCODE -ne 0 -or $compilerVersion -notmatch '^javac\s+(\d+)'){continue}
+      $major=[int]$matches[1]
+      if($major -ne 21 -and $major -ne 17){
+        Write-Host ("Skipping unsupported JDK " + $major + ": " + $candidateHome) -ForegroundColor Yellow
+        continue
+      }
+      if($selectedJavaHome -eq $null -or ($major -eq 21 -and $selectedVersion -ne 21)){
+        $selectedJavaHome=$candidateHome
+        $selectedVersion=$major
+      }
+      if($selectedVersion -eq 21){break}
+    } catch {
+      Write-Host ("Could not inspect JDK: " + $candidateHome) -ForegroundColor Yellow
     }
   }
   if(-not $selectedJavaHome) {
-    throw 'Java JDK was not found. In Android Studio, open Settings > Build, Execution, Deployment > Build Tools > Gradle to locate Gradle JDK; use the JDK root (often C:\Program Files\Android\Android Studio\jbr) for JAVA_HOME. No APK was installed.'
+    throw 'JDK 21 or 17 was not found. Java 25 from Android Studio is incompatible with Gradle 8.14.3. Install Temurin JDK 21 with: winget install --id EclipseAdoptium.Temurin.21.JDK -e --accept-package-agreements --accept-source-agreements ; then rerun this installer. No app data was changed.'
   }
+  Write-Host ("Verified compatible JDK " + $selectedVersion + ": " + $selectedJavaHome) -ForegroundColor Green
   $env:JAVA_HOME=$selectedJavaHome
   $env:Path=(Join-Path $selectedJavaHome 'bin') + ';' + $env:Path
   Write-Host ("Gradle will use JAVA_HOME=" + $env:JAVA_HOME) -ForegroundColor Green
@@ -100,7 +144,7 @@ try {
   $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
   if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
   Write-Host ''
-  Write-Host 'SUCCESS! RivoScan v0.13 built with live scanner and new adaptive launcher icon.' -ForegroundColor Green
+  Write-Host 'SUCCESS! RivoScan v0.14.0 built with live scanner and adaptive launcher icon.' -ForegroundColor Green
   Write-Host "APK: $apk"
   Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
 } catch {
