@@ -208,3 +208,9 @@ button:focus-visible,.dropzone:focus-within,select:focus-visible,input:focus-vis
 @media(prefers-reduced-motion:reduce){
   .hero-art-shine{animation:none}
 }
+
+/* Native scanner readiness: clearly distinguish live CameraX from ML Kit fallback. */
+.scan-runtime{font-size:11px;line-height:1.55;background:#eff6ff;color:#215092;border:1px solid #c7dfff;border-radius:14px;padding:11px 13px;margin:12px 0 3px;font-weight:750}
+.scan-runtime span{display:block;font-size:10px;letter-spacing:.03em;color:#7e8da4;margin-top:3px;font-weight:650}
+#mlkit-scanner{min-height:50px;color:#2359be;background:#edf4ff;border:1px solid #b9d6ff}
+#mlkit-scanner:hover{background:#e0edff}
