@@ -17,6 +17,9 @@ import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
+import { openPageManager } from './page-manager.js';
+import { exportToolFile } from './tool-exports.js';
+import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -151,6 +154,12 @@ const docViewerUI=createDocumentViewer({
     }
   },
   onEdit:async(tool,doc,bytes)=>{
+    if(tool==='managePages'&&(/\.pdf$/i.test(doc.name)||/pdf/.test(doc.mimeType||''))){
+      if(!bytes)throw Error('PDF too large for page editor');
+      await openPageManager({file:new File([bytes],doc.name,{type:'application/pdf'}),
+       getLanguage:()=>language,onSave:saveOut,onDone:async()=>{await loadLibrary(false);openLibrary()},
+       onError:message=>toast(message,true)});return;
+    }
     if(tool==='enhance'&&/^image\//.test(doc.mimeType||'')){
       await openScanEditor({
         doc,bridge:RivoDocuments,getLanguage:()=>language,
@@ -331,14 +340,19 @@ function home(){
   </section>`;
 }
 function toolsWorkspace(){
- const sections=[['create',tr('create')],['organize',tr('organize')],['edit',tr('edit')],['convert',tr('convert')]];
- return `<section class="app-tools"><div class="page-heading"><h1>${ut('tools')}</h1><p>${ut('quick')}</p></div>
- <button data-tool="scan" class="tools-banner"><span>${ico('scan',23)}</span><strong>${ut('scan')}</strong>${ico('back',17)}</button>
- ${sections.map(([id,label])=>`<section class="tools-section" id="section-${id}"><h2>${label}</h2><div class="mobile-tools-grid">${tools.filter(t=>t.category===id).map(t=>`<button class="mobile-tool-tile" data-tool="${t.id}"><span class="tool-icon ${t.color}">${ico(t.icon,25)}</span><strong>${escapeHTML(tn(t))}</strong></button>`).join('')}</div></section>`).join('')}
- </section>`;
+ const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
+ return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1><button data-tools-focus aria-label="${copy}">${ico('search',22)}</button></div>
+ <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
+ <nav class="rivo-tool-pills">${toolGroups.map((g,i)=>`<button type="button" data-hub-section="${g.id}" class="${i===0?'active':''}">${hubGroupLabel(language,g.id)}</button>`).join('')}</nav>
+ ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
+   ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
+    const label=hubLabel(language,id,item?tn(item):id);
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
+ </div></section>`).join('')}
+ <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
 function settingsWorkspace(){
- return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.17.0</p></div>
+ return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.18.0</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
@@ -593,6 +607,21 @@ function wire(){
     bulkUI.wireLongPress(el);
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
+  document.getElementById('tools-query')?.addEventListener('input',event=>{
+    const needle=event.target.value.trim().toLocaleLowerCase();let count=0;
+    document.querySelectorAll('.rivo-hub-tile').forEach(el=>{
+      el.hidden=!!needle&&!el.dataset.hubLabel.includes(needle);if(!el.hidden)count++;
+    });
+    document.querySelectorAll('.rivo-tools-section').forEach(section=>section.hidden=!!needle&&!section.querySelector('.rivo-hub-tile:not([hidden])'));
+    document.getElementById('tools-no-results').hidden=count!==0;
+  });
+  document.querySelector('[data-tools-focus]')?.addEventListener('click',()=>document.getElementById('tools-query')?.focus());
+  document.querySelectorAll('[data-hub-section]').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('[data-hub-section]').forEach(b=>b.classList.toggle('active',b===el));
+    const search=document.getElementById('tools-query');search.value='';search.dispatchEvent(new Event('input'));
+    document.getElementById('section-'+el.dataset.hubSection)?.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>openHubAction(el.dataset.hubAction)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
@@ -618,6 +647,40 @@ function wire(){
   if(activeTool?.id==='sign')initSignature();
 }
 function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;docViewerUI.close();activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
+function pickHubFile(accept,cb){
+ const input=document.createElement('input');input.type='file';input.accept=accept;
+ input.onchange=()=>{const file=input.files?.[0];input.remove();if(file)Promise.resolve(cb(file)).catch(e=>{console.error(e);toast(e?.message||String(e),true)});};
+ document.body.appendChild(input);input.click();
+}
+async function openHubAction(id){
+ const spec=hubSpecial[id];
+ if(!spec){openTool(id);return;}
+ if(spec.type==='idcard'){await openLiveScanner({mode:'ID Card'});return}
+ if(spec.type==='scan'){await openLiveScanner();return}
+ if(spec.type==='import'){chooseLibraryFiles(spec.kind);return}
+ if(spec.type==='pageManager'){
+  pickHubFile('.pdf,application/pdf',file=>openPageManager({file,getLanguage:()=>language,onSave:saveOut,
+   onDone:async()=>{await loadLibrary(false);openLibrary()},onError:msg=>toast(msg,true)}));return;
+ }
+ if(spec.type==='export'){
+  pickHubFile('.pdf,image/*',async file=>{
+   showBusy('Converting locally…');
+   try{await exportToolFile({file,format:spec.format,language,save:saveOut,progress})}
+   finally{clearBusy()}
+  });return;
+ }
+ if(spec.type==='photo'){
+  pickHubFile('image/*',async file=>{
+   if(file.size>16*1024*1024)throw Error('Image limit is 16 MB');
+   const bytes=new Uint8Array(await file.arrayBuffer());
+   const bridge={readFile:async()=>({base64:toBase64(bytes),mimeType:file.type||'image/jpeg'})};
+   await openScanEditor({doc:{uri:'local',name:file.name,size:file.size,mimeType:file.type||'image/jpeg'},
+    bridge,getLanguage:()=>language,preset:spec.preset,onSave:saveOut,
+    onCrop:async()=>{const saved=await saveOut(bytes,file.name,file.type||'image/jpeg');if(saved?.uri)await openLiveScanner({imageUri:saved.uri})},
+    onRetake:openCamera,onRefresh:async()=>{await loadLibrary(false)},notify:toast});
+  });return;
+ }
+}
 // Browser PDF libraries commonly keep multiple decoded copies in memory. Bound input sizes.
 const MAX_FILE_BYTES=30*1024*1024, MAX_TOTAL_BYTES=90*1024*1024;
 function addSelectedFiles(picked){
