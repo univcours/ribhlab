@@ -180,7 +180,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         label.setOnClickListener(v->{RivoSounds.play(this,"tap");action.run();});
         label.setClickable(true);label.setFocusable(true);
         label.setContentDescription(title);
-        label.setBackground(outlined(Color.rgb(26,43,82),11,Color.rgb(52,202,190)));
+        label.setBackground(outlined(Color.rgb(26,43,82),11,Color.rgb(4,188,247)));
         return label;
     }
     private LinearLayout.LayoutParams weighted(){
@@ -214,7 +214,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
-            if(i==buttons.length-1){action.setBackground(outlined(Color.rgb(49,85,218),13,Color.rgb(77,223,206)));action.setTextColor(Color.WHITE);}
+            if(i==buttons.length-1){action.setBackground(outlined(Color.rgb(8,125,250),13,Color.rgb(4,188,247)));action.setTextColor(Color.WHITE);}
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
             p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
         }
@@ -287,12 +287,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER_VERTICAL);
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
-            TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(114,185,255):Color.rgb(190,193,202),()->{
+            TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(4,188,247):Color.rgb(190,193,202),()->{
                 scanMode=mode;
                 for(int i=0;i<modes.getChildCount();i++){
                     TextView tab=(TextView)modes.getChildAt(i);
                     boolean selected=modesList[i].equals(scanMode);
-                    tab.setTextColor(selected?Color.rgb(114,185,255):Color.rgb(190,193,202));
+                    tab.setTextColor(selected?Color.rgb(4,188,247):Color.rgb(190,193,202));
                     tab.setTypeface(android.graphics.Typeface.DEFAULT,
                         selected?android.graphics.Typeface.BOLD:android.graphics.Typeface.NORMAL);
                 }
@@ -317,7 +317,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
         footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
         TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
-                savedImages.size()>0?Color.rgb(114,185,255):Color.rgb(134,143,149),this::finishWithPages);
+                savedImages.size()>0?Color.rgb(4,188,247):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
         frame.addView(footer,new LinearLayout.LayoutParams(-1,-2));
@@ -329,10 +329,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void updateBatchButtons(){
         if(singleButton==null||batchButton==null)return;
-        singleButton.setBackground(outlined(batchMode?Color.rgb(37,51,91):Color.rgb(66,92,185),
-            20,batchMode?Color.rgb(107,146,209):Color.rgb(77,223,206)));
-        batchButton.setBackground(outlined(batchMode?Color.rgb(66,92,185):Color.rgb(37,51,91),
-            20,batchMode?Color.rgb(77,223,206):Color.rgb(107,146,209)));
+        singleButton.setBackground(outlined(batchMode?Color.rgb(37,51,91):Color.rgb(35,40,221),
+            20,batchMode?Color.rgb(107,146,209):Color.rgb(4,188,247)));
+        batchButton.setBackground(outlined(batchMode?Color.rgb(35,40,221):Color.rgb(37,51,91),
+            20,batchMode?Color.rgb(4,188,247):Color.rgb(107,146,209)));
     }
     private void toggleTorch(){
         if(boundCamera==null||!boundCamera.getCameraInfo().hasFlashUnit()){
@@ -378,7 +378,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             super.onDraw(canvas);
             float cx=getWidth()/2f,cy=getHeight()/2f;
             float r=Math.min(getWidth(),getHeight())/2f;
-            ink.setStyle(Paint.Style.FILL);ink.setColor(Color.rgb(58,111,238));
+            ink.setStyle(Paint.Style.FILL);ink.setColor(Color.rgb(8,125,250));
             canvas.drawCircle(cx,cy,r-dp(4),ink);
             ink.setColor(Color.rgb(14,24,54));canvas.drawCircle(cx,cy,r-dp(9),ink);
             ink.setColor(Color.WHITE);canvas.drawCircle(cx,cy,r-dp(16),ink);
