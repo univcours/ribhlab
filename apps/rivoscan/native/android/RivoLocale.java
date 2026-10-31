@@ -47,6 +47,42 @@ final class RivoLocale {
         if("ar".equals(language))lang=1;else if("fr".equals(language))lang=2;
         else if("es".equals(language))lang=3;else if("de".equals(language))lang=4;
         else if("pt".equals(language))lang=5;else if("it".equals(language))lang=6;
+        if("notFound".equals(key))return new String[]{
+            "Edges not detected. Drag the four blue points around your document.",
+            "ما تعرفناش على الحواف. جرّ الزوايا الزرقاء الأربعة حول الوثيقة.",
+            "Bords non détectés. Déplacez les quatre points bleus autour du document.",
+            "Bordes no detectados. Ajusta los cuatro puntos azules.",
+            "Kanten nicht erkannt. Vier blaue Punkte an die Dokumentecken ziehen.",
+            "Bordas não detetadas. Ajuste os quatro pontos azuis.",
+            "Bordi non trovati. Sposta i quattro punti blu."
+        }[lang];
+        if("found".equals(key))return new String[]{
+            "Check the blue corners and adjust if needed.",
+            "راجع الزوايا الزرقاء وعدّلها إلا احتاج الأمر.",
+            "Vérifiez les coins bleus et ajustez-les si nécessaire.",
+            "Comprueba los bordes azules y ajusta si hace falta.",
+            "Blaue Ecken prüfen und bei Bedarf korrigieren.",
+            "Verifique os cantos azuis e ajuste se necessário.",
+            "Controlla gli angoli blu e correggili se necessario."
+        }[lang];
+        if("pageStored".equals(key))return new String[]{
+            "Page saved in Download/RivoScan",
+            "الصفحة تحفظات في Download/RivoScan",
+            "Page enregistrée dans Download/RivoScan",
+            "Página guardada en Download/RivoScan",
+            "Seite in Download/RivoScan gespeichert",
+            "Página guardada em Download/RivoScan",
+            "Pagina salvata in Download/RivoScan"
+        }[lang];
+        if("pageNotStored".equals(key))return new String[]{
+            "Image backup failed; the PDF save will still be attempted.",
+            "ما تحفظاتش نسخة الصورة؛ غادي نحاولو نحفظو PDF.",
+            "Échec de la copie image ; l'enregistrement PDF sera essayé.",
+            "No se pudo guardar la imagen; se intentará guardar PDF.",
+            "Bildkopie fehlgeschlagen; PDF-Speicherung wird versucht.",
+            "Falha ao guardar imagem; será tentado guardar PDF.",
+            "Copia immagine non riuscita; si proverà a salvare il PDF."
+        }[lang];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
         return key;
     }
