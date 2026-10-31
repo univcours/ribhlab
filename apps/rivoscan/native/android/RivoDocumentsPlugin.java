@@ -19,6 +19,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Locale;
 
 /**
@@ -206,6 +208,70 @@ public class RivoDocumentsPlugin extends Plugin {
             if(updated<1){call.reject("Could not rename document.");return;}
             JSObject response=new JSObject();response.put("name",newName);call.resolve(response);
         }catch(Exception e){call.reject("Rename failed: "+e.getMessage(),e);}
+    }
+
+    /**
+     * Read a small stored PDF/image for in-app preview or editing.
+     * Larger documents remain accessible through the Android external viewer.
+     */
+    @PluginMethod
+    public void readFile(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
+        Uri uri = verifiedUri(call);
+        if (uri == null) return;
+        int maxPreviewBytes = 24 * 1024 * 1024;
+        try {
+            ContentResolver resolver = getContext().getContentResolver();
+            try (Cursor c = resolver.query(uri,
+                    new String[]{MediaStore.MediaColumns.SIZE, MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null)) {
+                if (c == null || !c.moveToFirst()) { call.reject("Document not found."); return; }
+                if (!c.isNull(0) && c.getLong(0) > maxPreviewBytes) {
+                    call.reject("PREVIEW_TOO_LARGE: open in a compatible document viewer."); return;
+                }
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            try (InputStream input = resolver.openInputStream(uri)) {
+                if (input == null) throw new IllegalStateException("Document could not be read.");
+                byte[] chunk = new byte[16384];
+                int n;
+                while ((n = input.read(chunk)) != -1) {
+                    if (buffer.size() + n > maxPreviewBytes) {
+                        call.reject("PREVIEW_TOO_LARGE: open in a compatible document viewer.");
+                        return;
+                    }
+                    buffer.write(chunk, 0, n);
+                }
+            }
+            JSObject out = new JSObject();
+            out.put("base64", Base64.encodeToString(buffer.toByteArray(), Base64.NO_WRAP));
+            out.put("mimeType", mimeOf(uri));
+            out.put("size", buffer.size());
+            call.resolve(out);
+        } catch (Exception e) {
+            call.reject("Document preview failed: " + e.getMessage(), e);
+        }
+    }
+
+    @PluginMethod
+    public void renameFile(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
+        Uri uri = verifiedUri(call);
+        if (uri == null) return;
+        String name = safeName(call.getString("name"));
+        if (name.isEmpty()) { call.reject("Document name required."); return; }
+        // Android 10+ allows changing metadata of media this app created.
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+            int changed = getContext().getContentResolver().update(uri, values, null, null);
+            if (changed == 0) throw new IllegalStateException("Rename not permitted by Android.");
+            JSObject result = new JSObject();
+            result.put("uri", uri.toString());
+            result.put("name", name);
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("Cannot rename this document: " + e.getMessage(), e);
+        }
     }
 
     @PluginMethod
