@@ -126,36 +126,24 @@ try {
   }
 
   Write-Host "Updating RivoScan on $model ($serial) with verified APK, preserving app data..." -ForegroundColor Cyan
-  # Android itself also rejects downgrades; deliberately NO -d, uninstall or pm clear.
-  $result = & $adb -s $serial install -r $apk 2>&1
+  # Android itself rejects downgrades too: deliberately NO -d, uninstall or pm clear.
+  $result = @(& $adb -s $serial install -r $apk 2>&1)
   $installCode = $LASTEXITCODE
   $result | Out-Host
-  if($installCode -ne 0 -or -not ($result -match '^Success  Write-Host "VERIFIED: $model has the newly installed RivoScan 0.18.1 package." -ForegroundColor Green
-  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
-  Assert-Code "Launching RivoScan"
-  Write-Host ""
-  Write-Host "SUCCESS: RivoScan installed and started on $model ($serial)." -ForegroundColor Green
-  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Do not uninstall to fix an icon." -ForegroundColor Yellow
-  exit 0
-} catch {
-  Write-Host ""
-  Write-Host ("INSTALL STOPPED: " + $_.Exception.Message) -ForegroundColor Red
-  exit 1
-}
-)) {
-    throw "Android installation failed. DO NOT uninstall or clear app data. If signature differs (INSTALL_FAILED_UPDATE_INCOMPATIBLE), use a matching signing key."
+  if($installCode -ne 0 -or -not ($result -match '^Success$')) {
+    throw "Android installation failed. DO NOT uninstall or clear app data. If the signature differs (INSTALL_FAILED_UPDATE_INCOMPATIBLE), use the same signing key."
   }
   $after=Get-InstalledRivo
   if(-not $after.Installed -or $after.VersionCode -ne $apkVersionCode -or $after.VersionName -ne $apkVersionName) {
     throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
   }
   Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
-  Write-Host "VERIFIED: $model has the newly installed RivoScan 0.18.1 package." -ForegroundColor Green
+  Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
   & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
   Write-Host ""
-  Write-Host "SUCCESS: RivoScan installed and started on $model ($serial)." -ForegroundColor Green
-  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Do not uninstall to fix an icon." -ForegroundColor Yellow
+  Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green
+  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Never uninstall to fix an icon." -ForegroundColor Yellow
   exit 0
 } catch {
   Write-Host ""
