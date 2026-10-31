@@ -56,7 +56,40 @@ try {
     throw 'Android manifest still references the old launcher icon. Rebuild aborted.'
   }
   Write-Host 'PASS: CameraX scanner, adaptive launcher, and new RivoScan icon are registered.' -ForegroundColor Green
-  Write-Host '[6/6] Compiling a NEW Android debug APK including native scanner...' -ForegroundColor Cyan
+  Write-Host '[6/6] Finding Java JDK for Gradle...' -ForegroundColor Cyan
+  # Windows Android Studio bundles JetBrains Runtime (Java JDK), but a plain
+  # PowerShell terminal may not inherit the IDE's Gradle JDK/JAVA_HOME setting.
+  $javaHomes = [System.Collections.Generic.List[string]]::new()
+  if($env:JAVA_HOME) { $javaHomes.Add($env:JAVA_HOME) }
+  if($env:ProgramFiles) { $javaHomes.Add((Join-Path $env:ProgramFiles 'Android\Android Studio\jbr')) }
+  if($env:LOCALAPPDATA) { $javaHomes.Add((Join-Path $env:LOCALAPPDATA 'Programs\Android Studio\jbr')) }
+  $installedJava = Get-Command java.exe -ErrorAction SilentlyContinue
+  if($installedJava -and $installedJava.Source) {
+    $javaHomes.Add((Split-Path -Parent (Split-Path -Parent $installedJava.Source)))
+  }
+  if($env:USERPROFILE) {
+    $jdksRoot=Join-Path $env:USERPROFILE '.jdks'
+    if(Test-Path -LiteralPath $jdksRoot) {
+      @(Get-ChildItem -LiteralPath $jdksRoot -Directory -ErrorAction SilentlyContinue) | ForEach-Object { $javaHomes.Add($_.FullName) }
+    }
+  }
+  $selectedJavaHome=$null
+  foreach($home in $javaHomes) {
+    if(-not $home) { continue }
+    $javaPath=Join-Path $home 'bin\java.exe'
+    $javacPath=Join-Path $home 'bin\javac.exe'
+    if((Test-Path -LiteralPath $javaPath) -and (Test-Path -LiteralPath $javacPath)){
+      $selectedJavaHome=$home
+      break
+    }
+  }
+  if(-not $selectedJavaHome) {
+    throw 'Java JDK was not found. In Android Studio, open Settings > Build, Execution, Deployment > Build Tools > Gradle to locate Gradle JDK; use the JDK root (often C:\Program Files\Android\Android Studio\jbr) for JAVA_HOME. No APK was installed.'
+  }
+  $env:JAVA_HOME=$selectedJavaHome
+  $env:Path=(Join-Path $selectedJavaHome 'bin') + ';' + $env:Path
+  Write-Host ("Gradle will use JAVA_HOME=" + $env:JAVA_HOME) -ForegroundColor Green
+  Write-Host 'Compiling a NEW Android debug APK including native scanner...' -ForegroundColor Cyan
   $gradle = Join-Path $root 'android\gradlew.bat'
   if(-not (Test-Path -LiteralPath $gradle)) { throw 'Gradle wrapper not found.' }
   Push-Location -LiteralPath (Join-Path $root 'android')
