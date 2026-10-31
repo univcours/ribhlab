@@ -5,6 +5,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -40,12 +41,12 @@ final class RivoEdgeDetector {
             // Adaptive Canny thresholds: fixed contrast thresholds miss
             // pale paper on dark desks and over-detect noisy dark surfaces.
             Imgproc.GaussianBlur(small,blur,new Size(5,5),1.2);
-            Mat medianInput=new Mat(), medianStd=new Mat();
+            MatOfDouble mean=new MatOfDouble(), stdDev=new MatOfDouble();
             double contrast=30;
             try{
-                Core.meanStdDev(blur,medianInput,medianStd);
-                contrast=medianStd.get(0,0)[0];
-            }finally{medianInput.release();medianStd.release();}
+                Core.meanStdDev(blur,mean,stdDev);
+                contrast=stdDev.get(0,0)[0];
+            }finally{mean.release();stdDev.release();}
             double low=Math.max(24,Math.min(90,contrast*0.9));
             Imgproc.Canny(blur,edges,low,Math.max(80,Math.min(210,low*2.4)));
             kernel=Imgproc.getStructuringElement(Imgproc.MORPH_RECT,new Size(5,5));
