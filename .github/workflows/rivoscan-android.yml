@@ -69,6 +69,10 @@ jobs:
           grep -F 'MediaStore.Downloads.EXTERNAL_CONTENT_URI' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'showCameraPicker()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getAvailableCameraInfos()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'CameraSelector.DEFAULT_BACK_CAMERA' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'CameraSelector.LENS_FACING_FRONT' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
           grep -F 'androidx.camera:camera-view' android/app/build.gradle
