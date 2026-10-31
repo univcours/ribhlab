@@ -100,7 +100,7 @@ if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
-$mutex = New-Object System.Threading.Mutex($false, 'Local\RivoScanAutoSync')
+$mutex = [System.Threading.Mutex]::new($false, 'Local\RivoScanAutoSync')
 $gotLock = $mutex.WaitOne(0)
 if (-not $gotLock) {
   Say 'RivoScan auto-sync is already running. No second instance started.' 'Yellow'
