@@ -184,6 +184,21 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             try(InputStream input=getContentResolver().openInputStream(uri)){
                 if(input==null)throw new Exception("Selected image cannot be opened.");
                 Bitmap img=scaleDecode(input);
+                // Respect EXIF rotation for photos imported from gallery or another app.
+                try(InputStream exifStream=getContentResolver().openInputStream(uri)){
+                    if(exifStream!=null){
+                        ExifInterface exif=new ExifInterface(exifStream);
+                        int orientation=exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL);
+                        int degrees=orientation==ExifInterface.ORIENTATION_ROTATE_90?90:
+                            orientation==ExifInterface.ORIENTATION_ROTATE_180?180:
+                            orientation==ExifInterface.ORIENTATION_ROTATE_270?270:0;
+                        if(degrees!=0){
+                            Matrix m=new Matrix();m.postRotate(degrees);
+                            Bitmap rotated=Bitmap.createBitmap(img,0,0,img.getWidth(),img.getHeight(),m,true);
+                            img.recycle();img=rotated;
+                        }
+                    }
+                }catch(Exception ignored){}
                 openEditor(img);
             }
         }catch(Exception e){Toast.makeText(this,"Unable to import image: "+e.getMessage(),Toast.LENGTH_LONG).show();}
