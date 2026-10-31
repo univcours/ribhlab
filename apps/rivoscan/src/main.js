@@ -1,4 +1,5 @@
 import './style.css';
+import './theme-brand.css';
 import { parsePages } from './pdf-utils.js';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
@@ -29,8 +30,8 @@ if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#0A121C'}))
-    .then(()=>StatusBar.setStyle({style:Style.Dark}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#FFFFFF'}))
+    .then(()=>StatusBar.setStyle({style:Style.Light}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
 

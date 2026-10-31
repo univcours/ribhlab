@@ -61,7 +61,7 @@ jobs:
           grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          grep -F 'versionCode 21' android/app/build.gradle
+          grep -F 'versionCode 22' android/app/build.gradle
       - name: Verify live scanner and persistent Documents storage are registered
         run: |
           test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
@@ -69,8 +69,14 @@ jobs:
           # The extra white bar is Android's native ActionBar, NOT the system status bar.
           grep -F 'android:theme="@style/RivoScanNoActionBar"' android/app/src/main/AndroidManifest.xml
           grep -F 'parent="Theme.AppCompat.DayNight.NoActionBar"' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'import '\''./theme-brand.css'\'';' src/main.js
+          grep -F '#04bcf7' src/theme-brand.css
+          grep -F '#087dfa' src/theme-brand.css
+          grep -F '#2328dd' src/theme-brand.css
+          grep -F 'android:statusBarColor">#FFFFFF' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'setAppearanceLightStatusBars(true)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'nativeActionBar.hide()' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
-          grep -F 'web.setBackgroundColor(Color.rgb(10, 18, 28))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'web.setBackgroundColor(Color.rgb(244, 249, 255))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'public void shareFiles(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'public void organizeFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'makeLongImage' src/library-bulk.js
@@ -136,7 +142,7 @@ jobs:
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='21' versionName='0.18.0'"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='22' versionName='0.18.1'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
           "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
@@ -145,7 +151,7 @@ jobs:
           while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
-          echo "PASS: APK 0.18.0 contains launcher resources and native scanner classes."
+          echo "PASS: APK 0.18.1 contains launcher resources and native scanner classes."
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:
