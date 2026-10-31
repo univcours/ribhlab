@@ -34,7 +34,8 @@ compress:['Compress Scans','ضغط الملفات','Compresser PDF','Comprimir P
 metadata:['Clear Metadata','حذف معلومات الملف','Effacer les métadonnées','Borrar metadatos','Metadaten entfernen','Limpar metadados','Rimuovi metadati']
 };
 const orders={en:0,ar:1,fr:2,es:3,de:4,pt:5,it:6};
-export const tt=(lang,key)=>words[lang]?.[key]||words.en[key]||key;
+const extraEditorWords={en:'Enhance scanned image',ar:'تحسين وضوح الصورة',fr:'Améliorer le scan',es:'Mejorar imagen',de:'Scan verbessern',pt:'Melhorar digitalização',it:'Migliora scansione'};
+export const tt=(lang,key)=>key==='enhance'?(extraEditorWords[lang]||extraEditorWords.en):(words[lang]?.[key]||words.en[key]||key);
 export const toolTitle=(lang,id,fallback)=>toolNames[id]?.[orders[lang]??0]||fallback||id;
 const originalUI={
 'Loading your documents…':'loading',
