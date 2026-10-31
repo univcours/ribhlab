@@ -158,12 +158,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const isPDF=doc=>/pdf/i.test(doc.mimeType||'')||/\.pdf$/i.test(doc.name||'');
   const qrate=q=>q==='original'?.94:q==='balanced'?.77:.52;
   const scale=q=>q==='original'?1.65:q==='balanced'?1.2:.78;
-  const jpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image conversion failed')),'image/jpeg',.88));
   async function loadCanvas(file){const uri=URL.createObjectURL(file);try{
     const img=await new Promise((resolve,reject)=>{const e=new Image();e.onload=()=>resolve(e);e.onerror=reject;e.src=uri});
     const ratio=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
-    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);return canvas;
   }finally{URL.revokeObjectURL(uri)}}
   async function rasterPdf(file,q,onCanvas){
     const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true}).promise;
