@@ -9,6 +9,6 @@ if errorlevel 1 (
   echo Check the error above or send a screenshot to troubleshoot.
 ) else (
   echo.
-  echo RivoScan was installed on the selected Android device.
+  echo Safe version check completed. RivoScan was updated or the already installed same/newer version was kept.
 )
 pause
