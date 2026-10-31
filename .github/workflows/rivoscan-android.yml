@@ -56,6 +56,13 @@ jobs:
       - name: Integrate live camera edges and interactive crop editor
         shell: pwsh
         run: ./install-live-scanner.ps1
+      - name: Verify live scanner is registered in the Android APK sources
+        run: |
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
+          grep -F 'androidx.camera:camera-view' android/app/build.gradle
       - name: Build debug APK
         run: |
           cd android
