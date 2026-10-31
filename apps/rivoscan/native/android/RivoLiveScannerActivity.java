@@ -13,8 +13,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.hardware.camera2.CameraCharacteristics;
 import androidx.camera.camera2.interop.Camera2CameraInfo;
 import androidx.camera.core.CameraInfo;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -77,7 +75,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private CameraChoice selectedCamera=null; // null means the ordinary default rear camera
     private ProcessCameraProvider cameraProvider;
     private int cameraBindSerial=0;
-    private boolean cameraChooserOpen=false;
 
     private static final class CameraChoice {
         final String id,label;
@@ -428,7 +425,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 startCamera();
             })
             .setNegativeButton("Cancel",null)
-            .setMessage("Only camera devices made accessible by Android/CameraX are listed. Some S22 Ultra lenses may be combined by Samsung.")
             .show();
     }
     private void startCamera(){
@@ -453,7 +449,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 analysis.setAnalyzer(analyzer,this::analyze);
                 boundCamera=provider.bindToLifecycle(this,selector,preview,analysis,newCapture);
                 capture=newCapture;
-                if(overlay!=null)overlay.update(null,1,1);
+                if(overlay!=null){
+                    overlay.setMirrored(selectedCamera!=null && selectedCamera.facing==CameraSelector.LENS_FACING_FRONT);
+                    overlay.update(null,1,1);
+                }
                 frames=0;
                 if(boundCamera.getCameraInfo().hasFlashUnit() && torchOn){
                     boundCamera.getCameraControl().enableTorch(true);
@@ -582,6 +581,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     /** Live camera overlay; normalized corners from analyzed frame. */
     private static final class LiveEdges extends View{
+        private boolean mirrored=false;
+        void setMirrored(boolean active){mirrored=active;invalidate();}
+        private float screenX(Point point){return mirrored?1f-(float)point.x:(float)point.x;}
         private Point[] points;
         private int imageWidth=1,imageHeight=1;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -593,8 +595,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             // the same center-crop transform instead of stretching them to the screen.
             float scale=Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight);
             float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
-            Path path=new Path();path.moveTo(offsetX+(float)points[0].x*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
-            for(int i=1;i<4;i++)path.lineTo(offsetX+(float)points[i].x*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
+            Path path=new Path();path.moveTo(offsetX+screenX(points[0])*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
+            for(int i=1;i<4;i++)path.lineTo(offsetX+screenX(points[i])*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
             paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(45,45,123,255));canvas.drawPath(path,paint);
             paint.setColor(Color.rgb(100,189,255));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
         }
