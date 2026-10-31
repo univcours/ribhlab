@@ -44,6 +44,10 @@ echo [Extra] Installing RivoScan native live edge scanner...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-live-scanner.ps1"
 if errorlevel 1 goto :fail
 
+echo [Extra] Applying official RivoScan scanner app icon...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0apply-rivoscan-branding.ps1"
+if errorlevel 1 goto :fail
+
 echo [Extra] Applying Gradle 9 compatibility fix...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix-gradle-rivoscan.ps1"
 if errorlevel 1 goto :fail
