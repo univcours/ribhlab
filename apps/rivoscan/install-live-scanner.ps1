@@ -56,4 +56,6 @@ if($m -notmatch 'RivoLiveScannerActivity') {
  $m=$m.Replace('</application>','    <activity android:name=".RivoLiveScannerActivity" android:exported="false" android:screenOrientation="portrait" />' + "`r`n    " + '</application>')
 }
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'apply-rivoscan-branding.ps1')
+if($LASTEXITCODE -ne 0){throw 'Failed to apply RivoScan launcher branding'}
 Write-Host 'RivoScan live edge camera + manual crop + gallery import integrated into Android.' -ForegroundColor Green
