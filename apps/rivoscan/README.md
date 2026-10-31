@@ -57,6 +57,7 @@ To get a **debug APK**, run GitHub Actions → **RivoScan Android debug build** 
 ## Before Google Play release
 
 - Test every tool on actual Android devices, including large files, Arabic OCR and Native Share.
+- Brand native launcher with the included `assets/icon.png.b64`; workflow applies it during build.
 - Add native image edge detection / perspective crop and true automatic scanner detection; current version uses enhance/grayscale filters, not automatic perspective correction.
 - Build a properly signed **release AAB** using upload key stored in GitHub Actions secrets; never commit keystore, JSON service account, or passwords.
 - Create the Play Console app entry, confirm package ID, app icon, and supported targets.
