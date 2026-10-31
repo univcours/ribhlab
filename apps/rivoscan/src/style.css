@@ -1257,3 +1257,6 @@ html,body,#app{background:var(--rv-bg);color:var(--rv-white)}
 #app .rivo-peer-workspace #peer-send{min-height:50px}
 #app .rivo-peer-workspace #peer-send:disabled{opacity:.48}
 @media(max-width:400px){#app .rivo-peer-actions button{font-size:10px}}
+
+/* Keep Word OCR language selector hidden except in Word export mode. */
+.bulk-field[data-word-lang][hidden]{display:none!important}
