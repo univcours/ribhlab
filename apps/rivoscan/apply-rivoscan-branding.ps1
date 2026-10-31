@@ -104,8 +104,8 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 # Bump preview build version to make the new installation easier to distinguish.
 if(Test-Path -LiteralPath $gradle) {
   $settings=[IO.File]::ReadAllText($gradle)
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','${1}19')
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','${1}"0.17.0"')
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','${1}20')
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','${1}"0.17.1"')
   [IO.File]::WriteAllText($gradle,$settings,$utf8)
 }
 
@@ -115,4 +115,4 @@ if(-not $verify.Contains('android:icon="@mipmap/ic_launcher"') -or
    -not $verify.Contains('android:roundIcon="@mipmap/ic_launcher_round"')) {
   throw 'Android manifest is not using the new RivoScan adaptive launcher icons.'
 }
-Write-Host 'PASS: RivoScan icon applied (adaptive + monochrome + legacy) and preview version 0.17.0.' -ForegroundColor Green
+Write-Host 'PASS: RivoScan icon applied (adaptive + monochrome + legacy) and preview version 0.17.1.' -ForegroundColor Green
