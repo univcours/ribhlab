@@ -219,7 +219,7 @@ button:focus-visible,.dropzone:focus-within,select:focus-visible,input:focus-vis
 :root{--rivo-radius:18px;--rivo-shadow:0 10px 28px rgba(22,48,101,.09)}
 html{background:#f7f9fe}
 body.rivo-native-android{background:#f7f9fe;min-height:100dvh}
-body.rivo-native-android .shell{padding-top:env(safe-area-inset-top,0px)}
+body.rivo-native-android .shell{padding-top:0} /* Android 15+ system inset applied to native WebView by MainActivity */
 .top-documents{display:inline-flex;align-items:center;gap:8px;color:#295ac2;background:#eff5ff;border:1px solid #d8e7ff;border-radius:13px;font-size:12px;font-weight:800;padding:10px 12px;white-space:nowrap;min-height:42px}
 .top-documents svg{flex-shrink:0}
 .top-documents:hover{background:#dfebff}
