@@ -5,7 +5,7 @@ import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import JSZip from 'jszip';
 import { recognize } from 'tesseract.js';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -14,6 +14,7 @@ import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 
 const icons = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-8h6v8"/>',
@@ -46,7 +47,7 @@ const icons = {
 };
 const ico = (name,size=20) => `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.file}</svg>`;
 const tools = [
- {id:'scan',category:'create',icon:'scan',color:'violet',name:'Smart Scanner',desc:'Auto-detect document edges, straighten and save multi-page PDFs on Android',accept:'image/*',multiple:true},
+ {id:'scan',category:'create',icon:'scan',color:'violet',name:'Smart Scanner',desc:'See live document borders, drag the four corners and save cropped PDFs',accept:'image/*',multiple:true},
  {id:'bundle',category:'create',icon:'merge',color:'sky',name:'Combine Documents',desc:'Mix scanned photos and PDF files in a single PDF',accept:'.pdf,application/pdf,image/*',multiple:true},
  {id:'shareFiles',category:'convert',icon:'upload',color:'green',name:'Share Any File',desc:'Send PDFs, images, ZIPs, documents and more',accept:'*/*',multiple:true},
  {id:'peerTransfer',category:'convert',icon:'convert',color:'sky',name:'Direct File Transfer',desc:'Encrypted phone-to-phone sharing via pairing codes (beta)',accept:'*/*',multiple:true},
@@ -114,7 +115,7 @@ const opts = {
   watermark:`<div class="field"><label>Watermark text</label><input name="watermark" value="CONFIDENTIAL" maxlength="80"></div><div class="field"><label>Opacity</label><input type="range" name="opacity" min="10" max="70" value="23"></div>`,
   text:`<div class="field"><label>Text to add on each page</label><textarea name="note" rows="3" placeholder="Your annotation"></textarea></div><div class="field"><label>Position</label><select name="position"><option value="top">Top</option><option value="bottom">Bottom</option><option value="center">Center</option></select></div>`,
   sign:`<div class="field"><label>Draw signature (finger / mouse)</label><canvas id="signpad" class="signpad" aria-label="Signature drawing pad"></canvas><button class="btn btn-outline" style="margin-top:8px" id="clear-sign">Clear signature</button></div><div class="field"><label>Page number</label><input name="page" type="number" min="1" value="1"></div><div class="field"><label>Position</label><select name="position"><option value="bottom">Bottom right</option><option value="center">Center</option></select></div><p class="hint">This places a visual signature; it is not a cryptographic digital signature.</p>`,
-  scan:`<p class="hint">On Android use Smart Scanner for automatic edge detection, perspective correction, and gallery import. The basic image picker does not auto-crop.</p><div class="field"><label>Scan appearance</label><select name="filter"><option value="color">Original color</option><option value="enhance" selected>Enhanced document</option><option value="gray">Black & white (grayscale)</option><option value="bw">High contrast monochrome</option></select></div><div class="field"><label>Image quality</label><select name="quality"><option value=".85">High</option><option value=".65" selected>Balanced</option><option value=".45">Smaller file</option></select></div>`,
+  scan:`<p class="hint">LIVE CAMERA: Watch a green outline follow the paper. Capture, drag four corners to adjust them, then Save page. GALLERY: Import an existing photo, adjust its corners and save. Multiple saved pages become one PDF.</p><div class="field"><label>Scan appearance</label><select name="filter"><option value="color">Original color</option><option value="enhance" selected>Enhanced document</option><option value="gray">Black & white (grayscale)</option><option value="bw">High contrast monochrome</option></select></div><div class="field"><label>Image quality</label><select name="quality"><option value=".85">High</option><option value=".65" selected>Balanced</option><option value=".45">Smaller file</option></select></div>`,
   images:`<div class="field"><label>Image quality</label><select name="quality"><option value=".95">High</option><option value=".75" selected>Balanced</option><option value=".5">Smaller file</option></select></div>`,
   pdftoimages:`<div class="field"><label>Image format</label><select name="format"><option value="jpeg">JPG</option><option value="png">PNG</option></select></div><div class="field"><label>Resolution</label><select name="scale"><option value="1">Standard</option><option value="1.5" selected>High</option><option value="2">Extra high</option></select></div>`,
   compress:`<div class="field"><label>Compression quality</label><select name="quality"><option value=".38">Smaller file</option><option value=".58" selected>Balanced</option><option value=".78">Higher quality</option></select></div><p class="hint">Best for scanned PDFs. Pages are converted to images, so existing selectable text, links and forms may be lost. Results are not guaranteed to be smaller.</p>`,
@@ -124,7 +125,7 @@ const opts = {
 function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
-  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Smart Scanner · Camera or Gallery · Auto Crop</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
+  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} All tools</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(t.name)}</h1><p>${escapeHTML(t.desc)}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="Select files" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open Live Camera · Detect Edges</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button><button class="btn btn-light" id="camera" style="width:100%;margin-top:8px">${ico('camera')} Basic camera (no auto-crop)</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>Options</h3><div id="options">${opts[t.id]||'<p class="hint">Your file will be processed locally on this device.</p>'}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">PDFs with passwords or unsupported encryption may not open. Large files may require more device memory.</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
@@ -139,10 +140,11 @@ function wire(){
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];scanRotations=[];render()}));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{activeTool=null;files=[];render();document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);render()});
-  document.getElementById('files')?.addEventListener('change',e=>{addSelectedFiles([...e.target.files]);e.target.value='';});
-  document.querySelector('.dropzone')?.addEventListener('click',e=>{if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){e.preventDefault();openSmartScanner();}});
+  document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
+  document.querySelector('.dropzone')?.addEventListener('click',e=>{if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){e.preventDefault();openLiveScanner({gallery:true});}});
   document.getElementById('camera')?.addEventListener('click',openCamera);
-  document.getElementById('smart-scanner')?.addEventListener('click',openSmartScanner);
+  document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
+  document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
   document.getElementById('scanpreview')?.addEventListener('click',e=>{const b=e.target.closest('[data-turn]');if(!b)return;const i=+b.dataset.turn;scanRotations[i]=((scanRotations[i]||0)+90)%360;drawPreview()});
@@ -165,6 +167,35 @@ function addSelectedFiles(picked){
   const multiple=activeTool?.multiple, proposed=multiple?[...files,...additions]:additions.slice(0,1);
   if(proposed.reduce((sum,f)=>sum+f.size,0)>MAX_TOTAL_BYTES){toast('Files exceed 90 MB total. Try fewer files.',true);return;}
   files=proposed;scanRotations=files.map((_,i)=>scanRotations[i]||0);updateFileDisplay();
+}
+
+
+/** Android native: live green edge outline and manual four-corner editor. */
+async function openLiveScanner({gallery=false,imageUri=null}={}){
+  if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
+    toast('Live edge detection requires the Android app.',true);
+    return;
+  }
+  try{
+    const result=await RivoLiveScanner.scan({gallery,imageUri});
+    await consumeSmartScan(result);
+  }catch(err){
+    if(!/cancel|SCAN_CANCELLED/i.test(String(err?.message||err))){
+      console.error('Rivo live scanner:',err);
+      toast('Live scanner could not open: '+(err?.message||'Install the native scanner update and grant camera permission.'),true);
+    }
+  }
+}
+async function editUploadedScanPhotos(selected){
+  for(const [index,file] of selected.entries()){
+    if(file.size>MAX_FILE_BYTES){toast('Image exceeds 30 MB size limit.',true);continue;}
+    try{
+      const data=toBase64(new Uint8Array(await file.arrayBuffer()));
+      const path='RivoScanImported/'+Date.now()+'_'+index+'.jpg';
+      const saved=await Filesystem.writeFile({directory:Directory.Cache,path,data,recursive:true});
+      await openLiveScanner({imageUri:saved.uri});
+    }catch(err){toast('Could not import photo: '+(err?.message||err),true);}
+  }
 }
 
 async function readScannedImage(uri,index){
@@ -212,7 +243,8 @@ CapacitorApp.addListener('appRestoredResult',async event=>{
 }).catch(console.warn);
 
 async function openCamera(){
- try{if(Capacitor.isNativePlatform()){
+ try{if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){await openLiveScanner();return;}
+ if(Capacitor.isNativePlatform()){
    const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
    const blob=await (await fetch(photo.dataUrl)).blob();addSelectedFiles([new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
  }else{const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';el.onchange=()=>{const f=el.files?.[0];if(f){addSelectedFiles([f])}};el.click()}}
