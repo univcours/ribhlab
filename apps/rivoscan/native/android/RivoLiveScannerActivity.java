@@ -111,6 +111,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
+        // Native scanner already has its own toolbar: avoid the duplicated
+        // blue "RivoScan" AppCompat ActionBar seen above the crop editor.
+        if(getSupportActionBar()!=null)getSupportActionBar().hide();
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
         try{openCvReady=OpenCVLoader.initLocal();}
