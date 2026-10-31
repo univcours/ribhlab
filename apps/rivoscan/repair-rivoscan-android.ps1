@@ -74,12 +74,12 @@ try {
     }
   }
   $selectedJavaHome=$null
-  foreach($home in $javaHomes) {
-    if(-not $home) { continue }
-    $javaPath=Join-Path $home 'bin\java.exe'
-    $javacPath=Join-Path $home 'bin\javac.exe'
+  foreach($candidateHome in $javaHomes) {
+    if(-not $candidateHome) { continue }
+    $javaPath=Join-Path $candidateHome 'bin\java.exe'
+    $javacPath=Join-Path $candidateHome 'bin\javac.exe'
     if((Test-Path -LiteralPath $javaPath) -and (Test-Path -LiteralPath $javacPath)){
-      $selectedJavaHome=$home
+      $selectedJavaHome=$candidateHome
       break
     }
   }
