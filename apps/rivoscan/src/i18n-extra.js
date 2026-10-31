@@ -76,11 +76,12 @@ export function localizeStaticUI(root,lang){
    const translated=originalUI[value]?tt(lang,originalUI[value]):replacements[lang]?.[value]||extendedPhrases[value]?.[languagePositions[lang]];
    if(translated)node.nodeValue=node.nodeValue.replace(value,translated);
  }
- for(const el of root.querySelectorAll('input[placeholder],button[title],input[aria-label]')){
+ for(const el of root.querySelectorAll('[placeholder],[title],[aria-label]')){
    for(const attr of ['placeholder','title','aria-label']){
      if(!el.hasAttribute(attr))continue;
      const value=el.getAttribute(attr);
      if(originalUI[value])el.setAttribute(attr,tt(lang,originalUI[value]));
+      else if(replacements[lang]?.[value])el.setAttribute(attr,replacements[lang][value]);
       else if(extendedPhrases[value]?.[languagePositions[lang]])el.setAttribute(attr,extendedPhrases[value][languagePositions[lang]]);
    }
  }
