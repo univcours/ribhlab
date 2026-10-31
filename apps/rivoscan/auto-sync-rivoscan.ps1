@@ -84,6 +84,9 @@ function Sync-Once {
     Say 'Copying updates into the Android project (Capacitor)...' 'Cyan'
     & npx.cmd cap sync android
     Check-Exit 'Capacitor sync'
+    Say 'Checking Android Gradle ProGuard compatibility...' 'Cyan'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $appDir 'fix-gradle-rivoscan.ps1')
+    Check-Exit 'Gradle ProGuard compatibility'
     Say 'Done. Android Studio should detect the updated files. Press Run to install the new version on your phone.' 'Green'
   }
   finally {
