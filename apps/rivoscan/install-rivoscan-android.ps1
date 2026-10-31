@@ -70,10 +70,10 @@ try {
   }
   $after=Get-RivoVersion
   Write-Host "AFTER install: $after" -ForegroundColor Green
-  if($after -notmatch 'versionName=0\.11\.0' -or $after -notmatch 'versionCode=11(?:\D|$)') {
-    throw "Android device does not report RivoScan v0.11.0 / versionCode 11 after installation. DO NOT uninstall or clear app data. Check the APK build version and install output above."
+  if($after -notmatch 'versionName=0\.12\.0' -or $after -notmatch 'versionCode=12(?:\D|$)') {
+    throw "Android device does not report RivoScan v0.12.0 / versionCode 12 after installation. DO NOT uninstall or clear app data. Check the APK build version and install output above."
   }
-  Write-Host "VERIFIED: $model has the newly installed RivoScan 0.11.0 package." -ForegroundColor Green
+  Write-Host "VERIFIED: $model has the newly installed RivoScan 0.12.0 package." -ForegroundColor Green
   & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
   Write-Host ""
