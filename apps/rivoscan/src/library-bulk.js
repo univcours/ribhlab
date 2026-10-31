@@ -1,7 +1,8 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
+import {makeLongImage,makeWordText} from './share-exports.js';
 
-export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,showBusy,progress,clearBusy,saveOut,toast}){
+export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
   let suppressUntil=0;
@@ -15,7 +16,19 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     it:['Seleziona','selezionati','Seleziona tutto','Inverti','Annulla','Elimina','Condividi','Unisci PDF','Modifica','Anteprima','Azioni','Condividi come','Qualità','PDF','Immagini JPG','Originale / massima','Bilanciata','Piccolo','Prepara e condividi','Elaborazione locale. Copie in Documents/RivoScan.','Qualità ridotta converte il testo PDF in immagini.','Eliminare {n} documenti definitivamente?','Massimo 30 documenti.','Massimo 30 immagini.','File troppo grande (16 MB). Condividi originale.','Seleziona documenti.','Completato','Interrotto. Altri file intatti.','Seleziona due documenti.','Tieni premuto per opzioni.','Aggiungi','Rimuovi','Preparazione…','Troppe pagine.']
   };
   const keys=['select','selected','all','invert','cancel','delete','share','merge','edit','preview','menu','format','quality','pdf','images','original','balanced','small','send','info','loss','confirm','limit','pageLimit','large','none','done','stop','needTwo','hint','add','remove','preparing','tooMany'];
-  const t=key=>(translations[getLanguage()]||translations.en)[keys.indexOf(key)]||key;
+  const extraWords={
+    en:{long:'Long image',word:'Word (editable text)',wordHint:'Word uses OCR. Tables, pictures and layout may not match the original.',longHint:'Long image joins pages vertically (12 pages max).',direct:'Direct transfer',link:'Link / direct',noCloud:'No public cloud link is created. Direct transfer pairs two devices with a code.',shareFile:'Share file',shareLink:'Send to another device',rename:'Rename',copy:'Copy',move:'Move',folder:'Destination folder',root:'My documents',work:'Work',personal:'Personal',archive:'Archive',qualityHint:'Compression can reduce image clarity.',asIs:'Keep original',preview:'Preview',imageCount:'pages',compress:'Compress',menuActions:'Actions',ready:'Ready to share',first:'Selected files',files:'files'},
+    ar:{long:'صورة طويلة',word:'Word (نص قابل للتعديل)',wordHint:'Word كيعتمد على OCR، وممكن ما يحافظش على الجداول والتنسيق والصور.',longHint:'الصورة الطويلة كتجمع الصفحات عمودياً، حتى 12 صفحة.',direct:'نقل مباشر',link:'رابط / نقل مباشر',noCloud:'ما كننشئوش رابط عام بلا خادم. النقل المباشر كيستعمل رمز الربط بين جوج أجهزة.',shareFile:'مشاركة الملف',shareLink:'إرسال لجهاز آخر',rename:'تبديل الاسم',copy:'نسخ',move:'نقل',folder:'المجلد الهدف',root:'وثائقي',work:'العمل',personal:'شخصي',archive:'الأرشيف',qualityHint:'الضغط يمكن ينقص من وضوح الصور.',asIs:'احتفظ بالأصل',preview:'معاينة',imageCount:'صفحات',compress:'ضغط',menuActions:'العمليات',ready:'جاهز للمشاركة',first:'الملفات المختارة',files:'ملفات'},
+    fr:{long:'Image longue',word:'Word (texte modifiable)',wordHint:'Word utilise OCR : tableaux, images et mise en page peuvent changer.',longHint:'Assemble les pages verticalement, 12 max.',direct:'Transfert direct',link:'Lien / transfert',noCloud:'Pas de lien public sans serveur. Appairez deux appareils avec un code.',shareFile:'Partager fichier',shareLink:'Envoyer à un appareil',rename:'Renommer',copy:'Copier',move:'Déplacer',folder:'Dossier cible',root:'Mes documents',work:'Travail',personal:'Personnel',archive:'Archives',qualityHint:'La compression peut réduire la netteté.',asIs:'Original',preview:'Aperçu',imageCount:'pages',compress:'Compresser',menuActions:'Actions',ready:'Prêt à partager',first:'Fichiers sélectionnés',files:'fichiers'},
+    es:{long:'Imagen larga',word:'Word (texto editable)',wordHint:'Word usa OCR; el formato y las tablas pueden cambiar.',longHint:'Combina hasta 12 páginas verticalmente.',direct:'Transferencia directa',link:'Enlace / directo',noCloud:'Sin servidor no hay enlace público. Empareja dispositivos con un código.',shareFile:'Compartir archivo',shareLink:'Enviar a dispositivo',rename:'Renombrar',copy:'Copiar',move:'Mover',folder:'Carpeta',root:'Documentos',work:'Trabajo',personal:'Personal',archive:'Archivo',qualityHint:'La compresión puede reducir la nitidez.',asIs:'Original',preview:'Vista previa',imageCount:'páginas',compress:'Comprimir',menuActions:'Acciones',ready:'Listo',first:'Archivos seleccionados',files:'archivos'},
+    de:{long:'Langes Bild',word:'Word (bearbeitbarer Text)',wordHint:'Word nutzt OCR; Layout und Tabellen können abweichen.',longHint:'Max. 12 Seiten untereinander.',direct:'Direkt übertragen',link:'Link / Direkt',noCloud:'Kein öffentlicher Link ohne Server. Geräte per Code koppeln.',shareFile:'Datei teilen',shareLink:'An Gerät senden',rename:'Umbenennen',copy:'Kopieren',move:'Verschieben',folder:'Zielordner',root:'Dokumente',work:'Arbeit',personal:'Privat',archive:'Archiv',qualityHint:'Komprimierung kann Schärfe reduzieren.',asIs:'Original',preview:'Vorschau',imageCount:'Seiten',compress:'Komprimieren',menuActions:'Aktionen',ready:'Bereit',first:'Ausgewählte Dateien',files:'Dateien'},
+    pt:{long:'Imagem longa',word:'Word (texto editável)',wordHint:'Word usa OCR; formatação e tabelas podem mudar.',longHint:'Até 12 páginas na vertical.',direct:'Transferência direta',link:'Link / direto',noCloud:'Sem servidor não há link público. Emparelhe com código.',shareFile:'Partilhar ficheiro',shareLink:'Enviar a dispositivo',rename:'Renomear',copy:'Copiar',move:'Mover',folder:'Pasta de destino',root:'Documentos',work:'Trabalho',personal:'Pessoal',archive:'Arquivo',qualityHint:'Compressão pode reduzir a nitidez.',asIs:'Original',preview:'Prévia',imageCount:'páginas',compress:'Comprimir',menuActions:'Ações',ready:'Pronto',first:'Ficheiros selecionados',files:'ficheiros'},
+    it:{long:'Immagine lunga',word:'Word (testo modificabile)',wordHint:'Word usa OCR; impaginazione e tabelle possono cambiare.',longHint:'Fino a 12 pagine verticali.',direct:'Trasferimento diretto',link:'Link / diretto',noCloud:'Nessun link pubblico senza server. Collega i dispositivi con codice.',shareFile:'Condividi file',shareLink:'Invia a dispositivo',rename:'Rinomina',copy:'Copia',move:'Sposta',folder:'Cartella',root:'Documenti',work:'Lavoro',personal:'Personale',archive:'Archivio',qualityHint:'Compressione può ridurre nitidezza.',asIs:'Originale',preview:'Anteprima',imageCount:'pagine',compress:'Comprimi',menuActions:'Azioni',ready:'Pronto',first:'File selezionati',files:'file'}
+  };
+  const t=key=>{
+    const item=extraWords[getLanguage()]?.[key];
+    return item||((translations[getLanguage()]||translations.en)[keys.indexOf(key)]||key);
+  };
   const size=bytes=>bytes<1024?bytes+' B':bytes<1048576?(bytes/1024).toFixed(1)+' KB':(bytes/1048576).toFixed(1)+' MB';
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
@@ -97,6 +110,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         <button data-menu="edit">${t('edit')}</button>
         <button data-menu="share">${t('share')}</button>
         <button data-menu="delete">${t('delete')}</button>
+        <button data-menu="rename">${t('rename')}</button>
+        <button data-menu="copy">${t('copy')}</button>
         <button data-menu="select">${chosen(doc)?t('remove'):t('add')}</button>
       </div>`);
     root.addEventListener('click',async e=>{
@@ -104,6 +119,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       closeSheet();
       if(action==='select'){toggle(doc);return;}
       if(action==='preview'){await onPreview(doc);return;}
+      if(action==='rename'){await onRename?.(doc);return;}
+      if(action==='copy'){organize([doc],'copy');return;}
       if(action==='edit'){await onEdit(doc);return;}
       if(action==='share'){share([doc]);return;}
       if(action==='delete')await erase([doc]);
@@ -229,32 +246,74 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   }
   function share(docs){
     if(!docs?.length){toast(t('none'),true);return;}
-    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('share')} · ${docs.length}</strong><button data-close-sheet>✕</button></div>
-      <label class="bulk-field">${t('format')}<select name="bulk-format"><option value="pdf">${t('pdf')}</option><option value="image">${t('images')}</option></select></label>
-      <label class="bulk-field">${t('quality')}<select name="bulk-quality"><option value="original">${t('original')}</option><option value="balanced">${t('balanced')}</option><option value="small">${t('small')}</option></select></label>
-      <p class="bulk-note">${t('loss')}</p><p class="bulk-note">${t('info')}</p>
-      <button class="bulk-share-confirm" data-share-confirm>${t('send')}</button>`);
+    const safe=x=>String(x||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const names=docs.slice(0,3).map(d=>`<li>${safe(d.name)}</li>`).join('');
+    const root=sheet(`<div class="bulk-sheet-title"><strong>${docs.length} ${t('files')} · ${t('share')}</strong><button data-close-sheet aria-label="${t('cancel')}">✕</button></div>
+      <div class="rivo-share-tabs" role="tablist">
+        <button type="button" class="active" data-share-tab="file">${t('shareFile')}</button>
+        <button type="button" data-share-tab="direct">${t('link')}</button>
+      </div>
+      <div class="rivo-share-file-pane">
+        <div class="rivo-share-preview"><div class="rivo-share-paper">▤</div><div><strong>${t('first')}</strong>
+          <ul>${names}</ul>${docs.length>3?`<small>+ ${docs.length-3} ${t('files')}</small>`:''}</div></div>
+        <label class="bulk-field">${t('format')}
+          <select name="bulk-format"><option value="pdf">${t('pdf')}</option>
+          <option value="image">${t('images')}</option><option value="long">${t('long')}</option>
+          <option value="word">${t('word')}</option></select></label>
+        <label class="bulk-field">${t('quality')}
+          <select name="bulk-quality"><option value="original">${t('original')}</option>
+            <option value="balanced">${t('balanced')}</option><option value="small">${t('small')}</option></select></label>
+        <p class="bulk-note" data-share-note>${t('loss')}</p>
+        <button class="bulk-share-confirm" data-share-confirm>${t('send')}</button>
+      </div>
+      <div class="rivo-share-direct-pane" hidden><p class="bulk-note">${t('noCloud')}</p>
+        <button class="bulk-share-confirm" data-direct-transfer>${t('direct')}</button></div>`);
+    const filePane=root.querySelector('.rivo-share-file-pane');
+    const directPane=root.querySelector('.rivo-share-direct-pane');
+    root.querySelectorAll('[data-share-tab]').forEach(button=>button.addEventListener('click',()=>{
+      const direct=button.dataset.shareTab==='direct';
+      root.querySelectorAll('[data-share-tab]').forEach(b=>b.classList.toggle('active',b===button));
+      filePane.hidden=direct;directPane.hidden=!direct;
+    }));
+    const formatSelect=root.querySelector('[name="bulk-format"]');
+    const qualitySelect=root.querySelector('[name="bulk-quality"]');
+    const note=root.querySelector('[data-share-note]');
+    formatSelect.addEventListener('change',()=>{
+      const format=formatSelect.value;
+      note.textContent=format==='word'?t('wordHint'):format==='long'?t('longHint'):t('loss');
+      qualitySelect.disabled=format==='word';
+    });
+    root.querySelector('[data-direct-transfer]').addEventListener('click',()=>{
+      closeSheet();onDirectTransfer?.(docs);
+    });
     root.querySelector('[data-share-confirm]').addEventListener('click',async()=>{
-      const format=root.querySelector('[name="bulk-format"]').value;
-      const q=root.querySelector('[name="bulk-quality"]').value;closeSheet();
+      const format=formatSelect.value,q=qualitySelect.value;closeSheet();
       showBusy(t('preparing'));
       try{
         let uris,mime;
         if(format==='pdf'&&q==='original'&&docs.every(isPDF)){
-          uris=docs.map(doc=>doc.uri);mime='application/pdf'; // lossless native sharing
-        }else if(format==='image'&&q==='original'&&docs.every(doc=>/^image\/jpeg$/i.test(doc.mimeType||'')||/\.jpe?g$/i.test(doc.name||''))){
-          uris=docs.map(doc=>doc.uri);mime='image/jpeg'; // preserve original JPEG bytes
+          uris=docs.map(doc=>doc.uri);mime='application/pdf';
+        }else if(format==='image'&&q==='original'&&docs.every(doc=>/^image\\/jpeg$/i.test(doc.mimeType||'')||/\\.jpe?g$/i.test(doc.name||''))){
+          uris=docs.map(doc=>doc.uri);mime='image/jpeg';
         }else if(format==='pdf'){
           const bytes=await createMergedPDF(docs,q);
           const file=await saveOut(bytes,`RivoScan_Shared_${Date.now()}.pdf`,'application/pdf');
           uris=[file.uri];mime='application/pdf';
+        }else if(format==='long'){
+          const bytes=await makeLongImage(docs,q,fileFromDocument,isPDF,num=>progress(`${t('preparing')} ${num}`));
+          const saved=await saveOut(bytes,`RivoScan_Long_${Date.now()}.jpg`,'image/jpeg');
+          uris=[saved.uri];mime='image/jpeg';
+        }else if(format==='word'){
+          const bytes=await makeWordText(docs,fileFromDocument,isPDF,(now,total)=>progress(`${t('preparing')} ${now}/${total}`),'eng');
+          const saved=await saveOut(bytes,`RivoScan_Text_${Date.now()}.docx`,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+          uris=[saved.uri];mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         }else{
           uris=await createJpgs(docs,q);mime='image/jpeg';
           await onRefresh();
         }
         await bridge.shareFiles({uris,mimeType:mime});
-      }catch(error){console.error(error);toast(error.message||t('stop'),true)}
-      finally{clearBusy()}
+      }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
+      finally{clearBusy();}
     });
   }
   async function savePdf(docs){
