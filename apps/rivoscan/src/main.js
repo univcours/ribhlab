@@ -176,13 +176,23 @@ async function openLiveScanner({gallery=false,imageUri=null}={}){
     toast('Live edge detection requires the Android app.',true);
     return;
   }
+  if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
+    console.warn('RivoLiveScanner is missing from this installed Android APK. Rebuild and reinstall the native app after running install-live-scanner.ps1.');
+    toast('Live camera needs a rebuilt Android app. Opening the available document scanner for now.',true);
+    await openSmartScanner();
+    return;
+  }
   try{
     const result=await RivoLiveScanner.scan({gallery,imageUri});
     await consumeSmartScan(result);
   }catch(err){
-    if(!/cancel|SCAN_CANCELLED/i.test(String(err?.message||err))){
+    const message=String(err?.message||err);
+    if(/not implemented on android/i.test(message)){
+      toast('Live camera native plugin is absent. Update and reinstall Android app; opening smart crop instead.',true);
+      await openSmartScanner();
+    }else if(!/cancel|SCAN_CANCELLED/i.test(message)){
       console.error('Rivo live scanner:',err);
-      toast('Live scanner could not open: '+(err?.message||'Install the native scanner update and grant camera permission.'),true);
+      toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
     }
   }
 }
