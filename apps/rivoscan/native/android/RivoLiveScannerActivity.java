@@ -126,7 +126,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
         if(!openCvReady && !basicCameraMode){
-            Toast.makeText(this,"Edge detection unavailable on this device. Basic capture remains available.",Toast.LENGTH_LONG).show();
+            Toast.makeText(this,trNative("basicMode"),Toast.LENGTH_LONG).show();
         }
         analyzer=Executors.newSingleThreadExecutor();
         root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(16,27,59));
@@ -234,7 +234,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         cameraPickerButton.setBackground(rounded(Color.rgb(37,51,91),11));
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
-        flashButton=touchLabel(torchOn?"ϟ On":"ϟ Off",12,Color.WHITE,this::toggleTorch);
+        flashButton=touchLabel(torchOn?trNative("flashOn"):trNative("flashOff"),12,Color.WHITE,this::toggleTorch);
         top.addView(flashButton,new LinearLayout.LayoutParams(dp(52),dp(56)));
         qualityButton=touchLabel(highQuality?"HD":"SD",14,Color.WHITE,this::toggleQuality);
         qualityButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
@@ -248,7 +248,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
         if(!basicCameraMode)cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
-        message=text(basicCameraMode?"Take a photo · stored in Downloads/RivoScan":"Align your document inside the frame",12,Color.WHITE,false);
+        message=text(basicCameraMode?trNative("basicHint"):trNative("align"),12,Color.WHITE,false);
         message.setPadding(dp(10),dp(5),dp(10),dp(5));
         message.setBackground(rounded(Color.argb(168,0,0,0),15));
         FrameLayout.LayoutParams hint=new FrameLayout.LayoutParams(-2,dp(33),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
@@ -287,7 +287,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     tab.setTypeface(android.graphics.Typeface.DEFAULT,
                         selected?android.graphics.Typeface.BOLD:android.graphics.Typeface.NORMAL);
                 }
-                if(message!=null)message.setText(scanMode+" mode ready");
+                if(message!=null)message.setText((scanMode.equals("Document")?trNative("document"):scanMode.equals("ID Card")?trNative("id"):trNative("board"))+trNative("modeReady"));
             });
             if(scanMode.equals(mode))item.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
             modes.addView(item,weighted());
@@ -300,7 +300,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
         Shutter shutter=new Shutter(this);
         shutter.setOnClickListener(v->{RivoSounds.play(this,"capture");takePicture();});
-        shutter.setContentDescription("Capture document");
+        shutter.setContentDescription(trNative("capture"));
         LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
         actions.addView(shutter,buttonParams);
         TextView browse=touchLabel("▤\n"+trNative("files"),12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
@@ -316,7 +316,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void setBatch(boolean next){
         batchMode=next;updateBatchButtons();
-        if(message!=null)message.setText(next?"Batch: capture as many pages as needed":"Single: save one page and return");
+        if(message!=null)message.setText(next?trNative("batchReady"):trNative("singleReady"));
     }
     private void updateBatchButtons(){
         if(singleButton==null||batchButton==null)return;
@@ -326,13 +326,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void toggleTorch(){
         if(boundCamera==null||!boundCamera.getCameraInfo().hasFlashUnit()){
             torchOn=false;
-            Toast.makeText(this,"Flash is not available on this camera.",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,trNative("noFlash"),Toast.LENGTH_SHORT).show();
         }else{
             torchOn=!torchOn;
             try{boundCamera.getCameraControl().enableTorch(torchOn);}
-            catch(Exception e){torchOn=false;Toast.makeText(this,"Flash unavailable",Toast.LENGTH_SHORT).show();}
+            catch(Exception e){torchOn=false;Toast.makeText(this,trNative("flash"),Toast.LENGTH_SHORT).show();}
         }
-        if(flashButton!=null)flashButton.setText(torchOn?"ϟ On":"ϟ Off");
+        if(flashButton!=null)flashButton.setText(torchOn?trNative("flashOn"):trNative("flashOff"));
     }
     private void toggleQuality(){
         highQuality=!highQuality;
@@ -340,8 +340,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         startCamera();
     }
     private void showHelp(){
-        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("RivoScan Smart Scanner")
-            .setMessage("Point the camera at a page. The blue outline follows detected borders. Tap the shutter, drag the four corners, and save. Use Batch for a multipage PDF. HD prioritizes image quality.")
+        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("helpTitle"))
+            .setMessage(trNative("helpText"))
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
@@ -356,7 +356,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 boolean newState=!RivoSounds.enabled(this);
                 RivoSounds.setEnabled(this,newState);
                 if(newState)RivoSounds.play(this,"saved");
-                Toast.makeText(this,"Button sounds "+(newState?"on":"off"),Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,trNative("sounds")+(newState?trNative("soundOn"):trNative("soundOff")),Toast.LENGTH_SHORT).show();
             }else showHelp();
         }).show();
     }
@@ -463,7 +463,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void showCameraPicker(){
         if(editing||isFinishing())return;
         if(cameraProvider==null){
-            message.setText("Loading available cameras…");
+            message.setText(trNative("loadingCameras"));
             ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
             future.addListener(()->{
                 try{
@@ -471,7 +471,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     discoverCameras(cameraProvider);
                     showCameraPicker();
                 }catch(Exception e){
-                    if(message!=null)message.setText("Cameras unavailable: "+e.getMessage());
+                    if(message!=null)message.setText(trNative("camerasError")+e.getMessage());
                 }
             },ContextCompat.getMainExecutor(this));
             return;
@@ -484,10 +484,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         labels.add(trNative("bestCamera"));
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()&&!hasRear){
-            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("No rear camera available")
-                .setMessage("Android did not expose an accessible rear camera. You can import a photo and scan its edges.")
-                .setPositiveButton("Import photo",(d,w)->gallery.launch("image/*"))
-                .setNegativeButton("Cancel",null).show();
+            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("noRearTitle"))
+                .setMessage(trNative("noRearText"))
+                .setPositiveButton(trNative("importPhoto"),(d,w)->gallery.launch("image/*"))
+                .setNegativeButton(trNative("cancel"),null).show();
             return;
         }
         int selectedIndex=0;
@@ -497,7 +497,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             }
         }
         new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Choose camera · RivoScan")
+            .setTitle(trNative("cameraPicker"))
             .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,(dialog,which)->{
                 CameraChoice next=which==0?null:cameraChoices.get(which-1);
                 if(next!=null && selectedCamera!=null && next.id.equals(selectedCamera.id)){
@@ -506,20 +506,20 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 selectedCamera=next;
                 torchOn=false;
                 RivoSounds.play(this,"switch");
-                if(flashButton!=null)flashButton.setText("ϟ Off");
+                if(flashButton!=null)flashButton.setText(trNative("flashOff"));
                 if(cameraPickerButton!=null)cameraPickerButton.setText(next==null?trNative("bestCamera")+" ▾":shortCameraName(next)+" ▾");
                 dialog.dismiss();
-                if(message!=null)message.setText(next==null?"Using the default rear camera":"Switching to "+next.label);
+                if(message!=null)message.setText(next==null?trNative("usingAuto"):trNative("switching")+next.label);
                 startCamera();
             })
-            .setNeutralButton("Default", (dialog,which)->{
+            .setNeutralButton(trNative("bestSelection"), (dialog,which)->{
                 selectedCamera=null;torchOn=false;
                 RivoSounds.play(this,"switch");
                 if(cameraPickerButton!=null)cameraPickerButton.setText(trNative("bestCamera")+" ▾");
-                if(flashButton!=null)flashButton.setText("ϟ Off");
+                if(flashButton!=null)flashButton.setText(trNative("flashOff"));
                 startCamera();
             })
-            .setNegativeButton("Cancel",null)
+            .setNegativeButton(trNative("cancel"),null)
             .show();
     }
     private void freezePreview(){
@@ -571,13 +571,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             }
         }
         clearFrozenPreview();
-        if(message!=null)message.setText("No working rear camera found. Import photos instead.");
+        if(message!=null)message.setText(trNative("noWorking"));
         RivoSounds.play(this,"error");
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(trNative("noCamera"))
-            .setMessage("RivoScan cannot open an accessible rear camera on this device. You can still import an image, adjust its corners and save a PDF.")
-            .setPositiveButton("Import photo",(dialog,which)->gallery.launch("image/*"))
-            .setNegativeButton("Close",null).show();
+            .setMessage(trNative("noWorkingText"))
+            .setPositiveButton(trNative("importPhoto"),(dialog,which)->gallery.launch("image/*"))
+            .setNegativeButton(trNative("close"),null).show();
     }
     private void startCamera(){
         final int serial=++cameraBindSerial;
@@ -633,7 +633,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(boundCamera!=null){
                     torchOn=torchOn && boundCamera.getCameraInfo().hasFlashUnit();
                     if(torchOn)boundCamera.getCameraControl().enableTorch(true);
-                    if(flashButton!=null)flashButton.setText(torchOn?"ϟ On":"ϟ Off");
+                    if(flashButton!=null)flashButton.setText(torchOn?trNative("flashOn"):trNative("flashOff"));
                     boundCamera.getCameraInfo().getCameraState().observe(this,state->{
                         if(serial==cameraBindSerial && !editing && !isFinishing()
                             && state.getError()!=null){
@@ -740,13 +740,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(capture==null||editing)return;
         File file=new File(getCacheDir(),"rivo_original_"+System.currentTimeMillis()+".jpg");
         ImageCapture.OutputFileOptions options=new ImageCapture.OutputFileOptions.Builder(file).build();
-        message.setText("Capturing page…");
+        message.setText(trNative("capturePage"));
         capture.takePicture(options,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
-                try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText("Image error: "+e.getMessage());}
+                try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
-            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText("Capture failed: "+e.getMessage());}
+            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
         });
     }
     private static int sampleSize(int width,int height){
@@ -821,7 +821,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 }catch(Exception ignored){}
                 if(basicCameraMode)saveWithoutCrop(img);else openEditor(img);
             }
-        }catch(Exception e){Toast.makeText(this,"Unable to import image: "+e.getMessage(),Toast.LENGTH_LONG).show();}
+        }catch(Exception e){Toast.makeText(this,trNative("importError")+e.getMessage(),Toast.LENGTH_LONG).show();}
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
@@ -834,7 +834,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // The same interactive four-point editor handles both camera images and gallery images.
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
-        layout(editor,found==null?trNative("notFound"):trNative("found"),
+        layout(editor,trNative("loupe")+"\n"+(found==null?trNative("notFound"):trNative("found")),
             button(trNative("retake"),this::showCamera),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("savePage"),this::saveCroppedPage));
@@ -849,10 +849,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             savedImages.add(Uri.fromFile(target).toString());
             publishPageCopy(target);
             RivoSounds.play(this,"saved");
-            Toast.makeText(this,basicCameraMode?"Photo stored in Downloads/RivoScan":"Photo captured without auto-crop on this device.",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
             if(batchMode)showCamera();else finishWithPages();
         }catch(Exception error){
-            Toast.makeText(this,"Could not save photo: "+error.getMessage(),Toast.LENGTH_LONG).show();
+            Toast.makeText(this,trNative("saveError")+error.getMessage(),Toast.LENGTH_LONG).show();
         }finally{
             bitmap.recycle();
         }
@@ -868,7 +868,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             RivoSounds.play(this,"saved");
             if(current!=null){current.recycle();current=null;}
             if(batchMode)showCamera();else finishWithPages();
-        }catch(Exception e){RivoSounds.play(this,"error");message.setText("Adjust the corners: "+e.getMessage());}
+        }catch(Exception e){RivoSounds.play(this,"error");message.setText(trNative("adjustError")+e.getMessage());}
     }
     private void publishPageCopy(File temporaryPage){
         // Make the scan visible to Samsung My Files immediately after Save Page.
