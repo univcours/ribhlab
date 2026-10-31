@@ -57,14 +57,14 @@ $gradle=Join-Path $android 'app\build.gradle'
 $gradleText=[System.IO.File]::ReadAllText($gradle)
 $deps=@'
     // RivoScan: on-screen live document outlines and drag-adjustable perspective crop
-    implementation 'androidx.camera:camera-core:1.5.3'
-    implementation 'androidx.camera:camera-camera2:1.5.3'
-    implementation 'androidx.camera:camera-lifecycle:1.5.3'
-    implementation 'androidx.camera:camera-view:1.5.3'
+    implementation 'androidx.camera:camera-core:1.6.2'
+    implementation 'androidx.camera:camera-camera2:1.6.2'
+    implementation 'androidx.camera:camera-lifecycle:1.6.2'
+    implementation 'androidx.camera:camera-view:1.6.2'
     implementation 'androidx.exifinterface:exifinterface:1.4.2'
     implementation 'org.opencv:opencv:4.12.0'
 '@
-if($gradleText -notmatch "androidx\.camera:camera-view:1\.5\.3") {
+if($gradleText -notmatch "androidx\.camera:camera-view:1\.6\.2") {
   if($gradleText -notmatch 'dependencies\s*\{') {throw 'Gradle dependencies section not found.'}
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$deps",1)
 }
