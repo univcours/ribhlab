@@ -97,6 +97,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void showCamera(){
         editing=false;
         cameraView=new PreviewView(this);
+        // Use TextureView to ensure the green contour is visible above the live camera.
+        cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         FrameLayout cameraFrame=new FrameLayout(this);
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
