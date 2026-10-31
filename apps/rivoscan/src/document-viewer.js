@@ -109,7 +109,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     const row=tag('div','doc-rename-controls');
     const input=document.createElement('input');
     input.required=true;input.maxLength=90;input.autocomplete='off';
-    input.value=current.name.replace(/\.[^.]+$/,'');
+    input.value=current.name;
     row.appendChild(input);
     const submit=document.createElement('button');submit.type='submit';
     submit.textContent=word('save');row.appendChild(submit);form.appendChild(row);
@@ -117,7 +117,10 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       event.preventDefault();
       submit.disabled=true;
       try{
-        const response=await bridge.renameFile({uri:current.uri,name:input.value});
+        const trimmed=input.value.trim();
+        const oldExt=(current.name.match(/\.[^.]+$/)||[])[0]||'';
+        const newName=oldExt&&!/\.[^.]+$/.test(trimmed)?trimmed+oldExt:trimmed;
+        const response=await bridge.renameFile({uri:current.uri,name:newName});
         current.name=response.name;
         root.querySelector('.doc-viewer-title').textContent=response.name;
         form.remove();
