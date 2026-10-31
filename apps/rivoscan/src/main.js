@@ -659,8 +659,33 @@ async function openHubAction(id){
  if(spec.type==='scan'){await openLiveScanner();return}
  if(spec.type==='import'){chooseLibraryFiles(spec.kind);return}
  if(spec.type==='pageManager'){
-  pickHubFile('.pdf,application/pdf',file=>openPageManager({file,getLanguage:()=>language,onSave:saveOut,
-   onDone:async()=>{await loadLibrary(false);openLibrary()},onError:msg=>toast(msg,true)}));return;
+  const picker=document.createElement('input');picker.type='file';picker.accept='.pdf,application/pdf,image/*';picker.multiple=true;
+  picker.onchange=async()=>{
+    const picked=[...picker.files];picker.remove();if(!picked.length)return;
+    try{
+      let file;
+      if(picked.length===1&&(/\.pdf$/i.test(picked[0].name)||picked[0].type==='application/pdf'))file=picked[0];
+      else{
+        if(picked.length>30||picked.some(f=>!/^image\//i.test(f.type))||picked.reduce((n,f)=>n+f.size,0)>30*1024*1024)
+          throw Error('Select one PDF or up to 30 images (30 MB total).');
+        showBusy('Preparing selected pages…');
+        try{
+          const pdf=await PDFDocument.create();
+          for(let i=0;i<picked.length;i++){
+            progress('Page '+(i+1)+'/'+picked.length);
+            const canvas=await imageCanvas(picked[i]);
+            const image=await pdf.embedJpg(await(await canvasBlob(canvas,'image/jpeg',.88)).arrayBuffer());
+            const page=pdf.addPage([image.width,image.height]);
+            page.drawImage(image,{x:0,y:0,width:image.width,height:image.height});
+          }
+          file=new File([await pdf.save({useObjectStreams:true})],'RivoScan_ManagedPhotos.pdf',{type:'application/pdf'});
+        }finally{clearBusy()}
+      }
+      await openPageManager({file,getLanguage:()=>language,onSave:saveOut,
+       onDone:async()=>{await loadLibrary(false);openLibrary()},onError:msg=>toast(msg,true)});
+    }catch(error){toast(error?.message||String(error),true)}
+  };
+  document.body.appendChild(picker);picker.click();return;
  }
  if(spec.type==='export'){
   pickHubFile('.pdf,image/*',async file=>{
