@@ -85,9 +85,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         openCvReady=OpenCVLoader.initLocal();
         if(!openCvReady){Toast.makeText(this,"Document detection engine unavailable",Toast.LENGTH_LONG).show();finish();return;}
         analyzer=Executors.newSingleThreadExecutor();
-        root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(15,23,41));
+        root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(16,27,59));
         content=new FrameLayout(this);
         root.addView(content,new FrameLayout.LayoutParams(-1,-1));
+        // RivoScan brand: deep blue camera chrome, white system icons.
+        getWindow().setStatusBarColor(Color.rgb(16,28,58));
+        getWindow().setNavigationBarColor(Color.rgb(16,28,58));
+        getWindow().getDecorView().setSystemUiVisibility(
+            getWindow().getDecorView().getSystemUiVisibility()
+              & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         // Live scanner must not cover Samsung's clock, Wi-Fi, battery or nav bar.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if(Build.VERSION.SDK_INT >= 35){
@@ -129,14 +135,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
-        b.setTextColor(Color.WHITE);b.setBackground(rounded(Color.rgb(41,47,56),12));
+        b.setTextColor(Color.WHITE);b.setBackground(rounded(Color.rgb(34,51,100),12));
         b.setOnClickListener(v->onTap.run());return b;
     }
     private void layout(View body,String hint,Button... buttons){
         // A dedicated document-corners editor with a visible safe header and bottom actions.
         content.removeAllViews();
         LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(Color.BLACK);
+        shell.setBackgroundColor(Color.rgb(14,24,54));
         content.addView(shell,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(14),0,dp(14),0);
@@ -148,13 +154,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setPadding(dp(14),dp(10),dp(14),dp(13));
-        bottom.setBackgroundColor(Color.rgb(15,17,21));
+        bottom.setBackgroundColor(Color.rgb(16,28,58));
         message=text(hint,12,Color.rgb(184,197,206),false);
         bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(45)));
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
-            if(i==buttons.length-1){action.setBackground(rounded(Color.rgb(9,191,173),13));action.setTextColor(Color.BLACK);}
+            if(i==buttons.length-1){action.setBackground(rounded(Color.rgb(49,85,218),13));action.setTextColor(Color.WHITE);}
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
             p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
         }
@@ -167,15 +173,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         content.removeAllViews();
-        content.setBackgroundColor(Color.BLACK);
+        content.setBackgroundColor(Color.rgb(14,24,54));
         LinearLayout frame=new LinearLayout(this);frame.setOrientation(LinearLayout.VERTICAL);
-        frame.setBackgroundColor(Color.BLACK);
+        frame.setBackgroundColor(Color.rgb(14,24,54));
         content.addView(frame,new FrameLayout.LayoutParams(-1,-1));
 
         // The native status bar (time, signal, battery) remains outside the scanner.
         LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(7),0,dp(7),0);
-        top.setBackgroundColor(Color.rgb(0,0,0));
+        top.setBackgroundColor(Color.rgb(16,28,58));
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
@@ -191,7 +197,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
 
         FrameLayout cameraFrame=new FrameLayout(this);
-        cameraFrame.setBackgroundColor(Color.rgb(18,21,24));
+        cameraFrame.setBackgroundColor(Color.rgb(18,28,54));
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
         cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
@@ -209,10 +215,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(cameraFrame,new LinearLayout.LayoutParams(-1,0,1));
 
         LinearLayout footer=new LinearLayout(this);footer.setOrientation(LinearLayout.VERTICAL);
-        footer.setBackgroundColor(Color.BLACK);footer.setPadding(dp(10),dp(3),dp(10),dp(8));
+        footer.setBackgroundColor(Color.rgb(16,28,58));footer.setPadding(dp(10),dp(3),dp(10),dp(8));
         LinearLayout switches=new LinearLayout(this);
         switches.setGravity(Gravity.CENTER);
-        switches.setBackground(rounded(Color.rgb(30,31,35),23));
+        switches.setBackground(rounded(Color.rgb(37,51,91),23));
         singleButton=touchLabel("Single",14,Color.WHITE,()->setBatch(false));
         batchButton=touchLabel("Batch",14,Color.WHITE,()->setBatch(true));
         switches.addView(singleButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
@@ -225,7 +231,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER_VERTICAL);
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
-            TextView item=touchLabel(mode,13,scanMode.equals(mode)?Color.rgb(0,226,195):Color.rgb(190,193,202),()->{
+            TextView item=touchLabel(mode,13,scanMode.equals(mode)?Color.rgb(114,185,255):Color.rgb(190,193,202),()->{
                 scanMode=mode;showCamera();
             });
             if(scanMode.equals(mode))item.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
@@ -247,7 +253,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
         footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
         TextView done=touchLabel(savedImages.size()>0?"✓  Finish · "+savedImages.size():"Scan & save",14,
-                savedImages.size()>0?Color.rgb(0,224,192):Color.rgb(134,143,149),this::finishWithPages);
+                savedImages.size()>0?Color.rgb(114,185,255):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
         frame.addView(footer,new LinearLayout.LayoutParams(-1,-2));
@@ -259,8 +265,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void updateBatchButtons(){
         if(singleButton==null||batchButton==null)return;
-        singleButton.setBackground(rounded(batchMode?Color.TRANSPARENT:Color.rgb(87,91,100),22));
-        batchButton.setBackground(rounded(batchMode?Color.rgb(87,91,100):Color.TRANSPARENT,22));
+        singleButton.setBackground(rounded(batchMode?Color.TRANSPARENT:Color.rgb(66,92,185),22));
+        batchButton.setBackground(rounded(batchMode?Color.rgb(66,92,185):Color.TRANSPARENT,22));
     }
     private void toggleTorch(){
         torchOn=!torchOn;
@@ -295,9 +301,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             super.onDraw(canvas);
             float cx=getWidth()/2f,cy=getHeight()/2f;
             float r=Math.min(getWidth(),getHeight())/2f;
-            ink.setStyle(Paint.Style.FILL);ink.setColor(Color.rgb(0,213,185));
+            ink.setStyle(Paint.Style.FILL);ink.setColor(Color.rgb(58,111,238));
             canvas.drawCircle(cx,cy,r-dp(4),ink);
-            ink.setColor(Color.BLACK);canvas.drawCircle(cx,cy,r-dp(9),ink);
+            ink.setColor(Color.rgb(14,24,54));canvas.drawCircle(cx,cy,r-dp(9),ink);
             ink.setColor(Color.WHITE);canvas.drawCircle(cx,cy,r-dp(16),ink);
         }
         private float dp(float n){return n*getResources().getDisplayMetrics().density;}
@@ -441,8 +447,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
             Path path=new Path();path.moveTo(offsetX+(float)points[0].x*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
             for(int i=1;i<4;i++)path.lineTo(offsetX+(float)points[i].x*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
-            paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(40,18,255,163));canvas.drawPath(path,paint);
-            paint.setColor(Color.rgb(30,255,158));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
+            paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(45,45,123,255));canvas.drawPath(path,paint);
+            paint.setColor(Color.rgb(100,189,255));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
         }
     }
 }
