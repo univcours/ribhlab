@@ -264,7 +264,7 @@ async function openCamera(){
       const photo=await Camera.getPhoto({quality:90,source:CameraSource.Camera,resultType:CameraResultType.DataUrl,correctOrientation:true});
       if(!photo.dataUrl)throw new Error('Camera returned no image');
       const blob=await(await fetch(photo.dataUrl)).blob();
-      addSelectedFiles([new File([blob,],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
+      addSelectedFiles([new File([blob],`Scan_${Date.now()}.jpg`,{type:'image/jpeg'})]);
       return;
     }
     const el=document.createElement('input');el.type='file';el.accept='image/*';el.capture='environment';
