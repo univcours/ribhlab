@@ -26,6 +26,30 @@
 All core editing and conversion runs inside the device/browser, with no document-upload backend. **OCR language data** may be fetched from the library's training-data host on first use; no document needs to be sent to a remote server. Test this behavior before any privacy claim in production.
 
 
+
+## Native live edge scanner (new experimental implementation)
+
+The current Android beta includes a custom native CameraX + OpenCV document camera, in addition to the existing Google ML Kit scanner. The custom mode **shows a moving green four-sided outline during camera preview**. Press **Capture** to use a high-resolution photo; the app opens an editor with **four draggable green corner handles**. Adjust all four corners, press **Save page**, scan more pages if needed, then press **Done** to return the cropped images to the Scan Document tool. Press **Process & Save** to create one multi-page PDF.
+
+The **Gallery** button inside the live camera also imports images and opens the **same editable four-corner crop interface**. The main Scan Document screen exposes a separate **Import Photo · Adjust 4 Corners** action. Selecting images via Scan Document's file input also routes them through the Android native crop editor. The perspective warp uses OpenCV and can correct skewed quadrilaterals. If detection fails, a default quadrilateral appears; manually move the corners to cover the paper.
+
+**Important:** This is beta code, not a claim of verified CamScanner parity. Live contour recognition can fail in low light, low contrast, or complex backgrounds; the detected green polygon may not be perfectly aligned on all camera aspect ratios. The crop editor lets the user correct it. Test this feature on physical Samsung/Android devices. No continuous auto-shutter is implemented; press Capture manually.
+
+### Update an existing Android Studio installation
+
+The native Java sources live under \`apps/rivoscan/native/android/\`. They must be copied into the generated native Android wrapper. From \`apps/rivoscan\`:
+
+\`\`\`powershell
+npm install
+npm run build
+npx cap sync android
+.\install-live-scanner.cmd
+\`\`\`
+
+The provided \`setup-android-studio.cmd\` and \`start-rivoscan-autosync.cmd\` pipeline also invoke \`install-live-scanner.ps1\` automatically after Capacitor synchronization. Then in Android Studio use **Sync Project with Gradle Files** and **Run** to install the new APK on the phone.
+
+Native integration adds CameraX 1.5.3 and OpenCV Android 4.12.0 to \`android/app/build.gradle\`, declares Camera permission and the private scanner Activity in \`AndroidManifest.xml\`, and registers \`RivoLiveScanner\` in \`MainActivity.java\`. Because these are Android-native changes, simply copying web files without re-syncing and rebuilding is not enough.
+
 ## New in 0.2 beta: smart scans, document bundles and transfer
 
 - **Smart Scanner (Android):** Uses the maintained `@capacitor-mlkit/document-scanner` (Capacitor 8) plugin and the Google ML Kit Document Scanner UI. It supports automatic document edge detection and perspective correction, manual adjustment in the system scanner, filters, multi-page scanning (up to 20), and **photo-gallery import**. The basic fallback camera and basic web image picker do not automatically crop edges. Google Play services may first need to download the scanner module.
