@@ -13,7 +13,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import { initPeerTransfer } from './file-transfer.js';
-import { toolText, label as L } from './rivo-i18n.js';
+import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
@@ -142,6 +142,7 @@ const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
 const tn=t=>toolText(language,t.id,'name');
 const td=t=>toolText(language,t.id,'desc');
 const lt=key=>L(language,key);
+const localizeOptionMarkup=markup=>localizeOptions(language,markup);
 const app = document.getElementById('app');
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -238,7 +239,7 @@ function scannerWorkspace(){
   const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
   return `<section class="workspace scan-workspace">
   <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
-  <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>Smart Scanner</h1><p>Point your camera at a document, adjust its edges and save a clean PDF.</p></div></div>
+  <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>${sl('title')}</b><small>${sl('live')}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
@@ -248,7 +249,7 @@ function scannerWorkspace(){
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
   <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
   <button id="camera" class="scan-upload-link">${ico('camera',18)} ${sl('basic')}</button></div>
-  </div><div class="panel scan-export-panel"><div id="options">${opts.scan||''}</div>
+  </div><div class="panel scan-export-panel"><div id="options">${localizeOptionMarkup(opts.scan||'')}</div>
   <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} ${sl('save')}</button>
   <p class="hint">${sl('hint')} ${dl('folder')}</p></div>
   </section>`;
