@@ -100,7 +100,7 @@ try {
   $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
   if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
   Write-Host ''
-  Write-Host 'SUCCESS! RivoScan v0.8 built with live scanner and new adaptive launcher icon.' -ForegroundColor Green
+  Write-Host 'SUCCESS! RivoScan v0.9 built with live scanner and new adaptive launcher icon.' -ForegroundColor Green
   Write-Host "APK: $apk"
   Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your Samsung.' -ForegroundColor Green
 } catch {
