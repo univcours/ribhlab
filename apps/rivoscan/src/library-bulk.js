@@ -46,7 +46,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     for(const rootId of ['library-list','home-recents']){
     const root=document.getElementById(rootId);
     if(root){
-      for(const row of root.querySelectorAll('.document-entry[data-doc-open]')){
+      for(const row of root.querySelectorAll('.document-entry[data-doc-open],.recent-entry[data-doc-open]')){
         const doc=getItems()[Number(row.dataset.docOpen)];
         row.classList.toggle('doc-selected',!!doc&&chosen(doc));
         row.setAttribute('aria-selected',String(!!doc&&chosen(doc)));
