@@ -299,7 +299,7 @@ function toolsWorkspace(){
  </section>`;
 }
 function settingsWorkspace(){
- return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.15.0</p></div>
+ return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.16.0</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
