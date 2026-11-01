@@ -79,6 +79,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private boolean torchOn=false;
     private boolean highQuality=true;
     private boolean batchMode=false;
+    private boolean autoCleanEnabled=true;
+    private boolean saveOriginal=true;
+    private int scanJpegQuality=94;
+    private String defaultEnhancement=RivoDocumentEnhancer.AUTO;
     private String scanMode="Document";
     private boolean basicCameraMode=false;
     private String nativeLanguage="en";
@@ -129,6 +133,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // blue "RivoScan" AppCompat ActionBar seen above the crop editor.
         if(getSupportActionBar()!=null)getSupportActionBar().hide();
         basicCameraMode=getIntent().getBooleanExtra("basic",false);
+        autoCleanEnabled=getIntent().getBooleanExtra("autoClean",true);
+        saveOriginal=getIntent().getBooleanExtra("keepOriginal",true);
+        batchMode=getIntent().getBooleanExtra("batchDefault",false);
+        highQuality=getIntent().getBooleanExtra("highQuality",true);
+        scanJpegQuality=getIntent().getIntExtra("jpegQuality",94);
+        if(scanJpegQuality<70||scanJpegQuality>100)scanJpegQuality=94;
+        String requestedEnhancement=getIntent().getStringExtra("enhancement");
+        if(RivoDocumentEnhancer.isSupportedMode(requestedEnhancement))
+            defaultEnhancement=requestedEnhancement;
         scanMode="ID Card".equals(getIntent().getStringExtra("mode"))?"ID Card":"Document";
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
@@ -861,7 +874,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(editor,trNative("loupe")+"\n"+(found==null?trNative("notFound"):trNative("found")),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
-            button("✓  "+trNative("autoCleanSave"),this::autoCleanAndSave));
+            button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
     }
     /**
      * One-tap confirmation from the corner editor: warp the document, normalize
@@ -884,12 +897,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             File target=null;
             try{
                 straight=RivoEdgeDetector.warp(source,corners);
-                output=RivoDocumentEnhancer.apply(straight,RivoDocumentEnhancer.AUTO);
+                output=RivoDocumentEnhancer.apply(straight,
+                    autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL);
                 target=writeProcessedJpeg(output);
                 final File saved=target;
                 // Keep an unmodified copy (in a dedicated Originals folder) so
                 // faint stamps can be checked against the captured source later.
-                backupOriginalPage(source);
+                if(saveOriginal)backupOriginalPage(source);
                 mainHandler.post(()->completeProcessedPage(saved,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
@@ -910,7 +924,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         File target=new File(getCacheDir(),"rivoscan_clean_"+
             System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
         try(FileOutputStream stream=new FileOutputStream(target)){
-            if(!result.compress(Bitmap.CompressFormat.JPEG,94,stream))
+            if(!result.compress(Bitmap.CompressFormat.JPEG,scanJpegQuality,stream))
                 throw new Exception("Cannot encode enhanced JPEG");
         }
         return target;
@@ -965,7 +979,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(editor,trNative("loupe")+"\n"+trNative("found"),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
-            button("✓  "+trNative("autoCleanSave"),this::autoCleanAndSave));
+            button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
     }
     private void prepareEnhancementPreview(){
         if(current==null||current.isRecycled()||savingEnhancedPage)return;
@@ -983,7 +997,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         result.recycle();return;
                     }
                     releaseEnhancement();
-                    pendingWarp=result;selectedEnhancement=RivoDocumentEnhancer.AUTO;
+                    pendingWarp=result;selectedEnhancement=autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL;
                     showEnhancementPreview();
                 });
             }catch(Throwable failure){
@@ -1050,7 +1064,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 enhancementImage.setTag(enhancementImage.getTag()==null?"original":null);
             }),
             button("✓  "+trNative("enhanceDone"),this::saveEnhancedPage));
-        choices.getChildAt(0).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));
+        for(int i=0;i<modes.length;i++)
+            if(modes[i].equals(selectedEnhancement)){
+                choices.getChildAt(i).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));break;
+            }
         enhancementHint=message;
         renderEnhancementPreview(selectedEnhancement);
         // Thumbnails show their REAL filter output, not the same photo copied six times.
@@ -1121,7 +1138,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 output=RivoDocumentEnhancer.apply(input,preset);
                 target=writeProcessedJpeg(output);
                 final File completed=target;
-                backupOriginalPage(current);
+                if(saveOriginal&&current!=null)backupOriginalPage(current);
                 mainHandler.post(()->completeProcessedPage(completed,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();

@@ -21,6 +21,10 @@ final class RivoDocumentEnhancer {
     static final String ORIGINAL="original",AUTO="auto",ENHANCE="enhance",MAGIC="magic",
         SHADOW="shadow",BW="bw",WHITEBOARD="whiteboard";
     private RivoDocumentEnhancer(){}
+    static boolean isSupportedMode(String mode){
+        return ORIGINAL.equals(mode)||AUTO.equals(mode)||ENHANCE.equals(mode)||
+            MAGIC.equals(mode)||SHADOW.equals(mode)||BW.equals(mode)||WHITEBOARD.equals(mode);
+    }
 
     static Bitmap apply(Bitmap image,String mode){
         if(image==null||image.isRecycled())throw new IllegalArgumentException("Missing scanned page");

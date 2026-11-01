@@ -65,6 +65,14 @@ public class RivoLiveScannerPlugin extends Plugin {
         intent.putExtra("gallery", Boolean.TRUE.equals(call.getBoolean("gallery", false)));
         intent.putExtra("basic", Boolean.TRUE.equals(call.getBoolean("basic", false)));
         intent.putExtra("language", call.getString("language", "en"));
+        // Camera settings are normalized by the UI and validated again in Java.
+        intent.putExtra("autoClean",Boolean.TRUE.equals(call.getBoolean("autoClean",true)));
+        intent.putExtra("keepOriginal",Boolean.TRUE.equals(call.getBoolean("keepOriginal",true)));
+        intent.putExtra("batchDefault",Boolean.TRUE.equals(call.getBoolean("batch",false)));
+        intent.putExtra("highQuality",!"sd".equals(call.getString("cameraQuality","hd")));
+        Integer quality=call.getInt("jpegQuality",94);
+        intent.putExtra("jpegQuality",quality!=null&&quality>=70&&quality<=100?quality:94);
+        intent.putExtra("enhancement",call.getString("enhancement","auto"));
         intent.putExtra("mode", "ID Card".equals(call.getString("mode", "Document")) ? "ID Card" : "Document");
         String imageUri = call.getString("imageUri");
         if (imageUri != null && !imageUri.isEmpty()) intent.putExtra("imageUri", imageUri);
