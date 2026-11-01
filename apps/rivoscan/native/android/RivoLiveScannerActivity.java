@@ -979,7 +979,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         result.recycle();return;
                     }
                     releaseEnhancement();
-                    pendingWarp=result;selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
+                    pendingWarp=result;selectedEnhancement=RivoDocumentEnhancer.AUTO;
                     showEnhancementPreview();
                 });
             }catch(Throwable failure){
@@ -1007,10 +1007,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout choices=new LinearLayout(this);choices.setGravity(Gravity.CENTER_VERTICAL);
         choices.setPadding(dp(9),dp(8),dp(9),dp(8));
         choices.setBackgroundColor(Color.rgb(25,38,70));
-        String[] modes={RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
+        String[] modes={RivoDocumentEnhancer.AUTO,RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
             RivoDocumentEnhancer.MAGIC,RivoDocumentEnhancer.SHADOW,
             RivoDocumentEnhancer.WHITEBOARD,RivoDocumentEnhancer.BW};
-        String[] captions={"enhanceOriginal","enhanceSmart","enhanceMagic",
+        String[] captions={"enhanceAuto","enhanceOriginal","enhanceSmart","enhanceMagic",
             "enhanceShadow","enhanceWhiteboard","enhanceBW"};
         int sw=pendingWarp.getWidth(),sh=pendingWarp.getHeight();
         int tw=Math.max(35,(int)(dp(72)*sw/(double)Math.max(sw,sh)));
@@ -1046,7 +1046,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 enhancementImage.setTag(enhancementImage.getTag()==null?"original":null);
             }),
             button("✓  "+trNative("enhanceDone"),this::saveEnhancedPage));
-        choices.getChildAt(1).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));
+        choices.getChildAt(0).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));
         enhancementHint=message;
         renderEnhancementPreview(selectedEnhancement);
         // Thumbnails show their REAL filter output, not the same photo copied six times.
