@@ -4,9 +4,9 @@
 
 ## Primary requested flow
 - Captured photo -> corner magnifier/manual correction -> **post-crop enhancement preview** -> choose Original / Enhance / Magic / No Shadow / Whiteboard / B&W -> compare original -> ✓ Save the processed image -> publish image in Documents/RivoScan and return to PDF assembly.
-- Implemented in native `RivoLiveScannerActivity`, `RivoDocumentEnhancer`, `RivoEdgeDetector`, `RivoCropEditor`.
+- Implemented in native `RivoLiveScannerActivity`, `RivoDocumentEnhancer`, `RivoEdgeDetector`, `RivoCropEditor`. Since 0.19.1, ✓ in the crop editor immediately runs Auto Clean and saves; Filters is OPTIONAL, not a prerequisite.
 - Actual processing: perspective transform, spatial illumination normalization, CLAHE local contrast, restrained sharpening, and adaptive B&W. **Does not geometrically unbend deeply curved paper, recover text never recorded, or replace an AI restoration engine.** Physical creases/shadows may be reduced but not always removed.
-- The original input photo is not overwritten; scanned output is a new file.
+- The original input photo is not overwritten; a decoded/pre-enhancement backup is saved in `Documents/RivoScan/Originals`, and the new cleaned scan is saved separately.
 - Requires Android OpenCV to initialize; basic camera fallback does not have these advanced modes.
 
 ## Compared screenshot functions
