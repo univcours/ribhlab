@@ -1,4 +1,3 @@
-import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 const {recognize}=Tesseract;
 
@@ -48,6 +47,9 @@ export async function editableSlidesFromFile(file,language='eng',progress=()=>{}
  const isPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name);
  const pages=[];
  if(isPDF){
+  // Lazy-load PDF.js only when a PDF is opened; Node regression tests do not
+  // have DOMMatrix, while the actual Android WebView does.
+  const pdfjs=await import('pdfjs-dist');
   const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true}).promise;
   try{
    if(pdf.numPages>25)throw Error('Maximum 25 editable slides');
