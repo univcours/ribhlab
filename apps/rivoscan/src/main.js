@@ -25,6 +25,7 @@ import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
+import {openCountCam} from './count-cam.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -701,6 +702,14 @@ function pickHubFile(accept,cb){
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
+ if(spec.type==='countCam'){
+   openCountCam({language,capture:async()=>{
+     const photo=await Camera.getPhoto({quality:90,allowEditing:false,
+       resultType:CameraResultType.Uri,source:CameraSource.Camera});
+     return photo.webPath||photo.path;
+   }});
+   return;
+ }
  if(spec.type==='barcode'){
    openBarcodeScanner({language,notify:toast,capture:async()=>{
      const photo=await Camera.getPhoto({quality:90,allowEditing:false,

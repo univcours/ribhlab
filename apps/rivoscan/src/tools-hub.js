@@ -5,12 +5,13 @@ export const toolGroups=[
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
- {id:'utilities',entries:['peerTransfer','shareFiles','printPdf']}
+ {id:'utilities',entries:['countCam','peerTransfer','shareFiles','printPdf']}
 ];
 export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
  scanCode:{icon:'scan',color:'blue',type:'barcode'},
+ countCam:{icon:'camera',color:'green',type:'countCam'},
  bookScan:{icon:'file',color:'sky',type:'book'},
  slideScan:{icon:'image',color:'pink',type:'scan'},
  whiteboard:{icon:'image',color:'green',type:'photo',preset:'whiteboard'},
@@ -39,6 +40,7 @@ const groups={
 };
 const labels={
  idPhotoMaker:['ID Photo Sheet (print)','صور شخصية للطباعة','Planche photos identité','Hoja fotos de carné','Passfoto-Bogen','Folha fotos de identificação','Foglio fototessere'],
+ countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
  scanCode:['Scan QR & Barcode','قراءة QR والباركود','Lire QR et code-barres','Leer QR y código','QR / Barcode lesen','Ler QR e código','Leggi QR e barcode'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  bookScan:['Book Scan','مسح الكتب','Numériser un livre','Escanear libro','Buch scannen','Digitalizar livro','Scansiona libro'],

@@ -18,7 +18,7 @@
 | #15 Lock PDF | NOT implemented; pdf-lib cannot securely encrypt output |
 | #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
 | #17 Solver AI | NOT implemented; needs AI provider/model |
-| #18 CountCam | NOT implemented; needs object detection |
+| #18 CountCam | Partial, FUNCTIONAL source: COCO-SSD model detects common object classes from camera/import photo; internet for model weights on first use, counts are estimates, handset QA pending |
 | #19 Scan Code | FUNCTIONAL source: ZXing local QR/1D/2D decoding from a camera photo or imported image; hardware QA pending |
 | #20 Persistent Share Link | NOT implemented; needs authenticated storage/backend and user consent |
 | #21 Sign before first save | NOT implemented natively; PDF signing works after export |

@@ -1363,3 +1363,5 @@ body.rivo-native-android .rivo-dark-ui .topbar{background:#0c1420}
 .rivo-release-dialog li{margin:9px 0}
 .rivo-release-dialog button{width:100%;margin-top:12px}
 @media(max-width:380px){.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog{padding:13px;border-radius:13px}.rivo-code-actions button{flex-basis:40%}}
+
+.rivo-count-preview{display:block;max-width:100%;max-height:40vh;object-fit:contain;margin:10px auto;border-radius:8px;background:#fff}.rivo-code-dialog ul{padding-inline-start:21px;color:#112957}

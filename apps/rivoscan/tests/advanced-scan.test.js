@@ -52,3 +52,14 @@ test('All genuinely wired extended tools have handlers rather than generic dead 
  assert.ok(rest.includes('restorePhotoPixels'));
  assert.ok(rest.includes('inpaintMaskedPixels'));
 });
+
+test('CountCam returns grouped counts from actual scored detections without guessing unseen classes',async()=>{
+ const {countDetectedObjects}=await import('../src/count-cam.js');
+ assert.deepEqual(countDetectedObjects([
+  {class:'bottle',score:.9,bbox:[0,0,10,10]},
+  {class:'bottle',score:.7,bbox:[15,0,10,10]},
+  {class:'person',score:.81,bbox:[0,0,22,90]},
+  {class:'bottle',score:.2,bbox:[4,4,1,1]}
+ ],.5),{bottle:2,person:1});
+ assert.throws(()=>countDetectedObjects([],2));
+});

@@ -1,13 +1,13 @@
 {
   "name": "rivoscan",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "check": "node --check src/main.js && node --check src/tools-hub.js && node --check src/page-manager.js && node --check src/tool-exports.js && node --check src/xlsx-export.js && node --check src/library-bulk.js && node --check src/scan-editor.js && node --check src/share-exports.js && node --check src/document-viewer.js && node --check src/pdf-utils.js && node --check src/file-transfer.js && node --check src/barcode-scanner.js && node --check src/id-photo-maker.js && node --check src/whats-new.js && node --check src/smart-erase.js && node --check src/photo-restore.js && node --check src/book-split.js",
+    "check": "node --check src/main.js && node --check src/tools-hub.js && node --check src/page-manager.js && node --check src/tool-exports.js && node --check src/xlsx-export.js && node --check src/library-bulk.js && node --check src/scan-editor.js && node --check src/share-exports.js && node --check src/document-viewer.js && node --check src/pdf-utils.js && node --check src/file-transfer.js && node --check src/barcode-scanner.js && node --check src/id-photo-maker.js && node --check src/whats-new.js && node --check src/smart-erase.js && node --check src/photo-restore.js && node --check src/book-split.js && node --check src/count-cam.js",
     "test": "node --test tests/*.test.js",
     "capacitor:sync:after": "node scripts/after-capacitor-sync.mjs"
   },
@@ -24,7 +24,9 @@
     "@capacitor/app": "^8.0.0",
     "@capacitor-mlkit/document-scanner": "8.2.1",
     "@capacitor/status-bar": "^8.0.0",
-    "@zxing/browser": "^0.2.1"
+    "@zxing/browser": "^0.2.1",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow-models/coco-ssd": "^2.2.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
