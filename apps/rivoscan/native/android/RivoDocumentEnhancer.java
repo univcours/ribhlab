@@ -36,8 +36,8 @@ final class RivoDocumentEnhancer {
         try {
             Utils.bitmapToMat(image,rgba);
             Imgproc.cvtColor(rgba,rgb,Imgproc.COLOR_RGBA2RGB);
-            if(AUTO.equals(mode))rgb.copyTo(originalRGB);
-            if(BW.equals(mode)||WHITEBOARD.equals(mode)){
+            if(AUTO.equals(mode)||WHITEBOARD.equals(mode))rgb.copyTo(originalRGB);
+            if(BW.equals(mode)){
                 Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
                 // Large-scale paper illumination: reduce shadows caused by folds,
                 // fingers and uneven light without erasing ink strokes.
@@ -57,7 +57,7 @@ final class RivoDocumentEnhancer {
                 Imgproc.cvtColor(rgb,lab,Imgproc.COLOR_RGB2Lab);
                 Core.split(lab,channels);
                 Mat lum=channels.get(0);
-                boolean mild=SHADOW.equals(mode);
+                boolean mild=SHADOW.equals(mode)||WHITEBOARD.equals(mode);
                 double sigma=Math.max(13,Math.min(55,Math.min(lum.width(),lum.height())/24.));
                 Imgproc.GaussianBlur(lum,background,new Size(0,0),sigma);
                 Core.add(background,Scalar.all(12),background);
@@ -73,7 +73,7 @@ final class RivoDocumentEnhancer {
                 channels.set(0,sharp.clone());
                 Core.merge(channels,lab);
                 Imgproc.cvtColor(lab,rgb,Imgproc.COLOR_Lab2RGB);
-                if(AUTO.equals(mode)){
+                if(AUTO.equals(mode)||WHITEBOARD.equals(mode)){
                     // Normalize dull paper while retaining low-contrast writing.
                     Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb);
                     // Preserve saturated original stamp ink (blue/red/green) explicitly:

@@ -1,6 +1,7 @@
 import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
+import {normalizeWhiteboardRGBA} from './whiteboard-glare.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
 export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,preset='enhance'}){
@@ -66,14 +67,14 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   try{
    drawOriginal();
    if(filter==='original'&&brightness===0&&contrast===0&&!timestampOn&&!strokes.length)return;
-   const base=filter==='magic'?'contrast(1.34) saturate(1.22) brightness(1.07)':filter==='enhance'?'contrast(1.19) saturate(1.06) brightness(1.05)':filter==='gray'?'grayscale(1) contrast(1.11)':filter==='bw'?'grayscale(1) contrast(1.6)':filter==='whiteboard'?'grayscale(1) contrast(1.65) brightness(1.12)':filter==='shadow'?'contrast(1.11)':'none';
+   const base=filter==='magic'?'contrast(1.34) saturate(1.22) brightness(1.07)':filter==='enhance'?'contrast(1.19) saturate(1.06) brightness(1.05)':filter==='gray'?'grayscale(1) contrast(1.11)':filter==='bw'?'grayscale(1) contrast(1.6)':filter==='whiteboard'?'none':filter==='shadow'?'contrast(1.11)':'none';
    const current=ctx.getImageData(0,0,preview.width,preview.height);
    const auxiliary=document.createElement('canvas');auxiliary.width=preview.width;auxiliary.height=preview.height;
    const other=auxiliary.getContext('2d',{willReadFrequently:true});other.filter=base;
    other.putImageData(current,0,0); // apply the CSS filter by drawing an intermediary
    ctx.clearRect(0,0,preview.width,preview.height);
    ctx.filter=base;ctx.drawImage(auxiliary,0,0);ctx.filter='none';
-   if(filter==='shadow'||filter==='whiteboard'||filter==='bw'){
+   if(filter==='shadow'||filter==='bw'){
     const source=ctx.getImageData(0,0,preview.width,preview.height),data=source.data;
     const sw=64,sh=64,small=document.createElement('canvas');small.width=sw;small.height=sh;
     const bg=small.getContext('2d',{willReadFrequently:true});
@@ -97,6 +98,11 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      }
     }
     ctx.putImageData(source,0,0);
+   }
+   if(filter==='whiteboard'){
+    const scan=ctx.getImageData(0,0,preview.width,preview.height);
+    scan.data.set(normalizeWhiteboardRGBA(scan.data,preview.width,preview.height));
+    ctx.putImageData(scan,0,0);
    }
    if(filter==='restore'){
     const scan=ctx.getImageData(0,0,preview.width,preview.height);

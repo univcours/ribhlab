@@ -8,7 +8,7 @@
  */
 export function normalizeWhiteboardRGBA(rgba,width,height){
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
-    width*height>7000000||rgba.length!==width*height*4)throw Error('Invalid whiteboard photo');
+    width*height>10000000||rgba.length!==width*height*4)throw Error('Invalid whiteboard photo');
  const tile=Math.max(24,Math.round(Math.min(width,height)/12));
  const nx=Math.ceil(width/tile),ny=Math.ceil(height/tile);
  const hist=new Uint32Array(nx*ny*256),source=new Uint8ClampedArray(rgba);
