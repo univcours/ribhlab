@@ -14,7 +14,7 @@ export function restorePhotoPixels(rgba,width,height){
    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
     const o=((y+dy)*width+x+dx)*4;
     const distance=Math.abs(src[o]-r)+Math.abs(src[o+1]-g)+Math.abs(src[o+2]-b);
-    if(distance>88&&dx+dy!==0)continue;
+    if(distance>88&&(dx!==0||dy!==0))continue;
     const weight=dx===0&&dy===0?5:(dx===0||dy===0?2:1);
     sumR+=src[o]*weight;sumG+=src[o+1]*weight;sumB+=src[o+2]*weight;total+=weight;
    }
