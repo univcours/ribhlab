@@ -18,7 +18,7 @@ import java.util.List;
  * or straighten truly curved, non-planar paper surfaces.
  */
 final class RivoDocumentEnhancer {
-    static final String ORIGINAL="original",ENHANCE="enhance",MAGIC="magic",
+    static final String ORIGINAL="original",AUTO="auto",ENHANCE="enhance",MAGIC="magic",
         SHADOW="shadow",BW="bw",WHITEBOARD="whiteboard";
     private RivoDocumentEnhancer(){}
 
@@ -27,11 +27,12 @@ final class RivoDocumentEnhancer {
         if(ORIGINAL.equals(mode))return image.copy(Bitmap.Config.ARGB_8888,false);
         Mat rgba=new Mat(),rgb=new Mat(),lab=new Mat(),gray=new Mat();
         Mat background=new Mat(),normal=new Mat(),equalized=new Mat();
-        Mat smooth=new Mat(),sharp=new Mat(),output=new Mat();
+        Mat smooth=new Mat(),sharp=new Mat(),output=new Mat(),originalRGB=new Mat();
         List<Mat> channels=new ArrayList<>();
         try {
             Utils.bitmapToMat(image,rgba);
             Imgproc.cvtColor(rgba,rgb,Imgproc.COLOR_RGBA2RGB);
+            if(AUTO.equals(mode))originalRGB=rgb.clone();
             if(BW.equals(mode)||WHITEBOARD.equals(mode)){
                 Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
                 // Large-scale paper illumination: reduce shadows caused by folds,
@@ -57,7 +58,7 @@ final class RivoDocumentEnhancer {
                 Imgproc.GaussianBlur(lum,background,new Size(0,0),sigma);
                 Core.add(background,Scalar.all(12),background);
                 Core.divide(lum,background,normal,mild?232:244);
-                CLAHE local=Imgproc.createCLAHE(MAGIC.equals(mode)?2.5:(mild?1.25:1.7),new Size(8,8));
+                CLAHE local=Imgproc.createCLAHE(MAGIC.equals(mode)?2.5:(mild?1.25:(AUTO.equals(mode)?1.45:1.7)),new Size(8,8));
                 try{local.apply(normal,equalized);}finally{local.collectGarbage();}
                 // Crisp but restrained strokes; excessive sharpening amplifies noise
                 // and produces artificial halos around handwriting.
@@ -68,6 +69,11 @@ final class RivoDocumentEnhancer {
                 channels.set(0,sharp.clone());
                 Core.merge(channels,lab);
                 Imgproc.cvtColor(lab,rgb,Imgproc.COLOR_Lab2RGB);
+                if(AUTO.equals(mode)){
+                    // A gentle, color-preserving blend keeps faint blue/red stamps,
+                    // signatures and ink from disappearing during background cleanup.
+                    Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb);
+                }
                 Imgproc.cvtColor(rgb,output,Imgproc.COLOR_RGB2RGBA);
             }
             Bitmap result=Bitmap.createBitmap(output.cols(),output.rows(),Bitmap.Config.ARGB_8888);
@@ -75,7 +81,7 @@ final class RivoDocumentEnhancer {
             return result;
         }finally{
             rgba.release();rgb.release();lab.release();gray.release();background.release();
-            normal.release();equalized.release();smooth.release();sharp.release();output.release();
+            normal.release();equalized.release();smooth.release();sharp.release();output.release();originalRGB.release();
             for(Mat part:channels)part.release();
         }
     }
