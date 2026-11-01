@@ -4,7 +4,7 @@ export const toolGroups=[
  {id:'scan',entries:['idcard','idPhotoMaker','scanCode','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
- {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
+ {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
  {id:'utilities',entries:['peerTransfer','shareFiles','printPdf']}
 ];
 export const hubSpecial={
@@ -23,6 +23,7 @@ export const hubSpecial={
  toPpt:{icon:'image',color:'pink',type:'export',format:'pptx'},
  pdfLong:{icon:'image',color:'sky',type:'export',format:'long'},
  enhance:{icon:'image',color:'green',type:'photo',preset:'enhance'},
+ restorePhoto:{icon:'image',color:'sky',type:'photo',preset:'restore'},
  manualErase:{icon:'delete',color:'green',type:'photo',preset:'eraser'},
  managePages:{icon:'reorder',color:'blue',type:'pageManager'},
  printPdf:{icon:'file',color:'sky',type:'libraryPrint'}
@@ -51,6 +52,7 @@ const labels={
  toCSV:['To CSV (text)','تحويل إلى Excel (CSV)','Vers Excel (CSV)','A Excel (CSV)','Nach Excel (CSV)','Para Excel (CSV)','In Excel (CSV)'],
  toPpt:['To PPT (image slides)','تحويل إلى PowerPoint','Vers PPT (images)','A PPT (imágenes)','Nach PPT (Bilder)','Para PPT (imagens)','In PPT (immagini)'],
  pdfLong:['PDF to Long Image','PDF إلى صورة طويلة','PDF en longue image','PDF a imagen larga','PDF als langes Bild','PDF em imagem longa','PDF in immagine lunga'],
+ restorePhoto:['Restore Photo (denoise)','ترميم الصورة وإزالة التشويش','Restaurer photo (débruitage)','Restaurar foto (ruido)','Foto entrauschen','Restaurar foto (ruído)','Restauro foto (rumore)'],
  enhance:['Restore / Enhance Photo','تحسين الصور','Améliorer photo','Mejorar foto','Foto verbessern','Melhorar foto','Migliora foto'],
  manualErase:['Erase with Brush','ممحاة يدوية','Effacer au pinceau','Borrar con pincel','Mit Pinsel löschen','Apagar com pincel','Cancella con pennello'],
  managePages:['Manage Pages','إدارة الصفحات','Gérer les pages','Gestionar páginas','Seiten verwalten','Gerir páginas','Gestisci pagine'],

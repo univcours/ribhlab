@@ -1,5 +1,6 @@
 import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
+import {restorePhotoPixels} from './photo-restore.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
 export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,preset='enhance'}){
@@ -29,7 +30,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    <div class="rivo-editor-picture"><canvas id="rivo-editor-preview" aria-label="${tr(0)}"></canvas>
      <div class="rivo-compare-note">${tr(17)}</div></div>
    <div class="rivo-editor-filters" role="group">
-     ${['original','enhance','magic','shadow','gray','bw','whiteboard'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${i===1?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${tr(i+2)}</small></button>`).join('')}
+     ${['original','enhance','magic','shadow','gray','bw','whiteboard','restore'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${i===1?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${id==='restore'?({en:'Restore',ar:'ترميم',fr:'Restaurer',es:'Restaurar',de:'Restaurieren',pt:'Restaurar',it:'Restauro'})[getLanguage()]||'Restore':tr(i+2)}</small></button>`).join('')}
    </div>
    <div class="rivo-editor-sliders"><label>${tr(15)} <input type="range" data-adjust="brightness" min="-35" max="35" value="0" step="1"></label>
      <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
@@ -47,8 +48,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  </div>`;
  const preview=shell.querySelector('#rivo-editor-preview');
  const ctx=preview.getContext('2d',{willReadFrequently:true});
- const filters=['original','enhance','magic','shadow','gray','bw','whiteboard'];
- let filter=['original','enhance','magic','shadow','gray','bw','whiteboard'].includes(preset)?preset:'enhance';
+ const filters=['original','enhance','magic','shadow','gray','bw','whiteboard','restore'];
+ let filter=filters.includes(preset)?preset:'enhance';
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
  let eraserActive=preset==='eraser',timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
  const strokes=[];
@@ -97,6 +98,11 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     ctx.putImageData(source,0,0);
    }
+   if(filter==='restore'){
+    const scan=ctx.getImageData(0,0,preview.width,preview.height);
+    scan.data.set(restorePhotoPixels(scan.data,preview.width,preview.height));
+    ctx.putImageData(scan,0,0);
+   }
    if(brightness||contrast){
     const pixels=ctx.getImageData(0,0,preview.width,preview.height),d=pixels.data;
     const c=(259*(255+contrast*3))/(255*(259-contrast*3));
@@ -142,7 +148,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
  shell.querySelectorAll('.rivo-filter-thumb').forEach((node,i)=>{
   node.style.backgroundImage=`url("${thumbUrl}")`;
-  node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)'][i];
+  node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)','brightness(1.04) contrast(1.12)'][i];
  });
  document.body.appendChild(shell);document.body.classList.add('rivo-editing');
  await paint();
