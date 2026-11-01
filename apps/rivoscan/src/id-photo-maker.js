@@ -23,6 +23,25 @@ export function layoutIDPhotoSheet(preset='35x45'){
  if(!result.length)throw Error('Photo does not fit the sheet');
  return {sheetW,sheetH,photoW,photoH,positions:result};
 }
+// PNG pHYs chunk records 300 DPI so photo kiosks honor the 10 x 15 cm layout.
+export function setPNGResolution(bytes,dpi=300){
+ const pixelsPerMeter=Math.round(dpi/0.0254);
+ if(!Number.isSafeInteger(pixelsPerMeter)||pixelsPerMeter<1||pixelsPerMeter>0xffffffff)
+  throw Error('Invalid print resolution');
+ const src=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+ const png=[137,80,78,71,13,10,26,10];
+ if(src.length<33||png.some((v,i)=>src[i]!==v))throw Error('Not a valid PNG');
+ const view=new DataView(src.buffer,src.byteOffset,src.byteLength);
+ if(view.getUint32(8)!==13||String.fromCharCode(...src.slice(12,16))!=='IHDR')throw Error('Invalid PNG header');
+ const chunk=new Uint8Array(21),ch=new DataView(chunk.buffer);
+ ch.setUint32(0,9);chunk.set([112,72,89,115],4);ch.setUint32(8,pixelsPerMeter);ch.setUint32(12,pixelsPerMeter);chunk[16]=1;
+ let crc=0xffffffff;for(let i=4;i<=16;i++){
+  crc^=chunk[i];for(let j=0;j<8;j++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+ }
+ ch.setUint32(17,(crc^0xffffffff)>>>0);
+ const out=new Uint8Array(src.length+21);out.set(src.subarray(0,33),0);
+ out.set(chunk,33);out.set(src.subarray(33),54);return out;
+}
 const strings={
  en:['ID Photo Maker','Choose portrait','Photo size','Headroom','Left / Right','Make sheet','Save PNG · 10×15 cm at 300 DPI','Close','Use a photo already taken against the required official background. RivoScan does not remove/replace the person’s background or certify ID photo acceptance.','Image could not be loaded.'],
  ar:['صور شخصية للطباعة','اختار صورة شخصية','المقاس','الفوق والتحت','يمين ويسار','وجد الورقة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','استعمل صورة بخلفية مطابقة للشروط أصلاً. RivoScan ما كيحيدش خلفية الشخص ولا كيضمن قبول الصورة إدارياً.','تعذر فتح الصورة.'],
@@ -77,7 +96,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   try{
    update();
    const blob=await new Promise((ok,bad)=>canvas.toBlob(v=>v?ok(v):bad(Error(L[9])),'image/png'));
-   await save(new Uint8Array(await blob.arrayBuffer()),'RivoScan_ID_Photo_'+Date.now()+'.png','image/png');
+   await save(setPNGResolution(new Uint8Array(await blob.arrayBuffer())),'RivoScan_ID_Photo_'+Date.now()+'.png','image/png');
    if(!closed)notify('PNG ✓');
   }catch(error){if(!closed)status.textContent=error?.message||L[9]}
  });
