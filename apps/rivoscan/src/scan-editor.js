@@ -2,6 +2,7 @@ import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
 import {normalizeWhiteboardRGBA} from './whiteboard-glare.js';
+import {coloredMarkMask} from './colored-mark-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
 export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,preset='enhance'}){
@@ -36,7 +37,12 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    <div class="rivo-editor-sliders"><label>${tr(15)} <input type="range" data-adjust="brightness" min="-35" max="35" value="0" step="1"></label>
      <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
    <div class="rivo-eraser-control" hidden><label>${({ar:'حجم الممحاة',fr:'Taille de gomme',es:'Tamaño borrador',de:'Pinselgröße',pt:'Tamanho borracha',it:'Dimensione gomma',en:'Brush size'})[getLanguage()]||'Brush size'}
-     <input type="range" min="10" max="90" step="5" value="36" data-brush-size></label></div>
+     <input type="range" min="10" max="90" step="5" value="36" data-brush-size></label><label data-erase-color-label><select data-erase-color>
+<option value="all">All colors</option><option value="blue">Blue ink</option>
+<option value="red">Red ink</option><option value="green">Green ink</option>
+<option value="light-gray">Light-gray watermark</option></select></label>
+<small data-erase-help></small>
+<button type="button" data-edit="undoErase">↶ Undo brush</button></div>
    <p class="rivo-editor-tip">${tr(20)}</p>
    <nav class="rivo-editor-actions">
      <button data-edit="compare">${tr(9)}</button><button data-edit="left">${tr(10)}</button>
@@ -52,7 +58,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  const filters=['original','enhance','magic','shadow','gray','bw','whiteboard','restore'];
  let filter=filters.includes(preset)?preset:'enhance';
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
- let eraserActive=preset==='eraser',timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
+ let eraserActive=preset==='eraser'||preset.startsWith('erase:'),timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
+  let eraseColor=preset.startsWith('erase:')?preset.slice(6):'all';
  const strokes=[];
  const abs=n=>Math.max(0,Math.min(255,n));
  const close=()=>{closed=true;shell.remove();document.body.classList.remove('rivo-editing');};
@@ -132,7 +139,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      const coverage=maskCtx.getImageData(0,0,preview.width,preview.height).data;
      const mask=new Uint8Array(preview.width*preview.height);
      for(let i=0;i<mask.length;i++)mask[i]=coverage[i*4+3];
-     painted.data.set(inpaintMaskedPixels(painted.data,mask,preview.width,preview.height));
+     const selected=coloredMarkMask(painted.data,mask,preview.width,preview.height,eraseColor);
+      painted.data.set(inpaintMaskedPixels(painted.data,selected,preview.width,preview.height));
      ctx.putImageData(painted,0,0);
    }
    if(timestampOn){
@@ -156,6 +164,23 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   node.style.backgroundImage=`url("${thumbUrl}")`;
   node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)','brightness(1.04) contrast(1.12)'][i];
  });
+ const labelsByLang={
+  en:['Color in brushed area','All colors','Blue ink','Red ink','Green ink','Light-gray watermark','Brush a selected area; handwriting is not identified automatically.','Undo brush'],
+  ar:['اللون داخل المنطقة','جميع الألوان','حبر أزرق','حبر أحمر','حبر أخضر','علامة رمادية خفيفة','حدد العلامة بالفرشاة؛ ما كاينش تمييز آلي بين الخط اليدوي والمطبوع.','تراجع'],
+  fr:['Couleur dans la région','Toutes','Bleu','Rouge','Vert','Filigrane gris clair','Sélection manuelle; pas de reconnaissance automatique.','Annuler'],
+  es:['Color seleccionado','Todos','Azul','Rojo','Verde','Marca gris clara','Selección manual, no detección automática.','Deshacer'],
+  de:['Markierungsfarbe','Alle','Blau','Rot','Grün','Hellgrau','Manuelle Auswahl; keine automatische Erkennung.','Rückgängig'],
+  pt:['Cor selecionada','Todas','Azul','Vermelho','Verde','Marca cinzenta','Seleção manual; sem detecção automática.','Desfazer'],
+  it:['Colore selezionato','Tutti','Blu','Rosso','Verde','Filigrana grigia','Selezione manuale; nessuna rilevazione automatica.','Annulla']
+ };
+ const labelText=labelsByLang[getLanguage()]||labelsByLang.en;
+ shell.querySelector('[data-erase-color-label]').prepend(document.createTextNode(labelText[0]+' '));
+ const opts=shell.querySelector('[data-erase-color]').options;
+ for(let i=0;i<opts.length;i++)opts[i].textContent=labelText[i+1];
+ shell.querySelector('[data-erase-help]').textContent=labelText[6];
+ shell.querySelector('[data-edit="undoErase"]').textContent='↶ '+labelText[7];
+ shell.querySelector('[data-erase-color]').value=eraseColor;
+ shell.querySelector('[data-erase-color]').addEventListener('change',e=>{eraseColor=e.target.value;paint()});
  document.body.appendChild(shell);document.body.classList.add('rivo-editing');
  await paint();
  const apply=async action=>{
@@ -169,6 +194,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
     shell.querySelector('[data-edit="eraser"]').classList.toggle('active',eraserActive);return;
   }
+  if(action==='undoErase'){strokes.pop();await paint();return;}
   if(action==='date'){timestampOn=!timestampOn;await paint();return;}
   if(action==='save'){
    const output=await new Promise((resolve,reject)=>preview.toBlob(b=>b?resolve(b):reject(Error('Image export failed')),'image/jpeg',.92));
