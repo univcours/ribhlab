@@ -230,6 +230,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         shell.addView(bottom,new LinearLayout.LayoutParams(-1,-2));
     }
     private void showCamera(){
+        if(savingEnhancedPage)return;
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
         editing=false;
@@ -858,10 +859,93 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,trNative("loupe")+"\n"+(found==null?trNative("notFound"):trNative("found")),
-            button(trNative("retake"),this::showCamera),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
-            button(trNative("enhanceNext"),this::prepareEnhancementPreview));
+            button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button("✓  "+trNative("autoCleanSave"),this::autoCleanAndSave));
     }
+    /**
+     * One-tap confirmation from the corner editor: warp the document, normalize
+     * fold illumination, improve text/stamp contrast, and only then save.
+     * The optional filter preview remains available via the separate Filters button.
+     */
+    private void autoCleanAndSave(){
+        if(current==null||current.isRecycled()||editor==null||savingEnhancedPage)return;
+        final Bitmap source=current;
+        final Point[] corners=editor.getCorners();
+        savingEnhancedPage=true;
+        final int serial=++enhancementSerial;
+        if(message!=null)message.setText(trNative("autoCleaning"));
+        analyzer.execute(()->{
+            Bitmap straight=null,output=null;
+            File target=null;
+            try{
+                straight=RivoEdgeDetector.warp(source,corners);
+                output=RivoDocumentEnhancer.apply(straight,RivoDocumentEnhancer.AUTO);
+                target=writeProcessedJpeg(output);
+                final File saved=target;
+                // Keep an unmodified copy (in a dedicated Originals folder) so
+                // faint stamps can be checked against the captured source later.
+                backupOriginalPage(source);
+                mainHandler.post(()->completeProcessedPage(saved,serial));
+            }catch(Throwable error){
+                if(target!=null&&target.exists())target.delete();
+                final String details=error.getMessage();
+                mainHandler.post(()->{
+                    savingEnhancedPage=false;
+                    if(serial==enhancementSerial&&message!=null)
+                        message.setText(trNative("saveError")+details);
+                    android.util.Log.e("RivoScan","Automatic document restoration failed",error);
+                });
+            }finally{
+                if(output!=null&&!output.isRecycled())output.recycle();
+                if(straight!=null&&!straight.isRecycled())straight.recycle();
+            }
+        });
+    }
+    private File writeProcessedJpeg(Bitmap result)throws Exception{
+        File target=new File(getCacheDir(),"rivoscan_clean_"+
+            System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
+        try(FileOutputStream stream=new FileOutputStream(target)){
+            if(!result.compress(Bitmap.CompressFormat.JPEG,94,stream))
+                throw new Exception("Cannot encode enhanced JPEG");
+        }
+        return target;
+    }
+    /** Backup is separate from the processed page; failures never block the main scan. */
+    private void backupOriginalPage(Bitmap photo){
+        File temp=null;
+        try{
+            temp=new File(getCacheDir(),"rivoscan_original_backup_"+
+                System.currentTimeMillis()+".jpg");
+            try(FileOutputStream stream=new FileOutputStream(temp)){
+                if(!photo.compress(Bitmap.CompressFormat.JPEG,94,stream))
+                    throw new Exception("Cannot encode original backup");
+            }
+            RivoDocumentsPlugin.saveOriginalScannedImage(this,temp,
+                "RivoScan_Original_"+System.currentTimeMillis()+".jpg");
+        }catch(Exception error){
+            android.util.Log.w("RivoScan","Could not back up original capture",error);
+        }finally{
+            if(temp!=null)temp.delete();
+        }
+    }
+    private void completeProcessedPage(File saved,int serial){
+        if(isFinishing()||isDestroyed()||serial!=enhancementSerial){
+            if(saved!=null)saved.delete();
+            savingEnhancedPage=false;
+            return;
+        }
+        savedImages.add(Uri.fromFile(saved).toString());
+        publishPageCopy(saved);
+        RivoSounds.play(this,"saved");
+        if(current!=null&&!current.isRecycled())current.recycle();
+        current=null;
+        // Processed result already exists on disk; finish any preview bitmaps.
+        releaseEnhancement();
+        savingEnhancedPage=false;
+        if(batchMode)showCamera();else finishWithPages();
+    }
+
     /** Keep original corners and transformed photo available until user confirms ✓. */
     private void releaseEnhancement(){
         if(enhancementPreview!=null && enhancementPreview!=pendingWarp &&
@@ -875,9 +959,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
         layout(editor,trNative("loupe")+"\n"+trNative("found"),
-            button(trNative("retake"),this::showCamera),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
-            button(trNative("enhanceNext"),this::prepareEnhancementPreview));
+            button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button("✓  "+trNative("autoCleanSave"),this::autoCleanAndSave));
     }
     private void prepareEnhancementPreview(){
         if(current==null||current.isRecycled()||savingEnhancedPage)return;
@@ -1031,24 +1115,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Bitmap output=null;File target=null;
             try{
                 output=RivoDocumentEnhancer.apply(input,preset);
-                target=new File(getCacheDir(),"rivoscan_scan_"+
-                    System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
-                try(FileOutputStream stream=new FileOutputStream(target)){
-                    if(!output.compress(Bitmap.CompressFormat.JPEG,94,stream))
-                        throw new Exception("JPEG compression failed");
-                }
+                target=writeProcessedJpeg(output);
                 final File completed=target;
-                mainHandler.post(()->{
-                    if(isFinishing())return;
-                    savedImages.add(Uri.fromFile(completed).toString());
-                    publishPageCopy(completed);
-                    RivoSounds.play(this,"saved");
-                    savingEnhancedPage=false;
-                    if(current!=null&&!current.isRecycled())current.recycle();
-                    current=null;
-                    releaseEnhancement();
-                    if(batchMode)showCamera();else finishWithPages();
-                });
+                backupOriginalPage(current);
+                mainHandler.post(()->completeProcessedPage(completed,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
                 final String details=error.getMessage();
@@ -1096,6 +1166,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
 
     private void finishWithPages(){
+        if(savingEnhancedPage)return;
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
         setResult(Activity.RESULT_OK,out);finish();
