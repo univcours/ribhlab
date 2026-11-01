@@ -117,6 +117,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private String selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
     private int enhancementSerial=0;
     private boolean savingEnhancedPage=false;
+    private boolean captureInProgress=false;
     private TextView message;
     private boolean editing=false;
     private boolean openCvReady=false;
@@ -778,16 +779,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
     }
     private void takePicture(){
-        if(capture==null||editing)return;
+        if(capture==null||editing||captureInProgress||savingEnhancedPage)return;
+        captureInProgress=true;
         File file=new File(getCacheDir(),"rivo_original_"+System.currentTimeMillis()+".jpg");
         ImageCapture.OutputFileOptions options=new ImageCapture.OutputFileOptions.Builder(file).build();
         message.setText(trNative("capturePage"));
         capture.takePicture(options,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
+                captureInProgress=false;
                 try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
-            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
+            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
         });
     }
     private static int sampleSize(int width,int height){
@@ -978,6 +981,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         pendingWarp=null;enhancementImage=null;enhancementHint=null;
     }
     private void reopenCrop(){
+        if(savingEnhancedPage)return;
         enhancementSerial++;
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
@@ -988,7 +992,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void prepareEnhancementPreview(){
         if(current==null||current.isRecycled()||savingEnhancedPage)return;
-        final Point[] corners=editor.getCorners();
+        final Point[] liveCorners=editor.getCorners();
+        final Point[] corners=new Point[liveCorners.length];
+        for(int i=0;i<liveCorners.length;i++)corners[i]=new Point(liveCorners[i].x,liveCorners[i].y);
         final Bitmap source=current;
         final int serial=++enhancementSerial;
         message.setText(trNative("enhancePreparing"));
@@ -1051,6 +1057,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(91),dp(119));
             p.setMargins(dp(4),0,dp(4),0);choices.addView(card,p);
             card.setOnClickListener(v->{
+                if(savingEnhancedPage||pendingWarp==null)return;
                 RivoSounds.play(this,"tool");
                 for(int j=0;j<choices.getChildCount();j++)
                     choices.getChildAt(j).setBackground(outlined(Color.rgb(22,42,75),9,Color.rgb(66,133,230)));
@@ -1063,7 +1070,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(body,trNative("enhanceHint"),
             button(trNative("enhanceBack"),this::reopenCrop),
             button(trNative("enhanceCompare"),()->{
-                if(enhancementImage==null)return;
+                if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
                 enhancementImage.setImageBitmap(enhancementImage.getDrawable()!=null && enhancementPreview!=null
                     ? (enhancementImage.getTag()!=null?enhancementPreview:pendingWarp):pendingWarp);
                 enhancementImage.setTag(enhancementImage.getTag()==null?"original":null);
@@ -1097,7 +1104,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
     }
     private void renderEnhancementPreview(String preset){
-        if(pendingWarp==null||enhancementImage==null)return;
+        if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;
         final int serial=++enhancementSerial;
         final int width=pendingWarp.getWidth(),height=pendingWarp.getHeight();
         final double factor=Math.min(1,1050.0/Math.max(width,height));
@@ -1164,7 +1171,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             File target=new File(getCacheDir(),"rivoscan_uncropped_"+
                 System.currentTimeMillis()+"_"+savedImages.size()+".jpg");
             try(FileOutputStream out=new FileOutputStream(target)){
-                bitmap.compress(Bitmap.CompressFormat.JPEG,90,out);
+                if(!bitmap.compress(Bitmap.CompressFormat.JPEG,90,out))
+                    throw new java.io.IOException("Could not encode camera photo.");
             }
             savedImages.add(Uri.fromFile(target).toString());
             publishPageCopy(target);
