@@ -787,6 +787,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         capture.takePicture(options,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
                 captureInProgress=false;
+                if(isFinishing()||isDestroyed()){file.delete();return;}
                 try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
@@ -1133,7 +1134,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     if(serial==enhancementSerial&&enhancementHint!=null)
                         enhancementHint.setText(trNative("enhanceFailed"));
                 });
-            }finally{sample.recycle();}
+            }finally{if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();}
         });
     }
     /** Explicit ✓ applies the chosen processing at full image resolution. */
