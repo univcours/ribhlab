@@ -101,13 +101,41 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 }
 [IO.File]::WriteAllText($manifest,$xml,$utf8)
 
-# Bump preview build version to make the new installation easier to distinguish.
+# Set ONE authoritative version for Android Studio and the safe ADB installer.
+# Generated Capacitor build.gradle is local and often keeps an older hardcoded
+# version. Appending a Gradle override makes Android Studio Run read the repo
+# version on every build, even after Gradle's initial model was generated.
+$versionSpec=Join-Path $root 'rivoscan-version.properties'
+$gradleOverride=Join-Path $root 'rivoscan-version.gradle'
+if(-not (Test-Path -LiteralPath $versionSpec) -or -not (Test-Path -LiteralPath $gradleOverride)){
+  throw 'Missing RivoScan authoritative version metadata. Git pull the project again; installation aborted safely.'
+}
+$versions=@{}
+foreach($line in [IO.File]::ReadAllLines($versionSpec)){
+  if($line -match '^\s*(versionCode|versionName)\s*=\s*(\S+)\s*$'){
+    $versions[$matches[1]]=$matches[2]
+  }
+}
+if(-not $versions.ContainsKey('versionCode') -or $versions.versionCode -notmatch '^[1-9]\d*$' -or
+   -not $versions.ContainsKey('versionName') -or [string]::IsNullOrWhiteSpace($versions.versionName)){
+  throw 'Invalid RivoScan Android version metadata. Refusing to generate an old APK.'
+}
 if(Test-Path -LiteralPath $gradle) {
   $settings=[IO.File]::ReadAllText($gradle)
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','${1}25')
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','${1}"0.19.1"')
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','1'+$versions.versionCode)
+  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','1"'+$versions.versionName+'"')
+  # The override must be LAST, after Capacitor's Android defaultConfig. Idempotent.
+  $overrideLine="apply from: file('../../rivoscan-version.gradle')"
+  $settings=[regex]::Replace($settings,'(?m)^\s*apply from: file\(''\.\./\.\./rivoscan-version\.gradle''\)\s*$', '')
+  $settings=$settings.TrimEnd()+[Environment]::NewLine+[Environment]::NewLine+
+    '// Keep Android Studio Run on the latest RivoScan version, even after a future sync.'+
+    [Environment]::NewLine+$overrideLine+[Environment]::NewLine
   [IO.File]::WriteAllText($gradle,$settings,$utf8)
+  if(-not ([IO.File]::ReadAllText($gradle).Contains($overrideLine))){
+    throw 'Android Gradle could not be pinned to the authoritative RivoScan version.'
+  }
 }
+Write-Host ('PASS: Android Studio Gradle version aligned to v'+$versions.versionName+' / versionCode '+$versions.versionCode) -ForegroundColor Green
 
 # Fail before building if an older icon slipped back into the manifest.
 $verify = [IO.File]::ReadAllText($manifest)
@@ -115,4 +143,4 @@ if(-not $verify.Contains('android:icon="@mipmap/ic_launcher"') -or
    -not $verify.Contains('android:roundIcon="@mipmap/ic_launcher_round"')) {
   throw 'Android manifest is not using the new RivoScan adaptive launcher icons.'
 }
-Write-Host 'PASS: RivoScan icon applied (adaptive + monochrome + legacy) and preview version 0.19.1.' -ForegroundColor Green
+Write-Host ('PASS: RivoScan icon applied (adaptive + monochrome + legacy), Gradle v'+$versions.versionName+' (code '+$versions.versionCode+').') -ForegroundColor Green
