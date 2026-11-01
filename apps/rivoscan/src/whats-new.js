@@ -1,14 +1,98 @@
-// Version-aware release notes. Deliberately includes ONLY features with real implementation.
+// Version-aware release notes: describe verified code without promising semantic or generative AI.
 export const changesForVersion=(language='en')=>{
  const data={
- en:{title:"What's New in RivoScan",subtitle:'Release',close:'Got it',items:['Protect PDF documents locally with AES-256 passwords and print/copy/edit permissions. Translate photo text on-device after the language models download. Export PowerPoint slides with genuinely editable OCR/PDF text boxes (complex layouts remain approximate). ID photos can optionally replace their background locally, and signatures can be dragged and resized.','Draw your signature immediately after taking a scan, before ✓ saving.','Guide book-page curve correction with a manual slider (not automatic 3D restoration).','Scan QR codes and barcodes from a camera photo or an imported image, fully offline.','Prepare printable 10 × 15 cm ID-photo sheets at 300 DPI with different photo sizes.','Manage scan pages: select, rotate, reorder and delete before PDF assembly.','Export actual editable XLSX OCR workbooks. Optional AI Chat / Solver AI now require a personal key and explicit consent before sending text or photos.','Select an area for local background-aware erase, restore photo noise, split book pages or count common objects with a downloadable on-device model.'],limits:'Photo sheets do not remove portrait backgrounds; QR links only open after your confirmation. Advanced AI, true 3D page dewarping and complex Office layout recovery are still under development.'},
- ar:{title:'شنو الجديد فـRivoScan',subtitle:'النسخة',close:'فهمت',items:['حماية PDF بتشفير AES-256 وكلمة سر وصلاحيات الطباعة والنسخ. وترجمة الكتابة المصوّرة على الجهاز بعد تحميل نماذج اللغات. وتصدير PowerPoint بمربعات نص قابلة للتعديل مع بقاء التنسيق المعقد تقريبياً. وزدنا تبديل خلفية الصور الشخصية محلياً وتحريك التوقيع وتعديل الحجم.','التوقيع باليد مباشرة بعد تصوير الوثيقة وقبل ✓.','تقويم انحناء صفحات الكتاب يدوياً، ماشي إصلاح ثلاثي الأبعاد أوتوماتيكي.','قراءة QR والباركود من صورة الكاميرا أو المعرض، بلا رفع للخادم.','إنشاء ورقة صور شخصية 10 × 15 سم بدقة 300 DPI مع مقاسات مختلفة.','اختيار صفحات السكانير وترتيبها وتدويرها وحذفها قبل إنشاء PDF.','تصدير Excel بصيغة XLSX قابلة للتعديل من النص المستخرج.'],limits:'صور البطاقة ما كتبدلش الخلفية ديال الشخص؛ الروابط ما كتتحلش بلا موافقتك. إصلاح الطيات ثلاثية الأبعاد وميزات AI المعقدة مازال ما تكملوش.'},
- fr:{title:'Nouveautés RivoScan',subtitle:'Version',close:'Compris',items:['Lire les codes QR et codes-barres depuis la caméra ou une photo, hors ligne.','Créer des planches de photos identité de 10 × 15 cm à 300 DPI.','Sélectionner, déplacer, tourner ou retirer des pages avant le PDF.','Exporter du texte OCR en classeur Excel XLSX modifiable.'],limits:'Aucun détourage automatique des portraits ; ouverture des liens sur confirmation. L’IA et le redressement 3D avancé ne sont pas finalisés.'},
- es:{title:'Novedades de RivoScan',subtitle:'Versión',close:'Entendido',items:['Leer QR y códigos de barras sin subir imágenes.','Crear hojas de fotos de carné 10 × 15 cm a 300 DPI.','Seleccionar, mover, girar y quitar páginas antes del PDF.','Exportar OCR a Excel XLSX editable.'],limits:'No elimina el fondo; los enlaces requieren confirmación. Funciones de IA y corrección 3D aún pendientes.'},
- de:{title:'Neu in RivoScan',subtitle:'Version',close:'Verstanden',items:['QR- und Barcodes offline aus Fotos lesen.','Passfoto-Bögen 10 × 15 cm mit 300 DPI erzeugen.','Seiten vor dem PDF verwalten.','OCR-Texte als bearbeitbare XLSX exportieren.'],limits:'Keine Hintergrundentfernung; Links nur nach Bestätigung. KI und 3D-Entzerrung noch nicht fertig.'},
- pt:{title:'Novidades RivoScan',subtitle:'Versão',close:'Entendi',items:['Ler QR e códigos de barras sem upload.','Criar folhas de fotos de identificação de 10 × 15 cm a 300 DPI.','Organizar páginas antes de criar PDF.','Exportar OCR em Excel XLSX editável.'],limits:'Não remove fundos; links exigem confirmação. IA e correção 3D ainda pendentes.'},
- it:{title:'Novità RivoScan',subtitle:'Versione',close:'Capito',items:['Leggere QR e codici a barre offline.','Creare fogli fototessera da 10 × 15 cm a 300 DPI.','Gestire pagine prima del PDF.','Esportare OCR in XLSX modificabile.'],limits:'Non rimuove gli sfondi; link aperti solo su conferma. AI e raddrizzamento 3D non ancora completati.'}
- };
+  "en": {
+    "title": "What's New in RivoScan",
+    "subtitle": "Release",
+    "close": "Got it",
+    "items": [
+      "Colored-ink cleanup: brush only the area you own and choose automatic colored-ink detection or blue, red, green and light-gray selection.",
+      "Smart Erase now chooses more consistent image-boundary colors to reduce dark ink smearing when repairing an annotation.",
+      "Restore Photo repairs isolated dust pixels in otherwise uniform areas without replacing a connected text stroke.",
+      "Undo now removes an entire brush gesture. Each stroke keeps its selected color when you change tools.",
+      "Book Scan estimates left and right page curvature independently; manual correction and original copies remain available."
+    ],
+    "limits": "Color selection is not automatic handwriting or watermark recognition. Restoration is not generative AI; complex folds and damaged photos require manual review. AI Chat/Solver require explicit consent, network and a personal API key."
+  },
+  "ar": {
+    "title": "شنو الجديد فـRivoScan",
+    "subtitle": "النسخة",
+    "close": "فهمت",
+    "items": [
+      "حذف الحبر الملون داخل المنطقة اللي كتحدد بالفرشاة، مع اختيار اللون تلقائياً داخل التحديد أو اختيار الأزرق والأحمر والأخضر والرمادي الفاتح.",
+      "Smart Erase ولى كيختار لون الخلفية الأقرب لتقليل تشويه الحروف اللي حدا العلامة الممسوحة.",
+      "Restore Photo كيصلح نقط الغبار الصغيرة المعزولة مع الحفاظ على الخطوط المتصلة.",
+      "التراجع كيرجع الضربة كاملة، وكل ضربة كتبقى محتافظـة باللون اللي تختار ليها.",
+      "Book Scan كيقدّر انحناء الصفحة اليمنى واليسرى بوحدها، مع الاحتفاظ بالتصحيح اليدوي والصور الأصلية."
+    ],
+    "limits": "اختيار اللون ماشي تعرّف آلي على الكتابة اليدوية أو العلامات المائية. الترميم ماشي AI توليدي؛ الطيات والصور المتضررة خاصها مراجعة. AI Chat وSolver كيحتاجو موافقة واتصال ومفتاح API شخصي."
+  },
+  "fr": {
+    "title": "Nouveautés RivoScan",
+    "subtitle": "Version",
+    "close": "Compris",
+    "items": [
+      "Sélection de l'encre colorée uniquement dans la zone brossée, avec choix automatique de couleur ou de bleu/rouge/vert/gris clair.",
+      "Smart Erase préserve mieux les lettres voisines en favorisant des bords de couleur cohérente.",
+      "Restore Photo répare de petits pixels de poussière isolés sans effacer les traits continus.",
+      "Annulation par geste entier; chaque trait conserve sa couleur choisie.",
+      "Book Scan estime indépendamment la courbure des deux pages, avec correction manuelle."
+    ],
+    "limits": "Pas de reconnaissance sémantique automatique des écritures ou filigranes. Restauration locale non générative; vérifier les documents. L'IA distante requiert votre accord et une clé API."
+  },
+  "es": {
+    "title": "Novedades RivoScan",
+    "subtitle": "Versión",
+    "close": "Entendido",
+    "items": [
+      "Selección de tinta de color solo dentro de la zona marcada, automática por color o por azul/rojo/verde/gris claro.",
+      "Smart Erase combina bordes de colores similares para reducir manchas sobre texto cercano.",
+      "Restore Photo repara puntos aislados de polvo y conserva trazos continuos.",
+      "Deshacer elimina todo el trazo; cada marca conserva el color seleccionado.",
+      "Book Scan calcula por separado la curvatura de cada página y permite ajuste manual."
+    ],
+    "limits": "La selección de color no reconoce automáticamente escritura o marcas de agua. No es restauración generativa; revisar los resultados. La IA requiere consentimiento y clave API."
+  },
+  "de": {
+    "title": "Neu in RivoScan",
+    "subtitle": "Version",
+    "close": "Verstanden",
+    "items": [
+      "Farbige Tinte nur in markierten Bereichen auswählen: automatisch nach Farbe oder Blau/Rot/Grün/Hellgrau.",
+      "Smart Erase nutzt besser passende Randfarben und reduziert das Verschmieren benachbarter Schrift.",
+      "Restore Photo behebt isolierte Staubpunkte und schützt durchgehende Linien.",
+      "Rückgängig entfernt einen gesamten Pinselstrich; dessen Farbwahl bleibt erhalten.",
+      "Book Scan schätzt die Krümmung jeder Buchseite getrennt, mit manueller Nachjustierung."
+    ],
+    "limits": "Keine automatische Erkennung von Handschrift oder Wasserzeichen. Keine generative Fotorekonstruktion; Ergebnisse prüfen. Externe KI braucht Zustimmung und API-Schlüssel."
+  },
+  "pt": {
+    "title": "Novidades RivoScan",
+    "subtitle": "Versão",
+    "close": "Entendi",
+    "items": [
+      "Seleção de tinta colorida só na região pintada, automática por cor ou azul/vermelho/verde/cinzento claro.",
+      "Smart Erase dá preferência a bordas de cor semelhante e protege melhor o texto vizinho.",
+      "Restore Photo repara pequenos pontos isolados de poeira, preservando linhas contínuas.",
+      "Desfazer remove um traço inteiro; cada traço mantém a sua cor original.",
+      "Book Scan estima a curvatura de cada página separadamente, com ajuste manual."
+    ],
+    "limits": "Não reconhece automaticamente caligrafia ou marcas de água. A restauração não é generativa; confirme o resultado. IA externa exige consentimento e chave API."
+  },
+  "it": {
+    "title": "Novità RivoScan",
+    "subtitle": "Versione",
+    "close": "Capito",
+    "items": [
+      "Selezione dell'inchiostro colorato solo nell'area disegnata, automatica per colore o blu/rosso/verde/grigio chiaro.",
+      "Smart Erase privilegia bordi di colore simile per evitare sbavature sul testo vicino.",
+      "Restore Photo ripara piccoli punti di polvere isolati preservando le linee continue.",
+      "Annulla rimuove un intero gesto; ogni tratto conserva il colore iniziale.",
+      "Book Scan stima separatamente la curvatura delle due pagine e permette correzioni manuali."
+    ],
+    "limits": "La selezione cromatica non riconosce automaticamente scrittura o filigrane. Il restauro non è generativo; verificare i risultati. L'IA esterna richiede consenso e chiave API."
+  }
+};
  return data[language]||data.en;
 };
 export const shouldShowReleaseNotes=(storage,version)=>storage.getItem('rivo-release-notes-read')!==version;
