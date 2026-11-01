@@ -53,6 +53,42 @@ final class RivoLocale {
         {"Auto · melhor câmara","A testar outra câmara…"," · bordas em direto"," · câmara simples","Alinhe o documento no enquadramento","Tire foto · guardada em Documents/RivoScan","Arraste um canto azul · a lupa amplia a borda","Lote: capture várias páginas","Único: guarde uma página"," pronto","ϟ Desligado","ϟ Ligado","Flash não disponível nesta câmara.","Scanner inteligente RivoScan","Aponte para a página. Ajuste os quatro cantos com a lupa e guarde. Lote para várias páginas; HD para qualidade.","Sons dos botões ","ligados","desligados","A carregar câmaras…","Câmaras indisponíveis: ","Sem câmara traseira disponível","O Android não disponibilizou câmara traseira. Importe uma foto.","Escolher câmara · RivoScan","A escolher a melhor câmara","A mudar para ","Nenhuma câmara funcional. Importe uma foto.","O RivoScan não consegue abrir a câmara. Importe uma foto, ajuste e guarde PDF.","Fechar","A capturar página…","Erro de imagem: ","Falha na captura: ","Falha ao importar imagem: ","Foto guardada em Documents/RivoScan","Foto capturada sem corte automático.","Não foi possível guardar foto: ","Ajuste os cantos: ","Importar foto","Melhor câmara"},
         {"Auto · fotocamera migliore","Provo un’altra fotocamera…"," · bordi in diretta"," · fotocamera base","Allinea il documento nell’inquadratura","Scatta · salvato in Documents/RivoScan","Trascina un angolo blu · la lente ingrandisce il bordo","Sequenza: acquisisci più pagine","Singola: salva una pagina"," pronto","ϟ Spento","ϟ Acceso","Flash non disponibile.","Scanner intelligente RivoScan","Inquadra la pagina. Regola i quattro angoli con la lente e salva. Sequenza per più pagine; HD per la qualità.","Suoni dei pulsanti ","attivi","disattivi","Caricamento fotocamere…","Fotocamere non disponibili: ","Nessuna fotocamera posteriore","Android non rende disponibile una fotocamera posteriore. Importa foto.","Scegli fotocamera · RivoScan","Selezione automatica fotocamera migliore","Passaggio a ","Nessuna fotocamera funzionante. Importa foto.","RivoScan non apre la fotocamera. Importa una foto, regola gli angoli e salva PDF.","Chiudi","Acquisizione pagina…","Errore immagine: ","Acquisizione non riuscita: ","Importazione immagine fallita: ","Foto salvata in Documents/RivoScan","Foto scattata senza ritaglio.","Impossibile salvare foto: ","Regola gli angoli: ","Importa foto","Fotocamera migliore"}
     };
+    private static final String[] ENHANCE_KEYS={
+        "enhanceNext","enhanceTitle","enhanceOriginal","enhanceSmart","enhanceMagic",
+        "enhanceShadow","enhanceWhiteboard","enhanceBW","enhanceHint",
+        "enhanceBack","enhanceCompare","enhanceDone","enhancePreparing",
+        "enhanceSaving","enhanceFailed"
+    };
+    private static final String[][] ENHANCE_TEXT={
+        {"Next: enhance","Clean up your scan","Original","Enhance","Magic","No shadow",
+         "Whiteboard","B&W","Choose a filter, compare with original, then tap ✓ to save.",
+         "Edges","Compare","Save","Preparing straightened page…",
+         "Cleaning full-quality page…","Enhancement preview unavailable. Try Original."},
+        {"التالي: تحسين","تنقية الوثيقة","الأصلية","تحسين","تحسين قوي","حذف الظلال",
+         "السبورة","أبيض وأسود","اختار التحسين وقارن بالأصل، ومن بعد اضغط ✓ للحفظ.",
+         "الحواف","مقارنة","حفظ","كنقوّمو الصفحة…",
+         "كننقّيو الصفحة بالجودة العالية…","المعاينة ما خداماش. اختار الأصلية."},
+        {"Suivant : améliorer","Nettoyer le scan","Original","Améliorer","Intensif","Sans ombres",
+         "Tableau blanc","N&B","Choisissez le filtre, comparez puis validez avec ✓.",
+         "Bords","Comparer","Enregistrer","Redressement de la page…",
+         "Nettoyage en qualité maximale…","Aperçu impossible. Essayez Original."},
+        {"Siguiente: mejorar","Limpiar escaneo","Original","Mejorar","Intenso","Sin sombras",
+         "Pizarra","B/N","Elige un filtro, compara y toca ✓ para guardar.",
+         "Bordes","Comparar","Guardar","Enderezando página…",
+         "Limpiando con máxima calidad…","Vista previa no disponible. Prueba Original."},
+        {"Weiter: verbessern","Scan bereinigen","Original","Verbessern","Intensiv","Ohne Schatten",
+         "Whiteboard","S/W","Filter wählen, Original vergleichen, mit ✓ speichern.",
+         "Kanten","Vergleichen","Speichern","Seite wird begradigt…",
+         "Seite wird in hoher Qualität verbessert…","Keine Vorschau. Original wählen."},
+        {"Seguinte: melhorar","Limpar digitalização","Original","Melhorar","Intenso","Sem sombras",
+         "Quadro branco","P&B","Escolha filtro, compare e toque ✓ para guardar.",
+         "Bordas","Comparar","Guardar","A endireitar a página…",
+         "A melhorar a página…","Prévia indisponível. Experimente Original."},
+        {"Avanti: migliora","Ripulisci scansione","Originale","Migliora","Intenso","Senza ombre",
+         "Lavagna","B/N","Scegli filtro, confronta e tocca ✓ per salvare.",
+         "Bordi","Confronta","Salva","Raddrizzamento pagina…",
+         "Miglioramento ad alta qualità…","Anteprima non disponibile. Prova Original."}
+    };
     static String get(String language,String key){
         int lang=0;
         if("ar".equals(language))lang=1;else if("fr".equals(language))lang=2;
@@ -96,6 +132,7 @@ final class RivoLocale {
         }[lang];
         if("openDocument".equals(key))return new String[]{"Open RivoScan document","فتح وثيقة RivoScan","Ouvrir le document RivoScan","Abrir documento RivoScan","RivoScan-Dokument öffnen","Abrir documento RivoScan","Apri documento RivoScan"}[lang];
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
+        for(int i=0;i<ENHANCE_KEYS.length;i++)if(ENHANCE_KEYS[i].equals(key))return ENHANCE_TEXT[lang][i];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
         for(int i=0;i<EXTRA_KEYS.length;i++)if(EXTRA_KEYS[i].equals(key))return EXTRA_VALUES[lang][i];
         return key;
