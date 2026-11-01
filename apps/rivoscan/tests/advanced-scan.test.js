@@ -167,3 +167,12 @@ test('ID portraits support an actual optional on-device background model',()=>{
  assert.ok(ui.includes('await segmentPortrait(image'));
  assert.ok(ui.includes('Background model not ready'));
 });
+
+test('Linear formula OCR generates editable conservative TeX without inventing stacked fractions',async()=>{
+ const {linearMathToLatex}=await import('../src/formula-ocr.js');
+ assert.equal(linearMathToLatex('x^2 + √(y) ≤ π'),'x^{2} + \\sqrt{y} \\leq  \\pi ');
+ assert.equal(linearMathToLatex('1/2'),'1/2');
+ const ui=readFileSync(new URL('../src/formula-ocr.js',import.meta.url),'utf8');
+ assert.ok(ui.includes("await recognize(selected,'eng')"));
+ assert.ok(ui.includes('original.addEventListener'));
+});

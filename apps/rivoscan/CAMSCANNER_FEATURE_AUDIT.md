@@ -1,3 +1,6 @@
+## 0.27.0 Formula OCR beta
+- Adds a real camera/import OCR workflow for **linear printed equations**, with OCR confidence, editable recognized text, a conservative LaTeX character converter, copy and TXT export. Does **not** claim recognition of stacked fractions, nested layouts, or handwritten proofs. Complex math OCR remains missing until an appropriate specialized model is integrated and validated.
+
 ## 0.26.0 improvements
 - **Signature placement (#21)**: after drawing, a real document-image preview supports dragging the signature anywhere and choosing its scale. The final exported scan uses the same normalized position; original remains untouched.
 - **ID photo background (#11)**: elective, real on-device BodyPix MobileNet segmentation, with original/white/light-blue/gray backgrounds. Model weights download once. The user must inspect hair and clothing boundaries, and official acceptance is not guaranteed.
@@ -29,7 +32,7 @@
 | #7 Book Scan | Partial, FUNCTIONAL: capture/import, adjustable gutter, guided nonrigid curvature correction and 2-page PDF; automatic 3D flattening missing |
 | #8 Whiteboard/Slides | Partial: color-preserving local illumination normalization, perspective crop and colored stamp retention; saturated highlights cannot be recovered |
 | #9 Photo Translation | Source IMPLEMENTED: Tesseract OCR photo + on-device Google ML Kit translation between seven languages; first-use model downloads, Android hardware QA required |
-| #10 Formula Recognition | NOT implemented; specialized math OCR required |
+| #10 Formula Recognition | Partial, functional beta: Tesseract extracts linear printed formulas and converts visible symbols into editable LaTeX; full 2D math model still missing |
 | #11 ID Photo Maker | Partial: on-device portrait background segmentation (downloaded BodyPix) now available plus sizes and 300 DPI sheet; detailed edge quality/official acceptance not guaranteed |
 | #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
 | #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |

@@ -28,6 +28,7 @@ import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
 import {openPDFLock} from './pdf-lock.js';
 import {openPhotoTranslation} from './photo-translation.js';
+import {openFormulaReader} from './formula-ocr.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -704,6 +705,14 @@ function pickHubFile(accept,cb){
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
+ if(spec.type==='formulaOcr'){
+   openFormulaReader({language,save:saveOut,notify:toast,capture:async()=>{
+     const photo=await Camera.getPhoto({quality:92,allowEditing:false,
+       resultType:CameraResultType.Uri,source:CameraSource.Camera});
+     return photo.webPath||photo.path;
+   }});
+   return;
+ }
  if(spec.type==='photoTranslation'){
    openPhotoTranslation({language,save:saveOut,notify:toast,capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,

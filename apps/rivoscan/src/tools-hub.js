@@ -1,7 +1,7 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','ocr','bookScan','slideScan','whiteboard','timestamp']},
+ {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
@@ -14,6 +14,7 @@ export const hubSpecial={
  countCam:{icon:'camera',color:'green',type:'countCam'},
  lockPdf:{icon:'lock',color:'blue',type:'pdfLock'},
  photoTranslation:{icon:'text',color:'violet',type:'photoTranslation'},
+ formulaOcr:{icon:'text',color:'blue',type:'formulaOcr'},
  bookScan:{icon:'file',color:'sky',type:'book'},
  slideScan:{icon:'image',color:'pink',type:'scan'},
  whiteboard:{icon:'image',color:'green',type:'photo',preset:'whiteboard'},
@@ -43,6 +44,7 @@ const groups={
 };
 const labels={
  idPhotoMaker:['ID Photo Sheet (print)','صور شخصية للطباعة','Planche photos identité','Hoja fotos de carné','Passfoto-Bogen','Folha fotos de identificação','Foglio fototessere'],
+ formulaOcr:['Formula OCR (linear · beta)','قراءة المعادلات الخطية (تجريبي)','OCR formules linéaires (bêta)','OCR fórmulas lineales (beta)','Formel OCR (linear, Beta)','OCR fórmulas lineares (beta)','OCR formule lineari (beta)'],
  photoTranslation:['Photo Translation (offline after download)','ترجمة صورة على الهاتف','Traduction photo sur appareil','Traducción foto en el dispositivo','Foto lokal übersetzen','Tradução de foto no aparelho','Traduci foto sul telefono'],
  lockPdf:['Lock PDF (AES-256)','حماية PDF بكلمة السر','Protéger PDF (AES-256)','Proteger PDF (AES-256)','PDF verschlüsseln','Proteger PDF (AES-256)','Proteggi PDF (AES-256)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
