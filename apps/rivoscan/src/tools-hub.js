@@ -4,7 +4,7 @@ export const toolGroups=[
  {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
- {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
+ {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
  {id:'utilities',entries:['countCam','peerTransfer','shareFiles','printPdf']}
 ];
 export const hubSpecial={
@@ -30,6 +30,8 @@ export const hubSpecial={
  enhance:{icon:'image',color:'green',type:'photo',preset:'enhance'},
  restorePhoto:{icon:'image',color:'sky',type:'photo',preset:'restore'},
  manualErase:{icon:'delete',color:'green',type:'photo',preset:'eraser'},
+ eraseColoredMarks:{icon:'delete',color:'blue',type:'photo',preset:'erase:blue'},
+ eraseLightWatermark:{icon:'delete',color:'sky',type:'photo',preset:'erase:light-gray'},
  managePages:{icon:'reorder',color:'blue',type:'pageManager'},
  printPdf:{icon:'file',color:'sky',type:'libraryPrint'}
 };
@@ -64,6 +66,8 @@ const labels={
  pdfLong:['PDF to Long Image','PDF إلى صورة طويلة','PDF en longue image','PDF a imagen larga','PDF als langes Bild','PDF em imagem longa','PDF in immagine lunga'],
  restorePhoto:['Restore Photo (denoise)','ترميم الصورة وإزالة التشويش','Restaurer photo (débruitage)','Restaurar foto (ruido)','Foto entrauschen','Restaurar foto (ruído)','Restauro foto (rumore)'],
  enhance:['Restore / Enhance Photo','تحسين الصور','Améliorer photo','Mejorar foto','Foto verbessern','Melhorar foto','Migliora foto'],
+ eraseColoredMarks:['Remove colored ink (manual)','مسح الحبر الملون (تحديد يدوي)','Effacer encre colorée (manuel)','Borrar tinta de color (manual)','Farbtinte entfernen (manuell)','Apagar tinta colorida (manual)','Rimuovi inchiostro colorato (manuale)'],
+ eraseLightWatermark:['Erase faint watermark (manual)','مسح العلامة الرمادية (تحديد يدوي)','Effacer filigrane clair (manuel)','Borrar marca clara (manual)','Wasserzeichen entfernen (manuell)','Apagar marca clara (manual)','Rimuovi filigrana chiara (manuale)'],
  manualErase:['Erase with Brush','ممحاة يدوية','Effacer au pinceau','Borrar con pincel','Mit Pinsel löschen','Apagar com pincel','Cancella con pennello'],
  managePages:['Manage Pages','إدارة الصفحات','Gérer les pages','Gestionar páginas','Seiten verwalten','Gerir páginas','Gestisci pagine'],
  printPdf:['Print PDF','طباعة PDF','Imprimer PDF','Imprimir PDF','PDF drucken','Imprimir PDF','Stampa PDF']

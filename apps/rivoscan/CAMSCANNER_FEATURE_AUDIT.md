@@ -1,3 +1,7 @@
+## 0.28.0 guided selective mark removal
+- **Erase colored writing / light watermark (#3/#4)**: the user brushes the actual area, then chooses 'blue', 'red', 'green' or 'light-gray watermark'. Only matched colored pixels inside that area are inpainted; adjacent black print is not selected. Supports undo and seven-language labels.
+- This is NOT semantic automatic handwriting recognition, nor automatic watermark identification. Original copies remain unchanged, and the preview must be inspected. Mask tests explicitly check preservation of printed black strokes.
+
 ## 0.27.0 Formula OCR beta
 - Adds a real camera/import OCR workflow for **linear printed equations**, with OCR confidence, editable recognized text, a conservative LaTeX character converter, copy and TXT export. Does **not** claim recognition of stacked fractions, nested layouts, or handwritten proofs. Complex math OCR remains missing until an appropriate specialized model is integrated and validated.
 
@@ -25,8 +29,8 @@
 | --- | --- |
 | #1 True nonplanar/curved paper dewarping | PARTIAL: manually guided nonrigid remap in Book Scan; automatic 3D page reconstruction NOT implemented |
 | #2 Auto text/stamp enhancement | Implemented OpenCV CLAHE/color-preserving Auto; hardware image quality QA pending |
-| #3 No Handwriting automatic detection | NOT implemented; manual targeted erase only |
-| #4 No Watermark automatic detection | NOT implemented; manual targeted erase of authorized marks only |
+| #3 No Handwriting automatic detection | PARTIAL manual color-selective erase of brushed blue/red/green writing; no semantic handwriting detection |
+| #4 No Watermark automatic detection | PARTIAL manual brushed removal of faint neutral-gray marks; no automatic watermark detection |
 | #5 Smart Erase | Partial, FUNCTIONAL: user paints mask and local edge-color interpolation fills selected area without changing unselected pixels |
 | #6 Restore Photo | Partial, FUNCTIONAL: local edge-aware color denoising, no generative restoration |
 | #7 Book Scan | Partial, FUNCTIONAL: capture/import, adjustable gutter, guided nonrigid curvature correction and 2-page PDF; automatic 3D flattening missing |

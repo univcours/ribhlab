@@ -21,3 +21,21 @@ test('Smart erase rejects invalid masks or oversized images',()=>{
  assert.throws(()=>inpaintMaskedPixels(new Uint8ClampedArray(1),new Uint8Array(1),10,10));
  assert.throws(()=>inpaintMaskedPixels(new Uint8ClampedArray(4),new Uint8Array(1),10000,10000));
 });
+
+test('Colored-ink mask protects printed dark text even within selected brush',async()=>{
+ const {coloredMarkMask}=await import('../src/colored-mark-erase.js');
+ const w=5,h=1,image=new Uint8ClampedArray([
+   245,245,245,255,
+   15,15,15,255,
+   20,60,195,255,
+   198,42,50,255,
+   198,198,198,255
+ ]),all=new Uint8Array(w).fill(255);
+ const blue=coloredMarkMask(image,all,w,h,'blue');
+ assert.deepEqual(Array.from(blue),[0,0,255,0,0]);
+ const gray=coloredMarkMask(image,all,w,h,'light-gray');
+ assert.deepEqual(Array.from(gray),[0,0,0,0,255]);
+ assert.equal(coloredMarkMask(image,all,w,h,'red')[3],255);
+ assert.equal(blue[1],0,'black printed ink should be preserved');
+ assert.throws(()=>coloredMarkMask(image,all,w,h,'handwriting-auto'));
+});
