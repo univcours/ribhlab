@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import {createOCRWorkbook} from './xlsx-export.js';
+import {reconstructPositionedTable} from './table-reconstruct.js';
 import {editableSlidesFromFile} from './editable-pptx.js';
 import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
@@ -34,12 +35,7 @@ export async function exportToolFile({file,format,language='en',save,progress=()
      const page=await pdf.getPage(i),items=(await page.getTextContent()).items;
      const sorted=items.filter(it=>String(it.str||'').trim()).map(it=>({str:String(it.str).trim(),x:it.transform?.[4]??0,y:it.transform?.[5]??0}))
         .sort((a,b)=>b.y-a.y||a.x-b.x);
-     let current=[],position=null;
-     for(const item of sorted){
-      if(position!==null&&Math.abs(position-item.y)>5){rows.push(current);current=[]}
-      current.push(item.str);position=item.y;
-     }
-     if(current.length)rows.push(current);
+     rows.push(...reconstructPositionedTable(sorted));
      if(!sorted.length){
       const viewport=page.getViewport({scale:1.4}),canvas=document.createElement('canvas');
       canvas.width=Math.round(viewport.width);canvas.height=Math.round(viewport.height);
