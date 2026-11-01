@@ -122,8 +122,8 @@ if(-not $versions.ContainsKey('versionCode') -or $versions.versionCode -notmatch
 }
 if(Test-Path -LiteralPath $gradle) {
   $settings=[IO.File]::ReadAllText($gradle)
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionCode\s+)\d+','1'+$versions.versionCode)
-  $settings=[regex]::Replace($settings,'(?m)^(\s*versionName\s+)"[^"]*"','1"'+$versions.versionName+'"')
+  # Preserve the generated Gradle DSL exactly. Rewriting its version lines can
+  # corrupt Groovy syntax; the LAST applied script overrides both values safely.
   # The override must be LAST, after Capacitor's Android defaultConfig. Idempotent.
   $overrideLine="apply from: file('../../rivoscan-version.gradle')"
   $settings=[regex]::Replace($settings,'(?m)^\s*apply from: file\(''\.\./\.\./rivoscan-version\.gradle''\)\s*$', '')
