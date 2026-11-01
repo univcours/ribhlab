@@ -963,7 +963,28 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             }),
             button("✓  "+trNative("enhanceDone"),this::saveEnhancedPage));
         choices.getChildAt(1).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));
+        enhancementHint=message;
         renderEnhancementPreview(selectedEnhancement);
+        // Thumbnails show their REAL filter output, not the same photo copied six times.
+        for(int i=0;i<modes.length;i++){
+            final String mode=modes[i];
+            final ImageView icon=(ImageView)((LinearLayout)choices.getChildAt(i)).getChildAt(0);
+            analyzer.execute(()->{
+                Bitmap miniature=null;
+                try{
+                    miniature=RivoDocumentEnhancer.apply(thumbnail,mode);
+                    final Bitmap result=miniature;
+                    mainHandler.post(()->{
+                        if(!editing||pendingWarp==null||enhancementImage==null){
+                            result.recycle();return;
+                        }
+                        icon.setImageBitmap(result);
+                    });
+                }catch(Throwable error){
+                    if(miniature!=null&&!miniature.isRecycled())miniature.recycle();
+                }
+            });
+        }
     }
     private void renderEnhancementPreview(String preset){
         if(pendingWarp==null||enhancementImage==null)return;
