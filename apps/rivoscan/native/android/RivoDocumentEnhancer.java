@@ -74,9 +74,16 @@ final class RivoDocumentEnhancer {
                 Core.merge(channels,lab);
                 Imgproc.cvtColor(lab,rgb,Imgproc.COLOR_Lab2RGB);
                 if(AUTO.equals(mode)){
-                    // A gentle, color-preserving blend keeps faint blue/red stamps,
-                    // signatures and ink from disappearing during background cleanup.
+                    // Normalize dull paper while retaining low-contrast writing.
                     Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb);
+                    // Preserve saturated original stamp ink (blue/red/green) explicitly:
+                    // brightness normalization must not wash out official stamp colors.
+                    Mat hsv=new Mat(),stampMask=new Mat();
+                    try{
+                        Imgproc.cvtColor(originalRGB,hsv,Imgproc.COLOR_RGB2HSV);
+                        Core.inRange(hsv,new Scalar(0,38,42),new Scalar(179,255,255),stampMask);
+                        originalRGB.copyTo(rgb,stampMask);
+                    }finally{hsv.release();stampMask.release();}
                 }
                 Imgproc.cvtColor(rgb,output,Imgproc.COLOR_RGB2RGBA);
             }
