@@ -119,6 +119,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private boolean savingEnhancedPage=false;
     private boolean captureInProgress=false;
     private Bitmap handwrittenSignature;
+    private float signatureCenterX=.73f,signatureCenterY=.88f,signatureWidthFraction=.32f;
     private TextView message;
     private boolean editing=false;
     private boolean openCvReady=false;
@@ -992,6 +993,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(handwrittenSignature!=null && !handwrittenSignature.isRecycled())
             handwrittenSignature.recycle();
         handwrittenSignature=null;
+        signatureCenterX=.73f;signatureCenterY=.88f;signatureWidthFraction=.32f;
     }
     /**
      * The user draws their OWN signature on a transparent canvas; nothing is
@@ -1021,22 +1023,90 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 clearSessionSignature();
                 handwrittenSignature=next;
                 if(message!=null)message.setText(trNative("signatureReady"));
+                mainHandler.post(this::showSignaturePlacement);
             }).show();
+    }
+    /** Drag directly on the live document preview; resize with the slider. */
+    private void showSignaturePlacement(){
+        if(savingEnhancedPage||handwrittenSignature==null||handwrittenSignature.isRecycled()||
+            current==null||current.isRecycled())return;
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(12),dp(10),dp(12),dp(10));
+        TextView title=text(trNative("signDragHint"),13,Color.DKGRAY,false);
+        panel.addView(title,new LinearLayout.LayoutParams(-1,dp(46)));
+        SignaturePlacementPreview preview=new SignaturePlacementPreview(this,current,handwrittenSignature);
+        panel.addView(preview,new LinearLayout.LayoutParams(-1,dp(310)));
+        TextView sizeLabel=text(trNative("signSize"),13,Color.DKGRAY,false);
+        panel.addView(sizeLabel,new LinearLayout.LayoutParams(-1,dp(30)));
+        android.widget.SeekBar scale=new android.widget.SeekBar(this);
+        scale.setMax(70);scale.setProgress(Math.round(signatureWidthFraction*100));
+        scale.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){
+            @Override public void onProgressChanged(android.widget.SeekBar bar,int progress,boolean user){
+                signatureWidthFraction=Math.max(.12f,Math.min(.70f,progress/100f));
+                preview.invalidate();
+            }
+            @Override public void onStartTrackingTouch(android.widget.SeekBar bar){}
+            @Override public void onStopTrackingTouch(android.widget.SeekBar bar){}
+        });
+        panel.addView(scale,new LinearLayout.LayoutParams(-1,dp(42)));
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(trNative("signPlacementTitle"))
+            .setView(panel)
+            .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
+            .setPositiveButton("✓  "+trNative("enhanceDone"),(dialog,which)->{
+                if(message!=null)message.setText(trNative("signatureReady"));
+            }).show();
+    }
+    private android.graphics.RectF signatureBounds(float width,float height,float aspect){
+        final float w=Math.min(width*.7f,Math.max(width*.12f,width*signatureWidthFraction));
+        final float h=Math.min(height*.3f,w*Math.max(.02f,aspect));
+        final float x=Math.max(0,Math.min(width-w,signatureCenterX*width-w/2));
+        final float y=Math.max(0,Math.min(height-h,signatureCenterY*height-h/2));
+        return new android.graphics.RectF(x,y,x+w,y+h);
+    }
+    private final class SignaturePlacementPreview extends View{
+        private final Bitmap doc,signature;
+        private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        private final android.graphics.RectF frame=new android.graphics.RectF();
+        SignaturePlacementPreview(android.content.Context ctx,Bitmap document,Bitmap userSignature){
+            super(ctx);doc=document;signature=userSignature;
+            setBackgroundColor(Color.rgb(227,234,244));
+        }
+        @Override protected void onDraw(Canvas canvas){
+            super.onDraw(canvas);
+            final float scale=Math.min(getWidth()/(float)doc.getWidth(),getHeight()/(float)doc.getHeight());
+            final float w=doc.getWidth()*scale,h=doc.getHeight()*scale;
+            frame.set((getWidth()-w)/2,(getHeight()-h)/2,(getWidth()+w)/2,(getHeight()+h)/2);
+            canvas.drawBitmap(doc,null,frame,paint);
+            final android.graphics.RectF sig=signatureBounds(
+                w,h,signature.getHeight()/(float)signature.getWidth());
+            sig.offset(frame.left,frame.top);
+            canvas.drawBitmap(signature,null,sig,paint);
+        }
+        @Override public boolean onTouchEvent(MotionEvent event){
+            if(event.getActionMasked()==MotionEvent.ACTION_DOWN||
+               event.getActionMasked()==MotionEvent.ACTION_MOVE||
+               event.getActionMasked()==MotionEvent.ACTION_UP){
+                if(frame.width()<=0||frame.height()<=0)return false;
+                signatureCenterX=Math.max(0,Math.min(1,(event.getX()-frame.left)/frame.width()));
+                signatureCenterY=Math.max(0,Math.min(1,(event.getY()-frame.top)/frame.height()));
+                invalidate();
+                if(event.getActionMasked()==MotionEvent.ACTION_UP)performClick();
+                return true;
+            }
+            return true;
+        }
+        @Override public boolean performClick(){super.performClick();return true;}
     }
     private void composeSignature(Bitmap cleaned){
         if(handwrittenSignature==null||handwrittenSignature.isRecycled())return;
         if(!cleaned.isMutable())throw new IllegalStateException("Cannot sign an immutable image");
-        final int maxWidth=Math.max(40,(int)(cleaned.getWidth()*.38));
-        final float scale=Math.min(maxWidth/(float)handwrittenSignature.getWidth(),
-            Math.max(20,cleaned.getHeight()*.15f)/handwrittenSignature.getHeight());
-        final float w=handwrittenSignature.getWidth()*scale;
-        final float h=handwrittenSignature.getHeight()*scale;
-        final float margin=Math.max(8,cleaned.getWidth()*.045f);
-        final float x=Math.max(0,cleaned.getWidth()-w-margin);
-        final float y=Math.max(0,cleaned.getHeight()-h-margin);
+        final android.graphics.RectF placement=signatureBounds(cleaned.getWidth(),cleaned.getHeight(),
+            handwrittenSignature.getHeight()/(float)handwrittenSignature.getWidth());
         Canvas canvas=new Canvas(cleaned);
         Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
-        canvas.drawBitmap(handwrittenSignature,null,new android.graphics.RectF(x,y,x+w,y+h),paint);
+        canvas.drawBitmap(handwrittenSignature,null,placement,paint);
     }
     private static final class SignatureDrawView extends View{
         private final Paint ink=new Paint(Paint.ANTI_ALIAS_FLAG);
