@@ -1,3 +1,8 @@
+## 0.30.0 — AI integrations with explicit consent
+- **AI Chat (#16)**: document extraction (PDF text and OCR on raster pages) with page markers, questions, and the real OpenAI Responses API. User must provide their own API key per session and confirm each text transfer. Requests set `store:false`; RivoScan does not store credentials. Provider usage may incur charges.
+- **Solver AI (#17)**: image selection/resizing and real vision input, or PDF/text problem extraction, followed by a user-confirmed external AI request. Answers are returned by the provider; no simulated solving.
+- AI integrations cannot be live-tested without a user-supplied, funded API credential. Internet access required. API access is separate from a ChatGPT subscription.
+
 ## 0.29.0 Office formatting enhancements
 - **Excel (#13)**: exports native .xlsx with aligned columns inferred from repeated PDF text x-coordinates and grouped y-rows. Preserves text, leading zeros, blanks. Scanned image OCR still cannot reliably reproduce complex table grids.
 - **Word (#12)**: adds a separate editable DOCX mode that recreates plain tables from born-digital PDF text alignment with actual Word table cells, plus existing OCR paragraph mode. Images, nested tables, decorative styling and page geometry are not reconstructed exactly.
@@ -47,8 +52,8 @@
 | #13 Table-accurate XLSX | Partial: genuine XLSX with column-aligned native PDF text; complex scanned-table borders, merged cells and layouts not guaranteed |
 | #14 Editable PPT | PARTIAL: a new PowerPoint export produces real editable text boxes from PDF text/OCR; original images, advanced slide layouts and design geometry are not reconstructed |
 | #15 Lock PDF | Implemented in source: AES-256 password protection, optional owner password and print/copy/edit permission flags; complete encryption integration test and Android QA required |
-| #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
-| #17 Solver AI | NOT implemented; needs AI provider/model |
+| #16 AI Chat | User-configured implementation: local PDF/image OCR + consent-based external AI; user API key, provider charges and live QA required |
+| #17 Solver AI | User-configured implementation: actual selected image/problem sent to AI model only after explicit consent; key and live QA required |
 | #18 CountCam | Partial, FUNCTIONAL source: COCO-SSD model detects common object classes from camera/import photo; internet for model weights on first use, counts are estimates, handset QA pending |
 | #19 Scan Code | FUNCTIONAL source: ZXing local QR/1D/2D decoding from a camera photo or imported image; hardware QA pending |
 | #20 Persistent Share Link | NOT implemented; needs authenticated storage/backend and user consent |

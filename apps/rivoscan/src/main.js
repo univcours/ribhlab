@@ -29,6 +29,7 @@ import {openCountCam} from './count-cam.js';
 import {openPDFLock} from './pdf-lock.js';
 import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
+import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -705,6 +706,10 @@ function pickHubFile(accept,cb){
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
+ if(spec.type==='aiDocument'||spec.type==='aiSolver'){
+   openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language});
+   return;
+ }
  if(spec.type==='formulaOcr'){
    openFormulaReader({language,save:saveOut,notify:toast,capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,

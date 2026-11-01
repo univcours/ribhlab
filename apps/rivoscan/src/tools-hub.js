@@ -5,12 +5,14 @@ export const toolGroups=[
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
- {id:'utilities',entries:['countCam','peerTransfer','shareFiles','printPdf']}
+ {id:'utilities',entries:['aiChat','solverAI','countCam','peerTransfer','shareFiles','printPdf']}
 ];
 export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
  scanCode:{icon:'scan',color:'blue',type:'barcode'},
+ aiChat:{icon:'text',color:'violet',type:'aiDocument'},
+ solverAI:{icon:'image',color:'blue',type:'aiSolver'},
  countCam:{icon:'camera',color:'green',type:'countCam'},
  lockPdf:{icon:'lock',color:'blue',type:'pdfLock'},
  photoTranslation:{icon:'text',color:'violet',type:'photoTranslation'},
@@ -50,6 +52,8 @@ const labels={
  formulaOcr:['Formula OCR (linear · beta)','قراءة المعادلات الخطية (تجريبي)','OCR formules linéaires (bêta)','OCR fórmulas lineales (beta)','Formel OCR (linear, Beta)','OCR fórmulas lineares (beta)','OCR formule lineari (beta)'],
  photoTranslation:['Photo Translation (offline after download)','ترجمة صورة على الهاتف','Traduction photo sur appareil','Traducción foto en el dispositivo','Foto lokal übersetzen','Tradução de foto no aparelho','Traduci foto sul telefono'],
  lockPdf:['Lock PDF (AES-256)','حماية PDF بكلمة السر','Protéger PDF (AES-256)','Proteger PDF (AES-256)','PDF verschlüsseln','Proteger PDF (AES-256)','Proteggi PDF (AES-256)'],
+ aiChat:['AI Chat (your own API key)','AI Chat (مفتاح شخصي)','AI Chat (clé API personnelle)','AI Chat (clave API propia)','AI Chat (eigener API-Schlüssel)','AI Chat (chave API própria)','AI Chat (chiave API personale)'],
+ solverAI:['Solver AI (your own API key)','Solver AI (مفتاح شخصي)','Solver AI (clé API personnelle)','Solver AI (clave API propia)','Solver AI (eigener API-Schlüssel)','Solver AI (chave API própria)','Solver AI (chiave API personale)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
  scanCode:['Scan QR & Barcode','قراءة QR والباركود','Lire QR et code-barres','Leer QR y código','QR / Barcode lesen','Ler QR e código','Leggi QR e barcode'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
