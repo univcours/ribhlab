@@ -194,3 +194,22 @@ test('Aligned PDF text reconstructs genuine spreadsheet columns and Word table c
  assert.ok(xml.includes('<w:tc>'));
  assert.deepEqual(reconstructPositionedTable([{x:10,y:8,str:'Hello'},{x:20,y:8,str:'world'}]),[['Hello world']]);
 });
+
+test('Automatic book-line bend estimator identifies real synthetic non-planar displacement',async()=>{
+ const {estimateBookCurvature}=await import('../src/document-dewarp.js');
+ const w=260,h=320,data=new Uint8ClampedArray(w*h*4).fill(255);
+ for(let x=0;x<w;x++){
+  const shift=Math.round(10*Math.pow(x/(w-1),2));
+  for(const y0 of [50,84,118,152,186,220,254]){
+   for(let y=y0+shift;y<y0+shift+3;y++){
+    const at=(y*w+x)*4;data[at]=data[at+1]=data[at+2]=15;
+   }
+  }
+ }
+ const estimated=estimateBookCurvature(data,w,h,'right');
+ assert.ok(estimated.curvature>5,'automatic estimate should detect bend near gutter');
+ assert.ok(estimated.confidence>.5,'repeated warped ink lines provide measurable confidence');
+ const blank=new Uint8ClampedArray(w*h*4).fill(255);
+ const missing=estimateBookCurvature(blank,w,h,'right');
+ assert.equal(missing.curvature,0);assert.equal(missing.confidence,0);
+});

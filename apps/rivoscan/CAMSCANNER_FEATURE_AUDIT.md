@@ -1,3 +1,7 @@
+## 0.31.0 book flattening beta
+- Book Scan now offers an **automatic curvature estimate button** based on repeated dark text line alignment near the spine versus the outside margins. It suggests a bounded nonlinear pixel warp and shows a confidence level. The user can override using the existing curvature slider. Blank/low-confidence pages default to manual and originals remain intact.
+- This is a real image-derived automatic heuristic, NOT high-accuracy 3D surface reconstruction. Handset and diverse-document validation are still required.
+
 ## 0.30.0 remote AI implementations
 - **AI Chat**: extract PDF text/OCR into page-marked context; question answering via the OpenAI Responses API with explicit per-request approval. The user enters their own key for that session, not stored or committed. Requests set `store:false`; vendor may have independent retention policies. No provider subscription or secret is bundled.
 - **Solver AI**: submit the actual resized selected problem image as `input_image` after confirmation, or extracted text/PDF. Real model output is displayed; errors are surfaced and user key is redacted.
