@@ -40,3 +40,15 @@ test('ID photo PNG contains explicit 300 DPI print metadata',async()=>{
  assert.equal(String.fromCharCode(...encoded.slice(37,41)),'pHYs');
  assert.equal(new DataView(encoded.buffer).getUint32(41),11811);
 });
+
+test('All genuinely wired extended tools have handlers rather than generic dead buttons',async()=>{
+ const src=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ for(const type of ["spec.type==='barcode'","spec.type==='idPhoto'","spec.type==='book'"]){
+  assert.ok(src.includes(type),type);
+ }
+ const hub=readFileSync(new URL('../src/tools-hub.js',import.meta.url),'utf8');
+ for(const key of ['idPhotoMaker','scanCode','restorePhoto','bookScan'])assert.ok(hub.includes(key));
+ const rest=readFileSync(new URL('../src/scan-editor.js',import.meta.url),'utf8');
+ assert.ok(rest.includes('restorePhotoPixels'));
+ assert.ok(rest.includes('inpaintMaskedPixels'));
+});
