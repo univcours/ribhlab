@@ -440,6 +440,7 @@ function renderLibraryRows(needle=''){
     <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
     <div class="document-buttons">
       <button type="button" data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',19)}<span>${dl('share')}</span></button>
+      ${(/\.pdf$/i.test(item.name)||/pdf/i.test(item.mimeType||''))?'<button type="button" data-doc-print="'+index+'" aria-label="'+escapeHTML(hubLabel(language,'printPdf','Print PDF'))+'">'+ico('file',18)+'<span>'+escapeHTML(hubLabel(language,'printPdf','Print PDF'))+'</span></button>':''}
       <button type="button" data-doc-delete="${index}" class="document-delete" aria-label="${dl('remove')} ${escapeHTML(item.name)}">${ico('delete',19)}</button>
     </div></article>`).join('');
 }
@@ -598,7 +599,7 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -619,6 +620,13 @@ function wire(){
       if(target.hasAttribute('data-doc-savepdf')){
         const doc=libraryItems[Number(target.dataset.docSavepdf)];
         if(doc)bulkUI.savePdf([doc]);
+        return;
+      }
+      if(target.hasAttribute('data-doc-print')){
+        const doc=libraryItems[Number(target.dataset.docPrint)];
+        if(doc&&Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoDocuments')){
+          RivoDocuments.printFile({uri:doc.uri}).catch(error=>toast(error?.message||'Android printing is unavailable.',true));
+        }else toast('Printing requires the Android app.',true);
         return;
       }
       const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
@@ -687,6 +695,7 @@ function pickHubFile(accept,cb){
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
+ if(spec.type==='libraryPrint'){openLibrary();toast('Select a PDF and tap its print icon to open Android printing.');return}
  if(spec.type==='idcard'){await openLiveScanner({mode:'ID Card'});return}
  if(spec.type==='scan'){await openLiveScanner();return}
  if(spec.type==='import'){chooseLibraryFiles(spec.kind);return}

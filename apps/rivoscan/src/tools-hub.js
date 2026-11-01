@@ -5,7 +5,7 @@ export const toolGroups=[
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
- {id:'utilities',entries:['peerTransfer','shareFiles']}
+ {id:'utilities',entries:['peerTransfer','shareFiles','printPdf']}
 ];
 export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
@@ -21,7 +21,8 @@ export const hubSpecial={
  pdfLong:{icon:'image',color:'sky',type:'export',format:'long'},
  enhance:{icon:'image',color:'green',type:'photo',preset:'enhance'},
  manualErase:{icon:'delete',color:'green',type:'photo',preset:'eraser'},
- managePages:{icon:'reorder',color:'blue',type:'pageManager'}
+ managePages:{icon:'reorder',color:'blue',type:'pageManager'},
+ printPdf:{icon:'file',color:'sky',type:'libraryPrint'}
 };
 const groups={
  en:['Scan','Import','Convert','Edit','Utilities'],
@@ -46,7 +47,8 @@ const labels={
  pdfLong:['PDF to Long Image','PDF إلى صورة طويلة','PDF en longue image','PDF a imagen larga','PDF als langes Bild','PDF em imagem longa','PDF in immagine lunga'],
  enhance:['Restore / Enhance Photo','تحسين الصور','Améliorer photo','Mejorar foto','Foto verbessern','Melhorar foto','Migliora foto'],
  manualErase:['Erase with Brush','ممحاة يدوية','Effacer au pinceau','Borrar con pincel','Mit Pinsel löschen','Apagar com pincel','Cancella con pennello'],
- managePages:['Manage Pages','إدارة الصفحات','Gérer les pages','Gestionar páginas','Seiten verwalten','Gerir páginas','Gestisci pagine']
+ managePages:['Manage Pages','إدارة الصفحات','Gérer les pages','Gestionar páginas','Seiten verwalten','Gerir páginas','Gestisci pagine'],
+ printPdf:['Print PDF','طباعة PDF','Imprimer PDF','Imprimir PDF','PDF drucken','Imprimir PDF','Stampa PDF']
 };
 const langIndex={en:0,ar:1,fr:2,es:3,de:4,pt:5,it:6};
 export function hubGroupLabel(lang,id){const idx=langIndex[lang]??0;return groups[lang]?.[toolGroups.findIndex(x=>x.id===id)]||groups.en[toolGroups.findIndex(x=>x.id===id)]||id}
