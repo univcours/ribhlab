@@ -1,4 +1,5 @@
 import {recognize} from 'tesseract.js';
+import {inpaintMaskedPixels} from './smart-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
 export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,preset='enhance'}){
@@ -39,7 +40,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      <button data-edit="compare">${tr(9)}</button><button data-edit="left">${tr(10)}</button>
      <button data-edit="right">${tr(11)}</button><button data-edit="crop">${tr(12)}</button>
      <button data-edit="ocr">${tr(13)}</button>
-     <button data-edit="eraser">✎ ${({ar:'ممحاة',fr:'Gomme',es:'Borrador',de:'Radierer',pt:'Borracha',it:'Gomma',en:'Eraser'})[getLanguage()]||'Eraser'}</button>
+     <button data-edit="eraser">✎ ${({ar:'ممحاة ذكية (تحديد يدوي)',fr:'Gomme intelligente (sélection manuelle)',es:'Borrador inteligente (manual)',de:'Smart-Radierer (manuell)',pt:'Apagador inteligente (manual)',it:'Gomma intelligente (manuale)',en:'Smart Erase (select area)'})[getLanguage()]||'Smart Erase'}</button>
      <button data-edit="date">◷ ${({ar:'تاريخ',fr:'Date',es:'Fecha',de:'Datum',pt:'Data',it:'Data',en:'Date'})[getLanguage()]||'Date'}</button>
      <button data-edit="save" class="rivo-editor-save">✓ ${tr(14)}</button>
    </nav>
@@ -104,15 +105,23 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     ctx.putImageData(pixels,0,0);
    }
-   // Preserve hand-painted corrections between filter changes and during save.
+   // Reconstruct ONLY user-painted mask regions from nearby source pixels.
+   // No handwriting/signature is removed unless the user explicitly brushes it.
    if(strokes.length){
-     ctx.save();ctx.strokeStyle='#ffffff';ctx.fillStyle='#ffffff';
-     ctx.lineCap='round';ctx.lineJoin='round';
+     const maskCanvas=document.createElement('canvas');
+     maskCanvas.width=preview.width;maskCanvas.height=preview.height;
+     const maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true});
+     maskCtx.strokeStyle='#fff';maskCtx.lineCap='round';maskCtx.lineJoin='round';
      for(const stroke of strokes){
-       ctx.lineWidth=stroke.size;
-       ctx.beginPath();ctx.moveTo(stroke.a[0],stroke.a[1]);ctx.lineTo(stroke.b[0],stroke.b[1]);ctx.stroke();
+       maskCtx.lineWidth=stroke.size;maskCtx.beginPath();
+       maskCtx.moveTo(stroke.a[0],stroke.a[1]);maskCtx.lineTo(stroke.b[0],stroke.b[1]);maskCtx.stroke();
      }
-     ctx.restore();
+     const painted=ctx.getImageData(0,0,preview.width,preview.height);
+     const coverage=maskCtx.getImageData(0,0,preview.width,preview.height).data;
+     const mask=new Uint8Array(preview.width*preview.height);
+     for(let i=0;i<mask.length;i++)mask[i]=coverage[i*4+3];
+     painted.data.set(inpaintMaskedPixels(painted.data,mask,preview.width,preview.height));
+     ctx.putImageData(painted,0,0);
    }
    if(timestampOn){
      const text=new Date().toLocaleString(getLanguage());
@@ -194,8 +203,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    ctx.beginPath();ctx.moveTo(lastPoint[0],lastPoint[1]);ctx.lineTo(next[0],next[1]);ctx.stroke();ctx.restore();
    lastPoint=next;
  });
- preview.addEventListener('pointerup',()=>{drawing=false;lastPoint=null});
- preview.addEventListener('pointercancel',()=>{drawing=false;lastPoint=null});
+ preview.addEventListener('pointerup',()=>{drawing=false;lastPoint=null;if(strokes.length)paint()});
+ preview.addEventListener('pointercancel',()=>{drawing=false;lastPoint=null;if(strokes.length)paint()});
  shell.querySelectorAll('[data-adjust]').forEach(input=>input.addEventListener('input',async()=>{
   brightness=Number(shell.querySelector('[data-adjust="brightness"]').value);
   contrast=Number(shell.querySelector('[data-adjust="contrast"]').value);
