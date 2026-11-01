@@ -4,17 +4,25 @@ import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
  ar:['مسح كتاب — فصل الصفحتين','تصوير الكتاب','استيراد صورة الكتاب','موقع وسط الكتاب','حفظ PDF بجوج صفحات','إغلاق','حرك خط وسط الكتاب وضبط انحناء الصفحة حتى تبان السطور مستقيمة. التقويم هندسي غير خطي ولكن ماشي إعادة بناء أوتوماتيكية ثلاثية الأبعاد.'],
- fr:['Livre — séparer deux pages','Photographier','Importer photo','Reliure','Enregistrer PDF (2 pages)','Fermer','Déplacez la séparation centrale. Le redressement des courbures reste indisponible.'],
- es:['Libro — separar páginas','Fotografiar','Importar foto','Lomo','Guardar PDF (2 páginas)','Cerrar','Ajuste el centro. La corrección de curvaturas aún no está disponible.'],
- de:['Buch — Doppelseite trennen','Foto aufnehmen','Bild importieren','Buchfalz','2-seitiges PDF speichern','Schließen','Mittelsteg anpassen. Biegungen werden nicht entzerrt.'],
- pt:['Livro — separar páginas','Fotografar','Importar foto','Lombada','Guardar PDF de 2 páginas','Fechar','Ajuste o centro. Ainda não corrige curvaturas.'],
- it:['Libro — separa pagine','Fotografa','Importa foto','Piega centrale','Salva PDF a 2 pagine','Chiudi','Regola il centro. Non corregge le curve della carta.']
+ fr:['Livre — séparer deux pages','Photographier','Importer photo','Reliure','Enregistrer PDF (2 pages)','Fermer','Ajustez la reliure et la courbure. Estimation automatique expérimentale, avec correction manuelle.'],
+ es:['Libro — separar páginas','Fotografiar','Importar foto','Lomo','Guardar PDF (2 páginas)','Cerrar','Ajuste el lomo y la curvatura. Estimación automática experimental con ajuste manual.'],
+ de:['Buch — Doppelseite trennen','Foto aufnehmen','Bild importieren','Buchfalz','2-seitiges PDF speichern','Schließen','Buchfalz und Krümmung anpassen. Experimentelle automatische Schätzung mit manueller Korrektur.'],
+ pt:['Livro — separar páginas','Fotografar','Importar foto','Lombada','Guardar PDF de 2 páginas','Fechar','Ajuste a lombada e a curvatura. Estimativa automática experimental com controlo manual.'],
+ it:['Libro — separa pagine','Fotografa','Importa foto','Piega centrale','Salva PDF a 2 pagine','Chiudi','Regola il dorso e la curvatura. Stima automatica sperimentale, regolazione manuale.']
 };
 export function splitBookRegions(width,height,spine=50){
  if(!Number.isFinite(width)||!Number.isFinite(height)||width<100||height<100)throw Error('Invalid book photo');
  if(!Number.isFinite(spine)||spine<25||spine>75)throw Error('Spine must be between 25% and 75%');
  const cut=Math.max(1,Math.min(width-1,Math.round(width*spine/100)));
  return [{x:0,y:0,w:cut,h:height},{x:cut,y:0,w:width-cut,h:height}];
+}
+/** Resolve independent left/right book-page warps; manual slider overrides auto. */
+export function resolveBookPageCurvature(pageIndex,manualCurvature,autoPageWarp=null){
+ if(!Number.isInteger(pageIndex)||pageIndex<0||pageIndex>1||
+   !Number.isFinite(manualCurvature)||Math.abs(manualCurvature)>100)
+  throw Error('Invalid book curvature');
+ const estimate=autoPageWarp?.[pageIndex];
+ return Number.isFinite(estimate) ? Math.max(-100,Math.min(100,estimate)) : manualCurvature;
 }
 function makeButton(parent,title,callback){
  const b=document.createElement('button');b.type='button';b.textContent=title;b.addEventListener('click',callback);parent.append(b);return b;
@@ -40,12 +48,12 @@ export function openBookSplitter({language='en',save,capture}={}){
  const info=document.createElement('p');info.textContent=L[6];info.className='rivo-id-hint';panel.append(info);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
- let image=null,objectURL=null,closed=false,busy=false;
+ let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null;
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async src=>{
   const img=new Image();img.src=src;
   await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;if(img.complete&&img.naturalWidth)ok()});
-  if(!closed){image=img;draw()}
+  if(!closed){image=img;autoPageWarp=null;warpSlider.value='0';draw()}
  };
  const draw=()=>{
   if(!image)return;
@@ -53,14 +61,14 @@ export function openBookSplitter({language='en',save,capture}={}){
   preview.width=Math.round(image.naturalWidth*scale);preview.height=Math.round(image.naturalHeight*scale);
   const ctx=preview.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0,preview.width,preview.height);
   const center=Math.round(preview.width*(+slider.value/100));
-  if(+warpSlider.value!==0){
-   for(const [x,w,side] of [[0,center,'right'],[center,preview.width-center,'left']]){
-    if(w<2)continue;
-    const section=document.createElement('canvas');section.width=w;section.height=preview.height;
-    section.getContext('2d').drawImage(preview,x,0,w,preview.height,0,0,w,preview.height);
-    dewarpBookCanvas(section,+warpSlider.value,side);
-    ctx.drawImage(section,x,0);
-   }
+  for(const [pageIndex,x,w,side] of [[0,0,center,'right'],[1,center,preview.width-center,'left']]){
+   if(w<2)continue;
+   const curvature=resolveBookPageCurvature(pageIndex,+warpSlider.value,autoPageWarp);
+   if(curvature===0)continue;
+   const section=document.createElement('canvas');section.width=w;section.height=preview.height;
+   section.getContext('2d').drawImage(preview,x,0,w,preview.height,0,0,w,preview.height);
+   dewarpBookCanvas(section,curvature,side);
+   ctx.drawImage(section,x,0);
   }
   ctx.strokeStyle='#04bcf7';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(center,0);ctx.lineTo(center,preview.height);ctx.stroke();
  };
@@ -77,27 +85,29 @@ export function openBookSplitter({language='en',save,capture}={}){
  });
  autoButton.addEventListener('click',()=>{
   if(!image||busy)return;
-  warpSlider.value='0';draw();
+  // Estimate each page independently: pages may curve by different amounts
+  // and even in opposite directions. Never average their warps.
+  autoPageWarp=null;warpSlider.value='0';draw();
   const mid=Math.round(preview.width*(+slider.value/100));
-  const samples=[];
-  for(const [x,w,side] of [[0,mid,'right'],[mid,preview.width-mid,'left']]){
+  const samples=[null,null];
+  for(const [pageIndex,x,w,side] of [[0,0,mid,'right'],[1,mid,preview.width-mid,'left']]){
    if(w<80||preview.height<100)continue;
    const pixels=preview.getContext('2d',{willReadFrequently:true}).getImageData(x,0,w,preview.height);
    const estimate=estimateBookCurvature(pixels.data,w,preview.height,side);
-   if(estimate.confidence>.24)samples.push(estimate);
+   if(estimate.confidence>.24)samples[pageIndex]=estimate;
   }
-  if(!samples.length){
+  if(!samples.some(Boolean)){
    status.textContent=({ar:'ما قدرناش نقدرو الانحناء بثقة؛ ضبطو يدوياً.',en:'Not enough readable text lines for automatic estimate; adjust manually.'})[language]||'Manual curvature adjustment required';
    return;
   }
-  const total=samples.reduce((a,x)=>a+x.confidence,0);
-  const estimate=samples.reduce((a,x)=>a+x.curvature*x.confidence,0)/total;
-  warpSlider.value=String(Math.max(-100,Math.min(100,Math.round(estimate/5)*5)));
+  autoPageWarp=samples.map(estimate=>estimate
+   ?Math.max(-100,Math.min(100,Math.round(estimate.curvature/5)*5)):0);
   draw();
-  status.textContent='Auto curvature: '+warpSlider.value+'% · '+Math.round(total/samples.length*100)+'%';
+  status.textContent='Auto beta · '+autoPageWarp.map((v,i)=>
+   'Page '+(i+1)+': '+v+'%'+(samples[i]?' ('+Math.round(samples[i].confidence*100)+'% confidence)':' (manual adjustment needed)')).join(' · ');
  });
- slider.addEventListener('input',draw);
- warpSlider.addEventListener('input',draw);
+ slider.addEventListener('input',()=>{autoPageWarp=null;draw()});
+ warpSlider.addEventListener('input',()=>{autoPageWarp=null;draw()});
  makeButton(saveAction,L[4],async()=>{
   if(!image||busy)return;busy=true;
   try{
@@ -106,7 +116,7 @@ export function openBookSplitter({language='en',save,capture}={}){
     const scale=Math.min(1,1800/Math.max(rect.w,rect.h));
     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(rect.w*scale));canvas.height=Math.max(1,Math.round(rect.h*scale));
     canvas.getContext('2d').drawImage(image,rect.x,rect.y,rect.w,rect.h,0,0,canvas.width,canvas.height);
-    dewarpBookCanvas(canvas,+warpSlider.value,regionIndex===0?'right':'left');
+    dewarpBookCanvas(canvas,resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp),regionIndex===0?'right':'left');
     const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('JPEG failed')),'image/jpeg',.91));
     const pic=await pdf.embedJpg(await blob.arrayBuffer());
     const page=pdf.addPage([595,842]),pad=15;

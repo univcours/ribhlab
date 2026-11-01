@@ -213,3 +213,19 @@ test('Automatic book-line bend estimator identifies real synthetic non-planar di
  const missing=estimateBookCurvature(blank,w,h,'right');
  assert.equal(missing.curvature,0);assert.equal(missing.confidence,0);
 });
+
+test('Book auto-flattening maintains independent left/right corrections and manual override',async()=>{
+ const {resolveBookPageCurvature}=await import('../src/book-split.js');
+ assert.equal(resolveBookPageCurvature(0,0,[35,-45]),35);
+ assert.equal(resolveBookPageCurvature(1,0,[35,-45]),-45);
+ assert.equal(resolveBookPageCurvature(0,-15,null),-15);
+ assert.equal(resolveBookPageCurvature(1,-15,[35,null]),-15);
+ assert.equal(resolveBookPageCurvature(1,0,[35,150]),100);
+ assert.throws(()=>resolveBookPageCurvature(2,0,[35,40]));
+ const source=readFileSync(new URL('../src/book-split.js',import.meta.url),'utf8');
+ assert.ok(source.includes('autoPageWarp=samples.map('));
+ assert.ok(source.includes('resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp)'),
+   'the two independent corrections must actually be used for export');
+ assert.ok(source.includes("warpSlider.addEventListener('input',()=>{autoPageWarp=null;draw()})"),
+   'manual corrections must cancel stale auto estimate');
+});

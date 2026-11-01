@@ -1,3 +1,10 @@
+## 0.31.1 independent left/right Book Scan curvature correction
+- Automatic Book Scan bend estimation is now computed separately for each facing page and applied independently to both the preview and the exported PDF. Previously the app averaged the estimates, losing opposite or unequal bends.
+- Manual curvature and page split changes cancel obsolete auto-estimates; importing a new photo also resets stale adjustments.
+- The UI instructions in French, Spanish, German, Portuguese and Italian now describe the actual guided nonrigid correction rather than incorrectly saying there is no curvature correction.
+- Regression tests check the independent mapping, export wiring, manual override and input validation.
+- This remains a bounded image-based heuristic, not 3D surface reconstruction; real-device testing is necessary.
+
 ## 0.31.0 book flattening beta
 - Book Scan now offers an **automatic curvature estimate button** based on repeated dark text line alignment near the spine versus the outside margins. It suggests a bounded nonlinear pixel warp and shows a confidence level. The user can override using the existing curvature slider. Blank/low-confidence pages default to manual and originals remain intact.
 - This is a real image-derived automatic heuristic, NOT high-accuracy 3D surface reconstruction. Handset and diverse-document validation are still required.
