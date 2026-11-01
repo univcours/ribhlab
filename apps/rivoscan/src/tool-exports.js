@@ -32,7 +32,7 @@ export async function exportToolFile({file,format,language='en',save,progress=()
   return;
  }
  if(format==='csv'||format==='xlsx'){
-  const rows=[];
+  const rows=[],sheetPages=[];
   if(isPdf){
    const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true}).promise;
    try{
@@ -42,24 +42,28 @@ export async function exportToolFile({file,format,language='en',save,progress=()
      const page=await pdf.getPage(i),items=(await page.getTextContent()).items;
      const sorted=items.filter(it=>String(it.str||'').trim()).map(it=>({str:String(it.str).trim(),x:it.transform?.[4]??0,y:it.transform?.[5]??0}))
         .sort((a,b)=>b.y-a.y||a.x-b.x);
-     rows.push(...reconstructPositionedTable(sorted));
+     const pageRows=reconstructPositionedTable(sorted);
      if(!sorted.length){
       const viewport=page.getViewport({scale:1.4}),canvas=document.createElement('canvas');
       canvas.width=Math.round(viewport.width);canvas.height=Math.round(viewport.height);
       await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
       const result=(await recognize(canvas,ocrLang)).data.text;
-      rows.push(...result.split(/\r?\n/).filter(Boolean).map(line=>line.split(/\t|\s{2,}/)));
+      pageRows.push(...result.split(/\r?\n/).filter(Boolean).map(line=>line.split(/\t|\s{2,}/)));
      }
+     rows.push(...pageRows);
+     if(format==='xlsx')sheetPages.push({name:'Page '+i,rows:pageRows});
      page.cleanup();
     }
    }finally{await pdf.destroy()}
   }else{
    const result=(await recognize(file,ocrLang)).data.text;
-   rows.push(...result.split(/\r?\n/).filter(Boolean).map(line=>line.split(/\t|\s{2,}/)));
+   const pageRows=result.split(/\r?\n/).filter(Boolean).map(line=>line.split(/\t|\s{2,}/));
+   rows.push(...pageRows);
+   if(format==='xlsx')sheetPages.push({name:'Scan',rows:pageRows});
   }
   if(!rows.length)throw Error('No extractable text found');
   if(format==='xlsx'){
-   const workbook=await createOCRWorkbook(rows);
+   const workbook=await createOCRWorkbook({pages:sheetPages});
    await save(workbook,'RivoScan_Excel_Extract_'+date+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
    return;
   }

@@ -1,3 +1,8 @@
+## RivoScan 0.34.0 — PDF to Excel page-aware worksheets
+- Born-digital PDFs now export a separate editable sheet for each page instead of concatenating every page into one sheet. Scanned pages remain OCR heuristics; complex table borders and merged cells are not recreated.
+- Each sheet has bounded column widths and unique/sanitized names, with correct OpenXML sheet relationships. Leading zeros and values beginning with '=' remain safe inline text, never executable formulas. CSV remains single flat output.
+- Regression tests inspect two real XLSX sheet XML parts and relationship declarations, malicious OCR strings, Arabic text and duplicate worksheet names.
+
 ## RivoScan 0.33.0 — No Shadow and Book Scan gutter
 - Replaces editor shadow brightening with local percentile illumination normalization, bilinear background interpolation, and protection of colored/black/faint ink. No reconstruction of clipped pixels or physical fold geometry.
 - Adds a confidence-based dark gutter estimator to Book Scan to suggest the page separator from image data. Low-confidence pages keep the original manual slider.
