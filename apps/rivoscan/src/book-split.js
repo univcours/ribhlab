@@ -1,5 +1,6 @@
 import {PDFDocument} from 'pdf-lib';
 import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
+import {estimateBookSpine} from './book-spine.js';
 
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
@@ -38,6 +39,9 @@ export function openBookSplitter({language='en',save,capture}={}){
  const preview=document.createElement('canvas');preview.className='rivo-id-preview';panel.append(preview);
  const location=document.createElement('label');location.className='rivo-id-row';location.textContent=L[3];
  const slider=document.createElement('input');slider.type='range';slider.min='25';slider.max='75';slider.value='50';location.append(slider);panel.append(location);
+ const autoSpine=document.createElement('button');autoSpine.type='button';autoSpine.className='rivo-auto-spine';
+ autoSpine.textContent=({ar:'اكتشف وسط الكتاب (تجريبي)',en:'Find book spine (beta)',fr:'Trouver la reliure (bêta)',es:'Buscar el lomo (beta)',de:'Buchfalz erkennen (Beta)',pt:'Encontrar lombada (beta)',it:'Trova dorso (beta)'})[language]||'Find spine (beta)';
+ panel.append(autoSpine);
  const warpLabel=document.createElement('label');warpLabel.className='rivo-id-row';
  warpLabel.textContent=({ar:'تقويم انحناء الورق (يدوي)',en:'Guided curved-page flattening',fr:'Correction guidée de la courbure',es:'Corregir curvatura manualmente',de:'Manuelle Krümmungskorrektur',pt:'Correção manual da curvatura',it:'Correzione manuale curva'})[language]||'Guided curved-page flattening';
  const warpSlider=document.createElement('input');warpSlider.type='range';warpSlider.min='-100';warpSlider.max='100';warpSlider.value='0';warpSlider.step='5';
@@ -82,6 +86,22 @@ export function openBookSplitter({language='en',save,capture}={}){
   const file=fileInput.files?.[0];fileInput.value='';if(!file)return;
   if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(file);
   try{await load(objectURL)}catch{status.textContent='Cannot read book image'}
+ });
+ autoSpine.addEventListener('click',()=>{
+  if(!image||busy)return;
+  const canvas=document.createElement('canvas'),factor=Math.min(1,700/Math.max(image.naturalWidth,image.naturalHeight));
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*factor));
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*factor));
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  try{
+   const result=estimateBookSpine(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
+   if(result.confidence<.25){
+    status.textContent=({ar:'وسط الكتاب ما واضحش؛ حرك الخط يدوياً.',en:'Gutter uncertain; use manual separator.'})[language]||'Manual separator required';return;
+   }
+   slider.value=String(result.spine);autoPageWarp=null;draw();
+   status.textContent='Spine beta '+result.spine+'% · confidence '+Math.round(result.confidence*100)+'%';
+  }catch(error){status.textContent=error?.message||String(error)}
  });
  autoButton.addEventListener('click',()=>{
   if(!image||busy)return;

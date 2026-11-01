@@ -1,3 +1,9 @@
+## RivoScan 0.33.0 — No Shadow and Book Scan gutter
+- Replaces editor shadow brightening with local percentile illumination normalization, bilinear background interpolation, and protection of colored/black/faint ink. No reconstruction of clipped pixels or physical fold geometry.
+- Adds a confidence-based dark gutter estimator to Book Scan to suggest the page separator from image data. Low-confidence pages keep the original manual slider.
+- Adds synthetic image tests covering stamp preservation, dark text, faint text, original integrity, valid gutter and blank fallback.
+- Real Android document QA is still needed, including curved books, stamps and low light.
+
 ## 0.32.0 manual-select color cleanup and repair quality
 - **Color-aware No Handwriting workflow**: new `Colored ink (brushed only)` option uses only a user-marked area and strong chroma, preserving unselected printed black/gray pixels. It is not semantic handwriting removal; use the original to review complex colored paper. Existing blue/red/green/light-gray options remain.
 - **Stroke correctness**: each brush gesture keeps its original color when the selector changes, single taps mark a circular area, Undo reverts the whole gesture. Changing the selection no longer rewrites previous strokes.

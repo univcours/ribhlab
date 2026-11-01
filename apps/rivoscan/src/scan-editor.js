@@ -2,6 +2,7 @@ import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
 import {normalizeWhiteboardRGBA} from './whiteboard-glare.js';
+import {normalizeDocumentShadowsRGBA} from './document-shadows.js';
 import {coloredMarkMask} from './colored-mark-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
@@ -81,7 +82,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    other.putImageData(current,0,0); // apply the CSS filter by drawing an intermediary
    ctx.clearRect(0,0,preview.width,preview.height);
    ctx.filter=base;ctx.drawImage(auxiliary,0,0);ctx.filter='none';
-   if(filter==='shadow'||filter==='bw'){
+   if(filter==='bw'){
     const source=ctx.getImageData(0,0,preview.width,preview.height),data=source.data;
     const sw=64,sh=64,small=document.createElement('canvas');small.width=sw;small.height=sh;
     const bg=small.getContext('2d',{willReadFrequently:true});
@@ -105,6 +106,11 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      }
     }
     ctx.putImageData(source,0,0);
+   }
+   if(filter==='shadow'){
+    const scan=ctx.getImageData(0,0,preview.width,preview.height);
+    scan.data.set(normalizeDocumentShadowsRGBA(scan.data,preview.width,preview.height));
+    ctx.putImageData(scan,0,0);
    }
    if(filter==='whiteboard'){
     const scan=ctx.getImageData(0,0,preview.width,preview.height);
