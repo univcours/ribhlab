@@ -101,9 +101,9 @@ export function openDocumentAI({mode='chat',language='en'}={}){
    if(closed)return;
    // Consent is for the exact selected content. A new question requires a new confirmation.
    if(!window.confirm(L[13])){state.textContent='Not sent';return}
-   const context=history.slice(-3).map(pair=>'Earlier question: '+pair[0]+'\nEarlier answer: '+pair[1]).join('\n');
+   const context=history.slice(-2).map(pair=>'Earlier question: '+pair[0]+'\nEarlier answer: '+pair[1]).join('\n');
    const request=buildAIRequest({
-    mode,question:question.value+(context?'\n'+context.slice(0,2500):''),
+    mode,question:question.value.slice(0,1650)+(context?'\n'+context.slice(0,700):''),
     sourceText:docText,imageDataURL,model:model.value.trim()
    });
    state.textContent='Sending to AI provider…';
