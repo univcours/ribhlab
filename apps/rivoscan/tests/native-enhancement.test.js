@@ -18,7 +18,7 @@ test('Native enhancement modes operate on pixels, preserving document color or B
   assert.ok(processor.includes(feature),feature);
  }
  for(const preset of ['ORIGINAL','ENHANCE','MAGIC','SHADOW','BW','WHITEBOARD']){
-  assert.ok(processor.includes('static final String '+preset)||processor.includes(','+preset+'='),preset);
+  assert.ok(new RegExp('\\b'+preset+'\\s*=').test(processor),preset);
  }
 });
 test('All-language native stage and native source included in Android wrapper',()=>{
