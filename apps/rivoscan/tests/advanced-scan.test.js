@@ -126,3 +126,12 @@ test('Editable PPTX contains native PowerPoint text shapes, not just flattened J
  assert.ok(slide.includes('Sales 2026'));
  assert.ok(slide.includes('Total 01234'));
 });
+
+test('Editable text PowerPoint route is explicit and does not misrepresent image slides',()=>{
+ const spec=readFileSync(new URL('../src/tools-hub.js',import.meta.url),'utf8');
+ const exportCode=readFileSync(new URL('../src/tool-exports.js',import.meta.url),'utf8');
+ assert.ok(spec.includes("format:'editablePptx'"));
+ assert.ok(spec.includes("format:'pptx'"));
+ assert.ok(exportCode.includes("if(format==='editablePptx')"));
+ assert.ok(exportCode.includes('await editableSlidesFromFile(file,ocrLang,progress)'));
+});

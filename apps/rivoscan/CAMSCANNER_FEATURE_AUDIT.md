@@ -1,3 +1,9 @@
+## RivoScan 0.25.0 updates
+- **Photo Translation (#9)** now invokes Tesseract OCR, allows correction of recognized text, and uses on-device `@capacitor-mlkit/translation` on Android. Language models download once (may use mobile data), then translation stays local. Supports Arabic, English, French, Spanish, German, Portuguese, Italian. Accuracy and hardware performance require field QA.
+- **PPTX editable text (#14)** now provides a SEPARATE "To PPT (editable text)" export using PowerPoint native text boxes, plus the existing screenshot/image-slide export. No claim to reconstruct tables or graphic objects with full fidelity.
+- Lock PDF, before-save signatures and manually guided non-linear dewarping remain in the app.
+- Still missing: autonomous curved-page 3D flattening, handwriting/mark identification, accurate equation recognition, true AI conversational solver, persistent authenticated sharing, full Word/Excel table reconstruction. No dummy controls.
+
 ## 0.23.0 additional completed source / field QA needed
 - **Lock PDF (#15)**: a standalone AES-256 encrypt action uses @pdfsmaller/pdf-encrypt locally with open password, optional separate owner password and copy/edit/print flags. Saves a NEW protected PDF. The opening password is not saved or transmitted. PDF permissions are advisory, not DRM.
 - **Sign before saving (#21)**: CameraX corner editor and enhancement preview offer a native freehand signature dialog. User-drawn ink is overlaid at bottom-right only on the cleaned output after ✓; the original is not modified. Position is fixed bottom-right (custom drag placement still missing).
