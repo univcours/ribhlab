@@ -32,7 +32,7 @@ final class RivoDocumentEnhancer {
         try {
             Utils.bitmapToMat(image,rgba);
             Imgproc.cvtColor(rgba,rgb,Imgproc.COLOR_RGBA2RGB);
-            if(AUTO.equals(mode))originalRGB=rgb.clone();
+            if(AUTO.equals(mode))rgb.copyTo(originalRGB);
             if(BW.equals(mode)||WHITEBOARD.equals(mode)){
                 Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
                 // Large-scale paper illumination: reduce shadows caused by folds,

@@ -871,7 +871,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void autoCleanAndSave(){
         if(current==null||current.isRecycled()||editor==null||savingEnhancedPage)return;
         final Bitmap source=current;
-        final Point[] corners=editor.getCorners();
+        final Point[] rawCorners=editor.getCorners();
+        // Snapshot UI coordinates before crossing into the image-processing thread.
+        final Point[] corners=new Point[rawCorners.length];
+        for(int i=0;i<rawCorners.length;i++)
+            corners[i]=new Point(rawCorners[i].x,rawCorners[i].y);
         savingEnhancedPage=true;
         final int serial=++enhancementSerial;
         if(message!=null)message.setText(trNative("autoCleaning"));
