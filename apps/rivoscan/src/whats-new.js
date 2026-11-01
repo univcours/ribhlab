@@ -93,7 +93,17 @@ export const changesForVersion=(language='en')=>{
     "limits": "La selezione cromatica non riconosce automaticamente scrittura o filigrane. Il restauro non è generativo; verificare i risultati. L'IA esterna richiede consenso e chiave API."
   }
 };
- return data[language]||data.en;
+ const recent={
+ en:'New: No Shadow corrects uneven white-paper lighting while preserving stamps; Book Scan can suggest a dark page gutter (manual override); PDF to Excel now creates one editable sheet per PDF page.',
+ ar:'جديد: No Shadow كيخفف ظلال الورق مع الحفاظ على الأختام، وBook Scan كيقدر يحدد وسط الكتاب مع ضبط يدوي، وPDF → Excel كيخرج كل صفحة فـ Sheet مستقلة.',
+ fr:'Nouveau : No Shadow corrige les ombres sans effacer les tampons ; Book Scan propose la reliure avec réglage manuel ; PDF vers Excel crée une feuille modifiable par page.',
+ es:'Nuevo: No Shadow equilibra las sombras preservando sellos; Book Scan sugiere el lomo con ajuste manual; PDF a Excel crea una hoja editable por página.',
+ de:'Neu: No Shadow gleicht Papierschatten aus und bewahrt Stempel; Book Scan schlägt die Buchfalzposition vor; PDF zu Excel erstellt ein bearbeitbares Blatt pro Seite.',
+ pt:'Novo: No Shadow corrige sombras preservando carimbos; Book Scan sugere a lombada com ajuste manual; PDF para Excel cria uma folha editável por página.',
+ it:'Novità: No Shadow attenua le ombre preservando timbri; Book Scan propone il dorso con regolazione manuale; PDF in Excel crea un foglio modificabile per pagina.'
+ };
+ const note=data[language]||data.en;
+ return {...note,items:[...note.items,recent[language]||recent.en]};
 };
 export const shouldShowReleaseNotes=(storage,version)=>storage.getItem('rivo-release-notes-read')!==version;
 export function openWhatsNew({language='en',version='0.0.0',storage=localStorage}={}){
