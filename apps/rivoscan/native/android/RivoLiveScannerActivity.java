@@ -143,6 +143,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(RivoDocumentEnhancer.isSupportedMode(requestedEnhancement))
             defaultEnhancement=requestedEnhancement;
         scanMode="ID Card".equals(getIntent().getStringExtra("mode"))?"ID Card":"Document";
+        if("ID Card".equals(scanMode))batchMode=true;
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
         try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
@@ -313,6 +314,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         for(String mode:modesList){
             TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(4,188,247):Color.rgb(190,193,202),()->{
                 scanMode=mode;
+                if("ID Card".equals(scanMode))setBatch(true);
                 for(int i=0;i<modes.getChildCount();i++){
                     TextView tab=(TextView)modes.getChildAt(i);
                     boolean selected=modesList[i].equals(scanMode);
@@ -961,7 +963,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // Processed result already exists on disk; finish any preview bitmaps.
         releaseEnhancement();
         savingEnhancedPage=false;
-        if(batchMode)showCamera();else finishWithPages();
+        if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
+        else if(batchMode)showCamera();else finishWithPages();
     }
 
     /** Keep original corners and transformed photo available until user confirms ✓. */
@@ -1165,7 +1168,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             publishPageCopy(target);
             RivoSounds.play(this,"saved");
             Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
-            if(batchMode)showCamera();else finishWithPages();
+            if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
+            else if(batchMode)showCamera();else finishWithPages();
         }catch(Exception error){
             Toast.makeText(this,trNative("saveError")+error.getMessage(),Toast.LENGTH_LONG).show();
         }finally{
@@ -1181,7 +1185,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             RivoDocumentsPlugin.saveScannedImage(this,temporaryPage,publicName);
             Toast.makeText(this,trNative("pageStored"),Toast.LENGTH_SHORT).show();
         }catch(Exception e){
-            android.util.Log.e("RivoScan","Could not publish scanned page to Downloads/RivoScan",e);
+            android.util.Log.e("RivoScan","Could not publish scanned page to Documents/RivoScan",e);
             Toast.makeText(this,trNative("pageNotStored"),Toast.LENGTH_LONG).show();
         }
     }
@@ -1190,6 +1194,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(savingEnhancedPage)return;
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
+        out.putExtra("scanMode",scanMode);
         setResult(Activity.RESULT_OK,out);finish();
     }
     @Override public void onBackPressed(){

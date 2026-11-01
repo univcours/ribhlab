@@ -95,6 +95,7 @@ public class RivoLiveScannerPlugin extends Plugin {
         for (String page : pages) images.put(page);
         JSObject data = new JSObject();
         data.put("scannedImages", images);
+        data.put("scanMode",result.getData().getStringExtra("scanMode"));
         call.resolve(data);
     }
 }

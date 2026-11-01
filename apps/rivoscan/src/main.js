@@ -842,7 +842,9 @@ async function consumeSmartScan(result){
     }
     // Native CameraX has already performed perspective and color-safe Auto Clean.
     // Do NOT enhance the pixels again: this can fade colored stamps and handwriting.
-    const pdf=await imagesToPdf('color',picked);
+    const pdf=result.scanMode==='ID Card'
+      ?await idCardToPdf(picked)
+      :await imagesToPdf('color',picked);
     const saved=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
     openLibrary();
     toast(dl('savedNow')+' · '+picked.length+' '+sl('pages'));
@@ -1015,6 +1017,27 @@ function peerWorkspace(){
  </section>`;
 }
 
+/** Two-sided ID card: front and back on ONE portrait A4 page. */
+async function idCardToPdf(pages){
+ const pdf=await PDFDocument.create(),page=pdf.addPage([595.28,841.89]);
+ const width=507,height=299,margin=44;
+ const font=await pdf.embedFont(StandardFonts.HelveticaBold);
+ page.drawText('ID CARD — FRONT / BACK',{x:margin,y:795,size:14,font,color:rgb(.10,.31,.67)});
+ for(let i=0;i<Math.min(2,pages.length);i++){
+  const canvas=await imageCanvas(pages[i],'color');
+  const file=await canvasBlob(canvas,'image/jpeg',readScanPrefs(localStorage).pdfQuality);
+  const image=await pdf.embedJpg(await file.arrayBuffer());
+  const slotY=i===0?438:105;
+  page.drawRectangle({x:margin,y:slotY,width,height,borderWidth:1.5,
+   borderColor:rgb(.57,.74,.97),color:rgb(1,1,1)});
+  const fit=Math.min((width-22)/image.width,(height-28)/image.height);
+  const w=image.width*fit,h=image.height*fit;
+  page.drawImage(image,{x:margin+(width-w)/2,y:slotY+(height-h)/2,width:w,height:h});
+  page.drawText(i===0?'FRONT':'BACK',{x:margin+7,y:slotY+height-18,size:9,font,
+   color:rgb(.13,.41,.77)});
+ }
+ return pdf.save({useObjectStreams:true});
+}
 async function imagesToPdf(filter,sourceFiles=files){
  const pdf=await PDFDocument.create();for(let i=0;i<sourceFiles.length;i++){
   progress(`Preparing image ${i+1} / ${sourceFiles.length}`);
