@@ -24,6 +24,17 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
+import android.os.Bundle;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentInfo;
+import android.print.PrintManager;
+import android.print.PageRange;
+import android.os.Handler;
+import android.os.Looper;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Locale;
@@ -98,6 +109,75 @@ public class RivoDocumentsPlugin extends Plugin {
             try{resolver.delete(uri,null,null);}catch(Exception ignored){}
             throw e;
         }
+    }
+
+    /**
+     * Real Android system PDF printing. The print adapter copies the verified
+     * RivoScan PDF to Android's print spooler, which presents printer settings.
+     * This never modifies or deletes the user's document.
+     */
+    @PluginMethod
+    public void printFile(PluginCall call){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        Uri original=verifiedUri(call);
+        if(original==null)return;
+        String fileName="RivoScan.pdf";
+        try(Cursor cursor=getContext().getContentResolver().query(original,
+                new String[]{MediaStore.MediaColumns.DISPLAY_NAME,MediaStore.MediaColumns.MIME_TYPE},
+                null,null,null)){
+            if(cursor==null||!cursor.moveToFirst()){
+                call.reject("Could not read PDF metadata.");return;
+            }
+            fileName=cursor.getString(0);
+            String mime=cursor.getString(1);
+            if(!"application/pdf".equals(mime) && (fileName==null||!fileName.toLowerCase(Locale.ROOT).endsWith(".pdf"))){
+                call.reject("Print accepts PDF documents. Convert images to PDF first.");return;
+            }
+        }catch(Exception e){call.reject("Could not inspect the PDF for printing.",e);return;}
+        final String label=fileName==null?"RivoScan.pdf":fileName;
+        final Uri pdf=original;
+        getActivity().runOnUiThread(()->{
+            try{
+                PrintManager manager=(PrintManager)getActivity().getSystemService(Context.PRINT_SERVICE);
+                if(manager==null){call.reject("Android printing service is unavailable.");return;}
+                PrintDocumentAdapter adapter=new PrintDocumentAdapter(){
+                    @Override public void onLayout(PrintAttributes previous,PrintAttributes next,
+                            CancellationSignal cancel,LayoutResultCallback callback,Bundle extras){
+                        if(cancel.isCanceled()){callback.onLayoutCancelled();return;}
+                        PrintDocumentInfo info=new PrintDocumentInfo.Builder(label)
+                            .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                            .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN).build();
+                        callback.onLayoutFinished(info,true);
+                    }
+                    @Override public void onWrite(PageRange[] pages,ParcelFileDescriptor destination,
+                            CancellationSignal cancel,WriteResultCallback callback){
+                        new Thread(()->{
+                            try(InputStream in=getContext().getContentResolver().openInputStream(pdf);
+                                OutputStream out=new ParcelFileDescriptor.AutoCloseOutputStream(destination)){
+                                if(in==null)throw new IllegalStateException("Cannot open PDF");
+                                byte[] buffer=new byte[32768];int n;
+                                while((n=in.read(buffer))!=-1){
+                                    if(cancel.isCanceled()){
+                                        new Handler(Looper.getMainLooper()).post(callback::onWriteCancelled);
+                                        return;
+                                    }
+                                    out.write(buffer,0,n);
+                                }
+                                out.flush();
+                                new Handler(Looper.getMainLooper()).post(
+                                    ()->callback.onWriteFinished(new PageRange[]{PageRange.ALL_PAGES}));
+                            }catch(Exception e){
+                                new Handler(Looper.getMainLooper()).post(
+                                    ()->callback.onWriteFailed("Could not spool PDF: "+e.getMessage()));
+                            }
+                        },"RivoScan-PDF-Print").start();
+                    }
+                };
+                manager.print("RivoScan "+label,adapter,
+                    new PrintAttributes.Builder().setColorMode(PrintAttributes.COLOR_MODE_COLOR).build());
+                call.resolve();
+            }catch(Exception e){call.reject("Android print dialog could not start: "+e.getMessage(),e);}
+        });
     }
 
     @PluginMethod
