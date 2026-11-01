@@ -1,4 +1,5 @@
-import {recognize} from 'tesseract.js';
+import Tesseract from 'tesseract.js';
+const {recognize}=Tesseract;
 import {Translation} from '@capacitor-mlkit/translation';
 import {Capacitor} from '@capacitor/core';
 

@@ -1,5 +1,6 @@
 import * as pdfjs from 'pdfjs-dist';
-import {recognize} from 'tesseract.js';
+import Tesseract from 'tesseract.js';
+const {recognize}=Tesseract;
 
 export async function createEditableTextPresentation(pages,{progress=()=>{}}={}){
  if(!Array.isArray(pages)||pages.length<1||pages.length>25)throw Error('Choose 1–25 pages');
