@@ -38,7 +38,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
    <div class="rivo-eraser-control" hidden><label>${({ar:'حجم الممحاة',fr:'Taille de gomme',es:'Tamaño borrador',de:'Pinselgröße',pt:'Tamanho borracha',it:'Dimensione gomma',en:'Brush size'})[getLanguage()]||'Brush size'}
      <input type="range" min="10" max="90" step="5" value="36" data-brush-size></label><label data-erase-color-label><select data-erase-color>
-<option value="all">All colors</option><option value="blue">Blue ink</option>
+<option value="all">All colors</option><option value="auto-colored">Colored ink (inside brush)</option><option value="blue">Blue ink</option>
 <option value="red">Red ink</option><option value="green">Green ink</option>
 <option value="light-gray">Light-gray watermark</option></select></label>
 <small data-erase-help></small>
@@ -60,7 +60,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
  let eraserActive=preset==='eraser'||preset.startsWith('erase:'),timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
   let eraseColor=preset.startsWith('erase:')?preset.slice(6):'all';
- const strokes=[];
+ const strokes=[];let strokeBatch=0;
  const abs=n=>Math.max(0,Math.min(255,n));
  const close=()=>{closed=true;shell.remove();document.body.classList.remove('rivo-editing');};
  function drawOriginal(){
@@ -127,20 +127,35 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    // Reconstruct ONLY user-painted mask regions from nearby source pixels.
    // No handwriting/signature is removed unless the user explicitly brushes it.
    if(strokes.length){
-     const maskCanvas=document.createElement('canvas');
-     maskCanvas.width=preview.width;maskCanvas.height=preview.height;
-     const maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true});
-     maskCtx.strokeStyle='#fff';maskCtx.lineCap='round';maskCtx.lineJoin='round';
-     for(const stroke of strokes){
-       maskCtx.lineWidth=stroke.size;maskCtx.beginPath();
-       maskCtx.moveTo(stroke.a[0],stroke.a[1]);maskCtx.lineTo(stroke.b[0],stroke.b[1]);maskCtx.stroke();
-     }
      const painted=ctx.getImageData(0,0,preview.width,preview.height);
-     const coverage=maskCtx.getImageData(0,0,preview.width,preview.height).data;
-     const mask=new Uint8Array(preview.width*preview.height);
-     for(let i=0;i<mask.length;i++)mask[i]=coverage[i*4+3];
-     const selected=coloredMarkMask(painted.data,mask,preview.width,preview.height,eraseColor);
-      painted.data.set(inpaintMaskedPixels(painted.data,selected,preview.width,preview.height));
+     const selected=new Uint8Array(preview.width*preview.height);
+     // Each brush action retains its original selected color. Switching color
+     // does not retroactively change the pixels selected by prior strokes.
+     const groups=new Map();
+     for(const stroke of strokes){
+       if(!groups.has(stroke.color))groups.set(stroke.color,[]);
+       groups.get(stroke.color).push(stroke);
+     }
+     for(const [color,group] of groups){
+       const maskCanvas=document.createElement('canvas');
+       maskCanvas.width=preview.width;maskCanvas.height=preview.height;
+       const maskCtx=maskCanvas.getContext('2d',{willReadFrequently:true});
+       maskCtx.strokeStyle='#fff';maskCtx.fillStyle='#fff';maskCtx.lineCap='round';maskCtx.lineJoin='round';
+       for(const stroke of group){
+         maskCtx.lineWidth=stroke.size;maskCtx.beginPath();
+         if(stroke.a[0]===stroke.b[0]&&stroke.a[1]===stroke.b[1]){
+           maskCtx.arc(stroke.a[0],stroke.a[1],stroke.size/2,0,Math.PI*2);maskCtx.fill();
+         }else{
+           maskCtx.moveTo(stroke.a[0],stroke.a[1]);maskCtx.lineTo(stroke.b[0],stroke.b[1]);maskCtx.stroke();
+         }
+       }
+       const coverage=maskCtx.getImageData(0,0,preview.width,preview.height).data;
+       const brushMask=new Uint8Array(preview.width*preview.height);
+       for(let i=0;i<brushMask.length;i++)brushMask[i]=coverage[i*4+3];
+       const region=coloredMarkMask(painted.data,brushMask,preview.width,preview.height,color);
+       for(let i=0;i<selected.length;i++)if(region[i])selected[i]=255;
+     }
+     painted.data.set(inpaintMaskedPixels(painted.data,selected,preview.width,preview.height));
      ctx.putImageData(painted,0,0);
    }
    if(timestampOn){
@@ -165,22 +180,22 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)','brightness(1.04) contrast(1.12)'][i];
  });
  const labelsByLang={
-  en:['Color in brushed area','All colors','Blue ink','Red ink','Green ink','Light-gray watermark','Brush a selected area; handwriting is not identified automatically.','Undo brush'],
-  ar:['اللون داخل المنطقة','جميع الألوان','حبر أزرق','حبر أحمر','حبر أخضر','علامة رمادية خفيفة','حدد العلامة بالفرشاة؛ ما كاينش تمييز آلي بين الخط اليدوي والمطبوع.','تراجع'],
-  fr:['Couleur dans la région','Toutes','Bleu','Rouge','Vert','Filigrane gris clair','Sélection manuelle; pas de reconnaissance automatique.','Annuler'],
-  es:['Color seleccionado','Todos','Azul','Rojo','Verde','Marca gris clara','Selección manual, no detección automática.','Deshacer'],
-  de:['Markierungsfarbe','Alle','Blau','Rot','Grün','Hellgrau','Manuelle Auswahl; keine automatische Erkennung.','Rückgängig'],
-  pt:['Cor selecionada','Todas','Azul','Vermelho','Verde','Marca cinzenta','Seleção manual; sem detecção automática.','Desfazer'],
-  it:['Colore selezionato','Tutti','Blu','Rosso','Verde','Filigrana grigia','Selezione manuale; nessuna rilevazione automatica.','Annulla']
+  en:['Color in brushed area','All colors','Colored ink (brushed only)','Blue ink','Red ink','Green ink','Light-gray watermark','Brush the mark: color-only selection is not handwriting recognition.','Undo stroke'],
+  ar:['اللون داخل المنطقة','جميع الألوان','حبر ملون داخل التحديد','حبر أزرق','حبر أحمر','حبر أخضر','علامة رمادية خفيفة','حدد العلامة بالفرشاة؛ اختيار اللون ماشي تعرّف تلقائي على الخط اليدوي.','تراجع عن الضربة'],
+  fr:['Couleur dans la région','Toutes','Encre colorée (zone brossée)','Bleu','Rouge','Vert','Filigrane gris clair','Sélection de couleur dans la zone brossée; pas de reconnaissance manuscrite.','Annuler le trait'],
+  es:['Color seleccionado','Todos','Tinta coloreada (área marcada)','Azul','Rojo','Verde','Marca gris clara','Selección por color solo en el área marcada, no reconoce escritura.','Deshacer trazo'],
+  de:['Markierungsfarbe','Alle','Farbige Tinte (markierter Bereich)','Blau','Rot','Grün','Hellgrau','Farbwahl nur im markierten Bereich, keine Handschrifterkennung.','Strich rückgängig'],
+  pt:['Cor selecionada','Todas','Tinta colorida (área pintada)','Azul','Vermelho','Verde','Marca cinzenta','Seleção de cor só na área pintada; não reconhece escrita manual.','Desfazer traço'],
+  it:['Colore selezionato','Tutti','Inchiostro colorato (area pennello)','Blu','Rosso','Verde','Filigrana grigia','Selezione per colore nell’area del pennello, non riconosce scrittura.','Annulla tratto']
  };
  const labelText=labelsByLang[getLanguage()]||labelsByLang.en;
  shell.querySelector('[data-erase-color-label]').prepend(document.createTextNode(labelText[0]+' '));
  const opts=shell.querySelector('[data-erase-color]').options;
  for(let i=0;i<opts.length;i++)opts[i].textContent=labelText[i+1];
- shell.querySelector('[data-erase-help]').textContent=labelText[6];
- shell.querySelector('[data-edit="undoErase"]').textContent='↶ '+labelText[7];
+ shell.querySelector('[data-erase-help]').textContent=labelText[7];
+ shell.querySelector('[data-edit="undoErase"]').textContent='↶ '+labelText[8];
  shell.querySelector('[data-erase-color]').value=eraseColor;
- shell.querySelector('[data-erase-color]').addEventListener('change',e=>{eraseColor=e.target.value;paint()});
+ shell.querySelector('[data-erase-color]').addEventListener('change',e=>{eraseColor=e.target.value});
  document.body.appendChild(shell);document.body.classList.add('rivo-editing');
  await paint();
  const apply=async action=>{
@@ -194,7 +209,11 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
     shell.querySelector('[data-edit="eraser"]').classList.toggle('active',eraserActive);return;
   }
-  if(action==='undoErase'){strokes.pop();await paint();return;}
+  if(action==='undoErase'){
+    if(strokes.length){const lastBatch=strokes.at(-1).batch;
+      while(strokes.length&&strokes.at(-1).batch===lastBatch)strokes.pop();}
+    await paint();return;
+  }
   if(action==='date'){timestampOn=!timestampOn;await paint();return;}
   if(action==='save'){
    const output=await new Promise((resolve,reject)=>preview.toBlob(b=>b?resolve(b):reject(Error('Image export failed')),'image/jpeg',.92));
@@ -231,12 +250,13 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   Math.max(0,Math.min(preview.height,(e.clientY-rect.top)/rect.height*preview.height))
  ]};
  preview.addEventListener('pointerdown',e=>{
-   if(!eraserActive)return;e.preventDefault();drawing=true;lastPoint=xy(e);
+   if(!eraserActive)return;e.preventDefault();drawing=true;lastPoint=xy(e);strokeBatch++;
+   strokes.push({a:lastPoint,b:lastPoint,size:brushSize,color:eraseColor,batch:strokeBatch});
    preview.setPointerCapture(e.pointerId);
  });
  preview.addEventListener('pointermove',e=>{
    if(!drawing||!eraserActive)return;
-   const next=xy(e);strokes.push({a:lastPoint,b:next,size:brushSize});
+   const next=xy(e);strokes.push({a:lastPoint,b:next,size:brushSize,color:eraseColor,batch:strokeBatch});
    ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=brushSize;ctx.lineCap='round';
    ctx.beginPath();ctx.moveTo(lastPoint[0],lastPoint[1]);ctx.lineTo(next[0],next[1]);ctx.stroke();ctx.restore();
    lastPoint=next;

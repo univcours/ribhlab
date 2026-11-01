@@ -5,7 +5,7 @@
  * reliable semantic handwriting detection.
  */
 export function coloredMarkMask(rgba,brushMask,width,height,color='all'){
- if(!['all','blue','red','green','light-gray'].includes(color))throw Error('Unknown mark color');
+ if(!['all','auto-colored','blue','red','green','light-gray'].includes(color))throw Error('Unknown mark color');
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
    rgba.length!==width*height*4||brushMask.length!==width*height)throw Error('Invalid image/mask');
  const out=new Uint8Array(width*height);
@@ -14,6 +14,9 @@ export function coloredMarkMask(rgba,brushMask,width,height,color='all'){
   const k=i*4,r=rgba[k],g=rgba[k+1],b=rgba[k+2];
   const max=Math.max(r,g,b),min=Math.min(r,g,b),neutral=max-min<23;
   const isTarget=color==='all'||
+   // Color-only selection is not handwriting recognition. It is restricted to
+   // user-brushed pixels, excludes gray/black print and unsaturated paper.
+   color==='auto-colored'&&(max-min>=48&&max>=105&&min<205)||
    color==='blue'&&(b>r+34&&b>g+12&&b>65)||
    color==='red'&&(r>g+26&&r>b+19&&r>66)||
    color==='green'&&(g>r+23&&g>b+13&&g>70)||

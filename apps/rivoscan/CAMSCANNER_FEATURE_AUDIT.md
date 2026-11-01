@@ -1,3 +1,11 @@
+## 0.32.0 manual-select color cleanup and repair quality
+- **Color-aware No Handwriting workflow**: new `Colored ink (brushed only)` option uses only a user-marked area and strong chroma, preserving unselected printed black/gray pixels. It is not semantic handwriting removal; use the original to review complex colored paper. Existing blue/red/green/light-gray options remain.
+- **Stroke correctness**: each brush gesture keeps its original color when the selector changes, single taps mark a circular area, Undo reverts the whole gesture. Changing the selection no longer rewrites previous strokes.
+- **Smart Erase**: image-local horizontal and vertical boundary interpolation favors matching boundary colors, reducing dark printed-ink bleeding into a colored annotation removal. Pixels outside the exact mask, including alpha, remain untouched. This is not generative inpainting.
+- **Restore Photo**: small isolated high-contrast dust pixels on otherwise uniform regions can now be corrected; connected printed text and original image remain preserved. Torn photo reconstruction, missing content and full AI restoration remain unavailable.
+- Regression tests cover color-only masks, untouched dark print, original image integrity, single-pixel spot repair, directional inpainting and brush action behavior.
+- Source and CI tests are not substitutes for QA on actual documents and Android phones.
+
 ## 0.31.1 independent left/right Book Scan curvature correction
 - Automatic Book Scan bend estimation is now computed separately for each facing page and applied independently to both the preview and the exported PDF. Previously the app averaged the estimates, losing opposite or unequal bends.
 - Manual curvature and page split changes cancel obsolete auto-estimates; importing a new photo also resets stale adjustments.

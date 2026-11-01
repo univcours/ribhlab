@@ -7,6 +7,26 @@ export function restorePhotoPixels(rgba,width,height){
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
     width*height>7000000||rgba.length!==width*height*4)throw Error('Invalid image');
  const output=new Uint8ClampedArray(rgba),src=new Uint8ClampedArray(rgba);
+ // Fix only isolated high-contrast single-pixel dust on a locally uniform
+ // neighborhood. A connected ink stroke has dark neighbors and is preserved.
+ // No missing image detail is hallucinated or uploaded.
+ for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+   const center=(y*width+x)*4;
+   const samples=[];
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+     if(dx===0&&dy===0)continue;
+     const at=((y+dy)*width+x+dx)*4;
+     samples.push([src[at],src[at+1],src[at+2]]);
+   }
+   const med=[0,1,2].map(k=>samples.map(c=>c[k]).sort((a,b)=>a-b)[3]);
+   const noise=Math.max(...[0,1,2].map(k=>Math.abs(src[center+k]-med[k])));
+   const support=samples.filter(c=>c.every((v,k)=>Math.abs(v-med[k])<25)).length;
+   if(noise>100&&support===8){
+     for(let k=0;k<3;k++)output[center+k]=med[k];
+   }
+ }
+ // Subsequent smoothing uses repaired data but never changes alpha or input.
+ src.set(output);
  for(let y=1;y<height-1;y++){
   for(let x=1;x<width-1;x++){
    const i=(y*width+x)*4,r=src[i],g=src[i+1],b=src[i+2];

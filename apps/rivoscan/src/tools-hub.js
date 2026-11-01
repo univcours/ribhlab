@@ -33,7 +33,7 @@ export const hubSpecial={
  enhance:{icon:'image',color:'green',type:'photo',preset:'enhance'},
  restorePhoto:{icon:'image',color:'sky',type:'photo',preset:'restore'},
  manualErase:{icon:'delete',color:'green',type:'photo',preset:'eraser'},
- eraseColoredMarks:{icon:'delete',color:'blue',type:'photo',preset:'erase:blue'},
+ eraseColoredMarks:{icon:'delete',color:'blue',type:'photo',preset:'erase:auto-colored'},
  eraseLightWatermark:{icon:'delete',color:'sky',type:'photo',preset:'erase:light-gray'},
  managePages:{icon:'reorder',color:'blue',type:'pageManager'},
  printPdf:{icon:'file',color:'sky',type:'libraryPrint'}

@@ -13,3 +13,14 @@ test('Offline denoiser keeps high contrast strokes and alpha while reducing mild
  assert.equal(b[n+3],255);
 });
 test('Restore rejects impossible images',()=>assert.throws(()=>restorePhotoPixels(new Uint8ClampedArray(10),3,3)));
+
+test('Restore repairs an isolated dark dust pixel without altering continuous ink',()=>{
+ const w=9,h=9,img=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++){img[i*4]=img[i*4+1]=img[i*4+2]=232;img[i*4+3]=255}
+ img[(4*w+5)*4]=img[(4*w+5)*4+1]=img[(4*w+5)*4+2]=3;
+ for(let y=1;y<h-1;y++){const at=(y*w+2)*4;img[at]=img[at+1]=img[at+2]=13;}
+ const before=img.slice(),fixed=restorePhotoPixels(img,w,h);
+ assert.ok(fixed[(4*w+5)*4]>210,'one-pixel dark dust should be repaired');
+ assert.ok(fixed[(4*w+2)*4]<25,'connected print must remain');
+ assert.deepEqual(img,before,'original image bytes must not change');
+});
