@@ -1,3 +1,9 @@
+## 0.26.0 improvements
+- **Signature placement (#21)**: after drawing, a real document-image preview supports dragging the signature anywhere and choosing its scale. The final exported scan uses the same normalized position; original remains untouched.
+- **ID photo background (#11)**: elective, real on-device BodyPix MobileNet segmentation, with original/white/light-blue/gray backgrounds. Model weights download once. The user must inspect hair and clothing boundaries, and official acceptance is not guaranteed.
+- **Whiteboard/Slides (#8)**: local 80th-percentile illumination correction now preserves colored markers, unlike the former destructive grayscale threshold. Native OpenCV Whiteboard mode also retains color/stamps. Burnt-out specular highlights cannot restore missing characters.
+- Pending: full automatic 3D curve estimation, accurate handwriting-vs-printed separation, math-specific OCR, high-fidelity Office layout recovery, AI chat/solver backend, persistent links. User-requested capabilities are NOT represented by fake finished buttons.
+
 ## RivoScan 0.25.0 updates
 - **Photo Translation (#9)** now invokes Tesseract OCR, allows correction of recognized text, and uses on-device `@capacitor-mlkit/translation` on Android. Language models download once (may use mobile data), then translation stays local. Supports Arabic, English, French, Spanish, German, Portuguese, Italian. Accuracy and hardware performance require field QA.
 - **PPTX editable text (#14)** now provides a SEPARATE "To PPT (editable text)" export using PowerPoint native text boxes, plus the existing screenshot/image-slide export. No claim to reconstruct tables or graphic objects with full fidelity.
@@ -21,10 +27,10 @@
 | #5 Smart Erase | Partial, FUNCTIONAL: user paints mask and local edge-color interpolation fills selected area without changing unselected pixels |
 | #6 Restore Photo | Partial, FUNCTIONAL: local edge-aware color denoising, no generative restoration |
 | #7 Book Scan | Partial, FUNCTIONAL: capture/import, adjustable gutter, guided nonrigid curvature correction and 2-page PDF; automatic 3D flattening missing |
-| #8 Whiteboard/Slides | Partial, existing perspective crop and adaptive threshold filters, no robust glare elimination |
+| #8 Whiteboard/Slides | Partial: color-preserving local illumination normalization, perspective crop and colored stamp retention; saturated highlights cannot be recovered |
 | #9 Photo Translation | Source IMPLEMENTED: Tesseract OCR photo + on-device Google ML Kit translation between seven languages; first-use model downloads, Android hardware QA required |
 | #10 Formula Recognition | NOT implemented; specialized math OCR required |
-| #11 ID Photo Maker | Partial, FUNCTIONAL: preset sizes, adjustable framing, actual 300DPI PNG 10x15 sheet; NO background segmentation |
+| #11 ID Photo Maker | Partial: on-device portrait background segmentation (downloaded BodyPix) now available plus sizes and 300 DPI sheet; detailed edge quality/official acceptance not guaranteed |
 | #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
 | #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |
 | #14 Editable PPT | PARTIAL: a new PowerPoint export produces real editable text boxes from PDF text/OCR; original images, advanced slide layouts and design geometry are not reconstructed |
@@ -34,7 +40,7 @@
 | #18 CountCam | Partial, FUNCTIONAL source: COCO-SSD model detects common object classes from camera/import photo; internet for model weights on first use, counts are estimates, handset QA pending |
 | #19 Scan Code | FUNCTIONAL source: ZXing local QR/1D/2D decoding from a camera photo or imported image; hardware QA pending |
 | #20 Persistent Share Link | NOT implemented; needs authenticated storage/backend and user consent |
-| #21 Sign before first save | Implemented native hand-drawn signature dialog before ✓; fixed bottom-right position, no draggable placement yet |
+| #21 Sign before first save | Native signature dialog before ✓ now supports drag placement and resize on a live page preview; handset QA pending |
 | #22 What's New | FUNCTIONAL source: version-tracked seven-language dialog on update and in Settings |
 
 No placeholder controls are added for #1 #3 #4 #9 #10 #15 #16 #17 #18 #20 #21. **Do not conflate successful CI build with verified Samsung handset image quality.**

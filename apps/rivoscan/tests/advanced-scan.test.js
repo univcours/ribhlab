@@ -135,3 +135,35 @@ test('Editable text PowerPoint route is explicit and does not misrepresent image
  assert.ok(exportCode.includes("if(format==='editablePptx')"));
  assert.ok(exportCode.includes('await editableSlidesFromFile(file,ocrLang,progress)'));
 });
+
+test('Whiteboard normalization balances uneven light and preserves blue ink',async()=>{
+ const {normalizeWhiteboardRGBA}=await import('../src/whiteboard-glare.js');
+ const w=96,h=48,pixels=new Uint8ClampedArray(w*h*4);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const at=(y*w+x)*4,v=x<48?180:235;
+  pixels[at]=v;pixels[at+1]=v;pixels[at+2]=v;pixels[at+3]=255;
+ }
+ for(let y=8;y<40;y++){
+  let at=(y*w+24)*4;pixels[at]=22;pixels[at+1]=44;pixels[at+2]=152;
+  at=(y*w+72)*4;pixels[at]=15;pixels[at+1]=15;pixels[at+2]=15;
+ }
+ const output=normalizeWhiteboardRGBA(pixels,w,h);
+ const left=output[(20*w+10)*4],right=output[(20*w+86)*4];
+ assert.ok(Math.abs(left-right)<30,'uneven board illumination should converge');
+ const blue=(20*w+24)*4;
+ assert.ok(output[blue+2]>output[blue]+45,'colored signatures and markers must retain their hue');
+ const dark=(20*w+72)*4;
+ assert.ok(output[dark]<65,'dark line must survive normalization');
+ assert.equal(output[(15*w+10)*4+3],255);
+ assert.equal(pixels[(20*w+10)*4],180,'input must remain unchanged');
+});
+test('ID portraits support an actual optional on-device background model',()=>{
+ const src=readFileSync(new URL('../src/photo-background.js',import.meta.url),'utf8');
+ const ui=readFileSync(new URL('../src/id-photo-maker.js',import.meta.url),'utf8');
+ assert.ok(src.includes("import('@tensorflow-models/body-pix')"));
+ assert.ok(src.includes('await net.segmentPerson('));
+ assert.ok(src.includes("globalCompositeOperation='destination-in'"));
+ for(const name of ['white','blue','gray','original'])assert.ok(ui.includes(name));
+ assert.ok(ui.includes('await segmentPortrait(image'));
+ assert.ok(ui.includes('Background model not ready'));
+});

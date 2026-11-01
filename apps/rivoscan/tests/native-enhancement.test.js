@@ -72,3 +72,17 @@ test('Native freehand signature is offered before ✓ and applied to processed s
  assert.ok(locale.includes('signPlacementHint'));
  assert.ok(activity.includes('Paint.ANTI_ALIAS_FLAG'));
 });
+
+test('CameraX signature is draggable and scalable before save',()=>{
+ const locale=readFileSync(new URL('../native/android/RivoLocale.java',import.meta.url),'utf8');
+ for(const snippet of ['class SignaturePlacementPreview extends View','signatureCenterX','signatureCenterY',
+  'signatureWidthFraction','signatureBounds(cleaned.getWidth()','SeekBar','mainHandler.post(this::showSignaturePlacement)']){
+  assert.ok(activity.includes(snippet),snippet);
+ }
+ for(const word of ['signPlacementTitle','signDragHint','signSize'])assert.ok(locale.includes(word));
+});
+test('Whiteboard native auto uses color-preserving LAB branch, not destructive threshold',()=>{
+ assert.ok(processor.includes('if(BW.equals(mode)){'));
+ assert.ok(processor.includes('AUTO.equals(mode)||WHITEBOARD.equals(mode)'));
+ assert.ok(!processor.includes('if(BW.equals(mode)||WHITEBOARD.equals(mode))'));
+});
