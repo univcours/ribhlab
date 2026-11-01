@@ -15,7 +15,7 @@
 | #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
 | #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |
 | #14 Editable PPT | Partial image-backed slides; no editable text/shapes |
-| #15 Lock PDF | NOT implemented; pdf-lib cannot securely encrypt output |
+| #15 Lock PDF | Implemented in source: AES-256 password protection, optional owner password and print/copy/edit permission flags; complete encryption integration test and Android QA required |
 | #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
 | #17 Solver AI | NOT implemented; needs AI provider/model |
 | #18 CountCam | Partial, FUNCTIONAL source: COCO-SSD model detects common object classes from camera/import photo; internet for model weights on first use, counts are estimates, handset QA pending |

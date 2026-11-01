@@ -63,3 +63,20 @@ test('CountCam returns grouped counts from actual scored detections without gues
  ],.5),{bottle:2,person:1});
  assert.throws(()=>countDetectedObjects([],2));
 });
+
+test('AES-256 Lock PDF is wired to the editor and validates passwords locally',async()=>{
+ const {PDFDocument}=await import('pdf-lib');
+ const {encryptPDFCopy,validatePDFPassword}=await import('../src/pdf-lock.js');
+ assert.throws(()=>validatePDFPassword('short','short'));
+ assert.throws(()=>validatePDFPassword('12345678','87654321'));
+ const pdf=await PDFDocument.create();pdf.addPage([612,792]);
+ const original=await pdf.save({useObjectStreams:false});
+ const encrypted=await encryptPDFCopy(original,'correct horse battery staple','owner-password',
+  {copy:false,modify:false,print:true});
+ assert.ok(encrypted.length>0);
+ const text=new TextDecoder('latin1').decode(encrypted);
+ assert.ok(text.includes('/Encrypt'),'encrypted PDF must contain a real Encrypt dictionary');
+ assert.ok(text.includes('/AESV3')||text.includes('/V 5'),'PDF must use AES-256 handler');
+ const {PDFDocument:Lib}=await import('pdf-lib');
+ await assert.rejects(Lib.load(encrypted),'an unauthenticated parser must reject protected PDF');
+});
