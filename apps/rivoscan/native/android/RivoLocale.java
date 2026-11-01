@@ -89,6 +89,16 @@ final class RivoLocale {
          "Bordi","Confronta","Salva","Raddrizzamento pagina…",
          "Miglioramento ad alta qualità…","Anteprima non disponibile. Prova Original."}
     };
+    private static final String[] SIGN_KEYS={"signBeforeSave","signPlacementHint","signatureClear","signatureCleared","signatureEmpty","signatureReady"};
+    private static final String[][] SIGN_VALUES={
+        {"Sign","Draw your signature. It will appear at the bottom-right of the scanned page. The original photo is kept unchanged.","Remove","Signature removed.","Draw something first.","Signature ready; tap ✓ Clean & Save."},
+        {"توقيع","رسم توقيعك هنا. غادي يتحط أسفل يمين الصفحة المنقّاة، والصورة الأصلية كتبقى بلا تغيير.","حذف","تحيد التوقيع.","رسم التوقيع أولاً.","التوقيع واجد؛ ضغط ✓ للتنقية والحفظ."},
+        {"Signer","Dessinez votre signature. Elle sera placée en bas à droite du scan, sans modifier l’original.","Supprimer","Signature supprimée.","Dessinez d’abord la signature.","Signature prête : validez avec ✓."},
+        {"Firmar","Dibuje su firma. Se colocará abajo a la derecha sin alterar el original.","Quitar","Firma eliminada.","Dibuja la firma primero.","Firma lista, toca ✓."},
+        {"Unterschreiben","Unterschrift zeichnen. Sie wird unten rechts angebracht; das Original bleibt unverändert.","Entfernen","Unterschrift entfernt.","Bitte erst unterschreiben.","Unterschrift bereit, ✓ drücken."},
+        {"Assinar","Desenhe a assinatura. Aparecerá no canto inferior direito, sem alterar a imagem original.","Remover","Assinatura removida.","Desenhe primeiro.","Assinatura pronta: ✓."},
+        {"Firma","Disegna la firma. Comparirà in basso a destra; l'originale resta invariato.","Rimuovi","Firma rimossa.","Disegna la firma.","Firma pronta: tocca ✓."}
+    };
     private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto"};
     private static final String[][] AUTO_TEXT={
         {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean"},
@@ -157,6 +167,7 @@ final class RivoLocale {
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
         if("idFront".equals(key))return ID_SIDES[lang][0];
         if("idBack".equals(key))return ID_SIDES[lang][1];
+        for(int i=0;i<SIGN_KEYS.length;i++)if(SIGN_KEYS[i].equals(key))return SIGN_VALUES[lang][i];
         for(int i=0;i<AUTO_KEYS.length;i++)if(AUTO_KEYS[i].equals(key))return AUTO_TEXT[lang][i];
         for(int i=0;i<ENHANCE_KEYS.length;i++)if(ENHANCE_KEYS[i].equals(key))return ENHANCE_TEXT[lang][i];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
