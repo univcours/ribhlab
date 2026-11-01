@@ -1,6 +1,7 @@
 import './style.css';
 import './theme-brand.css';
 import { version as appVersion } from '../package.json';
+import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
@@ -353,11 +354,26 @@ function toolsWorkspace(){
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
+function scannerPreferenceRows(){
+ const prefs=readScanPrefs(localStorage),labels=scanPrefsText(language);
+ const secondary={autoClean:labels.autoCleanHelp,keepOriginal:labels.keepOriginalHelp,autoSavePdf:labels.autoSavePdfHelp};
+ return SCAN_PREF_FIELDS.map(field=>{
+  const key=field.key,iconName=key==='cameraQuality'?'camera':key==='pageSize'?'file':key==='keepOriginal'?'shield':'check';
+  const options=field.options?.map(value=>'<option value="'+value+'"'+(prefs[key]===value?' selected':'')+'>'+escapeHTML(formatScanSettingValue(language,key,value))+'</option>').join('');
+  const control=field.type==='switch'
+    ?'<input type="checkbox" data-scan-pref="'+key+'" role="switch" aria-label="'+escapeHTML(labels[key])+'" '+(prefs[key]?'checked':'')+'>'
+    :'<select data-scan-pref="'+key+'" aria-label="'+escapeHTML(labels[key])+'">'+options+'</select>';
+  return '<label class="settings-row rivo-scanner-pref"><span class="settings-row-icon">'+ico(iconName,21)+'</span>'+
+    '<span class="rivo-pref-copy"><strong>'+escapeHTML(labels[key])+'</strong>'+
+    (secondary[key]?'<small>'+escapeHTML(secondary[key])+'</small>':'')+'</span>'+control+'</label>';
+ }).join('');
+}
 function settingsWorkspace(){
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
+ <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>${scannerPreferenceRows()}<p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
@@ -627,6 +643,14 @@ function wire(){
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
+  document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
+    const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
+    if(!field)return;
+    let value=field.type==='switch'?Boolean(e.target.checked):e.target.value;
+    if(field.type!=='switch'&&field.options?.every(x=>typeof x==='number'))value=Number(value);
+    try{updateScanPref(localStorage,field.key,value);toast(scanPrefsText(language).settingsSaved)}
+    catch(error){console.warn('Scanner settings:',error);render();toast(String(error.message),true)}
+  }));
   document.getElementById('sound-toggle')?.addEventListener('change',async e=>{
     soundsEnabled=Boolean(e.target.checked);
     localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
@@ -739,7 +763,8 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
     return;
   }
   try{
-    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode});
+    const prefs=readScanPrefs(localStorage);
+    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs});
     await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);
@@ -795,7 +820,14 @@ async function consumeSmartScan(result){
   if(!picked.length)return;
   showBusy(dl('saving'));
   try{
-    const pdf=await imagesToPdf('enhance',picked);
+    const prefs=readScanPrefs(localStorage);
+    if(!prefs.autoSavePdf){
+      toast(scanPrefsText(language).autoSavePdfHelp);
+      return;
+    }
+    // Native CameraX has already performed perspective and color-safe Auto Clean.
+    // Do NOT enhance the pixels again: this can fade colored stamps and handwriting.
+    const pdf=await imagesToPdf('color',picked);
     const saved=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
     openLibrary();
     toast(dl('savedNow')+' · '+picked.length+' '+sl('pages'));
@@ -971,8 +1003,9 @@ function peerWorkspace(){
 async function imagesToPdf(filter,sourceFiles=files){
  const pdf=await PDFDocument.create();for(let i=0;i<sourceFiles.length;i++){
   progress(`Preparing image ${i+1} / ${sourceFiles.length}`);
-  const canvas=await imageCanvas(sourceFiles[i],filter,sourceFiles===files?(scanRotations[i]||0):0),blob=await canvasBlob(canvas,'image/jpeg',Number(setting('quality')||.85));
-  const image=await pdf.embedJpg(await blob.arrayBuffer());const pw=595.28,ph=841.89,margin=18;
+  const prefs=readScanPrefs(localStorage);
+  const canvas=await imageCanvas(sourceFiles[i],filter,sourceFiles===files?(scanRotations[i]||0):0),blob=await canvasBlob(canvas,'image/jpeg',Number(setting('quality')||prefs.pdfQuality));
+  const image=await pdf.embedJpg(await blob.arrayBuffer());const [pw,ph]=readScanPrefs(localStorage).pageSize==='letter'?[612,792]:[595.28,841.89],margin=18;
   const ratio=Math.min((pw-2*margin)/image.width,(ph-2*margin)/image.height);const width=image.width*ratio,height=image.height*ratio;
   const page=pdf.addPage([pw,ph]);page.drawImage(image,{x:(pw-width)/2,y:(ph-height)/2,width,height});
  }
