@@ -89,6 +89,16 @@ final class RivoLocale {
          "Bordi","Confronta","Salva","Raddrizzamento pagina…",
          "Miglioramento ad alta qualità…","Anteprima non disponibile. Prova Original."}
     };
+    private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto"};
+    private static final String[][] AUTO_TEXT={
+        {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean"},
+        {"تنقية وحفظ","الفلاتر","كنقومو الورقة وكننقيو الخطوط والكاشيات…","تنقية تلقائية"},
+        {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto"},
+        {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática"},
+        {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch"},
+        {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática"},
+        {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica"}
+    };
     static String get(String language,String key){
         int lang=0;
         if("ar".equals(language))lang=1;else if("fr".equals(language))lang=2;
@@ -132,6 +142,7 @@ final class RivoLocale {
         }[lang];
         if("openDocument".equals(key))return new String[]{"Open RivoScan document","فتح وثيقة RivoScan","Ouvrir le document RivoScan","Abrir documento RivoScan","RivoScan-Dokument öffnen","Abrir documento RivoScan","Apri documento RivoScan"}[lang];
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
+        for(int i=0;i<AUTO_KEYS.length;i++)if(AUTO_KEYS[i].equals(key))return AUTO_TEXT[lang][i];
         for(int i=0;i<ENHANCE_KEYS.length;i++)if(ENHANCE_KEYS[i].equals(key))return ENHANCE_TEXT[lang][i];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
         for(int i=0;i<EXTRA_KEYS.length;i++)if(EXTRA_KEYS[i].equals(key))return EXTRA_VALUES[lang][i];
