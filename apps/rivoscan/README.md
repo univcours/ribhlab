@@ -21,6 +21,22 @@
 15. Compress scanned PDFs by rasterization (may lose selectable text, links, forms; size reduction not guaranteed).
 16. Clear common PDF metadata (NOT secure redaction).
 
+### Android Studio: prevent the "phone already has a newer version" uninstall dialog
+
+If Android Studio offers to **uninstall** the existing application, select **Cancel**. Never use the IDE uninstall/downgrade option, since it can erase local documents or settings.
+
+**Root cause:** The native `android/` Gradle project is generated locally by Capacitor; Android Studio can retain a stale `app/build.gradle` versionCode even after the safe ADB installer upgraded the phone.
+
+**Permanent fix:** RivoScan has one tracked authoritative `rivoscan-version.properties`, and `rivoscan-version.gradle` is appended LAST to the generated `android/app/build.gradle` by `apply-rivoscan-branding.ps1`, automatically on every Capacitor sync. Android Studio reads the correct version during Gradle sync and Run. Do not manually edit generated versionCodes.
+
+From the repository root in Windows PowerShell:
+```powershell
+git switch feat/rivoscan-android-beta
+git pull --ff-only origin feat/rivoscan-android-beta
+.\apps\rivoscan\fix-android-studio-version.cmd
+```
+Then select **File > Sync Project with Gradle Files** in Android Studio once, and use **Run (app)**. The repair script safely builds and updates the app without uninstalling or clearing data. If the phone already has a higher versionCode than the locally built APK, installation is skipped.
+
 **Beta safeguard:** selected files are limited to 30 MB each / 90 MB combined to reduce memory pressure. Basic page selection has automated unit tests.
 
 All core editing and conversion runs inside the device/browser, with no document-upload backend. **OCR language data** may be fetched from the library's training-data host on first use; no document needs to be sent to a remote server. Test this behavior before any privacy claim in production.
