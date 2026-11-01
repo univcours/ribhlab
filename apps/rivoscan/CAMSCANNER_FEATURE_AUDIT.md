@@ -1,3 +1,31 @@
+## 0.22.0: implementation update for the user's 22-feature selection
+| Requested feature | 0.22.0 actual state |
+| --- | --- |
+| #1 True nonplanar/curved paper dewarping | NOT implemented; four-corner perspective correction only |
+| #2 Auto text/stamp enhancement | Implemented OpenCV CLAHE/color-preserving Auto; hardware image quality QA pending |
+| #3 No Handwriting automatic detection | NOT implemented; manual targeted erase only |
+| #4 No Watermark automatic detection | NOT implemented; manual targeted erase of authorized marks only |
+| #5 Smart Erase | Partial, FUNCTIONAL: user paints mask and local edge-color interpolation fills selected area without changing unselected pixels |
+| #6 Restore Photo | Partial, FUNCTIONAL: local edge-aware color denoising, no generative restoration |
+| #7 Book Scan | Partial, FUNCTIONAL: capture/import a book photo, adjust gutter, split to two PDF pages; non-planar dewarp missing |
+| #8 Whiteboard/Slides | Partial, existing perspective crop and adaptive threshold filters, no robust glare elimination |
+| #9 Photo Translation | NOT implemented; translation models/providers not connected |
+| #10 Formula Recognition | NOT implemented; specialized math OCR required |
+| #11 ID Photo Maker | Partial, FUNCTIONAL: preset sizes, adjustable framing, actual 300DPI PNG 10x15 sheet; NO background segmentation |
+| #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
+| #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |
+| #14 Editable PPT | Partial image-backed slides; no editable text/shapes |
+| #15 Lock PDF | NOT implemented; pdf-lib cannot securely encrypt output |
+| #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
+| #17 Solver AI | NOT implemented; needs AI provider/model |
+| #18 CountCam | NOT implemented; needs object detection |
+| #19 Scan Code | FUNCTIONAL source: ZXing local QR/1D/2D decoding from a camera photo or imported image; hardware QA pending |
+| #20 Persistent Share Link | NOT implemented; needs authenticated storage/backend and user consent |
+| #21 Sign before first save | NOT implemented natively; PDF signing works after export |
+| #22 What's New | FUNCTIONAL source: version-tracked seven-language dialog on update and in Settings |
+
+No placeholder controls are added for #1 #3 #4 #9 #10 #15 #16 #17 #18 #20 #21. **Do not conflate successful CI build with verified Samsung handset image quality.**
+
 # RivoScan / CamScanner screenshot feature audit — 2026-11-01
 
 **Source:** screenshot comparisons shared by the user in conversation. This is a feature matrix, not a claim that RivoScan reproduces CamScanner's algorithms. Do not misrepresent offline filters as generative AI or actual nonrigid paper dewarping.

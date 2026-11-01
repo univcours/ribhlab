@@ -23,3 +23,20 @@ test('Barcode reader has real camera/image decoding, and does not auto-open untr
  assert.ok(src.includes("input.type='file'"));assert.ok(src.includes('const link=safeScannedUrl(value)'));
  assert.ok(src.includes('window.confirm'));assert.ok(!src.includes('window.location='));
 });
+
+test('Book Scan splits a double-page photo into two non-overlapping pages',async()=>{
+ const {splitBookRegions}=await import('../src/book-split.js');
+ const regions=splitBookRegions(1600,1000,54);
+ assert.equal(regions.length,2);assert.equal(regions[0].w+regions[1].w,1600);
+ assert.equal(regions[1].x,regions[0].w);assert.equal(regions[0].h,1000);
+ assert.throws(()=>splitBookRegions(1600,1000,99));
+});
+test('ID photo PNG contains explicit 300 DPI print metadata',async()=>{
+ const {setPNGResolution}=await import('../src/id-photo-maker.js');
+ const bytes=new Uint8Array(45);bytes.set([137,80,78,71,13,10,26,10]);
+ const view=new DataView(bytes.buffer);view.setUint32(8,13);bytes.set([73,72,68,82],12);
+ const encoded=setPNGResolution(bytes);
+ assert.equal(encoded.length,66);
+ assert.equal(String.fromCharCode(...encoded.slice(37,41)),'pHYs');
+ assert.equal(new DataView(encoded.buffer).getUint32(41),11811);
+});

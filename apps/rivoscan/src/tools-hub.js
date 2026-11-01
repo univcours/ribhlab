@@ -11,7 +11,7 @@ export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
  scanCode:{icon:'scan',color:'blue',type:'barcode'},
- bookScan:{icon:'file',color:'sky',type:'scan'},
+ bookScan:{icon:'file',color:'sky',type:'book'},
  slideScan:{icon:'image',color:'pink',type:'scan'},
  whiteboard:{icon:'image',color:'green',type:'photo',preset:'whiteboard'},
  timestamp:{icon:'clock',color:'blue',type:'photo',preset:'timestamp'},
