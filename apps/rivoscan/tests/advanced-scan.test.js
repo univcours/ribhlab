@@ -112,3 +112,17 @@ test('Photo Translation uses actual on-device ML Kit, source OCR and editable te
  assert.ok(src.includes('translation.value'));
  assert.ok(!src.includes('fetch(\'https://'));
 });
+
+test('Editable PPTX contains native PowerPoint text shapes, not just flattened JPGs',async()=>{
+ const {createEditableTextPresentation}=await import('../src/editable-pptx.js');
+ const bytes=await createEditableTextPresentation([{width:1000,height:750,items:[
+  {text:'Sales 2026',x:100,y:630,width:300,height:36},
+  {text:'Total 01234',x:120,y:520,width:260,height:24}
+ ]}]);
+ const {default:JSZip}=await import('jszip');
+ const zip=await JSZip.loadAsync(bytes);
+ const slide=await zip.file('ppt/slides/slide1.xml').async('string');
+ assert.ok(slide.includes('<p:sp>'),'must contain editable shapes');
+ assert.ok(slide.includes('Sales 2026'));
+ assert.ok(slide.includes('Total 01234'));
+});

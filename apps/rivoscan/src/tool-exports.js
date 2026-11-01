@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import {createOCRWorkbook} from './xlsx-export.js';
+import {editableSlidesFromFile} from './editable-pptx.js';
 import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
@@ -61,6 +62,12 @@ export async function exportToolFile({file,format,language='en',save,progress=()
   }
   const csv='\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\r\n');
   await save(new TextEncoder().encode(csv),'RivoScan_Excel_Extract_'+date+'.csv','text/csv');
+  return;
+ }
+ if(format==='editablePptx'){
+  const bytes=await editableSlidesFromFile(file,ocrLang,progress);
+  await save(bytes,'RivoScan_Editable_Text_Slides_'+date+'.pptx',
+   'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   return;
  }
  if(format==='pptx'){

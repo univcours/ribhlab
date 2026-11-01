@@ -21,7 +21,7 @@
 | #11 ID Photo Maker | Partial, FUNCTIONAL: preset sizes, adjustable framing, actual 300DPI PNG 10x15 sheet; NO background segmentation |
 | #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
 | #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |
-| #14 Editable PPT | Partial image-backed slides; no editable text/shapes |
+| #14 Editable PPT | PARTIAL: a new PowerPoint export produces real editable text boxes from PDF text/OCR; original images, advanced slide layouts and design geometry are not reconstructed |
 | #15 Lock PDF | Implemented in source: AES-256 password protection, optional owner password and print/copy/edit permission flags; complete encryption integration test and Android QA required |
 | #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
 | #17 Solver AI | NOT implemented; needs AI provider/model |

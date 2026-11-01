@@ -3,7 +3,7 @@
 export const toolGroups=[
  {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
- {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
+ {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
  {id:'utilities',entries:['countCam','peerTransfer','shareFiles','printPdf']}
 ];
@@ -24,6 +24,7 @@ export const hubSpecial={
  toExcel:{icon:'file',color:'green',type:'export',format:'xlsx'},
  toCSV:{icon:'file',color:'green',type:'export',format:'csv'},
  toPpt:{icon:'image',color:'pink',type:'export',format:'pptx'},
+ toPptEditable:{icon:'text',color:'green',type:'export',format:'editablePptx'},
  pdfLong:{icon:'image',color:'sky',type:'export',format:'long'},
  enhance:{icon:'image',color:'green',type:'photo',preset:'enhance'},
  restorePhoto:{icon:'image',color:'sky',type:'photo',preset:'restore'},
@@ -56,6 +57,7 @@ const labels={
  toWord:['To Word (OCR)','تحويل إلى Word','Vers Word (OCR)','A Word (OCR)','Nach Word (OCR)','Para Word (OCR)','In Word (OCR)'],
  toExcel:['To Excel (.xlsx)','إلى Excel قابل للتعديل','Vers Excel (.xlsx)','A Excel (.xlsx)','Nach Excel (.xlsx)','Para Excel (.xlsx)','In Excel (.xlsx)'],
  toCSV:['To CSV (text)','تحويل إلى Excel (CSV)','Vers Excel (CSV)','A Excel (CSV)','Nach Excel (CSV)','Para Excel (CSV)','In Excel (CSV)'],
+ toPptEditable:['To PPT (editable text)','PPT بنص قابل للتعديل','PPT avec texte modifiable','PPT con texto editable','PPT mit editierbarem Text','PPT com texto editável','PPT con testo modificabile'],
  toPpt:['To PPT (image slides)','تحويل إلى PowerPoint','Vers PPT (images)','A PPT (imágenes)','Nach PPT (Bilder)','Para PPT (imagens)','In PPT (immagini)'],
  pdfLong:['PDF to Long Image','PDF إلى صورة طويلة','PDF en longue image','PDF a imagen larga','PDF als langes Bild','PDF em imagem longa','PDF in immagine lunga'],
  restorePhoto:['Restore Photo (denoise)','ترميم الصورة وإزالة التشويش','Restaurer photo (débruitage)','Restaurar foto (ruido)','Foto entrauschen','Restaurar foto (ruído)','Restauro foto (rumore)'],
