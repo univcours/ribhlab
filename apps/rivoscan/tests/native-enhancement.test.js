@@ -29,9 +29,9 @@ test('All-language native stage and native source included in Android wrapper',(
 });
 
 test('The first crop check automatically cleans without requiring a manual filter choice',()=>{
- assert.ok(activity.includes('button("✓  "+trNative("autoCleanSave"),this::autoCleanAndSave)'));
+ assert.ok(activity.includes('button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave)'));
  assert.ok(activity.includes('button(trNative("enhanceFilters"),this::prepareEnhancementPreview)'));
- assert.ok(activity.includes('RivoDocumentEnhancer.apply(straight,RivoDocumentEnhancer.AUTO)'));
+ assert.ok(activity.includes('autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL'));
  assert.ok(activity.includes('backupOriginalPage(source)'));
  assert.ok(processor.includes('AUTO="auto"'));
  assert.ok(processor.includes('Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb)'));

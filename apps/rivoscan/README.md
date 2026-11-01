@@ -162,3 +162,16 @@ To get a **debug APK**, run GitHub Actions → **RivoScan Android debug build** 
 ## Security
 
 Never share service-account JSON, release keystore or Play Console password in chat. Avoid assigning admin access to CI when the narrower release permissions suffice. Do not release this beta before independent QA.
+
+## RivoScan 0.20.0 — restored CamScanner-like controls
+
+Open **Me > Scanner preferences** for nine persistent controls:
+- Auto-clean on ✓ (default on), enhancement preset (Auto / Enhance / Magic / No Shadow / Whiteboard / B&W / Original), optional original JPG backup in `Documents/RivoScan/Originals`.
+- Single vs. batch capture default, HD vs. SD camera, saved JPG quality (78/88/94%).
+- Output PDF quality (65/85/95%), A4 vs. US Letter paper, automatic PDF creation or manual page review before export.
+
+Settings are stored locally (no cloud account) and passed into the **native CameraX scanner**. PDF creation does not repeat enhancement on already-cleaned native scans. Existing OCR and PDF tools remain available.
+
+The ID Card tool now captures a front and back photograph and arranges both on ONE A4 PDF page. The PDF Print action uses Android's actual print dialog for a RivoScan PDF (requires printer setup). Scanner results, stamp visibility and physical folds still need testing on a real phone; this is not equivalent to a non-rigid dewarping or generative restoration engine.
+
+Known gaps versus CamScanner: no advanced AI handwriting removal, nonrigid book dewarping, formula solver, photo translation, secure PDF encryption, public cloud sharing link, full Word/Excel layout recreation or semantic object repair. These are explicitly unimplemented, not silently advertised as working.

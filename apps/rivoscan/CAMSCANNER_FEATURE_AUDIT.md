@@ -9,6 +9,14 @@
 - The original input photo is not overwritten; a decoded/pre-enhancement backup is saved in `Documents/RivoScan/Originals`, and the new cleaned scan is saved separately.
 - Requires Android OpenCV to initialize; basic camera fallback does not have these advanced modes.
 
+## New working additions in 0.20.0
+- Restored **nine persistent scanner preferences** in Me > Settings: ✓ auto-clean, configurable native filter, save originals, single/batch default, HD/SD camera, JPEG quality, PDF quality, A4/Letter, automatic PDF creation. Each option is validated, translated into seven languages, and passed to the native CameraX scanner or PDF assembly.
+- Existing Auto Clean output is no longer enhanced a second time when assembling a PDF, protecting the saturation of colored stamps and faint handwriting.
+- **Two-sided ID card mode** captures front and back, then places both photographs on ONE A4 page. This is a simple physical composite, not government-ID validation.
+- **Print PDF** invokes the system's actual Android print dialog for a PDF stored in RivoScan's verified Documents folders. A compatible printer/service is required.
+- **Retake** is explicitly available in the native crop header; ID card capture indicates front/back in seven languages.
+- Previous items remain: manual four-corner correction/loupe, Compare, filtered preview, reorder/delete/rotate pages, OCR, DOCX text export, CSV text export, image-based PPTX, JPG/PNG, long-image, sharing, direct transfer, fixed Documents/RivoScan + legacy Downloads visibility, language switching and sound toggle.
+
 ## Compared screenshot functions
 | CamScanner control observed | RivoScan state | Actual implementation / caveat |
 | --- | --- | --- |
@@ -33,7 +41,7 @@
 | Folder copy/move/rename, multi-select | Implemented | Android MediaStore and web batch controls |
 | Sharing via Android apps | Implemented | Device share chooser and format/quality selector |
 | Share Link | Partial | Manual WebRTC device pairing; no persistent public cloud URL |
-| ID card scan | Partial | Launches camera mode; specialized front/back composite missing |
+| ID card scan | Implemented source (0.20.0; handset QA pending) | Front/back are placed together on ONE A4 PDF page |
 | Book scanner | Partial | Launches document scanner; curved book dewarp missing |
 | Slides / Whiteboard | Partial | Scan and whiteboard photo enhancement; perspective details depend on camera |
 | Timestamp | Implemented | Text overlay on enhanced image |
@@ -45,9 +53,10 @@
 | Lock PDF | Missing | No PDF encryption in currently wired tools |
 | AI Chat / Solver AI | Missing | Needs AI service and cost/privacy design |
 | CountCam | Missing | Needs object recognition |
-| Print | Missing explicit UI | Android share/Open With does not equal direct print workflow |
+| Print | Implemented source (0.20.0; handset QA pending) | Android native PrintManager printer chooser, PDF files only |
 | Scan Code | Missing | Barcode/QR scanner not wired |
 | What's New + sticky Tools categories | Partial | Tools categories/search implemented; What's New banner not in app |
+| Scanner settings | Implemented source (0.20.0; handset QA pending) | Nine real options with seven-language UI and CameraX/PDF wiring |
 
 ## Acceptance tests still required on a real Samsung S22 Ultra
 1. Capture a flat document, tap crop Next, switch every filter, compare, save; ensure PDF generated.

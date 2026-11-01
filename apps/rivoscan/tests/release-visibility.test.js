@@ -8,7 +8,7 @@ const gradleMetadata=get('rivoscan-version.properties');
 const ui=get('src/main.js');
 test('Build and UI use the SAME semantic version source',()=>{
  assert.ok(gradleMetadata.includes('versionName='+pkg.version));
- assert.ok(gradleMetadata.includes('versionCode=27'));
+ assert.ok(gradleMetadata.includes('versionCode=28'));
  assert.ok(ui.includes("version as appVersion } from '../package.json'"));
  assert.ok(ui.includes('class="rivo-build-version"'));
  assert.ok(ui.includes('RivoScan v'+ '$'+'{appVersion}'));
