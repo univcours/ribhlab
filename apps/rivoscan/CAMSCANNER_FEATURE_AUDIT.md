@@ -1,3 +1,10 @@
+## 0.30.0 remote AI implementations
+- **AI Chat**: extract PDF text/OCR into page-marked context; question answering via the OpenAI Responses API with explicit per-request approval. The user enters their own key for that session, not stored or committed. Requests set `store:false`; vendor may have independent retention policies. No provider subscription or secret is bundled.
+- **Solver AI**: submit the actual resized selected problem image as `input_image` after confirmation, or extracted text/PDF. Real model output is displayed; errors are surfaced and user key is redacted.
+- Tests mock the network to check actual request format, page grounding, consent path and no provider saving. Because the project has no provisioned production AI credentials, a live API response cannot yet be certified.
+- **Persistent link sharing** still needs a user-authorized, access-controlled cloud store and published backend. Never upload documents to a public repository just to fabricate a permanent share link.
+- **Automatic 3D flattening / semantic handwriting removal** still needs specialized models and on-device quality tests.
+
 ## 0.30.0 — AI integrations with explicit consent
 - **AI Chat (#16)**: document extraction (PDF text and OCR on raster pages) with page markers, questions, and the real OpenAI Responses API. User must provide their own API key per session and confirm each text transfer. Requests set `store:false`; RivoScan does not store credentials. Provider usage may incur charges.
 - **Solver AI (#17)**: image selection/resizing and real vision input, or PDF/text problem extraction, followed by a user-confirmed external AI request. Answers are returned by the provider; no simulated solving.
