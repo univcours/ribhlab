@@ -118,6 +118,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private int enhancementSerial=0;
     private boolean savingEnhancedPage=false;
     private boolean captureInProgress=false;
+    private Bitmap handwrittenSignature;
     private TextView message;
     private boolean editing=false;
     private boolean openCvReady=false;
@@ -246,6 +247,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void showCamera(){
         if(savingEnhancedPage)return;
+        clearSessionSignature();
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
         editing=false;
@@ -892,6 +894,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(editor,trNative("loupe")+"\n"+(found==null?trNative("notFound"):trNative("found")),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button(trNative("signBeforeSave"),this::showSignaturePad),
             button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
     }
     /**
@@ -917,6 +920,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 straight=RivoEdgeDetector.warp(source,corners);
                 output=RivoDocumentEnhancer.apply(straight,
                     autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL);
+                composeSignature(output);
                 target=writeProcessedJpeg(output);
                 final File saved=target;
                 // Keep an unmodified copy (in a dedicated Originals folder) so
@@ -978,9 +982,98 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         current=null;
         // Processed result already exists on disk; finish any preview bitmaps.
         releaseEnhancement();
+        clearSessionSignature();
         savingEnhancedPage=false;
         if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
         else if(batchMode)showCamera();else finishWithPages();
+    }
+
+    private void clearSessionSignature(){
+        if(handwrittenSignature!=null && !handwrittenSignature.isRecycled())
+            handwrittenSignature.recycle();
+        handwrittenSignature=null;
+    }
+    /**
+     * The user draws their OWN signature on a transparent canvas; nothing is
+     * forged or inferred. Signing modifies only the new exported scan, never
+     * the original photo. The preview allows clearing it before export.
+     */
+    private void showSignaturePad(){
+        if(savingEnhancedPage || current==null || current.isRecycled())return;
+        final SignatureDrawView pad=new SignatureDrawView(this);
+        LinearLayout view=new LinearLayout(this);view.setOrientation(LinearLayout.VERTICAL);
+        view.setPadding(dp(12),dp(8),dp(12),dp(8));
+        TextView hint=text(trNative("signPlacementHint"),12,Color.DKGRAY,false);
+        view.addView(hint,new LinearLayout.LayoutParams(-1,dp(51)));
+        pad.setBackground(outlined(Color.WHITE,9,Color.rgb(4,188,247)));
+        view.addView(pad,new LinearLayout.LayoutParams(-1,dp(215)));
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(trNative("signBeforeSave"))
+            .setView(view)
+            .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
+            .setNeutralButton(trNative("signatureClear"),(dialog,which)->{
+                clearSessionSignature();
+                if(message!=null)message.setText(trNative("signatureCleared"));
+            })
+            .setPositiveButton("✓  "+trNative("enhanceDone"),(dialog,which)->{
+                if(!pad.hasInk()){if(message!=null)message.setText(trNative("signatureEmpty"));return;}
+                Bitmap next=pad.toTransparentBitmap();
+                clearSessionSignature();
+                handwrittenSignature=next;
+                if(message!=null)message.setText(trNative("signatureReady"));
+            }).show();
+    }
+    private void composeSignature(Bitmap cleaned){
+        if(handwrittenSignature==null||handwrittenSignature.isRecycled())return;
+        if(!cleaned.isMutable())throw new IllegalStateException("Cannot sign an immutable image");
+        final int maxWidth=Math.max(40,(int)(cleaned.getWidth()*.38));
+        final float scale=Math.min(maxWidth/(float)handwrittenSignature.getWidth(),
+            Math.max(20,cleaned.getHeight()*.15f)/handwrittenSignature.getHeight());
+        final float w=handwrittenSignature.getWidth()*scale;
+        final float h=handwrittenSignature.getHeight()*scale;
+        final float margin=Math.max(8,cleaned.getWidth()*.045f);
+        final float x=Math.max(0,cleaned.getWidth()-w-margin);
+        final float y=Math.max(0,cleaned.getHeight()-h-margin);
+        Canvas canvas=new Canvas(cleaned);
+        Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        canvas.drawBitmap(handwrittenSignature,null,new android.graphics.RectF(x,y,x+w,y+h),paint);
+    }
+    private static final class SignatureDrawView extends View{
+        private final Paint ink=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path line=new Path();
+        private boolean hasInk=false;
+        SignatureDrawView(android.content.Context ctx){
+            super(ctx);
+            ink.setColor(Color.rgb(11,45,157));ink.setStrokeWidth(5f);
+            ink.setStyle(Paint.Style.STROKE);
+            ink.setStrokeJoin(Paint.Join.ROUND);ink.setStrokeCap(Paint.Cap.ROUND);
+            setLayerType(View.LAYER_TYPE_SOFTWARE,null);
+        }
+        boolean hasInk(){return hasInk;}
+        @Override protected void onDraw(Canvas canvas){
+            super.onDraw(canvas);
+            canvas.drawPath(line,ink);
+        }
+        @Override public boolean onTouchEvent(MotionEvent event){
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    line.moveTo(event.getX(),event.getY());invalidate();return true;
+                case MotionEvent.ACTION_MOVE:
+                    line.lineTo(event.getX(),event.getY());hasInk=true;invalidate();return true;
+                case MotionEvent.ACTION_UP:
+                    line.lineTo(event.getX(),event.getY());hasInk=true;invalidate();
+                    performClick();return true;
+                default:return true;
+            }
+        }
+        @Override public boolean performClick(){super.performClick();return true;}
+        Bitmap toTransparentBitmap(){
+            Bitmap out=Bitmap.createBitmap(Math.max(1,getWidth()),Math.max(1,getHeight()),
+                Bitmap.Config.ARGB_8888);
+            Canvas canvas=new Canvas(out);
+            canvas.drawPath(line,ink);
+            return out;
+        }
     }
 
     /** Keep original corners and transformed photo available until user confirms ✓. */
@@ -999,6 +1092,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(editor,trNative("loupe")+"\n"+trNative("found"),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button(trNative("signBeforeSave"),this::showSignaturePad),
             button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
     }
     private void prepareEnhancementPreview(){
@@ -1080,6 +1174,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
         layout(body,trNative("enhanceHint"),
             button(trNative("enhanceBack"),this::reopenCrop),
+            button(trNative("signBeforeSave"),this::showSignaturePad),
             button(trNative("enhanceCompare"),()->{
                 if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
                 enhancementImage.setImageBitmap(enhancementImage.getDrawable()!=null && enhancementPreview!=null
@@ -1159,6 +1254,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Bitmap output=null;File target=null;
             try{
                 output=RivoDocumentEnhancer.apply(input,preset);
+                composeSignature(output);
                 target=writeProcessedJpeg(output);
                 final File completed=target;
                 if(saveOriginal&&current!=null)backupOriginalPage(current);
