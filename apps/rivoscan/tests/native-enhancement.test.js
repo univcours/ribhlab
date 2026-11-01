@@ -49,3 +49,16 @@ test('Scanner protects ✓ save against rapid filter taps, back navigation and r
  assert.ok(activity.includes('if(isFinishing()||isDestroyed()){file.delete();return;}'), 'ignore camera callback after closing');
  assert.ok(activity.includes('if(!bitmap.compress(Bitmap.CompressFormat.JPEG,90,out))'), 'fallback scan must verify JPG encoding');
 });
+
+test('Native current-scan pages manager is installed and connected to camera',()=>{
+ const manager=readFileSync(new URL('../native/android/RivoScanPagesManager.java',import.meta.url),'utf8');
+ assert.ok(nativeInstall.includes('RivoScanPagesManager.java'));
+ assert.ok(activity.includes('RivoScanPagesManager.show(this,savedImages,nativeLanguage'));
+ assert.ok(activity.includes('this::openScanPages'));
+ assert.ok(locale.includes('manageScanPages'));
+ for(const part of ['startDragAndDrop','ACTION_DROP','void rotate(','void remove(','void commit(','setOnClickListener','Bitmap.createBitmap','selected']){
+  assert.ok(manager.includes(part),part);
+ }
+ assert.ok(manager.includes('pages.removeIf(p->p.selected)'));
+ assert.ok(!manager.includes('resolver.delete('),'Deleting a scan page must never erase its published originals');
+});

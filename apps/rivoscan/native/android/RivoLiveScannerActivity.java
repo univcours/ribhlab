@@ -293,6 +293,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         countLabel=text(savedImages.size()+" page(s)",12,Color.WHITE,true);
         countLabel.setPadding(dp(10),dp(4),dp(10),dp(4));
         countLabel.setBackground(rounded(Color.argb(170,0,0,0),10));
+        countLabel.setOnClickListener(v->openScanPages());
         FrameLayout.LayoutParams countParam=new FrameLayout.LayoutParams(dp(91),dp(33),Gravity.BOTTOM|Gravity.LEFT);
         countParam.bottomMargin=dp(14);countParam.leftMargin=dp(14);
         cameraFrame.addView(countLabel,countParam);
@@ -348,7 +349,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
                 savedImages.size()>0?Color.rgb(4,188,247):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
-        footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
+        if(savedImages.isEmpty()){
+            footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
+        }else{
+            LinearLayout pageActions=new LinearLayout(this);
+            TextView manage=touchLabel(trNative("manageScanPages")+" · "+savedImages.size(),
+                13,Color.WHITE,this::openScanPages);
+            pageActions.addView(manage,new LinearLayout.LayoutParams(0,dp(45),1));
+            pageActions.addView(done,new LinearLayout.LayoutParams(0,dp(45),1));
+            footer.addView(pageActions,new LinearLayout.LayoutParams(-1,dp(49)));
+        }
         frame.addView(footer,new LinearLayout.LayoutParams(-1,-2));
         startCamera();
     }
@@ -1201,6 +1211,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
     }
 
+    private void openScanPages(){
+        if(savingEnhancedPage||captureInProgress||savedImages.isEmpty())return;
+        RivoScanPagesManager.show(this,savedImages,nativeLanguage,updated->{
+            savedImages.clear();
+            savedImages.addAll(updated);
+            showCamera();
+        });
+    }
     private void finishWithPages(){
         if(savingEnhancedPage)return;
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}

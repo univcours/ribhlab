@@ -149,6 +149,10 @@ final class RivoLocale {
             "Falha ao guardar imagem; será tentado guardar PDF.",
             "Copia immagine non riuscita; si proverà a salvare il PDF."
         }[lang];
+        if("manageScanPages".equals(key))return new String[]{
+            "Manage Pages","إدارة الصفحات","Gérer les pages","Gestionar páginas",
+            "Seiten verwalten","Gerir páginas","Gestisci pagine"
+        }[lang];
         if("openDocument".equals(key))return new String[]{"Open RivoScan document","فتح وثيقة RivoScan","Ouvrir le document RivoScan","Abrir documento RivoScan","RivoScan-Dokument öffnen","Abrir documento RivoScan","Apri documento RivoScan"}[lang];
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
         if("idFront".equals(key))return ID_SIDES[lang][0];
