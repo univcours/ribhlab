@@ -99,6 +99,15 @@ final class RivoLocale {
         {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática"},
         {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica"}
     };
+    private static final String[][] ID_SIDES={
+        {"ID card: photograph the FRONT","ID card: photograph the BACK"},
+        {"البطاقة: صوّر الوجه الأمامي","البطاقة: صوّر الوجه الخلفي"},
+        {"Carte : photographiez le RECTO","Carte : photographiez le VERSO"},
+        {"Documento: fotografía el ANVERSO","Documento: fotografía el REVERSO"},
+        {"Ausweis: VORDERSEITE scannen","Ausweis: RÜCKSEITE scannen"},
+        {"Cartão: fotografe a FRENTE","Cartão: fotografe o VERSO"},
+        {"Documento: fotografa il FRONTE","Documento: fotografa il RETRO"}
+    };
     static String get(String language,String key){
         int lang=0;
         if("ar".equals(language))lang=1;else if("fr".equals(language))lang=2;
@@ -142,6 +151,8 @@ final class RivoLocale {
         }[lang];
         if("openDocument".equals(key))return new String[]{"Open RivoScan document","فتح وثيقة RivoScan","Ouvrir le document RivoScan","Abrir documento RivoScan","RivoScan-Dokument öffnen","Abrir documento RivoScan","Apri documento RivoScan"}[lang];
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
+        if("idFront".equals(key))return ID_SIDES[lang][0];
+        if("idBack".equals(key))return ID_SIDES[lang][1];
         for(int i=0;i<AUTO_KEYS.length;i++)if(AUTO_KEYS[i].equals(key))return AUTO_TEXT[lang][i];
         for(int i=0;i<ENHANCE_KEYS.length;i++)if(ENHANCE_KEYS[i].equals(key))return ENHANCE_TEXT[lang][i];
         for(int i=0;i<KEYS.length;i++)if(KEYS[i].equals(key))return VALUES[lang][i];
