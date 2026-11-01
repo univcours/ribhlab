@@ -135,7 +135,7 @@ jobs:
           grep -F 'reconstructPositionedTable' src/tool-exports.js
           grep -F 'wordTablesFromFile' src/tool-exports.js
           grep -F "format:'wordTables'" src/tools-hub.js
-          grep -F "preset:'erase:blue'" src/tools-hub.js
+          grep -F "preset:'erase:auto-colored'" src/tools-hub.js
           grep -F "preset:'erase:light-gray'" src/tools-hub.js
           grep -F 'linearMathToLatex' src/formula-ocr.js
           grep -F 'segmentPortrait' src/id-photo-maker.js
