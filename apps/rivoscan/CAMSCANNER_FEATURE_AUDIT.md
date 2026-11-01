@@ -17,6 +17,11 @@
 - **Retake** is explicitly available in the native crop header; ID card capture indicates front/back in seven languages.
 - Previous items remain: manual four-corner correction/loupe, Compare, filtered preview, reorder/delete/rotate pages, OCR, DOCX text export, CSV text export, image-based PPTX, JPG/PNG, long-image, sharing, direct transfer, fixed Documents/RivoScan + legacy Downloads visibility, language switching and sound toggle.
 
+## 0.21.0 additions grounded in the user's original screenshots
+- **Native Manage Pages DURING a multipage CameraX session**: each captured page has a real thumbnail, multi-selection, select all/deselect, drag-and-drop reordering (and accessible ↑/↓ controls), left/right 90° rotation, removing pages from the current PDF and ✓ confirmation. Underlying previously published JPEGs/originals are never deleted. Final PDF uses the confirmed page order and rotated JPEGs.
+- **Editable Excel .xlsx export**: Tools > Convert > To Excel now writes a genuine XLSX workbook with OCR/PDF-text cells. CSV stays a separate tool. OCR-derived rows/columns are heuristic; scanned tables are NOT guaranteed to reconstruct their original layout. Every recognized cell stays text to protect leading zeros and avoid malicious formulas.
+- Both features include source-level regressions and are compiled/checked in Android Actions.
+
 ## Compared screenshot functions
 | CamScanner control observed | RivoScan state | Actual implementation / caveat |
 | --- | --- | --- |
@@ -31,11 +36,11 @@
 | Retake, Rotate, Crop | Implemented | Native camera, web editor, page manager |
 | OCR Extract Text | Implemented | Tesseract.js, varies with text and language |
 | Sign | Implemented | PDF signing, not yet a native pre-save scan-sign button |
-| Manage Pages select/reorder/rotate/delete | Implemented | PDF page manager via web; non-destructive new PDF |
+| Manage Pages select/reorder/rotate/delete | Implemented in native scan session and PDF editor | Drag/↑↓ ordering, rotation and deletion within current PDF; originals kept |
 | Import images/files | Implemented | Android picker |
 | PDF to images / long image | Implemented | Offline export, bounded number of pages |
 | Word export | Partial | OCR text DOCX, complex tables/layout not retained |
-| Excel export | Partial | CSV extracted text, not exact table reconstruction |
+| Excel export | Editable XLSX and CSV available | Text/OCR cells exported to true .xlsx; complex table geometry not reconstructed |
 | PPT export | Partial | Image-backed slides, not editable shapes |
 | Compress / Merge / Split / Watermark / Page Numbers | Implemented | PDF toolkit |
 | Folder copy/move/rename, multi-select | Implemented | Android MediaStore and web batch controls |
