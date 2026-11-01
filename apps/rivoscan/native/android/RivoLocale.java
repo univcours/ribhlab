@@ -89,6 +89,16 @@ final class RivoLocale {
          "Bordi","Confronta","Salva","Raddrizzamento pagina…",
          "Miglioramento ad alta qualità…","Anteprima non disponibile. Prova Original."}
     };
+    private static final String[] SIGN_PLACE_KEYS={"signPlacementTitle","signDragHint","signSize"};
+    private static final String[][] SIGN_PLACE_VALUES={
+        {"Position signature","Drag the signature on the document preview, then adjust its size.","Signature size"},
+        {"موضع التوقيع","جرّ التوقيع فوق الوثيقة وحدد بلاصتو، ومن بعد بدل الحجم.","حجم التوقيع"},
+        {"Placer la signature","Déplacez la signature sur le document et réglez sa taille.","Taille de signature"},
+        {"Colocar firma","Arrastra la firma sobre el documento y ajusta el tamaño.","Tamaño de firma"},
+        {"Unterschrift platzieren","Unterschrift im Dokument verschieben und Größe anpassen.","Unterschriftgröße"},
+        {"Posicionar assinatura","Arraste a assinatura na pré-visualização e ajuste o tamanho.","Tamanho da assinatura"},
+        {"Posiziona la firma","Trascina la firma sul documento e regola la dimensione.","Dimensione firma"}
+    };
     private static final String[] SIGN_KEYS={"signBeforeSave","signPlacementHint","signatureClear","signatureCleared","signatureEmpty","signatureReady"};
     private static final String[][] SIGN_VALUES={
         {"Sign","Draw your signature. It will appear at the bottom-right of the scanned page. The original photo is kept unchanged.","Remove","Signature removed.","Draw something first.","Signature ready; tap ✓ Clean & Save."},
@@ -167,6 +177,7 @@ final class RivoLocale {
         if("shareDocument".equals(key))return new String[]{"Share RivoScan document","مشاركة وثيقة RivoScan","Partager le document RivoScan","Compartir documento RivoScan","RivoScan-Dokument teilen","Partilhar documento RivoScan","Condividi documento RivoScan"}[lang];
         if("idFront".equals(key))return ID_SIDES[lang][0];
         if("idBack".equals(key))return ID_SIDES[lang][1];
+        for(int i=0;i<SIGN_PLACE_KEYS.length;i++)if(SIGN_PLACE_KEYS[i].equals(key))return SIGN_PLACE_VALUES[lang][i];
         for(int i=0;i<SIGN_KEYS.length;i++)if(SIGN_KEYS[i].equals(key))return SIGN_VALUES[lang][i];
         for(int i=0;i<AUTO_KEYS.length;i++)if(AUTO_KEYS[i].equals(key))return AUTO_TEXT[lang][i];
         for(int i=0;i<ENHANCE_KEYS.length;i++)if(ENHANCE_KEYS[i].equals(key))return ENHANCE_TEXT[lang][i];
