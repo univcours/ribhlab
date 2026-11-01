@@ -100,3 +100,15 @@ test('Guided book-page dewarping is non-affine, preserves unmodified image and r
  assert.throws(()=>remapCurvedPageRGBA(src,w,h,120,'right'));
  assert.throws(()=>remapCurvedPageRGBA(src,1,h,10,'right'));
 });
+
+test('Photo Translation uses actual on-device ML Kit, source OCR and editable text',()=>{
+ const src=readFileSync(new URL('../src/photo-translation.js',import.meta.url),'utf8');
+ assert.ok(src.includes("from '@capacitor-mlkit/translation'"));
+ assert.ok(src.includes('await recognize(file,model.ocr)'));
+ assert.ok(src.includes('await Translation.translate('));
+ assert.ok(src.includes('original.value.slice(0,12000)'));
+ assert.ok(src.includes("sourceLanguage:source.value,targetLanguage:target.value"));
+ assert.ok(src.includes("input.type='file'"));
+ assert.ok(src.includes('translation.value'));
+ assert.ok(!src.includes('fetch(\'https://'));
+});

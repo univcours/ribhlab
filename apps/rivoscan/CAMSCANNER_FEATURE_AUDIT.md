@@ -2,7 +2,7 @@
 - **Lock PDF (#15)**: a standalone AES-256 encrypt action uses @pdfsmaller/pdf-encrypt locally with open password, optional separate owner password and copy/edit/print flags. Saves a NEW protected PDF. The opening password is not saved or transmitted. PDF permissions are advisory, not DRM.
 - **Sign before saving (#21)**: CameraX corner editor and enhancement preview offer a native freehand signature dialog. User-drawn ink is overlaid at bottom-right only on the cleaned output after ✓; the original is not modified. Position is fixed bottom-right (custom drag placement still missing).
 - **Guided nonlinear book flattening (#1/#7)**: Book Scan has an adjustable curvature slider applying an actual non-affine, bilinear pixel remap to both facing pages, with an on-screen preview and PDF output. It is NOT automatically inferred 3D dewarping of an arbitrary curled page.
-- **Remaining unimplemented selected features**: automatic handwriting detection, automatic watermark/annotation detection, formula OCR, photo translation, layout-preserving DOCX/XLSX/PPTX, AI Chat/Solver, and persistent authenticated cloud share links. Do not advertise unfinished tools.
+- **Remaining unimplemented selected features**: automatic handwriting detection, automatic watermark/annotation detection, formula OCR, layout-preserving DOCX/XLSX/PPTX, AI Chat/Solver, and persistent authenticated cloud share links. Photo Translation now runs with on-device ML Kit after language model download. Do not advertise unfinished tools.
 - The source includes true AES encryption test, deterministic pixel-warp tests, build & signature regressions; Android handset test on curved/scanned pages still required.
 
 ## 0.22.0: implementation update for the user's 22-feature selection
@@ -16,7 +16,7 @@
 | #6 Restore Photo | Partial, FUNCTIONAL: local edge-aware color denoising, no generative restoration |
 | #7 Book Scan | Partial, FUNCTIONAL: capture/import, adjustable gutter, guided nonrigid curvature correction and 2-page PDF; automatic 3D flattening missing |
 | #8 Whiteboard/Slides | Partial, existing perspective crop and adaptive threshold filters, no robust glare elimination |
-| #9 Photo Translation | NOT implemented; translation models/providers not connected |
+| #9 Photo Translation | Source IMPLEMENTED: Tesseract OCR photo + on-device Google ML Kit translation between seven languages; first-use model downloads, Android hardware QA required |
 | #10 Formula Recognition | NOT implemented; specialized math OCR required |
 | #11 ID Photo Maker | Partial, FUNCTIONAL: preset sizes, adjustable framing, actual 300DPI PNG 10x15 sheet; NO background segmentation |
 | #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
