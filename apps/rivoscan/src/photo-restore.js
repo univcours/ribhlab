@@ -12,6 +12,15 @@ export function restorePhotoPixels(rgba,width,height){
  // No missing image detail is hallucinated or uploaded.
  for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
    const center=(y*width+x)*4;
+   // Fast rejection for ordinary smooth pixels and connected line strokes:
+   // expensive median samples are needed only for suspicious isolated spots.
+   let similar=0;
+   for(const at of [center-width*4,center+width*4,center-4,center+4]){
+     const delta=Math.abs(src[at]-src[center])+
+       Math.abs(src[at+1]-src[center+1])+Math.abs(src[at+2]-src[center+2]);
+     if(delta<75&&++similar===2)break;
+   }
+   if(similar>=2)continue;
    const samples=[];
    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
      if(dx===0&&dy===0)continue;
