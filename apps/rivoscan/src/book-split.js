@@ -1,5 +1,5 @@
 import {PDFDocument} from 'pdf-lib';
-import {dewarpBookCanvas} from './document-dewarp.js';
+import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
 
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
@@ -34,6 +34,9 @@ export function openBookSplitter({language='en',save,capture}={}){
  warpLabel.textContent=({ar:'تقويم انحناء الورق (يدوي)',en:'Guided curved-page flattening',fr:'Correction guidée de la courbure',es:'Corregir curvatura manualmente',de:'Manuelle Krümmungskorrektur',pt:'Correção manual da curvatura',it:'Correzione manuale curva'})[language]||'Guided curved-page flattening';
  const warpSlider=document.createElement('input');warpSlider.type='range';warpSlider.min='-100';warpSlider.max='100';warpSlider.value='0';warpSlider.step='5';
  warpLabel.append(warpSlider);panel.append(warpLabel);
+ const autoButton=document.createElement('button');autoButton.type='button';autoButton.className='rivo-auto-curvature';
+ autoButton.textContent=({ar:'اكتشف الانحناء تلقائياً (تجريبي)',en:'Estimate curvature automatically (beta)',fr:'Estimer la courbure automatiquement (bêta)',es:'Estimar curvatura automáticamente (beta)',de:'Krümmung automatisch schätzen (Beta)',pt:'Estimar curvatura automaticamente (beta)',it:'Stima curva automatica (beta)'})[language]||'Auto curvature (beta)';
+ panel.append(autoButton);
  const info=document.createElement('p');info.textContent=L[6];info.className='rivo-id-hint';panel.append(info);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
@@ -71,6 +74,27 @@ export function openBookSplitter({language='en',save,capture}={}){
   const file=fileInput.files?.[0];fileInput.value='';if(!file)return;
   if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(file);
   try{await load(objectURL)}catch{status.textContent='Cannot read book image'}
+ });
+ autoButton.addEventListener('click',()=>{
+  if(!image||busy)return;
+  warpSlider.value='0';draw();
+  const mid=Math.round(preview.width*(+slider.value/100));
+  const samples=[];
+  for(const [x,w,side] of [[0,mid,'right'],[mid,preview.width-mid,'left']]){
+   if(w<80||preview.height<100)continue;
+   const pixels=preview.getContext('2d',{willReadFrequently:true}).getImageData(x,0,w,preview.height);
+   const estimate=estimateBookCurvature(pixels.data,w,preview.height,side);
+   if(estimate.confidence>.24)samples.push(estimate);
+  }
+  if(!samples.length){
+   status.textContent=({ar:'ما قدرناش نقدرو الانحناء بثقة؛ ضبطو يدوياً.',en:'Not enough readable text lines for automatic estimate; adjust manually.'})[language]||'Manual curvature adjustment required';
+   return;
+  }
+  const total=samples.reduce((a,x)=>a+x.confidence,0);
+  const estimate=samples.reduce((a,x)=>a+x.curvature*x.confidence,0)/total;
+  warpSlider.value=String(Math.max(-100,Math.min(100,Math.round(estimate/5)*5)));
+  draw();
+  status.textContent='Auto curvature: '+warpSlider.value+'% · '+Math.round(total/samples.length*100)+'%';
  });
  slider.addEventListener('input',draw);
  warpSlider.addEventListener('input',draw);
