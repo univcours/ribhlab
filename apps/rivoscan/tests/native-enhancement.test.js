@@ -63,3 +63,12 @@ test('Native current-scan pages manager is installed and connected to camera',()
  assert.ok(manager.includes('pages.removeIf(p->p.selected)'));
  assert.ok(!manager.includes('resolver.delete('),'Deleting a scan page must never erase its published originals');
 });
+
+test('Native freehand signature is offered before ✓ and applied to processed scan, not source',()=>{
+ const locale=readFileSync(new URL('../native/android/RivoLocale.java',import.meta.url),'utf8');
+ for(const snippet of ['private void showSignaturePad()','class SignatureDrawView extends View','composeSignature(output);','clearSessionSignature();','trNative("signBeforeSave")']){
+  assert.ok(activity.includes(snippet),snippet);
+ }
+ assert.ok(locale.includes('signPlacementHint'));
+ assert.ok(activity.includes('Paint.ANTI_ALIAS_FLAG'));
+});

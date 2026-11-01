@@ -1,13 +1,20 @@
+## 0.23.0 additional completed source / field QA needed
+- **Lock PDF (#15)**: a standalone AES-256 encrypt action uses @pdfsmaller/pdf-encrypt locally with open password, optional separate owner password and copy/edit/print flags. Saves a NEW protected PDF. The opening password is not saved or transmitted. PDF permissions are advisory, not DRM.
+- **Sign before saving (#21)**: CameraX corner editor and enhancement preview offer a native freehand signature dialog. User-drawn ink is overlaid at bottom-right only on the cleaned output after ✓; the original is not modified. Position is fixed bottom-right (custom drag placement still missing).
+- **Guided nonlinear book flattening (#1/#7)**: Book Scan has an adjustable curvature slider applying an actual non-affine, bilinear pixel remap to both facing pages, with an on-screen preview and PDF output. It is NOT automatically inferred 3D dewarping of an arbitrary curled page.
+- **Remaining unimplemented selected features**: automatic handwriting detection, automatic watermark/annotation detection, formula OCR, photo translation, layout-preserving DOCX/XLSX/PPTX, AI Chat/Solver, and persistent authenticated cloud share links. Do not advertise unfinished tools.
+- The source includes true AES encryption test, deterministic pixel-warp tests, build & signature regressions; Android handset test on curved/scanned pages still required.
+
 ## 0.22.0: implementation update for the user's 22-feature selection
 | Requested feature | 0.22.0 actual state |
 | --- | --- |
-| #1 True nonplanar/curved paper dewarping | NOT implemented; four-corner perspective correction only |
+| #1 True nonplanar/curved paper dewarping | PARTIAL: manually guided nonrigid remap in Book Scan; automatic 3D page reconstruction NOT implemented |
 | #2 Auto text/stamp enhancement | Implemented OpenCV CLAHE/color-preserving Auto; hardware image quality QA pending |
 | #3 No Handwriting automatic detection | NOT implemented; manual targeted erase only |
 | #4 No Watermark automatic detection | NOT implemented; manual targeted erase of authorized marks only |
 | #5 Smart Erase | Partial, FUNCTIONAL: user paints mask and local edge-color interpolation fills selected area without changing unselected pixels |
 | #6 Restore Photo | Partial, FUNCTIONAL: local edge-aware color denoising, no generative restoration |
-| #7 Book Scan | Partial, FUNCTIONAL: capture/import a book photo, adjust gutter, split to two PDF pages; non-planar dewarp missing |
+| #7 Book Scan | Partial, FUNCTIONAL: capture/import, adjustable gutter, guided nonrigid curvature correction and 2-page PDF; automatic 3D flattening missing |
 | #8 Whiteboard/Slides | Partial, existing perspective crop and adaptive threshold filters, no robust glare elimination |
 | #9 Photo Translation | NOT implemented; translation models/providers not connected |
 | #10 Formula Recognition | NOT implemented; specialized math OCR required |
@@ -21,7 +28,7 @@
 | #18 CountCam | Partial, FUNCTIONAL source: COCO-SSD model detects common object classes from camera/import photo; internet for model weights on first use, counts are estimates, handset QA pending |
 | #19 Scan Code | FUNCTIONAL source: ZXing local QR/1D/2D decoding from a camera photo or imported image; hardware QA pending |
 | #20 Persistent Share Link | NOT implemented; needs authenticated storage/backend and user consent |
-| #21 Sign before first save | NOT implemented natively; PDF signing works after export |
+| #21 Sign before first save | Implemented native hand-drawn signature dialog before ✓; fixed bottom-right position, no draggable placement yet |
 | #22 What's New | FUNCTIONAL source: version-tracked seven-language dialog on update and in Settings |
 
 No placeholder controls are added for #1 #3 #4 #9 #10 #15 #16 #17 #18 #20 #21. **Do not conflate successful CI build with verified Samsung handset image quality.**

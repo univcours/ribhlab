@@ -80,3 +80,23 @@ test('AES-256 Lock PDF is wired to the editor and validates passwords locally',a
  const {PDFDocument:Lib}=await import('pdf-lib');
  await assert.rejects(Lib.load(encrypted),'an unauthenticated parser must reject protected PDF');
 });
+
+test('Guided book-page dewarping is non-affine, preserves unmodified image and remains bounded',async()=>{
+ const {remapCurvedPageRGBA}=await import('../src/document-dewarp.js');
+ const w=60,h=120,src=new Uint8ClampedArray(w*h*4);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const index=(y*w+x)*4;
+  src[index]=Math.round(y/h*255);src[index+1]=x;src[index+2]=100;src[index+3]=255;
+ }
+ const flat=remapCurvedPageRGBA(src,w,h,0,'right');
+ assert.deepEqual(flat,src);
+ const adjusted=remapCurvedPageRGBA(src,w,h,70,'right');
+ assert.deepEqual(Array.from(adjusted.slice((60*w+0)*4,(60*w+0)*4+4)),
+   Array.from(src.slice((60*w+0)*4,(60*w+0)*4+4)),
+   'away from spine must be unchanged');
+ assert.notEqual(adjusted[(60*w+(w-1))*4],src[(60*w+(w-1))*4],
+   'spine must receive nonlinear correction');
+ assert.equal(adjusted[3],255);
+ assert.throws(()=>remapCurvedPageRGBA(src,w,h,120,'right'));
+ assert.throws(()=>remapCurvedPageRGBA(src,1,h,10,'right'));
+});
