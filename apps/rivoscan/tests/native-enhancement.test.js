@@ -39,3 +39,13 @@ test('The first crop check automatically cleans without requiring a manual filte
  assert.ok(firstCrop.includes('this::autoCleanAndSave'));
  assert.ok(!firstCrop.includes('button(trNative("enhanceNext"),this::prepareEnhancementPreview)'));
 });
+
+test('Scanner protects ✓ save against rapid filter taps, back navigation and repeated captures',()=>{
+ assert.ok(activity.includes('captureInProgress||savingEnhancedPage'), 'camera shutter must be locked while busy');
+ assert.ok(activity.includes('if(savingEnhancedPage)return;\n        enhancementSerial++;'), 'crop back must not cancel a save');
+ assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null)return;'), 'filter selections must not invalidate active save');
+ assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;'), 'preview task must not invalidate an active save');
+ assert.ok(activity.includes('if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();'), 'must not recycle live original bitmap after scaled preview');
+ assert.ok(activity.includes('if(isFinishing()||isDestroyed()){file.delete();return;}'), 'ignore camera callback after closing');
+ assert.ok(activity.includes('if(!bitmap.compress(Bitmap.CompressFormat.JPEG,90,out))'), 'fallback scan must verify JPG encoding');
+});
