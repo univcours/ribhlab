@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 import {createOCRWorkbook} from './xlsx-export.js';
 import {reconstructPositionedTable} from './table-reconstruct.js';
+import {wordTablesFromFile} from './word-tables.js';
 import {editableSlidesFromFile} from './editable-pptx.js';
 import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
@@ -14,6 +15,12 @@ export async function exportToolFile({file,format,language='en',save,progress=()
  const load=async()=>file;
  const date=Date.now();
  const ocrLang=({en:'eng',fr:'fra',ar:'ara',es:'spa',de:'deu',pt:'por',it:'ita'})[language]||'eng';
+ if(format==='wordTables'){
+  const bytes=await wordTablesFromFile(file,ocrLang,progress);
+  await save(bytes,'RivoScan_Editable_Word_Tables_'+date+'.docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  return;
+ }
  if(format==='word'){
   const bytes=await makeWordText([doc],load,()=>isPdf,(i,n)=>progress(`OCR ${i}/${n}`),ocrLang);
   await save(bytes,'RivoScan_Text_'+date+'.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document');

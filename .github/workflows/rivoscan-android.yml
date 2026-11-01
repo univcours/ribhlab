@@ -90,11 +90,11 @@ jobs:
           # RivoScan Gradle override is the actual source of truth in Android Studio.
           grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
           grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
-          grep -F 'versionCode=38' rivoscan-version.properties
+          grep -F 'versionCode=39' rivoscan-version.properties
           grep -F 'rivo-build-version' src/main.js
           grep -F 'version as appVersion' src/main.js
           grep -F 'rivo-library-version' src/main.js
-          grep -F 'versionName=0.28.0' rivoscan-version.properties
+          grep -F 'versionName=0.29.0' rivoscan-version.properties
           grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
       - name: Verify live scanner and persistent Documents storage are registered
         run: |
@@ -128,6 +128,9 @@ jobs:
           grep -F "spec.type==='photoTranslation'" src/main.js
           grep -F "spec.type==='formulaOcr'" src/main.js
           grep -F 'coloredMarkMask' src/scan-editor.js
+          grep -F 'reconstructPositionedTable' src/tool-exports.js
+          grep -F 'wordTablesFromFile' src/tool-exports.js
+          grep -F "format:'wordTables'" src/tools-hub.js
           grep -F "preset:'erase:blue'" src/tools-hub.js
           grep -F "preset:'erase:light-gray'" src/tools-hub.js
           grep -F 'linearMathToLatex' src/formula-ocr.js
@@ -227,7 +230,7 @@ jobs:
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='38' versionName='0.28.0'"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='39' versionName='0.29.0'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
           "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
@@ -236,7 +239,7 @@ jobs:
           while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
-          echo "PASS: APK 0.28.0 contains launcher resources and native scanner classes."
+          echo "PASS: APK 0.29.0 contains launcher resources and native scanner classes."
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:

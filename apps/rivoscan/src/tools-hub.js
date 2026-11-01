@@ -3,7 +3,7 @@
 export const toolGroups=[
  {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
- {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
+ {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
  {id:'utilities',entries:['countCam','peerTransfer','shareFiles','printPdf']}
 ];
@@ -22,6 +22,7 @@ export const hubSpecial={
  importImages:{icon:'image',color:'green',type:'import',kind:'image'},
  importFiles:{icon:'folder',color:'sky',type:'import',kind:'file'},
  toWord:{icon:'file',color:'blue',type:'export',format:'word'},
+ toWordTables:{icon:'file',color:'green',type:'export',format:'wordTables'},
  toExcel:{icon:'file',color:'green',type:'export',format:'xlsx'},
  toCSV:{icon:'file',color:'green',type:'export',format:'csv'},
  toPpt:{icon:'image',color:'pink',type:'export',format:'pptx'},
@@ -58,6 +59,7 @@ const labels={
  timestamp:['Timestamp','إضافة التاريخ والساعة','Horodatage','Fecha y hora','Zeitstempel','Data e hora','Data e ora'],
  importImages:['Import Images','استيراد الصور','Importer images','Importar imágenes','Bilder importieren','Importar imagens','Importa immagini'],
  importFiles:['Import Files','استيراد الملفات','Importer fichiers','Importar archivos','Dateien importieren','Importar ficheiros','Importa file'],
+ toWordTables:['Word with editable tables (PDF text)','Word بجداول قابلة للتعديل','Word avec tableaux modifiables','Word con tablas editables','Word mit bearbeitbaren Tabellen','Word com tabelas editáveis','Word con tabelle modificabili'],
  toWord:['To Word (OCR)','تحويل إلى Word','Vers Word (OCR)','A Word (OCR)','Nach Word (OCR)','Para Word (OCR)','In Word (OCR)'],
  toExcel:['To Excel (.xlsx)','إلى Excel قابل للتعديل','Vers Excel (.xlsx)','A Excel (.xlsx)','Nach Excel (.xlsx)','Para Excel (.xlsx)','In Excel (.xlsx)'],
  toCSV:['To CSV (text)','تحويل إلى Excel (CSV)','Vers Excel (CSV)','A Excel (CSV)','Nach Excel (CSV)','Para Excel (CSV)','In Excel (CSV)'],

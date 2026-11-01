@@ -176,3 +176,21 @@ test('Linear formula OCR generates editable conservative TeX without inventing s
  assert.ok(ui.includes("await recognize(selected,'eng')"));
  assert.ok(ui.includes('original.addEventListener'));
 });
+
+test('Aligned PDF text reconstructs genuine spreadsheet columns and Word table cells',async()=>{
+ const {reconstructPositionedTable}=await import('../src/table-reconstruct.js');
+ const items=[{x:50,y:200,str:'Item'},{x:220,y:200,str:'Price'},
+  {x:50,y:170,str:'Nail'},{x:220,y:170,str:'0012'},
+  {x:50,y:140,str:'Bolt'},{x:220,y:140,str:'0035'}];
+ const rows=reconstructPositionedTable(items);
+ assert.deepEqual(rows,[['Item','Price'],['Nail','0012'],['Bolt','0035']]);
+ const {createEditableWordTables}=await import('../src/word-tables.js');
+ const bytes=await createEditableWordTables([{rows}]);
+ const {default:JSZip}=await import('jszip');
+ const zip=await JSZip.loadAsync(bytes);
+ const xml=await zip.file('word/document.xml').async('string');
+ assert.ok(xml.includes('<w:tbl>'));assert.ok(xml.includes('0012'));
+ assert.ok(xml.includes('<w:gridCol'));
+ assert.ok(xml.includes('<w:tc>'));
+ assert.deepEqual(reconstructPositionedTable([{x:10,y:8,str:'Hello'},{x:20,y:8,str:'world'}]),[['Hello world']]);
+});

@@ -1,3 +1,8 @@
+## 0.29.0 Office formatting enhancements
+- **Excel (#13)**: exports native .xlsx with aligned columns inferred from repeated PDF text x-coordinates and grouped y-rows. Preserves text, leading zeros, blanks. Scanned image OCR still cannot reliably reproduce complex table grids.
+- **Word (#12)**: adds a separate editable DOCX mode that recreates plain tables from born-digital PDF text alignment with actual Word table cells, plus existing OCR paragraph mode. Images, nested tables, decorative styling and page geometry are not reconstructed exactly.
+- The user's original file is untouched; all exports are new document copies.
+
 ## 0.28.0 guided selective mark removal
 - **Erase colored writing / light watermark (#3/#4)**: the user brushes the actual area, then chooses 'blue', 'red', 'green' or 'light-gray watermark'. Only matched colored pixels inside that area are inpainted; adjacent black print is not selected. Supports undo and seven-language labels.
 - This is NOT semantic automatic handwriting recognition, nor automatic watermark identification. Original copies remain unchanged, and the preview must be inspected. Mask tests explicitly check preservation of printed black strokes.
@@ -38,8 +43,8 @@
 | #9 Photo Translation | Source IMPLEMENTED: Tesseract OCR photo + on-device Google ML Kit translation between seven languages; first-use model downloads, Android hardware QA required |
 | #10 Formula Recognition | Partial, functional beta: Tesseract extracts linear printed formulas and converts visible symbols into editable LaTeX; full 2D math model still missing |
 | #11 ID Photo Maker | Partial: on-device portrait background segmentation (downloaded BodyPix) now available plus sizes and 300 DPI sheet; detailed edge quality/official acceptance not guaranteed |
-| #12 Formatted DOCX | Partial OCR text export; layout reconstruction missing |
-| #13 Table-accurate XLSX | Partial OCR/text-to-XLSX; complex table boundaries not recovered |
+| #12 Formatted DOCX | Partial: real editable DOCX tables from aligned born-digital PDF text and OCR paragraphs; exact layout, graphics, merged cells not recovered |
+| #13 Table-accurate XLSX | Partial: genuine XLSX with column-aligned native PDF text; complex scanned-table borders, merged cells and layouts not guaranteed |
 | #14 Editable PPT | PARTIAL: a new PowerPoint export produces real editable text boxes from PDF text/OCR; original images, advanced slide layouts and design geometry are not reconstructed |
 | #15 Lock PDF | Implemented in source: AES-256 password protection, optional owner password and print/copy/edit permission flags; complete encryption integration test and Android QA required |
 | #16 AI Chat | NOT implemented; needs AI provider, user consent, costs |
