@@ -1,5 +1,6 @@
 import './style.css';
 import './theme-brand.css';
+import { version as appVersion } from '../package.json';
 import { parsePages } from './pdf-utils.js';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
@@ -275,7 +276,7 @@ function render(){
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
   const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
-  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong></span><div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button><button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
+  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span><div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button><button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation"><button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button><button type="button" data-open-library class="${isDocs?'active':''}">${ico('file')}${ut('documents')}</button><button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button><button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',29)}</button>`:''}${mobile}</div>`;
@@ -353,7 +354,7 @@ function toolsWorkspace(){
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
 function settingsWorkspace(){
- return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v0.19.2</p></div>
+ return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
  <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
@@ -422,7 +423,7 @@ function renderLibraryRows(needle=''){
 }
 function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
-    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p></div></div></div>
+    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p><small class="rivo-library-version">RivoScan v${appVersion} · Documents/RivoScan</small></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
     <div class="panel library-panel"><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
@@ -878,7 +879,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
       path:`RivoScan/${Date.now()}_${safe}`,data:toBase64(data),directory:Directory.Documents,recursive:true
     });
     record(activeTool?.name||'Saved document');
-    toast('Saved in app Documents. Public Downloads storage needs the updated Android app.');
+    toast('Saved in local app Documents. Public Documents/RivoScan storage requires the current Android app.');
     return output;
   }
   const url=URL.createObjectURL(new Blob([data],{type:mime}));
