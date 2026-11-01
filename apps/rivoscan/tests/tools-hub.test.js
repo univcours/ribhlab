@@ -7,7 +7,7 @@ test('Tools hub contains five functional categories and unique action IDs',()=>{
  const entries=toolGroups.flatMap(g=>g.entries);
  assert.ok(entries.length>=20);
  assert.equal(entries.length,new Set(entries).size);
- for(const id of ['idcard','toWord','toCSV','toPpt','pdfLong','timestamp','whiteboard','managePages','manualErase']){
+ for(const id of ['idcard','toWord','toExcel','toCSV','toPpt','pdfLong','timestamp','whiteboard','managePages','manualErase']){
   assert.ok(entries.includes(id),id+' must be visible');
   assert.ok(hubSpecial[id],id+' must have a functional handler');
  }
@@ -20,6 +20,7 @@ test('New tools have labels in all seven app languages',()=>{
 });
 test('Advanced tools distinguish OCR CSV and image-only slide conversion',()=>{
  assert.equal(hubSpecial.toCSV.format,'csv');
+ assert.equal(hubSpecial.toExcel.format,'xlsx');
  assert.equal(hubSpecial.toPpt.format,'pptx');
  assert.equal(hubSpecial.toWord.format,'word');
  assert.equal(hubSpecial.pdfLong.format,'long');

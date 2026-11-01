@@ -3,7 +3,7 @@
 export const toolGroups=[
  {id:'scan',entries:['idcard','ocr','bookScan','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
- {id:'convert',entries:['toWord','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
+ {id:'convert',entries:['toWord','toExcel','toCSV','toPpt','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','split','reorder','managePages','rotate','compress','metadata','numbers','text','delete']},
  {id:'utilities',entries:['peerTransfer','shareFiles','printPdf']}
 ];
@@ -16,6 +16,7 @@ export const hubSpecial={
  importImages:{icon:'image',color:'green',type:'import',kind:'image'},
  importFiles:{icon:'folder',color:'sky',type:'import',kind:'file'},
  toWord:{icon:'file',color:'blue',type:'export',format:'word'},
+ toExcel:{icon:'file',color:'green',type:'export',format:'xlsx'},
  toCSV:{icon:'file',color:'green',type:'export',format:'csv'},
  toPpt:{icon:'image',color:'pink',type:'export',format:'pptx'},
  pdfLong:{icon:'image',color:'sky',type:'export',format:'long'},
@@ -42,7 +43,8 @@ const labels={
  importImages:['Import Images','استيراد الصور','Importer images','Importar imágenes','Bilder importieren','Importar imagens','Importa immagini'],
  importFiles:['Import Files','استيراد الملفات','Importer fichiers','Importar archivos','Dateien importieren','Importar ficheiros','Importa file'],
  toWord:['To Word (OCR)','تحويل إلى Word','Vers Word (OCR)','A Word (OCR)','Nach Word (OCR)','Para Word (OCR)','In Word (OCR)'],
- toCSV:['To Excel (CSV)','تحويل إلى Excel (CSV)','Vers Excel (CSV)','A Excel (CSV)','Nach Excel (CSV)','Para Excel (CSV)','In Excel (CSV)'],
+ toExcel:['To Excel (.xlsx)','إلى Excel قابل للتعديل','Vers Excel (.xlsx)','A Excel (.xlsx)','Nach Excel (.xlsx)','Para Excel (.xlsx)','In Excel (.xlsx)'],
+ toCSV:['To CSV (text)','تحويل إلى Excel (CSV)','Vers Excel (CSV)','A Excel (CSV)','Nach Excel (CSV)','Para Excel (CSV)','In Excel (CSV)'],
  toPpt:['To PPT (image slides)','تحويل إلى PowerPoint','Vers PPT (images)','A PPT (imágenes)','Nach PPT (Bilder)','Para PPT (imagens)','In PPT (immagini)'],
  pdfLong:['PDF to Long Image','PDF إلى صورة طويلة','PDF en longue image','PDF a imagen larga','PDF als langes Bild','PDF em imagem longa','PDF in immagine lunga'],
  enhance:['Restore / Enhance Photo','تحسين الصور','Améliorer photo','Mejorar foto','Foto verbessern','Melhorar foto','Migliora foto'],

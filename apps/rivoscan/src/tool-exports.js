@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import {createOCRWorkbook} from './xlsx-export.js';
 import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
@@ -21,7 +22,7 @@ export async function exportToolFile({file,format,language='en',save,progress=()
   await save(bytes,'RivoScan_Long_'+date+'.jpg','image/jpeg');
   return;
  }
- if(format==='csv'){
+ if(format==='csv'||format==='xlsx'){
   const rows=[];
   if(isPdf){
    const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true}).promise;
@@ -53,6 +54,11 @@ export async function exportToolFile({file,format,language='en',save,progress=()
    rows.push(...result.split(/\r?\n/).filter(Boolean).map(line=>line.split(/\t|\s{2,}/)));
   }
   if(!rows.length)throw Error('No extractable text found');
+  if(format==='xlsx'){
+   const workbook=await createOCRWorkbook(rows);
+   await save(workbook,'RivoScan_Excel_Extract_'+date+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+   return;
+  }
   const csv='\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\r\n');
   await save(new TextEncoder().encode(csv),'RivoScan_Excel_Extract_'+date+'.csv','text/csv');
   return;
