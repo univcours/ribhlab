@@ -86,7 +86,9 @@ jobs:
           grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          grep -F 'versionCode 26' android/app/build.gradle
+          # Capacitor's generated versionCode may be stale; the LAST applied
+          # RivoScan Gradle override is the actual source of truth in Android Studio.
+          grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
           grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
           grep -F 'versionCode=26' rivoscan-version.properties
           grep -F 'versionName=0.19.2' rivoscan-version.properties
