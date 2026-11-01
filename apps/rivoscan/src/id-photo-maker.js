@@ -1,7 +1,5 @@
-/**
- * Print-ready ID photo sheets. The original background is not segmented:
- * tell users to photograph against the required backdrop first.
- */
+/** Optional on-device portrait cutout for printable ID sheets. */
+import {segmentPortrait} from './photo-background.js';
 export const MM_TO_PX_300=300/25.4;
 export const photoSizes={
  '35x45':{label:'35 × 45 mm',w:35,h:45},
@@ -43,21 +41,22 @@ export function setPNGResolution(bytes,dpi=300){
  out.set(chunk,33);out.set(src.subarray(33),54);return out;
 }
 const strings={
- en:['ID Photo Maker','Choose portrait','Photo size','Headroom','Left / Right','Make sheet','Save PNG · 10×15 cm at 300 DPI','Close','Use a photo already taken against the required official background. RivoScan does not remove/replace the person’s background or certify ID photo acceptance.','Image could not be loaded.'],
- ar:['صور شخصية للطباعة','اختار صورة شخصية','المقاس','الفوق والتحت','يمين ويسار','وجد الورقة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','استعمل صورة بخلفية مطابقة للشروط أصلاً. RivoScan ما كيحيدش خلفية الشخص ولا كيضمن قبول الصورة إدارياً.','تعذر فتح الصورة.'],
- fr:['Photos d’identité','Choisir portrait','Format','Hauteur','Gauche / Droite','Créer planche','Enregistrer PNG · 10×15 cm, 300 DPI','Fermer','Utilisez une photo avec le fond exigé. L’application ne détoure pas la personne et ne garantit pas l’acceptation officielle.','Image illisible.'],
- es:['Fotos de carné','Elegir foto','Tamaño','Altura','Izquierda / derecha','Crear hoja','Guardar PNG · 10×15 cm, 300 DPI','Cerrar','Use una foto con el fondo oficial. La app no elimina el fondo ni garantiza su aceptación.','Imagen inválida.'],
- de:['Passfotos','Portrait wählen','Größe','Höhe','Links / Rechts','Blatt erstellen','PNG · 10×15 cm, 300 DPI','Schließen','Foto mit passendem Hintergrund verwenden. Kein automatischer Hintergrundtausch oder behördliche Zusage.','Bild ungültig.'],
- pt:['Fotos de identificação','Escolher retrato','Tamanho','Altura','Esquerda / direita','Criar folha','Guardar PNG · 10×15 cm, 300 DPI','Fechar','Use foto com fundo oficial correto. O fundo não é removido nem há garantia de aceitação.','Imagem inválida.'],
- it:['Foto tessera','Scegli ritratto','Formato','Altezza','Sinistra / destra','Crea foglio','Salva PNG · 10×15 cm, 300 DPI','Chiudi','Usa una foto con sfondo conforme. Non rimuove lo sfondo né garantisce accettazione ufficiale.','Immagine non valida.']
+ en:['ID Photo Maker','Choose portrait','Photo size','Headroom','Left / Right','Make sheet','Save PNG · 10×15 cm at 300 DPI','Close','Optional local portrait background replacement uses a model download. Review the cutout; acceptance is not guaranteed.','Image could not be loaded.'],
+ ar:['صور شخصية للطباعة','اختار صورة شخصية','المقاس','الفوق والتحت','يمين ويسار','وجد الورقة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','تغيير الخلفية اختياري ومحلي بعد تحميل النموذج. راجع حواف الشخص؛ قبول الصورة ماشي مضمون.','تعذر فتح الصورة.'],
+ fr:['Photos d’identité','Choisir portrait','Format','Hauteur','Gauche / Droite','Créer planche','Enregistrer PNG · 10×15 cm, 300 DPI','Fermer','Détourage local facultatif après téléchargement du modèle. Vérifiez le résultat; aucune garantie officielle.','Image illisible.'],
+ es:['Fotos de carné','Elegir foto','Tamaño','Altura','Izquierda / derecha','Crear hoja','Guardar PNG · 10×15 cm, 300 DPI','Cerrar','Cambio de fondo local facultativo. Compruebe los bordes; aceptación no garantizada.','Imagen inválida.'],
+ de:['Passfotos','Portrait wählen','Größe','Höhe','Links / Rechts','Blatt erstellen','PNG · 10×15 cm, 300 DPI','Schließen','Optionaler lokaler Hintergrundwechsel. Ränder prüfen; keine behördliche Garantie.','Bild ungültig.'],
+ pt:['Fotos de identificação','Escolher retrato','Tamanho','Altura','Esquerda / direita','Criar folha','Guardar PNG · 10×15 cm, 300 DPI','Fechar','Mudança de fundo local opcional. Verifique contornos; aceitação não garantida.','Imagem inválida.'],
+ it:['Foto tessera','Scegli ritratto','Formato','Altezza','Sinistra / destra','Crea foglio','Salva PNG · 10×15 cm, 300 DPI','Chiudi','Sostituzione locale opzionale. Controlla i bordi; nessuna garanzia ufficiale.','Immagine non valida.']
 };
 function cropImage(ctx,image,rect,offsetX,offsetY){
- const wanted=rect.w/rect.h,actual=image.naturalWidth/image.naturalHeight;
- let sw,sh;if(actual>wanted){sh=image.naturalHeight;sw=sh*wanted}else{sw=image.naturalWidth;sh=sw/wanted}
- const horizontal=(image.naturalWidth-sw)*(.5+offsetX/200);
- const vertical=(image.naturalHeight-sh)*(.5+offsetY/200);
- ctx.drawImage(image,Math.max(0,Math.min(image.naturalWidth-sw,horizontal)),
-    Math.max(0,Math.min(image.naturalHeight-sh,vertical)),sw,sh,
+ const iw=image.naturalWidth||image.width,ih=image.naturalHeight||image.height;
+ const wanted=rect.w/rect.h,actual=iw/ih;
+ let sw,sh;if(actual>wanted){sh=ih;sw=sh*wanted}else{sw=iw;sh=sw/wanted}
+ const horizontal=(iw-sw)*(.5+offsetX/200);
+ const vertical=(ih-sh)*(.5+offsetY/200);
+ ctx.drawImage(image,Math.max(0,Math.min(iw-sw,horizontal)),
+    Math.max(0,Math.min(ih-sh,vertical)),sw,sh,
     rect.x,rect.y,rect.w,rect.h);
 }
 export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
@@ -76,23 +75,50 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  const actions=document.createElement('div');actions.className='rivo-code-actions';
  const row=(caption,control)=>{const label=document.createElement('label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
  row(L[1],input);row(L[2],select);row(L[3],y);row(L[4],x);
+ const bgSelect=document.createElement('select');
+ const names=({ar:['الأصلية','بيضاء','زرقاء','رمادية'],fr:['Original','Blanc','Bleu','Gris'],es:['Original','Blanco','Azul','Gris'],de:['Original','Weiß','Blau','Grau'],pt:['Original','Branco','Azul','Cinzento'],it:['Originale','Bianco','Blu','Grigio'],en:['Original','White','Light blue','Gray']})[language]||['Original','White','Light blue','Gray'];
+ for(const [i,key] of ['original','white','blue','gray'].entries()){
+  const opt=document.createElement('option');opt.value=key;opt.textContent=names[i];bgSelect.append(opt);
+ }
+ row(({ar:'الخلفية (النموذج يتحمل أول مرة)',en:'Background (first-use model download)',fr:'Fond (premier téléchargement)'})[language]||'Background / downloaded model',bgSelect);
  panel.append(canvas,hint,status,actions);overlay.append(panel);document.body.append(overlay);
- let image=null,blobURL=null,closed=false;
+ let image=null,cutout=null,blobURL=null,closed=false,processing=false;
  const update=()=>{
   if(!image)return;
   const dims=layoutIDPhotoSheet(select.value);
   canvas.width=dims.sheetW;canvas.height=dims.sheetH;
   const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(const rect of dims.positions)cropImage(ctx,image,rect,+x.value,+y.value);
+  for(const rect of dims.positions){
+   if(bgSelect.value!=='original'){
+    ctx.fillStyle={white:'#ffffff',blue:'#d9efff',gray:'#e6e6e6'}[bgSelect.value];
+    ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+   }
+   cropImage(ctx,bgSelect.value==='original'?image:(cutout||image),rect,+x.value,+y.value);
+  }
   status.textContent=dims.positions.length+' × '+photoSizes[select.value].label;
  };
  const close=()=>{closed=true;overlay.remove();if(blobURL)URL.revokeObjectURL(blobURL)};
  const button=(name,callback)=>{
   const b=document.createElement('button');b.type='button';b.textContent=name;b.addEventListener('click',callback);actions.append(b);
  };
- button(L[5],update);
- button(L[6],async()=>{
+ const applyBackground=async()=>{
   if(!image||closed)return;
+  if(bgSelect.value==='original'||cutout){update();return}
+  if(processing)return;
+  processing=true;
+  status.textContent=({ar:'كنعزلو الشخص محلياً... أول مرة خاص الإنترنت',en:'On-device background removal; first use needs internet…'})[language]||'Loading portrait segmentation model…';
+  try{
+   cutout=await segmentPortrait(image,{onProgress:msg=>{if(!closed)status.textContent=msg}});
+   if(!closed)update();
+  }catch(error){
+   bgSelect.value='original';if(!closed){update();status.textContent=error?.message||String(error)}
+  }finally{processing=false}
+ };
+ bgSelect.addEventListener('change',applyBackground);
+ button(L[5],()=>{if(!processing)update()});
+ button(L[6],async()=>{
+  if(!image||closed||processing)return;
+  if(bgSelect.value!=='original'&&!cutout){status.textContent='Background model not ready';return}
   try{
    update();
    const blob=await new Promise((ok,bad)=>canvas.toBlob(v=>v?ok(v):bad(Error(L[9])),'image/png'));
@@ -108,7 +134,8 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   try{
    const next=new Image();next.src=blobURL;
    await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
-   if(closed)return;image=next;update();
+   if(closed)return;image=next;cutout=null;
+    if(bgSelect.value!=='original')await applyBackground();else update();
   }catch{status.textContent=L[9]}
  };
  input.addEventListener('change',load);select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
