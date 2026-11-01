@@ -22,6 +22,9 @@ import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
+import {openBarcodeScanner} from './barcode-scanner.js';
+import {openIDPhotoMaker} from './id-photo-maker.js';
+import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
@@ -376,6 +379,7 @@ function settingsWorkspace(){
  <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>${scannerPreferenceRows()}<p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
+ <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -656,6 +660,7 @@ function wire(){
   document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>openHubAction(el.dataset.hubAction)));
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
+  document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
@@ -695,6 +700,18 @@ function pickHubFile(accept,cb){
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
+ if(spec.type==='barcode'){
+   openBarcodeScanner({language,notify:toast,capture:async()=>{
+     const photo=await Camera.getPhoto({quality:90,allowEditing:false,
+       resultType:CameraResultType.Uri,source:CameraSource.Camera});
+     return photo.webPath||photo.path;
+   }});
+   return;
+ }
+ if(spec.type==='idPhoto'){
+   await openIDPhotoMaker({language,save:saveOut,notify:toast});
+   return;
+ }
  if(spec.type==='libraryPrint'){openLibrary();toast('Select a PDF and tap its print icon to open Android printing.');return}
  if(spec.type==='idcard'){await openLiveScanner({mode:'ID Card'});return}
  if(spec.type==='scan'){await openLiveScanner();return}
@@ -1146,6 +1163,10 @@ function initSignature(){
  document.getElementById('clear-sign')?.addEventListener('click',()=>{ctx.clearRect(0,0,rect.width,rect.height);signatureHasInk=false});signatureHasInk=false;
 }
 render();
+try{
+ if(shouldShowReleaseNotes(localStorage,appVersion))
+  requestAnimationFrame(()=>openWhatsNew({language,version:appVersion}));
+}catch(error){console.warn('Release notes unavailable:',error)}
 if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   const syncNativeSoundSetting=()=>{
     if(!Capacitor.isPluginAvailable('RivoLiveScanner'))return;

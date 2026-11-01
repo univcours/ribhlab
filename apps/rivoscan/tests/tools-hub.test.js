@@ -7,7 +7,7 @@ test('Tools hub contains five functional categories and unique action IDs',()=>{
  const entries=toolGroups.flatMap(g=>g.entries);
  assert.ok(entries.length>=20);
  assert.equal(entries.length,new Set(entries).size);
- for(const id of ['idcard','toWord','toExcel','toCSV','toPpt','pdfLong','timestamp','whiteboard','managePages','manualErase']){
+ for(const id of ['idcard','idPhotoMaker','scanCode','toWord','toExcel','toCSV','toPpt','pdfLong','timestamp','whiteboard','managePages','manualErase']){
   assert.ok(entries.includes(id),id+' must be visible');
   assert.ok(hubSpecial[id],id+' must have a functional handler');
  }

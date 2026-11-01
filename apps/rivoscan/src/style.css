@@ -1345,3 +1345,21 @@ body.rivo-native-android .rivo-dark-ui .topbar{background:#0c1420}
  .rivo-editor-actions{grid-template-columns:repeat(8,minmax(0,1fr))}
  .rivo-editor-actions button{font-size:9px}
 }
+
+/* Camera image utilities and versioned release notes: responsive, app-color UI. */
+.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay{position:fixed;inset:0;z-index:6500;background:rgba(8,16,37,.8);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;overflow:auto}
+.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog{box-sizing:border-box;width:min(100%,540px);max-height:min(90vh,850px);overflow-y:auto;border-radius:18px;padding:20px;background:#f7fbff;color:#122751;box-shadow:0 14px 60px rgba(0,18,60,.35);border:1px solid #b3d9ff}
+.rivo-code-dialog h2,.rivo-id-dialog h2,.rivo-release-dialog h2{margin:0 0 14px;font-size:20px;color:#172e73}
+.rivo-code-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.rivo-code-actions button,.rivo-release-dialog button{flex:1;min-height:43px;border:1px solid #087dfa;border-radius:11px;color:white;background:#087dfa;padding:9px 14px;font-size:13px;cursor:pointer}
+.rivo-code-preview{display:block;object-fit:contain;max-height:38vh;max-width:100%;margin:8px auto;border-radius:9px}
+.rivo-code-preview[hidden],.rivo-code-result[hidden]{display:none}
+.rivo-code-result{padding:14px;border-radius:8px;background:#eaf5ff;color:#14254e;white-space:pre-wrap;overflow-wrap:anywhere;max-height:170px;overflow-y:auto;direction:ltr;text-align:start}
+.rivo-code-help,.rivo-id-hint,.rivo-release-limits{font-size:12px;color:#4b607f;line-height:1.6}
+.rivo-id-row{display:flex;flex-direction:column;gap:6px;margin:12px 0;color:#14254e;font-size:14px}
+.rivo-id-row input,.rivo-id-row select{width:100%;font:inherit;min-height:35px}
+.rivo-id-preview{display:block;max-width:min(100%,295px);max-height:42vh;object-fit:contain;margin:12px auto;border:1px solid #bed8f4;background:white}
+.rivo-release-dialog ul{padding-inline-start:23px;line-height:1.65}
+.rivo-release-dialog li{margin:9px 0}
+.rivo-release-dialog button{width:100%;margin-top:12px}
+@media(max-width:380px){.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog{padding:13px;border-radius:13px}.rivo-code-actions button{flex-basis:40%}}
