@@ -65,13 +65,19 @@ public class RivoDocumentsPlugin extends Plugin {
      * them into a PDF. This preserves scans even if PDF creation later fails.
      */
     static Uri saveScannedImage(Context ctx,File image,String requestedName) throws Exception {
+        return saveScannedImageToFolder(ctx,image,requestedName,FOLDER);
+    }
+    static Uri saveOriginalScannedImage(Context ctx,File image,String requestedName) throws Exception {
+        return saveScannedImageToFolder(ctx,image,requestedName,FOLDER+"Originals/");
+    }
+    private static Uri saveScannedImageToFolder(Context ctx,File image,String requestedName,String targetFolder) throws Exception {
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q)
             throw new IllegalStateException("Public scanner storage requires Android 10+.");
         ContentResolver resolver=ctx.getContentResolver();
         ContentValues meta=new ContentValues();
         meta.put(MediaStore.MediaColumns.DISPLAY_NAME,requestedName);
         meta.put(MediaStore.MediaColumns.MIME_TYPE,"image/jpeg");
-        meta.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER);
+        meta.put(MediaStore.MediaColumns.RELATIVE_PATH,targetFolder);
         meta.put(MediaStore.MediaColumns.IS_PENDING,1);
         Uri uri=resolver.insert(documentsCollection(),meta);
         if(uri==null)throw new IllegalStateException("Documents/RivoScan is unavailable.");
