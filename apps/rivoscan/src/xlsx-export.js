@@ -26,7 +26,7 @@ export async function createOCRWorkbook(input){
  const normalized=pages.map((page,i)=>{
   if(!Array.isArray(page.rows))throw Error('Invalid Excel page rows');
   const rows=page.rows.map(line=>Array.isArray(line)?line:[line]);
-  const name=String(page.name||('Page '+(i+1))).replace(/[\[\]*?:/\\]/g,'').trim().slice(0,31)||('Page '+(i+1));
+  const name=String(page.name||('Page '+(i+1))).split('').filter(ch=>!['[',']','*','?',':','/',String.fromCharCode(92)].includes(ch)).join('').trim().slice(0,31)||('Page '+(i+1));
   return {name,rows};
  });
  if(normalized.reduce((n,p)=>n+p.rows.length,0)>50000)throw Error('Excel export limit: 50,000 OCR lines');
