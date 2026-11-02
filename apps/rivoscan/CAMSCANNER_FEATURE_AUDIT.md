@@ -1,3 +1,7 @@
+## 0.36.1: CountCam duplicate-aware bounding boxes
+- Adds class-aware nonmaximum suppression after real COCO-SSD detections, preventing one detected object from being counted twice when predicted boxes overlap strongly. The actual annotated camera preview and displayed totals use the same deduplicated detections.
+- Tests cover duplicates, nearby distinct objects, other classes and malformed boxes. Does not recognize categories outside COCO or make count estimates exact; handset QA remains needed.
+
 ## 0.36.0 optional vision AI math transcription
 - Formula OCR keeps local linear Tesseract. An additional real image-to-LaTeX option passes an explicitly selected photo to OpenAI Responses API after per-request confirmation, using a personal API key supplied for that session.
 - It asks the model to transcribe stacked fractions, radicals and matrices **without solving**, exposes real errors, does not persist the key and sends `store:false`. External API charges/retention are controlled by the user's provider settings. No live network QA without an authorized paid key.

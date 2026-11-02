@@ -12,6 +12,33 @@ const translations={
  pt:['CountCam — contar','Fotografar','Escolher imagem','Detetar e contar','Fechar','Carregar modelo (Internet inicial)','Sem foto','Contagem estimada','80 classes COCO comuns. Objetos pequenos podem falhar. A foto fica no aparelho.','Erro: '],
  it:['CountCam — conteggio','Fotografa','Scegli immagine','Rileva e conta','Chiudi','Carica modello (prima volta online)','Nessuna foto','Conteggio stimato','80 classi COCO comuni. Piccoli oggetti possono mancare. La foto resta sul dispositivo.','Errore: ']
 };
+/**
+ * Camera model can return overlapping candidate boxes for one physical
+ * object. Per-class nonmaximum suppression removes only strong duplicates.
+ * It does not discover unseen objects or certify inventory counts.
+ */
+export function deduplicateDetections(detections,iouThreshold=.60){
+ if(!Array.isArray(detections)||!Number.isFinite(iouThreshold)||iouThreshold<=0||iouThreshold>=1)
+  throw Error('Invalid detections or overlap threshold');
+ const candidates=detections.filter(p=>
+  typeof p?.class==='string'&&p.class.length>0&&Array.isArray(p.bbox)&&p.bbox.length===4&&
+  p.bbox.every(Number.isFinite)&&p.bbox[2]>0&&p.bbox[3]>0&&
+  Number.isFinite(p.score)&&p.score>=0&&p.score<=1);
+ candidates.sort((a,b)=>b.score-a.score);
+ const kept=[];
+ const iou=(a,b)=>{
+  const x1=Math.max(a[0],b[0]),y1=Math.max(a[1],b[1]);
+  const x2=Math.min(a[0]+a[2],b[0]+b[2]),y2=Math.min(a[1]+a[3],b[1]+b[3]);
+  const intersection=Math.max(0,x2-x1)*Math.max(0,y2-y1);
+  return intersection/(a[2]*a[3]+b[2]*b[3]-intersection);
+ };
+ for(const candidate of candidates){
+  if(kept.every(x=>x.class!==candidate.class||iou(x.bbox,candidate.bbox)<iouThreshold))
+   kept.push(candidate);
+ }
+ return kept;
+}
+
 export function countDetectedObjects(detections,minScore=.5){
  if(!Array.isArray(detections)||!Number.isFinite(minScore)||minScore<0||minScore>1)throw Error('Invalid detections');
  const totals={};
@@ -77,7 +104,7 @@ export function openCountCam({language='en',capture}={}){
    if(closed)return;
    const preds=await model.detect(image,60,.55);
    if(closed)return;
-   const valid=preds.filter(p=>p.score>=.55);draw(valid);
+   const valid=deduplicateDetections(preds.filter(p=>p.score>=.55));draw(valid);
    const counts=countDetectedObjects(valid,.55);
    results.replaceChildren();
    for(const [klass,count] of Object.entries(counts).sort((a,b)=>b[1]-a[1])){
