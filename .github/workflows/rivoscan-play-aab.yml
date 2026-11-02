@@ -52,8 +52,8 @@ jobs:
           set -euo pipefail
           unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
           unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
-          grep -F 'versionCode=49' rivoscan-version.properties
-          grep -F 'versionName=0.36.2' rivoscan-version.properties
+          grep -F 'versionCode=50' rivoscan-version.properties
+          grep -F 'versionName=0.36.3' rivoscan-version.properties
       - name: Check authorized signing secrets
         id: signing
         env:

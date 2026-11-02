@@ -102,8 +102,17 @@ export const changesForVersion=(language='en')=>{
  pt:'Novo: No Shadow corrige sombras preservando carimbos; Book Scan sugere a lombada com ajuste manual; PDF para Excel cria uma folha editável por página.',
  it:'Novità: No Shadow attenua le ombre preservando timbri; Book Scan propone il dorso con regolazione manuale; PDF in Excel crea un foglio modificabile per pagina.'
  };
+  const extra={
+  en:'New: Book Scan can align curved text rows (beta); optional Formula OCR vision AI and Solver camera require your API key and consent. CountCam removes duplicate overlapping detections. Play AAB needs private signing keys.',
+  ar:'جديد: Book Scan كيقوّم السطور المنحنية تجريبياً. Formula OCR وSolver بالكاميرا كيرسلو الصور للـAI غير بموافقتك ومفتاحك. CountCam كيحيد العد المكرر. ملف Play محتاج توقيع خاص.',
+  fr:'Nouveau : correction des lignes courbées (bêta), OCR maths IA et caméra Solver avec consentement et clé API. CountCam évite les doubles comptes. AAB Play nécessite signature.',
+  es:'Nuevo: corrección de líneas curvas (beta), OCR matemático con IA y cámara Solver con consentimiento y clave API. CountCam reduce conteos duplicados. AAB requiere firma.',
+  de:'Neu: Textzeilen-Begradigung (Beta), optionale KI-Formelerkennung und Solver-Kamera nur mit Zustimmung/API-Schlüssel. CountCam entfernt Doppelzählungen. AAB erfordert Signatur.',
+  pt:'Novo: correção de linhas curvas (beta), OCR matemático IA e câmara Solver com consentimento e chave API. CountCam reduz duplicações. AAB requer assinatura.',
+  it:'Novità: allineamento righe curve (beta), OCR matematico IA e fotocamera Solver con consenso e chiave API. CountCam riduce conteggi duplicati. AAB richiede firma.'
+ };
  const note=data[language]||data.en;
- return {...note,items:[...note.items,recent[language]||recent.en]};
+ return {...note,items:[...note.items,recent[language]||recent.en,extra[language]||extra.en]};
 };
 export const shouldShowReleaseNotes=(storage,version)=>storage.getItem('rivo-release-notes-read')!==version;
 export function openWhatsNew({language='en',version='0.0.0',storage=localStorage}={}){

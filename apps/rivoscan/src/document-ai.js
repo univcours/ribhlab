@@ -95,8 +95,21 @@ export function openDocumentAI({mode='chat',language='en',capture=null}={}){
    const response=await fetch(uri);
    if(!response.ok)throw Error('Could not read camera photo');
    const blob=await response.blob();
-   if(blob.size>5*1024*1024)throw Error('Photo limit: 5 MB');
-   lastFile=new File([blob],'RivoScan_Solver_'+Date.now()+'.jpg',{type:blob.type||'image/jpeg'});
+   if(blob.size>18*1024*1024)throw Error('Camera photo too large (18 MB)');
+   const photoURL=URL.createObjectURL(blob);
+   let optimized;
+   try{
+    const photo=await new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(Error('Could not decode camera photo'));img.src=photoURL});
+    const factor=Math.min(1,1800/Math.max(photo.naturalWidth,photo.naturalHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(photo.naturalWidth*factor));
+    canvas.height=Math.max(1,Math.round(photo.naturalHeight*factor));
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(photo,0,0,canvas.width,canvas.height);
+    optimized=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('Photo compression failed')),'image/jpeg',.76));
+   }finally{URL.revokeObjectURL(photoURL)}
+   if(optimized.size>5*1024*1024)throw Error('Photo too large after optimization (5 MB)');
+   lastFile=new File([optimized],'RivoScan_Solver_'+Date.now()+'.jpg',{type:'image/jpeg'});
    input.value='';docText='';history=[];result.textContent='';state.textContent=lastFile.name;
    // The photo is only selected locally. Submission still requires a second
    // explicit user action plus a separate consent dialog in submit().

@@ -1,3 +1,8 @@
+## 0.36.3: Solver camera image resilience + truthful release notes
+- Camera-captured problem photos up to 18 MB are converted to a bounded JPEG on-device before user selection, avoiding spurious 5 MB vision payload rejection without changing the camera original.
+- Nothing is uploaded until the separate user key + question + consent flow executes. Regressions check local resizing and actual consent wiring.
+- What's New and the formula tile now describe line-aware book correction, optional AI math and CountCam duplicate suppression in seven languages.
+
 ## 0.36.2: AI Solver direct Android camera capture
 - Solver AI now has a camera action that selects a real photographed problem as an in-memory File, with same image-size limit and existing explicit key and confirmation step. Capturing/choosing the photo never uploads it automatically.
 - Actual vision calls still need a paid user key and live device/provider QA. No claims of automatic or guaranteed problem solving.

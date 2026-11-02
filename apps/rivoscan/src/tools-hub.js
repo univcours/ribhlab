@@ -49,7 +49,7 @@ const groups={
 };
 const labels={
  idPhotoMaker:['ID Photo Sheet (print)','صور شخصية للطباعة','Planche photos identité','Hoja fotos de carné','Passfoto-Bogen','Folha fotos de identificação','Foglio fototessere'],
- formulaOcr:['Formula OCR (linear · beta)','قراءة المعادلات الخطية (تجريبي)','OCR formules linéaires (bêta)','OCR fórmulas lineales (beta)','Formel OCR (linear, Beta)','OCR fórmulas lineares (beta)','OCR formule lineari (beta)'],
+ formulaOcr:['Formula OCR + optional AI','قراءة المعادلات + AI اختياري','OCR formules + IA facultative','OCR fórmulas + IA opcional','Formel-OCR + optionale KI','OCR fórmulas + IA opcional','OCR formule + IA opzionale'],
  photoTranslation:['Photo Translation (offline after download)','ترجمة صورة على الهاتف','Traduction photo sur appareil','Traducción foto en el dispositivo','Foto lokal übersetzen','Tradução de foto no aparelho','Traduci foto sul telefono'],
  lockPdf:['Lock PDF (AES-256)','حماية PDF بكلمة السر','Protéger PDF (AES-256)','Proteger PDF (AES-256)','PDF verschlüsseln','Proteger PDF (AES-256)','Proteggi PDF (AES-256)'],
  aiChat:['AI Chat (your own API key)','AI Chat (مفتاح شخصي)','AI Chat (clé API personnelle)','AI Chat (clave API propia)','AI Chat (eigener API-Schlüssel)','AI Chat (chave API própria)','AI Chat (chiave API personale)'],
