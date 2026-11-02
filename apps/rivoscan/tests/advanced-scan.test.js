@@ -225,7 +225,7 @@ test('Book auto-flattening maintains independent left/right corrections and manu
  assert.throws(()=>resolveBookPageCurvature(2,0,[35,40]));
  const source=readFileSync(new URL('../src/book-split.js',import.meta.url),'utf8');
  assert.ok(source.includes('autoPageWarp=samples.map('));
- assert.ok(source.includes('resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp)'),
+ assert.ok(source.includes('resolveBookPageCurvature(regionIndex,spread.curvature,spread.autoPageWarp)'),
    'the two independent corrections must actually be used for export');
  assert.ok(source.includes("warpSlider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()})"),
    'manual corrections must cancel stale auto estimate');
