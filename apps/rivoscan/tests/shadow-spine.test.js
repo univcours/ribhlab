@@ -32,5 +32,5 @@ test('No Shadow and find-spine logic are connected to actual image tools',()=>{
  const book=readFileSync(new URL('../src/book-split.js',import.meta.url),'utf8');
  assert.ok(edit.includes('normalizeDocumentShadowsRGBA(scan.data,preview.width,preview.height)'));
  assert.ok(book.includes('estimateBookSpine('));
- assert.ok(book.includes('slider.value=String(result.spine);autoPageWarp=null;draw()'));
+ assert.ok(book.includes('slider.value=String(result.spine);autoPageWarp=null;autoLineWarp=null;draw()'));
 });
