@@ -173,7 +173,8 @@ test('Linear formula OCR generates editable conservative TeX without inventing s
  assert.equal(linearMathToLatex('x^2 + √(y) ≤ π'),'x^{2} + \\sqrt{y} \\leq  \\pi ');
  assert.equal(linearMathToLatex('1/2'),'1/2');
  const ui=readFileSync(new URL('../src/formula-ocr.js',import.meta.url),'utf8');
- assert.ok(ui.includes("await recognize(selected,'eng')"));
+ assert.ok(ui.includes("worker.recognize(selected,{}, {blocks:true})"));
+ assert.ok(ui.includes("await worker.terminate()"));
  assert.ok(ui.includes('original.addEventListener'));
 });
 
