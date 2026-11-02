@@ -1,3 +1,9 @@
+## 0.35.0: Content-derived curved text-line flattening (beta)
+- Adds an actual independently estimated, per-column nonrigid vertical displacement field for book pages. Repeated printed text-line profiles at seven horizontal positions are cross-correlated; high-confidence page estimates can be previewed and exported to PDF. Low-text, ambiguous or blank pages revert to manual adjustment; no hidden background AI service.
+- This is an image-based 1D remap and cannot reconstruct paper depth, severe horizontal creases or occluded text; NOT automatic 3D flattening.
+- 0.35.0 regression tests include a curved-line synthetic image and blank-page abstention. Field quality on real pages is still required.
+- All earlier selective erase / photo restoration / Office export limitations remain unchanged.
+
 ## RivoScan 0.34.0 — PDF to Excel page-aware worksheets
 - Born-digital PDFs now export a separate editable sheet for each page instead of concatenating every page into one sheet. Scanned pages remain OCR heuristics; complex table borders and merged cells are not recreated.
 - Each sheet has bounded column widths and unique/sanitized names, with correct OpenXML sheet relationships. Leading zeros and values beginning with '=' remain safe inline text, never executable formulas. CSV remains single flat output.

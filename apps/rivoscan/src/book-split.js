@@ -1,6 +1,7 @@
 import {PDFDocument} from 'pdf-lib';
 import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
 import {estimateBookSpine} from './book-spine.js';
+import {estimateLineWarp,applyLineWarpCanvas} from './line-aware-dewarp.js';
 
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
@@ -49,15 +50,18 @@ export function openBookSplitter({language='en',save,capture}={}){
  const autoButton=document.createElement('button');autoButton.type='button';autoButton.className='rivo-auto-curvature';
  autoButton.textContent=({ar:'اكتشف الانحناء تلقائياً (تجريبي)',en:'Estimate curvature automatically (beta)',fr:'Estimer la courbure automatiquement (bêta)',es:'Estimar curvatura automáticamente (beta)',de:'Krümmung automatisch schätzen (Beta)',pt:'Estimar curvatura automaticamente (beta)',it:'Stima curva automatica (beta)'})[language]||'Auto curvature (beta)';
  panel.append(autoButton);
+ const lineButton=document.createElement('button');lineButton.type='button';lineButton.className='rivo-line-curvature';
+ lineButton.textContent=({en:'Straighten text rows (beta)',ar:'تقويم سطور الكتاب تلقائياً (تجريبي)',fr:'Redresser les lignes (bêta)',es:'Enderezar líneas (beta)',de:'Textzeilen begradigen (Beta)',pt:'Endireitar linhas (beta)',it:'Raddrizza righe (beta)'})[language]||'Straighten text rows (beta)';
+ panel.append(lineButton);
  const info=document.createElement('p');info.textContent=L[6];info.className='rivo-id-hint';panel.append(info);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
- let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null;
+ let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null;
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async src=>{
   const img=new Image();img.src=src;
   await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;if(img.complete&&img.naturalWidth)ok()});
-  if(!closed){image=img;autoPageWarp=null;warpSlider.value='0';draw()}
+  if(!closed){image=img;autoPageWarp=null;autoLineWarp=null;warpSlider.value='0';draw()}
  };
  const draw=()=>{
   if(!image)return;
@@ -68,10 +72,11 @@ export function openBookSplitter({language='en',save,capture}={}){
   for(const [pageIndex,x,w,side] of [[0,0,center,'right'],[1,center,preview.width-center,'left']]){
    if(w<2)continue;
    const curvature=resolveBookPageCurvature(pageIndex,+warpSlider.value,autoPageWarp);
-   if(curvature===0)continue;
+   if(curvature===0&&!autoLineWarp?.[pageIndex]?.anchors?.length)continue;
    const section=document.createElement('canvas');section.width=w;section.height=preview.height;
    section.getContext('2d').drawImage(preview,x,0,w,preview.height,0,0,w,preview.height);
    dewarpBookCanvas(section,curvature,side);
+   if(autoLineWarp?.[pageIndex])applyLineWarpCanvas(section,autoLineWarp[pageIndex]);
    ctx.drawImage(section,x,0);
   }
   ctx.strokeStyle='#04bcf7';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(center,0);ctx.lineTo(center,preview.height);ctx.stroke();
@@ -99,7 +104,7 @@ export function openBookSplitter({language='en',save,capture}={}){
    if(result.confidence<.25){
     status.textContent=({ar:'وسط الكتاب ما واضحش؛ حرك الخط يدوياً.',en:'Gutter uncertain; use manual separator.'})[language]||'Manual separator required';return;
    }
-   slider.value=String(result.spine);autoPageWarp=null;draw();
+   slider.value=String(result.spine);autoPageWarp=null;autoLineWarp=null;draw();
    status.textContent='Spine beta '+result.spine+'% · confidence '+Math.round(result.confidence*100)+'%';
   }catch(error){status.textContent=error?.message||String(error)}
  });
@@ -107,7 +112,7 @@ export function openBookSplitter({language='en',save,capture}={}){
   if(!image||busy)return;
   // Estimate each page independently: pages may curve by different amounts
   // and even in opposite directions. Never average their warps.
-  autoPageWarp=null;warpSlider.value='0';draw();
+  autoPageWarp=null;autoLineWarp=null;warpSlider.value='0';draw();
   const mid=Math.round(preview.width*(+slider.value/100));
   const samples=[null,null];
   for(const [pageIndex,x,w,side] of [[0,0,mid,'right'],[1,mid,preview.width-mid,'left']]){
@@ -126,8 +131,24 @@ export function openBookSplitter({language='en',save,capture}={}){
   status.textContent='Auto beta · '+autoPageWarp.map((v,i)=>
    'Page '+(i+1)+': '+v+'%'+(samples[i]?' ('+Math.round(samples[i].confidence*100)+'% confidence)':' (manual adjustment needed)')).join(' · ');
  });
- slider.addEventListener('input',()=>{autoPageWarp=null;draw()});
- warpSlider.addEventListener('input',()=>{autoPageWarp=null;draw()});
+ lineButton.addEventListener('click',()=>{
+  if(!image||busy)return;
+  autoLineWarp=null;autoPageWarp=null;warpSlider.value='0';draw();
+  const mid=Math.round(preview.width*(+slider.value/100)),found=[null,null];
+  for(const [i,x,w,side] of [[0,0,mid,'right'],[1,mid,preview.width-mid,'left']]){
+   if(w<140||preview.height<120)continue;
+   const raw=preview.getContext('2d',{willReadFrequently:true}).getImageData(x,0,w,preview.height);
+   const estimate=estimateLineWarp(raw.data,w,preview.height,side);
+   if(estimate.confidence>=.25)found[i]=estimate;
+  }
+  if(!found.some(Boolean)){
+   status.textContent=({ar:'السطور ما واضحةش كفاية، استعمل التقويم اليدوي.',en:'Not enough reliable text rows; use guided curvature slider.'})[language]||'Manual correction required';return;
+  }
+  autoLineWarp=found;draw();
+  status.textContent=({ar:'تقويم تجريبي اعتماداً على السطور: راجع النتيجة قبل الحفظ.',en:'Line-aware beta: review page previews before saving.'})[language]||'Check correction before saving';
+ });
+ slider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
+ warpSlider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
  makeButton(saveAction,L[4],async()=>{
   if(!image||busy)return;busy=true;
   try{
@@ -137,6 +158,7 @@ export function openBookSplitter({language='en',save,capture}={}){
     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(rect.w*scale));canvas.height=Math.max(1,Math.round(rect.h*scale));
     canvas.getContext('2d').drawImage(image,rect.x,rect.y,rect.w,rect.h,0,0,canvas.width,canvas.height);
     dewarpBookCanvas(canvas,resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp),regionIndex===0?'right':'left');
+    if(autoLineWarp?.[regionIndex])applyLineWarpCanvas(canvas,autoLineWarp[regionIndex]);
     const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('JPEG failed')),'image/jpeg',.91));
     const pic=await pdf.embedJpg(await blob.arrayBuffer());
     const page=pdf.addPage([595,842]),pad=15;
