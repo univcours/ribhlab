@@ -1,5 +1,6 @@
 import Tesseract from 'tesseract.js';
 import {buildAIRequest,requestUserAI} from './ai-provider.js';
+import {findFormulaRegions,formulaRegionLayout} from './formula-regions.js';
 const {recognize}=Tesseract;
 
 /**
@@ -39,6 +40,8 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  const actions=document.createElement('div');actions.className='rivo-code-actions';panel.append(actions);
  const file=document.createElement('input');file.type='file';file.accept='image/*';file.hidden=true;panel.append(file);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
+ const preview=document.createElement('canvas');preview.className='rivo-id-preview';
+ preview.style.maxWidth='100%';panel.append(preview);
  const original=document.createElement('textarea');original.rows=5;original.placeholder=L[4];
  const latex=document.createElement('textarea');latex.rows=5;latex.placeholder='LaTeX';latex.dir='ltr';
  for(const [name,control] of [[L[4],original],['LaTeX (editable)',latex]]){
@@ -46,36 +49,82 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  }
  const notice=document.createElement('p');notice.className='rivo-code-help';notice.textContent=L[8]+' '+L[10];panel.append(notice);
  const buttons=document.createElement('div');buttons.className='rivo-code-actions';panel.append(buttons);
- let selected=null,closed=false,busy=false;
+ let selected=null,closed=false,busy=false,formulaRegions=[];
  const action=(container,text,cb)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',cb);container.append(b)};
  const secret=document.createElement('input');secret.type='password';secret.autocomplete='off';
  secret.placeholder=({en:'Personal OpenAI API key (session only)',ar:'مفتاح API الشخصي لهاد الجلسة',fr:'Clé API personnelle',es:'Clave API personal',de:'Persönlicher API-Schlüssel',pt:'Chave API pessoal',it:'Chiave API personale'})[language]||'Personal API key';
  const keyLabel=document.createElement('label');keyLabel.className='rivo-id-row';
  keyLabel.textContent=({en:'Optional AI to recognize complex formulas',ar:'قراءة المعادلات المعقدة بالذكاء الاصطناعي (اختيارية)',fr:'IA pour les formules complexes (optionnel)',es:'IA para fórmulas complejas (opcional)',de:'KI für komplexe Formeln (optional)',pt:'IA para fórmulas complexas (opcional)',it:'IA per formule complesse (opzionale)'})[language]||'Optional AI';
  keyLabel.append(secret);panel.append(keyLabel);
- const close=()=>{if(busy)return;closed=true;selected=null;secret.value='';overlay.remove()};
+ const drawRegions=async()=>{
+  if(!selected)return;
+  const url=URL.createObjectURL(selected);
+  try{
+   const img=await new Promise((ok,bad)=>{const picture=new Image();picture.onload=()=>ok(picture);picture.onerror=()=>bad(Error('Invalid formula image'));picture.src=url});
+   const factor=Math.min(1,850/Math.max(img.naturalWidth,img.naturalHeight));
+   preview.width=Math.max(1,Math.round(img.naturalWidth*factor));
+   preview.height=Math.max(1,Math.round(img.naturalHeight*factor));
+   const ctx=preview.getContext('2d');
+   ctx.drawImage(img,0,0,preview.width,preview.height);
+   ctx.strokeStyle='#04bcf7';ctx.lineWidth=3;
+   for(const box of formulaRegions)ctx.strokeRect(box.x*factor,box.y*factor,box.w*factor,box.h*factor);
+  }finally{URL.revokeObjectURL(url)}
+ };
+ const saveMathRegions=async()=>{
+  if(!selected||!formulaRegions.length||busy)return;
+  busy=true;
+  const url=URL.createObjectURL(selected);
+  try{
+   const img=await new Promise((ok,bad)=>{const picture=new Image();picture.onload=()=>ok(picture);picture.onerror=()=>bad(Error('Invalid formula image'));picture.src=url});
+   const geometry=formulaRegionLayout(formulaRegions,img.naturalWidth,img.naturalHeight);
+   const sheet=document.createElement('canvas');sheet.width=geometry.width;sheet.height=geometry.height;
+   const ctx=sheet.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,sheet.width,sheet.height);
+   for(const r of geometry.parts)ctx.drawImage(img,r.x,r.y,r.w,r.h,r.dx,r.dy,r.w,r.h);
+   const blob=await new Promise((ok,bad)=>sheet.toBlob(b=>b?ok(b):bad(Error('PNG failed')),'image/png'));
+   await save(new Uint8Array(await blob.arrayBuffer()),'RivoScan_Formula_Regions_'+Date.now()+'.png','image/png');
+   if(!closed)status.textContent='Formula image PNG ✓';
+  }catch(error){if(!closed)status.textContent=error?.message||String(error)}
+  finally{URL.revokeObjectURL(url);busy=false}
+ };
+ const close=()=>{if(busy)return;closed=true;selected=null;formulaRegions=[];secret.value='';overlay.remove()};
  action(actions,L[1],async()=>{
   if(!capture||busy)return;
   try{
    const uri=await capture();if(!uri)return;
    const response=await fetch(uri);if(!response.ok)throw Error('Cannot read photo');
    selected=new File([await response.blob()],'RivoScan_Formula.jpg',{type:'image/jpeg'});
-   status.textContent=selected.name;
+   status.textContent=selected.name;formulaRegions=[];await drawRegions();
   }catch(error){status.textContent=error?.message||String(error)}
  });
  action(actions,L[2],()=>file.click());
- file.addEventListener('change',()=>{if(file.files?.[0])selected=file.files[0];status.textContent=selected?.name||'';file.value=''});
+ file.addEventListener('change',async()=>{
+  if(file.files?.[0])selected=file.files[0];
+  status.textContent=selected?.name||'';file.value='';formulaRegions=[];
+  if(selected)try{await drawRegions()}catch(error){status.textContent=error?.message||String(error)}
+ });
  action(buttons,L[3],async()=>{
   if(!selected||busy)return;
   busy=true;status.textContent=L[3]+' …';
   try{
    if(selected.size>16*1024*1024)throw Error('Image limit: 16 MB');
-   const result=await recognize(selected,'eng');
+   const worker=await Tesseract.createWorker('eng');
+   let result;
+   try{result=await worker.recognize(selected,{}, {blocks:true})}
+   finally{await worker.terminate()}
    if(closed)return;
    original.value=(result.data.text||'').trim().slice(0,5000);
    latex.value=linearMathToLatex(original.value);
+   const geometry=await new Promise((ok,bad)=>{
+    const url=URL.createObjectURL(selected);
+    const img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(url);ok([img.naturalWidth,img.naturalHeight])};
+    img.onerror=()=>{URL.revokeObjectURL(url);bad(Error('Invalid formula image'))};img.src=url;
+   });
+   formulaRegions=findFormulaRegions(result.data.blocks||[],geometry[0],geometry[1]);
+   await drawRegions();
    const confidence=Math.round(result.data.confidence||0);
-   status.textContent=original.value?'OCR '+confidence+'% · '+L[8]:L[9];
+   status.textContent=(original.value?'OCR '+confidence+'% · ':'')+
+     formulaRegions.length+' formula image region(s) · '+L[8];
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{busy=false}
  });
@@ -103,6 +152,7 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{if(url)URL.revokeObjectURL(url);busy=false}
  });
+ action(buttons,({en:'Export detected formula regions PNG',ar:'حفظ مناطق المعادلات كصورة PNG',fr:'Exporter régions de formules PNG',es:'Exportar regiones de fórmulas PNG',de:'Formelbereiche als PNG speichern',pt:'Exportar fórmulas em PNG',it:'Esporta regioni formule PNG'})[language]||'Export formula PNG',saveMathRegions);
  action(buttons,L[5],async()=>{
   if(!latex.value)return;
   try{await navigator.clipboard.writeText(latex.value);notify('LaTeX ✓')}

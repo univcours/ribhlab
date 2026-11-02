@@ -1,3 +1,8 @@
+## 0.37.1 — Formula Recognition region images
+- Formula OCR now calls Tesseract.js 6's opt-in blocks/word coordinates and selects lines containing **visible** mathematical notation. It draws blue region boxes on the source image and can export actual formula crops as a stitched PNG image — a separate result from editable OCR/LaTeX. Detection can miss complex, handwritten or visually ambiguous math; no fake math reconstruction.
+- Keeps existing editable text, copy LaTeX and optional explicitly consented provider route unchanged; does not change AI Chat/Solver.
+- Tests check math vs ordinary rows, precise bounded geometry, PNG layout and actual UI/worker wiring; source images stay intact.
+
 ## 0.37.0 — CamScanner-style document flatten + Book Scan Pro workflow (independent implementation)
 - Adds a real **Document Flattening** tool for a *single page* that imports/captures a photo, estimates ink-line curvature conservatively, shows before/after and saves a NEW one-page PDF. No destructive overwrite, no claim of 3D reconstruction.
 - Book Scan Pro now offers automatic gutter detection, independent left/right curvature detection and confidence-gated text-row correction on import and via one tap; manual spine/curvature controls remain, and comparison never changes export.
