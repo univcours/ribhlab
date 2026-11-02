@@ -38,7 +38,9 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
  title.textContent=singlePage?({en:'Document Flattening — correct curved paper',ar:'تقويم الوثائق — تصحيح الورق المنحني',fr:'Aplatir le document — corriger la courbure',es:'Aplanar documento — corregir curvas',de:'Dokument glätten — gewelltes Papier',pt:'Achatar documento — corrigir curvas',it:'Appiattisci documento — correggi curvature'})[language]||'Document Flattening':L[0];
  panel.append(title);
  const actions=document.createElement('div');actions.className='rivo-code-actions';panel.append(actions);
- const fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';fileInput.hidden=true;panel.append(fileInput);
+ const fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';fileInput.multiple=!singlePage;fileInput.hidden=true;panel.append(fileInput);
+ const spreadCount=document.createElement('p');spreadCount.className='rivo-id-hint';
+ if(!singlePage)panel.append(spreadCount);
  const preview=document.createElement('canvas');preview.className='rivo-id-preview';panel.append(preview);
  const location=document.createElement('label');location.className='rivo-id-row';location.textContent=L[3];
  const slider=document.createElement('input');slider.type='range';slider.min='25';slider.max='75';slider.value='50';location.append(slider);panel.append(location);
@@ -68,11 +70,31 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
  let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false;
+ const previousSpreads=[],maxSpreads=6;
+ const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
+  (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads};
+ countSpreads();
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async src=>{
-  const img=new Image();img.src=src;
+  if(!singlePage&&image&&previousSpreads.length>=maxSpreads-1)
+   throw Error('Book Scan maximum: '+maxSpreads+' spreads (12 pages).');
+  const source=new Image();source.src=src;
+  await new Promise((ok,bad)=>{source.onload=ok;source.onerror=bad;if(source.complete&&source.naturalWidth)ok()});
+  // Ingest downsized copies to bound memory across a book. Originals stay untouched.
+  const scale=Math.min(1,2200/Math.max(source.naturalWidth,source.naturalHeight));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(source.naturalWidth*scale));
+  canvas.height=Math.max(1,Math.round(source.naturalHeight*scale));
+  canvas.getContext('2d').drawImage(source,0,0,canvas.width,canvas.height);
+  const img=new Image();img.src=canvas.toDataURL('image/jpeg',.90);
   await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;if(img.complete&&img.naturalWidth)ok()});
-  if(!closed){image=img;autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';draw();autoFix()}
+  if(closed)return;
+  if(!singlePage&&image)previousSpreads.push({
+   image,spine:+slider.value,curvature:+warpSlider.value,
+   autoPageWarp,autoLineWarp
+  });
+  image=img;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
+  draw();autoFix();countSpreads();
  };
  const draw=()=>{
   if(!image)return;
@@ -133,11 +155,26 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   try{const photo=await capture();if(photo)await load(photo)}catch(error){status.textContent=error?.message||String(error)}
  });
  makeButton(actions,L[2],()=>fileInput.click());
+ if(!singlePage)makeButton(actions,
+  (({en:'Undo last spread',ar:'رجّع الصفحة السابقة',fr:'Revenir à la double page précédente',es:'Volver a página anterior',de:'Letzte Doppelseite zurück',pt:'Voltar à página anterior',it:'Torna alla pagina precedente'})[language]||'Previous spread'),()=>{
+   if(busy||!previousSpreads.length)return;
+   const old=previousSpreads.pop();
+   image=old.image;slider.value=String(old.spine);warpSlider.value=String(old.curvature);
+   autoPageWarp=old.autoPageWarp;autoLineWarp=old.autoLineWarp;showOriginal=false;
+   draw();countSpreads();
+  });
  makeButton(actions,L[5],cleanup);
  fileInput.addEventListener('change',async()=>{
-  const file=fileInput.files?.[0];fileInput.value='';if(!file)return;
-  if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(file);
-  try{await load(objectURL)}catch{status.textContent='Cannot read book image'}
+  const files=[...(fileInput.files||[])];fileInput.value='';
+  for(const file of files){
+   if(!file.type.startsWith('image/')||file.size>18*1024*1024){
+    status.textContent='Unsupported or oversized photo (max 18 MB each)';break;
+   }
+   const url=URL.createObjectURL(file);
+   try{await load(url)}
+   catch(error){status.textContent=error?.message||String(error);break}
+   finally{URL.revokeObjectURL(url)}
+  }
  });
  autoSpine.addEventListener('click',()=>{
   if(!image||busy)return;
@@ -180,7 +217,7 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
  });
  lineButton.addEventListener('click',()=>{
   if(!image||busy)return;
-  autoLineWarp=null;autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';draw();
+  autoLineWarp=null;autoPageWarp=null;showOriginal=false;warpSlider.value='0';draw();
   const mid=Math.round(preview.width*(+slider.value/100)),found=[null,null];
   for(const [i,x,w,side] of [[0,0,mid,'right'],[1,mid,preview.width-mid,'left']]){
    if(w<140||preview.height<120)continue;
@@ -201,20 +238,27 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   L[4],async()=>{
   if(!image||busy)return;busy=true;
   try{
-   const pdf=await PDFDocument.create(),regions=singlePage?
-    [{x:0,y:0,w:image.naturalWidth,h:image.naturalHeight}]:
-    splitBookRegions(image.naturalWidth,image.naturalHeight,+slider.value);
-   for(const [regionIndex,rect] of regions.entries()){
-    const scale=Math.min(1,1800/Math.max(rect.w,rect.h));
-    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(rect.w*scale));canvas.height=Math.max(1,Math.round(rect.h*scale));
-    canvas.getContext('2d').drawImage(image,rect.x,rect.y,rect.w,rect.h,0,0,canvas.width,canvas.height);
-    dewarpBookCanvas(canvas,resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp),regionIndex===0?'right':'left');
-    if(autoLineWarp?.[regionIndex])applyLineWarpCanvas(canvas,autoLineWarp[regionIndex]);
-    const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('JPEG failed')),'image/jpeg',.91));
-    const pic=await pdf.embedJpg(await blob.arrayBuffer());
-    const page=pdf.addPage([595,842]),pad=15;
-    const ratio=Math.min((595-pad*2)/pic.width,(842-pad*2)/pic.height);
-    const w=pic.width*ratio,h=pic.height*ratio;page.drawImage(pic,{x:(595-w)/2,y:(842-h)/2,width:w,height:h});
+   const pdf=await PDFDocument.create();
+   const spreads=singlePage?[{image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp}]:
+    [...previousSpreads,{image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp}];
+   for(const spread of spreads){
+    const src=spread.image;
+    const regions=singlePage?[{x:0,y:0,w:src.naturalWidth,h:src.naturalHeight}]:
+      splitBookRegions(src.naturalWidth,src.naturalHeight,spread.spine);
+    for(const [regionIndex,rect] of regions.entries()){
+     const scale=Math.min(1,1800/Math.max(rect.w,rect.h));
+     const canvas=document.createElement('canvas');
+     canvas.width=Math.max(1,Math.round(rect.w*scale));canvas.height=Math.max(1,Math.round(rect.h*scale));
+     canvas.getContext('2d').drawImage(src,rect.x,rect.y,rect.w,rect.h,0,0,canvas.width,canvas.height);
+     dewarpBookCanvas(canvas,resolveBookPageCurvature(regionIndex,spread.curvature,spread.autoPageWarp),regionIndex===0?'right':'left');
+     if(spread.autoLineWarp?.[regionIndex])applyLineWarpCanvas(canvas,spread.autoLineWarp[regionIndex]);
+     const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('JPEG failed')),'image/jpeg',.91));
+     const pic=await pdf.embedJpg(await blob.arrayBuffer());
+     const page=pdf.addPage([595,842]),pad=15;
+     const ratio=Math.min((595-pad*2)/pic.width,(842-pad*2)/pic.height);
+     const w=pic.width*ratio,h=pic.height*ratio;
+     page.drawImage(pic,{x:(595-w)/2,y:(842-h)/2,width:w,height:h});
+    }
    }
    await save(new Uint8Array(await pdf.save({useObjectStreams:true})),(singlePage?'RivoScan_Flatten_':'RivoScan_Book_')+Date.now()+'.pdf','application/pdf');
    if(!closed)cleanup();

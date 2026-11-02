@@ -1,3 +1,9 @@
+## 0.37.2 — Book Scan Pro multi-spread capture and multipage PDF
+- Camera capture/import may be repeated to collect up to six book spreads (12 exported facing pages) into a single PDF, preserving sequential order and each spread's independent gutter and curvature settings. Import supports multiple selected images; user may undo the last added spread.
+- Photos are downscaled to max 2200px on ingest, reducing peak memory. Source images remain untouched. Large/unsupported inputs are rejected rather than silently truncating.
+- The standalone Document Flattening tool stays a single-page operation.
+- Camera and Android memory testing is still needed on the target handset.
+
 ## 0.37.1 — Formula Recognition region images
 - Formula OCR now calls Tesseract.js 6's opt-in blocks/word coordinates and selects lines containing **visible** mathematical notation. It draws blue region boxes on the source image and can export actual formula crops as a stitched PNG image — a separate result from editable OCR/LaTeX. Detection can miss complex, handwritten or visually ambiguous math; no fake math reconstruction.
 - Keeps existing editable text, copy LaTeX and optional explicitly consented provider route unchanged; does not change AI Chat/Solver.
