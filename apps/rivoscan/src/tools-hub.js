@@ -1,7 +1,7 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','slideScan','whiteboard','timestamp']},
+ {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
@@ -18,6 +18,7 @@ export const hubSpecial={
  photoTranslation:{icon:'text',color:'violet',type:'photoTranslation'},
  formulaOcr:{icon:'text',color:'blue',type:'formulaOcr'},
  bookScan:{icon:'file',color:'sky',type:'book'},
+ documentFlatten:{icon:'file',color:'green',type:'flatten'},
  slideScan:{icon:'image',color:'pink',type:'scan'},
  whiteboard:{icon:'image',color:'green',type:'photo',preset:'whiteboard'},
  timestamp:{icon:'clock',color:'blue',type:'photo',preset:'timestamp'},
@@ -57,7 +58,8 @@ const labels={
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
  scanCode:['Scan QR & Barcode','قراءة QR والباركود','Lire QR et code-barres','Leer QR y código','QR / Barcode lesen','Ler QR e código','Leggi QR e barcode'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
- bookScan:['Book Scan','مسح الكتب','Numériser un livre','Escanear libro','Buch scannen','Digitalizar livro','Scansiona libro'],
+ bookScan:['Book Scan Pro (auto split & flatten)','مسح الكتب الاحترافي (فصل وتقويم تلقائي)','Scanner livre Pro (séparer et redresser)','Escanear libro Pro (dividir y aplanar)','Buchscan Pro (trennen & glätten)','Digitalizar livro Pro (separar e corrigir)','Scansiona libro Pro (separa e correggi)'],
+ documentFlatten:['Document Flattening (beta)','تقويم الوثائق المنحنية','Aplatir document (bêta)','Aplanar documento (beta)','Dokument glätten (Beta)','Achatar documento (beta)','Appiattisci documento (beta)'],
  slideScan:['Slides Scan','مسح العروض','Scanner des diapositives','Escanear diapositivas','Folien scannen','Digitalizar slides','Scansione slide'],
  whiteboard:['Whiteboard Enhance','تحسين السبورة','Améliorer tableau blanc','Mejorar pizarra','Whiteboard verbessern','Melhorar quadro','Migliora lavagna'],
  timestamp:['Timestamp','إضافة التاريخ والساعة','Horodatage','Fecha y hora','Zeitstempel','Data e hora','Data e ora'],

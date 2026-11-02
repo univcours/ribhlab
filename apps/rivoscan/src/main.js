@@ -749,8 +749,8 @@ async function openHubAction(id){
    }});
    return;
  }
- if(spec.type==='book'){
-   openBookSplitter({language,save:saveOut,capture:async()=>{
+ if(spec.type==='book'||spec.type==='flatten'){
+   openBookSplitter({language,save:saveOut,singlePage:spec.type==='flatten',capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
        resultType:CameraResultType.Uri,source:CameraSource.Camera});
      return photo.webPath||photo.path;

@@ -1,3 +1,9 @@
+## 0.37.0 — CamScanner-style document flatten + Book Scan Pro workflow (independent implementation)
+- Adds a real **Document Flattening** tool for a *single page* that imports/captures a photo, estimates ink-line curvature conservatively, shows before/after and saves a NEW one-page PDF. No destructive overwrite, no claim of 3D reconstruction.
+- Book Scan Pro now offers automatic gutter detection, independent left/right curvature detection and confidence-gated text-row correction on import and via one tap; manual spine/curvature controls remain, and comparison never changes export.
+- Both modes deliberately abstain when evidence is unreliable (blank/illustrated pages). Curled 3D folds, fingers and occluded content still require specialized image models and in-person quality testing.
+- See CamScanner user experience reference: two-facing-page split and AI curve correction, but code and UI are independently implemented.
+
 ## 0.36.3: Solver camera image resilience + truthful release notes
 - Camera-captured problem photos up to 18 MB are converted to a bounded JPEG on-device before user selection, avoiding spurious 5 MB vision payload rejection without changing the camera original.
 - Nothing is uploaded until the separate user key + question + consent flow executes. Regressions check local resizing and actual consent wiring.
