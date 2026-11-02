@@ -707,7 +707,11 @@ async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){openTool(id);return;}
  if(spec.type==='aiDocument'||spec.type==='aiSolver'){
-   openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language});
+   openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:async()=>{
+     const photo=await Camera.getPhoto({quality:92,allowEditing:false,
+       resultType:CameraResultType.Uri,source:CameraSource.Camera});
+     return photo.webPath||photo.path;
+   }});
    return;
  }
  if(spec.type==='formulaOcr'){

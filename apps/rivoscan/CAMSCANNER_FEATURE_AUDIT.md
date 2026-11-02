@@ -1,3 +1,7 @@
+## 0.36.2: AI Solver direct Android camera capture
+- Solver AI now has a camera action that selects a real photographed problem as an in-memory File, with same image-size limit and existing explicit key and confirmation step. Capturing/choosing the photo never uploads it automatically.
+- Actual vision calls still need a paid user key and live device/provider QA. No claims of automatic or guaranteed problem solving.
+
 ## 0.36.1: CountCam duplicate-aware bounding boxes
 - Adds class-aware nonmaximum suppression after real COCO-SSD detections, preventing one detected object from being counted twice when predicted boxes overlap strongly. The actual annotated camera preview and displayed totals use the same deduplicated detections.
 - Tests cover duplicates, nearby distinct objects, other classes and malformed boxes. Does not recognize categories outside COCO or make count estimates exact; handset QA remains needed.

@@ -61,7 +61,7 @@ export async function encodeProblemImage(file){
   return canvas.toDataURL('image/jpeg',.78);
  }finally{URL.revokeObjectURL(url)}
 }
-export function openDocumentAI({mode='chat',language='en'}={}){
+export function openDocumentAI({mode='chat',language='en',capture=null}={}){
  if(!['chat','solver'].includes(mode))throw Error('Unknown AI workflow');
  const L=labels(language),cover=document.createElement('div');cover.className='rivo-code-overlay';
  const panel=document.createElement('section');panel.className='rivo-code-dialog';
@@ -86,6 +86,23 @@ export function openDocumentAI({mode='chat',language='en'}={}){
   if(busy)return;closed=true;key.value='';docText='';history=[];input.value='';result.textContent='';cover.remove();
  };
  input.addEventListener('change',()=>{lastFile=input.files?.[0]||null;docText='';history=[];result.textContent='';state.textContent=lastFile?.name||''});
+ if(mode==='solver'&&capture)action(({ar:'تصوير المسألة',en:'Take problem photo',fr:'Photographier exercice',es:'Fotografiar problema',de:'Aufgabe fotografieren',pt:'Fotografar problema',it:'Fotografa problema'})[language]||'Take problem photo',async()=>{
+  if(busy)return;
+  busy=true;state.textContent=L[10];
+  try{
+   const uri=await capture();
+   if(!uri)return;
+   const response=await fetch(uri);
+   if(!response.ok)throw Error('Could not read camera photo');
+   const blob=await response.blob();
+   if(blob.size>5*1024*1024)throw Error('Photo limit: 5 MB');
+   lastFile=new File([blob],'RivoScan_Solver_'+Date.now()+'.jpg',{type:blob.type||'image/jpeg'});
+   input.value='';docText='';history=[];result.textContent='';state.textContent=lastFile.name;
+   // The photo is only selected locally. Submission still requires a second
+   // explicit user action plus a separate consent dialog in submit().
+  }catch(error){state.textContent=error?.message||String(error)}
+  finally{busy=false}
+ });
  const submit=action(L[mode==='chat'?7:8],async()=>{
   if(busy)return;
   if(!lastFile){state.textContent=L[14];return}
