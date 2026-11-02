@@ -226,6 +226,6 @@ test('Book auto-flattening maintains independent left/right corrections and manu
  assert.ok(source.includes('autoPageWarp=samples.map('));
  assert.ok(source.includes('resolveBookPageCurvature(regionIndex,+warpSlider.value,autoPageWarp)'),
    'the two independent corrections must actually be used for export');
- assert.ok(source.includes("warpSlider.addEventListener('input',()=>{autoPageWarp=null;draw()})"),
+ assert.ok(source.includes("warpSlider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()})"),
    'manual corrections must cancel stale auto estimate');
 });
