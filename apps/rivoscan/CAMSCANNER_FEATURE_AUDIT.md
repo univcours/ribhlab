@@ -1,3 +1,8 @@
+## 0.36.0 optional vision AI math transcription
+- Formula OCR keeps local linear Tesseract. An additional real image-to-LaTeX option passes an explicitly selected photo to OpenAI Responses API after per-request confirmation, using a personal API key supplied for that session.
+- It asks the model to transcribe stacked fractions, radicals and matrices **without solving**, exposes real errors, does not persist the key and sends `store:false`. External API charges/retention are controlled by the user's provider settings. No live network QA without an authorized paid key.
+- Recognition is not guaranteed and local advanced handwriting/math OCR remains unimplemented. Never replace user's original file.
+
 ## 0.35.0: Content-derived curved text-line flattening (beta)
 - Adds an actual independently estimated, per-column nonrigid vertical displacement field for book pages. Repeated printed text-line profiles at seven horizontal positions are cross-correlated; high-confidence page estimates can be previewed and exported to PDF. Low-text, ambiguous or blank pages revert to manual adjustment; no hidden background AI service.
 - This is an image-based 1D remap and cannot reconstruct paper depth, severe horizontal creases or occluded text; NOT automatic 3D flattening.

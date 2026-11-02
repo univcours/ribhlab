@@ -1,4 +1,5 @@
 import Tesseract from 'tesseract.js';
+import {buildAIRequest,requestUserAI} from './ai-provider.js';
 const {recognize}=Tesseract;
 
 /**
@@ -47,7 +48,12 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  const buttons=document.createElement('div');buttons.className='rivo-code-actions';panel.append(buttons);
  let selected=null,closed=false,busy=false;
  const action=(container,text,cb)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',cb);container.append(b)};
- const close=()=>{if(busy)return;closed=true;selected=null;overlay.remove()};
+ const secret=document.createElement('input');secret.type='password';secret.autocomplete='off';
+ secret.placeholder=({en:'Personal OpenAI API key (session only)',ar:'مفتاح API الشخصي لهاد الجلسة',fr:'Clé API personnelle',es:'Clave API personal',de:'Persönlicher API-Schlüssel',pt:'Chave API pessoal',it:'Chiave API personale'})[language]||'Personal API key';
+ const keyLabel=document.createElement('label');keyLabel.className='rivo-id-row';
+ keyLabel.textContent=({en:'Optional AI to recognize complex formulas',ar:'قراءة المعادلات المعقدة بالذكاء الاصطناعي (اختيارية)',fr:'IA pour les formules complexes (optionnel)',es:'IA para fórmulas complejas (opcional)',de:'KI für komplexe Formeln (optional)',pt:'IA para fórmulas complexas (opcional)',it:'IA per formule complesse (opzionale)'})[language]||'Optional AI';
+ keyLabel.append(secret);panel.append(keyLabel);
+ const close=()=>{if(busy)return;closed=true;selected=null;secret.value='';overlay.remove()};
  action(actions,L[1],async()=>{
   if(!capture||busy)return;
   try{
@@ -74,6 +80,29 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
   finally{busy=false}
  });
  original.addEventListener('input',()=>{latex.value=linearMathToLatex(original.value)});
+ action(buttons,({en:'Read complex formula with AI (consent)',ar:'قراءة معادلة معقدة بـAI (بموافقتك)',fr:'Lire une formule avec IA (accord)',es:'Leer fórmula con IA (confirmar)',de:'Formel mit KI lesen (Zustimmung)',pt:'Ler fórmula com IA (confirmar)',it:'Leggi formula con IA (consenso)'})[language]||'AI math OCR',async()=>{
+  if(!selected||busy)return;
+  if(!secret.value.trim()){status.textContent=secret.placeholder;return}
+  const confirmText=({en:'Send this math photo to OpenAI using your personal API key? Fees may apply.',ar:'واش موافق ترسل صورة المعادلة إلى OpenAI باستعمال مفتاحك الشخصي؟ ممكن تكون تكاليف.',fr:'Envoyer cette photo à OpenAI avec votre clé API ? Frais possibles.',es:'¿Enviar esta foto a OpenAI con tu clave API? Puede tener coste.',de:'Foto mit Ihrem API-Schlüssel an OpenAI senden? Gebühren möglich.',pt:'Enviar foto para OpenAI com a sua chave API? Pode haver custos.',it:'Inviare la foto a OpenAI con la propria chiave API? Costi possibili.'})[language];
+  if(!window.confirm(confirmText))return;
+  busy=true;status.textContent=L[3]+' (AI) …';
+  let url=null;
+  try{
+   if(selected.size>16*1024*1024)throw Error('Image limit: 16 MB');
+   url=URL.createObjectURL(selected);
+   const image=await new Promise((ok,bad)=>{const img=new Image();img.onload=()=>ok(img);img.onerror=()=>bad(Error('Cannot read math image'));img.src=url});
+   const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+   canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(image,0,0,canvas.width,canvas.height);
+   const imageDataURL=canvas.toDataURL('image/jpeg',.76);
+   const request=buildAIRequest({mode:'formula',question:'Transcribe precisely as LaTeX, no solution.',imageDataURL});
+   const answer=await requestUserAI({apiKey:secret.value,request});
+   if(!closed){latex.value=answer.trim();status.textContent='AI OCR · '+L[8]}
+  }catch(error){if(!closed)status.textContent=error?.message||String(error)}
+  finally{if(url)URL.revokeObjectURL(url);busy=false}
+ });
  action(buttons,L[5],async()=>{
   if(!latex.value)return;
   try{await navigator.clipboard.writeText(latex.value);notify('LaTeX ✓')}
