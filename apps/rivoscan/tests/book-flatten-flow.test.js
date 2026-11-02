@@ -23,5 +23,5 @@ test('Book mode retains two-page split and right/left independent dewarp logic',
  assert.ok(book.includes('autoPageWarp=curve;'));
  assert.ok(book.includes('autoLineWarp=line;'));
  assert.ok(book.includes('dewarpBookCanvas(canvas,resolveBookPageCurvature'));
- assert.ok(book.includes('applyLineWarpCanvas(canvas,autoLineWarp[regionIndex])'));
+ assert.ok(book.includes('applyLineWarpCanvas(canvas,spread.autoLineWarp[regionIndex])'));
 });
