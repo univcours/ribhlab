@@ -56,6 +56,7 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
  const lineButton=document.createElement('button');lineButton.type='button';lineButton.className='rivo-line-curvature';
  lineButton.textContent=({en:'Straighten text rows (beta)',ar:'تقويم سطور الكتاب تلقائياً (تجريبي)',fr:'Redresser les lignes (bêta)',es:'Enderezar líneas (beta)',de:'Textzeilen begradigen (Beta)',pt:'Endireitar linhas (beta)',it:'Raddrizza righe (beta)'})[language]||'Straighten text rows (beta)';
  panel.append(lineButton);
+ if(singlePage){lineButton.hidden=true;autoButton.hidden=true;}
  const autoAll=document.createElement('button');autoAll.type='button';autoAll.className='rivo-auto-all';
  autoAll.textContent=({en:'Auto straighten (beta)',ar:'تقويم تلقائي (تجريبي)',fr:'Redresser automatiquement (bêta)',es:'Enderezar automáticamente (beta)',de:'Automatisch begradigen (Beta)',pt:'Endireitar automaticamente (beta)',it:'Raddrizza automaticamente (beta)'})[language]||'Auto straighten';
  panel.append(autoAll);
