@@ -1,0 +1,22 @@
+// Read the repository version on EVERY Gradle sync/build (including Android Studio Run).
+// The generated android/app/build.gradle may contain a stale Capacitor template
+// version; this override is deliberately evaluated after that defaultConfig.
+def rivoScanVersionFile = file('../../rivoscan-version.properties')
+if (!rivoScanVersionFile.isFile()) {
+    throw new GradleException('RivoScan version file missing. Run install-live-scanner.ps1 before Android Studio Run.')
+}
+def rivoScanVersion = new Properties()
+rivoScanVersionFile.withInputStream { input -> rivoScanVersion.load(input) }
+def rivoCodeText = rivoScanVersion.getProperty('versionCode', '').trim()
+def rivoNameText = rivoScanVersion.getProperty('versionName', '').trim()
+if (!(rivoCodeText ==~ /[1-9][0-9]*/) || !rivoNameText) {
+    throw new GradleException('Invalid RivoScan versionCode/versionName in rivoscan-version.properties')
+}
+def rivoCode = Integer.parseInt(rivoCodeText)
+android {
+    defaultConfig {
+        versionCode rivoCode
+        versionName rivoNameText
+    }
+}
+println("[RivoScan] Android Studio/Gradle app version: " + rivoNameText + " (versionCode " + rivoCode + ")")

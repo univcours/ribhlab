@@ -1,0 +1,86 @@
+name: RivoScan Android emulator smoke / data-preservation tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-emulator-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build APK from current source
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+          npx cap add android
+          npx cap sync android
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Integrate native scanner and storage
+        shell: pwsh
+        run: ./install-live-scanner.ps1
+      - name: Apply launcher branding and version guard
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Build debug APK for isolated emulator
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Enable Android emulator KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch on Android emulator; verify upgrade preserves documents
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -eu
+            APK="apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk"
+            adb install -r "$APK"
+            adb shell pm path com.ribhlab.rivoscan
+            adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
+            sleep 8
+            test -n "$(adb shell pidof com.ribhlab.rivoscan | tr -d '\r')"
+            adb shell run-as com.ribhlab.rivoscan sh -c 'mkdir -p files && echo preserved-by-update > files/rivoscan-emulator-test.txt'
+            adb install -r "$APK"
+            VAL="$(adb shell run-as com.ribhlab.rivoscan cat files/rivoscan-emulator-test.txt | tr -d '\r')"
+            test "$VAL" = "preserved-by-update"
+            adb shell am force-stop com.ribhlab.rivoscan
+            adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
+            sleep 5
+            test -n "$(adb shell pidof com.ribhlab.rivoscan | tr -d '\r')"
+            adb exec-out screencap -p > /tmp/rivoscan-emulator-smoke.png
+            echo "PASS: native launch and in-place update preserved private app data"
+      - name: Upload emulator proof image (no user documents)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Emulator-Smoke-Screenshot
+          path: /tmp/rivoscan-emulator-smoke.png
+          if-no-files-found: ignore
+          retention-days: 7

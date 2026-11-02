@@ -1,0 +1,99 @@
+name: RivoScan Play candidate AAB
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-play-aab.yml'
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test and bundle
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+      - name: Generate Android and integrate scanner
+        run: |
+          npx cap add android
+          npx cap sync android
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Integrate native camera
+        shell: pwsh
+        run: ./install-live-scanner.ps1
+      - name: Apply native brand and version
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Compile unsigned release bundle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+          test -s app/build/outputs/bundle/release/app-release.aab
+      - name: Inspect release AAB structure
+        run: |
+          set -euo pipefail
+          unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
+          unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
+          grep -F 'versionCode=50' rivoscan-version.properties
+          grep -F 'versionName=0.36.3' rivoscan-version.properties
+      - name: Check authorized signing secrets
+        id: signing
+        env:
+          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
+          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
+          STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No upload signing secrets: AAB stays UNSIGNED, NOT Play-ready."
+          fi
+      - name: Sign with user-supplied upload key
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
+          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
+          PLAY_STORE_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
+          PLAY_KEY_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYFILE="$RUNNER_TEMP/rivoscan-upload-key.jks"
+          trap 'rm -f "$KEYFILE"' EXIT
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+      - name: Save signed AAB (Play QA still required)
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-SIGNED-AAB-NEEDS-PLAY-TEST
+          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+      - name: Save unsigned AAB for inspection ONLY
+        if: steps.signing.outputs.enabled != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-UNSIGNED-AAB-NOT-PLAY-READY
+          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 7
