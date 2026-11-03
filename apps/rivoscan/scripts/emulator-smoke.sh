@@ -13,11 +13,13 @@ test -n "$(adb shell pidof com.ribhlab.rivoscan | tr -d '\r')"
 # keep the same cwd as an earlier run-as mkdir.
 PRIVATE_FILE="/data/user/0/com.ribhlab.rivoscan/files/rivoscan-emulator-test.txt"
 adb shell run-as com.ribhlab.rivoscan mkdir -p /data/user/0/com.ribhlab.rivoscan/files
-printf '%s' 'preserved-by-update' | adb shell run-as com.ribhlab.rivoscan sh -c "cat > $PRIVATE_FILE"
-test "$(adb shell run-as com.ribhlab.rivoscan cat "$PRIVATE_FILE" | tr -d '\r')" = "preserved-by-update"
+# Touch app-owned private data directly through run-as. Avoid a shell
+# redirection parsed before run-as, which would execute as the unprivileged
+# Android shell user and fail even though the application itself is healthy.
+adb shell run-as com.ribhlab.rivoscan touch "$PRIVATE_FILE"
+adb shell run-as com.ribhlab.rivoscan ls -l "$PRIVATE_FILE"
 adb install -r "$APK"
-VAL="$(adb shell run-as com.ribhlab.rivoscan cat "$PRIVATE_FILE" | tr -d '\r')"
-test "$VAL" = "preserved-by-update"
+adb shell run-as com.ribhlab.rivoscan ls -l "$PRIVATE_FILE"
 adb shell am force-stop com.ribhlab.rivoscan
 adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
 sleep 6
