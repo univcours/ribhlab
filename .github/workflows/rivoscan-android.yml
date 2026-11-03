@@ -90,11 +90,11 @@ jobs:
           # RivoScan Gradle override is the actual source of truth in Android Studio.
           grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
           grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
-          grep -F 'versionCode=53' rivoscan-version.properties
+          grep -F 'versionCode=54' rivoscan-version.properties
           grep -F 'rivo-build-version' src/main.js
           grep -F 'version as appVersion' src/main.js
           grep -F 'rivo-library-version' src/main.js
-          grep -F 'versionName=0.37.2' rivoscan-version.properties
+          grep -F 'versionName=0.38.0' rivoscan-version.properties
           grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
       - name: Verify live scanner and persistent Documents storage are registered
         run: |

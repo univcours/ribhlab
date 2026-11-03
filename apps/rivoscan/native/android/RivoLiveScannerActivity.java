@@ -1211,10 +1211,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout choices=new LinearLayout(this);choices.setGravity(Gravity.CENTER_VERTICAL);
         choices.setPadding(dp(9),dp(8),dp(9),dp(8));
         choices.setBackgroundColor(Color.rgb(25,38,70));
-        String[] modes={RivoDocumentEnhancer.AUTO,RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
+        String[] modes={RivoDocumentEnhancer.PRO_SCAN,RivoDocumentEnhancer.AUTO,RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
             RivoDocumentEnhancer.MAGIC,RivoDocumentEnhancer.SHADOW,
             RivoDocumentEnhancer.WHITEBOARD,RivoDocumentEnhancer.BW};
-        String[] captions={"enhanceAuto","enhanceOriginal","enhanceSmart","enhanceMagic",
+        String[] captions={"enhancePro","enhanceAuto","enhanceOriginal","enhanceSmart","enhanceMagic",
             "enhanceShadow","enhanceWhiteboard","enhanceBW"};
         int sw=pendingWarp.getWidth(),sh=pendingWarp.getHeight();
         int tw=Math.max(35,(int)(dp(72)*sw/(double)Math.max(sw,sh)));

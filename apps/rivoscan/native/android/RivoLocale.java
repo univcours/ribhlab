@@ -109,15 +109,15 @@ final class RivoLocale {
         {"Assinar","Desenhe a assinatura. Aparecerá no canto inferior direito, sem alterar a imagem original.","Remover","Assinatura removida.","Desenhe primeiro.","Assinatura pronta: ✓."},
         {"Firma","Disegna la firma. Comparirà in basso a destra; l'originale resta invariato.","Rimuovi","Firma rimossa.","Disegna la firma.","Firma pronta: tocca ✓."}
     };
-    private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto"};
+    private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto","enhancePro"};
     private static final String[][] AUTO_TEXT={
-        {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean"},
-        {"تنقية وحفظ","الفلاتر","كنقومو الورقة وكننقيو الخطوط والكاشيات…","تنقية تلقائية"},
-        {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto"},
-        {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática"},
-        {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch"},
-        {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática"},
-        {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica"}
+        {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean","Paper Scan Pro"},
+        {"تنقية وحفظ","الفلاتر","كنقومو الورقة وكننقيو الخطوط والكاشيات…","تنقية تلقائية","سكانير الورق الاحترافي"},
+        {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto","Scanner papier Pro"},
+        {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática","Escáner papel Pro"},
+        {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch","Papier-Scan Pro"},
+        {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática","Digitalização papel Pro"},
+        {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica","Scanner carta Pro"}
     };
     private static final String[][] ID_SIDES={
         {"ID card: photograph the FRONT","ID card: photograph the BACK"},

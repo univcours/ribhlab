@@ -19,11 +19,11 @@ import java.util.List;
  */
 final class RivoDocumentEnhancer {
     static final String ORIGINAL="original",AUTO="auto",ENHANCE="enhance",MAGIC="magic",
-        SHADOW="shadow",BW="bw",WHITEBOARD="whiteboard";
+        SHADOW="shadow",BW="bw",WHITEBOARD="whiteboard",PRO_SCAN="proscan";
     private RivoDocumentEnhancer(){}
     static boolean isSupportedMode(String mode){
         return ORIGINAL.equals(mode)||AUTO.equals(mode)||ENHANCE.equals(mode)||
-            MAGIC.equals(mode)||SHADOW.equals(mode)||BW.equals(mode)||WHITEBOARD.equals(mode);
+            MAGIC.equals(mode)||SHADOW.equals(mode)||BW.equals(mode)||WHITEBOARD.equals(mode)||PRO_SCAN.equals(mode);
     }
 
     static Bitmap apply(Bitmap image,String mode){
@@ -36,7 +36,7 @@ final class RivoDocumentEnhancer {
         try {
             Utils.bitmapToMat(image,rgba);
             Imgproc.cvtColor(rgba,rgb,Imgproc.COLOR_RGBA2RGB);
-            if(AUTO.equals(mode)||WHITEBOARD.equals(mode))rgb.copyTo(originalRGB);
+            if(AUTO.equals(mode)||WHITEBOARD.equals(mode)||PRO_SCAN.equals(mode))rgb.copyTo(originalRGB);
             if(BW.equals(mode)){
                 Imgproc.cvtColor(rgb,gray,Imgproc.COLOR_RGB2GRAY);
                 // Large-scale paper illumination: reduce shadows caused by folds,
@@ -57,25 +57,27 @@ final class RivoDocumentEnhancer {
                 Imgproc.cvtColor(rgb,lab,Imgproc.COLOR_RGB2Lab);
                 Core.split(lab,channels);
                 Mat lum=channels.get(0);
-                boolean mild=SHADOW.equals(mode)||WHITEBOARD.equals(mode);
-                double sigma=Math.max(13,Math.min(55,Math.min(lum.width(),lum.height())/24.));
+                boolean mild=SHADOW.equals(mode)||WHITEBOARD.equals(mode)||PRO_SCAN.equals(mode);
+                double sigma=PRO_SCAN.equals(mode)?Math.max(24,Math.min(78,Math.min(lum.width(),lum.height())/19.)):
+                    Math.max(13,Math.min(55,Math.min(lum.width(),lum.height())/24.));
                 Imgproc.GaussianBlur(lum,background,new Size(0,0),sigma);
                 Core.add(background,Scalar.all(12),background);
-                Core.divide(lum,background,normal,mild?232:244);
-                CLAHE local=Imgproc.createCLAHE(MAGIC.equals(mode)?2.5:(mild?1.25:(AUTO.equals(mode)?1.45:1.7)),new Size(8,8));
+                Core.divide(lum,background,normal,PRO_SCAN.equals(mode)?246:(mild?232:244));
+                CLAHE local=Imgproc.createCLAHE(MAGIC.equals(mode)?2.5:(PRO_SCAN.equals(mode)?1.65:(mild?1.25:(AUTO.equals(mode)?1.45:1.7))),new Size(8,8));
                 try{local.apply(normal,equalized);}finally{local.collectGarbage();}
                 // Crisp but restrained strokes; excessive sharpening amplifies noise
                 // and produces artificial halos around handwriting.
                 Imgproc.GaussianBlur(equalized,smooth,new Size(0,0),.95);
-                Core.addWeighted(equalized,MAGIC.equals(mode)?1.28:1.14,
-                    smooth,MAGIC.equals(mode)?-.28:-.14,0,sharp);
+                Core.addWeighted(equalized,MAGIC.equals(mode)?1.28:(PRO_SCAN.equals(mode)?1.11:1.14),
+                    smooth,MAGIC.equals(mode)?-.28:(PRO_SCAN.equals(mode)?-.11:-.14),0,sharp);
                 channels.get(0).release();
                 channels.set(0,sharp.clone());
                 Core.merge(channels,lab);
                 Imgproc.cvtColor(lab,rgb,Imgproc.COLOR_Lab2RGB);
-                if(AUTO.equals(mode)||WHITEBOARD.equals(mode)){
+                if(AUTO.equals(mode)||WHITEBOARD.equals(mode)||PRO_SCAN.equals(mode)){
                     // Normalize dull paper while retaining low-contrast writing.
-                    Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb);
+                    Core.addWeighted(rgb,PRO_SCAN.equals(mode)?0.87:0.82,originalRGB,
+                        PRO_SCAN.equals(mode)?0.13:0.18,0,rgb);
                     // Preserve saturated original stamp ink (blue/red/green) explicitly:
                     // brightness normalization must not wash out official stamp colors.
                     Mat hsv=new Mat(),stampMask=new Mat();
