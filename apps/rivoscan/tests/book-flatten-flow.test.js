@@ -10,7 +10,7 @@ test('Flatten tool uses independent single-page preview and exports a one-page P
  assert.ok(book.includes("(singlePage||currentIsSinglePage)?[[0,0,preview.width,'right']]"));
  assert.ok(book.includes('regions=(singlePage||spread.alreadySingle)?'));
  assert.ok(book.includes('if(!singlePage){ctx.strokeStyle'));
- assert.ok(book.includes('const autoFix=()=>{'));
+ assert.ok(book.includes('const autoFix=(allowDuringLoad=false)=>{'));
  assert.ok(book.includes('autoAll.addEventListener'));
  assert.ok(book.includes('showOriginal=!showOriginal'));
 });
