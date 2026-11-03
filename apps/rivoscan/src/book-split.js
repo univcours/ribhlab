@@ -30,7 +30,7 @@ export function resolveBookPageCurvature(pageIndex,manualCurvature,autoPageWarp=
 function makeButton(parent,title,callback){
  const b=document.createElement('button');b.type='button';b.textContent=title;b.addEventListener('click',callback);parent.append(b);return b;
 }
-export function openBookSplitter({language='en',save,capture,singlePage=false}={}){
+export function openBookSplitter({language='en',save,capture,cleanPage,singlePage=false}={}){
  const L=dict[language]||dict.en,overlay=document.createElement('div');
  overlay.className='rivo-id-overlay';
  const panel=document.createElement('section');panel.className='rivo-id-dialog';panel.setAttribute('role','dialog');
@@ -70,13 +70,13 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   ({en:'Straighten one document using detected text-line curvature; adjust manually if detection is uncertain. Not 3D fold reconstruction.',ar:'كيقوّم صفحة وحدة بتحليل سطور النص، وإذا النتيجة ما واضحةش يمكن تصحيحها يدوياً. ماشي إعادة بناء 3D كاملة.',fr:'Redressement par lignes de texte, à vérifier. Ce n’est pas une reconstruction 3D.'})[language]||'Guided flattening':L[6];info.className='rivo-id-hint';panel.append(info);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
- let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false;
+ let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false,currentIsSinglePage=false;
  const previousSpreads=[],maxSpreads=6;
  const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
   (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads};
  countSpreads();
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
- const load=async src=>{
+ const load=async (src,{alreadySingle=false}={})=>{
   if(!singlePage&&image&&previousSpreads.length>=maxSpreads-1)
    throw Error('Book Scan maximum: '+maxSpreads+' spreads (12 pages).');
   const source=new Image();source.src=src;
@@ -92,10 +92,12 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   if(closed)return;
   if(!singlePage&&image)previousSpreads.push({
    image,spine:+slider.value,curvature:+warpSlider.value,
-   autoPageWarp,autoLineWarp
+   autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
-  image=img;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
+  image=img;currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix();countSpreads();
+  location.hidden=singlePage||currentIsSinglePage;
+  autoSpine.hidden=singlePage||currentIsSinglePage;
  };
  const draw=()=>{
   if(!image)return;
@@ -104,7 +106,7 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   const ctx=preview.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0,preview.width,preview.height);
   if(showOriginal)return;
   const center=Math.round(preview.width*(+slider.value/100));
-  const parts=singlePage?[[0,0,preview.width,'right']]:[[0,0,center,'right'],[1,center,preview.width-center,'left']];
+  const parts=(singlePage||currentIsSinglePage)?[[0,0,preview.width,'right']]:[[0,0,center,'right'],[1,center,preview.width-center,'left']];
   for(const [pageIndex,x,w,side] of parts){
    if(w<2)continue;
    const curvature=resolveBookPageCurvature(pageIndex,+warpSlider.value,autoPageWarp);
@@ -124,13 +126,13 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   draw();
   const width=preview.width,height=preview.height;
   const ctx=preview.getContext('2d',{willReadFrequently:true});
-  if(!singlePage&&width>=160&&height>=100){
+  if(!singlePage&&!currentIsSinglePage&&width>=160&&height>=100){
    const whole=ctx.getImageData(0,0,width,height);
    const gutter=estimateBookSpine(whole.data,width,height);
    if(gutter.confidence>=.25){slider.value=String(gutter.spine);draw()}
   }
   const center=Math.round(width*(+slider.value/100));
-  const pages=singlePage?[[0,0,width,'right']]:[[0,0,center,'right'],[1,center,width-center,'left']];
+  const pages=(singlePage||currentIsSinglePage)?[[0,0,width,'right']]:[[0,0,center,'right'],[1,center,width-center,'left']];
   const line=[null,null],curve=[null,null];
   let reliable=0;
   for(const [idx,x,w,side] of pages){
@@ -161,13 +163,30 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   try{const photo=await capture();if(photo)await load(photo)}catch(error){status.textContent=error?.message||String(error)}
  });
  makeButton(actions,L[2],()=>fileInput.click());
+ if(!singlePage&&typeof cleanPage==='function'){
+  makeButton(actions,({en:'AI clean page (remove fingers/stains)',ar:'تنقية الصفحة بـAI (الأصابع والبقع)',fr:'Nettoyer page IA (doigts/taches)',es:'Limpiar página IA (dedos/manchas)',de:'KI-Seite säubern (Finger/Flecken)',pt:'Limpar página IA (dedos/manchas)',it:'Pulisci pagina IA (dita/macchie)'})[language]||'AI clean page',async()=>{
+   if(busy)return;busy=true;
+   try{
+    const pages=await cleanPage();
+    if(!Array.isArray(pages)||!pages.length)return;
+    for(const file of pages){
+     if(!(file instanceof Blob)||file.size>18*1024*1024)throw Error('Invalid scanner photo');
+     const url=URL.createObjectURL(file);
+     try{await load(url,{alreadySingle:true})}finally{URL.revokeObjectURL(url)}
+    }
+    status.textContent=({en:'ML Kit FULL cleanup applied on device. Review each result: blocked text cannot be reconstructed.',ar:'تنقية ML Kit FULL على الجهاز. راجع كل صفحة: النص المغطى ما نضمنوش يرجع.',fr:'ML Kit FULL a nettoyé la page. Vérifiez le résultat.'})[language]||'Review cleaned page';
+   }catch(error){status.textContent=error?.message||String(error)}
+   finally{busy=false}
+  });
+ }
  if(!singlePage)makeButton(actions,
   (({en:'Undo last spread',ar:'رجّع الصفحة السابقة',fr:'Revenir à la double page précédente',es:'Volver a página anterior',de:'Letzte Doppelseite zurück',pt:'Voltar à página anterior',it:'Torna alla pagina precedente'})[language]||'Previous spread'),()=>{
    if(busy||!previousSpreads.length)return;
    const old=previousSpreads.pop();
    image=old.image;slider.value=String(old.spine);warpSlider.value=String(old.curvature);
-   autoPageWarp=old.autoPageWarp;autoLineWarp=old.autoLineWarp;showOriginal=false;
+   autoPageWarp=old.autoPageWarp;autoLineWarp=old.autoLineWarp;currentIsSinglePage=old.alreadySingle;showOriginal=false;
    draw();countSpreads();
+   location.hidden=singlePage||currentIsSinglePage;autoSpine.hidden=singlePage||currentIsSinglePage;
   });
  makeButton(actions,L[5],cleanup);
  fileInput.addEventListener('change',async()=>{
@@ -245,11 +264,11 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   if(!image||busy)return;busy=true;
   try{
    const pdf=await PDFDocument.create();
-   const spreads=singlePage?[{image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp}]:
-    [...previousSpreads,{image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp}];
+   const current={image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp,alreadySingle:currentIsSinglePage};
+   const spreads=singlePage?[current]:[...previousSpreads,current];
    for(const spread of spreads){
     const src=spread.image;
-    const regions=singlePage?[{x:0,y:0,w:src.naturalWidth,h:src.naturalHeight}]:
+    const regions=(singlePage||spread.alreadySingle)?[{x:0,y:0,w:src.naturalWidth,h:src.naturalHeight}]:
       splitBookRegions(src.naturalWidth,src.naturalHeight,spread.spine);
     for(const [regionIndex,rect] of regions.entries()){
      const scale=Math.min(1,1800/Math.max(rect.w,rect.h));
