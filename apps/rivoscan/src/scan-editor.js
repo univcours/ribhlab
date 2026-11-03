@@ -3,6 +3,7 @@ import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
 import {normalizeWhiteboardRGBA} from './whiteboard-glare.js';
 import {normalizeDocumentShadowsRGBA} from './document-shadows.js';
+import {normalizeScannerPaperRGBA} from './scanner-paper.js';
 import {coloredMarkMask} from './colored-mark-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
@@ -33,7 +34,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    <div class="rivo-editor-picture"><canvas id="rivo-editor-preview" aria-label="${tr(0)}"></canvas>
      <div class="rivo-compare-note">${tr(17)}</div></div>
    <div class="rivo-editor-filters" role="group">
-     ${['original','enhance','magic','shadow','gray','bw','whiteboard','restore'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${i===1?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${id==='restore'?({en:'Restore',ar:'ترميم',fr:'Restaurer',es:'Restaurar',de:'Restaurieren',pt:'Restaurar',it:'Restauro'})[getLanguage()]||'Restore':tr(i+2)}</small></button>`).join('')}
+     ${['original','proscan','enhance','magic','shadow','gray','bw','whiteboard','restore'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${id===preset?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${id==='proscan'?({en:'Paper Scan Pro',ar:'سكانير ورقي Pro',fr:'Scanner papier Pro',es:'Escáner papel Pro',de:'Papier-Scan Pro',pt:'Digitalização Pro',it:'Scanner carta Pro'})[getLanguage()]||'Paper Scan Pro':id==='restore'?({en:'Restore',ar:'ترميم',fr:'Restaurer',es:'Restaurar',de:'Restaurieren',pt:'Restaurar',it:'Restauro'})[getLanguage()]||'Restore':tr(i===0?2:i+1)}</small></button>`).join('')}
    </div>
    <div class="rivo-editor-sliders"><label>${tr(15)} <input type="range" data-adjust="brightness" min="-35" max="35" value="0" step="1"></label>
      <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
@@ -56,7 +57,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  </div>`;
  const preview=shell.querySelector('#rivo-editor-preview');
  const ctx=preview.getContext('2d',{willReadFrequently:true});
- const filters=['original','enhance','magic','shadow','gray','bw','whiteboard','restore'];
+ const filters=['original','proscan','enhance','magic','shadow','gray','bw','whiteboard','restore'];
  let filter=filters.includes(preset)?preset:'enhance';
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
  let eraserActive=preset==='eraser'||preset.startsWith('erase:'),timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
@@ -106,6 +107,11 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      }
     }
     ctx.putImageData(source,0,0);
+   }
+   if(filter==='proscan'){
+    const scan=ctx.getImageData(0,0,preview.width,preview.height);
+    scan.data.set(normalizeScannerPaperRGBA(scan.data,preview.width,preview.height));
+    ctx.putImageData(scan,0,0);
    }
    if(filter==='shadow'){
     const scan=ctx.getImageData(0,0,preview.width,preview.height);
@@ -183,7 +189,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
  shell.querySelectorAll('.rivo-filter-thumb').forEach((node,i)=>{
   node.style.backgroundImage=`url("${thumbUrl}")`;
-  node.style.filter=['none','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)','brightness(1.04) contrast(1.12)'][i];
+  node.style.filter=['none','contrast(1.15) brightness(1.14)','contrast(1.2) brightness(1.07)','contrast(1.4) saturate(1.3)','brightness(1.3) contrast(1.2)','grayscale(1)','grayscale(1) contrast(2)','grayscale(1) contrast(1.8) brightness(1.2)','brightness(1.04) contrast(1.12)'][i];
  });
  const labelsByLang={
   en:['Color in brushed area','All colors','Colored ink (brushed only)','Blue ink','Red ink','Green ink','Light-gray watermark','Brush the mark: color-only selection is not handwriting recognition.','Undo stroke'],
