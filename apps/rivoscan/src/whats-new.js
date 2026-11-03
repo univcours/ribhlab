@@ -6,6 +6,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
+      "Paper Scan Pro enhances document brightness and colored seals without overwriting the original. AI Scan uses ML Kit FULL on supported Android phones.",
       "Colored-ink cleanup: brush only the area you own and choose automatic colored-ink detection or blue, red, green and light-gray selection.",
       "Smart Erase now chooses more consistent image-boundary colors to reduce dark ink smearing when repairing an annotation.",
       "Restore Photo repairs isolated dust pixels in otherwise uniform areas without replacing a connected text stroke.",
@@ -19,6 +20,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
+      "Paper Scan Pro كينقّي الورقة ويحافظ على الكاشيات والأصلية. AI Scan كيستعمل ML Kit FULL على هواتف Android المدعومة.",
       "حذف الحبر الملون داخل المنطقة اللي كتحدد بالفرشاة، مع اختيار اللون تلقائياً داخل التحديد أو اختيار الأزرق والأحمر والأخضر والرمادي الفاتح.",
       "Smart Erase ولى كيختار لون الخلفية الأقرب لتقليل تشويه الحروف اللي حدا العلامة الممسوحة.",
       "Restore Photo كيصلح نقط الغبار الصغيرة المعزولة مع الحفاظ على الخطوط المتصلة.",
@@ -32,6 +34,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
+      "Paper Scan Pro corrige l'éclairage et conserve les cachets. AI Scan utilise ML Kit FULL sur les appareils Android compatibles.",
       "Sélection de l'encre colorée uniquement dans la zone brossée, avec choix automatique de couleur ou de bleu/rouge/vert/gris clair.",
       "Smart Erase préserve mieux les lettres voisines en favorisant des bords de couleur cohérente.",
       "Restore Photo répare de petits pixels de poussière isolés sans effacer les traits continus.",
@@ -45,6 +48,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
+      "Paper Scan Pro améliore le papier sans effacer les tampons. AI Scan utilise ML Kit FULL sur Android compatible.",
       "Selección de tinta de color solo dentro de la zona marcada, automática por color o por azul/rojo/verde/gris claro.",
       "Smart Erase combina bordes de colores similares para reducir manchas sobre texto cercano.",
       "Restore Photo repara puntos aislados de polvo y conserva trazos continuos.",
@@ -58,6 +62,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Verstanden",
     "items": [
+      "Paper Scan Pro verbessert den Papierkontrast und schützt Stempel. AI Scan verwendet ML Kit FULL auf unterstützten Android-Geräten.",
       "Farbige Tinte nur in markierten Bereichen auswählen: automatisch nach Farbe oder Blau/Rot/Grün/Hellgrau.",
       "Smart Erase nutzt besser passende Randfarben und reduziert das Verschmieren benachbarter Schrift.",
       "Restore Photo behebt isolierte Staubpunkte und schützt durchgehende Linien.",
@@ -71,6 +76,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versão",
     "close": "Entendi",
     "items": [
+      "Paper Scan Pro melhora a luz e mantém carimbos. AI Scan utiliza ML Kit FULL em Android compatível.",
       "Seleção de tinta colorida só na região pintada, automática por cor ou azul/vermelho/verde/cinzento claro.",
       "Smart Erase dá preferência a bordas de cor semelhante e protege melhor o texto vizinho.",
       "Restore Photo repara pequenos pontos isolados de poeira, preservando linhas contínuas.",
@@ -84,6 +90,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versione",
     "close": "Capito",
     "items": [
+      "Paper Scan Pro migliora la luminosità senza cancellare i timbri. AI Scan usa ML Kit FULL su Android compatibile.",
       "Selezione dell'inchiostro colorato solo nell'area disegnata, automatica per colore o blu/rosso/verde/grigio chiaro.",
       "Smart Erase privilegia bordi di colore simile per evitare sbavature sul testo vicino.",
       "Restore Photo ripara piccoli punti di polvere isolati preservando le linee continue.",

@@ -1,3 +1,8 @@
+## 0.38.1 — Book Scan Pro with real optional Google ML Kit page cleanup and 2D text curvature
+- A Book Scan Pro action can take a separate ML Kit FULL on-device cleaned scan (up to two already-cropped pages). It tracks these as single pages, not double-page spreads, so exporting does not accidentally split a cropped page again. The original book-spread camera and manual gutter tools remain.
+- Local 2D text-grid correction estimates distinct shifts in different vertical segments and interpolates a bounded warp. Blank or unreliable text pages abstain. Both preview and exported PDF use the same local grid field. This is not a 3D depth model.
+- Pro purchases and locks are not activated during beta field tests. No server AI key, uploads or user data loss introduced.
+
 ## 0.38.0 — Google ML Kit FULL scan and CI data-preservation check
 - AI Scan is directly accessible from Scan and Tools; uses existing ML Kit FULL to remove fingers, stains and shadows in supported Google Play services flows. Cleaned JPEGs are now saved separately under Documents/RivoScan before a new PDF is assembled, without touching original photos.
 - Android emulator smoke now runs an actual single bash script; prior action script lines were executed separately and lost the APK variable.

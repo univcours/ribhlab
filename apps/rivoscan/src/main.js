@@ -751,7 +751,19 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='book'||spec.type==='flatten'){
-   openBookSplitter({language,save:saveOut,singlePage:spec.type==='flatten',capture:async()=>{
+   openBookSplitter({language,save:saveOut,singlePage:spec.type==='flatten',
+    cleanPage:async()=>{
+      if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android')
+        throw Error('AI page cleanup requires Android Google Play services');
+      const scanned=await DocumentScanner.scanDocument({galleryImportAllowed:true,pageLimit:2,
+        resultFormats:'JPEG',scannerMode:'FULL'});
+      if(!Array.isArray(scanned?.scannedImages))return [];
+      const output=[];
+      for(let i=0;i<scanned.scannedImages.length;i++)
+        output.push(await readScannedImage(scanned.scannedImages[i],i));
+      return output;
+    },
+    capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
        resultType:CameraResultType.Uri,source:CameraSource.Camera});
      return photo.webPath||photo.path;

@@ -1,5 +1,11 @@
 # RivoScan • Android PDF Toolkit (Beta)
 
+## 0.38.1 field-test features (all unlocked)
+The native CameraX scanner uses Paper Scan Pro by default for new installs (perspective crop, color-preserving illumination cleanup). Tools > AI Scan offers Google ML Kit FULL, which can remove fingers, stains and shadows after on-device model download on supported Google Play services devices. Book Scan Pro adds optional ML Kit cleaned page capture and locally varying text-line straighten with review/undo. This does not guarantee true 3D reconstruction of damaged paper or lost text.
+
+Do not uninstall or clear app data to update. No Pro payment or gating is enabled until user device testing is complete and a separate Play Billing release is approved.
+
+
 **RivoScan** is a privacy-oriented PDF toolbox from RibhLab. This repository provides an editable, installable Android/Capacitor starter plus a responsive web interface. It is **not yet a tested or published Play Store release**.
 
 ## Implemented source code
