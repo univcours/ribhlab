@@ -95,7 +95,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
   image=img;currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
-  draw();autoFix();countSpreads();
+  draw();autoFix(true);countSpreads();
   location.hidden=singlePage||currentIsSinglePage;
   autoSpine.hidden=singlePage||currentIsSinglePage;
  };
@@ -118,10 +118,10 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    else if(autoLineWarp?.[pageIndex]?.anchors)applyLineWarpCanvas(section,autoLineWarp[pageIndex]);
    ctx.drawImage(section,x,0);
   }
-  if(!singlePage){ctx.strokeStyle='#04bcf7';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(center,0);ctx.lineTo(center,preview.height);ctx.stroke();}
+  if(!singlePage&&!currentIsSinglePage){ctx.strokeStyle='#04bcf7';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(center,0);ctx.lineTo(center,preview.height);ctx.stroke();}
  };
- const autoFix=()=>{
-  if(!image||busy)return;
+ const autoFix=(allowDuringLoad=false)=>{
+  if(!image||(busy&&!allowDuringLoad))return;
   autoPageWarp=null;autoLineWarp=null;warpSlider.value='0';showOriginal=false;
   draw();
   const width=preview.width,height=preview.height;
@@ -156,7 +156,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
     (({en:'Auto beta: review the result and compare with the original before saving.',ar:'تقويم تجريبي: راجع النتيجة وقارنها مع الأصل قبل الحفظ.',fr:'Correction bêta : vérifiez le résultat et comparez avec l’original.'})[language]||'Review auto correction'):
     (({en:'No reliable text lines found. Original preserved; use manual correction.',ar:'ما لقيناش سطور واضحة باش نصححو تلقائياً. الأصلية محفوظة؛ استعمل التقويم اليدوي.',fr:'Aucune ligne fiable ; utilisez le réglage manuel.'})[language]||'Manual correction required');
  };
- autoAll.addEventListener('click',autoFix);
+ autoAll.addEventListener('click',()=>autoFix());
  compare.addEventListener('click',()=>{showOriginal=!showOriginal;draw()});
  makeButton(actions,L[1],async()=>{
   if(!capture)return;
