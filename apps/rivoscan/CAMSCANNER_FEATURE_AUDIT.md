@@ -1,3 +1,8 @@
+## 0.38.3 — Latest compatible OpenCV 4.x, scanner stability
+- Upgrade Android native OpenCV from 4.12.0 to 4.14.0 in generated-wrapper integration, maintaining Java/OpenCV 4 API compatibility while using the latest 4.x stable available from Maven Central. CameraX 1.6.2 is the latest stable Android CameraX API as of 2026-11-03, so do not switch to a release candidate merely to claim novelty.
+- Keep Google ML Kit FULL as the official on-device scanner; safety checks and regression for single-page ML Kit imports remain.
+- Update source-based regression after the native compare overlay became correctly hidden for already-cropped single pages. Actual CI and physical handset quality testing are still required.
+
 ## 0.38.2 — offline 2D printed formula OCR suggestions
 - From actual Tesseract word bounding boxes, a conservative local parser now recognizes clearly stacked printed fractions and typographic superscripts/subscripts as editable LaTeX suggestions. It declines ambiguous/handwritten layouts, labels results for review and does not make network calls or solve questions. Original photographed image is never modified.
 - This improves math recognition breadth without claiming full handwritten math or matrix OCR; external AI Chat/Solver remains postponed.

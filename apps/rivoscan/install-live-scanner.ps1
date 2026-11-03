@@ -79,7 +79,7 @@ $deps=@'
     implementation 'androidx.camera:camera-lifecycle:1.6.2'
     implementation 'androidx.camera:camera-view:1.6.2'
     implementation 'androidx.exifinterface:exifinterface:1.4.2'
-    implementation 'org.opencv:opencv:4.12.0'
+    implementation 'org.opencv:opencv:4.14.0'
 '@
 if($gradleText -notmatch "androidx\.camera:camera-view:1\.6\.2") {
   if($gradleText -notmatch 'dependencies\s*\{') {throw 'Gradle dependencies section not found.'}
