@@ -1,6 +1,7 @@
 import Tesseract from 'tesseract.js';
 import {buildAIRequest,requestUserAI} from './ai-provider.js';
 import {findFormulaRegions,formulaRegionLayout} from './formula-regions.js';
+import {suggestPrintedMathLayout} from './math-layout.js';
 const {recognize}=Tesseract;
 
 /**
@@ -113,7 +114,8 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
    finally{await worker.terminate()}
    if(closed)return;
    original.value=(result.data.text||'').trim().slice(0,5000);
-   latex.value=linearMathToLatex(original.value);
+   const layout=suggestPrintedMathLayout(result.data.blocks||[]);
+   latex.value=layout?.latex||linearMathToLatex(original.value);
    const geometry=await new Promise((ok,bad)=>{
     const url=URL.createObjectURL(selected);
     const img=new Image();
@@ -124,7 +126,8 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
    await drawRegions();
    const confidence=Math.round(result.data.confidence||0);
    status.textContent=(original.value?'OCR '+confidence+'% · ':'')+
-     formulaRegions.length+' formula image region(s) · '+L[8];
+     formulaRegions.length+' formula image region(s) · '+
+     (layout?.latex?'2D layout suggestion (verify) · ':'')+L[8];
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{busy=false}
  });

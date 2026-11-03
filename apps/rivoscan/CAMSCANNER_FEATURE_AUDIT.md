@@ -1,3 +1,7 @@
+## 0.38.2 — offline 2D printed formula OCR suggestions
+- From actual Tesseract word bounding boxes, a conservative local parser now recognizes clearly stacked printed fractions and typographic superscripts/subscripts as editable LaTeX suggestions. It declines ambiguous/handwritten layouts, labels results for review and does not make network calls or solve questions. Original photographed image is never modified.
+- This improves math recognition breadth without claiming full handwritten math or matrix OCR; external AI Chat/Solver remains postponed.
+
 ## 0.38.1 — Book Scan Pro with real optional Google ML Kit page cleanup and 2D text curvature
 - A Book Scan Pro action can take a separate ML Kit FULL on-device cleaned scan (up to two already-cropped pages). It tracks these as single pages, not double-page spreads, so exporting does not accidentally split a cropped page again. The original book-spread camera and manual gutter tools remain.
 - Local 2D text-grid correction estimates distinct shifts in different vertical segments and interpolates a bounded warp. Blank or unreliable text pages abstain. Both preview and exported PDF use the same local grid field. This is not a 3D depth model.
