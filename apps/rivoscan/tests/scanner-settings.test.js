@@ -14,7 +14,7 @@ test('Scanner defaults preserve documents with one-tap auto-clean',()=>{
  const prefs=normalizeScanPrefs();
  assert.equal(prefs.autoClean,true);
  assert.equal(prefs.keepOriginal,true);
- assert.equal(prefs.enhancement,'auto');
+ assert.equal(prefs.enhancement,'proscan');
  assert.equal(prefs.jpegQuality,94);
  assert.equal(prefs.pageSize,'a4');
  assert.equal(prefs.autoSavePdf,true);
