@@ -421,7 +421,7 @@ function scannerWorkspace(){
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>${sl('title')}</b><small>${sl('live')}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
-  <button id="mlkit-scanner" class="scan-mlkit-link">${ico('sparkle',18)} ${sl('crop')}</button></div>
+  <button id="mlkit-scanner" class="scan-mlkit-link">${ico('sparkle',18)} ${hubLabel(language,'smartScanPro','AI Scan — clean paper (beta)')}</button></div>
   <div class="scan-runtime" role="status">${live?sl('ready'):sl('fallback')}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
@@ -714,6 +714,7 @@ async function openHubAction(id){
    }});
    return;
  }
+ if(spec.type==='mlkitFull'){await openSmartScanner();return;}
  if(spec.type==='formulaOcr'){
    openFormulaReader({language,save:saveOut,notify:toast,capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
@@ -892,7 +893,7 @@ async function readScannedImage(uri,index){
   }
   throw new Error('Unsupported scanner image output.');
 }
-async function consumeSmartScan(result){
+async function consumeSmartScan(result,{mlkitFull=false}={}){
   if(!result?.scannedImages?.length){toast('No scanned pages were returned.',true);return;}
   if(activeTool?.id!=='scan')openTool('scan');
   const picked=[];
@@ -902,16 +903,21 @@ async function consumeSmartScan(result){
   showBusy(dl('saving'));
   try{
     const prefs=readScanPrefs(localStorage);
+    if(mlkitFull){
+      // ML Kit's cleaned JPEGs are temporary; unlike CameraX results,
+      // they must be copied to permanent Documents/RivoScan storage.
+      for(const page of picked)await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg');
+    }
     if(!prefs.autoSavePdf){
       toast(scanPrefsText(language).autoSavePdfHelp);
       return;
     }
-    // Native CameraX has already performed perspective and color-safe Auto Clean.
-    // Do NOT enhance the pixels again: this can fade colored stamps and handwriting.
+    // Both native CameraX and ML Kit FULL return cleaned images. Double filters
+    // can remove faint seals, handwriting and pale table lines, so do not reapply.
     const pdf=result.scanMode==='ID Card'
       ?await idCardToPdf(picked)
       :await imagesToPdf('color',picked);
-    const saved=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
+    await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
     openLibrary();
     toast(dl('savedNow')+' · '+picked.length+' '+sl('pages'));
   }catch(err){
@@ -925,7 +931,7 @@ async function openSmartScanner(){
   }
   try{
     const result=await DocumentScanner.scanDocument({galleryImportAllowed:true,pageLimit:20,resultFormats:'JPEG',scannerMode:'FULL'});
-    await consumeSmartScan(result);
+    await consumeSmartScan(result,{mlkitFull:true});
   }catch(err){
     if(!/cancel/i.test(String(err?.message||err)))toast('Smart scanner: '+(err?.message||'Unavailable. Check Google Play services.'),true);
   }
@@ -933,7 +939,7 @@ async function openSmartScanner(){
 CapacitorApp.addListener('appRestoredResult',async event=>{
   if(event?.pluginId!=='DocumentScanner'||event?.methodName!=='scanDocument')return;
   try{
-    if(event.success)await consumeSmartScan(event.data);
+    if(event.success)await consumeSmartScan(event.data,{mlkitFull:true});
     else if(event.error?.message)toast('Scanner was interrupted: '+event.error.message,true);
   }catch(err){toast('Could not recover scan: '+err.message,true)}
 }).catch(console.warn);

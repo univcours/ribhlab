@@ -58,24 +58,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-boot-timeout: 600
-          script: |
-            set -eu
-            APK="apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk"
-            adb install -r "$APK"
-            adb shell pm path com.ribhlab.rivoscan
-            adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
-            sleep 8
-            test -n "$(adb shell pidof com.ribhlab.rivoscan | tr -d '\r')"
-            adb shell run-as com.ribhlab.rivoscan sh -c 'mkdir -p files && echo preserved-by-update > files/rivoscan-emulator-test.txt'
-            adb install -r "$APK"
-            VAL="$(adb shell run-as com.ribhlab.rivoscan cat files/rivoscan-emulator-test.txt | tr -d '\r')"
-            test "$VAL" = "preserved-by-update"
-            adb shell am force-stop com.ribhlab.rivoscan
-            adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
-            sleep 5
-            test -n "$(adb shell pidof com.ribhlab.rivoscan | tr -d '\r')"
-            adb exec-out screencap -p > /tmp/rivoscan-emulator-smoke.png
-            echo "PASS: native launch and in-place update preserved private app data"
+          script: bash apps/rivoscan/scripts/emulator-smoke.sh
       - name: Upload emulator proof image (no user documents)
         if: always()
         uses: actions/upload-artifact@v4

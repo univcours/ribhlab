@@ -1,3 +1,8 @@
+## 0.38.0 — Google ML Kit FULL scan and CI data-preservation check
+- AI Scan is directly accessible from Scan and Tools; uses existing ML Kit FULL to remove fingers, stains and shadows in supported Google Play services flows. Cleaned JPEGs are now saved separately under Documents/RivoScan before a new PDF is assembled, without touching original photos.
+- Android emulator smoke now runs an actual single bash script; prior action script lines were executed separately and lost the APK variable.
+- Paper Scan Pro native mode is available in new default scanner preferences. All advanced beta tools remain unlocked pending user tests.
+
 ## 0.37.2 — Book Scan Pro multi-spread capture and multipage PDF
 - Camera capture/import may be repeated to collect up to six book spreads (12 exported facing pages) into a single PDF, preserving sequential order and each spread's independent gutter and curvature settings. Import supports multiple selected images; user may undo the last added spread.
 - Photos are downscaled to max 2200px on ingest, reducing peak memory. Source images remain untouched. Large/unsupported inputs are rejected rather than silently truncating.
