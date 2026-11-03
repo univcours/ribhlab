@@ -34,7 +34,8 @@ test('The first crop check automatically cleans without requiring a manual filte
  assert.ok(activity.includes('autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL'));
  assert.ok(activity.includes('backupOriginalPage(source)'));
  assert.ok(processor.includes('AUTO="auto"'));
- assert.ok(processor.includes('Core.addWeighted(rgb,0.82,originalRGB,0.18,0,rgb)'));
+ assert.ok(processor.includes('Core.addWeighted(rgb,PRO_SCAN.equals(mode)?0.87:0.82,originalRGB,'));
+ assert.ok(processor.includes('PRO_SCAN="proscan"'));
  assert.ok(processor.includes('originalRGB.copyTo(rgb,stampMask)'), 'colored stamps are preserved from original');
  const firstCrop=activity.slice(activity.indexOf('private void openEditor('),activity.indexOf('private void releaseEnhancement()'));
  assert.ok(firstCrop.includes('this::autoCleanAndSave'));
