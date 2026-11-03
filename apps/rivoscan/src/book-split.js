@@ -2,6 +2,7 @@ import {PDFDocument} from 'pdf-lib';
 import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
 import {estimateBookSpine} from './book-spine.js';
 import {estimateLineWarp,applyLineWarpCanvas} from './line-aware-dewarp.js';
+import {estimateTextGridWarp,applyTextGridCanvas} from './text-grid-dewarp.js';
 
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
@@ -107,11 +108,12 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   for(const [pageIndex,x,w,side] of parts){
    if(w<2)continue;
    const curvature=resolveBookPageCurvature(pageIndex,+warpSlider.value,autoPageWarp);
-   if(curvature===0&&!autoLineWarp?.[pageIndex]?.anchors?.length)continue;
+   if(curvature===0&&!autoLineWarp?.[pageIndex]?.anchors?.length&&!autoLineWarp?.[pageIndex]?.rows?.length)continue;
    const section=document.createElement('canvas');section.width=w;section.height=preview.height;
    section.getContext('2d').drawImage(preview,x,0,w,preview.height,0,0,w,preview.height);
    dewarpBookCanvas(section,curvature,side);
-   if(autoLineWarp?.[pageIndex])applyLineWarpCanvas(section,autoLineWarp[pageIndex]);
+   if(autoLineWarp?.[pageIndex]?.rows)applyTextGridCanvas(section,autoLineWarp[pageIndex]);
+   else if(autoLineWarp?.[pageIndex]?.anchors)applyLineWarpCanvas(section,autoLineWarp[pageIndex]);
    ctx.drawImage(section,x,0);
   }
   if(!singlePage){ctx.strokeStyle='#04bcf7';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(center,0);ctx.lineTo(center,preview.height);ctx.stroke();}
@@ -134,6 +136,10 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
   for(const [idx,x,w,side] of pages){
    if(w<80||height<100)continue;
    const pixels=ctx.getImageData(x,0,w,height);
+   if(w>=220&&height>=240){
+    const local=estimateTextGridWarp(pixels.data,w,height,side);
+    if(local.confidence>=.28){line[idx]=local;reliable++;continue}
+   }
    if(w>=140&&height>=120){
     const result=estimateLineWarp(pixels.data,w,height,side);
     if(result.confidence>=.5){line[idx]=result;reliable++;continue}
@@ -251,7 +257,8 @@ export function openBookSplitter({language='en',save,capture,singlePage=false}={
      canvas.width=Math.max(1,Math.round(rect.w*scale));canvas.height=Math.max(1,Math.round(rect.h*scale));
      canvas.getContext('2d').drawImage(src,rect.x,rect.y,rect.w,rect.h,0,0,canvas.width,canvas.height);
      dewarpBookCanvas(canvas,resolveBookPageCurvature(regionIndex,spread.curvature,spread.autoPageWarp),regionIndex===0?'right':'left');
-     if(spread.autoLineWarp?.[regionIndex])applyLineWarpCanvas(canvas,spread.autoLineWarp[regionIndex]);
+     if(spread.autoLineWarp?.[regionIndex]?.rows)applyTextGridCanvas(canvas,spread.autoLineWarp[regionIndex]);
+     else if(spread.autoLineWarp?.[regionIndex]?.anchors)applyLineWarpCanvas(canvas,spread.autoLineWarp[regionIndex]);
      const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('JPEG failed')),'image/jpeg',.91));
      const pic=await pdf.embedJpg(await blob.arrayBuffer());
      const page=pdf.addPage([595,842]),pad=15;
