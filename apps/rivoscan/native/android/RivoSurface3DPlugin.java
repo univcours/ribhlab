@@ -219,8 +219,18 @@ public final class RivoSurface3DPlugin extends Plugin {
             ArrayList<Mat> frames=new ArrayList<>();
             Mat result=null;
             try{
-                // Work with one bounded resolution; evidence never leaves device.
-                final int w=640,h=832;
+                // Preserve the aspect ratio of the original page. Changing
+                // landscape to portrait would invalidate camera epipolar geometry.
+                String firstEncoded=photos.getString(0);
+                byte[] firstBytes=Base64.decode(firstEncoded,Base64.DEFAULT);
+                BitmapFactory.Options shape=new BitmapFactory.Options();
+                shape.inJustDecodeBounds=true;
+                BitmapFactory.decodeByteArray(firstBytes,0,firstBytes.length,shape);
+                if(shape.outWidth<160||shape.outHeight<160||shape.outWidth>12000||shape.outHeight>12000)
+                    throw new IllegalArgumentException("Unsupported 3D image geometry");
+                double scale=Math.min(1,960.0/Math.max(shape.outWidth,shape.outHeight));
+                final int w=Math.max(160,(int)Math.round(shape.outWidth*scale));
+                final int h=Math.max(160,(int)Math.round(shape.outHeight*scale));
                 for(int i=0;i<photos.length();i++){
                     Bitmap b=decode(photos.getString(i),w,h);
                     bitmaps.add(b);
@@ -236,7 +246,23 @@ public final class RivoSurface3DPlugin extends Plugin {
                     call.reject("3D reconstruction abstained: "+(best==null?"No suitable camera view":best.failure));
                     return;
                 }
-                result=flatten(frames.get(0),best,w,h);
+                // Warp the user-cleaned image using pose measured from ORIGINAL
+                // photos. No feature matching is performed against edited ink.
+                Mat painted=frames.get(0);
+                Bitmap extraBitmap=null;
+                Mat extraMat=null;
+                try{
+                    String render=call.getString("renderBase64");
+                    if(render!=null&&!render.isEmpty()){
+                        extraBitmap=decode(render,w,h);
+                        extraMat=new Mat();Utils.bitmapToMat(extraBitmap,extraMat);
+                        painted=extraMat;
+                    }
+                    result=flatten(painted,best,w,h);
+                }finally{
+                    if(extraMat!=null)extraMat.release();
+                    if(extraBitmap!=null)extraBitmap.recycle();
+                }
                 Bitmap corrected=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
                 try{
                     Utils.matToBitmap(result,corrected);
