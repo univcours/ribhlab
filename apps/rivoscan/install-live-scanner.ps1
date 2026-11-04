@@ -35,7 +35,7 @@ public class MainActivity extends BridgeActivity {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
             WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         getWindow().setStatusBarColor(Color.WHITE);
-        getWindow().setNavigationBarColor(Color.rgb(243, 248, 255));
+        getWindow().setNavigationBarColor(Color.rgb(237, 249, 246));
         new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
             .setAppearanceLightStatusBars(true);
         registerPlugin(RivoLiveScannerPlugin.class);
@@ -54,8 +54,8 @@ public class MainActivity extends BridgeActivity {
             // Its native light strip remains visible while HTML scrolls below it.
             View content = findViewById(android.R.id.content);
             View web = getBridge().getWebView();
-            content.setBackgroundColor(Color.rgb(244, 249, 255));
-            web.setBackgroundColor(Color.rgb(244, 249, 255));
+            content.setBackgroundColor(Color.rgb(241, 250, 248));
+            web.setBackgroundColor(Color.rgb(241, 250, 248));
             ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
                 Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars() |
                     WindowInsetsCompat.Type.displayCutout());

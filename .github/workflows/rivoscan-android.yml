@@ -104,13 +104,13 @@ jobs:
           grep -F 'android:theme="@style/RivoScanNoActionBar"' android/app/src/main/AndroidManifest.xml
           grep -F 'parent="Theme.AppCompat.DayNight.NoActionBar"' android/app/src/main/res/values/rivoscan_no_actionbar.xml
           grep -F 'import '\''./theme-brand.css'\'';' src/main.js
-          grep -F '#04bcf7' src/theme-brand.css
-          grep -F '#087dfa' src/theme-brand.css
-          grep -F '#2328dd' src/theme-brand.css
+          grep -F '#0cb6aa' src/theme-brand.css
+          grep -F '#089b99' src/theme-brand.css
+          grep -F '#056f72' src/theme-brand.css
           grep -F 'android:statusBarColor">#FFFFFF' android/app/src/main/res/values/rivoscan_no_actionbar.xml
           grep -F 'setAppearanceLightStatusBars(true)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'nativeActionBar.hide()' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
-          grep -F 'web.setBackgroundColor(Color.rgb(244, 249, 255))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'web.setBackgroundColor(Color.rgb(241, 250, 248))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
           grep -F 'public void shareFiles(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'public void organizeFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
           grep -F 'makeLongImage' src/library-bulk.js
@@ -187,7 +187,7 @@ jobs:
           grep -F 'private void showEnhancementPreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'RivoDocumentEnhancer.apply(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'private void autoCleanAndSave()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
-          grep -F 'this::autoCleanAndSave' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'batchMode=getIntent().getBooleanExtra("batchDefault"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'public void printFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
