@@ -185,7 +185,8 @@ jobs:
           # Native post-capture enhancement must run BEFORE saving a scanned page.
           grep -F "'RivoDocumentEnhancer.java'" install-live-scanner.ps1
           grep -F 'private void showEnhancementPreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
-          grep -F 'RivoDocumentEnhancer.apply(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'output=applyScanFilter(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoUVDocPlugin.unwarpBitmap(this,image)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'private void autoCleanAndSave()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
           grep -F 'autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
