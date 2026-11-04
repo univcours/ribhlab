@@ -114,6 +114,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Bitmap pendingWarp,enhancementPreview;
     private ImageView enhancementImage;
     private TextView enhancementHint;
+    private android.widget.ProgressBar enhancementProgress;
+    private RivoCaptureQuality.Result captureQuality;
+    private int captureQualitySerial=0;
     private String selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
     private int enhancementSerial=0;
     private boolean savingEnhancedPage=false;
@@ -233,9 +236,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setPadding(dp(14),dp(10),dp(14),dp(13));
-        bottom.setBackgroundColor(Color.rgb(16,28,58));
-        message=text(hint,12,Color.rgb(184,197,206),false);
-        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(45)));
+        bottom.setBackgroundColor(Color.rgb(7,54,56));
+        message=text(hint,12,Color.rgb(219,253,247),false);
+        message.setMaxLines(3);
+        message.setGravity(Gravity.CENTER_VERTICAL);
+        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(editing?74:46)));
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
@@ -246,8 +251,31 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(57)));
         shell.addView(bottom,new LinearLayout.LayoutParams(-1,-2));
     }
+
+    private String localizedCapture(String key){
+        String code=nativeLanguage==null?"en":nativeLanguage.toLowerCase(java.util.Locale.ROOT);
+        String[] languages={"en","ar","fr","es","de","pt","it"};
+        String[] review={"Review","مراجعة","Aperçu","Revisar","Prüfen","Rever","Rivedi"};
+        String[] analyzing={"Analyzing the document…","جاري تحليل جودة الوثيقة…","Analyse du document…","Analizando documento…","Dokument wird analysiert…","Analisando documento…","Analisi del documento…"};
+        String[] processing={"Correcting perspective, shadows and ink…","جاري تصحيح المنظور والظلال وتوضيح الحبر…","Correction de perspective, ombres et encre…","Corrigiendo perspectiva, sombras y tinta…","Perspektive, Schatten und Schrift werden optimiert…","Corrigindo perspectiva, sombras e tinta…","Correzione prospettiva, ombre e inchiostro…"};
+        String[] save={"Save","حفظ","Enregistrer","Guardar","Speichern","Guardar","Salva"};
+        String[] check={"Compare and choose a filter, then save or retake.","قارن واختار المعالجة ثم احفظ أو عاود التصوير.","Comparez, choisissez un filtre puis enregistrez ou reprenez.","Compara, elige filtro y guarda o repite.","Vergleichen, Filter wählen, speichern oder neu aufnehmen.","Compare, escolha filtro, guarde ou repita.","Confronta, scegli filtro, salva o riprendi."};
+        String[] qualityWarning={"Image may need retaking","قد تحتاج الصورة لإعادة التصوير","La photo doit peut-être être reprise","Puede necesitar repetir la foto","Foto möglicherweise neu aufnehmen","Poderá ter de repetir a fotografia","Potrebbe essere necessario ripetere la foto"};
+        int index=0;for(int i=0;i<languages.length;i++)if(languages[i].equals(code)){index=i;break;}
+        switch(key){
+            case "review":return review[index];
+            case "analyzing":return analyzing[index];
+            case "processing":return processing[index];
+            case "save":return save[index];
+            case "qualityWarning":return qualityWarning[index];
+            default:return check[index];
+        }
+    }
+
     private void showCamera(){
         if(savingEnhancedPage)return;
+        captureQualitySerial++;
+        captureQuality=null;
         clearSessionSignature();
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
@@ -883,20 +911,42 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
-            // If a vendor/CPU cannot load OpenCV, offer ordinary photo capture
-            // rather than closing the entire scanner.
-            saveWithoutCrop(bitmap);
+            // Never silently save a document when enhancement is unavailable:
+            // the user must see the photo and decide whether to keep or retake.
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("RivoScan")
+                .setMessage("Document processing unavailable on this device. Review the original photo before saving.")
+                .setNegativeButton(trNative("retake"),(dialog,which)->{
+                    if(bitmap!=null&&!bitmap.isRecycled())bitmap.recycle();
+                    showCamera();
+                })
+                .setPositiveButton(trNative("savePage"),(dialog,which)->saveWithoutCrop(bitmap))
+                .setCancelable(false).show();
             return;
         }
         editing=true;current=bitmap;
+        captureQuality=null;
+        final int qualityCheck=++captureQualitySerial;
         // The same interactive four-point editor handles both camera images and gallery images.
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
-        layout(editor,trNative("loupe")+"\n"+(found==null?trNative("notFound"):trNative("found")),
+        layout(editor,trNative("loupe")+"\n"+localizedCapture("analyzing"),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
-            button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
-            button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
+            button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
+        analyzer.execute(()->{
+            RivoCaptureQuality.Result quality=null;
+            try{quality=RivoCaptureQuality.analyze(bitmap,found);}
+            catch(Throwable error){android.util.Log.w("RivoScan","Capture quality check unavailable",error);}
+            final RivoCaptureQuality.Result qualityResult=quality;
+            mainHandler.post(()->{
+                if(qualityCheck!=captureQualitySerial||current!=bitmap||!editing||isFinishing())return;
+                captureQuality=qualityResult;
+                if(message!=null)message.setText(qualityResult!=null?
+                    qualityResult.summary(nativeLanguage):localizedCapture("review"));
+            });
+        });
     }
     /**
      * One-tap confirmation from the corner editor: warp the document, normalize
@@ -1152,18 +1202,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
              !enhancementPreview.isRecycled())enhancementPreview.recycle();
         enhancementPreview=null;
         if(pendingWarp!=null&&!pendingWarp.isRecycled())pendingWarp.recycle();
-        pendingWarp=null;enhancementImage=null;enhancementHint=null;
+        pendingWarp=null;enhancementImage=null;enhancementHint=null;enhancementProgress=null;
     }
     private void reopenCrop(){
         if(savingEnhancedPage)return;
         enhancementSerial++;
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
-        layout(editor,trNative("loupe")+"\n"+trNative("found"),
+        layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
             button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
-            button(trNative("enhanceFilters"),this::prepareEnhancementPreview),
+            button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
-            button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave));
+            button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
     }
     private void prepareEnhancementPreview(){
         if(current==null||current.isRecycled()||savingEnhancedPage)return;
@@ -1205,6 +1255,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementImage.setImageBitmap(pendingWarp);
         enhancementImage.setContentDescription(trNative("enhanceTitle"));
         body.addView(enhancementImage,new LinearLayout.LayoutParams(-1,0,1));
+        enhancementProgress=new android.widget.ProgressBar(this,null,
+            android.R.attr.progressBarStyleHorizontal);
+        enhancementProgress.setIndeterminate(true);
+        enhancementProgress.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(Color.rgb(20,184,166)));
+        enhancementProgress.setVisibility(View.VISIBLE);
+        body.addView(enhancementProgress,new LinearLayout.LayoutParams(-1,dp(5)));
         HorizontalScrollView scroll=new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
         scroll.setFillViewport(true);
@@ -1242,16 +1298,21 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         scroll.addView(choices,new HorizontalScrollView.LayoutParams(-2,-1));
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
-        layout(body,trNative("enhanceHint"),
+        layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
+            button(trNative("retake"),this::showCamera),
             button(trNative("enhanceBack"),this::reopenCrop),
-            button(trNative("signBeforeSave"),this::showSignaturePad),
             button(trNative("enhanceCompare"),()->{
                 if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
-                enhancementImage.setImageBitmap(enhancementImage.getDrawable()!=null && enhancementPreview!=null
-                    ? (enhancementImage.getTag()!=null?enhancementPreview:pendingWarp):pendingWarp);
-                enhancementImage.setTag(enhancementImage.getTag()==null?"original":null);
+                boolean showingOriginal="original".equals(enhancementImage.getTag());
+                if(showingOriginal){
+                    enhancementImage.setImageBitmap(enhancementPreview!=null?enhancementPreview:pendingWarp);
+                    enhancementImage.setTag(null);
+                }else{
+                    enhancementImage.setImageBitmap(pendingWarp);
+                    enhancementImage.setTag("original");
+                }
             }),
-            button("✓  "+trNative("enhanceDone"),this::saveEnhancedPage));
+            button("✓  "+localizedCapture("save"),this::saveEnhancedPage));
         for(int i=0;i<modes.length;i++)
             if(modes[i].equals(selectedEnhancement)){
                 choices.getChildAt(i).setBackground(outlined(Color.rgb(15,68,110),9,Color.rgb(4,188,247)));break;
@@ -1288,6 +1349,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Math.max(1,(int)(width*factor)),Math.max(1,(int)(height*factor)),true);
         enhancementImage.setTag(null);
         enhancementImage.setImageBitmap(pendingWarp);
+        if(enhancementProgress!=null)enhancementProgress.setVisibility(View.VISIBLE);
+        if(enhancementHint!=null)enhancementHint.setText(localizedCapture("processing"));
         analyzer.execute(()->{
             Bitmap processed=null;
             try{
@@ -1300,6 +1363,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     Bitmap previous=enhancementPreview;
                     enhancementPreview=result;
                     enhancementImage.setImageBitmap(result);
+                    if(enhancementProgress!=null)enhancementProgress.setVisibility(View.GONE);
+                    if(enhancementHint!=null)enhancementHint.setText(
+                        captureQuality!=null?captureQuality.summary(nativeLanguage):
+                        localizedCapture("check"));
                     if(previous!=null&&previous!=pendingWarp&&previous!=result&&!previous.isRecycled())
                         previous.recycle();
                 });
@@ -1308,13 +1375,30 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 mainHandler.post(()->{
                     if(serial==enhancementSerial&&enhancementHint!=null)
                         enhancementHint.setText(trNative("enhanceFailed"));
+                    if(serial==enhancementSerial&&enhancementProgress!=null)
+                        enhancementProgress.setVisibility(View.GONE);
                 });
             }finally{if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();}
         });
     }
-    /** Explicit ✓ applies the chosen processing at full image resolution. */
+    /** User explicitly accepts the visual result; low-quality photos get a retake prompt. */
     private void saveEnhancedPage(){
-        if(pendingWarp==null||savingEnhancedPage)return;
+        if(pendingWarp==null||savingEnhancedPage||enhancementPreview==null)return;
+        if(captureQuality!=null&&captureQuality.retakeSuggested){
+            new android.app.AlertDialog.Builder(this)
+                .setTitle(localizedCapture("qualityWarning"))
+                .setMessage(captureQuality.summary(nativeLanguage))
+                .setNegativeButton(trNative("retake"),(d,w)->showCamera())
+                .setNeutralButton(trNative("enhanceBack"),(d,w)->{})
+                .setPositiveButton(localizedCapture("save"),(d,w)->commitEnhancedPage())
+                .show();
+            return;
+        }
+        commitEnhancedPage();
+    }
+    /** Explicit ✓ applies the selected filter at full source resolution. */
+    private void commitEnhancedPage(){
+        if(pendingWarp==null||savingEnhancedPage||enhancementPreview==null)return;
         savingEnhancedPage=true;
         final Bitmap input=pendingWarp;
         final String preset=selectedEnhancement;
