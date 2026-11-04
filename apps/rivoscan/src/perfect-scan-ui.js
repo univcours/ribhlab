@@ -48,6 +48,16 @@ const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b)
 const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
 const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
+const nativeModeLabels={
+ en:{uvdoc:'UVDoc AI flatten · offline Android',surface:'Relative 3D surface · 2–4 different camera angles (beta)'},
+ ar:{uvdoc:'UVDoc تقويم ذكي على الهاتف بلا إنترنت',surface:'سطح 3D نسبي · صور من زوايا مختلفة (تجريبي)'},
+ fr:{uvdoc:'UVDoc IA · correction locale Android',surface:'Surface 3D relative · 2–4 angles (bêta)'},
+ es:{uvdoc:'UVDoc IA · corrección local Android',surface:'Superficie 3D relativa · 2–4 ángulos (beta)'},
+ de:{uvdoc:'UVDoc KI · lokale Android-Korrektur',surface:'Relative 3D-Oberfläche · 2–4 Ansichten (Beta)'},
+ pt:{uvdoc:'UVDoc IA · correção Android offline',surface:'Superfície 3D relativa · 2–4 ângulos (beta)'},
+ it:{uvdoc:'UVDoc IA · correzione Android offline',surface:'Superficie 3D relativa · 2–4 angoli (beta)'}
+};
+
 export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null,onUVDoc=null,onSurface3D=null}){
  const lang=getLanguage(),t=dict[lang]||dict.en;
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
@@ -66,8 +76,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<div class="rivo-perfectscan-preview" role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
  '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
- (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> UVDoc ONNX · Android offline (AI unwarp)</label>':'')+
- (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d checked> 3D Surface Mesh · multi-angle beta (2–4 photos)</label>':'')+
+ (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</label>':'')+
+ (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</label>':'')+
  '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
