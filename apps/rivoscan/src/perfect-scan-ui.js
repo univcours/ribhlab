@@ -1,4 +1,4 @@
-import {perfectScanRGBA,assessDocumentQualityRGBA} from './perfect-scan-core.js';
+import {perfectScanRGBA,assessDocumentQualityRGBA,inspectInkChanges} from './perfect-scan-core.js';
 import {PDFDocument} from 'pdf-lib';
 
 const dict={
@@ -48,7 +48,7 @@ const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b)
 const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
 const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
-export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null}){
+export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null,onUVDoc=null}){
  const lang=getLanguage(),t=dict[lang]||dict.en;
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
@@ -65,7 +65,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
  '<div class="rivo-perfectscan-preview" role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
- '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+
+ '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
+ (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> UVDoc ONNX · Android offline (AI unwarp)</label>':'')+
  '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
@@ -121,10 +122,25 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   try{
    const frames=extra.map(({data})=>({data}));
    const started=performance.now();
+   const uvdocRequested=!!onUVDoc&&root.querySelector('[data-perfect-uvdoc]').checked;
    const processed=perfectScanRGBA(base.data,base.width,base.height,{
     extraFrames:frames,creaseStrength:80,
-    geometry:root.querySelector('[data-perfect-geometry]').checked
+    // Never apply two non-rigid warps on the same photo.
+    geometry:!uvdocRequested&&root.querySelector('[data-perfect-geometry]').checked
    });
+   if(uvdocRequested){
+    const neural=await onUVDoc(processed.pixels,base.width,base.height);
+    if(neural?.pixels?.length!==base.data.length||!neural.modelSha256)
+      throw Error('UVDoc returned invalid Android inference; uncheck UVDoc to use safe offline 2D mode');
+    processed.pixels=neural.pixels;
+    processed.neuralUvdocApplied=true;
+    processed.neuralModelSha256=neural.modelSha256;
+    processed.neuralEffectiveResolution=[neural.effectiveWidth,neural.effectiveHeight];
+    processed.neuralRuntime=neural.engine;
+    processed.neuralInferenceMs=neural.inferenceMs;
+    processed.integrity=inspectInkChanges(base.data,neural.pixels,base.width,base.height);
+    processed.requiresReview=true;
+   }
    const elapsed=Math.round(performance.now()-started);
    result={...processed,sourceName:base.name,extraCount:extra.length,elapsed};
    previewPixels(processed.pixels,base.width,base.height,t.processed);
@@ -132,6 +148,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
      (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
      ' · 2D: '+(processed.geometryApplied?'yes':'no')+
+     (processed.neuralUvdocApplied?' · UVDoc ONNX Android ✓ · 3D depth: no':'')+
      ' · '+(processed.requiresReview?t.manual:t.clean)+
      (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings.join('; '):'')+
      ' · '+elapsed+' ms';
@@ -173,7 +190,12 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    }
    const audit={
     product:'RivoScan PerfectScan Pro',version:1,createdUTC:time,
-    processing:'on-device 2D document enhancement; NOT 3D reconstruction or certified forensic authenticity',
+    processing:'on-device UVDoc neural 2D unwarp and/or 2D document enhancement; NOT 3D reconstruction or certified forensic authenticity',
+    uvdocAndroidInference:!!result.neuralUvdocApplied,
+    uvdocModelSha256:result.neuralModelSha256||null,
+    uvdocEffectiveModelResolution:result.neuralEffectiveResolution||null,
+    uvdocRuntime:result.neuralRuntime||null,
+    uvdocInferenceMs:result.neuralInferenceMs||null,
     originalName:base.name,originalSha256:baseHash,processedName:name,processedSha256:outHash,
     processedPdfName:pdfName,processedPdfSha256:pdfSha256,
     SHA256Available:!!baseHash&&!!outHash,
@@ -208,6 +230,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  cameraInput.addEventListener('change',async()=>{const files=[...cameraInput.files];cameraInput.value='';await addShots(files)});
  review.addEventListener('change',()=>{save.disabled=!result||!review.checked});
  root.querySelector('[data-perfect-geometry]').addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
+ root.querySelector('[data-perfect-uvdoc]')?.addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
  const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
  const after=()=>{if(result)previewPixels(result.pixels,base.width,base.height,t.processed)};
  compare.addEventListener('pointerdown',before);

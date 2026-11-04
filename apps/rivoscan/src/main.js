@@ -21,6 +21,7 @@ import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import { openPerfectScan } from './perfect-scan-ui.js';
+import { unwarpPixelsAndroid } from './uvdoc-android.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -38,6 +39,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
+const RivoUVDoc = registerPlugin('RivoUVDoc');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
@@ -552,6 +554,8 @@ function refreshVisibleLibrary(){
 function launchPerfectScan(doc=null){
   return openPerfectScan({
     doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
+    onUVDoc:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
+      (rgba,width,height)=>unwarpPixelsAndroid({plugin:RivoUVDoc,rgba,width,height}):null,
     onDeepClean:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?()=>openSmartScanner():null,
     onRefresh:async()=>{
       await loadLibrary(false);
