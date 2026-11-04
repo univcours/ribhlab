@@ -1365,3 +1365,18 @@ body.rivo-native-android .rivo-dark-ui .topbar{background:#0c1420}
 @media(max-width:380px){.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog{padding:13px;border-radius:13px}.rivo-code-actions button{flex-basis:40%}}
 
 .rivo-count-preview{display:block;max-width:100%;max-height:40vh;object-fit:contain;margin:10px auto;border-radius:8px;background:#fff}.rivo-code-dialog ul{padding-inline-start:21px;color:#112957}
+
+/* Interactive document preview: touch pinch, mouse pan, double-tap, fit. */
+.doc-detail-paper{overflow:hidden;touch-action:none;position:relative;min-height:0}
+.doc-zoom-stage{display:flex;justify-content:center;align-items:center;flex:none;
+ width:max-content;max-width:100%;max-height:100%;transform-origin:50% 50%;
+ will-change:transform;user-select:none;-webkit-user-select:none;pointer-events:none}
+.doc-zoom-stage img,.doc-zoom-stage canvas{pointer-events:none;display:block}
+.doc-zoom-actions{display:flex;gap:7px;justify-content:center;align-items:center;
+ flex-wrap:wrap;padding:9px 7px 5px;flex:none}
+.doc-zoom-actions button{border:1px solid #d0def5;background:#fff;color:#2754bf;
+ border-radius:12px;min-width:43px;min-height:43px;font-size:21px;font-weight:750}
+.doc-zoom-actions button:active{background:#d7e9ff}
+.doc-zoom-label{min-width:54px;text-align:center;font-weight:800;font-size:12px;color:#39578e}
+.doc-zoom-stage .doc-preview-picture{max-width:min(100%,90vw);max-height:65dvh;width:auto;height:auto;object-fit:contain}
+.doc-zoom-stage .doc-pdf-canvas{max-width:min(100%,90vw);height:auto!important}

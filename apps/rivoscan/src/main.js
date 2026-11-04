@@ -195,6 +195,7 @@ const docViewerUI=createDocumentViewer({
     scanRotations=[0];updateFileDisplay();
   },
   onError:message=>toast(message,true),
+  getImageItems:()=>libraryItems.filter(item=>/^image\//i.test(item.mimeType||'')||/\.(jpg|jpeg|png|webp)$/i.test(item.name||'')),
   onShare:doc=>bulkUI.share([doc])
 });
 const bulkUI=createLibraryBulk({
