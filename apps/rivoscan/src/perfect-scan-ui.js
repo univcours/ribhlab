@@ -1,4 +1,5 @@
-import {perfectScanRGBA} from './perfect-scan-core.js';
+import {perfectScanRGBA,assessDocumentQualityRGBA} from './perfect-scan-core.js';
+import {PDFDocument} from 'pdf-lib';
 
 const dict={
  en:{title:'PerfectScan Pro',subtitle:'Local multi-shot document enhancement · experimental 2D flattening',base:'Source photo',add:'Add shots',capture:'Capture another angle',process:'✦ One-tap PerfectScan',compare:'Hold to compare original',original:'Original photo',processed:'Enhanced copy',save:'Save scan + integrity report',cancel:'Close',privacy:'Never uploads your document. Original pixels and file are preserved.',tip:'Use 2–4 photos of the SAME document, with matching framing. Slightly change lighting or angle. Unmatched photos are rejected.',none:'Choose a source photo first.',choosing:'Choose document photo',ready:'Ready to enhance',working:'Checking alignment and correcting paper...',review:'Please review ALL text, stamps and signatures before saving.',check:'I reviewed the full document and accept this processed copy.',saved:'Scan and integrity report saved. The original was kept.',failed:'Unable to process this document.',geometry:'Correct curved printed lines (2D)',quality:'Contrast safe; strongly folded/missing text cannot be recovered.',frames:'Additional photos',rejected:'Photos rejected (misalignment)',manual:'Manual review required',clean:'Safety checks passed; review still recommended'},
@@ -8,6 +9,15 @@ const dict={
  de:{title:'PerfectScan Pro',subtitle:'Lokale Fotofusion, experimentelle 2D-Entzerrung',base:'Originalfoto',add:'Aufnahmen hinzufügen',capture:'Weiteren Winkel aufnehmen',process:'✦ PerfectScan',compare:'Halten zum Vergleich',original:'Original',processed:'Bearbeitet',save:'Bild und Bericht speichern',cancel:'Schließen',privacy:'Keine Übertragung. Original bleibt erhalten.',tip:'2–4 Aufnahmen desselben Dokuments bei ähnlicher Ausrichtung.',none:'Foto auswählen.',choosing:'Foto auswählen',ready:'Bereit',working:'Ausrichten und bereinigen...',review:'Text, Stempel und Unterschriften prüfen.',check:'Ich habe das gesamte Dokument geprüft.',saved:'Bild und Bericht gespeichert.',failed:'Bearbeitung nicht möglich.',geometry:'Gekrümmte Zeilen korrigieren (2D)',quality:'Keine Wiederherstellung fehlender Schrift.',frames:'Weitere Fotos',rejected:'Abgewiesene Fotos',manual:'Bitte prüfen',clean:'Prüfung erfolgreich; bitte prüfen'},
  pt:{title:'PerfectScan Pro',subtitle:'Fusão local de fotos e correção 2D experimental',base:'Foto original',add:'Adicionar fotos',capture:'Capturar outro ângulo',process:'✦ PerfectScan',compare:'Manter para comparar',original:'Original',processed:'Melhorada',save:'Guardar digitalização e relatório',cancel:'Fechar',privacy:'Sem upload. Original intacto.',tip:'Use 2–4 fotos do MESMO documento com enquadramento semelhante.',none:'Escolha a foto.',choosing:'Escolher foto',ready:'Pronto',working:'A alinhar e limpar...',review:'Confira texto, carimbos e assinaturas.',check:'Revisei a página completa e aceito a cópia.',saved:'Scan e relatório guardados.',failed:'Não foi possível processar.',geometry:'Corrigir linhas curvas (2D)',quality:'Não recupera texto perdido.',frames:'Fotos extras',rejected:'Fotos rejeitadas',manual:'Verificação necessária',clean:'Verificação aprovada; revise'},
  it:{title:'PerfectScan Pro',subtitle:'Fusione locale e raddrizzamento 2D sperimentale',base:'Foto originale',add:'Aggiungi foto',capture:'Altro angolo',process:'✦ PerfectScan',compare:'Tieni premuto per confrontare',original:'Originale',processed:'Migliorata',save:'Salva immagine e rapporto',cancel:'Chiudi',privacy:'Nessun upload. Originale preservato.',tip:'2–4 scatti dello STESSO documento con inquadratura simile.',none:'Scegli prima una foto.',choosing:'Scegli foto',ready:'Pronto',working:'Allineamento e pulizia...',review:'Controlla testo, timbri e firme.',check:'Ho verificato tutta la pagina e accetto la copia.',saved:'Immagine e rapporto salvati.',failed:'Impossibile elaborare.',geometry:'Correggi righe curve (2D)',quality:'Non recupera testo mancante.',frames:'Scatti extra',rejected:'Foto rifiutate',manual:'Da controllare',clean:'Controlli superati; verificare'}
+};
+const pdfLabels={
+ en:'Also save as PDF',ar:'حفظ PDF حتى هو',fr:'Enregistrer aussi en PDF',
+ es:'Guardar también PDF',de:'Auch als PDF speichern',
+ pt:'Guardar também PDF',it:'Salva anche PDF'
+};
+const qualityLabels={
+ en:'Quality review',ar:'مراجعة جودة الصورة',fr:'Vérification qualité',
+ es:'Revisar calidad',de:'Qualitätsprüfung',pt:'Revisão da qualidade',it:'Controllo qualità'
 };
 const mlkitLabels={en:'AI Deep Clean · ML Kit',ar:'تنقية AI قوية · ML Kit',fr:'Nettoyage IA · ML Kit',es:'Limpieza IA · ML Kit',de:'KI Tiefenreinigung · ML Kit',pt:'Limpeza IA · ML Kit',it:'Pulizia IA · ML Kit'};
 const toBytes=base64=>{const bin=atob(base64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a};
@@ -55,6 +65,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
  '<div class="rivo-perfectscan-preview" role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
+ '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+
  '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
@@ -83,7 +94,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   const c=await imageCanvas(blob),image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
   base={data:image.data,width:c.width,height:c.height,bytes:bytes||new Uint8Array(await blob.arrayBuffer()),
    name,mime,fromLibrary};extra=[];resetOutput();process.disabled=false;
-  previewPixels(base.data,base.width,base.height,t.original);setStatus(t.ready);
+  previewPixels(base.data,base.width,base.height,t.original);
+  const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
+  setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
  }
  async function addShots(files){
   if(!base){setStatus(t.none,true);return}
@@ -119,7 +132,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
      (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
      ' · 2D: '+(processed.geometryApplied?'yes':'no')+
-     ' · '+(processed.requiresReview?t.manual:t.clean)+' · '+elapsed+' ms';
+     ' · '+(processed.requiresReview?t.manual:t.clean)+
+     (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings.join('; '):'')+
+     ' · '+elapsed+' ms';
    setStatus(summary,processed.requiresReview||processed.rejectedFrames.length>0);
   }catch(e){result=null;setStatus(t.failed+' '+e.message,true)}
   finally{disableDuring(false)}
@@ -139,16 +154,35 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     await onSave(base.bytes,'RivoScan_Original_'+stamp+'_'+safeName(base.name).replace(/\.[^.]*$/,'')+'.'+fileExt(base.mime,base.name),base.mime);
    }
    await onSave(out,name,'image/jpeg');
+   let pdfName=null,pdfSha256=null;
+   if(root.querySelector('[data-perfect-pdf]').checked){
+    const pdf=await PDFDocument.create();
+    const image=await pdf.embedJpg(out);
+    // A document page stays proportional to the photograph, rather than
+    // stretching a signature, seal or printed text into a different shape.
+    const pageWidth=base.width>=base.height?842:595;
+    const pageHeight=pageWidth*base.height/base.width;
+    const sheet=pdf.addPage([pageWidth,pageHeight]);
+    sheet.drawImage(image,{x:0,y:0,width:pageWidth,height:pageHeight});
+    pdf.setTitle('RivoScan PerfectScan Pro');
+    pdf.setProducer('RivoScan');
+    const pdfBytes=await pdf.save();
+    pdfName='RivoScan_PerfectScan_'+stamp+'.pdf';
+    pdfSha256=await sha256(pdfBytes);
+    await onSave(pdfBytes,pdfName,'application/pdf');
+   }
    const audit={
     product:'RivoScan PerfectScan Pro',version:1,createdUTC:time,
     processing:'on-device 2D document enhancement; NOT 3D reconstruction or certified forensic authenticity',
     originalName:base.name,originalSha256:baseHash,processedName:name,processedSha256:outHash,
+    processedPdfName:pdfName,processedPdfSha256:pdfSha256,
     SHA256Available:!!baseHash&&!!outHash,
     extraFramesSelected:result.extraCount,extraFramesAligned:result.usedFrames,
     additionalSources:extra.map(item=>({name:item.name,sha256:item.sha256})),
     rejectedFrames:result.rejectedFrames,frameOffsets:result.alignment,
     geometry2DApplied:result.geometryApplied,geometryConfidence:result.geometryConfidence,
-    inkFidelity:result.integrity,manualReviewRequired:result.requiresReview,
+    inkFidelity:result.integrity,captureQuality:result.quality,
+    manualReviewRequired:result.requiresReview,
     userConfirmedReview:true,originalKept:true,noUploadByPerfectScan:true
    };
    await onSave(new TextEncoder().encode(JSON.stringify(audit,null,2)),'RivoScan_PerfectScan_'+stamp+'_integrity.json','application/json');
