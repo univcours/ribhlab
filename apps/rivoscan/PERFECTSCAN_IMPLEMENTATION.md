@@ -16,6 +16,11 @@
 - Hash and contrast diagnostics do not establish certified legal authenticity; human review is required.
 - UVDoc and UVDoc_onnx (PaddlePaddle; Apache-2.0) are not bundled or running in the Android APK. Their Android runtime, model preprocessing, licensing/dependencies and device memory must be validated before enabling. Do not advertise UVDoc or true 3D as implemented.
 
+## Optional desktop UVDoc ONNX validation
+- A genuine local experimental runner is provided at scripts/uvdoc-offline.py.
+- It uses PaddlePaddle's Apache-2.0 UVDoc model through PaddleOCR/ONNX Runtime when installed on a compatible desktop environment, and keeps a byte-identical source copy and hashes. It does not run on Android, it is not a built-in mobile tool, and it has not been performance-certified on the user's phone.
+- Model download may require connectivity on first use; input photos are handled as local paths. This is an experimental companion for comparative QA, not a replacement for the mobile scanner.
+
 ## Device QA required before release
 - Capture one strongly folded real paper, compare with source and verify no made-up strokes.
 - Capture 2–4 shots of the same paper under changing light and confirm aligned frames, legible signatures, stamp color.
