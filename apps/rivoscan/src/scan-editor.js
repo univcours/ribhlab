@@ -9,7 +9,7 @@ import {estimateTextGridWarp,applyTextGridCanvas} from './text-grid-dewarp.js';
 import {coloredMarkMask} from './colored-mark-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
-export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,onDeepClean=null,preset='enhance'}){
+export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,onDeepClean=null,onPerfectScan=null,preset='enhance'}){
  const labels={
   en:['Edit scan','Add / retake','Original','Enhance','Magic','Remove shadow','Grayscale','Black & white','Whiteboard','Compare','Rotate left','Rotate right','Crop','Extract text','Save copy','Brightness','Contrast','Original / edited','Cancel','Processing photo…','Saving a new copy; original stays unchanged.'],
   ar:['تعديل الوثيقة','إعادة التصوير','الأصلية','تحسين','تحسين ذكي','حذف الظلال','رمادي','أبيض وأسود','سبورة','مقارنة','دور لليسار','دور لليمين','قص الحواف','استخراج النص','حفظ نسخة','الإضاءة','التباين','قبل / بعد','إلغاء','كنصلحو الصورة…','غادي نحفظ نسخة جديدة والأصل يبقى كيفما هو.'],
@@ -50,6 +50,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
 <button type="button" data-edit="undoErase">↶ Undo brush</button></div>
    <p class="rivo-editor-tip">${tr(20)}</p>
    <nav class="rivo-editor-actions">
+     ${onPerfectScan?`<button data-edit="perfectScan" class="rivo-editor-perfectscan">✦ PerfectScan Pro · multi-shot</button>` :''}
      ${onDeepClean?`<button data-edit="deepClean" class="rivo-editor-deep-clean">✦ ${({en:'AI Deep Clean · choose photo',ar:'تنقية AI قوية · اختار الصورة',fr:'Nettoyage IA · choisir photo',es:'Limpieza IA · elegir foto',de:'KI-Reinigung · Foto wählen',pt:'Limpeza IA · escolher foto',it:'Pulizia IA · scegli foto'})[getLanguage()]||'AI Deep Clean · choose photo'}</button>` :''}
      <button data-edit="compare">${tr(9)}</button><button data-edit="left">${tr(10)}</button>
      <button data-edit="right">${tr(11)}</button><button data-edit="crop">${tr(12)}</button>
@@ -251,6 +252,9 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   if(action==='left'||action==='right'){angle=(angle+(action==='left'?270:90))%360;await paint();return;}
   if(action==='crop'){close();await onCrop(doc);return;}
   if(action==='retake'){close();await onRetake();return;}
+  if(action==='perfectScan'&&onPerfectScan){
+    close();await onPerfectScan(doc);return;
+  }
   if(action==='deepClean'&&onDeepClean){
     // ML Kit owns its consented on-device workflow: user chooses the photo.
     // No automatic replacement of the file being edited.

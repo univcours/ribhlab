@@ -20,6 +20,7 @@ import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
+import { openPerfectScan } from './perfect-scan-ui.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -178,6 +179,7 @@ const docViewerUI=createDocumentViewer({
         onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
         onRetake:()=>openLiveScanner(),
         onDeepClean:()=>openSmartScanner(),
+        onPerfectScan:d=>launchPerfectScan(d),
         preset:'crease',
         onRefresh:async()=>{
           await loadLibrary(false);
@@ -345,6 +347,11 @@ function home(){
    <div class="rivo-search-row">
      <label class="rivo-home-search">${ico('search',23)} <input type="search" id="home-quick-search" placeholder="${hv('search')}" aria-label="${hv('search')}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"><span class="rivo-search-key" aria-hidden="true">${ico('search',14)}</span></label>
    </div>
+   <button type="button" class="rivo-perfectscan-home" data-perfectscan-launch>
+     <span class="rivo-perfectscan-feature-icon" aria-hidden="true">✦</span>
+     <span><strong>PerfectScan Pro</strong><small>${({en:'Flatten paper · merge camera shots · verify ink',ar:'تقويم الورق · دمج الصور · حماية الكتابة',fr:'Redresser · fusionner · protéger',es:'Aplanar · combinar · preservar',de:'Entzerren · vereinen · prüfen',pt:'Achatar · fundir · preservar',it:'Spiana · unisci · proteggi'})[language]||'Flatten paper · preserve stamps'}</small></span>
+     <span aria-hidden="true">›</span>
+   </button>
    <div class="home-shortcuts rivo-shortcuts">${shortcuts.map(short=>`<button type="button" class="home-shortcut rivo-tile rivo-tile-${short.id}" ${short.action}>
        <span class="home-shortcut-icon">${ico(short.icon,27)}</span><span>${escapeHTML(short.text)}</span>
      </button>`).join('')}</div>
@@ -542,6 +549,20 @@ function refreshVisibleLibrary(){
   const toggle=document.getElementById('library-layout');
   if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
 }
+function launchPerfectScan(doc=null){
+  return openPerfectScan({
+    doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
+    onRefresh:async()=>{
+      await loadLibrary(false);
+      if(activeTool?.id==='library')refreshVisibleLibrary();
+      else{
+        const rows=document.getElementById('home-recents');
+        if(rows)rows.innerHTML=recentDocuments();
+      }
+    },
+    notify:toast
+  });
+}
 function openLibrary(){
   docViewerUI.close();
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];bulkUI.clear();
@@ -668,6 +689,7 @@ function wire(){
     document.getElementById('section-'+el.dataset.hubSection)?.scrollIntoView({behavior:'smooth',block:'start'});
   }));
   document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>openHubAction(el.dataset.hubAction)));
+  document.querySelector('[data-perfectscan-launch]')?.addEventListener('click',()=>launchPerfectScan());
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
