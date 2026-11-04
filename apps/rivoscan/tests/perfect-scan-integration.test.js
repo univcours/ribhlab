@@ -11,9 +11,12 @@ test('PerfectScan Pro is reachable from home and an existing photo with original
  assert.ok(ui.includes('onSave(out,name'));
  assert.ok(ui.includes('userConfirmedReview:true'));
 });
-test('PerfectScan publishes no misleading 3D or forensic claims and blocks save until review',()=>{
+test('PerfectScan distinguishes real relative 3D from absent/certified metric depth and blocks save until review',()=>{
  const ui=get('src/perfect-scan-ui.js');
- assert.ok(ui.includes('NOT 3D reconstruction or certified forensic authenticity'));
+ assert.ok(ui.includes('relative 3D triangulation'));
+ assert.ok(ui.includes('surface3DCameraCalibrationApproximate'));
+ assert.ok(ui.includes('not certified forensic authenticity'));
+ assert.ok(ui.includes('no 3D reconstruction'));
  assert.ok(ui.includes("if(!base||!result||!review.checked||working)return"));
  assert.ok(ui.includes("save.disabled=!result||!review.checked"));
  assert.ok(ui.includes("extraFramesSelected:result.extraCount"));
