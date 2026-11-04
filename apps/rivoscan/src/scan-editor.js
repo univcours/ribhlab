@@ -133,7 +133,13 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
         if(best.confidence>=.42)creaseWarp=best;
       }
     }
-    if(creaseWarp)applyTextGridCanvas(preview,creaseWarp);
+    if(creaseWarp&&creaseStrength>=30){
+      const gain=Math.min(1,creaseStrength/80);
+      const cautiousWarp={...creaseWarp,rows:creaseWarp.rows.map(row=>({
+        ...row,anchors:row.anchors.map(anchor=>({...anchor,shift:anchor.shift*gain}))
+      }))};
+      applyTextGridCanvas(preview,cautiousWarp);
+    }
     const scan=ctx.getImageData(0,0,preview.width,preview.height);
     scan.data.set(reducePaperCreasesRGBA(scan.data,preview.width,preview.height,{strength:creaseStrength}));
     ctx.putImageData(scan,0,0);
