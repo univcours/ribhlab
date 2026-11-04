@@ -181,7 +181,7 @@ const docViewerUI=createDocumentViewer({
       await openScanEditor({
         doc,bridge:RivoDocuments,getLanguage:()=>language,
         onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
-        onRetake:()=>openLiveScanner(),
+        onRetake:()=>openSmartScanner(),
         // The one native scanner has its own filters, including neural correction.
         preset:'crease',
         onRefresh:async()=>{
@@ -390,8 +390,15 @@ function settingsWorkspace(){
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
- <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>${sl('live')}</small></span>${ico('back',18)}</button></div>
- <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>${scannerPreferenceRows()}<p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
+ <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>AI Deep Clean · Google ML Kit FULL</small></span>${ico('back',18)}</button></div>
+ <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>
+ <p class="rivo-pref-section-subtitle">${({en:'AI Deep Clean (ML Kit FULL) is the primary scanner. CameraX quality controls apply only to the backup corner editor.',ar:'AI Deep Clean (ML Kit FULL) هو السكان الرئيسي. إعدادات CameraX كتطبق غير على محرر الزوايا الاحتياطي.',fr:'AI Deep Clean (ML Kit FULL) est le scanner principal. Les réglages CameraX concernent l’éditeur de secours.'})[language]||'AI Deep Clean (ML Kit FULL) is the primary scanner.'}</p>
+ ${scannerPreferenceRows()}
+ <button type="button" class="settings-row rivo-scanner-pref" data-scan-advanced>
+ <span class="settings-row-icon">${ico('layers',22)}</span>
+ <span class="rivo-pref-copy"><strong>${({en:'Advanced document correction',ar:'تصحيح الوثائق المتقدم',fr:'Correction avancée des documents',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione documenti avanzata'})[language]||'Advanced document correction'}</strong>
+ <small>${({en:'Combine 2–4 views, AI flatten or relative 3D (optional)',ar:'دمج 2 حتى 4 صور، تقويم AI أو 3D نسبي (اختياري)',fr:'Fusion 2–4 vues, mise à plat IA ou 3D relative'})[language]||'Multi-angle or AI flatten (optional)'}</small></span>${ico('back',18)}</button>
+ <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
@@ -451,7 +458,7 @@ function scannerWorkspace(){
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
   <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
-  <button id="camera" class="scan-upload-link">${ico('camera',18)} ${sl('basic')}</button></div>
+  </div>
   </div><div class="panel scan-export-panel"><div id="options">${scannerOptionsMarkup()}</div>
   <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} ${sl('save')}</button>
   <p class="hint">${sl('hint')} ${dl('folder')}</p></div>
@@ -736,6 +743,7 @@ function wire(){
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner());
   document.getElementById('scan-multi-angle')?.addEventListener('click',()=>launchPerfectScan());
+  document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',()=>launchPerfectScan()));
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
