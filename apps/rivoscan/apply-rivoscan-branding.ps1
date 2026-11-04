@@ -105,6 +105,13 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
+# AdMob: use Google sample app ID in all beta/QA builds. Never bundle real ads
+# until merchant account, privacy policy and production ad units are verified.
+$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+if($xml -notmatch 'com.google.android.gms.ads.APPLICATION_ID') {
+  if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing' }
+  $xml=$xml.Replace('</application>',$admobMeta+"`r`n"+'</application>')
+}
 [IO.File]::WriteAllText($manifest,$xml,$utf8)
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.

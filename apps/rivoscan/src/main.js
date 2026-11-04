@@ -34,6 +34,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
+import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
@@ -287,6 +288,7 @@ const scanLabels={
 };
 const sl=(key)=>scanLabels[language]?.[key]||scanLabels.en[key]||key;
 
+configureAds({getLanguage:()=>language,notify:(message,error)=>toast(message,error),onChange:()=>{ /* refresh on next user navigation */ }});
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
 function render(){
   if(closeTransfer){closeTransfer();closeTransfer=null;}
@@ -368,7 +370,7 @@ function toolsWorkspace(){
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Rewarded video access">▶ 10m</span>':''}</button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
@@ -402,6 +404,7 @@ function settingsWorkspace(){
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
+ <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'خيارات خصوصية الإشهارات',fr:'Confidentialité des publicités',en:'Ad privacy options'})[language]||'Ad privacy options'}</strong><small>AdMob · ${getPremiumStatus().native?'Android':'Web'}</small></span></button>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -553,6 +556,9 @@ async function chooseLibraryFiles(kind='file'){
   input.click();
 }
 function openTab(tab){
+  // Fullscreen ads are considered only AFTER completed saves and on user navigation.
+  // Never interrupt capture, OCR, photo review, processing or document saving.
+  if(tab==='home'||tab==='tools'||tab==='me')void atNaturalNavigation();
   docViewerUI.close();
   if(tab==='library'){openLibrary();return;}
   bulkUI.clear();
@@ -700,7 +706,7 @@ function wire(){
     el?.addEventListener('keydown',activate);
     bulkUI.wireLongPress(el);
   }
-  document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>openTool(el.dataset.tool)));
+  document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>{void openTool(el.dataset.tool)}));
   document.getElementById('tools-query')?.addEventListener('input',event=>{
     const needle=event.target.value.trim().toLocaleLowerCase();let count=0;
     document.querySelectorAll('.rivo-hub-tile').forEach(el=>{
@@ -715,11 +721,12 @@ function wire(){
     const search=document.getElementById('tools-query');search.value='';search.dispatchEvent(new Event('input'));
     document.getElementById('section-'+el.dataset.hubSection)?.scrollIntoView({behavior:'smooth',block:'start'});
   }));
-  document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>openHubAction(el.dataset.hubAction)));
+  document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>{void openHubAction(el.dataset.hubAction)}));
 
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
+  document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
@@ -742,8 +749,8 @@ function wire(){
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner());
-  document.getElementById('scan-multi-angle')?.addEventListener('click',()=>launchPerfectScan());
-  document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',()=>launchPerfectScan()));
+  document.getElementById('scan-multi-angle')?.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()});
+  document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()}));
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
@@ -751,7 +758,7 @@ function wire(){
   document.getElementById('process')?.addEventListener('click',process);
   if(activeTool?.id==='sign')initSignature();
 }
-function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;docViewerUI.close();activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
+async function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;if(!(await requestPremium(id)))return;docViewerUI.close();activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
 function pickHubFile(accept,cb){
  const input=document.createElement('input');input.type='file';input.accept=accept;
  input.onchange=()=>{const file=input.files?.[0];input.remove();if(file)Promise.resolve(cb(file)).catch(e=>{console.error(e);toast(e?.message||String(e),true)});};
@@ -759,7 +766,8 @@ function pickHubFile(accept,cb){
 }
 async function openHubAction(id){
  const spec=hubSpecial[id];
- if(!spec){openTool(id);return;}
+ if(!spec){await openTool(id);return;}
+ if(!(await requestPremium(id)))return;
  if(spec.type==='aiDocument'||spec.type==='aiSolver'){
    openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
@@ -1059,7 +1067,7 @@ function clearBusy(){busy=false;document.querySelector('.busy')?.remove()}
 function setting(name){return document.querySelector(`[name="${name}"]`)?.value?.trim()||''}
 function requireFiles(min=1){if(files.length<min)throw Error(`Select at least ${min} file${min===1?'':'s'} first.`)}
 const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());
-function record(action){history.unshift({action,time:Date.now()});history=history.slice(0,10);localStorage.setItem('rivo-history',JSON.stringify(history));}
+function record(action){onDocumentSaved();history.unshift({action,time:Date.now()});history=history.slice(0,10);localStorage.setItem('rivo-history',JSON.stringify(history));}
 function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
 async function saveOut(bytes,name,mime='application/pdf'){
@@ -1298,6 +1306,8 @@ function initSignature(){
  document.getElementById('clear-sign')?.addEventListener('click',()=>{ctx.clearRect(0,0,rect.width,rect.height);signatureHasInk=false});signatureHasInk=false;
 }
 render();
+// Google demo ads, GDPR/UMP privacy flow; no app-open interruption.
+void initializeAds();
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))
   requestAnimationFrame(()=>openWhatsNew({language,version:appVersion}));

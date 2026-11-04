@@ -193,3 +193,11 @@ One user-visible Scan entry. CameraX captures, analyzes and displays the photo b
 
 ## 0.41.3 — AI Deep Clean is the scanner
 The single Scan action from Home, Scan workspace, Tools and ID Card now directly launches Google ML Kit FULL (gallery import allowed), saving the JPEG images that Google returns and creating an optional PDF. The native CameraX document camera is kept only for incompatible Google Play services or explicit manual edit. No separate Smart Scan, Deep Clean or PerfectScan Pro screen appears. Optional fusion, UVDoc and relative 3D are accessible under Scan > Advanced Corrections and in scanner settings. A user cancel never automatically launches backup CameraX. Note ML Kit output JPEGs are the cleaned Google scans; the plugin does not expose raw source photos. No delete/uninstall, no paywall or extra consent checkbox.
+
+## 0.42.0 — AdMob field-test monetization (DEMO ADS ONLY)
+- One Android banner, offset away from bottom navigation. No advertising/SDK on the browser build.
+- Explicit, dismissible rewarded video grants all advanced tools for **10 minutes**. Only a confirmed Google rewarded callback or returned SDK reward unlocks; cancellation never unlocks.
+- After at least **2 successful document saves**, full-screen interstitial is eligible only on a subsequent user-initiated Home/Tools/Me transition, after 2 minutes elapsed, with an **8-minute cooldown and a maximum of 3 per foreground app process**; never during capture or saving. Skips if 10-minute access is active.
+- Essential Scan, file library, existing saved documents, imports, share and routine PDF tools stay accessible without a forced video.
+- Consent is requested through Google UMP before requesting ads and ad privacy options are available in settings. If Google consent or ad serving is unavailable, no ad is fabricated. Advanced ad-gated tools may be temporarily unavailable.
+- All AdMob IDs are **Google demonstration IDs**. They generate **zero real advertising revenue**. Before commercial publication, register the RivoScan app in AdMob, configure valid production IDs via a reviewed release process, verify consent/privacy notice, Play Data Safety, app-ads.txt and complete device QA. Never publish Google demo IDs as revenue units.
