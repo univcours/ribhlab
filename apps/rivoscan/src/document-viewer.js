@@ -226,7 +226,6 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       try{await onEdit('enhance',selected,copy);}catch(error){feedback(error)}
     }:edit));
     actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
-    actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
     actionRow.appendChild(button('⌫ '+word('delete'),'doc-action doc-action-danger',async()=>{
       if(!window.confirm(word('confirm')))return;
       try{
@@ -234,6 +233,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
         close();await onChanged();
       }catch(e){feedback(e);}
     }));
+    actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
     root.appendChild(actionRow);
     root.appendChild(button('↗ '+word('external'),'doc-external-open',async()=>{try{await bridge.openFile({uri:current.uri});}catch(e){feedback(e);}}));
     document.body.appendChild(root);
