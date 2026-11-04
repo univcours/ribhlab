@@ -543,3 +543,17 @@ html,body,#app,body.rivo-native-android{background:#f5f7fb!important;color:#1725
 @media(prefers-reduced-motion:reduce){
  #app .rivo-home .rivo-tile,#app .rivo-dark-ui .mobile-tool-tile{transition:none!important}
 }
+
+/* Editor deep wrinkle cleaning: deliberate prominent action, not a tiny icon. */
+.rivo-editor-actions .rivo-editor-deep-clean{
+ grid-column:span 2;min-height:48px;
+ background:#eaf1ff!important;border:1px solid #9cbdff!important;
+ color:#1747aa!important;font-size:12px!important;font-weight:850!important;
+}
+.rivo-editor-actions .rivo-editor-save{grid-column:span 2}
+.rivo-editor-actions .rivo-editor-deep-clean:focus-visible{
+ outline:3px solid #2563eb!important;outline-offset:2px!important;
+}
+@media(max-width:420px){
+ .rivo-editor-actions .rivo-editor-deep-clean{font-size:11px!important}
+}
