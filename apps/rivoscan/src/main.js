@@ -34,7 +34,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
+import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
@@ -288,7 +288,7 @@ const scanLabels={
 };
 const sl=(key)=>scanLabels[language]?.[key]||scanLabels.en[key]||key;
 
-configureAds({getLanguage:()=>language,notify:(message,error)=>toast(message,error),onChange:()=>{ /* refresh on next user navigation */ }});
+configureAds({getLanguage:()=>language,notify:(message,error)=>toast(message,error),onChange:()=>{if(activeTool?.id==='me')render();}});
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
 function render(){
   if(closeTransfer){closeTransfer();closeTransfer=null;}
@@ -404,6 +404,14 @@ function settingsWorkspace(){
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
+ <div class="settings-section rivo-ad-settings"><h2>${({ar:'تشخيص الإشهارات',fr:'Diagnostics des publicités',en:'Ad diagnostics'})[language]||'Ad diagnostics'}</h2>
+ <div class="rivo-ads-diagnostics"><strong>${escapeHTML(getPremiumStatus().status)}</strong>
+ <span>${({ar:'إعلانات Google التجريبية فقط · بلا بانر · الفيديو اختياري',fr:'Annonces de test Google · sans bannière · vidéo volontaire',en:'Google test ads only · no banner · optional rewarded video'})[language]||'Test ads only'}</span>
+ <small>${getPremiumStatus().ready?'SDK ready':'SDK not ready'} · ${getPremiumStatus().interstitialReady?'Interstitial loaded':'Interstitial not loaded'} · ${getPremiumStatus().appOpenReady?'App open loaded':'App open not loaded'}</small>
+ ${getPremiumStatus().lastError?'<small>'+escapeHTML(getPremiumStatus().lastError)+'</small>':''}</div>
+ <button type="button" class="settings-row" data-ad-retry><span class="settings-row-icon">${ico('clock',22)}</span><span><strong>${({ar:'عاود الاتصال بالإشهارات',fr:'Réessayer le chargement des publicités',en:'Retry AdMob loading'})[language]||'Retry AdMob loading'}</strong></span></button>
+ <button type="button" class="settings-row" data-ad-test><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'جرّب إعلان الشاشة الكاملة',fr:'Tester une annonce plein écran',en:'Show TEST interstitial'})[language]||'Show TEST interstitial'}</strong><small>Google demo — no paid impressions</small></span></button>
+ </div>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'خيارات خصوصية الإشهارات',fr:'Confidentialité des publicités',en:'Ad privacy options'})[language]||'Ad privacy options'}</strong><small>AdMob · ${getPremiumStatus().native?'Android':'Web'}</small></span></button>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
@@ -556,9 +564,6 @@ async function chooseLibraryFiles(kind='file'){
   input.click();
 }
 function openTab(tab){
-  // Fullscreen ads are considered only AFTER completed saves and on user navigation.
-  // Never interrupt capture, OCR, photo review, processing or document saving.
-  if(tab==='home'||tab==='tools'||tab==='me')void atNaturalNavigation();
   docViewerUI.close();
   if(tab==='library'){openLibrary();return;}
   bulkUI.clear();
@@ -633,7 +638,7 @@ function wire(){
     openLibrary();
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
   }));
-  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>openTab(el.dataset.tab)));
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab(el.dataset.tab)}));
   document.querySelectorAll('[data-live-camera]').forEach(el=>el.addEventListener('click',async ()=>{
     if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner();
     else openTool('scan');
@@ -723,10 +728,12 @@ function wire(){
   }));
   document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>{void openHubAction(el.dataset.hubAction)}));
 
-  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>openTab('home')));
-  document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>{openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
+  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('home')}));
+  document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
+  document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
+  document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
   document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
@@ -1305,6 +1312,49 @@ function initSignature(){
  canvas.addEventListener('pointerup',()=>drawing=false);canvas.addEventListener('pointercancel',()=>drawing=false);
  document.getElementById('clear-sign')?.addEventListener('click',()=>{ctx.clearRect(0,0,rect.width,rect.height);signatureHasInk=false});signatureHasInk=false;
 }
+
+/** Unified in-app back stack for Android gestures, hardware back and edge swipe.
+ * Back exits selection before leaving Documents and never clears saved files. */
+let lastBackHandled=0;
+function navigateRivoBack(){
+ const now=Date.now();
+ if(now-lastBackHandled<420)return true;
+ if(document.querySelector('.rivo-reward-overlay')){
+  document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
+ }
+ const sheet=document.querySelector('.bulk-overlay');
+ if(sheet){sheet.querySelector('[data-close-sheet]')?.click();lastBackHandled=now;return true;}
+ if(document.querySelector('.doc-detail-overlay')){
+  docViewerUI.close();lastBackHandled=now;return true;
+ }
+ if(document.querySelector('.rivo-release-overlay')){
+  document.querySelector('.rivo-release-dialog button')?.click();lastBackHandled=now;return true;
+ }
+ if(bulkUI.mode()){
+  void bulkUI.action('cancel');lastBackHandled=now;return true;
+ }
+ if(document.querySelector('.busy'))return true; // Never interrupt a running document save.
+ if(activeTool){
+  openTab('home');lastBackHandled=now;return true;
+ }
+ return false;
+}
+// Fallback swipe for immersive Android WebViews where the OS edge gesture is not
+// forwarded; OS backButton remains the main source of back actions.
+let edgeSwipeStart=null;
+document.addEventListener('touchstart',event=>{
+ if(event.touches.length!==1){edgeSwipeStart=null;return;}
+ const t=event.touches[0];
+ edgeSwipeStart=t.clientX<=32?{x:t.clientX,y:t.clientY}:null;
+},{passive:true});
+document.addEventListener('touchend',event=>{
+ if(!edgeSwipeStart||event.changedTouches.length!==1)return;
+ const t=event.changedTouches[0],dx=t.clientX-edgeSwipeStart.x,dy=t.clientY-edgeSwipeStart.y;
+ edgeSwipeStart=null;
+ if(dx>=84&&Math.abs(dy)<60)navigateRivoBack();
+},{passive:true});
+document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
+
 render();
 // Google demo ads, GDPR/UMP privacy flow; no app-open interruption.
 void initializeAds();
@@ -1324,10 +1374,23 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   };
   syncNativeSoundSetting();
   loadLibrary(false);
+  CapacitorApp.addListener('backButton',()=>{
+    if(!navigateRivoBack())CapacitorApp.minimizeApp().catch(console.warn);
+  }).catch(console.warn);
+  let backgroundStartedAt=0;
   CapacitorApp.addListener('appStateChange',({isActive})=>{
     if(isActive){
       loadLibrary(activeTool?.id==='library');
       syncNativeSoundSetting();
+      const secondsAway=backgroundStartedAt?Date.now()-backgroundStartedAt:0;
+      backgroundStartedAt=0;
+      // App-open ad only on a genuine foreground return and only if preloaded.
+      if(secondsAway>=60000)void onAppForeground({
+       backgroundMs:secondsAway,
+       working:busy||!!document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy')
+      });
+    }else{
+      backgroundStartedAt=Date.now();
     }
   }).catch(console.warn);
 }

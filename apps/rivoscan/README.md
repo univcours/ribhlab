@@ -201,3 +201,14 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Essential Scan, file library, existing saved documents, imports, share and routine PDF tools stay accessible without a forced video.
 - Consent is requested through Google UMP before requesting ads and ad privacy options are available in settings. If Google consent or ad serving is unavailable, no ad is fabricated. Advanced ad-gated tools may be temporarily unavailable.
 - All AdMob IDs are **Google demonstration IDs**. They generate **zero real advertising revenue**. Before commercial publication, register the RivoScan app in AdMob, configure valid production IDs via a reviewed release process, verify consent/privacy notice, Play Data Safety, app-ads.txt and complete device QA. Never publish Google demo IDs as revenue units.
+
+## 0.42.1 — no banner, reliable test ad loading, Android back and responsive files
+- **No banner:** AdMob banner loading has been removed. Rewarded video, interstitial and app-open have separate official Google demonstration ad units in development builds.
+- **Consent corrected:** the Google UMP request/form runs before Android Mobile Ads SDK initialization; on consent rejection or unavailable ads, no ad appears and no simulated reward is granted.
+- **Rewarded video:** user chooses to watch; SDK reward callback or reward item is mandatory for 10-minute access. No video is forced into the editor. Essential scanner, document library, import and share remain available.
+- **Interstitial:** preloaded and shown only at an actual home/tools transition after 2 saved outputs, with 8-minute cooldown, 3 per process. No delayed surprise after a new screen renders.
+- **App open:** preloaded and shown only on a genuine return from ≥60s background, with at least a 20-minute fullscreen cooldown; never during scanning, editing or after a rewarded unlock.
+- **Ad diagnostics:** Me/Settings includes current native status, SDK loading failures, Retry and an explicit test-interstitial trigger. Debug builds do not earn revenue; use the production App ID and ad units only after actual AdMob configuration, privacy review and physical tests.
+- **Android navigation:** real Capacitor Android system-back listener, with narrow edge-swipe fallback. Back dismisses selection before leaving Documents, preserves files and does not interrupt saves.
+- **Files selection:** bottom fixed toolbar removed. Share/Delete stay side by side and remaining actions wrap inside the Documents panel, above Android gesture navigation bar.
+- **Turquoise brand** preserved throughout revised controls.

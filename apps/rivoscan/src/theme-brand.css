@@ -789,3 +789,69 @@ html,body,#app,body.rivo-native-android{background:#f1faf8!important;color:#123c
 .rivo-unified-scan-advanced{margin:12px 0 18px;padding:12px 14px;background:#fff;border:1px solid #bce8de;border-radius:16px;color:#126f72}
 .rivo-unified-scan-advanced summary{cursor:pointer;font-weight:750;min-height:44px;display:flex;align-items:center}
 .rivo-unified-scan-advanced button{display:flex;align-items:center;gap:10px;min-height:46px;padding:11px 14px;border:1px solid #93ddd1;border-radius:12px;background:#edfbf6;color:#086f72;font-weight:700}
+
+
+/* v0.42.1: Selection actions belong to the documents panel, NOT over Android
+   gesture/navigation bars. CSS below intentionally overrides legacy fixed bar. */
+#app .rivo-dark-ui .library-selection-toolbar,
+#app .rivo-home .library-selection-toolbar{
+ position:relative!important;inset:auto!important;top:auto!important;bottom:auto!important;
+ left:auto!important;right:auto!important;transform:none!important;
+ z-index:3!important;overflow:visible!important;
+ width:100%!important;max-width:100%!important;max-height:none!important;
+ display:block!important;box-sizing:border-box!important;
+ margin:12px 0 18px!important;padding:12px!important;border-radius:16px!important;
+ background:#f4fffb!important;border:1px solid #a5dfd3!important;
+ box-shadow:0 4px 18px #086e6817!important;
+}
+#app .rivo-dark-ui .bulk-heading{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;margin-bottom:10px!important}
+#app .rivo-dark-ui .bulk-heading strong{color:#075c60!important;font-size:14px!important}
+#app .rivo-dark-ui .bulk-heading small{font-size:12px!important;color:#4d7778!important}
+#app .rivo-dark-ui .bulk-heading .bulk-close{
+ margin-inline-start:auto;flex:none;width:36px;min-height:36px;display:grid;place-items:center;
+ border-radius:10px;background:#fff!important;color:#0a6c69!important;border:1px solid #b4e3d9!important;
+}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-actions{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important;min-width:0!important}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-primary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-primary button{
+ min-width:0!important;width:100%!important;white-space:normal!important;
+ font-size:13px!important;line-height:1.2!important;padding:10px 8px!important;min-height:46px!important;
+ overflow-wrap:anywhere!important;
+}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-secondary{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:7px!important;overflow:visible!important;max-width:100%!important;
+ min-width:0!important;padding:0!important;
+}
+#app .rivo-dark-ui .library-selection-toolbar .bulk-secondary button{
+ width:100%!important;min-width:0!important;min-height:42px!important;
+ padding:8px 5px!important;font-size:11px!important;line-height:1.2!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+}
+body.rivo-multiselect #app #library-list,
+body.rivo-multiselect #app #home-recents{padding-bottom:0!important}
+#app .rivo-dark-ui .rivo-build-version{
+ background:#e4faf4!important;color:#067b78!important;border:1px solid #95dcd0!important;
+}
+#app .rivo-dark-ui .settings-row[data-ad-privacy],
+#app .rivo-dark-ui .settings-row[data-ad-test],
+#app .rivo-dark-ui .settings-row[data-ad-retry]{
+ border:1px solid #aee0d5!important;background:#f3fffb!important;color:#065a60!important;
+}
+#app .rivo-ads-diagnostics{padding:14px;border:1px solid #bae5da;border-radius:15px;background:#f8fffd;color:#154c4d;font-size:12px;line-height:1.55}
+#app .rivo-ads-diagnostics strong{display:block;color:#086b69;font-size:15px;margin-bottom:5px}
+#app .rivo-ads-diagnostics small{display:block;color:#557c79;margin-top:5px;overflow-wrap:anywhere}
+#app .rivo-dark-ui .floating-scan{background:linear-gradient(140deg,#06b3a7,#08747a)!important}
+.rivo-reward-dialog{border:1px solid #8ddacc}
+@media(max-width:780px){
+ #app .rivo-dark-ui .library-selection-toolbar,
+ #app .rivo-home .library-selection-toolbar{position:relative!important;bottom:auto!important;max-height:none!important}
+ #app .rivo-dark-ui .content{padding-bottom:calc(95px + env(safe-area-inset-bottom,0px))!important}
+ #app .rivo-dark-ui .mobilebar{
+  padding-bottom:max(6px,env(safe-area-inset-bottom,0px))!important;
+ }
+ #app .rivo-dark-ui .library-panel,
+ #app .rivo-dark-ui .recent-panel{overflow-x:hidden!important}
+ #app .rivo-dark-ui .document-entry{min-width:0!important;max-width:100%!important}
+ #app .rivo-dark-ui .document-description{min-width:0!important}
+}

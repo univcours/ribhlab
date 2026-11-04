@@ -36,18 +36,21 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     if(!mode)return '';
     const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
     return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
-      <strong>${items.length} ${t('selected')}</strong><small>${size(total)}</small>
+      <div class="bulk-heading"><strong>${items.length} ${t('selected')}</strong>
+        <small>${size(total)}</small>
+        <button class="bulk-close" type="button" data-bulk="cancel" aria-label="${t('cancel')}">✕</button>
+      </div>
       <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
         <div class="bulk-primary">
-          <button data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span> ${t('share')}</button>
-          <button data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span> ${t('delete')}</button>
+          <button type="button" data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
+          <button type="button" data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
         </div>
         <div class="bulk-secondary">
-          <button data-bulk="all">${t('all')}</button><button data-bulk="invert">${t('invert')}</button>
-          <button data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
-          <button data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
-          <button data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
-          <button data-bulk="cancel">${t('cancel')}</button>
+          <button type="button" data-bulk="all">${t('all')}</button>
+          <button type="button" data-bulk="invert">${t('invert')}</button>
+          <button type="button" data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
+          <button type="button" data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
+          <button type="button" data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
         </div>
       </div>
     </div>`;

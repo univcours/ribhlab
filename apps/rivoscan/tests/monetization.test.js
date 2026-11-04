@@ -1,25 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AD_CONFIG,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial} from '../src/monetization.js';
-test('all ad IDs are Google development TEST units only',()=>{
+import {AD_CONFIG,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
+ FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS} from '../src/monetization.js';
+test('banner removed; only official Google sample rewarded, interstitial and app-open units',()=>{
+ assert.equal(AD_CONFIG.bannerEnabled,false);assert.equal('banner' in AD_CONFIG,false);
  assert.equal(AD_CONFIG.testMode,true);
- for(const name of ['banner','rewarded','interstitial'])assert.match(AD_CONFIG[name],/^ca-app-pub-3940256099942544\/\d+$/);
+ for(const id of ['rewarded','interstitial','appOpen'])
+  assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
-test('premium access is scoped to heavy tools, not essential scanning or saved files',()=>{
- for(const id of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])assert.equal(isPremiumFeature(id),true);
- for(const id of ['scan','images','importFiles','shareFiles','merge','library','idcard'])assert.equal(isPremiumFeature(id),false);
+test('basic scanning, reading and existing files never need reward ads',()=>{
+ for(const name of ['scan','images','importFiles','shareFiles','merge','library','idcard'])
+  assert.equal(isPremiumFeature(name),false);
+ for(const name of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])
+  assert.equal(isPremiumFeature(name),true);
 });
-test('rewarded access expires after precisely 10 minutes',()=>{
+test('reward unlock is limited to 10 minutes',()=>{
  assert.equal(remainingPremiumMs(600000,0),600000);
  assert.equal(remainingPremiumMs(600000,600001),0);
 });
-test('interstitial only at a natural navigation after 2 finished tasks, min 2 min and 8 min cooldown',()=>{
- const base={native:true,consent:true,startedAt:1000,now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0};
- assert.equal(shouldShowInterstitial(base),true);
- assert.equal(shouldShowInterstitial({...base,savedCount:1}),false);
- assert.equal(shouldShowInterstitial({...base,now:100000}),false);
- assert.equal(shouldShowInterstitial({...base,lastShownAt:700000}),false);
- assert.equal(shouldShowInterstitial({...base,shownCount:3}),false);
- assert.equal(shouldShowInterstitial({...base,consent:false}),false);
- assert.equal(shouldShowInterstitial({...base,premiumUntil:1000000}),false);
+test('interstitial requires consent, saved work, natural break, cooldown, session cap',()=>{
+ const state={native:true,consent:true,ready:true,startedAt:1000,
+  now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0};
+ assert.equal(shouldShowInterstitial(state),true);
+ for(const override of [{native:false},{consent:false},{ready:false},{savedCount:1},
+  {shownCount:3},{premiumUntil:1000000},{now:100000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
+  assert.equal(shouldShowInterstitial({...state,...override}),false);
+});
+test('app open only on foreground return after >=60 seconds background and 20-minute cooldown',()=>{
+ const now=3600000;
+ const base={native:true,consent:true,ready:true,backgroundMs:MIN_BACKGROUND_MS,
+  now,lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS,premiumUntil:0,working:false};
+ assert.equal(shouldShowAppOpen(base),true);
+ for(const change of [{backgroundMs:0},{working:true},{consent:false},{native:false},
+   {ready:false},{premiumUntil:now+1},{lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS+1}])
+  assert.equal(shouldShowAppOpen({...base,...change}),false);
 });
