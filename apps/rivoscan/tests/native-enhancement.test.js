@@ -8,7 +8,7 @@ const nativeInstall=readFileSync(new URL('../install-live-scanner.ps1',import.me
 test('Saving native scans requires perspective crop, enhancement preview and explicit check',()=>{
  assert.ok(activity.includes('RivoEdgeDetector.warp(source,corners)'));
  assert.ok(activity.includes('private void showEnhancementPreview()'));
- assert.ok(activity.includes('button("✓  "+trNative("enhanceDone"),this::saveEnhancedPage)'));
+ assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
  assert.ok(activity.includes('RivoDocumentEnhancer.apply(input,preset)'));
  assert.ok(activity.includes('if(batchMode)showCamera();else finishWithPages();'));
  assert.ok(!activity.includes('button(trNative("savePage"),this::saveCroppedPage)'));
@@ -28,18 +28,23 @@ test('All-language native stage and native source included in Android wrapper',(
  assert.ok(nativeInstall.includes('RivoDocumentEnhancer.java'));
 });
 
-test('The first crop check automatically cleans without requiring a manual filter choice',()=>{
- assert.ok(activity.includes('button("✓  "+trNative(autoCleanEnabled?"autoCleanSave":"savePage"),this::autoCleanAndSave)'));
- assert.ok(activity.includes('button(trNative("enhanceFilters"),this::prepareEnhancementPreview)'));
- assert.ok(activity.includes('autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL'));
- assert.ok(activity.includes('backupOriginalPage(source)'));
- assert.ok(processor.includes('AUTO="auto"'));
- assert.ok(processor.includes('Core.addWeighted(rgb,CREASE.equals(mode)?0.88:(PRO_SCAN.equals(mode)?0.87:0.82),originalRGB,'));
+test('Capture keeps the image on screen, evaluates quality and requires user-selected review or retake',()=>{
+ assert.ok(activity.includes('RivoEdgeDetector.detect(bitmap)'));
+ assert.ok(activity.includes('RivoCaptureQuality.analyze(bitmap,found)'));
+ assert.ok(activity.includes('qualityResult.summary(nativeLanguage)'));
+ assert.ok(activity.includes('button(trNative("retake"),this::showCamera)'));
+ assert.ok(activity.includes('button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)'));
+ assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
+ assert.ok(activity.includes('if(captureQuality!=null&&captureQuality.retakeSuggested)'));
+ assert.ok(activity.includes('setNegativeButton(trNative("retake")'));
+ assert.ok(activity.includes('enhancementProgress.setVisibility(View.VISIBLE)'));
+ assert.ok(activity.includes('enhancementProgress.setVisibility(View.GONE)'));
+ assert.ok(activity.includes('selectedEnhancement=mode;renderEnhancementPreview(mode)'));
+ assert.ok(activity.includes('enhancementImage.setImageBitmap(pendingWarp)'));
+ assert.ok(activity.includes('if(saveOriginal&&current!=null)backupOriginalPage(current)'));
  assert.ok(processor.includes('PRO_SCAN="proscan"'));
- assert.ok(processor.includes('originalRGB.copyTo(rgb,stampMask)'), 'colored stamps are preserved from original');
- const firstCrop=activity.slice(activity.indexOf('private void openEditor('),activity.indexOf('private void releaseEnhancement()'));
- assert.ok(firstCrop.includes('this::autoCleanAndSave'));
- assert.ok(!firstCrop.includes('button(trNative("enhanceNext"),this::prepareEnhancementPreview)'));
+ assert.ok(processor.includes('originalRGB.copyTo(rgb,stampMask)'));
+ assert.ok(nativeInstall.includes('RivoCaptureQuality.java'));
 });
 
 test('Scanner protects ✓ save against rapid filter taps, back navigation and repeated captures',()=>{

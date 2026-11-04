@@ -183,15 +183,21 @@ final class RivoEdgeDetector {
         return new Point[]{top[0],top[1],bottom[1],bottom[0]};
     }
 
-    /** Apply perspective transform to a color bitmap with user-adjustable corners. */
+    /** Perspective correct at document-readable resolution without upscaling fabricated detail. */
     static Bitmap warp(Bitmap bitmap,Point[] normalized) {
+        return warp(bitmap,normalized,3100);
+    }
+    static Bitmap warp(Bitmap bitmap,Point[] normalized,int maxLongSide) {
         int w=bitmap.getWidth(),h=bitmap.getHeight();
         Point[] q=new Point[4];
         for(int i=0;i<4;i++)q[i]=new Point(Math.max(0,Math.min(1,normalized[i].x))*(w-1),Math.max(0,Math.min(1,normalized[i].y))*(h-1));
         int width=(int)Math.round(Math.max(distance(q[0],q[1]),distance(q[3],q[2])));
         int height=(int)Math.round(Math.max(distance(q[0],q[3]),distance(q[1],q[2])));
         if(width<80||height<80)throw new IllegalArgumentException("Move corners to outline a document.");
-        double shrink=Math.min(1.,2100./Math.max(width,height));
+        // A4 300dpi is ~3508px tall. Preserve more real ink detail in HD
+        // when available, bounded to avoid OOM in OpenCV processing.
+        double target=Math.max(1700,Math.min(3400,maxLongSide));
+        double shrink=Math.min(1.,target/Math.max(width,height));
         width=Math.max(1,(int)Math.round(width*shrink));height=Math.max(1,(int)Math.round(height*shrink));
         Mat source=new Mat(),out=new Mat(),matrix=new Mat();
         MatOfPoint2f src=new MatOfPoint2f(q),dst=new MatOfPoint2f(

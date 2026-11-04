@@ -13,7 +13,7 @@ test('Full turquoise theme and icon use matching palette in all major surfaces',
   '.rivo-perfectscan-modal','.rivo-editor-window','.library-selection-toolbar'])
   assert.ok(theme.includes(part),'theme area missing '+part);
  assert.ok(brand.includes('scripts/create-turquoise-icon.mjs'));
- assert.ok(brand.includes('#0aa59d'));
+ assert.ok(brand.toLowerCase().includes('#0aa59d'));
  assert.ok(build.scripts.prebuild.includes('create-turquoise-icon.mjs'));
 });
 test('Native system bar remains white and readable',()=>{

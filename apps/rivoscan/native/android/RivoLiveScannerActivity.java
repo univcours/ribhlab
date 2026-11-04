@@ -837,12 +837,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private static int sampleSize(int width,int height){
         int sample=1;
-        while(Math.max(width,height)/sample>2800 && sample<16)sample*=2;
+        while(Math.max(width,height)/sample>3600 && sample<16)sample*=2;
         return sample;
     }
     private static Bitmap resizeForCrop(Bitmap input){
         if(input==null)throw new IllegalArgumentException("Cannot decode photo.");
-        double scale=Math.min(1,2800.0/Math.max(input.getWidth(),input.getHeight()));
+        double scale=Math.min(1,3600.0/Math.max(input.getWidth(),input.getHeight()));
         if(scale>=1)return input;
         Bitmap resized=Bitmap.createScaledBitmap(input,
             Math.max(1,(int)Math.round(input.getWidth()*scale)),
@@ -968,7 +968,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Bitmap straight=null,output=null;
             File target=null;
             try{
-                straight=RivoEdgeDetector.warp(source,corners);
+                straight=RivoEdgeDetector.warp(source,corners,highQuality?3300:2150);
                 output=RivoDocumentEnhancer.apply(straight,
                     autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL);
                 composeSignature(output);
@@ -1226,7 +1226,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         analyzer.execute(()->{
             Bitmap warped=null;
             try{
-                warped=RivoEdgeDetector.warp(source,corners);
+                warped=RivoEdgeDetector.warp(source,corners,highQuality?3300:2150);
                 final Bitmap result=warped;
                 mainHandler.post(()->{
                     if(serial!=enhancementSerial||!editing||isFinishing()){
