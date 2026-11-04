@@ -10,7 +10,7 @@ export function limitZoom(s,cw,ch,vw,vh){
 export function createViewerZoom({viewport,stage,onChange=()=>{}}){
  if(!viewport||!stage)throw Error('Missing document zoom viewport');
  let state={scale:1,x:0,y:0},previous=null,lastTap=null,closed=false;
- const pointers=new Map();
+ const pointers=new Map(),tapStarts=new Map();
  const coords=e=>{const b=viewport.getBoundingClientRect();return {x:e.clientX-b.left-b.width/2,y:e.clientY-b.top-b.height/2}};
  const center=()=>{const [a,b]=[...pointers.values()];return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,d:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y))}};
  function apply(){
@@ -24,7 +24,9 @@ export function createViewerZoom({viewport,stage,onChange=()=>{}}){
  };
  const down=e=>{
   if(e.button!==undefined&&e.button!==0)return;
-  e.preventDefault();pointers.set(e.pointerId,coords(e));
+  e.preventDefault();const p=coords(e);pointers.set(e.pointerId,p);
+  tapStarts.set(e.pointerId,{...p,multitouch:false});
+  if(pointers.size>1){for(const t of tapStarts.values())t.multitouch=true;lastTap=null;}
   try{viewport.setPointerCapture(e.pointerId)}catch{}
   previous=pointers.size===2?center():[...pointers.values()][0];
  };
@@ -44,16 +46,18 @@ export function createViewerZoom({viewport,stage,onChange=()=>{}}){
   }
  };
  const up=e=>{
-  const p=pointers.get(e.pointerId);pointers.delete(e.pointerId);
+  const p=pointers.get(e.pointerId),start=tapStarts.get(e.pointerId);
+  pointers.delete(e.pointerId);tapStarts.delete(e.pointerId);
   try{if(viewport.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId)}catch{}
   if(!pointers.size){
    previous=null;
-   if(e.pointerType==='touch'&&p){
+   if(e.pointerType==='touch'&&p&&start&&!start.multitouch){
     const now=Date.now(),q=coords(e);
-    if(lastTap&&now-lastTap.time<310&&Math.hypot(q.x-lastTap.x,q.y-lastTap.y)<28){
+    if(Math.hypot(q.x-start.x,q.y-start.y)>13){lastTap=null;}
+    else if(lastTap&&now-lastTap.time<310&&Math.hypot(q.x-lastTap.x,q.y-lastTap.y)<28){
      zoomAt(state.scale>1.4?1:2.5,q);lastTap=null;
     }else lastTap={time:now,...q};
-   }
+   }else lastTap=null;
   }else previous=pointers.size===2?center():[...pointers.values()][0];
  };
  const wheel=e=>{e.preventDefault();zoomAt(state.scale*(e.deltaY<0?1.18:1/1.18),coords(e))};
@@ -62,7 +66,7 @@ export function createViewerZoom({viewport,stage,onChange=()=>{}}){
  viewport.addEventListener('wheel',wheel,{passive:false});viewport.style.touchAction='none';apply();
  return {
   zoomIn:()=>zoomAt(state.scale*1.5),zoomOut:()=>zoomAt(state.scale/1.5),
-  reset:()=>{pointers.clear();previous=null;state={scale:1,x:0,y:0};apply()},
-  destroy:()=>{if(closed)return;closed=true;for(const [event,listener] of [['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',up],['dblclick',dbl]])viewport.removeEventListener(event,listener);viewport.removeEventListener('wheel',wheel);viewport.style.touchAction='';pointers.clear()}
+  reset:()=>{pointers.clear();tapStarts.clear();previous=null;lastTap=null;state={scale:1,x:0,y:0};apply()},
+  destroy:()=>{if(closed)return;closed=true;for(const [event,listener] of [['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',up],['dblclick',dbl]])viewport.removeEventListener(event,listener);viewport.removeEventListener('wheel',wheel);viewport.style.touchAction='';pointers.clear();tapStarts.clear()}
  };
 }
