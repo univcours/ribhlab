@@ -7,7 +7,7 @@ $source=Join-Path $root 'native\android'
 if(-not (Test-Path (Join-Path $android 'app\build.gradle'))) { throw 'Android wrapper not found. Run npm install, npm run build, npx cap add android (first time), npx cap sync android.' }
 $packageDir=Join-Path $android 'app\src\main\java\com\ribhlab\rivoscan'
 New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-foreach($filename in @('RivoLiveScannerPlugin.java','RivoDocumentsPlugin.java','RivoSounds.java','RivoLocale.java','RivoEdgeDetector.java','RivoCropEditor.java','RivoDocumentEnhancer.java','RivoScanPagesManager.java','RivoLiveScannerActivity.java')) {
+foreach($filename in @('RivoLiveScannerPlugin.java','RivoDocumentsPlugin.java','RivoSounds.java','RivoLocale.java','RivoEdgeDetector.java','RivoCropEditor.java','RivoDocumentEnhancer.java','RivoScanPagesManager.java','RivoLiveScannerActivity.java','RivoUVDocPlugin.java')) {
   $src=Join-Path $source $filename
   if(-not(Test-Path $src)){throw "Missing native scanner source: $src"}
   Copy-Item -LiteralPath $src -Destination (Join-Path $packageDir $filename) -Force
@@ -40,6 +40,7 @@ public class MainActivity extends BridgeActivity {
             .setAppearanceLightStatusBars(true);
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
+        registerPlugin(RivoUVDocPlugin.class);
         super.onCreate(savedInstanceState);
         // A second Android AppCompat ActionBar was displaying above RivoScan's
         // own branded HTML header. Hide it even on upgraded installations.
@@ -85,8 +86,41 @@ if($gradleText -notmatch "androidx\.camera:camera-view:1\.6\.2") {
   if($gradleText -notmatch 'dependencies\s*\{') {throw 'Gradle dependencies section not found.'}
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$deps",1)
 }
+# Official PaddlePaddle UVDoc ONNX mobile CPU backend (verified source + SHA-256).
+# Kept separate from CameraX dependencies: upgrades of existing Android projects
+# must receive ONNX Runtime even if the CameraX block already exists.
+if($gradleText -notmatch 'com\.microsoft\.onnxruntime:onnxruntime-android:') {
+  $uvRuntime="    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.31.1'"
+  $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$uvRuntime",1)
+}
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
+
+# Bundle UVDoc ONNX model into Android assets after verifying the official
+# PaddlePaddle Apache-2.0 model bytes. No user document is transmitted.
+# Model is ~31.7 MB, and is kept intact across incremental local builds.
+$uvdocAssets=Join-Path $android 'app\src\main\assets\uvdoc'
+New-Item -ItemType Directory -Path $uvdocAssets -Force | Out-Null
+$uvdocFile=Join-Path $uvdocAssets 'inference.onnx'
+$uvdocExpected='54cab30dc2cf347b4f3d6971c833b1c3d84f5ef17280f1f6d15796bff20e63d6'
+$uvdocCorrect=(Test-Path $uvdocFile) -and ((Get-FileHash -LiteralPath $uvdocFile -Algorithm SHA256).Hash.ToLowerInvariant() -eq $uvdocExpected)
+if(-not $uvdocCorrect) {
+  $uvdocTemp=Join-Path $uvdocAssets 'inference.download'
+  if(Test-Path $uvdocTemp){Remove-Item -LiteralPath $uvdocTemp -Force}
+  try {
+    $uvdocURL='https://huggingface.co/PaddlePaddle/UVDoc_onnx/resolve/main/inference.onnx?download=true'
+    Invoke-WebRequest -Uri $uvdocURL -OutFile $uvdocTemp -UseBasicParsing
+    if((Get-FileHash -LiteralPath $uvdocTemp -Algorithm SHA256).Hash.ToLowerInvariant() -ne $uvdocExpected) {
+      throw 'UVDoc model SHA-256 does not match verified official bytes.'
+    }
+    Move-Item -LiteralPath $uvdocTemp -Destination $uvdocFile -Force
+  } catch {
+    if(Test-Path $uvdocTemp){Remove-Item -LiteralPath $uvdocTemp -Force}
+    throw ('UVDoc model must be downloaded and verified for this build. No fake Android model is shipped. ' + $_.Exception.Message)
+  }
+}
+Write-Host 'UVDoc official ONNX model SHA-256 verified and bundled into Android assets.' -ForegroundColor Green
+
 
 
 # Use a real NoActionBar theme in the actual Android Activity. The native title
