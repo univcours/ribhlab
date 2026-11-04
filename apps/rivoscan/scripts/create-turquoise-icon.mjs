@@ -68,7 +68,9 @@ const raw=Buffer.alloc(N*(N*4+1));
 for(let y=0;y<N;y++)Buffer.from(pixels.subarray(y*N*4,(y+1)*N*4)).copy(raw,y*(N*4+1)+1);
 const header=Buffer.alloc(13);header.writeUInt32BE(N,0);header.writeUInt32BE(N,4);header[8]=8;header[9]=6;
 const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',header),chunk('IDAT',deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
-for(const [p,data] of [['assets/icon.png.b64',png.toString('base64')+'\n'],['public/rivoscan-icon.png',png],['public/icon.png',png]]){
+// Generated assets live under already-ignored node_modules: never dirty Git
+// and never block the next safe git pull on a user's Windows PC.
+for(const [p,data] of [['node_modules/.cache/rivoscan/icon.png.b64',png.toString('base64')+'\n']]){
  const abs=join(root,p);mkdirSync(dirname(abs),{recursive:true});writeFileSync(abs,data);
 }
 console.log('[RivoScan] Turquoise icon generated: '+png.length+' bytes; web and Android assets aligned.');

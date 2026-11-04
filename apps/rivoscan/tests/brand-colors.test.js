@@ -15,6 +15,10 @@ test('Full turquoise theme and icon use matching palette in all major surfaces',
  assert.ok(brand.includes('scripts/create-turquoise-icon.mjs'));
  assert.ok(brand.toLowerCase().includes('#0aa59d'));
  assert.ok(build.scripts.prebuild.includes('create-turquoise-icon.mjs'));
+ const generator=readFileSync(new URL('../scripts/create-turquoise-icon.mjs',import.meta.url),'utf8');
+ assert.ok(generator.includes('node_modules/.cache/rivoscan/icon.png.b64'));
+ assert.ok(!generator.includes("['public/rivoscan-icon.png',png]"));
+ assert.ok(brand.includes('node_modules/.cache/rivoscan/icon.png.b64'));
 });
 test('Native system bar remains white and readable',()=>{
  assert.ok(main.includes("import './theme-brand.css'"));

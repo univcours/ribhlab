@@ -2,11 +2,11 @@
 # Safe to re-run after every Capacitor sync. Produces adaptive, themed and legacy icons.
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$source = Join-Path $root 'assets/icon.png.b64'
+$source = Join-Path $root 'node_modules/.cache/rivoscan/icon.png.b64'
 $res = Join-Path $root 'android/app/src/main/res'
 $manifest = Join-Path $root 'android/app/src/main/AndroidManifest.xml'
 $gradle = Join-Path $root 'android/app/build.gradle'
-if(-not (Test-Path -LiteralPath $source) -or -not (Test-Path -LiteralPath $manifest)) {
+if(-not (Test-Path -LiteralPath $manifest)) {
   throw 'RivoScan Android project or branding source missing. Run npm run build and npx cap sync android first.'
 }
 
@@ -15,6 +15,7 @@ $generator=Join-Path $root 'scripts/create-turquoise-icon.mjs'
 if(-not (Test-Path -LiteralPath $generator)){throw 'Turquoise launcher icon generator missing.'}
 & node $generator
 if($LASTEXITCODE -ne 0){throw 'Turquoise icon generation failed.'}
+if(-not (Test-Path -LiteralPath $source)){throw 'Generated launcher icon PNG was not found.'}
 $bytes = [Convert]::FromBase64String([IO.File]::ReadAllText($source).Trim())
 if($bytes.Length -lt 8 -or $bytes[0] -ne 137 -or $bytes[1] -ne 80 -or $bytes[2] -ne 78 -or $bytes[3] -ne 71) {
   throw 'RivoScan launcher artwork is not a valid PNG.'
