@@ -557,3 +557,11 @@ html,body,#app,body.rivo-native-android{background:#f5f7fb!important;color:#1725
 @media(max-width:420px){
  .rivo-editor-actions .rivo-editor-deep-clean{font-size:11px!important}
 }
+
+/* Wrinkle strength: full-width adjustment with clear, visible selected mode. */
+.rivo-editor-sliders .rivo-crease-intensity{
+ grid-column:1/-1;min-height:38px;display:flex;gap:13px;align-items:center;
+ font-size:12px;font-weight:760;color:#1f4b85!important;
+}
+.rivo-editor-sliders .rivo-crease-intensity[hidden]{display:none!important}
+.rivo-editor-sliders .rivo-crease-intensity input{flex:1;min-width:70px;accent-color:#2563eb}
