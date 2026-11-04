@@ -91,9 +91,145 @@ try {
   # pm path distinguishes an absent package from a malformed dumpsys result.
   # If an installed version cannot be read, stop instead of guessing.
   function Get-InstalledRivo {
+    # Android 15/16 builds may return a non-zero exit for "pm path" when
+    # no app is installed, or route the command differently. A failed path
+    # alone must NEVER be interpreted as an absent package or a reason to
+    # uninstall: fall back to explicit package listing for user 0.
     $location=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan 2>&1)
-    if($LASTEXITCODE -ne 0) { throw "Cannot inspect installed RivoScan. Installation cancelled to avoid accidental rollback." }
-    if(-not ($location -match "^package:")) {
+    $pathCode=$LASTEXITCODE
+    $exists=$false
+    $known=$false
+    if($pathCode -eq 0) {
+      $exists=[bool](@($location | Where-Object { $_ -match '^package:' }).Count)
+      $known=$true
+    }
+    if(-not $known -or -not $exists) {
+      $listing=@(& $adb -s $serial shell pm list packages --user 0 com.ribhlab.rivoscan 2>&1)
+      if($LASTEXITCODE -eq 0) {
+        $exists=[bool](@($listing | Where-Object { $_ -match '^package:com\.ribhlab\.rivoscan\s*
+    $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
+    if($LASTEXITCODE -ne 0 -or
+       $details -notmatch "versionCode=(\d+)" -or
+       $details -notmatch "versionName=(\S+)") {
+      throw "Installed RivoScan version cannot be verified. Refusing installation; your data was not changed."
+    }
+    $codeMatch=[regex]::Match($details,"versionCode=(\d+)")
+    $nameMatch=[regex]::Match($details,"versionName=(\S+)")
+    return [pscustomobject]@{
+      Installed=$true
+      VersionCode=[long]$codeMatch.Groups[1].Value
+      VersionName=$nameMatch.Groups[1].Value
+    }
+  }
+  $installed=Get-InstalledRivo
+  if($installed.Installed) {
+    Write-Host "Currently installed: RivoScan v$($installed.VersionName) / versionCode=$($installed.VersionCode)" -ForegroundColor Yellow
+    if($installed.VersionCode -gt $apkVersionCode) {
+      Write-Host "SAFE SKIP: The phone already has a NEWER RivoScan. No downgrade, uninstall or data clearing was attempted." -ForegroundColor Green
+      exit 0
+    }
+    if($installed.VersionCode -eq $apkVersionCode -and $env:RIVOSCAN_REINSTALL_SAME_VERSION -ne "1") {
+      Write-Host "SAFE SKIP: The phone has the SAME versionCode. To intentionally reinstall the same release (without uninstalling), set RIVOSCAN_REINSTALL_SAME_VERSION=1." -ForegroundColor Yellow
+      exit 0
+    }
+  } else {
+    Write-Host "RivoScan is not installed: this is a first installation." -ForegroundColor Cyan
+  }
+
+  Write-Host "Updating RivoScan on $model ($serial) with verified APK, preserving app data..." -ForegroundColor Cyan
+  # Android itself rejects downgrades too: deliberately NO -d, uninstall or pm clear.
+  $result = @(& $adb -s $serial install -r $apk 2>&1)
+  $installCode = $LASTEXITCODE
+  $result | Out-Host
+  if($installCode -ne 0 -or -not ($result -match '^Success$')) {
+    throw "Android installation failed. DO NOT uninstall or clear app data. If the signature differs (INSTALL_FAILED_UPDATE_INCOMPATIBLE), use the same signing key."
+  }
+  $after=Get-InstalledRivo
+  if(-not $after.Installed -or $after.VersionCode -ne $apkVersionCode -or $after.VersionName -ne $apkVersionName) {
+    throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
+  }
+  Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
+  Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
+  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
+  Assert-Code "Launching RivoScan"
+  Write-Host ""
+  Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green
+  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Never uninstall to fix an icon." -ForegroundColor Yellow
+  exit 0
+} catch {
+  Write-Host ""
+  Write-Host ("INSTALL STOPPED: " + $_.Exception.Message) -ForegroundColor Red
+  exit 1
+}
+ }).Count)
+        $known=$true
+      } else {
+        $listing=@(& $adb -s $serial shell cmd package list packages --user 0 com.ribhlab.rivoscan 2>&1)
+        if($LASTEXITCODE -eq 0) {
+          $exists=[bool](@($listing | Where-Object { $_ -match '^package:com\.ribhlab\.rivoscan\s*
+    $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
+    if($LASTEXITCODE -ne 0 -or
+       $details -notmatch "versionCode=(\d+)" -or
+       $details -notmatch "versionName=(\S+)") {
+      throw "Installed RivoScan version cannot be verified. Refusing installation; your data was not changed."
+    }
+    $codeMatch=[regex]::Match($details,"versionCode=(\d+)")
+    $nameMatch=[regex]::Match($details,"versionName=(\S+)")
+    return [pscustomobject]@{
+      Installed=$true
+      VersionCode=[long]$codeMatch.Groups[1].Value
+      VersionName=$nameMatch.Groups[1].Value
+    }
+  }
+  $installed=Get-InstalledRivo
+  if($installed.Installed) {
+    Write-Host "Currently installed: RivoScan v$($installed.VersionName) / versionCode=$($installed.VersionCode)" -ForegroundColor Yellow
+    if($installed.VersionCode -gt $apkVersionCode) {
+      Write-Host "SAFE SKIP: The phone already has a NEWER RivoScan. No downgrade, uninstall or data clearing was attempted." -ForegroundColor Green
+      exit 0
+    }
+    if($installed.VersionCode -eq $apkVersionCode -and $env:RIVOSCAN_REINSTALL_SAME_VERSION -ne "1") {
+      Write-Host "SAFE SKIP: The phone has the SAME versionCode. To intentionally reinstall the same release (without uninstalling), set RIVOSCAN_REINSTALL_SAME_VERSION=1." -ForegroundColor Yellow
+      exit 0
+    }
+  } else {
+    Write-Host "RivoScan is not installed: this is a first installation." -ForegroundColor Cyan
+  }
+
+  Write-Host "Updating RivoScan on $model ($serial) with verified APK, preserving app data..." -ForegroundColor Cyan
+  # Android itself rejects downgrades too: deliberately NO -d, uninstall or pm clear.
+  $result = @(& $adb -s $serial install -r $apk 2>&1)
+  $installCode = $LASTEXITCODE
+  $result | Out-Host
+  if($installCode -ne 0 -or -not ($result -match '^Success$')) {
+    throw "Android installation failed. DO NOT uninstall or clear app data. If the signature differs (INSTALL_FAILED_UPDATE_INCOMPATIBLE), use the same signing key."
+  }
+  $after=Get-InstalledRivo
+  if(-not $after.Installed -or $after.VersionCode -ne $apkVersionCode -or $after.VersionName -ne $apkVersionName) {
+    throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
+  }
+  Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
+  Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
+  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
+  Assert-Code "Launching RivoScan"
+  Write-Host ""
+  Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green
+  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Never uninstall to fix an icon." -ForegroundColor Yellow
+  exit 0
+} catch {
+  Write-Host ""
+  Write-Host ("INSTALL STOPPED: " + $_.Exception.Message) -ForegroundColor Red
+  exit 1
+}
+ }).Count)
+          $known=$true
+        }
+      }
+    }
+    if(-not $known) {
+      throw "Cannot reliably query Android package manager (pm path and package list unavailable). Check wireless ADB, then retry. No app data touched."
+    }
+    if(-not $exists) {
       return [pscustomobject]@{ Installed=$false; VersionCode=$null; VersionName=$null }
     }
     $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
