@@ -1,7 +1,7 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','smartScanPro','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
+ {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},

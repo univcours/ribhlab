@@ -60,10 +60,14 @@ const nativeModeLabels={
 
 export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null,onUVDoc=null,onSurface3D=null}){
  const lang=getLanguage(),t=dict[lang]||dict.en;
+ // Advanced correction is part of the single Scan workspace, not a second scanner.
+ const modeTitle=({en:'Scan · Multi-angle',ar:'السكان · زوايا متعددة',fr:'Scan · Plusieurs angles',
+  es:'Escanear · Varios ángulos',de:'Scan · Mehrere Winkel',pt:'Digitalizar · Vários ângulos',
+  it:'Scansione · Più angoli'})[lang]||'Scan · Multi-angle';
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
- root.innerHTML='<section class="rivo-perfectscan-modal" role="dialog" aria-modal="true" aria-label="'+t.title+'">'+
- '<header><div><strong>'+t.title+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-perfect="close" aria-label="'+t.cancel+'">✕</button></header>'+
+ root.innerHTML='<section class="rivo-perfectscan-modal" role="dialog" aria-modal="true" aria-label="'+modeTitle+'">'+
+ '<header><div><strong>'+modeTitle+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-perfect="close" aria-label="'+t.cancel+'">✕</button></header>'+
  '<div class="rivo-perfectscan-toolbar">'+
  '<button type="button" data-perfect="base">'+t.choosing+'</button>'+
  '<button type="button" data-perfect="add">'+t.add+'</button>'+
@@ -73,17 +77,16 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
  '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
- '<div class="rivo-perfectscan-preview" role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
+ '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
  '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
  (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</label>':'')+
  (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d> '+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</label>':'')+
- '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
+ '<button data-perfect="compare" hidden disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
- '<label class="rivo-perfectscan-review"><input type="checkbox" data-perfect-review> '+t.check+'</label>'+
- '<footer><button data-perfect="process" disabled>'+t.process+'</button>'+
- '<button data-perfect="save" disabled>'+t.save+'</button></footer>'+
+ '<footer class="rivo-perfectscan-actions" hidden><button data-perfect="process" disabled>'+t.process+'</button>'+
+ '<button data-perfect="save" hidden disabled>'+t.save+'</button></footer>'+
  '<p class="rivo-perfectscan-privacy">'+t.privacy+'</p></section>';
  document.body.appendChild(root);
  const sourceInput=root.querySelector('.rivo-perfect-file'),extrasInput=root.querySelector('.rivo-perfect-extras'),cameraInput=root.querySelector('.rivo-perfect-camera');
@@ -91,16 +94,23 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const status=root.querySelector('.rivo-perfectscan-status');
  const tag=root.querySelector('.rivo-perfectscan-tag');
  const save=root.querySelector('[data-perfect="save"]'),process=root.querySelector('[data-perfect="process"]');
- const review=root.querySelector('[data-perfect-review]'),compare=root.querySelector('[data-perfect="compare"]');
+ const compare=root.querySelector('[data-perfect="compare"]');
+ const actions=root.querySelector('.rivo-perfectscan-actions');
+ const preview=root.querySelector('.rivo-perfectscan-preview');
  let base=null,extra=[],result=null,closed=false,working=false;
  const setStatus=(message,alert=false)=>{status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
   if(closed)return;
+  preview.hidden=false;
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
   const data=ctx.createImageData(w,h);data.data.set(rgba);ctx.putImageData(data,0,0);tag.textContent=label;
  };
- const resetOutput=()=>{result=null;review.checked=false;save.disabled=true;compare.disabled=true;};
+ const resetOutput=()=>{
+  result=null;save.disabled=true;save.hidden=true;
+  compare.disabled=true;compare.hidden=true;
+  process.hidden=!base;process.disabled=!base;actions.hidden=!base;
+ };
  async function setBase(blob,name,bytes=null,mime='image/jpeg',fromLibrary=false){
   if(!blob||blob.size>20*1024*1024)throw Error('Maximum source photo: 20 MB');
   const c=await imageCanvas(blob),image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
@@ -122,9 +132,16 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   }
   resetOutput();setStatus(t.frames+': '+extra.length+' / 3');
  }
- function disableDuring(value){working=value;root.querySelectorAll('button,input').forEach(el=>{
-  if(el.type==='checkbox')return;el.disabled=value;
- });if(!value){process.disabled=!base;save.disabled=!result||!review.checked;compare.disabled=!result;}}
+ function disableDuring(value){
+  working=value;
+  root.querySelectorAll('button,input').forEach(el=>{el.disabled=value;});
+  if(!value){
+   process.disabled=!base;process.hidden=!base||!!result;
+   save.disabled=!result;save.hidden=!result;
+   compare.disabled=!result;compare.hidden=!result;
+   actions.hidden=!base;
+  }
+ }
  async function run(){
   if(!base||working)return;
   disableDuring(true);setStatus(t.working);
@@ -177,7 +194,6 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const elapsed=Math.round(performance.now()-started);
    result={...processed,sourceName:base.name,extraCount:extra.length,elapsed};
    previewPixels(processed.pixels,base.width,base.height,t.processed);
-   review.checked=false;
    const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
      (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
      ' · 2D: '+(processed.geometryApplied?'yes':'no')+
@@ -192,7 +208,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   finally{disableDuring(false)}
  }
  async function writeResult(){
-  if(!base||!result||!review.checked||working)return;
+  if(!base||!result||working)return;
   disableDuring(true);
   try{
    const temp=document.createElement('canvas');temp.width=base.width;temp.height=base.height;
@@ -200,7 +216,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const image=c.createImageData(base.width,base.height);image.data.set(result.pixels);c.putImageData(image,0,0);
    const blob=await asJpeg(temp),out=new Uint8Array(await blob.arrayBuffer()),time=new Date().toISOString();
    const stamp=time.replace(/[-:.TZ]/g,'');
-   const name='RivoScan_PerfectScan_'+stamp+'.jpg';
+   const name='RivoScan_Scan_'+stamp+'.jpg';
    const baseHash=await sha256(base.bytes),outHash=await sha256(out);
    if(!base.fromLibrary){
     await onSave(base.bytes,'RivoScan_Original_'+stamp+'_'+safeName(base.name).replace(/\.[^.]*$/,'')+'.'+fileExt(base.mime,base.name),base.mime);
@@ -216,7 +232,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     const pageHeight=pageWidth*base.height/base.width;
     const sheet=pdf.addPage([pageWidth,pageHeight]);
     sheet.drawImage(image,{x:0,y:0,width:pageWidth,height:pageHeight});
-    pdf.setTitle('RivoScan PerfectScan Pro');
+    pdf.setTitle('RivoScan Document Scan');
     pdf.setProducer('RivoScan');
     const pdfBytes=await pdf.save();
     pdfName='RivoScan_PerfectScan_'+stamp+'.pdf';
@@ -224,7 +240,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     await onSave(pdfBytes,pdfName,'application/pdf');
    }
    const audit={
-    product:'RivoScan PerfectScan Pro',version:1,createdUTC:time,
+    product:'RivoScan Document Scan',version:1,createdUTC:time,
     processing:result.surface3DApplied?
       'Native OpenCV multi-view relative 3D triangulation + neural UVDoc optional; approximate camera calibration, not metric certified depth':
       'UVDoc neural 2D unwarp and/or 2D enhancement; no 3D reconstruction; not certified forensic authenticity',
@@ -249,8 +265,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     rejectedFrames:result.rejectedFrames,frameOffsets:result.alignment,
     geometry2DApplied:result.geometryApplied,geometryConfidence:result.geometryConfidence,
     inkFidelity:result.integrity,captureQuality:result.quality,
-    manualReviewRequired:result.requiresReview,
-    userConfirmedReview:true,originalKept:true,noUploadByPerfectScan:true
+    manualReviewRecommended:result.requiresReview,
+    userSavedResult:true,originalKept:true,noUploadByPerfectScan:true
    };
    await onSave(new TextEncoder().encode(JSON.stringify(audit,null,2)),'RivoScan_PerfectScan_'+stamp+'_integrity.json','application/json');
    await onRefresh();notify(t.saved);close();
@@ -273,7 +289,6 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  });
  extrasInput.addEventListener('change',async()=>{const files=[...extrasInput.files];extrasInput.value='';await addShots(files)});
  cameraInput.addEventListener('change',async()=>{const files=[...cameraInput.files];cameraInput.value='';await addShots(files)});
- review.addEventListener('change',()=>{save.disabled=!result||!review.checked});
  root.querySelector('[data-perfect-geometry]').addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
  // These are separate geometric remaps: never stack them on real documents.
  // UVDoc is the safer default. Relative 3D is an opt-in experiment requiring

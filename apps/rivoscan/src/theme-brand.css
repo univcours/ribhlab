@@ -782,3 +782,10 @@ html,body,#app,body.rivo-native-android{background:#f1faf8!important;color:#123c
 @media(prefers-reduced-motion:reduce){
  #app .rivo-dark-ui .btn-primary,#app .rivo-home .rivo-perfectscan-home{transition:none!important}
 }
+
+/* One scanner: hide blank preview, unwanted consent and out-of-order action buttons. */
+.rivo-perfectscan-preview[hidden],.rivo-perfectscan-actions[hidden],
+.rivo-perfectscan-actions button[hidden],.rivo-perfectscan-control button[hidden]{display:none!important}
+.rivo-unified-scan-advanced{margin:12px 0 18px;padding:12px 14px;background:#fff;border:1px solid #bce8de;border-radius:16px;color:#126f72}
+.rivo-unified-scan-advanced summary{cursor:pointer;font-weight:750;min-height:44px;display:flex;align-items:center}
+.rivo-unified-scan-advanced button{display:flex;align-items:center;gap:10px;min-height:46px;padding:11px 14px;border:1px solid #93ddd1;border-radius:12px;background:#edfbf6;color:#086f72;font-weight:700}
