@@ -6,6 +6,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
+      "Capture review is now mandatory: real photo stays on screen with paper-corner adjustment, quality check for blur, glare and lighting, live filter processing, Before/After and Save or Retake. High-resolution crop is increased in HD, with turquoise theme and redesigned launcher icon.",
       "PerfectScan Pro: multi-shot local paper fusion, smart 2D flatten, SHA-256 integrity report, ML Kit FULL cleaning.",
       "Comfort design with checked-photo Share and Delete side-by-side; strong wrinkle correction slider and on-device AI Deep Clean.",
       "Interactive gallery: 6× pinch zoom, double tap, pan and direct edit. Reduce wrinkles protects originals, stamps and signatures.",
@@ -23,6 +24,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
+      "المعاينة ولات إجبارية: الصورة كتبقى قدامك مع تحديد الزوايا وفحص الوضوح والضوء والوهج؛ الفلاتر والتقدم والمقارنة، ومن بعد حفظ أو إعادة التصوير. جودة قص أعلى ووِجهة وأيقونة فيروزية.",
       "PerfectScan Pro: صور متعددة، تنقية محلية، تقويم سطور 2D، تقرير SHA‑256، وML Kit FULL.",
       "ستايل مريح، مشاركة ومسح حدا بعضهم ملي تختار الصورة، وقوة تقويم التجاعيد وتنقية AI على الهاتف.",
       "المعاينة فيها زوم 6 مرات، التنقل والتعديل المباشر. تقليل التجاعيد كيحافظ على الأصل والكاشيات والتواقيع.",
@@ -40,6 +42,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
+      "Photo conservée à l'écran pour contrôle des angles, flou, éclairage et reflets ; traitement visible, filtres, comparaison, enregistrer ou reprendre. Recadrage HD amélioré et thème/icône turquoise.",
       "PerfectScan Pro : fusion locale, correction 2D, rapport SHA-256 et ML Kit FULL.",
       "Interface apaisée, Partager et Supprimer côte à côte pour les photos sélectionnées, correction des plis et nettoyage IA.",
       "Galerie tactile avec zoom 6× et édition directe. Réduction des plis avec cachets et signatures préservés.",
@@ -57,6 +60,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
+      "La foto permanece visible: ajustar esquinas, revisar enfoque, luz y reflejos, filtros, comparación y Guardar/Repetir. Recorte HD mejorado y estilo/icono turquesa.",
       "PerfectScan Pro: fotos múltiples, fusión local, informe SHA-256 y ML Kit FULL.",
       "Diseño cómodo, Compartir y Eliminar juntos para fotos elegidas, ajuste de pliegues y limpieza IA local.",
       "Galería con zoom 6× y edición directa. Reduce pliegues manteniendo sellos y firmas.",
@@ -74,6 +78,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Verstanden",
     "items": [
+      "Foto bleibt sichtbar: Ecken, Unschärfe, Licht und Reflexe prüfen; Filter, Fortschritt und Vorher/Nachher, Speichern oder Neuaufnahme. Bessere HD-Auflösung und türkisfarbenes Design.",
       "PerfectScan Pro: lokale Fotofusion, 2D-Entzerrung, SHA-256 und ML Kit FULL.",
       "Ruhiges Design, Teilen/Löschen nebeneinander für ausgewählte Bilder, Faltenstärke und lokale KI-Reinigung.",
       "Galerie: Zoom 6× und direkte Bearbeitung. Faltenkorrektur schützt Originalstempel und Unterschriften.",
@@ -91,6 +96,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versão",
     "close": "Entendi",
     "items": [
+      "Fotografia permanece visível para ajustar cantos, analisar nitidez, luz e reflexos, comparar e Guardar/Repetir. Maior resolução HD e tema/ícone turquesa.",
       "PerfectScan Pro: fusão de fotos local, correção 2D, SHA-256 e ML Kit FULL.",
       "Design confortável, Partilhar/Eliminar juntos nas fotos selecionadas, controlo de vincos e limpeza IA.",
       "Zoom 6× na galeria e edição direta. Corrigir vincos preservando carimbos e assinaturas.",
@@ -108,6 +114,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versione",
     "close": "Capito",
     "items": [
+      "La foto resta visibile: regolazione angoli, controllo nitidezza, luce e riflessi; filtri, confronto, Salva o Riprendi. HD migliore e tema/icona turchese.",
       "PerfectScan Pro: fusione locale, correzione 2D, SHA-256 e ML Kit FULL.",
       "Design confortevole, Condividi/Elimina affiancati sulle immagini selezionate, riduzione pieghe e pulizia IA.",
       "Galleria con zoom 6× e modifica diretta. Riduci pieghe preservando timbri e firme.",

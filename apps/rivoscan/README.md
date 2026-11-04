@@ -1,6 +1,6 @@
 # RivoScan • Android PDF Toolkit (Beta)
 
-## 0.40.1 field-test features (all unlocked)
+## 0.41.1 field-test features (all unlocked)
 The native CameraX scanner uses Paper Scan Pro by default for new installs (perspective crop, color-preserving illumination cleanup). Tools > AI Scan offers Google ML Kit FULL, which can remove fingers, stains and shadows after on-device model download on supported Google Play services devices. Book Scan Pro adds optional ML Kit cleaned page capture and locally varying text-line straighten with review/undo. This does not guarantee true 3D reconstruction of damaged paper or lost text.
 
 Do not uninstall or clear app data to update. No Pro payment or gating is enabled until user device testing is complete and a separate Play Billing release is approved.
@@ -184,3 +184,6 @@ Known gaps versus CamScanner: no advanced AI handwriting removal, nonrigid book 
 
 ## 0.41.0 native PerfectScan
 Official UVDoc ONNX on Android plus optional relative 3D surface triangulation using 2–4 camera views. Original source preserved, review before save, no paywall until physical QA. See PERFECTSCAN_IMPLEMENTATION.md.
+
+## 0.41.1 scan-review and turquoise release
+Every scanned document remains visible for manual corner confirmation and locally computed sharpness/exposure/glare diagnostic; the UI advises Save or Retake instead of silently saving. Processing filters visibly render the source and enhanced output, with explicit user confirmation. The HD document perspective crop uses up to 3300px source detail when supported, while non-HD remains memory-bounded. A matching turquoise SVG, native adaptive icon and automatically generated PNGs replace the old blue palette. Do not uninstall an old signed build to force updates; all Pro tools remain open during field QA.
