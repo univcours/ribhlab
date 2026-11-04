@@ -1,3 +1,11 @@
+## 0.39.1 — One-tap photo actions, comfort design and wrinkle QA
+- Photo checkboxes are visible in My Documents without first entering edit mode. A multi-selection bar places **Share and Delete immediately side-by-side**, while supplementary actions are separately scrollable. The Delete action always asks for confirmation and operates only on explicitly selected files. The recent-photo card also shows Delete next to Share when checked; the full-screen viewer places Delete directly next to Share.
+- Comfort UI adopts restrained document-first color palette, calm white cards, adequate 44px touch targets, focus indicators, reduced-motion support and mobile fixed bulk actions above navigation. Prior functionality preserved.
+- Opening an image in the editor defaults to the reversible **Reduce wrinkles** preset; user may adjust wrinkle correction from 0–100 without altering originals. Both shading and confidence-gated 2D line-remap are proportionally disabled when the slider reaches 0. All edits are saved as new copies, original photo retained.
+- A prominent **AI Deep Clean · choose photo** button opens official Google ML Kit Document Scanner in FULL mode, with gallery import. The user chooses the photo again in the native scanner (no file silently uploaded or preselected); Google Play services provides on-device image cleanup that can remove shadows, stains, fingers and wrinkles on supported devices.
+- Heavy folds, lost ink and 3D reconstruction are not guaranteed. Colored stamps and dark signatures are protected by existing native masks and color-safe web processing. Check results with a physical phone before selling features.
+- All Pro paid locks remain disabled during field testing.
+
 ## 0.39.0 — Interactive gallery and conservative wrinkle reduction
 - Image/PDF preview 1–6× pinch zoom, drag, double tap, mouse wheel, next/previous photo, native Share and direct editing.
 - Photo editor `Reduce wrinkles` uses guarded text-line 2D flattening (only high-confidence), spatial illumination normalization, conservative preservation of colored seals and dark signature ink, original-only compare and saves a NEW copy. Cannot regenerate damaged/missing handwriting or universally flatten severe 3D crumples.
