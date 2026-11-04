@@ -12,7 +12,8 @@ test('Saved image is selectable and selected Share/Delete are adjacent with conf
  assert.ok(b.includes("if(!mode&&!isImage(doc))return ''"));
  assert.ok(b.includes('if(!selected.size)mode=false'));
  assert.ok(b.includes("window.confirm(t('confirm')"));
- assert.ok(m.includes("bulkUI.chosen(doc)&&file.klass==='image'"));
+ assert.ok(m.includes("file.klass==='image'?"));
+ assert.ok(read('src/theme-brand.css').includes('recent-entry:not(.doc-selected) .rivo-recent-delete'));
  assert.ok(m.includes('data-doc-delete='));
 });
 test('Comfort UI has sticky photo actions, readable controls and reduced-motion support',()=>{

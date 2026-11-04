@@ -565,3 +565,7 @@ html,body,#app,body.rivo-native-android{background:#f5f7fb!important;color:#1725
 }
 .rivo-editor-sliders .rivo-crease-intensity[hidden]{display:none!important}
 .rivo-editor-sliders .rivo-crease-intensity input{flex:1;min-width:70px;accent-color:#2563eb}
+
+/* Selection is state-driven; the adjacent Delete button appears immediately
+   when a recent photo checkbox changes, without re-rendering its card. */
+#app .rivo-home .recent-entry:not(.doc-selected) .rivo-recent-delete{display:none!important}
