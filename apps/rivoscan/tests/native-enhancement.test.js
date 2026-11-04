@@ -6,7 +6,7 @@ const processor=readFileSync(new URL('../native/android/RivoDocumentEnhancer.jav
 const locale=readFileSync(new URL('../native/android/RivoLocale.java',import.meta.url),'utf8');
 const nativeInstall=readFileSync(new URL('../install-live-scanner.ps1',import.meta.url),'utf8');
 test('Saving native scans requires perspective crop, enhancement preview and explicit check',()=>{
- assert.ok(activity.includes('RivoEdgeDetector.warp(source,corners)'));
+ assert.ok(activity.includes('RivoEdgeDetector.warp(source,corners,highQuality?3300:2150)'));
  assert.ok(activity.includes('private void showEnhancementPreview()'));
  assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
  assert.ok(activity.includes('RivoDocumentEnhancer.apply(input,preset)'));
