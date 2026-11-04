@@ -100,7 +100,7 @@ public final class RivoSurface3DPlugin extends Plugin {
             // different cameras, in which case low confidence must reject it.
             double f=1.25*Math.max(w,h),cx=(w-1)/2.0,cy=(h-1)/2.0;
             K.put(0,0,f);K.put(1,1,f);K.put(0,2,cx);K.put(1,2,cy);
-            E=Calib3d.findEssentialMat(p0,p1,K,Calib3d.RANSAC,.999,1.5,mask);
+            E=Calib3d.findEssentialMat(p0,p1,K,Calib3d.RANSAC,.999,1.5,1000,mask);
             if(E.empty()||E.rows()!=3){out.failure="Unstable 3D camera motion";return out;}
             out.inliers=Calib3d.recoverPose(E,p0,p1,K,R,t,mask);
             if(out.inliers<MIN_INLIERS){out.failure="No reliable camera baseline for depth";return out;}
