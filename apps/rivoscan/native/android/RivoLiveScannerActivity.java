@@ -115,6 +115,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private ImageView enhancementImage;
     private TextView enhancementHint;
     private android.widget.ProgressBar enhancementProgress;
+    private Button enhancementSaveButton;
     private RivoCaptureQuality.Result captureQuality;
     private int captureQualitySerial=0;
     private static final String AI_FLATTEN="uvdoc";
@@ -1207,7 +1208,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
              !enhancementPreview.isRecycled())enhancementPreview.recycle();
         enhancementPreview=null;
         if(pendingWarp!=null&&!pendingWarp.isRecycled())pendingWarp.recycle();
-        pendingWarp=null;enhancementImage=null;enhancementHint=null;enhancementProgress=null;
+        pendingWarp=null;enhancementImage=null;enhancementHint=null;enhancementProgress=null;enhancementSaveButton=null;
     }
     private void reopenCrop(){
         if(savingEnhancedPage)return;
@@ -1303,6 +1304,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         scroll.addView(choices,new HorizontalScrollView.LayoutParams(-2,-1));
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
+        enhancementSaveButton=button("✓  "+localizedCapture("save"),this::saveEnhancedPage);
+        enhancementSaveButton.setEnabled(false); // Enable only when the result is visible.
         layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
             button(trNative("retake"),this::showCamera),
             button(trNative("enhanceBack"),this::reopenCrop),
@@ -1317,7 +1320,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     enhancementImage.setTag("original");
                 }
             }),
-            button("✓  "+localizedCapture("save"),this::saveEnhancedPage));
+            enhancementSaveButton);
         for(int i=0;i<modes.length;i++)
             if(modes[i].equals(selectedEnhancement)){
                 choices.getChildAt(i).setBackground(outlined(Color.rgb(8,120,119),9,Color.rgb(42,215,194)));break;
@@ -1363,6 +1366,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Math.max(1,(int)(width*factor)),Math.max(1,(int)(height*factor)),true);
         enhancementImage.setTag(null);
         enhancementImage.setImageBitmap(pendingWarp);
+        if(enhancementSaveButton!=null)enhancementSaveButton.setEnabled(false);
         if(enhancementProgress!=null)enhancementProgress.setVisibility(View.VISIBLE);
         if(enhancementHint!=null)enhancementHint.setText(localizedCapture("processing"));
         analyzer.execute(()->{
@@ -1377,6 +1381,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     Bitmap previous=enhancementPreview;
                     enhancementPreview=result;
                     enhancementImage.setImageBitmap(result);
+                    if(enhancementSaveButton!=null)enhancementSaveButton.setEnabled(true);
                     if(enhancementProgress!=null)enhancementProgress.setVisibility(View.GONE);
                     if(enhancementHint!=null)enhancementHint.setText(
                         captureQuality!=null?captureQuality.summary(nativeLanguage):
@@ -1388,7 +1393,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(processed!=null&&!processed.isRecycled())processed.recycle();
                 mainHandler.post(()->{
                     if(serial==enhancementSerial&&enhancementHint!=null)
-                        enhancementHint.setText(trNative("enhanceFailed"));
+                        enhancementHint.setText(trNative("enhanceFailed")+" · "+String.valueOf(error.getMessage()));
+                    // Failed enhancement never silently saves the unprocessed page;
+                    // user can choose another filter or retake.
+                    if(serial==enhancementSerial&&enhancementSaveButton!=null)
+                        enhancementSaveButton.setEnabled(false);
                     if(serial==enhancementSerial&&enhancementProgress!=null)
                         enhancementProgress.setVisibility(View.GONE);
                 });
