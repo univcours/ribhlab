@@ -6,8 +6,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
+      "One document scanner: UVDoc AI flatten now works inside the native camera filters, with visible processing and a Save button that activates only after a real result. No separate Pro/Smart scan buttons, no consent checkbox, no empty white photo preview; optional 2–4-angle correction lives under Scan > Advanced.",
       "Capture review is now mandatory: real photo stays on screen with paper-corner adjustment, quality check for blur, glare and lighting, live filter processing, Before/After and Save or Retake. High-resolution crop is increased in HD, with turquoise theme and redesigned launcher icon.",
-      "PerfectScan Pro: multi-shot local paper fusion, smart 2D flatten, SHA-256 integrity report, ML Kit FULL cleaning.",
       "Comfort design with checked-photo Share and Delete side-by-side; strong wrinkle correction slider and on-device AI Deep Clean.",
       "Interactive gallery: 6× pinch zoom, double tap, pan and direct edit. Reduce wrinkles protects originals, stamps and signatures.",
       "Paper Scan Pro enhances document brightness and colored seals without overwriting the original. AI Scan uses ML Kit FULL on supported Android phones.",
@@ -24,8 +24,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
+      "سكانير واحد: UVDoc AI دخل لفلاتر الكاميرا، المعالجة كتبان قدامك، والحفظ ما كيتفعل حتى تجهز النتيجة. حيدنا سكانات Pro/Smart المنفصلين، المربع الأبيض الفارغ وخانة الموافقة؛ تصحيح 2 حتى 4 صور باقي داخل السكان > المتقدم.",
       "المعاينة ولات إجبارية: الصورة كتبقى قدامك مع تحديد الزوايا وفحص الوضوح والضوء والوهج؛ الفلاتر والتقدم والمقارنة، ومن بعد حفظ أو إعادة التصوير. جودة قص أعلى ووِجهة وأيقونة فيروزية.",
-      "PerfectScan Pro: صور متعددة، تنقية محلية، تقويم سطور 2D، تقرير SHA‑256، وML Kit FULL.",
       "ستايل مريح، مشاركة ومسح حدا بعضهم ملي تختار الصورة، وقوة تقويم التجاعيد وتنقية AI على الهاتف.",
       "المعاينة فيها زوم 6 مرات، التنقل والتعديل المباشر. تقليل التجاعيد كيحافظ على الأصل والكاشيات والتواقيع.",
       "Paper Scan Pro كينقّي الورقة ويحافظ على الكاشيات والأصلية. AI Scan كيستعمل ML Kit FULL على هواتف Android المدعومة.",
@@ -42,8 +42,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
+      "Un seul scanner : UVDoc IA intégré aux filtres natifs, traitement visible et Enregistrer activé après le résultat. Plus de boutons Pro/Smart séparés, case de consentement ou aperçu blanc vide ; correction multi-angle dans Scan > Avancé.",
       "Photo conservée à l'écran pour contrôle des angles, flou, éclairage et reflets ; traitement visible, filtres, comparaison, enregistrer ou reprendre. Recadrage HD amélioré et thème/icône turquoise.",
-      "PerfectScan Pro : fusion locale, correction 2D, rapport SHA-256 et ML Kit FULL.",
       "Interface apaisée, Partager et Supprimer côte à côte pour les photos sélectionnées, correction des plis et nettoyage IA.",
       "Galerie tactile avec zoom 6× et édition directe. Réduction des plis avec cachets et signatures préservés.",
       "Paper Scan Pro corrige l'éclairage et conserve les cachets. AI Scan utilise ML Kit FULL sur les appareils Android compatibles.",
@@ -60,8 +60,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
+      "Un solo escáner: UVDoc IA integrado en filtros de cámara, procesamiento visible y Guardar activo tras la imagen. Sin botones Pro/Smart separados, casilla de aceptación ni vista blanca vacía; multiángulo en Escanear > Avanzado.",
       "La foto permanece visible: ajustar esquinas, revisar enfoque, luz y reflejos, filtros, comparación y Guardar/Repetir. Recorte HD mejorado y estilo/icono turquesa.",
-      "PerfectScan Pro: fotos múltiples, fusión local, informe SHA-256 y ML Kit FULL.",
       "Diseño cómodo, Compartir y Eliminar juntos para fotos elegidas, ajuste de pliegues y limpieza IA local.",
       "Galería con zoom 6× y edición directa. Reduce pliegues manteniendo sellos y firmas.",
       "Paper Scan Pro améliore le papier sans effacer les tampons. AI Scan utilise ML Kit FULL sur Android compatible.",
@@ -78,8 +78,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Verstanden",
     "items": [
+      "Ein Scanner: UVDoc KI direkt in der nativen Kamerafilterliste; Speichern erst nach Ergebnis. Keine separaten Smart/Pro-Scanner, Zustimmungskästchen oder leere weiße Vorschau; Mehrwinkelmodus unter Scan > Erweitert.",
       "Foto bleibt sichtbar: Ecken, Unschärfe, Licht und Reflexe prüfen; Filter, Fortschritt und Vorher/Nachher, Speichern oder Neuaufnahme. Bessere HD-Auflösung und türkisfarbenes Design.",
-      "PerfectScan Pro: lokale Fotofusion, 2D-Entzerrung, SHA-256 und ML Kit FULL.",
       "Ruhiges Design, Teilen/Löschen nebeneinander für ausgewählte Bilder, Faltenstärke und lokale KI-Reinigung.",
       "Galerie: Zoom 6× und direkte Bearbeitung. Faltenkorrektur schützt Originalstempel und Unterschriften.",
       "Paper Scan Pro verbessert den Papierkontrast und schützt Stempel. AI Scan verwendet ML Kit FULL auf unterstützten Android-Geräten.",
@@ -96,8 +96,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versão",
     "close": "Entendi",
     "items": [
+      "Um scanner: UVDoc IA nos filtros da câmera, processamento visível e Guardar apenas após o resultado. Sem scan Pro/Smart separado, consentimento obrigatório nem pré-visualização branca vazia; vários ângulos em Scan > Avançado.",
       "Fotografia permanece visível para ajustar cantos, analisar nitidez, luz e reflexos, comparar e Guardar/Repetir. Maior resolução HD e tema/ícone turquesa.",
-      "PerfectScan Pro: fusão de fotos local, correção 2D, SHA-256 e ML Kit FULL.",
       "Design confortável, Partilhar/Eliminar juntos nas fotos selecionadas, controlo de vincos e limpeza IA.",
       "Zoom 6× na galeria e edição direta. Corrigir vincos preservando carimbos e assinaturas.",
       "Paper Scan Pro melhora a luz e mantém carimbos. AI Scan utiliza ML Kit FULL em Android compatível.",
@@ -114,8 +114,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versione",
     "close": "Capito",
     "items": [
+      "Uno scanner: UVDoc IA nei filtri della fotocamera, elaborazione visibile e Salva solo dopo il risultato. Nessun Pro/Smart separato, casella di conferma o anteprima vuota; multiangolo in Scan > Avanzate.",
       "La foto resta visibile: regolazione angoli, controllo nitidezza, luce e riflessi; filtri, confronto, Salva o Riprendi. HD migliore e tema/icona turchese.",
-      "PerfectScan Pro: fusione locale, correzione 2D, SHA-256 e ML Kit FULL.",
       "Design confortevole, Condividi/Elimina affiancati sulle immagini selezionate, riduzione pieghe e pulizia IA.",
       "Galleria con zoom 6× e modifica diretta. Riduci pieghe preservando timbri e firme.",
       "Paper Scan Pro migliora la luminosità senza cancellare i timbri. AI Scan usa ML Kit FULL su Android compatibile.",
