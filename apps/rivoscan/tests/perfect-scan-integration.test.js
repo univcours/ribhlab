@@ -19,3 +19,10 @@ test('PerfectScan publishes no misleading 3D or forensic claims and blocks save 
  assert.ok(ui.includes("extraFramesSelected:result.extraCount"));
  assert.ok(ui.includes("noUploadByPerfectScan:true"));
 });
+
+test('ML Kit deep clean is optional and user-initiated, not a silent replacement',()=>{
+ const main=get('src/main.js'),ui=get('src/perfect-scan-ui.js');
+ assert.ok(main.includes("onDeepClean:Capacitor.isNativePlatform()"));
+ assert.ok(ui.includes("if(action==='mlkit'&&onDeepClean)"));
+ assert.ok(ui.includes('onDeepClean=null'));
+});

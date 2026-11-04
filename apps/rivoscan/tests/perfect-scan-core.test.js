@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {signedInkMask,estimateDocumentShift,fuseDocumentFramesRGBA,inspectInkChanges,perfectScanRGBA} from '../src/perfect-scan-core.js';
+import {signedInkMask,estimateDocumentShift,fuseDocumentFramesRGBA,inspectInkChanges,perfectScanRGBA,assessDocumentQualityRGBA} from '../src/perfect-scan-core.js';
 const make=(w=240,h=280,dx=0,dy=0)=>{const a=new Uint8ClampedArray(w*h*4);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
   const i=(y*w+x)*4;let ink=false;
@@ -50,4 +50,21 @@ test('Contrast restoration is copy-on-write and reports risky edits',()=>{
  const out=perfectScanRGBA(src,w,h,{geometry:false});
  assert.notStrictEqual(out.pixels,src);assert.ok(out.pixels[(10*w+10)*4]>src[(10*w+10)*4]);
  assert.deepEqual(src,make(w,h));
+});
+
+test('Capture quality scores focus and highlights without modifying the photo',()=>{
+ const w=240,h=280,src=make(w,h),copy=src.slice();
+ const scored=assessDocumentQualityRGBA(src,w,h);
+ assert.ok(scored.sharpness>=0);
+ assert.ok(scored.edgePercent>0);
+ assert.ok(scored.contrast>=35);
+ assert.equal(typeof scored.highlightPercent,'number');
+ assert.deepEqual(src,copy);
+ const blank=new Uint8ClampedArray(src.length);
+ for(let i=0;i<blank.length;i+=4)blank.fill(255,i,i+4);
+ const suspect=assessDocumentQualityRGBA(blank,w,h);
+ assert.ok(suspect.warnings.some(x=>x.includes('detail')));
+ assert.ok(suspect.reviewRecommended);
+ const report=perfectScanRGBA(src,w,h,{geometry:false});
+ assert.equal(typeof report.quality.reviewRecommended,'boolean');
 });

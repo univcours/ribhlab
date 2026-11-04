@@ -9,3 +9,12 @@ test('PerfectScan modal exposes one-tap enhancement, camera multi-angle, local f
  assert.ok(s.includes('noUploadByPerfectScan:true'));
  assert.ok(s.includes("if(!base.fromLibrary)"),'imported source also preserved');
 });
+
+test('PerfectScan also exports a photo-fidelity PDF and a quality report after user review',()=>{
+ const s=readFileSync(new URL('../src/perfect-scan-ui.js',import.meta.url),'utf8');
+ for(const token of ['PDFDocument.create()','pdf.embedJpg(out)','sheet.drawImage(image','data-perfect-pdf',
+ 'pdfSha256','processedPdfName:pdfName','captureQuality:result.quality',
+ 'assessDocumentQualityRGBA(', 'onSave(pdfBytes,pdfName'])
+  assert.ok(s.includes(token),token);
+ assert.ok(s.includes("if(root.querySelector('[data-perfect-pdf]').checked)"));
+});
