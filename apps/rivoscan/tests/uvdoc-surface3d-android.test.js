@@ -44,3 +44,13 @@ test('Neural and 3D mode require manual review and never claim metric depth',()=
  assert.ok(docs.includes('not metrically calibrated'));
  assert.ok(docs.includes('Severe folds, occluded text'));
 });
+
+test('Protect signatures by making neural UVDoc and relative 3D mutually exclusive',()=>{
+ const ui=src('src/perfect-scan-ui.js');
+ assert.ok(ui.includes('data-perfect-uvdoc checked'),'UVDoc on-device is default');
+ assert.ok(ui.includes('data-perfect-surface3d>'),'3D is user opt-in, not automatic');
+ assert.ok(!ui.includes('data-perfect-surface3d checked'));
+ assert.ok(ui.includes('if(uvdocToggle.checked&&surfaceToggle)surfaceToggle.checked=false'));
+ assert.ok(ui.includes('if(surfaceToggle.checked&&uvdocToggle)uvdocToggle.checked=false'));
+ assert.ok(ui.includes('manualReviewRequired:result.requiresReview'));
+});
