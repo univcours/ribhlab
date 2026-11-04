@@ -320,6 +320,7 @@ function recentDocuments(limit=6,query=homeSearchQuery){
      <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
      ${expanded?`<div class="rivo-recent-actions">
        <button type="button" data-doc-share="${index}" class="rivo-recent-share">${ico('upload',18)} ${hv('share')}</button>
+       ${bulkUI.chosen(doc)&&file.klass==='image'?`<button type="button" data-doc-delete="${index}" class="rivo-recent-delete" aria-label="${dl('remove')} ${escapeHTML(doc.name)}">${ico('delete',18)} ${dl('remove')}</button>`:''}
        ${canPdf?`<button type="button" data-doc-savepdf="${index}" class="rivo-recent-pdf">${ico('file',18)} ${hv('savePdf')}</button>`:`<button type="button" data-doc-open="${index}" class="rivo-recent-pdf">${ico('folder',18)} ${hv('open')}</button>`}
        <button type="button" data-doc-open="${index}" class="rivo-recent-view">${ico('eye',19)} ${hv('view')}</button>
      </div>`:''}
