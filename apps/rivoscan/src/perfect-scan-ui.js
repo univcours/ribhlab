@@ -92,7 +92,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    try{
     const c=await imageCanvas(file,{width:base.width,height:base.height});
     const a=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height).data;
-    extra.push({data:a,name:file.name});
+    extra.push({data:a,name:file.name,sha256:await sha256(new Uint8Array(await file.arrayBuffer()))});
    }catch(error){setStatus(error.message,true)}
   }
   resetOutput();setStatus(t.frames+': '+extra.length+' / 3');
@@ -145,6 +145,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     originalName:base.name,originalSha256:baseHash,processedName:name,processedSha256:outHash,
     SHA256Available:!!baseHash&&!!outHash,
     extraFramesSelected:result.extraCount,extraFramesAligned:result.usedFrames,
+    additionalSources:extra.map(item=>({name:item.name,sha256:item.sha256})),
     rejectedFrames:result.rejectedFrames,frameOffsets:result.alignment,
     geometry2DApplied:result.geometryApplied,geometryConfidence:result.geometryConfidence,
     inkFidelity:result.integrity,manualReviewRequired:result.requiresReview,
