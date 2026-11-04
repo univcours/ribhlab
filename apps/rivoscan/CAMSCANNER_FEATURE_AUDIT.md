@@ -1,3 +1,8 @@
+## 0.39.0 — Interactive gallery and conservative wrinkle reduction
+- Image/PDF preview 1–6× pinch zoom, drag, double tap, mouse wheel, next/previous photo, native Share and direct editing.
+- Photo editor `Reduce wrinkles` uses guarded text-line 2D flattening (only high-confidence), spatial illumination normalization, conservative preservation of colored seals and dark signature ink, original-only compare and saves a NEW copy. Cannot regenerate damaged/missing handwriting or universally flatten severe 3D crumples.
+- CameraX adds selectable `Reduce folds` filter, OpenCV broad background normalization and explicit colored-stamp plus dark-signature masks. `Paper Scan Pro` remains default. All beta/Pro tools open for device testing, no billing/paywall.
+
 ## 0.38.3 — Latest compatible OpenCV 4.x, scanner stability
 - Upgrade Android native OpenCV from 4.12.0 to 4.14.0 in generated-wrapper integration, maintaining Java/OpenCV 4 API compatibility while using the latest 4.x stable available from Maven Central. CameraX 1.6.2 is the latest stable Android CameraX API as of 2026-11-03, so do not switch to a release candidate merely to claim novelty.
 - Keep Google ML Kit FULL as the official on-device scanner; safety checks and regression for single-page ML Kit imports remain.
