@@ -423,11 +423,19 @@ function scannerOptionsMarkup(){
  return markup.replace(chosen,chosen+' selected');
 }
 function scannerWorkspace(){
-  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
+  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('DocumentScanner');
+  const aiScanLabel=({en:'AI Deep Clean · Google ML Kit FULL',ar:'سكان AI Deep Clean · Google ML Kit FULL',
+    fr:'Scan IA Deep Clean · Google ML Kit FULL',es:'Escáner IA Deep Clean · Google ML Kit FULL',
+    de:'KI Scan Deep Clean · Google ML Kit FULL',pt:'Scanner IA Deep Clean · Google ML Kit FULL',
+    it:'Scanner IA Deep Clean · Google ML Kit FULL'})[language]||'AI Deep Clean · Google ML Kit FULL';
+  const aiScanHint=({en:'Auto-crop, cleanup and review in one scan',ar:'قص وتنقية ومراجعة الوثيقة فعملية وحدة',
+    fr:'Recadrage, nettoyage et aperçu en un scan',es:'Recorte, limpieza y vista previa en un escaneo',
+    de:'Automatisch zuschneiden, bereinigen, prüfen',pt:'Cortar, limpar e rever num só scan',
+    it:'Ritaglio, pulizia e revisione in un solo scan'})[language]||'Auto-crop, clean, review';
   return `<section class="workspace scan-workspace">
   <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
-  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner">${ico('camera',25)} <span><b>${sl('title')}</b><small>${sl('live')}</small></span><span class="scan-action-arrow">→</span></button>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="mlkit-full">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button></div>
   <details class="rivo-unified-scan-advanced">
@@ -439,7 +447,7 @@ function scannerWorkspace(){
     de:'2–4 Ansichten kombinieren · 3D Beta',pt:'Combinar 2–4 fotos · 3D beta',
     it:'Unisci 2–4 foto · 3D beta'})[language]||'Multi-angle correction'}</button>
   </details>
-  <div class="scan-runtime" role="status">${live?sl('ready'):sl('fallback')}</div>
+  <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Google ML Kit requires a supported Android phone with Google Play services; CameraX is available as fallback.',ar:'Google ML Kit خاصو هاتف مدعوم وخدمات Google Play؛ كاميرا CameraX غير للاحتياط.',fr:'Google ML Kit nécessite Google Play services, avec CameraX en solution de secours.'})[language]||'ML Kit FULL requires supported Google Play services.'}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
   <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
@@ -563,7 +571,7 @@ function launchPerfectScan(doc=null){
         plugin:RivoSurface3D,reference,render,extraFrames,width,height}):null,
     onUVDoc:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
       (rgba,width,height)=>unwarpPixelsAndroid({plugin:RivoUVDoc,rgba,width,height}):null,
-    onDeepClean:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?()=>openSmartScanner():null,
+    // ML Kit FULL is now Scan itself, never an extra Deep Clean CTA.
     onRefresh:async()=>{
       await loadLibrary(false);
       if(activeTool?.id==='library')refreshVisibleLibrary();
@@ -597,7 +605,7 @@ function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
   if(t.id==='scan')return scannerWorkspace();
-  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('RivoLiveScanner')?'Live edge camera ready':'Live document scanner is unavailable in this installed APK — update RivoScan'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" style="width:100%;margin-top:12px">${ico('scan')} Open RivoScan Camera</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
+  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('DocumentScanner')?'AI Deep Clean · ML Kit FULL':'ML Kit FULL needs compatible Google Play services'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" data-primary-scanner="mlkit-full" style="width:100%;margin-top:12px">${ico('scan')} AI Deep Clean · ML Kit FULL</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
@@ -614,7 +622,7 @@ function wire(){
   }));
   document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>openTab(el.dataset.tab)));
   document.querySelectorAll('[data-live-camera]').forEach(el=>el.addEventListener('click',async ()=>{
-    if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openLiveScanner();
+    if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner();
     else openTool('scan');
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
@@ -639,7 +647,7 @@ function wire(){
     bulkUI.sync();
   });
   document.querySelectorAll('[data-id-card-scan]').forEach(button=>button.addEventListener('click',()=>{
-    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')openLiveScanner({mode:'ID Card'});
+    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')openSmartScanner({mode:'ID Card',pageLimit:2});
     else openTool('scan');
   }));
   for(const list of ['library-list','home-recents']){
@@ -726,7 +734,7 @@ function wire(){
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
-  document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
+  document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner());
   document.getElementById('scan-multi-angle')?.addEventListener('click',()=>launchPerfectScan());
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
@@ -813,8 +821,8 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='libraryPrint'){openLibrary();toast('Select a PDF and tap its print icon to open Android printing.');return}
- if(spec.type==='idcard'){await openLiveScanner({mode:'ID Card'});return}
- if(spec.type==='scan'){await openLiveScanner();return}
+ if(spec.type==='idcard'){await openSmartScanner({mode:'ID Card',pageLimit:2});return}
+ if(spec.type==='scan'){await openSmartScanner();return}
  if(spec.type==='import'){chooseLibraryFiles(spec.kind);return}
  if(spec.type==='pageManager'){
   const picker=document.createElement('input');picker.type='file';picker.accept='.pdf,application/pdf,image/*';picker.multiple=true;
@@ -890,8 +898,8 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
   }
   if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
     console.warn('RivoLiveScanner is missing from this installed Android APK. Rebuild and reinstall the native app after running install-live-scanner.ps1.');
-    toast('Live camera component missing in installed APK. Switching to Smart Scan.');
-    await openSmartScanner();
+    toast('Native crop editor unavailable. Opening AI Deep Clean.');
+    await openSmartScanner({mode,allowNativeFallback:false});
     return;
   }
   try{
@@ -901,8 +909,8 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
   }catch(err){
     const message=String(err?.message||err);
     if(/not implemented on android/i.test(message)){
-      toast('Live camera component missing. Switching to Smart Scan.');
-      await openSmartScanner();
+      toast('Native crop editor unavailable. Opening AI Deep Clean.');
+      await openSmartScanner({mode,allowNativeFallback:false});
     }else if(!/cancel|SCAN_CANCELLED/i.test(message)){
       console.error('Rivo live scanner:',err);
       toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
@@ -975,15 +983,29 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
     toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
   }finally{clearBusy();}
 }
-async function openSmartScanner(){
+/** One primary Scan button: Google ML Kit FULL; native CameraX is an explicit fallback only. */
+async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
-    toast('Smart auto-crop needs the Android app. Use regular camera or photo upload on the web.',true);return;
+    toast('AI Deep Clean needs Android with Google Play services. Use photo upload on the web.',true);return;
   }
+  const count=pageLimit||('ID Card'===mode?2:20);
   try{
-    const result=await DocumentScanner.scanDocument({galleryImportAllowed:true,pageLimit:20,resultFormats:'JPEG',scannerMode:'FULL'});
-    await consumeSmartScan(result,{mlkitFull:true});
+    const result=await DocumentScanner.scanDocument({
+      galleryImportAllowed:true,pageLimit:count,resultFormats:'JPEG',scannerMode:'FULL'
+    });
+    if(!result?.scannedImages?.length)return;
+    await consumeSmartScan(mode==='ID Card'?{...result,scanMode:'ID Card'}:result,{mlkitFull:true});
   }catch(err){
-    if(!/cancel/i.test(String(err?.message||err)))toast('Smart scanner: '+(err?.message||'Unavailable. Check Google Play services.'),true);
+    const message=String(err?.message||err);
+    if(/cancel|user dismissed|aborted/i.test(message))return;
+    console.error('AI Deep Clean / Google ML Kit FULL:',err);
+    const incompatible=/not implemented|unavailable|not supported|play services|play-services|not installed|api[_ ]?not[_ ]?available|unsupported/i.test(message);
+    if(incompatible&&allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner')){
+      toast('Google ML Kit FULL is unavailable; using local CameraX backup.');
+      await openLiveScanner({mode});
+      return;
+    }
+    toast('AI Deep Clean could not scan: '+message,true);
   }
 }
 CapacitorApp.addListener('appRestoredResult',async event=>{
