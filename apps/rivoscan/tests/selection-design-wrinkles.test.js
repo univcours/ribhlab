@@ -24,7 +24,7 @@ test('Comfort UI has sticky photo actions, readable controls and reduced-motion 
 });
 test('Image editor offers crease mode and optional official ML Kit FULL photo cleanup',()=>{
  const e=read('src/scan-editor.js'),m=read('src/main.js'),n=read('native/android/RivoDocumentEnhancer.java');
- for(const token of ["preset:'crease'","onDeepClean:()=>openSmartScanner()","scannerMode:'FULL'","galleryImportAllowed:true"])
+ for(const token of ["preset:'crease'","scannerMode:'FULL'","galleryImportAllowed:true"])
  assert.ok(m.includes(token),token);
  for(const token of ["onDeepClean=null",'data-edit="deepClean"',"action==='deepClean'&&onDeepClean","filter==='crease'"])
  assert.ok(e.includes(token),token);

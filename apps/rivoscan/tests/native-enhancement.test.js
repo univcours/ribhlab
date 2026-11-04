@@ -9,7 +9,10 @@ test('Saving native scans requires perspective crop, enhancement preview and exp
  assert.ok(activity.includes('RivoEdgeDetector.warp(source,corners,highQuality?3300:2150)'));
  assert.ok(activity.includes('private void showEnhancementPreview()'));
  assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
- assert.ok(activity.includes('RivoDocumentEnhancer.apply(input,preset)'));
+ assert.ok(activity.includes('output=applyScanFilter(input,preset)'));
+ assert.ok(activity.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
+ assert.ok(activity.includes('enhancementSaveButton.setEnabled(false)'));
+ assert.ok(activity.includes('enhancementSaveButton.setEnabled(true)'));
  assert.ok(activity.includes('if(batchMode)showCamera();else finishWithPages();'));
  assert.ok(!activity.includes('button(trNative("savePage"),this::saveCroppedPage)'));
 });

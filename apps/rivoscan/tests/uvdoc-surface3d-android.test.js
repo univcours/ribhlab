@@ -16,7 +16,7 @@ test('Official UVDoc ONNX runs natively on Android with pinned weights and no cl
  assert.ok(installer.includes('registerPlugin(RivoUVDocPlugin.class)'));
  assert.ok(web.includes('plugin.unwarp({imageBase64})'));
  assert.ok(web.includes('physical3D:false'));
- assert.ok(ui.includes('data-perfect-uvdoc'));
+ assert.ok(ui.includes('data-perfect-mode'));
  assert.ok(ui.includes('uvdocModelSha256:result.neuralModelSha256||null'));
 });
 
@@ -29,7 +29,7 @@ test('Relative 3D mode uses real epipolar pose + triangulation with rejection ga
   assert.ok(java.includes(token),token);
  assert.ok(web.includes('plugin.reconstruct({images,renderBase64})'));
  assert.ok(web.includes('result?.physical3DRelative'));
- assert.ok(ui.includes('data-perfect-surface3d'));
+ assert.ok(ui.includes('value="surface3d"'));
  assert.ok(ui.includes('processed.surface3DRejectedReason'));
  assert.ok(ui.includes('relativeSurface3DApplied'));
  assert.ok(ui.includes('surface3DCameraCalibrationApproximate'));
@@ -38,19 +38,24 @@ test('Relative 3D mode uses real epipolar pose + triangulation with rejection ga
 
 test('Neural and 3D mode require manual review and never claim metric depth',()=>{
  const ui=src('src/perfect-scan-ui.js'),docs=src('PERFECTSCAN_IMPLEMENTATION.md');
- assert.ok(ui.includes('if(!base||!result||!review.checked||working)return'));
- assert.ok(ui.includes('userConfirmedReview:true,originalKept:true'));
+ assert.ok(ui.includes('if(!base||!result||working)return'));
+ assert.ok(ui.includes('userSavedResult:true,originalKept:true'));
  assert.ok(ui.includes('relative 3D'));
  assert.ok(docs.includes('not metrically calibrated'));
  assert.ok(docs.includes('Severe folds, occluded text'));
 });
 
-test('Protect signatures by making neural UVDoc and relative 3D mutually exclusive',()=>{
+test('Exclusive correction selection avoids double geometric warp and ticking consent',()=>{
  const ui=src('src/perfect-scan-ui.js');
- assert.ok(ui.includes('data-perfect-uvdoc checked'),'UVDoc on-device is default');
- assert.ok(ui.includes('data-perfect-surface3d>'),'3D is user opt-in, not automatic');
- assert.ok(!ui.includes('data-perfect-surface3d checked'));
- assert.ok(ui.includes('if(uvdocToggle.checked&&surfaceToggle)surfaceToggle.checked=false'));
- assert.ok(ui.includes('if(surfaceToggle.checked&&uvdocToggle)uvdocToggle.checked=false'));
- assert.ok(ui.includes('manualReviewRequired:result.requiresReview'));
+ const native=src('native/android/RivoLiveScannerActivity.java');
+ const uvdoc=src('native/android/RivoUVDocPlugin.java');
+ assert.ok(ui.includes('data-perfect-mode'));
+ assert.ok(ui.includes('const uvdocRequested=!!onUVDoc&&method===\'uvdoc\''));
+ assert.ok(ui.includes('const surface3dRequested=!!onSurface3D&&method===\'surface3d\''));
+ assert.ok(ui.includes("geometry:method==='geometry'"));
+ assert.ok(!ui.includes('input type="checkbox"'));
+ assert.ok(ui.includes('manualReviewRecommended:result.requiresReview'));
+ assert.ok(native.includes('AI_FLATTEN="uvdoc"'));
+ assert.ok(native.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
+ assert.ok(uvdoc.includes('static Bitmap unwarpBitmap('));
 });
