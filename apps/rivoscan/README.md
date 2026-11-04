@@ -181,3 +181,6 @@ Settings are stored locally (no cloud account) and passed into the **native Came
 The ID Card tool now captures a front and back photograph and arranges both on ONE A4 PDF page. The PDF Print action uses Android's actual print dialog for a RivoScan PDF (requires printer setup). Scanner results, stamp visibility and physical folds still need testing on a real phone; this is not equivalent to a non-rigid dewarping or generative restoration engine.
 
 Known gaps versus CamScanner: no advanced AI handwriting removal, nonrigid book dewarping, formula solver, photo translation, secure PDF encryption, public cloud sharing link, full Word/Excel layout recreation or semantic object repair. These are explicitly unimplemented, not silently advertised as working.
+
+## 0.41.0 native PerfectScan
+Official UVDoc ONNX on Android plus optional relative 3D surface triangulation using 2–4 camera views. Original source preserved, review before save, no paywall until physical QA. See PERFECTSCAN_IMPLEMENTATION.md.

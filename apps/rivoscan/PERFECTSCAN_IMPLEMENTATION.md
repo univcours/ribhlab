@@ -1,4 +1,25 @@
-# RivoScan PerfectScan Pro — Android beta 0.40.1
+# RivoScan PerfectScan Pro 0.41.0 — Native UVDoc ONNX and relative 3D mesh (field beta)
+
+## Delivered Android integration
+- **Real native UVDoc neural correction**: official PaddlePaddle/UVDoc_onnx inference.onnx (31,684,150 bytes, Apache-2.0) is downloaded at Android build time; its SHA-256 is pinned to 54cab30dc2cf347b4f3d6971c833b1c3d84f5ef17280f1f6d15796bff20e63d6. The verified model is bundled in Android assets and verified again before loading. ONNX Runtime Android 1.31.1 uses the official BGR/255 float32 NCHW preprocessing and rectified-image output. No document photos leave the phone.
+- **Native multi-shot relative 3D reconstruction**: 2–4 source photos of one physical page. OpenCV ORB feature matching, essential-matrix RANSAC, relative pose, 3D triangulation, positive-depth/coverage confidence gates, and bounded tangent-plane mesh warping. Rejects low confidence or nearly identical viewpoints. Camera intrinsics are approximated; recovered depth is relative, not metrically calibrated.
+- **UI**: 3D and UVDoc controls are visible on Android in PerfectScan, with UVDoc enabled by default. Distinct pipelines, actual model identity and relative 3D confidence/rejection reason are included in the JSON integrity report.
+- **Document safety**: original photo preserved; JPEG, optional PDF and JSON are saved as new files only after mandatory human review. No synthesized lost letters, invented ink or official forensic authenticity claim.
+- **Memory/resolution limits**: UVDoc executes at up to 1024px long side and 3D reconstruction at up to 960px. Upsampling for export does not create more detail than the neural/mesh inference size. Severe folds, occluded text, blank pages or repeated low-text patterns may still fail.
+- **Build caveat**: initial Android build needs network to obtain the pinned model once; subsequent builds reuse a verified local copy. A missing/modified model makes build or inference fail visibly, never a fake 3D success.
+- **Production gate**: field photographs and Samsung handset performance, fold/color/stamp quality, signature fidelity and in-place update safety are not certified by successful CI alone. Pro paywall remains disabled.
+
+## Important distinction
+UVDoc neural image correction is a 2D geometric rectification model. The separate Surface3D plugin uses genuine multi-view 3D point triangulation, but output is relative (camera calibration approximate), not an accurate metric paper scan or a guaranteed recovery of hidden text.
+
+## References
+- Official UVDoc ONNX (Apache-2.0): https://huggingface.co/PaddlePaddle/UVDoc_onnx
+- PaddleX preprocess: https://github.com/PaddlePaddle/PaddleX/blob/release/3.7/paddlex/inference/models/image_unwarping/predictor.py
+- ONNX Runtime Android (MIT): https://central.sonatype.com/artifact/com.microsoft.onnxruntime/onnxruntime-android
+- OpenCV: https://opencv.org/license/
+
+## Previous 0.40.1 notes (historical)
+# RivoScan PerfectScan Pro — Android beta 0.40.1 (superseded)
 
 ## Delivered in code
 - One-tap entry from Home and existing-image editor; up to three additional phone-camera or gallery shots.
@@ -14,7 +35,7 @@
 - Translation-only matching works on nearly registered shots of the same paper. Different pages and major perspective/rotation differences are rejected rather than fabricated.
 - On-device PerfectScan fusion is bounded to about 4.8 megapixels for WebView memory safety. Native CameraX and ML Kit may produce larger photos separately.
 - Hash and contrast diagnostics do not establish certified legal authenticity; human review is required.
-- UVDoc and UVDoc_onnx (PaddlePaddle; Apache-2.0) are not bundled or running in the Android APK. Their Android runtime, model preprocessing, licensing/dependencies and device memory must be validated before enabling. Do not advertise UVDoc or true 3D as implemented.
+- UVDoc was not bundled in version 0.40.1; this limitation is superseded by the native 0.41.0 integration. Their Android runtime, model preprocessing, licensing/dependencies and device memory must be validated before enabling. Do not advertise UVDoc or true 3D as implemented.
 
 ## Optional desktop UVDoc ONNX validation
 - A genuine local experimental runner is provided at scripts/uvdoc-offline.py.

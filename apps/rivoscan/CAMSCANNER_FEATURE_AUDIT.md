@@ -1,3 +1,8 @@
+## 0.41.0 — Official Android UVDoc ONNX + triangulated relative 3D page mesh
+- Verified SHA-256 official UVDoc model shipped as Android asset; ONNX Runtime Java executes real BGR/255 NCHW inference locally, with explicit model identity and effective resolution in provenance metadata.
+- Android OpenCV multi-view ORB/RANSAC essential matrix/recoverPose/triangulatePoints estimates a genuine relative 3D paper point cloud and tangent-plane image warp when 2–4 photo evidence is reliable; otherwise abstains. Intrinsics are approximate, no metric/certified 3D claim.
+- PerfectScan UI adds Android UVDoc + 3D controls; human review required, original document always untouched. Real camera/quality testing still pending. No Pro locks or billing added.
+
 ## 0.40.0 — PerfectScan Pro
 - One-tap entry from Home and existing-image editor; up to three additional phone-camera or gallery shots.
 - Local gradient-aligned registration of the same printed page (maximum ±22 pixels), explicit rejection when alignment confidence is low.
