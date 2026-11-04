@@ -77,7 +77,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
  '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
  (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</label>':'')+
- (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</label>':'')+
+ (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d> '+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</label>':'')+
  '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
@@ -275,8 +275,19 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  cameraInput.addEventListener('change',async()=>{const files=[...cameraInput.files];cameraInput.value='';await addShots(files)});
  review.addEventListener('change',()=>{save.disabled=!result||!review.checked});
  root.querySelector('[data-perfect-geometry]').addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
- root.querySelector('[data-perfect-uvdoc]')?.addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
- root.querySelector('[data-perfect-surface3d]')?.addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
+ // These are separate geometric remaps: never stack them on real documents.
+ // UVDoc is the safer default. Relative 3D is an opt-in experiment requiring
+ // genuine different-angle captures and a meaningful number of RANSAC inliers.
+ const uvdocToggle=root.querySelector('[data-perfect-uvdoc]');
+ const surfaceToggle=root.querySelector('[data-perfect-surface3d]');
+ uvdocToggle?.addEventListener('change',()=>{
+  if(uvdocToggle.checked&&surfaceToggle)surfaceToggle.checked=false;
+  resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
+ });
+ surfaceToggle?.addEventListener('change',()=>{
+  if(surfaceToggle.checked&&uvdocToggle)uvdocToggle.checked=false;
+  resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
+ });
  const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
  const after=()=>{if(result)previewPixels(result.pixels,base.width,base.height,t.processed)};
  compare.addEventListener('pointerdown',before);
