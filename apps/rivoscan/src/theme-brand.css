@@ -569,3 +569,97 @@ html,body,#app,body.rivo-native-android{background:#f5f7fb!important;color:#1725
 /* Selection is state-driven; the adjacent Delete button appears immediately
    when a recent photo checkbox changes, without re-rendering its card. */
 #app .rivo-home .recent-entry:not(.doc-selected) .rivo-recent-delete{display:none!important}
+
+
+/* PerfectScan Pro: minimalist mobile-first photo laboratory. All camera/
+   gallery inputs are user-initiated and processed locally, never uploaded. */
+#app .rivo-perfectscan-home{
+ display:flex;align-items:center;gap:14px;text-align:start;width:100%;
+ background:linear-gradient(120deg,#173b78,#235da9)!important;
+ border:1px solid #7fabee!important;border-radius:19px!important;
+ box-shadow:0 8px 23px #0d3e7a2c!important;color:#fff!important;
+ padding:15px 17px;margin:0 0 19px;min-height:75px;
+}
+#app .rivo-perfectscan-home .rivo-perfectscan-feature-icon{
+ width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+ font-size:26px;background:#fff2;color:#e9f4ff;flex-shrink:0;
+}
+#app .rivo-perfectscan-home span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+#app .rivo-perfectscan-home strong{font-size:16px;letter-spacing:-.3px;color:#fff}
+#app .rivo-perfectscan-home small{font-size:11px;color:#dceafe;line-height:1.35}
+#app .rivo-perfectscan-home>span:last-child{font-size:26px;opacity:.85}
+.rivo-perfectscan-overlay{
+ position:fixed;inset:0;z-index:2147483000;display:flex;justify-content:center;
+ align-items:center;background:#0a1734c7;backdrop-filter:blur(6px);padding:0;
+}
+.rivo-perfectscan-modal{
+ background:#f7f9fc;color:#172b47;width:min(760px,100%);height:min(95dvh,960px);
+ overflow-y:auto;display:flex;flex-direction:column;overscroll-behavior:contain;
+ box-shadow:0 22px 65px #09172b65;border-radius:23px;border:1px solid #dce6f4;
+}
+.rivo-perfectscan-modal header{
+ position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;
+ align-items:center;background:#fff;gap:12px;padding:14px 16px;border-bottom:1px solid #e0e7f0;
+}
+.rivo-perfectscan-modal header div{display:flex;flex-direction:column;gap:3px}
+.rivo-perfectscan-modal header strong{font-size:18px;font-weight:850}
+.rivo-perfectscan-modal header small{font-size:11px;color:#657e9a;line-height:1.4}
+.rivo-perfectscan-modal header button{
+ width:45px;height:45px;border:1px solid #e1e7ee;border-radius:14px;
+ background:#f3f6fa;color:#2a3e56;font-size:21px;flex:none;
+}
+.rivo-perfectscan-toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 7px}
+.rivo-perfectscan-toolbar button{
+ flex:1 1 135px;min-height:45px;border:1px solid #b9cce9;border-radius:13px;
+ background:#fff;color:#2255a4;font-size:12px;font-weight:780;padding:9px;
+}
+.rivo-perfectscan-tip,.rivo-perfectscan-warning{
+ margin:5px 14px 10px;color:#66788e;font-size:11px;line-height:1.55
+}
+.rivo-perfectscan-preview{
+ position:relative;flex:1 1 auto;min-height:200px;
+ background:#dbe4f0;display:flex;justify-content:center;align-items:center;
+ padding:12px;margin:0 14px;border:1px solid #d0dcea;border-radius:16px;overflow:hidden;
+}
+.rivo-perfectscan-preview canvas{
+ display:block;width:auto;height:auto;max-width:100%;max-height:min(50dvh,480px);
+ object-fit:contain;background:#fff;border-radius:4px;box-shadow:0 6px 20px #10274726
+}
+.rivo-perfectscan-tag{
+ position:absolute;top:19px;inset-inline-start:19px;
+ background:#132c4cb8;color:#fff;font-size:11px;font-weight:700;
+ padding:6px 11px;border-radius:999px;
+}
+.rivo-perfectscan-control{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 15px}
+.rivo-perfectscan-control label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.rivo-perfectscan-control input,.rivo-perfectscan-review input{accent-color:#2563eb;width:18px;height:18px}
+.rivo-perfectscan-control button{
+ background:#fff;color:#194b92;border:1px solid #c9d9ed;
+ border-radius:12px;min-height:44px;padding:9px 12px;font-size:12px;font-weight:750;
+}
+.rivo-perfectscan-control button:disabled{opacity:.4}
+.rivo-perfectscan-status{margin:0 15px 8px;padding:11px 13px;border-radius:12px;
+ background:#edf5ff;border:1px solid #d2e2f5;color:#245078;font-size:12px;line-height:1.5}
+.rivo-perfectscan-status.rivo-warning{background:#fff3e9;border-color:#f6d6b9;color:#915318}
+.rivo-perfectscan-review{display:flex;align-items:center;gap:10px;margin:4px 15px 12px;
+ padding:11px 12px;background:#fff;border:1px solid #dce4ed;border-radius:12px;font-size:12px;line-height:1.4}
+.rivo-perfectscan-modal footer{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:4px 15px 8px}
+.rivo-perfectscan-modal footer button{min-height:49px;border-radius:14px;font-size:13px;font-weight:830;padding:9px}
+.rivo-perfectscan-modal footer [data-perfect=process]{background:#2563eb;color:white;border:1px solid #1d4ed8}
+.rivo-perfectscan-modal footer [data-perfect=save]{background:#0e766c;color:white;border:1px solid #0c6f66}
+.rivo-perfectscan-modal footer button:disabled{opacity:.4}
+.rivo-perfectscan-privacy{margin:0;padding:7px 15px 13px;color:#6a7b8d;text-align:center;font-size:10px;line-height:1.5}
+.rivo-perfectscan-overlay button:focus-visible{outline:3px solid #94b9ff;outline-offset:2px}
+.rivo-editor-actions .rivo-editor-perfectscan{
+ grid-column:span 2;background:#eaf2ff!important;border:1px solid #aac6f7!important;
+ color:#194eab!important;font-weight:840!important;font-size:12px!important;
+}
+@media(max-width:620px){
+ .rivo-perfectscan-modal{width:100%;height:100dvh;max-height:100dvh;border-radius:0;border:0}
+ .rivo-perfectscan-toolbar{padding:9px 11px 5px;gap:6px}
+ .rivo-perfectscan-toolbar button{flex:1 1 31%;min-width:0;font-size:11px}
+ .rivo-perfectscan-preview{margin:0 11px;padding:8px;min-height:190px}
+ .rivo-perfectscan-modal footer{position:sticky;bottom:0;background:#fff;border-top:1px solid #e1e7ee;padding:10px 11px calc(10px + env(safe-area-inset-bottom,0px))}
+ .rivo-perfectscan-modal footer button{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.rivo-perfectscan-overlay{backdrop-filter:none}}
