@@ -115,6 +115,42 @@ export function inspectInkChanges(before,after,width,height){
  };
 }
 
+/**
+ * Low-cost capture quality hints, not content authenticity classification.
+ * No OCR, model uploads or destructive edits; treats blank pages conservatively.
+ */
+export function assessDocumentQualityRGBA(image,width,height){
+ if(!valid(image,width,height))throw Error('Invalid quality sample');
+ const step=Math.max(1,Math.ceil(Math.sqrt(width*height/90000)));
+ const hist=new Uint32Array(256);
+ let samples=0,edge=0,energy=0,clipped=0;
+ for(let y=1;y<height-1;y+=step)for(let x=1;x<width-1;x+=step){
+  const i=(y*width+x)*4,l=light(image,i),c=clamp(Math.round(l),0,255);
+  hist[c]++;samples++;if(c>=252)clipped++;
+  const diff=Math.abs(light(image,i+4)-light(image,i-4))+
+   Math.abs(light(image,i+width*4)-light(image,i-width*4));
+  if(diff>36){edge++;energy+=diff;}
+ }
+ if(!samples)return {sharpness:0,highlightPercent:0,contrast:0,warnings:['Too small to assess']};
+ const percentile=p=>{
+  const target=samples*p;let acc=0;
+  for(let i=0;i<256;i++){acc+=hist[i];if(acc>=target)return i;}
+  return 255;
+ };
+ const contrast=percentile(.95)-percentile(.05);
+ const edgePercent=edge/samples*100,sharpness=edge?energy/edge:0;
+ const highlightPercent=clipped/samples*100;
+ const warnings=[];
+ if(edgePercent<.3||sharpness<40)warnings.push('Low detectable detail: check focus and text sharpness');
+ if(contrast<35)warnings.push('Low contrast: improve lighting');
+ if(highlightPercent>60)warnings.push('Large bright area: check for glare or overexposure');
+ return {
+  sharpness:Math.round(sharpness),edgePercent:Math.round(edgePercent*100)/100,
+  highlightPercent:Math.round(highlightPercent*100)/100,contrast,warnings,
+  reviewRecommended:warnings.length>0
+ };
+}
+
 export function perfectScanRGBA(source,width,height,{extraFrames=[],creaseStrength=80,geometry=true}={}){
  if(!valid(source,width,height))throw Error('Invalid PerfectScan image');
  if(!Number.isFinite(creaseStrength)||creaseStrength<0||creaseStrength>100)throw Error('Invalid cleaning strength');
@@ -136,9 +172,10 @@ export function perfectScanRGBA(source,width,height,{extraFrames=[],creaseStreng
   }
  }
  const integrity=inspectInkChanges(first,pixels,width,height);
+ const quality=assessDocumentQualityRGBA(first,width,height);
  return {
   pixels,usedFrames:fusion.used,rejectedFrames:fusion.rejected,
   alignment:fusion.alignments,geometryApplied,geometryConfidence,
-  integrity,requiresReview:geometryApplied||integrity.warning
+  integrity,quality,requiresReview:geometryApplied||integrity.warning||quality.reviewRecommended
  };
 }
