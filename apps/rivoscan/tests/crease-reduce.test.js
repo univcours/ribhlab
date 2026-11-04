@@ -26,3 +26,24 @@ test('Scan editor exposes real wrinkle reduction, guarded 2D flatten and compare
  assert.ok(s.includes("data-edit=\"compare\""));
  assert.ok(s.includes('RivoScan_Enhanced_'));
 });
+
+test('Wrinkle-strength slider is monotonic and 0% is a true immutable original copy',()=>{
+ const w=200,h=160,src=new Uint8ClampedArray(w*h*4);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const p=(y*w+x)*4,v=x<100?153:224;
+  src[p]=src[p+1]=src[p+2]=v;src[p+3]=255;
+ }
+ const before=src.slice();
+ const off=reducePaperCreasesRGBA(src,w,h,{strength:0});
+ const moderate=reducePaperCreasesRGBA(src,w,h,{strength:50});
+ const strong=reducePaperCreasesRGBA(src,w,h,{strength:100});
+ const at=(12*w+12)*4;
+ assert.deepEqual(off,before);
+ assert.ok(strong[at]>=moderate[at]&&moderate[at]>before[at]);
+ assert.deepEqual(src,before);
+ assert.throws(()=>reducePaperCreasesRGBA(src,w,h,{strength:101}));
+ const editor=readFileSync(new URL('../src/scan-editor.js',import.meta.url),'utf8');
+ assert.ok(editor.includes('data-adjust="creaseStrength"'));
+ assert.ok(editor.includes('strength:creaseStrength'));
+ assert.ok(editor.includes("hidden=filter!=='crease'"));
+});
