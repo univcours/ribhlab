@@ -6,6 +6,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
+      "PerfectScan Pro: multi-shot local paper fusion, smart 2D flatten, SHA-256 integrity report, ML Kit FULL cleaning.",
       "Comfort design with checked-photo Share and Delete side-by-side; strong wrinkle correction slider and on-device AI Deep Clean.",
       "Interactive gallery: 6× pinch zoom, double tap, pan and direct edit. Reduce wrinkles protects originals, stamps and signatures.",
       "Paper Scan Pro enhances document brightness and colored seals without overwriting the original. AI Scan uses ML Kit FULL on supported Android phones.",
@@ -22,6 +23,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
+      "PerfectScan Pro: صور متعددة، تنقية محلية، تقويم سطور 2D، تقرير SHA‑256، وML Kit FULL.",
       "ستايل مريح، مشاركة ومسح حدا بعضهم ملي تختار الصورة، وقوة تقويم التجاعيد وتنقية AI على الهاتف.",
       "المعاينة فيها زوم 6 مرات، التنقل والتعديل المباشر. تقليل التجاعيد كيحافظ على الأصل والكاشيات والتواقيع.",
       "Paper Scan Pro كينقّي الورقة ويحافظ على الكاشيات والأصلية. AI Scan كيستعمل ML Kit FULL على هواتف Android المدعومة.",
@@ -38,6 +40,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
+      "PerfectScan Pro : fusion locale, correction 2D, rapport SHA-256 et ML Kit FULL.",
       "Interface apaisée, Partager et Supprimer côte à côte pour les photos sélectionnées, correction des plis et nettoyage IA.",
       "Galerie tactile avec zoom 6× et édition directe. Réduction des plis avec cachets et signatures préservés.",
       "Paper Scan Pro corrige l'éclairage et conserve les cachets. AI Scan utilise ML Kit FULL sur les appareils Android compatibles.",
@@ -54,6 +57,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
+      "PerfectScan Pro: fotos múltiples, fusión local, informe SHA-256 y ML Kit FULL.",
       "Diseño cómodo, Compartir y Eliminar juntos para fotos elegidas, ajuste de pliegues y limpieza IA local.",
       "Galería con zoom 6× y edición directa. Reduce pliegues manteniendo sellos y firmas.",
       "Paper Scan Pro améliore le papier sans effacer les tampons. AI Scan utilise ML Kit FULL sur Android compatible.",
@@ -70,6 +74,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Verstanden",
     "items": [
+      "PerfectScan Pro: lokale Fotofusion, 2D-Entzerrung, SHA-256 und ML Kit FULL.",
       "Ruhiges Design, Teilen/Löschen nebeneinander für ausgewählte Bilder, Faltenstärke und lokale KI-Reinigung.",
       "Galerie: Zoom 6× und direkte Bearbeitung. Faltenkorrektur schützt Originalstempel und Unterschriften.",
       "Paper Scan Pro verbessert den Papierkontrast und schützt Stempel. AI Scan verwendet ML Kit FULL auf unterstützten Android-Geräten.",
@@ -86,6 +91,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versão",
     "close": "Entendi",
     "items": [
+      "PerfectScan Pro: fusão de fotos local, correção 2D, SHA-256 e ML Kit FULL.",
       "Design confortável, Partilhar/Eliminar juntos nas fotos selecionadas, controlo de vincos e limpeza IA.",
       "Zoom 6× na galeria e edição direta. Corrigir vincos preservando carimbos e assinaturas.",
       "Paper Scan Pro melhora a luz e mantém carimbos. AI Scan utiliza ML Kit FULL em Android compatível.",
@@ -102,6 +108,7 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versione",
     "close": "Capito",
     "items": [
+      "PerfectScan Pro: fusione locale, correzione 2D, SHA-256 e ML Kit FULL.",
       "Design confortevole, Condividi/Elimina affiancati sulle immagini selezionate, riduzione pieghe e pulizia IA.",
       "Galleria con zoom 6× e modifica diretta. Riduci pieghe preservando timbri e firme.",
       "Paper Scan Pro migliora la luminosità senza cancellare i timbri. AI Scan usa ML Kit FULL su Android compatibile.",
