@@ -18,5 +18,5 @@ jobs:
           python-version: '3.11'
       - name: Inspect real official model tensors and license source
         run: |
-          python -m pip install --disable-pip-version-check "huggingface_hub>=0.34,<2" "onnx>=1.16,<2"
+          python -m pip install --disable-pip-version-check "huggingface_hub>=0.34,<2" "onnx>=1.16,<2" "onnxruntime>=1.23,<2" "numpy>=1.26,<3"
           python apps/rivoscan/scripts/uvdoc-model-audit.py
