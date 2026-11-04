@@ -39,7 +39,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      ${['original','proscan','crease','enhance','magic','shadow','gray','bw','whiteboard','restore'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${id===preset?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${id==='crease'?({en:'Reduce wrinkles',ar:'تقليل التجاعيد',fr:'Réduire les plis',es:'Reducir arrugas',de:'Falten mindern',pt:'Reduzir vincos',it:'Riduci pieghe'})[getLanguage()]||'Reduce wrinkles':id==='proscan'?({en:'Paper Scan Pro',ar:'سكانير ورقي Pro',fr:'Scanner papier Pro',es:'Escáner papel Pro',de:'Papier-Scan Pro',pt:'Digitalização Pro',it:'Scanner carta Pro'})[getLanguage()]||'Paper Scan Pro':id==='restore'?({en:'Restore',ar:'ترميم',fr:'Restaurer',es:'Restaurar',de:'Restaurieren',pt:'Restaurar',it:'Restauro'})[getLanguage()]||'Restore':tr(({original:2,enhance:3,magic:4,shadow:5,gray:6,bw:7,whiteboard:8})[id]??2)}</small></button>`).join('')}
    </div>
    <div class="rivo-editor-sliders"><label>${tr(15)} <input type="range" data-adjust="brightness" min="-35" max="35" value="0" step="1"></label>
-     <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label></div>
+     <label>${tr(16)} <input type="range" data-adjust="contrast" min="-35" max="35" value="0" step="1"></label>
+     <label class="rivo-crease-intensity" ${preset==='crease'?'':'hidden'}>${({en:'Wrinkle correction',ar:'قوة تقويم التجاعيد',fr:'Correction des plis',es:'Corrección de pliegues',de:'Faltenkorrektur',pt:'Correção de vincos',it:'Correzione pieghe'})[getLanguage()]||'Wrinkle correction'} <input type="range" data-adjust="creaseStrength" min="0" max="100" value="80" step="5"></label></div>
    <div class="rivo-eraser-control" hidden><label>${({ar:'حجم الممحاة',fr:'Taille de gomme',es:'Tamaño borrador',de:'Pinselgröße',pt:'Tamanho borracha',it:'Dimensione gomma',en:'Brush size'})[getLanguage()]||'Brush size'}
      <input type="range" min="10" max="90" step="5" value="36" data-brush-size></label><label data-erase-color-label><select data-erase-color>
 <option value="all">All colors</option><option value="auto-colored">Colored ink (inside brush)</option><option value="blue">Blue ink</option>
@@ -63,7 +64,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  const filters=['original','proscan','crease','enhance','magic','shadow','gray','bw','whiteboard','restore'];
  let filter=filters.includes(preset)?preset:'enhance';
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
- let creaseWarp=null,creaseWarpAngle=-1;
+ let creaseWarp=null,creaseWarpAngle=-1,creaseStrength=80;
  let eraserActive=preset==='eraser'||preset.startsWith('erase:'),timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
   let eraseColor=preset.startsWith('erase:')?preset.slice(6):'all';
  const strokes=[];let strokeBatch=0;
@@ -112,6 +113,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     ctx.putImageData(source,0,0);
    }
+   shell.querySelector('.rivo-crease-intensity').hidden=filter!=='crease';
    if(filter==='crease'){
     // Read the actual printed row geometry at bounded resolution. Do not infer
     // a warp for blank pages, diagrams or low-confidence handwriting.
@@ -133,7 +135,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     if(creaseWarp)applyTextGridCanvas(preview,creaseWarp);
     const scan=ctx.getImageData(0,0,preview.width,preview.height);
-    scan.data.set(reducePaperCreasesRGBA(scan.data,preview.width,preview.height));
+    scan.data.set(reducePaperCreasesRGBA(scan.data,preview.width,preview.height,{strength:creaseStrength}));
     ctx.putImageData(scan,0,0);
    }
    if(filter==='proscan'){
@@ -311,6 +313,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  shell.querySelectorAll('[data-adjust]').forEach(input=>input.addEventListener('input',async()=>{
   brightness=Number(shell.querySelector('[data-adjust="brightness"]').value);
   contrast=Number(shell.querySelector('[data-adjust="contrast"]').value);
+  creaseStrength=Number(shell.querySelector('[data-adjust="creaseStrength"]').value);
   await paint();
  }));
  return close;
