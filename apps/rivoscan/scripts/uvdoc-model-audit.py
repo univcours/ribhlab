@@ -19,5 +19,19 @@ def tinfo(field):
 print("OFFICIAL UVDoc_onnx inputs:",json.dumps(tinfo(m.graph.input)),flush=True)
 print("OFFICIAL UVDoc_onnx outputs:",json.dumps(tinfo(m.graph.output)),flush=True)
 print("MODEL_SIZE_BYTES:",Path(model_path).stat().st_size,flush=True)
+import hashlib
+print("OFFICIAL_MODEL_SHA256:",hashlib.sha256(Path(model_path).read_bytes()).hexdigest(),flush=True)
+import numpy as np
+import onnxruntime as ort
+session=ort.InferenceSession(model_path,providers=["CPUExecutionProvider"])
+name=session.get_inputs()[0].name
+# Official preprocess is BGR/255, dynamically sized CHW.
+sample=np.full((1,3,256,192),.8,dtype=np.float32)
+sample[:,0,100:110,20:170]=.15
+result=session.run(None,{name:sample})
+for tensor in result:
+ print("UVDOC_RUNTIME_RESULT:",json.dumps({"shape":list(tensor.shape),"min":float(tensor.min()),"max":float(tensor.max()),"finite":bool(np.isfinite(tensor).all())}),flush=True)
+ assert tensor.ndim==4 and tensor.shape[0]==1 and tensor.shape[1]==3 and np.isfinite(tensor).all()
+
 onnx.checker.check_model(model_path)
 print("UVDOC_ONNX_VALIDATED")
