@@ -78,10 +78,14 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
  '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
  '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
- '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
- '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
- (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> '+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</label>':'')+
- (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d> '+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</label>':'')+
+ '<div class="rivo-perfectscan-control">'+
+ '<label class="rivo-scan-method"><span>'+({en:'Correction method',ar:'طريقة التصحيح',fr:'Méthode de correction',
+ es:'Método de corrección',de:'Korrekturmethode',pt:'Método de correção',
+ it:'Metodo di correzione'})[lang]+'</span><select data-perfect-mode aria-label="Correction method">'+
+ (onUVDoc?'<option value="uvdoc">'+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</option>':'')+
+ '<option value="geometry">'+t.geometry+'</option>'+
+ (onSurface3D?'<option value="surface3d">'+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</option>':'')+
+ '</select></label>'+
  '<button data-perfect="compare" hidden disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
@@ -150,13 +154,18 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   try{
    const frames=extra.map(({data})=>({data}));
    const started=performance.now();
-   const uvdocRequested=!!onUVDoc&&root.querySelector('[data-perfect-uvdoc]').checked;
-   const surface3dRequested=!!onSurface3D&&extra.length>=1&&
-     root.querySelector('[data-perfect-surface3d]').checked;
+   const method=root.querySelector('[data-perfect-mode]').value;
+   const uvdocRequested=!!onUVDoc&&method==='uvdoc';
+   const surface3dRequested=!!onSurface3D&&method==='surface3d';
+   if(surface3dRequested&&extra.length<1)
+     throw Error(({en:'Add another photo of this page from a different angle.',
+       ar:'زيد صورة أخرى لنفس الورقة من زاوية مختلفة.',
+       fr:'Ajoutez une autre photo de la même page sous un autre angle.'})[lang]||
+       'Add another photo from a different angle.');
    const processed=perfectScanRGBA(base.data,base.width,base.height,{
     extraFrames:frames,creaseStrength:80,
     // UVDoc and a triangulated 3D surface each do their own non-rigid warp.
-    geometry:!uvdocRequested&&!surface3dRequested&&root.querySelector('[data-perfect-geometry]').checked
+    geometry:method==='geometry'
    });
    processed.surface3DAttempted=surface3dRequested;
    if(surface3dRequested){
@@ -223,7 +232,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    }
    await onSave(out,name,'image/jpeg');
    let pdfName=null,pdfSha256=null;
-   if(root.querySelector('[data-perfect-pdf]').checked){
+   {
+    // PDF is produced automatically with the scan; no extra checkbox.
     const pdf=await PDFDocument.create();
     const image=await pdf.embedJpg(out);
     // A document page stays proportional to the photograph, rather than
@@ -289,18 +299,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  });
  extrasInput.addEventListener('change',async()=>{const files=[...extrasInput.files];extrasInput.value='';await addShots(files)});
  cameraInput.addEventListener('change',async()=>{const files=[...cameraInput.files];cameraInput.value='';await addShots(files)});
- root.querySelector('[data-perfect-geometry]').addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
- // These are separate geometric remaps: never stack them on real documents.
- // UVDoc is the safer default. Relative 3D is an opt-in experiment requiring
- // genuine different-angle captures and a meaningful number of RANSAC inliers.
- const uvdocToggle=root.querySelector('[data-perfect-uvdoc]');
- const surfaceToggle=root.querySelector('[data-perfect-surface3d]');
- uvdocToggle?.addEventListener('change',()=>{
-  if(uvdocToggle.checked&&surfaceToggle)surfaceToggle.checked=false;
-  resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
- });
- surfaceToggle?.addEventListener('change',()=>{
-  if(surfaceToggle.checked&&uvdocToggle)uvdocToggle.checked=false;
+ // One select ensures mutually exclusive AI/2D/3D corrections.
+ root.querySelector('[data-perfect-mode]').addEventListener('change',()=>{
   resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
  });
  const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
