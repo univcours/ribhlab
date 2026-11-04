@@ -1,11 +1,11 @@
-# RivoScan PerfectScan Pro — Android beta 0.40.0
+# RivoScan PerfectScan Pro — Android beta 0.40.1
 
 ## Delivered in code
 - One-tap entry from Home and existing-image editor; up to three additional phone-camera or gallery shots.
 - Local gradient-aligned registration of the same printed page (maximum ±22 pixels), explicit rejection when alignment confidence is low.
 - Non-destructive paper-tone and wrinkle-shadow correction with conservative pixel fusion; preservation of dark ink, colored stamps and handwritten signatures; optional confidence-gated printed-text 2D dewarping.
 - Full-screen original / enhanced compare, mandatory human review before save.
-- Export new JPG image and integrity JSON with SHA-256 hashes of original and added shots and processed image (where browser WebCrypto is available), alignment diagnostics, document alteration warnings. Newly imported originals saved unchanged.
+- Export new JPG image, optional PDF of the same proportions, and integrity JSON with SHA-256 hashes of original and added shots and processed image (where browser WebCrypto is available), alignment diagnostics, document alteration warnings. Newly imported originals saved unchanged.
 - Direct Google ML Kit FULL Deep Clean entry opens Google's on-device editor with user-controlled gallery import. The local 2D PerfectScan engine and ML Kit workflow are distinct; they are not the same process.
 - Premium Comfort UI, selectable photos with Share and Delete side by side, local privacy, 7 languages. All Pro/paywall/billing gates still OFF for field testing.
 
@@ -33,3 +33,7 @@
 - https://developers.google.com/ml-kit/vision/doc-scanner
 - https://huggingface.co/PaddlePaddle/UVDoc_onnx
 - https://www.paddleocr.ai/latest/en/version3.x/module_usage/text_image_unwarping.html
+
+## 0.40.1 additional controls
+- Optional PDF output and its SHA-256 hash in integrity JSON; JPEG export and source original remain separate.
+- Offline capture-quality hints for low edge detail, weak contrast, and excessive clipped highlights. These are heuristics, not guarantees of focus or legally certified authenticity.
