@@ -88,6 +88,66 @@ public final class RivoUVDocPlugin extends Plugin {
         return bitmap;
     }
 
+
+    /**
+     * Shared local neural filter for the ONE native CameraX scanner.
+     * Original bitmap is NEVER edited. This produces bounded 1024px effective
+     * resolution; user may choose it instead of the high-resolution color filter.
+     * The Android app already packages the SHA-256 verified UVDoc ONNX model.
+     */
+    static Bitmap unwarpBitmap(android.content.Context context,Bitmap original) throws Exception {
+        if(original==null||original.isRecycled()||
+           original.getWidth()<128||original.getHeight()<128)
+            throw new IllegalArgumentException("Invalid document photo for UVDoc");
+        final int ow=original.getWidth(),oh=original.getHeight();
+        final double scale=Math.min(1.0,1024.0/Math.max(ow,oh));
+        final int w=size32((int)Math.round(ow*scale)),h=size32((int)Math.round(oh*scale));
+        if((long)w*h>1600000L)throw new IOException("UVDoc memory limit exceeded");
+        Bitmap source=Bitmap.createScaledBitmap(original,w,h,true);
+        try {
+            final int size=w*h;
+            int[] pixels=new int[size];
+            source.getPixels(pixels,0,w,0,0,w,h);
+            float[] channels=new float[3*size];
+            for(int i=0;i<size;i++){
+                final int color=pixels[i];
+                channels[i]=(color&255)/255f;
+                channels[size+i]=((color>>>8)&255)/255f;
+                channels[2*size+i]=((color>>>16)&255)/255f;
+            }
+            OrtSession active=ensureSession(context);
+            float[][][][] result;
+            try(OnnxTensor tensor=OnnxTensor.createTensor(env,FloatBuffer.wrap(channels),
+                    new long[]{1,3,h,w});
+                OrtSession.Result prediction=active.run(
+                    Collections.singletonMap(active.getInputNames().iterator().next(),tensor))){
+                Object data=prediction.get(0).getValue();
+                if(!(data instanceof float[][][][]))
+                    throw new IOException("UVDoc returned a non-image tensor");
+                result=(float[][][][])data;
+            }
+            if(result.length!=1||result[0].length!=3||
+                result[0][0].length<128||result[0][0][0].length<128)
+                throw new IOException("UVDoc invalid image shape");
+            final int rh=result[0][0].length,rw=result[0][0][0].length;
+            if((long)rh*rw>1600000L)throw new IOException("UVDoc output too large");
+            int[] corrected=new int[rw*rh];
+            for(int y=0;y<rh;y++)for(int x=0;x<rw;x++){
+                float b=result[0][0][y][x],g=result[0][1][y][x],r=result[0][2][y][x];
+                if(!Float.isFinite(r)||!Float.isFinite(g)||!Float.isFinite(b)||
+                   r<-.05f||r>1.05f||g<-.05f||g>1.05f||b<-.05f||b>1.05f)
+                    throw new IOException("UVDoc invalid pixel values");
+                corrected[y*rw+x]=0xff000000|
+                   (clamp(Math.round(r*255),0,255)<<16)|
+                   (clamp(Math.round(g*255),0,255)<<8)|
+                   clamp(Math.round(b*255),0,255);
+            }
+            return Bitmap.createBitmap(corrected,rw,rh,Bitmap.Config.ARGB_8888);
+        }finally{
+            if(source!=original&&!source.isRecycled())source.recycle();
+        }
+    }
+
     @PluginMethod
     public void unwarp(PluginCall call){
         final String value=call.getString("imageBase64");

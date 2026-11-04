@@ -117,6 +117,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private android.widget.ProgressBar enhancementProgress;
     private RivoCaptureQuality.Result captureQuality;
     private int captureQualitySerial=0;
+    private static final String AI_FLATTEN="uvdoc";
     private String selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
     private int enhancementSerial=0;
     private boolean savingEnhancedPage=false;
@@ -261,6 +262,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] save={"Save","حفظ","Enregistrer","Guardar","Speichern","Guardar","Salva"};
         String[] check={"Compare and choose a filter, then save or retake.","قارن واختار المعالجة ثم احفظ أو عاود التصوير.","Comparez, choisissez un filtre puis enregistrez ou reprenez.","Compara, elige filtro y guarda o repite.","Vergleichen, Filter wählen, speichern oder neu aufnehmen.","Compare, escolha filtro, guarde ou repita.","Confronta, scegli filtro, salva o riprendi."};
         String[] qualityWarning={"Image may need retaking","قد تحتاج الصورة لإعادة التصوير","La photo doit peut-être être reprise","Puede necesitar repetir la foto","Foto möglicherweise neu aufnehmen","Poderá ter de repetir a fotografia","Potrebbe essere necessario ripetere la foto"};
+        String[] uvdoc={"UVDoc AI · review result","UVDoc AI · شوف النتيجة","UVDoc IA · voir le résultat",
+            "UVDoc IA · revisar resultado","UVDoc KI · Ergebnis prüfen","UVDoc IA · rever resultado",
+            "UVDoc IA · verifica il risultato"};
         int index=0;for(int i=0;i<languages.length;i++)if(languages[i].equals(code)){index=i;break;}
         switch(key){
             case "review":return review[index];
@@ -268,6 +272,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             case "processing":return processing[index];
             case "save":return save[index];
             case "qualityWarning":return qualityWarning[index];
+            case "uvdoc":return uvdoc[index];
             default:return check[index];
         }
     }
@@ -1267,17 +1272,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout choices=new LinearLayout(this);choices.setGravity(Gravity.CENTER_VERTICAL);
         choices.setPadding(dp(9),dp(8),dp(9),dp(8));
         choices.setBackgroundColor(Color.rgb(8,72,76));
-        String[] modes={RivoDocumentEnhancer.PRO_SCAN,RivoDocumentEnhancer.CREASE,RivoDocumentEnhancer.AUTO,RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
+        String[] modes={RivoDocumentEnhancer.PRO_SCAN,AI_FLATTEN,RivoDocumentEnhancer.CREASE,RivoDocumentEnhancer.AUTO,RivoDocumentEnhancer.ORIGINAL,RivoDocumentEnhancer.ENHANCE,
             RivoDocumentEnhancer.MAGIC,RivoDocumentEnhancer.SHADOW,
             RivoDocumentEnhancer.WHITEBOARD,RivoDocumentEnhancer.BW};
-        String[] captions={"enhancePro","enhanceCrease","enhanceAuto","enhanceOriginal","enhanceSmart","enhanceMagic",
+        String[] captions={"enhancePro","uvdoc","enhanceCrease","enhanceAuto","enhanceOriginal","enhanceSmart","enhanceMagic",
             "enhanceShadow","enhanceWhiteboard","enhanceBW"};
         int sw=pendingWarp.getWidth(),sh=pendingWarp.getHeight();
         int tw=Math.max(35,(int)(dp(72)*sw/(double)Math.max(sw,sh)));
         int th=Math.max(35,(int)(dp(72)*sh/(double)Math.max(sw,sh)));
         Bitmap thumbnail=Bitmap.createScaledBitmap(pendingWarp,tw,th,true);
         for(int i=0;i<modes.length;i++){
-            final String mode=modes[i],caption=trNative(captions[i]);
+            final String mode=modes[i],caption=AI_FLATTEN.equals(mode)?localizedCapture("uvdoc"):trNative(captions[i]);
             LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);
             card.setGravity(Gravity.CENTER);card.setPadding(dp(5),dp(5),dp(5),dp(5));
             card.setBackground(outlined(Color.rgb(8,70,75),9,Color.rgb(24,173,160)));
@@ -1322,6 +1327,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // Thumbnails show their REAL filter output, not the same photo copied six times.
         for(int i=0;i<modes.length;i++){
             final String mode=modes[i];
+            // UVDoc model must not be run on a thumbnail and must not pretend
+            // to show an enhanced preview before the user selects this mode.
+            if(AI_FLATTEN.equals(mode))continue;
             final ImageView icon=(ImageView)((LinearLayout)choices.getChildAt(i)).getChildAt(0);
             analyzer.execute(()->{
                 Bitmap miniature=null;
@@ -1340,6 +1348,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             });
         }
     }
+    /** All scan modes share one native preview/save engine. */
+    private Bitmap applyScanFilter(Bitmap image,String preset) throws Exception {
+        if(AI_FLATTEN.equals(preset))
+            return RivoUVDocPlugin.unwarpBitmap(this,image);
+        return RivoDocumentEnhancer.apply(image,preset);
+    }
     private void renderEnhancementPreview(String preset){
         if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;
         final int serial=++enhancementSerial;
@@ -1354,7 +1368,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         analyzer.execute(()->{
             Bitmap processed=null;
             try{
-                processed=RivoDocumentEnhancer.apply(sample,preset);
+                processed=applyScanFilter(sample,preset);
                 final Bitmap result=processed;
                 mainHandler.post(()->{
                     if(serial!=enhancementSerial||enhancementImage==null||pendingWarp==null){
@@ -1407,7 +1421,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         analyzer.execute(()->{
             Bitmap output=null;File target=null;
             try{
-                output=RivoDocumentEnhancer.apply(input,preset);
+                output=applyScanFilter(input,preset);
                 composeSignature(output);
                 target=writeProcessedJpeg(output);
                 final File completed=target;
