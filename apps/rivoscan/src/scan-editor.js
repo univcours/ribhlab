@@ -80,6 +80,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   if(closed||rendering)return;rendering=true;renderCount++;
   try{
    drawOriginal();
+   shell.querySelector('.rivo-crease-intensity').hidden=filter!=='crease';
    if(filter==='original'&&brightness===0&&contrast===0&&!timestampOn&&!strokes.length)return;
    const base=filter==='magic'?'contrast(1.34) saturate(1.22) brightness(1.07)':filter==='enhance'?'contrast(1.19) saturate(1.06) brightness(1.05)':filter==='gray'?'grayscale(1) contrast(1.11)':filter==='bw'?'grayscale(1) contrast(1.6)':filter==='whiteboard'?'none':filter==='shadow'?'contrast(1.11)':'none';
    const current=ctx.getImageData(0,0,preview.width,preview.height);
@@ -113,7 +114,6 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
     }
     ctx.putImageData(source,0,0);
    }
-   shell.querySelector('.rivo-crease-intensity').hidden=filter!=='crease';
    if(filter==='crease'){
     // Read the actual printed row geometry at bounded resolution. Do not infer
     // a warp for blank pages, diagrams or low-confidence handwriting.
