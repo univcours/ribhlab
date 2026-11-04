@@ -177,6 +177,8 @@ const docViewerUI=createDocumentViewer({
         doc,bridge:RivoDocuments,getLanguage:()=>language,
         onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
         onRetake:()=>openLiveScanner(),
+        onDeepClean:()=>openSmartScanner(),
+        preset:'crease',
         onRefresh:async()=>{
           await loadLibrary(false);
           if(activeTool?.id==='library')refreshVisibleLibrary();
