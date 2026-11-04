@@ -67,6 +67,12 @@ public final class RivoSurface3DPlugin extends Plugin {
         Collections.sort(values);
         return values.get(values.size()/2);
     }
+    private static boolean isInlier(Mat mask,int index){
+        int n=mask.rows()*mask.cols();
+        if(index<0||index>=n)return false;
+        double[] value=mask.rows()==1?mask.get(0,index):mask.get(index,0);
+        return value!=null&&value.length>0&&value[0]>0;
+    }
     private static Reconstruction triangulate(Mat a,Mat b,int w,int h){
         Reconstruction out=new Reconstruction();
         Mat g0=new Mat(),g1=new Mat(),d0=new Mat(),d1=new Mat(),K=Mat.eye(3,3,CvType.CV_64F);
@@ -119,7 +125,7 @@ public final class RivoSurface3DPlugin extends Plugin {
             ArrayList<Double> depths=new ArrayList<>();
             ArrayList<double[]> cloud=new ArrayList<>();
             for(int i=0;i<q0.size();i++){
-                if(mask.rows()>i&&mask.get(i,0)[0]<1)continue;
+                if(!isInlier(mask,i))continue;
                 double homogeneous=xyz.get(3,i)[0];
                 if(!Double.isFinite(homogeneous)||Math.abs(homogeneous)<1e-9)continue;
                 double X=xyz.get(0,i)[0]/homogeneous,Y=xyz.get(1,i)[0]/homogeneous,Z=xyz.get(2,i)[0]/homogeneous;
