@@ -48,7 +48,7 @@ const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b)
 const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
 const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
-export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null,onUVDoc=null}){
+export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null,onUVDoc=null,onSurface3D=null}){
  const lang=getLanguage(),t=dict[lang]||dict.en;
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
@@ -67,6 +67,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<div class="rivo-perfectscan-control"><label><input type="checkbox" data-perfect-geometry checked> '+t.geometry+'</label>'+
  '<label><input type="checkbox" data-perfect-pdf checked> '+pdfLabels[lang]+'</label>'+ 
  (onUVDoc?'<label class="rivo-perfectscan-uvdoc"><input type="checkbox" data-perfect-uvdoc checked> UVDoc ONNX · Android offline (AI unwarp)</label>':'')+
+ (onSurface3D?'<label class="rivo-perfectscan-surface3d"><input type="checkbox" data-perfect-surface3d checked> 3D Surface Mesh · multi-angle beta (2–4 photos)</label>':'')+
  '<button data-perfect="compare" disabled>'+t.compare+'</button></div>'+
  '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
  '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
@@ -123,11 +124,33 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const frames=extra.map(({data})=>({data}));
    const started=performance.now();
    const uvdocRequested=!!onUVDoc&&root.querySelector('[data-perfect-uvdoc]').checked;
+   const surface3dRequested=!!onSurface3D&&extra.length>=1&&
+     root.querySelector('[data-perfect-surface3d]').checked;
    const processed=perfectScanRGBA(base.data,base.width,base.height,{
     extraFrames:frames,creaseStrength:80,
-    // Never apply two non-rigid warps on the same photo.
-    geometry:!uvdocRequested&&root.querySelector('[data-perfect-geometry]').checked
+    // UVDoc and a triangulated 3D surface each do their own non-rigid warp.
+    geometry:!uvdocRequested&&!surface3dRequested&&root.querySelector('[data-perfect-geometry]').checked
    });
+   processed.surface3DAttempted=surface3dRequested;
+   if(surface3dRequested){
+    try{
+     const surface=await onSurface3D(base.data,processed.pixels,extra.map(frame=>frame.data),
+       base.width,base.height);
+     if(!surface?.physical3DRelative||surface.pixels?.length!==base.data.length)
+       throw Error('Insufficient 3D paper surface evidence');
+     processed.pixels=surface.pixels;
+     processed.surface3DApplied=true;
+     processed.surface3DPointCount=surface.points;
+     processed.surface3DConfidence=surface.confidence;
+     processed.surface3DRelativeDepthSpread=surface.relativeDepthSpread;
+     processed.surface3DCameraCalibrationApproximate=surface.calibrationAssumed;
+     processed.surface3DEffectiveResolution=[surface.effectiveWidth,surface.effectiveHeight];
+     processed.requiresReview=true;
+    }catch(error){
+     // Reject instead of pretending to have flattened a 3D sheet.
+     processed.surface3DRejectedReason=String(error.message||error);
+    }
+   }
    if(uvdocRequested){
     const neural=await onUVDoc(processed.pixels,base.width,base.height);
     if(neural?.pixels?.length!==base.data.length||!neural.modelSha256)
@@ -148,7 +171,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
      (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
      ' · 2D: '+(processed.geometryApplied?'yes':'no')+
-     (processed.neuralUvdocApplied?' · UVDoc ONNX Android ✓ · 3D depth: no':'')+
+     (processed.neuralUvdocApplied?' · UVDoc ONNX Android ✓':'')+
+     (processed.surface3DApplied?' · relative 3D surface ✓':
+        processed.surface3DRejectedReason?' · 3D abstained: '+processed.surface3DRejectedReason:'')+
      ' · '+(processed.requiresReview?t.manual:t.clean)+
      (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings.join('; '):'')+
      ' · '+elapsed+' ms';
@@ -190,7 +215,17 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    }
    const audit={
     product:'RivoScan PerfectScan Pro',version:1,createdUTC:time,
-    processing:'on-device UVDoc neural 2D unwarp and/or 2D document enhancement; NOT 3D reconstruction or certified forensic authenticity',
+    processing:result.surface3DApplied?
+      'Native OpenCV multi-view relative 3D triangulation + neural UVDoc optional; approximate camera calibration, not metric certified depth':
+      'UVDoc neural 2D unwarp and/or 2D enhancement; no 3D reconstruction; not certified forensic authenticity',
+    surface3DAttempted:!!result.surface3DAttempted,
+    relativeSurface3DApplied:!!result.surface3DApplied,
+    relativeSurface3DConfidence:result.surface3DConfidence||null,
+    relativeSurface3DPoints:result.surface3DPointCount||0,
+    relativeDepthSpread:result.surface3DRelativeDepthSpread||null,
+    relativeSurface3DRejectedReason:result.surface3DRejectedReason||null,
+    surface3DCameraCalibrationApproximate:!!result.surface3DCameraCalibrationApproximate,
+    relativeSurface3DEffectiveResolution:result.surface3DEffectiveResolution||null,
     uvdocAndroidInference:!!result.neuralUvdocApplied,
     uvdocModelSha256:result.neuralModelSha256||null,
     uvdocEffectiveModelResolution:result.neuralEffectiveResolution||null,
@@ -231,6 +266,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  review.addEventListener('change',()=>{save.disabled=!result||!review.checked});
  root.querySelector('[data-perfect-geometry]').addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
  root.querySelector('[data-perfect-uvdoc]')?.addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
+ root.querySelector('[data-perfect-surface3d]')?.addEventListener('change',()=>{resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original)});
  const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
  const after=()=>{if(result)previewPixels(result.pixels,base.width,base.height,t.processed)};
  compare.addEventListener('pointerdown',before);
