@@ -5,7 +5,7 @@ export function limitZoom(s,cw,ch,vw,vh){
  const scale=clamp(Number(s.scale)||1,MIN_ZOOM,MAX_ZOOM);
  const maxX=Math.max(0,(Math.max(1,cw)*scale-Math.max(1,vw))/2);
  const maxY=Math.max(0,(Math.max(1,ch)*scale-Math.max(1,vh))/2);
- return {scale,x:clamp(Number(s.x)||0,-maxX,maxX),y:clamp(Number(s.y)||0,-maxY,maxY)};
+ return {scale,x:maxX?clamp(Number(s.x)||0,-maxX,maxX):0,y:maxY?clamp(Number(s.y)||0,-maxY,maxY):0};
 }
 export function createViewerZoom({viewport,stage,onChange=()=>{}}){
  if(!viewport||!stage)throw Error('Missing document zoom viewport');
