@@ -24,7 +24,7 @@ public final class RivoCropEditor extends View {
     private final Paint loupePaint=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final Paint decoration=new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    public RivoCropEditor(Context ctx){super(ctx);setBackgroundColor(Color.rgb(20,27,43));}
+    public RivoCropEditor(Context ctx){super(ctx);setBackgroundColor(Color.rgb(5,46,52));}
     private float dp(float n){return n*getResources().getDisplayMetrics().density;}
 
     public void setDocument(Bitmap source,Point[] detected){
@@ -54,7 +54,7 @@ public final class RivoCropEditor extends View {
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(detected?Color.argb(29,49,106,235):Color.argb(12,49,106,235));
         canvas.drawPath(path,paint);
-        paint.setColor(detected?Color.rgb(61,134,255):Color.rgb(122,162,243));
+        paint.setColor(detected?Color.rgb(32,220,198):Color.rgb(110,232,211));
         paint.setStrokeWidth(dp(2.5f));paint.setStyle(Paint.Style.STROKE);
         paint.setPathEffect(detected?null:new DashPathEffect(new float[]{dp(9),dp(6)},0));
         canvas.drawPath(path,paint);
@@ -62,7 +62,7 @@ public final class RivoCropEditor extends View {
         paint.setStyle(Paint.Style.FILL);
         for(int i=0;i<4;i++){
             paint.setColor(Color.WHITE);canvas.drawCircle(px(corners[i]),py(corners[i]),dp(10),paint);
-            paint.setColor(Color.rgb(49,91,219));canvas.drawCircle(px(corners[i]),py(corners[i]),dp(7),paint);
+            paint.setColor(Color.rgb(13,152,148));canvas.drawCircle(px(corners[i]),py(corners[i]),dp(7),paint);
         }
         if(selected>=0)drawLoupe(canvas);
     }
@@ -86,7 +86,7 @@ public final class RivoCropEditor extends View {
         float x1=Math.min(bitmap.getWidth(),sourceX+sourceRadius),y1=Math.min(bitmap.getHeight(),sourceY+sourceRadius);
         if(x1<=x0||y1<=y0)return;
 
-        decoration.setStyle(Paint.Style.FILL);decoration.setColor(Color.rgb(14,24,54));
+        decoration.setStyle(Paint.Style.FILL);decoration.setColor(Color.rgb(6,48,53));
         canvas.drawCircle(cx,cy,radius+dp(5),decoration);
         Path clip=new Path();clip.addCircle(cx,cy,radius,Path.Direction.CW);
         canvas.save();canvas.clipPath(clip);
@@ -102,12 +102,12 @@ public final class RivoCropEditor extends View {
         decoration.setStrokeWidth(dp(1.3f));decoration.setColor(Color.WHITE);
         canvas.drawLine(cx-radius,cy,cx+radius,cy,decoration);
         canvas.drawLine(cx,cy-radius,cx,cy+radius,decoration);
-        decoration.setStrokeWidth(dp(2));decoration.setColor(Color.rgb(33,92,230));
+        decoration.setStrokeWidth(dp(2));decoration.setColor(Color.rgb(11,162,151));
         canvas.drawCircle(cx,cy,dp(5),decoration);
         canvas.restore();
         decoration.setStrokeWidth(dp(3));decoration.setStyle(Paint.Style.STROKE);
         decoration.setColor(Color.WHITE);canvas.drawCircle(cx,cy,radius,decoration);
-        decoration.setStrokeWidth(dp(2));decoration.setColor(Color.rgb(61,134,255));
+        decoration.setStrokeWidth(dp(2));decoration.setColor(Color.rgb(32,220,198));
         canvas.drawCircle(cx,cy,radius+dp(3),decoration);
         decoration.setStyle(Paint.Style.FILL);
     }

@@ -663,3 +663,122 @@ html,body,#app,body.rivo-native-android{background:#f5f7fb!important;color:#1725
  .rivo-perfectscan-modal footer button{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.rivo-perfectscan-overlay{backdrop-filter:none}}
+
+
+/* RivoScan Turquoise 2026 — final brand layer; overrides older blue themes. */
+:root{
+ --rv-bg:#f1faf8;--rv-panel:#fff;--rv-card:#fff;--rv-line:#c7e9e2;
+ --rv-white:#123c40;--rv-muted:#5f7b7c;--rv-blue:#0eaaa5;--rv-teal:#0cb6aa;
+ --rivo-brand-primary:#089b99;--rivo-brand-indigo:#076e74;
+ --rivo-brand-cyan:#1bd4c3;--rivo-brand-ice:#e4faf4;
+ --rivo-brand-text:#123c40;--rivo-brand-muted:#597b7b;
+ --rivo-brand-border:#c6e6e0;
+ accent-color:#089b99;
+}
+html,body,#app,body.rivo-native-android{background:#f1faf8!important;color:#123c40!important}
+#app .rivo-dark-ui,#app .rivo-dark-ui .main{
+ background:linear-gradient(180deg,#f4fcfa 0%,#eaf7f5 100%)!important;
+ color:#123c40!important;
+}
+#app .rivo-dark-ui .topbar,body.rivo-native-android .rivo-dark-ui .topbar{
+ background:#ffffffed!important;border-bottom:1px solid #cdebe5!important;
+}
+#app .rivo-dark-ui .crumb strong{color:#075b62!important;-webkit-text-fill-color:#075b62!important}
+#app .rivo-dark-ui .mobilebar{
+ background:#fffffffb!important;border-top:1px solid #d2eee8!important;
+}
+#app .rivo-dark-ui .mobilebar button.active{
+ background:#e0f8f2!important;border:1px solid #a8e4dc!important;color:#067e7b!important;
+}
+#app .rivo-dark-ui .panel,#app .rivo-dark-ui .library-panel,
+#app .rivo-home .rivo-tile,#app .rivo-home .recent-entry,
+#app .rivo-dark-ui .mobile-tool-tile,#app .rivo-dark-ui .document-entry,
+#app .rivo-dark-ui .settings-row{
+ border:1px solid #d3ece8!important;background:#fff!important;
+ box-shadow:0 4px 16px #075b6210!important;color:#163e42!important;
+}
+#app .rivo-dark-ui .document-entry.doc-selected,#app .rivo-home .recent-entry.doc-selected{
+ background:#e4fbf5!important;border:2px solid #0ba79f!important;
+ box-shadow:0 0 0 3px #3bddc529!important;
+}
+#app .rivo-home .rivo-home-search,#app .rivo-dark-ui .library-search,
+#app .rivo-dark-ui .rivo-tool-pills button{
+ border-color:#bfe9e2!important;background:#fff!important;color:#13676b!important;
+}
+#app .rivo-dark-ui .btn-primary,#app .rivo-dark-ui .operation,
+#app .rivo-dark-ui .scan-action-primary{
+ background:linear-gradient(125deg,#0dc5ba,#087e84)!important;
+ border:1px solid #07888b!important;color:white!important;
+ box-shadow:0 5px 14px #088a8427!important;
+}
+#app .rivo-home .rivo-perfectscan-home{
+ background:linear-gradient(122deg,#07575d,#078a88 67%,#08b3a8)!important;
+ border:1px solid #63d8ca!important;color:white!important;
+ box-shadow:0 11px 24px #047d772a!important;
+}
+#app .rivo-home .rivo-perfectscan-home .rivo-perfectscan-feature-icon{
+ background:#c8fff025!important;color:#d6fff8!important;
+}
+#app .rivo-dark-ui .rivo-header-action,
+#app .rivo-dark-ui .document-buttons button{
+ color:#086f75!important;background:#e8f9f5!important;border:1px solid #bce8de!important;
+}
+#app .rivo-dark-ui .doc-select-box:checked{background:#0ea59a!important;border-color:#0ea59a!important}
+.library-selection-toolbar{
+ background:#fff!important;border:1px solid #b7e7df!important;
+ box-shadow:0 9px 28px #064d541b!important;
+}
+.library-selection-toolbar .bulk-primary .bulk-share-primary{
+ background:#089b99!important;border:1px solid #067b7d!important;color:#fff!important;
+}
+.library-selection-toolbar .bulk-primary .bulk-delete-primary{
+ background:#fff2f3!important;border:1px solid #f9cad1!important;color:#b4233d!important;
+}
+.library-selection-toolbar .bulk-secondary button{
+ background:#f3fbf8!important;border-color:#c8e8e2!important;color:#286367!important;
+}
+.rivo-perfectscan-modal{
+ background:#f5fbf9!important;border:1px solid #bfe8e0!important;
+}
+.rivo-perfectscan-modal header{border-bottom-color:#c6e6df!important;background:#fff!important}
+.rivo-perfectscan-toolbar button,.rivo-perfectscan-control button{
+ border-color:#a7ded4!important;color:#077b79!important;background:#f7fffc!important;
+}
+.rivo-perfectscan-preview{background:#d9f0ea!important;border-color:#c8e6dd!important}
+.rivo-perfectscan-status{
+ background:#e6faf4!important;color:#176164!important;border:1px solid #bbece0!important;
+}
+.rivo-perfectscan-control input,.rivo-perfectscan-review input{accent-color:#0aa99d!important}
+.rivo-perfectscan-modal footer [data-perfect=process]{
+ background:#0b9c98!important;border-color:#078786!important;color:white!important;
+}
+.rivo-perfectscan-modal footer [data-perfect=save]{
+ background:#056f72!important;border-color:#04585d!important;color:white!important;
+}
+.rivo-perfectscan-home:focus-visible,
+.rivo-perfectscan-overlay button:focus-visible,
+#app .rivo-dark-ui button:focus-visible,
+#app .rivo-dark-ui input:focus-visible{
+ outline:3px solid #0cbcb0!important;outline-offset:3px!important;
+}
+.rivo-editor-window{background:#f0faf8!important}
+.rivo-editor-header,.rivo-editor-actions{
+ background:#fff!important;color:#123f42!important;border-color:#cbe9e1!important;
+}
+.rivo-editor-filters{background:#e9f7f4!important;border-top-color:#c4e7e0!important}
+.rivo-filter-choice{border-color:#c0e5dc!important;color:#316a6c!important}
+.rivo-filter-choice.active{background:#dcfaf2!important;color:#056c6a!important;border-color:#0aaea3!important}
+.rivo-editor-actions .rivo-editor-deep-clean,
+.rivo-editor-actions .rivo-editor-perfectscan{
+ background:#ddfaf2!important;border-color:#93ded1!important;color:#076e70!important;
+}
+.doc-detail-overlay{background:#f1fbf7!important}
+.doc-detail-paper{background:#e3f4ee!important;border-color:#c5e7dd!important}
+.doc-zoom-actions button{color:#087575!important;background:#fff!important;border-color:#bce5dc!important}
+@media(max-width:780px){
+ #app .rivo-dark-ui .main{background:#f1faf8!important}
+ .library-selection-toolbar{border-color:#b9e7dc!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-dark-ui .btn-primary,#app .rivo-home .rivo-perfectscan-home{transition:none!important}
+}
