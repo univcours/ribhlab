@@ -37,18 +37,25 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
     return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
       <strong>${items.length} ${t('selected')}</strong><small>${size(total)}</small>
-      <div class="bulk-secondary"><button data-bulk="all">${t('all')}</button><button data-bulk="invert">${t('invert')}</button><button data-bulk="cancel">${t('cancel')}</button></div>
       <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
-        <button data-bulk="share" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span> ${t('share')}</button>
-        <button data-bulk="organize" ${items.length?'':'disabled'}><span aria-hidden="true">▣</span> ${t('move')} / ${t('copy')}</button>
-        <button data-bulk="rename" ${items.length===1?'':'disabled'}><span aria-hidden="true">✎</span> ${t('rename')}</button>
-        <button data-bulk="delete" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span> ${t('delete')}</button>
-        <button data-bulk="merge" ${items.length>1?'':'disabled'}><span aria-hidden="true">⋯</span> ${t('merge')}</button>
+        <div class="bulk-primary">
+          <button data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span> ${t('share')}</button>
+          <button data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span> ${t('delete')}</button>
+        </div>
+        <div class="bulk-secondary">
+          <button data-bulk="all">${t('all')}</button><button data-bulk="invert">${t('invert')}</button>
+          <button data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
+          <button data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
+          <button data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
+          <button data-bulk="cancel">${t('cancel')}</button>
+        </div>
       </div>
     </div>`;
   }
+  const isImage=doc=>/^image\//i.test(doc?.mimeType||'')||/\.(png|jpe?g|webp)$/i.test(doc?.name||'');
   function checkbox(doc,index){
-    if(!mode)return '';
+    // Allow selection of saved photos without entering multi-select first.
+    if(!mode&&!isImage(doc))return '';
     return `<input type="checkbox" class="doc-select-box" data-doc-select="${index}" aria-label="${t('select')}" ${chosen(doc)?'checked':''}>`;
   }
   function clear(){mode=false;selected.clear();document.body.classList.remove('rivo-multiselect');}
@@ -71,7 +78,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         if(mode&&!existing){
           const div=document.createElement('div');div.innerHTML=doc?checkbox(doc,Number(row.dataset.docOpen)):'';
           if(div.firstElementChild)row.prepend(div.firstElementChild);
-        } else if(!mode&&existing&&!alwaysVisible)existing.remove();
+        } else if(!mode&&existing&&!alwaysVisible&&!isImage(doc))existing.remove();
         else if(existing)existing.checked=!!doc&&chosen(doc);
       }
     }
@@ -83,6 +90,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     if(selected.has(doc.uri))selected.delete(doc.uri);
     else if(selected.size>=30){toast(t('limit'),true);return;}
     else selected.add(doc.uri);
+    if(!selected.size)mode=false;
     sync();
   }
   function selectAll(){
