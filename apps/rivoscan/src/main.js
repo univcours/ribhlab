@@ -552,6 +552,7 @@ function refreshVisibleLibrary(){
 function launchPerfectScan(doc=null){
   return openPerfectScan({
     doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
+    onDeepClean:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?()=>openSmartScanner():null,
     onRefresh:async()=>{
       await loadLibrary(false);
       if(activeTool?.id==='library')refreshVisibleLibrary();

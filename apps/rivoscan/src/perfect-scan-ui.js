@@ -9,6 +9,7 @@ const dict={
  pt:{title:'PerfectScan Pro',subtitle:'Fusão local de fotos e correção 2D experimental',base:'Foto original',add:'Adicionar fotos',capture:'Capturar outro ângulo',process:'✦ PerfectScan',compare:'Manter para comparar',original:'Original',processed:'Melhorada',save:'Guardar digitalização e relatório',cancel:'Fechar',privacy:'Sem upload. Original intacto.',tip:'Use 2–4 fotos do MESMO documento com enquadramento semelhante.',none:'Escolha a foto.',choosing:'Escolher foto',ready:'Pronto',working:'A alinhar e limpar...',review:'Confira texto, carimbos e assinaturas.',check:'Revisei a página completa e aceito a cópia.',saved:'Scan e relatório guardados.',failed:'Não foi possível processar.',geometry:'Corrigir linhas curvas (2D)',quality:'Não recupera texto perdido.',frames:'Fotos extras',rejected:'Fotos rejeitadas',manual:'Verificação necessária',clean:'Verificação aprovada; revise'},
  it:{title:'PerfectScan Pro',subtitle:'Fusione locale e raddrizzamento 2D sperimentale',base:'Foto originale',add:'Aggiungi foto',capture:'Altro angolo',process:'✦ PerfectScan',compare:'Tieni premuto per confrontare',original:'Originale',processed:'Migliorata',save:'Salva immagine e rapporto',cancel:'Chiudi',privacy:'Nessun upload. Originale preservato.',tip:'2–4 scatti dello STESSO documento con inquadratura simile.',none:'Scegli prima una foto.',choosing:'Scegli foto',ready:'Pronto',working:'Allineamento e pulizia...',review:'Controlla testo, timbri e firme.',check:'Ho verificato tutta la pagina e accetto la copia.',saved:'Immagine e rapporto salvati.',failed:'Impossibile elaborare.',geometry:'Correggi righe curve (2D)',quality:'Non recupera testo mancante.',frames:'Scatti extra',rejected:'Foto rifiutate',manual:'Da controllare',clean:'Controlli superati; verificare'}
 };
+const mlkitLabels={en:'AI Deep Clean · ML Kit',ar:'تنقية AI قوية · ML Kit',fr:'Nettoyage IA · ML Kit',es:'Limpieza IA · ML Kit',de:'KI Tiefenreinigung · ML Kit',pt:'Limpeza IA · ML Kit',it:'Pulizia IA · ML Kit'};
 const toBytes=base64=>{const bin=atob(base64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a};
 const sha256=async bytes=>{
  if(typeof crypto==='undefined'||!crypto.subtle)return null;
@@ -37,7 +38,7 @@ const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b)
 const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
 const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
-export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{}}){
+export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onSave,onRefresh=async()=>{},notify=()=>{},onDeepClean=null}){
  const lang=getLanguage(),t=dict[lang]||dict.en;
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
@@ -46,7 +47,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<div class="rivo-perfectscan-toolbar">'+
  '<button type="button" data-perfect="base">'+t.choosing+'</button>'+
  '<button type="button" data-perfect="add">'+t.add+'</button>'+
- '<button type="button" data-perfect="camera">'+t.capture+'</button></div>'+
+ '<button type="button" data-perfect="camera">'+t.capture+'</button>'+
+ (onDeepClean?'<button type="button" class="rivo-perfectscan-mlkit" data-perfect="mlkit">✦ '+mlkitLabels[lang]+'</button>':'')+'</div>'+
  '<input class="rivo-perfect-file" type="file" accept="image/*" hidden>'+
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
@@ -154,8 +156,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  }
  root.addEventListener('click',e=>{
   const action=e.target.closest('[data-perfect]')?.dataset.perfect;
-  if(action==='close'){close();return;}
   if(working)return;
+  if(action==='close'){close();return;}
+  if(action==='mlkit'&&onDeepClean){close();onDeepClean();return;}
   if(action==='base')sourceInput.click();
   else if(action==='add')extrasInput.click();
   else if(action==='camera')cameraInput.click();
