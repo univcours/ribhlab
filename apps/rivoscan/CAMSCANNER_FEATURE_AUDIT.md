@@ -1,3 +1,10 @@
+## 0.41.3 — Google ML Kit FULL is the single primary scanner
+- Main Scan/Home floating scanner/Tools Scan and ID Card now open @capacitor-mlkit/document-scanner in FULL mode, allowing gallery import and collecting cleaned JPEG outputs; ID Card limits pages to 2 and retains its PDF layout.
+- CameraX native scanner is a backup ONLY if Google ML Kit cannot run on the device (Google Play services missing/unavailable), or as a manual corner editor when editing an existing photo. Canceling the Google scanner never triggers another camera.
+- Removed any extra Deep Clean CTA from optional multi-angle correction; advanced tools remain in existing Scan settings and Scan > Advanced. No PerfectScan Pro product tile or consent checkbox.
+- ML Kit controls its own native capture and filter review; RivoScan cannot inject custom UVDoc controls inside Google's scanner UI. Advanced UVDoc/relative 3D tools remain optional after capture from the Scan settings. ML Kit cleaned images are persisted as JPEG, optional PDF is generated without double-filtering and source data is not silently deleted.
+- The web and fallback manual editing workflows remain available. No user documents or local repo modifications are overwritten during build. Pro features remain unlocked.
+
 ## 0.41.2 — Unified native scanner, no separate Smart/Pro funnels
 - Removed PerfectScan Pro marketing card and separate Smart Scan entry from user-facing Home/Scan workspace. Kept one native CameraX scanner for capture, quality inspection, corner adjustment, post-processing, comparison, Retake, Save and PDF.
 - Added UVDoc AI as a genuine on-device filter in native CameraX enhancement chooser by sharing the verified ONNX model runtime (RivoUVDocPlugin.unwarpBitmap) with the capture preview and save path. The model is 1024px max side and may reduce text detail versus HD Paper Scan Pro; remains opt-in.

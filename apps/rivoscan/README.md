@@ -1,7 +1,7 @@
 # RivoScan • Android PDF Toolkit (Beta)
 
-## 0.41.2 field-test features (all unlocked)
-The native CameraX scanner uses Paper Scan Pro by default for new installs (perspective crop, color-preserving illumination cleanup). The unified native scanner provides filter selection including real UVDoc offline ONNX for neural unwarping. Optional Google ML Kit FULL remains available internally as a supported fallback and specialized cleaning engine. Book Scan Pro adds optional ML Kit cleaned page capture and locally varying text-line straighten with review/undo. This does not guarantee true 3D reconstruction of damaged paper or lost text.
+## 0.41.3 field-test features (all unlocked)
+The primary Scan action uses Google ML Kit Document Scanner FULL on compatible Android phones (capture, automatic document detection/cropping, native cleanup and review). CameraX remains a fallback and manual corner editor. The unified native scanner provides filter selection including real UVDoc offline ONNX for neural unwarping. Optional Google ML Kit FULL remains available internally as a supported fallback and specialized cleaning engine. Book Scan Pro adds optional ML Kit cleaned page capture and locally varying text-line straighten with review/undo. This does not guarantee true 3D reconstruction of damaged paper or lost text.
 
 Do not uninstall or clear app data to update. No Pro payment or gating is enabled until user device testing is complete and a separate Play Billing release is approved.
 
@@ -190,3 +190,6 @@ Every scanned document remains visible for manual corner confirmation and locall
 
 ## 0.41.2 One Scanner UX
 One user-visible Scan entry. CameraX captures, analyzes and displays the photo before Save; adjust 4 corners, choose regular high-resolution color, paper-crease or UVDoc neural filter, compare, Save or Retake. Native Save stays disabled until the processed image appears. No approval checkbox, no empty white placeholder, no separate Smart Scan / PerfectScan Pro cards. Optional multi-angle 3D and fusion remains under Scan > Advanced Correction, with mode dropdown instead of checkbox; JPG/PDF integrity copy preserves originals. UVDoc effective AI resolution is bounded to 1024px while Pro Scan retains original HD text detail. Physical document QA pending.
+
+## 0.41.3 — AI Deep Clean is the scanner
+The single Scan action from Home, Scan workspace, Tools and ID Card now directly launches Google ML Kit FULL (gallery import allowed), saving the JPEG images that Google returns and creating an optional PDF. The native CameraX document camera is kept only for incompatible Google Play services or explicit manual edit. No separate Smart Scan, Deep Clean or PerfectScan Pro screen appears. Optional fusion, UVDoc and relative 3D are accessible under Scan > Advanced Corrections and in scanner settings. A user cancel never automatically launches backup CameraX. Note ML Kit output JPEGs are the cleaned Google scans; the plugin does not expose raw source photos. No delete/uninstall, no paywall or extra consent checkbox.
