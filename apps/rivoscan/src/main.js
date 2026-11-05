@@ -304,7 +304,7 @@ function render(){
   const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
     <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button type="button" class="rivo-premium-badge" data-premium-unlock aria-label="Ad-supported advanced tools">${ico('play',17)} AD</button>
+   <div class="topright"><button type="button" class="rivo-premium-badge" data-ad-entry aria-label="Ad-supported advanced tools">${ico('play',17)} AD</button>
    <button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
    <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
@@ -362,16 +362,21 @@ function home(){
    ${item.premium?`<span class="rivo-premium-lock" aria-label="Ad-supported feature">AD</span>`:''}
   </button>`).join('');
  return `<section class="app-home rivo-home rivo-premium-home">
-  <div class="rivo-premium-hero">
-   <div class="rivo-hero-top">
-    <div class="rivo-hero-icon">${ico('sparkle',33)}</div>
-    <div class="rivo-hero-copy"><small>RivoScan AI</small><h1>${escapeHTML(copy.hero)}</h1><p>${escapeHTML(copy.body)}</p></div>
-    <div class="rivo-hero-timer" aria-label="${unlocked?'Advanced tools unlocked':'Ad-supported access'}">${ico(unlocked?'check':'play',15)} <span>${unlocked?'ON':'AD'}</span></div>
-   </div>
-   <button type="button" class="rivo-hero-action" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
-    ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>
+  <div class="rivo-ai-compact" role="group" aria-label="${escapeHTML(copy.hero)}">
+   <button type="button" class="rivo-ai-toggle" data-ad-settings-toggle
+     aria-controls="rivo-ai-details" aria-expanded="false" aria-label="${escapeHTML(copy.hero)}">
+    <span class="rivo-ai-symbol">${ico('sparkle',22)}</span>
+    <span class="rivo-ai-name"><small>RivoScan AI</small><strong>${escapeHTML(copy.hero)}</strong></span>
+    <span class="rivo-ai-status" aria-label="${unlocked?'Advanced tools unlocked':'Ad supported'}">${unlocked?'ON':'AD'}</span>
+    <span class="rivo-ai-chevron">${ico('back',17)}</span>
    </button>
-   <div class="rivo-hero-note">${ico('shield',13)} AD · ${escapeHTML(copy.tiles)}</div>
+   <div id="rivo-ai-details" class="rivo-ai-details" hidden>
+    <p>${escapeHTML(copy.body)}</p>
+    <button type="button" class="rivo-ai-watch" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
+     ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>
+    </button>
+    <small>${ico('shield',13)} ${escapeHTML(copy.tiles)} · ${unlocked?'ON':'AD'}</small>
+   </div>
   </div>
   <div class="rivo-premium-heading">
    <div><h2>${escapeHTML(copy.tiles)}</h2><p>${escapeHTML(copy.subtitle)}</p></div>
@@ -669,6 +674,23 @@ function wire(){
   }));
   document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab(el.dataset.tab)}));
   document.querySelectorAll('[data-inapp-back]').forEach(button=>button.addEventListener('click',()=>navigateRivoBack()));
+  document.querySelectorAll('[data-ad-settings-toggle]').forEach(button=>button.addEventListener('click',()=>{
+    const details=document.getElementById('rivo-ai-details');
+    if(!details)return;
+    const open=details.hidden;
+    details.hidden=!open;
+    button.setAttribute('aria-expanded',String(open));
+  }));
+  document.querySelectorAll('[data-ad-entry]').forEach(button=>button.addEventListener('click',()=>{
+    if(activeTool)openTab('home');
+    const details=document.getElementById('rivo-ai-details');
+    const control=document.querySelector('[data-ad-settings-toggle]');
+    if(details&&control){
+      details.hidden=false;
+      control.setAttribute('aria-expanded','true');
+      control.focus();
+    }
+  }));
   document.querySelectorAll('[data-premium-unlock]').forEach(button=>button.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
       toast(premiumCopy(language).web);return;

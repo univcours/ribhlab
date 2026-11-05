@@ -247,3 +247,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Ad-funded tools and the unlock card have **AD** before watching a video, **ON** when access is active; toolbar badge is AD, not PRO. The Tools navigation uses a grid icon rather than a paid-subscription crown.
 - Visible scan-filter labels Paper Scan, Book Scan and PerfectScan drop misleading Pro branding. The actual filtering, rewarded 10-minute access window, consent and documents are unchanged.
 - This is not a paid subscription. Do not show Premium/PRO branding unless a real premium subscription product is launched and its purchase/entitlement flow is implemented.
+
+## v0.43.4 — compact advanced AI drawer and lower full-circle scan FAB
+- Replaces oversized home AI/ad hero with a 57px compact turquoise AI control. Its accessible tap-to-expand details preserve ad choice, real rewarded-video activation and unlocked state; header AD shortcut opens the same drawer rather than firing a video unexpectedly.
+- The mobile navigation retains four real tabs with a new central 76px empty notch, and the distinct 70px camera FAB is moved down to 26px above Android's bottom safe inset. Full circular border, camera icon and click area remain visible; no overlap with Home/Documents/Tools/Me tabs.
+- The FAB still hides on selection and modal overlays, the scanner action remains native, saved files are untouched, and no Premium/PRO purchase branding is added.

@@ -29,7 +29,7 @@ test('Premium dashboard keeps saved-file UX, native camera, rewards and Retake',
   "data-id-card-scan","data-live-camera","data-doc-select"]){
   assert.ok(main.includes(token),token);
  }
- for(const token of ['.rivo-premium-hero','.rivo-premium-tile','.rivo-premium-recent',
+ for(const token of ['.rivo-ai-compact','.rivo-premium-tile','.rivo-premium-recent',
  '.rivo-library-chips','.rivo-camera-fab','safe-area-inset-bottom']){
   assert.ok(css.includes(token),token);
  }
@@ -46,8 +46,8 @@ test('Camera remains a single independent floating action button above four bott
  const fab=main.slice(main.indexOf('const showFab='),main.indexOf('localizeStaticUI(app'));
  assert.ok(fab.includes("isHome||isDocs||isTools"),'FAB visible only in main screens');
  assert.ok(fab.includes('class="floating-scan rivo-camera-fab" data-live-camera'),'real native scanner action');
- assert.ok(css.includes('bottom:calc(83px + env(safe-area-inset-bottom,0px))'),'FAB above gesture bar');
- assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'four navigation entries');
+ assert.ok(css.includes('bottom:calc(26px + env(safe-area-inset-bottom,0px))'),'FAB lowered but fully visible above gesture bar');
+ assert.ok(css.includes('grid-template-columns:minmax(0,1fr) minmax(0,1fr) 76px minmax(0,1fr) minmax(0,1fr)'),'navigation has a central camera notch');
  assert.ok(css.includes('body.rivo-multiselect')&&css.includes('body:has(.rivo-editor-overlay)'),'overlay safe');
 });
 
@@ -77,4 +77,20 @@ test('Ad unlock is never mislabeled as Premium or a paid PRO subscription',()=>{
  assert.ok(!editor.includes('PerfectScan Pro'));
  assert.ok(text('src/monetization.js').includes('PREMIUM_MINUTES=10'),
    'rewarded video entitlement remains 10 minutes; paid subscriptions are separate');
+});
+
+test('AI settings are compact by default, expandable and contain the real rewarded action',()=>{
+ const main=text('src/main.js'),css=text('src/premium-home.css');
+ const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
+ assert.ok(home.includes('class="rivo-ai-toggle" data-ad-settings-toggle'),'small trigger is present');
+ assert.ok(home.includes('aria-controls="rivo-ai-details" aria-expanded="false"'),'starts collapsed');
+ assert.ok(home.includes('class="rivo-ai-details" hidden'),'large content hidden by default');
+ assert.ok(home.includes('class="rivo-ai-watch"'),'actual video action retained');
+ assert.ok(home.includes("data-premium-unlock"),'rewarded ad remains opt-in');
+ assert.ok(!home.includes('class="rivo-premium-hero"'),'bulky home hero removed');
+ assert.ok(main.includes("document.querySelectorAll('[data-ad-settings-toggle]')"));
+ assert.ok(main.includes("document.querySelectorAll('[data-ad-entry]')"));
+ assert.ok(css.includes('.rivo-ai-details[hidden]{display:none!important}'));
+ assert.ok(css.includes('button:nth-of-type(3){grid-column:4}'),'tools keep a clear gap');
+ assert.ok(css.includes('box-sizing:border-box!important'),'camera full circle fits');
 });
