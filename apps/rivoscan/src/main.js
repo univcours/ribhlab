@@ -915,6 +915,7 @@ function addSelectedFiles(picked){
 
 
 /** Android native: live green edge outline and manual four-corner editor. */
+let nativeCaptureDepth=0;
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
@@ -926,6 +927,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
     await openSmartScanner({mode,allowNativeFallback:false});
     return;
   }
+  nativeCaptureDepth++;
   try{
     const prefs=readScanPrefs(localStorage);
     const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs});
@@ -939,7 +941,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
       console.error('Rivo live scanner:',err);
       toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
     }
-  }
+  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 async function editUploadedScanPhotos(selected){
   if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
@@ -977,7 +979,7 @@ async function readScannedImage(uri,index){
 }
 async function consumeSmartScan(result,{mlkitFull=false}={}){
   if(!result?.scannedImages?.length){toast('No scanned pages were returned.',true);return;}
-  if(activeTool?.id!=='scan')openTool('scan');
+  if(activeTool?.id!=='scan')await openTool('scan');
   const picked=[];
   for(let i=0;i<result.scannedImages.length;i++)picked.push(await readScannedImage(result.scannedImages[i],i));
   addSelectedFiles(picked);
@@ -1013,6 +1015,7 @@ async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallb
     toast('AI Deep Clean needs Android with Google Play services. Use photo upload on the web.',true);return;
   }
   const count=pageLimit||('ID Card'===mode?2:20);
+  nativeCaptureDepth++;
   try{
     const result=await DocumentScanner.scanDocument({
       galleryImportAllowed:true,pageLimit:count,resultFormats:'JPEG',scannerMode:'FULL'
@@ -1030,7 +1033,7 @@ async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallb
       return;
     }
     toast('AI Deep Clean could not scan: '+message,true);
-  }
+  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 CapacitorApp.addListener('appRestoredResult',async event=>{
   if(event?.pluginId!=='DocumentScanner'||event?.methodName!=='scanDocument')return;
@@ -1041,6 +1044,7 @@ CapacitorApp.addListener('appRestoredResult',async event=>{
 }).catch(console.warn);
 
 async function openCamera(){
+  if(Capacitor.isNativePlatform())nativeCaptureDepth++;
   try{
     if(Capacitor.isNativePlatform()){
       // Basic photo mode uses the same reliable CameraX preview, without cropping.
@@ -1067,6 +1071,7 @@ async function openCamera(){
     el.onchange=()=>{const f=el.files?.[0];if(f)addSelectedFiles([f])};
     el.click();
   }catch(err){if(!/cancel|SCAN_CANCELLED/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
+  finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 function toast(text,error=false){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=translateStatus(language,text);document.body.appendChild(el);setTimeout(()=>el.remove(),5000)}
 function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
@@ -1390,7 +1395,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
       // App-open ad only on a genuine foreground return and only if preloaded.
       if(secondsAway>=60000)void onAppForeground({
        backgroundMs:secondsAway,
-       working:busy||!!document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy')
+       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy')
       });
     }else{
       backgroundStartedAt=Date.now();
