@@ -230,8 +230,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         content.addView(shell,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(14),0,dp(14),0);
-        TextView back=touchLabel(editing?trNative("retake"):"✕",editing?12:27,Color.WHITE,()->showCamera());
-        header.addView(back,new LinearLayout.LayoutParams(dp(editing?76:44),dp(55)));
+        // Show a full, readable Retake label in the editor header, never an
+        // ambiguous tiny icon or truncated translated action.
+        TextView back=touchLabel(editing?trNative("retake"):"✕",editing?15:27,Color.WHITE,()->showCamera());
+        back.setContentDescription(editing?trNative("retake"):trNative("close"));
+        header.addView(back,new LinearLayout.LayoutParams(dp(editing?94:44),dp(55)));
         TextView title=text(trNative("title"),17,Color.WHITE,true);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
         shell.addView(header);

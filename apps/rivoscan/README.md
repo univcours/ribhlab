@@ -220,3 +220,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - One preloaded interstitial is eligible only after 2 minutes of use and a meaningful tool break (a document saved or 2 real tool returns), with 8-minute fullscreen cooldown and max 3 per app process. Consent and ad readiness are required.
 - No ads on exiting/minimizing from Home, dismissing selection or dialogs, during scanner capture, editing, saving, or during a 10-minute rewarded unlock.
 - Interstitial *can* be video but may show images; creative cannot be forced to video. Rewarded video remains explicitly optional.
+
+## 0.42.3 — Retake UI label legibility
+- Native scan/crop editor header has a full-width Retake control (94 dp, 15 sp) with accessible label. It preserves the existing tap action to resume the camera.
+- The web-based scan editor now displays **Retake** instead of **Add / retake** in English, and **رتايك** in Arabic; native Arabic uses **رتايك**, matching the requested wording. Other translations remain localized.
+- Premium turquoise design mockup reviewed separately; the mockup is a concept, not a claim that all UI screens have been implemented.

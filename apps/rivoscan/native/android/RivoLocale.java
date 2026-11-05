@@ -18,7 +18,7 @@ final class RivoLocale {
          "Scanner help","Cancel","Capture","Adjust 4 corners","Default rear camera ready","Switching to","Choose camera",
          "Import photo","Choose from Files","Finish scanning","Scanner help","Camera unavailable","Could not open camera","Adjust the 4 corners","Flash unavailable"},
         {"الكاميرات","الخلفية الافتراضية","كاميرا خلفية","كاميرا أمامية","صفحة","عدة صفحات","وثيقة","بطاقة الهوية","سبورة",
-         "الصور","الملفات","إنهاء","تصوير وحفظ","إعادة التصوير","تحديد الحواف","حفظ الصفحة","تعديل الحواف",
+         "الصور","الملفات","إنهاء","تصوير وحفظ","رتايك","تحديد الحواف","حفظ الصفحة","تعديل الحواف",
          "مساعدة السكانير","إلغاء","تصوير","عدّل الزوايا الأربع","الكاميرا الخلفية جاهزة","تبديل إلى","اختيار الكاميرا",
          "استيراد صورة","اختيار ملف","إنهاء التصوير","مساعدة السكانير","الكاميرا غير متاحة","تعذر فتح الكاميرا","عدّل الزوايا الأربع","الفلاش غير متاح"},
         {"Caméras","Arrière par défaut","Caméra arrière","Caméra avant","Simple","Lot","Document","Carte d'identité","Tableau blanc",
