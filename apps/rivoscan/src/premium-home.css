@@ -161,7 +161,7 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
 }
 #app .rivo-dark-ui .rivo-hub-tile strong{color:#1b5255!important}
 #app .rivo-dark-ui .rivo-hub-tile .tool-icon{background:#e0f8ee;color:#088f87}
-#app .rivo-editor-retake{
+.rivo-editor-overlay .rivo-editor-retake{
  min-height:44px;white-space:nowrap;padding:8px 15px;border-radius:14px!important;
  background:#e3faf1!important;border:1px solid #8dd6c8!important;
  color:#067375!important;font-weight:900!important;
@@ -214,4 +214,21 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
 }
 @media(prefers-reduced-motion:reduce){
  #app .rivo-premium-tile{transition:none!important}
+}
+
+/* Compact top bar: keep Android status/header legible on 360 px screens. */
+#app .rivo-dark-ui .topbar{min-width:0;gap:7px}
+#app .rivo-dark-ui .topbar .crumb{flex:1 1 auto;min-width:0;gap:6px}
+#app .rivo-dark-ui .topbar .topright{flex:none;gap:5px}
+#app .rivo-dark-ui .topbar .crumb strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:440px){
+ #app .rivo-dark-ui .topbar .rivo-header-feature{display:none!important}
+ #app .rivo-dark-ui .topbar .rivo-header-action{width:37px;min-width:37px;padding:0!important}
+ #app .rivo-dark-ui .topbar .rivo-premium-badge{padding:0 7px;min-height:33px;font-size:11px}
+ #app .rivo-dark-ui .topbar:has(.rivo-header-back) .rivo-premium-badge{display:none!important}
+ #app .rivo-dark-ui .topbar .crumb strong{font-size:15px}
+ #app .rivo-dark-ui .topbar .rivo-build-version{font-size:9px;padding:4px 5px}
+}
+@media(max-width:345px){
+ #app .rivo-dark-ui .topbar .rivo-premium-badge{display:none!important}
 }
