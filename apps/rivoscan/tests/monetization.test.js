@@ -26,6 +26,18 @@ test('interstitial requires consent, saved work, natural break, cooldown, sessio
   {shownCount:3},{premiumUntil:1000000},{now:100000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowInterstitial({...state,...override}),false);
 });
+test('Back ads only after completed work or two tool-to-Home transitions, never app-exit or overlays',()=>{
+ const base={native:true,consent:true,ready:true,startedAt:1000,now:900000,
+  lastShownAt:0,savedCount:0,backTransitions:1,shownCount:0,premiumUntil:0,trigger:'back'};
+ assert.equal(shouldShowInterstitial(base),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2}),true);
+ assert.equal(shouldShowInterstitial({...base,savedCount:1}),true);
+ assert.equal(shouldShowInterstitial({...base,savedCount:1,trigger:'regular'}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,shownCount:3}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,premiumUntil:1000000}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:100000}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,lastShownAt:899000}),false);
+});
 test('app open only on foreground return after >=60 seconds background and 20-minute cooldown',()=>{
  const now=3600000;
  const base={native:true,consent:true,ready:true,backgroundMs:MIN_BACKGROUND_MS,

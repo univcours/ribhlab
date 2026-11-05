@@ -24,8 +24,14 @@ const PREMIUM_IDS=new Set([
 ]);
 export function isPremiumFeature(id){return PREMIUM_IDS.has(String(id||''));}
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
-export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true}){
- return !!(native&&consent&&ready&&savedCount>=2&&shownCount<3&&
+export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0}){
+ // A Back press is a natural page transition only when returning from an
+ // actual tool to Home, after either a completed save or two tool returns.
+ // Never treat dismissing an overlay or exiting the app as an ad opportunity.
+ const meaningfulBreak=trigger==='back'
+  ?(savedCount>=1||backTransitions>=2)
+  :savedCount>=2;
+ return !!(native&&consent&&ready&&meaningfulBreak&&shownCount<3&&
   now-startedAt>=120000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
@@ -35,7 +41,7 @@ export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFul
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
- unlockedUntil:0,savedCount:0,shownCount:0,lastFullscreenAt:0,busy:false,
+ unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
  interstitialReady:false,appOpenReady:false,status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 const strings={
@@ -151,18 +157,25 @@ export async function requestPremium(id){
  }
 }
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
-export async function atNaturalNavigation({working=false}={}){
- if(state.busy||working||!state.interstitialReady)return false;
+export async function atNaturalNavigation({working=false,trigger='regular'}={}){
+ if(state.busy||working)return false;
+ // Count actual tool -> Home transitions, not button taps, gesture duplicates
+ // or app-exit presses. A first Back without work remains advertisement-free.
+ if(trigger==='back')state.backTransitions++;
+ if(!state.interstitialReady)return false;
  const now=Date.now();
  if(!shouldShowInterstitial({native:isAndroid,consent:state.consent,ready:state.ready,
     startedAt:state.startedAt,now,lastShownAt:state.lastFullscreenAt,
-    savedCount:state.savedCount,shownCount:state.shownCount,premiumUntil:state.unlockedUntil}))return false;
+    savedCount:state.savedCount,shownCount:state.shownCount,
+    premiumUntil:state.unlockedUntil,trigger,backTransitions:state.backTransitions}))return false;
  state.busy=true;state.interstitialReady=false;
  try{
-  // Preloaded ad only; never await an ad load AFTER the page transition.
+  // Preloaded full-screen ad can contain video; its creative is chosen by
+  // AdMob. Never wait for fresh network loading when the user presses Back.
   await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
   state.lastFullscreenAt=Date.now();state.shownCount++;state.savedCount=0;
-  status('Interstitial shown');
+  state.backTransitions=0;
+  status(trigger==='back'?'Interstitial shown on return to Home':'Interstitial shown');
   return true;
  }catch(error){status('Interstitial failed',String(error?.message||error));return false;}
  finally{state.busy=false;void loadInterstitial();}

@@ -1322,9 +1322,10 @@ function initSignature(){
 /** Unified in-app back stack for Android gestures, hardware back and edge swipe.
  * Back exits selection before leaving Documents and never clears saved files. */
 let lastBackHandled=0;
+let backNavigationPending=false;
 function navigateRivoBack(){
  const now=Date.now();
- if(now-lastBackHandled<420)return true;
+ if(backNavigationPending||now-lastBackHandled<420)return true;
  if(document.querySelector('.rivo-reward-overlay')){
   document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
  }
@@ -1341,7 +1342,23 @@ function navigateRivoBack(){
  }
  if(document.querySelector('.busy'))return true; // Never interrupt a running document save.
  if(activeTool){
-  openTab('home');lastBackHandled=now;return true;
+  lastBackHandled=now;
+  backNavigationPending=true;
+  const safeToShow=!busy&&nativeCaptureDepth===0&&
+    !document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy');
+  // Only internal tool -> Home transitions can display an ad; on Home,
+  // Android Back still exits/minimizes normally, without any advertisement.
+  void (async()=>{
+   try{
+    if(safeToShow)await atNaturalNavigation({working:false,trigger:'back'});
+   }catch(error){
+    console.warn('Back navigation ad skipped:',error);
+   }finally{
+    openTab('home');
+    backNavigationPending=false;
+   }
+  })();
+  return true;
  }
  return false;
 }

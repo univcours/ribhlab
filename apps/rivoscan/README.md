@@ -214,3 +214,9 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - **Turquoise brand** preserved throughout revised controls.
 
 - Header Back button added to every non-Home page; both left and right edge swipe fallbacks work alongside Android's system back gesture.
+
+## 0.42.2 — back-navigation interstitial placement
+- Android hardware Back, system gesture, edge-swipe fallback and visible toolbar Back share the same tool-to-Home route.
+- One preloaded interstitial is eligible only after 2 minutes of use and a meaningful tool break (a document saved or 2 real tool returns), with 8-minute fullscreen cooldown and max 3 per app process. Consent and ad readiness are required.
+- No ads on exiting/minimizing from Home, dismissing selection or dialogs, during scanner capture, editing, saving, or during a 10-minute rewarded unlock.
+- Interstitial *can* be video but may show images; creative cannot be forced to video. Rewarded video remains explicitly optional.
