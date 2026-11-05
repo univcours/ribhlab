@@ -268,3 +268,8 @@ body:has(.rivo-id-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
 body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  display:none!important;
 }
+
+/* Compact native-looking advertising indicator; no countdown or access duration on cards. */
+#app .rivo-premium-lock{letter-spacing:.4px;font-size:10px;font-weight:900;padding:3px 7px}
+#app .rivo-hero-timer{min-width:51px;justify-content:center;letter-spacing:.6px}
+#app .rivo-video-access{background:#fff2d7;color:#99620e;border:1px solid #f5d99e;font-size:10px;font-weight:900;padding:3px 8px;letter-spacing:.4px}

@@ -1,7 +1,7 @@
 import './style.css';
 import './theme-brand.css';
 import './premium-home.css';
-import {homeTiles,premiumCopy,premiumClock} from './premium-home-model.js';
+import {homeTiles,premiumCopy} from './premium-home-model.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -359,19 +359,19 @@ function home(){
    ${item.action} aria-label="${escapeHTML(copy.names[i])}">
    <span class="rivo-premium-tile-icon">${ico(item.icon,28)}</span>
    <strong>${escapeHTML(copy.names[i])}</strong>
-   ${item.premium?`<span class="rivo-premium-lock">${ico('play',11)} 10m</span>`:''}
+   ${item.premium?`<span class="rivo-premium-lock" aria-label="Ad-supported feature">AD</span>`:''}
   </button>`).join('');
  return `<section class="app-home rivo-home rivo-premium-home">
   <div class="rivo-premium-hero">
    <div class="rivo-hero-top">
     <div class="rivo-hero-icon">${ico('sparkle',33)}</div>
     <div class="rivo-hero-copy"><small>RivoScan AI</small><h1>${escapeHTML(copy.hero)}</h1><p>${escapeHTML(copy.body)}</p></div>
-    <div class="rivo-hero-timer">${ico('clock',16)} <span>${unlocked?premiumClock(access.remainingMs):'10:00'}</span></div>
+    <div class="rivo-hero-timer" aria-label="${unlocked?'Premium unlocked':'Ad-supported access'}">${ico(unlocked?'check':'play',15)} <span>${unlocked?'PRO':'AD'}</span></div>
    </div>
    <button type="button" class="rivo-hero-action" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
     ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>
    </button>
-   <div class="rivo-hero-note">${ico('shield',13)} 10 MIN · ${escapeHTML(copy.tiles)}</div>
+   <div class="rivo-hero-note">${ico('shield',13)} AD · ${escapeHTML(copy.tiles)}</div>
   </div>
   <div class="rivo-premium-heading">
    <div><h2>${escapeHTML(copy.tiles)}</h2><p>${escapeHTML(copy.subtitle)}</p></div>
@@ -399,7 +399,7 @@ function toolsWorkspace(){
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Rewarded video access">▶ 10m</span>':''}</button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Ad-supported feature">AD</span>':''}</button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }

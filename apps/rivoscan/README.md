@@ -238,3 +238,7 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - A separate 70dp teal circular camera FAB is centered just above the mobile nav, honoring Android safe-area and gesture insets. It opens the existing native scanner via data-live-camera on Home/Documents/Tools.
 - FAB hides on non-camera workspaces, file multi-selection, document viewer, editors and modal overlays. Tablet/desktop displays it floating at the lower corner. No change to document storage or AdMob policy.
 - Added a regression test for four nav entries, real scanner action, safe insets and overlay behavior.
+
+## v0.43.2 — polished AD badges
+- Premium tool tiles, tool hub and Home hero use concise **AD** badges instead of **10m / 10:00 / 10 MIN**. After reward, hero badge shows PRO. All seven localized Home descriptions omit timer marketing language.
+- Actual rewarded unlock remains ten minutes, disclosed clearly inside the opt-in video dialog. No change to AdMob test IDs, ad frequency, consent, or scanner behavior.

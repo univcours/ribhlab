@@ -50,3 +50,16 @@ test('Camera remains a single independent floating action button above four bott
  assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'four navigation entries');
  assert.ok(css.includes('body.rivo-multiselect')&&css.includes('body:has(.rivo-editor-overlay)'),'overlay safe');
 });
+
+test('Premium badges display AD (not countdown/duration), while reward duration stays disclosed at opt-in',()=>{
+ const main=text('src/main.js'),copy=text('src/premium-home-model.js'),ads=text('src/monetization.js');
+ assert.ok(main.includes('rivo-premium-lock" aria-label="Ad-supported feature">AD'));
+ assert.ok(main.includes('rivo-video-access" aria-label="Ad-supported feature">AD'));
+ assert.ok(main.includes("unlocked?'PRO':'AD'"));
+ assert.ok(!main.includes('▶ 10m'));
+ assert.ok(!main.includes('10 MIN ·'));
+ assert.ok(!main.includes("'10:00'"));
+ assert.ok(!copy.includes('10 minutes')&&!copy.includes('10 دقائق'));
+ assert.ok(ads.includes('PREMIUM_MINUTES=10'));
+ assert.ok(ads.includes('Watch video · 10 minutes'));
+});
