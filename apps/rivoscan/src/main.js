@@ -1351,9 +1351,10 @@ document.addEventListener('touchstart',event=>{
 },{passive:true});
 document.addEventListener('touchend',event=>{
  if(!edgeSwipeStart||event.changedTouches.length!==1)return;
- const t=event.changedTouches[0],dx=t.clientX-edgeSwipeStart.x,dy=t.clientY-edgeSwipeStart.y;
+ const start=edgeSwipeStart;
+ const t=event.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
  edgeSwipeStart=null;
- if(Math.abs(dy)<60&&((edgeSwipeStart.side==='left'&&dx>=84)||(edgeSwipeStart.side==='right'&&dx<=-84)))navigateRivoBack();
+ if(Math.abs(dy)<60&&((start.side==='left'&&dx>=84)||(start.side==='right'&&dx<=-84)))navigateRivoBack();
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
