@@ -310,11 +310,10 @@ function render(){
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
-    <button type="button" data-live-camera class="rivo-mobile-capture" aria-label="${ut('scan')}">${ico('camera',29)}<span class="sr-only">${ut('scan')}</span></button>
     <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('crown')}${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',29)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
 }

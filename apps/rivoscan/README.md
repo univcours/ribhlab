@@ -232,3 +232,9 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - The My Files page has functional All/PDF/Images chips, plus existing search, sort, share, delete, print, selection and long-press actions. Saved files are never migrated or deleted during the UI change.
 - The image editor Retake action is clearly labeled and styled in teal; native scanner retains its full Retake label. Premium CSS is loaded last to unify teal/white/gold without fake document thumbnails.
 - The Home premium card reflects actual rewarded access state. Web/browser previews do not pretend ads were viewed. The AdMob debug build still uses Google **test IDs** only and generates no revenue; native/device QA is required.
+
+## v0.43.1 — Centered independent floating camera FAB
+- Camera is no longer a fifth bottom-navigation button: there are four navigation slots (Home, Documents, Tools, Me).
+- A separate 70dp teal circular camera FAB is centered just above the mobile nav, honoring Android safe-area and gesture insets. It opens the existing native scanner via data-live-camera on Home/Documents/Tools.
+- FAB hides on non-camera workspaces, file multi-selection, document viewer, editors and modal overlays. Tablet/desktop displays it floating at the lower corner. No change to document storage or AdMob policy.
+- Added a regression test for four nav entries, real scanner action, safe insets and overlay behavior.

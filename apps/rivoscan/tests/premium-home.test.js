@@ -25,15 +25,28 @@ test('Premium card remains honest and is translated into 7 languages',()=>{
 test('Premium dashboard keeps saved-file UX, native camera, rewards and Retake',()=>{
  const main=text('src/main.js'),css=text('src/premium-home.css');
  for(const token of ["import './premium-home.css'","homeTiles.map(","data-premium-unlock",
-  "requestPremium('bookScan')","rivo-mobile-capture","data-library-chip","home-quick-search",
+  "requestPremium('bookScan')","rivo-camera-fab","data-library-chip","home-quick-search",
   "data-id-card-scan","data-live-camera","data-doc-select"]){
   assert.ok(main.includes(token),token);
  }
  for(const token of ['.rivo-premium-hero','.rivo-premium-tile','.rivo-premium-recent',
- '.rivo-library-chips','.rivo-mobile-capture','safe-area-inset-bottom']){
+ '.rivo-library-chips','.rivo-camera-fab','safe-area-inset-bottom']){
   assert.ok(css.includes(token),token);
  }
  assert.ok(text('src/monetization.js').includes('receivedReward'),'reward must be real');
  assert.ok(text('src/scan-editor.js').includes('rivo-editor-retake'));
  assert.ok(text('src/library-bulk.js').includes('data-bulk="delete"'));
+});
+
+test('Camera remains a single independent floating action button above four bottom navigation slots',()=>{
+ const main=text('src/main.js'),css=text('src/premium-home.css');
+ const nav=main.slice(main.indexOf('const mobile = '),main.indexOf('const showFab='));
+ assert.equal((nav.match(/<button\b/g)||[]).length,4,'exactly four bottom nav buttons');
+ assert.ok(!nav.includes('data-live-camera'),'camera cannot be inside bottom nav');
+ const fab=main.slice(main.indexOf('const showFab='),main.indexOf('localizeStaticUI(app'));
+ assert.ok(fab.includes("isHome||isDocs||isTools"),'FAB visible only in main screens');
+ assert.ok(fab.includes('class="floating-scan rivo-camera-fab" data-live-camera'),'real native scanner action');
+ assert.ok(css.includes('bottom:calc(83px + env(safe-area-inset-bottom,0px))'),'FAB above gesture bar');
+ assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'four navigation entries');
+ assert.ok(css.includes('body.rivo-multiselect')&&css.includes('body:has(.rivo-editor-overlay)'),'overlay safe');
 });

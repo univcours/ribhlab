@@ -168,9 +168,9 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
 }
 @media(max-width:780px){
  #app .rivo-dark-ui .mobilebar{
-  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
-  align-items:end!important;gap:2px!important;min-height:74px!important;
-  padding:7px 4px calc(7px + env(safe-area-inset-bottom,0px))!important;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:center!important;gap:5px!important;min-height:73px!important;
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px))!important;
   background:#fffffff7!important;border-top:1px solid #cfeae3!important;
   box-shadow:0 -5px 17px #0c595a16!important;
  }
@@ -181,16 +181,22 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
  #app .rivo-dark-ui .mobilebar button.active{
   color:#087e79!important;background:#e1f7f0!important;border-color:#a7ded4!important;
  }
- #app .rivo-dark-ui .mobilebar .rivo-mobile-capture{
-  align-self:center!important;display:grid!important;place-items:center!important;
-  width:min(62px,100%)!important;min-height:62px!important;
-  margin:-27px auto 4px!important;border-radius:50%!important;border:4px solid #f0fcf8!important;
-  background:radial-gradient(circle at 30% 20%,#36ead7,#09b4aa 44%,#056d77)!important;
-  color:white!important;box-shadow:0 7px 19px #048f8a4b!important;
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  display:grid!important;place-items:center!important;
+  position:fixed!important;left:50%!important;right:auto!important;
+  bottom:calc(83px + env(safe-area-inset-bottom,0px))!important;
+  width:70px!important;height:70px!important;min-height:70px!important;
+  padding:0!important;margin:0!important;
+  transform:translateX(-50%)!important;border:4px solid #edfcf7!important;
+  border-radius:50%!important;z-index:65!important;
+  background:radial-gradient(circle at 30% 18%,#39eee0,#0abbad 46%,#04717a)!important;
+  color:#fff!important;box-shadow:0 9px 21px #047c7b5c,0 0 0 4px #c8f5e8a8!important;
  }
- #app .rivo-dark-ui .mobilebar .rivo-mobile-capture svg{width:28px!important;height:28px!important}
- #app .rivo-dark-ui .floating-scan{display:none!important}
- #app .rivo-dark-ui .content{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab svg{width:31px!important;height:31px!important}
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab:active{
+  transform:translateX(-50%) scale(.95)!important;
+ }
+ #app .rivo-dark-ui .content{padding-bottom:calc(178px + env(safe-area-inset-bottom,0px))!important}
  #app .rivo-premium-hero{padding:16px 13px;border-radius:22px}
  #app .rivo-hero-top{gap:9px}
  #app .rivo-hero-icon{width:48px;height:48px;border-radius:15px}
@@ -231,4 +237,34 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
 }
 @media(max-width:345px){
  #app .rivo-dark-ui .topbar .rivo-premium-badge{display:none!important}
+}
+
+/* The camera is a real FAB, separate from the four-item navigation bar.
+   On tablet/desktop it stays floating at the bottom corner. */
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:grid!important;place-items:center!important;
+ position:fixed!important;right:24px!important;left:auto!important;bottom:24px!important;
+ width:68px!important;height:68px!important;border-radius:50%!important;
+ background:radial-gradient(circle at 30% 18%,#39eee0,#0abbad 46%,#04717a)!important;
+ border:4px solid #ecfcf7!important;color:#fff!important;
+ box-shadow:0 9px 22px #087c7a50!important;z-index:65!important;
+}
+@media(max-width:780px){
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  left:50%!important;right:auto!important;
+  bottom:calc(83px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateX(-50%)!important;width:70px!important;height:70px!important;
+ }
+}
+/* Do not block multi-select actions, modals, saved-file preview or edit flows. */
+body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-reward-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-editor-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.doc-detail-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.bulk-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-release-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-code-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-id-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:none!important;
 }
