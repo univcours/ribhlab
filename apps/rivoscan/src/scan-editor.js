@@ -50,7 +50,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
 <button type="button" data-edit="undoErase">↶ Undo brush</button></div>
    <p class="rivo-editor-tip">${tr(20)}</p>
    <nav class="rivo-editor-actions">
-     ${onPerfectScan?`<button data-edit="perfectScan" class="rivo-editor-perfectscan">✦ PerfectScan Pro · multi-shot</button>` :''}
+     ${onPerfectScan?`<button data-edit="perfectScan" class="rivo-editor-perfectscan">✦ PerfectScan · multi-shot</button>` :''}
      ${onDeepClean?`<button data-edit="deepClean" class="rivo-editor-deep-clean">✦ ${({en:'AI Deep Clean · choose photo',ar:'تنقية AI قوية · اختار الصورة',fr:'Nettoyage IA · choisir photo',es:'Limpieza IA · elegir foto',de:'KI-Reinigung · Foto wählen',pt:'Limpeza IA · escolher foto',it:'Pulizia IA · scegli foto'})[getLanguage()]||'AI Deep Clean · choose photo'}</button>` :''}
      <button data-edit="compare">${tr(9)}</button><button data-edit="left">${tr(10)}</button>
      <button data-edit="right">${tr(11)}</button><button data-edit="crop">${tr(12)}</button>

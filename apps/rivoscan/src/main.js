@@ -304,13 +304,13 @@ function render(){
   const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
     <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button type="button" class="rivo-premium-badge" data-premium-unlock aria-label="Premium tools">${ico('crown',17)} PRO</button>
+   <div class="topright"><button type="button" class="rivo-premium-badge" data-premium-unlock aria-label="Ad-supported advanced tools">${ico('play',17)} AD</button>
    <button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
    <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
-    <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('crown')}${ut('tools')}</button>
+    <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
@@ -366,7 +366,7 @@ function home(){
    <div class="rivo-hero-top">
     <div class="rivo-hero-icon">${ico('sparkle',33)}</div>
     <div class="rivo-hero-copy"><small>RivoScan AI</small><h1>${escapeHTML(copy.hero)}</h1><p>${escapeHTML(copy.body)}</p></div>
-    <div class="rivo-hero-timer" aria-label="${unlocked?'Premium unlocked':'Ad-supported access'}">${ico(unlocked?'check':'play',15)} <span>${unlocked?'PRO':'AD'}</span></div>
+    <div class="rivo-hero-timer" aria-label="${unlocked?'Advanced tools unlocked':'Ad-supported access'}">${ico(unlocked?'check':'play',15)} <span>${unlocked?'ON':'AD'}</span></div>
    </div>
    <button type="button" class="rivo-hero-action" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
     ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>

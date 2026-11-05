@@ -60,7 +60,7 @@ const labels={
  scanCode:['Scan QR & Barcode','قراءة QR والباركود','Lire QR et code-barres','Leer QR y código','QR / Barcode lesen','Ler QR e código','Leggi QR e barcode'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],
- bookScan:['Book Scan Pro (auto split & flatten)','مسح الكتب الاحترافي (فصل وتقويم تلقائي)','Scanner livre Pro (séparer et redresser)','Escanear libro Pro (dividir y aplanar)','Buchscan Pro (trennen & glätten)','Digitalizar livro Pro (separar e corrigir)','Scansiona libro Pro (separa e correggi)'],
+ bookScan:['Book Scan (auto split & flatten)','مسح الكتب الاحترافي (فصل وتقويم تلقائي)','Scanner livre (séparer et redresser)','Escanear libro (dividir y aplanar)','Buchscan (trennen & glätten)','Digitalizar livro (separar e corrigir)','Scansiona libro (separa e correggi)'],
  documentFlatten:['Document Flattening (beta)','تقويم الوثائق المنحنية','Aplatir document (bêta)','Aplanar documento (beta)','Dokument glätten (Beta)','Achatar documento (beta)','Appiattisci documento (beta)'],
  slideScan:['Slides Scan','مسح العروض','Scanner des diapositives','Escanear diapositivas','Folien scannen','Digitalizar slides','Scansione slide'],
  whiteboard:['Whiteboard Enhance','تحسين السبورة','Améliorer tableau blanc','Mejorar pizarra','Whiteboard verbessern','Melhorar quadro','Migliora lavagna'],

@@ -242,3 +242,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 ## v0.43.2 — polished AD badges
 - Premium tool tiles, tool hub and Home hero use concise **AD** badges instead of **10m / 10:00 / 10 MIN**. After reward, hero badge shows PRO. All seven localized Home descriptions omit timer marketing language.
 - Actual rewarded unlock remains ten minutes, disclosed clearly inside the opt-in video dialog. No change to AdMob test IDs, ad frequency, consent, or scanner behavior.
+
+## v0.43.3 — reserve Premium/PRO for a future paid offer
+- Ad-funded tools and the unlock card have **AD** before watching a video, **ON** when access is active; toolbar badge is AD, not PRO. The Tools navigation uses a grid icon rather than a paid-subscription crown.
+- Visible scan-filter labels Paper Scan, Book Scan and PerfectScan drop misleading Pro branding. The actual filtering, rewarded 10-minute access window, consent and documents are unchanged.
+- This is not a paid subscription. Do not show Premium/PRO branding unless a real premium subscription product is launched and its purchase/entitlement flow is implemented.

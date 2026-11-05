@@ -55,11 +55,26 @@ test('Premium badges display AD (not countdown/duration), while reward duration 
  const main=text('src/main.js'),copy=text('src/premium-home-model.js'),ads=text('src/monetization.js');
  assert.ok(main.includes('rivo-premium-lock" aria-label="Ad-supported feature">AD'));
  assert.ok(main.includes('rivo-video-access" aria-label="Ad-supported feature">AD'));
- assert.ok(main.includes("unlocked?'PRO':'AD'"));
+ assert.ok(main.includes("unlocked?'ON':'AD'"));
  assert.ok(!main.includes('▶ 10m'));
  assert.ok(!main.includes('10 MIN ·'));
  assert.ok(!main.includes("'10:00'"));
  assert.ok(!copy.includes('10 minutes')&&!copy.includes('10 دقائق'));
  assert.ok(ads.includes('PREMIUM_MINUTES=10'));
  assert.ok(ads.includes('Watch video · 10 minutes'));
+});
+
+test('Ad unlock is never mislabeled as Premium or a paid PRO subscription',()=>{
+ const main=text('src/main.js'),hub=text('src/tools-hub.js');
+ const native=text('native/android/RivoLocale.java'),editor=text('src/scan-editor.js');
+ assert.ok(main.includes('aria-label="Ad-supported advanced tools"'));
+ assert.ok(main.includes("unlocked?'ON':'AD'"));
+ assert.ok(!main.includes('aria-label="Premium tools"'));
+ assert.ok(!main.includes("unlocked?'PRO':'AD'"));
+ assert.ok(!main.includes("ico('crown',17)} PRO"));
+ assert.ok(!hub.includes('Book Scan Pro'));
+ assert.ok(!native.includes('Paper Scan Pro'));
+ assert.ok(!editor.includes('PerfectScan Pro'));
+ assert.ok(text('src/monetization.js').includes('PREMIUM_MINUTES=10'),
+   'rewarded video entitlement remains 10 minutes; paid subscriptions are separate');
 });

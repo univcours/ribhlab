@@ -111,13 +111,13 @@ final class RivoLocale {
     };
     private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto","enhancePro","enhanceCrease"};
     private static final String[][] AUTO_TEXT={
-        {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean","Paper Scan Pro","Reduce folds"},
+        {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean","Paper Scan","Reduce folds"},
         {"تنقية وحفظ","الفلاتر","كنقومو الورقة وكننقيو الخطوط والكاشيات…","تنقية تلقائية","سكانير الورق الاحترافي","تقليل طيات الورق"},
-        {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto","Scanner papier Pro","Réduire les plis"},
-        {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática","Escáner papel Pro","Reducir pliegues"},
-        {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch","Papier-Scan Pro","Falten reduzieren"},
-        {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática","Digitalização papel Pro","Reduzir vincos"},
-        {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica","Scanner carta Pro","Riduci pieghe"}
+        {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto","Scanner papier","Réduire les plis"},
+        {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática","Escáner papel","Reducir pliegues"},
+        {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch","Papier-Scan","Falten reduzieren"},
+        {"Limpar e guardar","Filtros","A endireitar e limpar o documento…","Limpeza automática","Digitalização papel","Reduzir vincos"},
+        {"Pulisci e salva","Filtri","Raddrizzamento e pulizia del documento…","Pulizia automatica","Scanner carta","Riduci pieghe"}
     };
     private static final String[][] ID_SIDES={
         {"ID card: photograph the FRONT","ID card: photograph the BACK"},

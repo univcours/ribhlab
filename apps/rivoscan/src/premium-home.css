@@ -17,8 +17,8 @@ html,body,#app,body.rivo-native-android{background:#f0faf7!important;color:#143c
 #app .rivo-dark-ui .crumb strong{color:#075a5f!important;-webkit-text-fill-color:#075a5f!important}
 #app .rivo-premium-badge{
  display:flex;align-items:center;gap:4px;min-height:35px;padding:0 10px;
- color:#684000!important;background:linear-gradient(145deg,#ffe8a5,#edaf44)!important;
- border:1px solid #d3a54b!important;border-radius:999px;box-shadow:0 3px 10px #aa79202b;
+ color:#086e71!important;background:linear-gradient(145deg,#e9fbf4,#c8f0e8)!important;
+ border:1px solid #8dd5c8!important;border-radius:999px;box-shadow:0 3px 10px #07867920;
  font-size:12px;font-weight:900;
 }
 #app .rivo-premium-home{width:100%;max-width:100%;min-width:0;padding-bottom:12px}
