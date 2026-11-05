@@ -32,7 +32,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  const shell=document.createElement('div');shell.className='rivo-editor-overlay';shell.dir=getLanguage()==='ar'?'rtl':'ltr';
  shell.innerHTML=`<div class="rivo-editor-window" role="dialog" aria-modal="true" aria-label="${tr(0)}">
    <header class="rivo-editor-header"><button data-edit="cancel" aria-label="${tr(18)}">✕</button>
-     <strong title="${String(doc.name).replace(/[&<>"]/g,'')}">${tr(0)}</strong><button data-edit="retake">${tr(1)}</button></header>
+     <strong title="${String(doc.name).replace(/[&<>"]/g,'')}">${tr(0)}</strong><button class="rivo-editor-retake" data-edit="retake">${tr(1)}</button></header>
    <div class="rivo-editor-picture"><canvas id="rivo-editor-preview" aria-label="${tr(0)}"></canvas>
      <div class="rivo-compare-note">${tr(17)}</div></div>
    <div class="rivo-editor-filters" role="group">

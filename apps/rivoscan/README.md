@@ -225,3 +225,10 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Native scan/crop editor header has a full-width Retake control (94 dp, 15 sp) with accessible label. It preserves the existing tap action to resume the camera.
 - The web-based scan editor now displays **Retake** instead of **Add / retake** in English, and **رتايك** in Arabic; native Arabic uses **رتايك**, matching the requested wording. Other translations remain localized.
 - Premium turquoise design mockup reviewed separately; the mockup is a concept, not a claim that all UI screens have been implemented.
+
+## v0.43.0 — approved turquoise Premium UI implemented
+- The Home dashboard now uses a real turquoise AI card, explicitly opt-in Google Rewarded video for 10-minute access (Android only), a clean 3x3 scanning tools layout and a compact recent-files grid. None of the nine tiles are fake actions; they route to existing scanner, import, ID card, flatten, eraser, enhance, books, images-to-PDF and OCR functions.
+- A five-position mobile navigation bar keeps the central camera capture action and leaves Android system gesture space unobstructed. Existing safe in-app Back logic remains intact.
+- The My Files page has functional All/PDF/Images chips, plus existing search, sort, share, delete, print, selection and long-press actions. Saved files are never migrated or deleted during the UI change.
+- The image editor Retake action is clearly labeled and styled in teal; native scanner retains its full Retake label. Premium CSS is loaded last to unify teal/white/gold without fake document thumbnails.
+- The Home premium card reflects actual rewarded access state. Web/browser previews do not pretend ads were viewed. The AdMob debug build still uses Google **test IDs** only and generates no revenue; native/device QA is required.
