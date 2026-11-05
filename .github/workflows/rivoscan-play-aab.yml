@@ -45,7 +45,16 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all\\.zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew bundleRelease --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle bundleRelease attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
           test -s app/build/outputs/bundle/release/app-release.aab
       - name: Inspect release AAB structure
         run: |

@@ -227,7 +227,16 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all\\.zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle assembleDebug attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
       - name: Inspect final APK for RivoScan identity, launcher and native scanner
         shell: bash
         run: |
