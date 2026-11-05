@@ -296,7 +296,7 @@ function render(){
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
   const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
-  const header = `<header class="topbar"><span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span><div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button><button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
+  const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}<span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span><div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button><button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation"><button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button><button type="button" data-open-library class="${isDocs?'active':''}">${ico('file')}${ut('documents')}</button><button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button><button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan" data-live-camera aria-label="${ut('scan')}">${ico('camera',29)}</button>`:''}${mobile}</div>`;
@@ -639,6 +639,7 @@ function wire(){
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
   }));
   document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab(el.dataset.tab)}));
+  document.querySelectorAll('[data-inapp-back]').forEach(button=>button.addEventListener('click',()=>navigateRivoBack()));
   document.querySelectorAll('[data-live-camera]').forEach(el=>el.addEventListener('click',async ()=>{
     if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner();
     else openTool('scan');
@@ -1345,13 +1346,14 @@ let edgeSwipeStart=null;
 document.addEventListener('touchstart',event=>{
  if(event.touches.length!==1){edgeSwipeStart=null;return;}
  const t=event.touches[0];
- edgeSwipeStart=t.clientX<=32?{x:t.clientX,y:t.clientY}:null;
+ edgeSwipeStart=t.clientX<=32?{x:t.clientX,y:t.clientY,side:'left'}:
+  t.clientX>=window.innerWidth-32?{x:t.clientX,y:t.clientY,side:'right'}:null;
 },{passive:true});
 document.addEventListener('touchend',event=>{
  if(!edgeSwipeStart||event.changedTouches.length!==1)return;
  const t=event.changedTouches[0],dx=t.clientX-edgeSwipeStart.x,dy=t.clientY-edgeSwipeStart.y;
  edgeSwipeStart=null;
- if(dx>=84&&Math.abs(dy)<60)navigateRivoBack();
+ if(Math.abs(dy)<60&&((edgeSwipeStart.side==='left'&&dx>=84)||(edgeSwipeStart.side==='right'&&dx<=-84)))navigateRivoBack();
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 

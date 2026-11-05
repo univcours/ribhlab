@@ -855,3 +855,14 @@ body.rivo-multiselect #app #home-recents{padding-bottom:0!important}
  #app .rivo-dark-ui .document-entry{min-width:0!important;max-width:100%!important}
  #app .rivo-dark-ui .document-description{min-width:0!important}
 }
+
+/* Explicit toolbar back affordance; retains OS gesture support. */
+#app .rivo-dark-ui .topbar{background:#fff!important;z-index:11}
+#app .rivo-dark-ui .rivo-header-back{
+ width:40px;height:40px;flex:none;display:inline-grid;place-items:center;
+ border:1px solid #b7e5dc!important;color:#087b7c!important;
+ border-radius:13px;background:#effcf8!important;margin-inline-end:8px;
+}
+@media(max-width:420px){
+ #app .rivo-dark-ui .rivo-header-back{width:36px;height:36px;margin-inline-end:4px}
+}

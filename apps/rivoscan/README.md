@@ -212,3 +212,5 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - **Android navigation:** real Capacitor Android system-back listener, with narrow edge-swipe fallback. Back dismisses selection before leaving Documents, preserves files and does not interrupt saves.
 - **Files selection:** bottom fixed toolbar removed. Share/Delete stay side by side and remaining actions wrap inside the Documents panel, above Android gesture navigation bar.
 - **Turquoise brand** preserved throughout revised controls.
+
+- Header Back button added to every non-Home page; both left and right edge swipe fallbacks work alongside Android's system back gesture.
