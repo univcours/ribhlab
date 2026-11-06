@@ -17,7 +17,7 @@ export function normalizeDocumentSearch(value){
 }
 export function documentKind(item){
  const name=String(item?.name||'').toLowerCase();
- const mime=String(item?.mimeType||'').toLowerCase();
+ const mime=String(item?.mimeType||'').split(';',1)[0].trim().toLowerCase();
  if(mime==='application/pdf'||name.endsWith('.pdf'))return 'pdf';
  if(mime.startsWith('image/')||/\.(jpe?g|png|webp|heic|heif|gif|bmp|tiff?)$/.test(name))return 'images';
  return 'other';
