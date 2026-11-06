@@ -299,3 +299,9 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Removed standalone ADS header button. ADS labels remain only on ad-supported features.
 - A single selected document displays compact Share, PDF, View, Delete actions in its own card, with no bottom batch tray; PDF checkboxes are visible too.
 - Two or more selected files show a compact six-action bottom tray in three columns and two rows (safe-area aware), not a giant overlay. Buttons and quick-scan tools become horizontal rounded rectangles; centered camera FAB stays round.
+
+## 0.44.12 — safe production AdMob build path (not enabled without publisher IDs)
+- Default debug, automated CI and Play QA runs continue using official Google demo App ID and three demo ad units: NO paid impressions. Real ads are never fabricated.
+- To create a production-ads AAB, configure all secrets in GitHub Actions: `RIVOSCAN_ADMOB_APP_ID` (`~` App ID), `RIVOSCAN_ADMOB_REWARDED_ID`, `RIVOSCAN_ADMOB_INTERSTITIAL_ID`, `RIVOSCAN_ADMOB_APP_OPEN_ID` (`/` ad units, same publisher), and existing Play upload signing secrets. Select **Actions → RivoScan Play candidate AAB → Run workflow → production_ads=true**. The validator fails closed if any ID is missing, malformed, mismatched or a Google demo ID.
+- `apply-rivoscan-branding.ps1` writes the verified production APP ID to AndroidManifest; `monetization.js` uses production ad units only for explicit production builds. Default release candidates still use demo ads. Rewarded unlock still requires an actual rewarded video event, with consent checked before any ad. No banners.
+- Updated privacy page to describe optional Google advertising and local document storage. Verify public privacy URL, Google Play Data safety, consent status, app-ads.txt and AdMob app review and test real advertising only on registered test devices before publishing. Signed AAB alone does not publish to Play Store.

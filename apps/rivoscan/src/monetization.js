@@ -1,15 +1,29 @@
-// RivoScan Android AdMob field QA: no banner, no real ads in debug builds.
-// Production AdMob APP ID is NOT known; do not substitute an ad unit ID for it.
-// Google sample units prevent invalid paid traffic during development.
+// RivoScan AdMob: official Google demo units for debug, verified publisher
+// units ONLY for explicit production builds. Never synthesize real identifiers.
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
 
+const adEnv=import.meta.env||{};
+const productionAds=adEnv.VITE_RIVOSCAN_ADMOB_PRODUCTION==='true';
+const liveUnits={
+ appId:String(adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||'').trim(),
+ rewarded:String(adEnv.VITE_RIVOSCAN_ADMOB_REWARDED_ID||'').trim(),
+ interstitial:String(adEnv.VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID||'').trim(),
+ appOpen:String(adEnv.VITE_RIVOSCAN_ADMOB_APP_OPEN_ID||'').trim()
+};
+const formatApp=/^ca-app-pub-\\d{16}~\\d{10}$/;
+const formatUnit=/^ca-app-pub-\\d{16}\\/\\d{10}$/;
+const prodConfigured=formatApp.test(liveUnits.appId)&&
+ ['rewarded','interstitial','appOpen'].every(key=>formatUnit.test(liveUnits[key]))&&
+ Object.values(liveUnits).every(id=>id.includes(liveUnits.appId.slice(0,27)))&&
+ !liveUnits.appId.includes('3940256099942544');
 export const AD_CONFIG=Object.freeze({
- testMode:true,
- androidAppId:'ca-app-pub-3940256099942544~3347511713',
- rewarded:'ca-app-pub-3940256099942544/5224354917',
- interstitial:'ca-app-pub-3940256099942544/1033173712',
- appOpen:'ca-app-pub-3940256099942544/9257395921',
+ testMode:!productionAds,
+ configured:!productionAds||prodConfigured,
+ androidAppId:productionAds?(prodConfigured?liveUnits.appId:''):'ca-app-pub-3940256099942544~3347511713',
+ rewarded:productionAds?(prodConfigured?liveUnits.rewarded:''):'ca-app-pub-3940256099942544/5224354917',
+ interstitial:productionAds?(prodConfigured?liveUnits.interstitial:''):'ca-app-pub-3940256099942544/1033173712',
+ appOpen:productionAds?(prodConfigured?liveUnits.appOpen:''):'ca-app-pub-3940256099942544/9257395921',
  bannerEnabled:false
 });
 export const PREMIUM_MINUTES=10;
@@ -58,19 +72,19 @@ export function configureAds({getLanguage,notify,onChange}={}){
 }
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,status:state.status,
- lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
+ lastError:state.lastError,testMode:AD_CONFIG.testMode,configured:AD_CONFIG.configured,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,
  shownCount:state.shownCount};
 }
 async function loadInterstitial(){
- if(!state.ready||state.interstitialReady||state.busy)return false;
+ if(!state.ready||!AD_CONFIG.interstitial||state.interstitialReady||state.busy)return false;
  try{
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
   state.interstitialReady=true;status('Interstitial ready');return true;
  }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
 }
 async function loadAppOpen(){
- if(!state.ready||state.appOpenReady||state.busy)return false;
+ if(!state.ready||!AD_CONFIG.appOpen||state.appOpenReady||state.busy)return false;
  try{
   await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
   const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
@@ -80,6 +94,7 @@ async function loadAppOpen(){
 }
 export async function initializeAds({retry=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
+ if(!AD_CONFIG.configured){status('Production ad units missing or invalid');return false;}
  if(state.ready)return true;
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{

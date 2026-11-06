@@ -105,14 +105,68 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# AdMob: use Google sample app ID in all beta/QA builds. Never bundle real ads
-# until merchant account, privacy policy and production ad units are verified.
-$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
-if($xml -notmatch 'com.google.android.gms.ads.APPLICATION_ID') {
+# Development uses Google's official sample app ID. Explicit, verified
+# production builds use the actual AdMob APP ID (with ~, never a / unit ID).
+$productionAds = $env:RIVOSCAN_ADMOB_PRODUCTION -eq 'true'
+$admobAppId = if($productionAds) { [string]$env:RIVOSCAN_ADMOB_APP_ID } else { 'ca-app-pub-3940256099942544~3347511713' }
+if($productionAds -and ($admobAppId -notmatch '^ca-app-pub-\d{16}~\d{10}
+
+# Set ONE authoritative version for Android Studio and the safe ADB installer.
+# Generated Capacitor build.gradle is local and often keeps an older hardcoded
+# version. Appending a Gradle override makes Android Studio Run read the repo
+# version on every build, even after Gradle's initial model was generated.
+$versionSpec=Join-Path $root 'rivoscan-version.properties'
+$gradleOverride=Join-Path $root 'rivoscan-version.gradle'
+if(-not (Test-Path -LiteralPath $versionSpec) -or -not (Test-Path -LiteralPath $gradleOverride)){
+  throw 'Missing RivoScan authoritative version metadata. Git pull the project again; installation aborted safely.'
+}
+$versions=@{}
+foreach($line in [IO.File]::ReadAllLines($versionSpec)){
+  if($line -match '^\s*(versionCode|versionName)\s*=\s*(\S+)\s*$'){
+    $versions[$matches[1]]=$matches[2]
+  }
+}
+if(-not $versions.ContainsKey('versionCode') -or $versions.versionCode -notmatch '^[1-9]\d*$' -or
+   -not $versions.ContainsKey('versionName') -or [string]::IsNullOrWhiteSpace($versions.versionName)){
+  throw 'Invalid RivoScan Android version metadata. Refusing to generate an old APK.'
+}
+if(Test-Path -LiteralPath $gradle) {
+  $settings=[IO.File]::ReadAllText($gradle)
+  # Preserve the generated Gradle DSL exactly. Rewriting its version lines can
+  # corrupt Groovy syntax; the LAST applied script overrides both values safely.
+  # The override must be LAST, after Capacitor's Android defaultConfig. Idempotent.
+  $overrideLine="apply from: file('../../rivoscan-version.gradle')"
+  $settings=[regex]::Replace($settings,'(?m)^\s*apply from: file\(''\.\./\.\./rivoscan-version\.gradle''\)\s*$', '')
+  $settings=$settings.TrimEnd()+[Environment]::NewLine+[Environment]::NewLine+
+    '// Keep Android Studio Run on the latest RivoScan version, even after a future sync.'+
+    [Environment]::NewLine+$overrideLine+[Environment]::NewLine
+  [IO.File]::WriteAllText($gradle,$settings,$utf8)
+  if(-not ([IO.File]::ReadAllText($gradle).Contains($overrideLine))){
+    throw 'Android Gradle could not be pinned to the authoritative RivoScan version.'
+  }
+}
+Write-Host ('PASS: Android Studio Gradle version aligned to v'+$versions.versionName+' / versionCode '+$versions.versionCode) -ForegroundColor Green
+
+# Fail before building if an older icon slipped back into the manifest.
+$verify = [IO.File]::ReadAllText($manifest)
+if(-not $verify.Contains('android:icon="@mipmap/ic_launcher"') -or
+   -not $verify.Contains('android:roundIcon="@mipmap/ic_launcher_round"')) {
+  throw 'Android manifest is not using the new RivoScan adaptive launcher icons.'
+}
+Write-Host ('PASS: RivoScan icon applied (adaptive + monochrome + legacy), Gradle v'+$versions.versionName+' (code '+$versions.versionCode+').') -ForegroundColor Green
+ -or $admobAppId.Contains('3940256099942544'))) {
+  throw 'A verified production AdMob APP ID is required; sample IDs cannot ship.'
+}
+$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="'+$admobAppId+'" />'
+if($xml -match 'com.google.android.gms.ads.APPLICATION_ID') {
+  $xml=[regex]::Replace($xml,'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*/>',$admobMeta)
+} else {
   if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing' }
   $xml=$xml.Replace('</application>',$admobMeta+"`r`n"+'</application>')
 }
+if(-not $xml.Contains('android:value="'+$admobAppId+'"')) { throw 'AdMob manifest app ID was not installed correctly.' }
 [IO.File]::WriteAllText($manifest,$xml,$utf8)
+Write-Host ('PASS: AdMob manifest '+$(if($productionAds){'production'}else{'test'})+' mode.')
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.
 # Generated Capacitor build.gradle is local and often keeps an older hardcoded

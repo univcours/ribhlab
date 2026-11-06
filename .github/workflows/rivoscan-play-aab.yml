@@ -1,6 +1,12 @@
 name: RivoScan Play candidate AAB
 on:
   workflow_dispatch:
+    inputs:
+      production_ads:
+        description: 'Use verified production AdMob units (requires Actions secrets)'
+        required: false
+        type: boolean
+        default: false
   push:
     branches: [feat/rivoscan-android-beta]
     paths:
@@ -11,6 +17,14 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      RIVOSCAN_ADMOB_PRODUCTION: ${{ inputs.production_ads && 'true' || 'false' }}
+      VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ inputs.production_ads && 'true' || 'false' }}
+      RIVOSCAN_ADMOB_APP_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_APP_ID || '' }}
+      VITE_RIVOSCAN_ADMOB_APP_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_APP_ID || '' }}
+      VITE_RIVOSCAN_ADMOB_REWARDED_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_REWARDED_ID || '' }}
+      VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_INTERSTITIAL_ID || '' }}
+      VITE_RIVOSCAN_ADMOB_APP_OPEN_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_APP_OPEN_ID || '' }}
     timeout-minutes: 40
     defaults:
       run:
@@ -29,6 +43,7 @@ jobs:
           npm install --no-audit --no-fund
           npm run check
           npm test
+          npm run check:ads
           npm run build
       - name: Generate Android and integrate scanner
         run: |
@@ -73,6 +88,10 @@ jobs:
           STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
           KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
         run: |
+          if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" && ( -z "$KEYSTORE_B64" || -z "$KEY_ALIAS" || -z "$STORE_PASS" || -z "$KEY_PASS" ) ]]; then
+            echo "::error::Production Play AAB requires signing secrets."
+            exit 1
+          fi
           if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else

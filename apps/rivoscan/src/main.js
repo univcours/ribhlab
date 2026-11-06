@@ -39,7 +39,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
+import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus,AD_CONFIG} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
@@ -507,11 +507,13 @@ function settingsWorkspace(){
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <div class="settings-section rivo-ad-settings"><h2>${({ar:'تشخيص الإشهارات',fr:'Diagnostics des publicités',en:'Ad diagnostics'})[language]||'Ad diagnostics'}</h2>
  <div class="rivo-ads-diagnostics"><strong>${escapeHTML(getPremiumStatus().status)}</strong>
- <span>${({ar:'إعلانات Google التجريبية فقط · بلا بانر · الفيديو اختياري',fr:'Annonces de test Google · sans bannière · vidéo volontaire',en:'Google test ads only · no banner · optional rewarded video'})[language]||'Test ads only'}</span>
+ <span>${AD_CONFIG.testMode?
+  (({ar:'وضع الاختبار · بلا بانر · الفيديو اختياري',fr:'Mode test · sans bannière · vidéo au choix',en:'Test ads · no banners · optional video'})[language]||'Test ads'):
+  (({ar:'إعلانات إنتاجية · خاضعة لموافقة AdMob · بلا بانر',fr:'Annonces réelles · sous réserve AdMob · sans bannières',en:'Production AdMob · subject to ad serving approval · no banners'})[language]||'Production AdMob')}</span>
  <small>${getPremiumStatus().ready?'SDK ready':'SDK not ready'} · ${getPremiumStatus().interstitialReady?'Interstitial loaded':'Interstitial not loaded'} · ${getPremiumStatus().appOpenReady?'App open loaded':'App open not loaded'}</small>
  ${getPremiumStatus().lastError?'<small>'+escapeHTML(getPremiumStatus().lastError)+'</small>':''}</div>
  <button type="button" class="settings-row" data-ad-retry><span class="settings-row-icon">${ico('clock',22)}</span><span><strong>${({ar:'عاود الاتصال بالإشهارات',fr:'Réessayer le chargement des publicités',en:'Retry AdMob loading'})[language]||'Retry AdMob loading'}</strong></span></button>
- <button type="button" class="settings-row" data-ad-test><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'جرّب إعلان الشاشة الكاملة',fr:'Tester une annonce plein écran',en:'Show TEST interstitial'})[language]||'Show TEST interstitial'}</strong><small>Google demo — no paid impressions</small></span></button>
+ ${AD_CONFIG.testMode?`<button type="button" class="settings-row" data-ad-test><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'جرّب إعلان الشاشة الكاملة',fr:'Tester une annonce plein écran',en:'Show TEST interstitial'})[language]||'Show TEST interstitial'}</strong><small>Google demo — no paid impressions</small></span></button>`:''}
  </div>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'خيارات خصوصية الإشهارات',fr:'Confidentialité des publicités',en:'Ad privacy options'})[language]||'Ad privacy options'}</strong><small>AdMob · ${getPremiumStatus().native?'Android':'Web'}</small></span></button>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
