@@ -56,102 +56,14 @@ jobs:
           done
           test "$success" -eq 1
           test -s app/build/outputs/bundle/release/app-release.aab
-      - name: Inspect release AAB structure
+      - name: Inspect release AAB structure and version
         run: |
           set -euo pipefail
-          unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
-          unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
-          # Validate authoritative version metadata without pinning yesterday's release.
-          grep -Eq '^versionCode=[1-9][0-9]*
-      - name: Check authorized signing secrets
-        id: signing
-        env:
-          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
-          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
-          STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
-        run: |
-          if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No upload signing secrets: AAB stays UNSIGNED, NOT Play-ready."
-          fi
-      - name: Sign with user-supplied upload key
-        if: steps.signing.outputs.enabled == 'true'
-        env:
-          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
-          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
-          PLAY_STORE_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
-          PLAY_KEY_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          KEYFILE="$RUNNER_TEMP/rivoscan-upload-key.jks"
-          trap 'rm -f "$KEYFILE"' EXIT
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYFILE"
-          chmod 600 "$KEYFILE"
-          jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
-          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
-      - name: Save signed AAB (Play QA still required)
-        if: steps.signing.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-SIGNED-AAB-NEEDS-PLAY-TEST
-          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 14
-      - name: Save unsigned AAB for inspection ONLY
-        if: steps.signing.outputs.enabled != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-UNSIGNED-AAB-NOT-PLAY-READY
-          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 7
- rivoscan-version.properties
-          grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+
-      - name: Check authorized signing secrets
-        id: signing
-        env:
-          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
-          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
-          STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
-        run: |
-          if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No upload signing secrets: AAB stays UNSIGNED, NOT Play-ready."
-          fi
-      - name: Sign with user-supplied upload key
-        if: steps.signing.outputs.enabled == 'true'
-        env:
-          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
-          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
-          PLAY_STORE_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
-          PLAY_KEY_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          KEYFILE="$RUNNER_TEMP/rivoscan-upload-key.jks"
-          trap 'rm -f "$KEYFILE"' EXIT
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYFILE"
-          chmod 600 "$KEYFILE"
-          jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
-          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
-      - name: Save signed AAB (Play QA still required)
-        if: steps.signing.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-SIGNED-AAB-NEEDS-PLAY-TEST
-          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 14
-      - name: Save unsigned AAB for inspection ONLY
-        if: steps.signing.outputs.enabled != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-UNSIGNED-AAB-NOT-PLAY-READY
-          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 7
- rivoscan-version.properties
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          unzip -t "$AAB" > /dev/null
+          unzip -Z -1 "$AAB" | grep -F 'base/manifest/AndroidManifest.xml'
+          grep -Eq '^versionCode=[1-9][0-9]*$' rivoscan-version.properties
+          grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+$' rivoscan-version.properties
           node -e "const fs=require('fs'); const p=fs.readFileSync('rivoscan-version.properties','utf8'); const v=p.match(/^versionName=(.+)$/m)?.[1]; if(v!==require('./package.json').version) process.exit(1)"
       - name: Check authorized signing secrets
         id: signing
