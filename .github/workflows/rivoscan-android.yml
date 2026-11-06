@@ -90,7 +90,524 @@ jobs:
           # RivoScan Gradle override is the actual source of truth in Android Studio.
           grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
           grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
-          grep -F 'versionCode=81' rivoscan-version.properties
+          grep -Eq '^versionCode=[0-9]+
+          grep -F 'rivo-build-version' src/main.js
+          grep -F 'version as appVersion' src/main.js
+          grep -F 'rivo-library-version' src/main.js
+          grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+
+          grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
+      - name: Verify live scanner and persistent Documents storage are registered
+        run: |
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'registerPlugin(RivoDocumentsPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          # The extra white bar is Android's native ActionBar, NOT the system status bar.
+          grep -F 'android:theme="@style/RivoScanNoActionBar"' android/app/src/main/AndroidManifest.xml
+          grep -F 'parent="Theme.AppCompat.DayNight.NoActionBar"' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'import '\''./theme-brand.css'\'';' src/main.js
+          grep -F '#0cb6aa' src/theme-brand.css
+          grep -F '#089b99' src/theme-brand.css
+          grep -F '#056f72' src/theme-brand.css
+          grep -F 'android:statusBarColor">#FFFFFF' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'setAppearanceLightStatusBars(true)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'nativeActionBar.hide()' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'web.setBackgroundColor(Color.rgb(241, 250, 248))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'public void shareFiles(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'public void organizeFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'makeLongImage' src/library-bulk.js
+          grep -F 'makeWordText' src/library-bulk.js
+          grep -F 'openScanEditor' src/main.js
+          grep -F 'data-hub-action' src/main.js
+          grep -F 'openPageManager' src/main.js
+          grep -F 'RivoScanPagesManager.java' install-live-scanner.ps1
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'RivoScanPagesManager.show(this,savedImages,nativeLanguage' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F "format==='xlsx'" src/tool-exports.js
+          grep -F 'createOCRWorkbook' src/xlsx-export.js
+          grep -F 'BrowserMultiFormatReader' src/barcode-scanner.js
+          grep -F "spec.type==='pdfLock'" src/main.js
+          grep -F "spec.type==='photoTranslation'" src/main.js
+          grep -F "spec.type==='formulaOcr'" src/main.js
+          grep -F 'coloredMarkMask' src/scan-editor.js
+          grep -F "spec.type==='aiDocument'" src/main.js
+          grep -F 'window.confirm(L[13])' src/document-ai.js
+          grep -F "store:false" src/ai-provider.js
+          test -f tests/ai-workflows.test.js
+          grep -F 'reconstructPositionedTable' src/tool-exports.js
+          grep -F 'wordTablesFromFile' src/tool-exports.js
+          grep -F "format:'wordTables'" src/tools-hub.js
+          grep -F "preset:'erase:auto-colored'" src/tools-hub.js
+          grep -F "preset:'erase:light-gray'" src/tools-hub.js
+          grep -F 'linearMathToLatex' src/formula-ocr.js
+          grep -F 'segmentPortrait' src/id-photo-maker.js
+          grep -F 'normalizeWhiteboardRGBA' src/scan-editor.js
+          grep -F 'class SignaturePlacementPreview extends View' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'editableSlidesFromFile' src/tool-exports.js
+          grep -F "format:'editablePptx'" src/tools-hub.js
+          grep -F 'await Translation.translate(' src/photo-translation.js
+          grep -F 'await recognize(file,model.ocr)' src/photo-translation.js
+          grep -F "encryptPDF(data,userPassword" src/pdf-lock.js
+          grep -F 'dewarpBookCanvas(canvas' src/book-split.js
+          grep -F 'estimateBookCurvature' src/book-split.js
+          grep -F 'showSignaturePad()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'composeSignature(output)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'countDetectedObjects' src/count-cam.js
+          grep -F "spec.type==='countCam'" src/main.js
+          grep -F 'const link=safeScannedUrl(value)' src/barcode-scanner.js
+          grep -F 'setPNGResolution' src/id-photo-maker.js
+          grep -F 'splitBookRegions' src/book-split.js
+          grep -F 'inpaintMaskedPixels' src/scan-editor.js
+          grep -F 'restorePhotoPixels' src/scan-editor.js
+          grep -F 'openWhatsNew' src/main.js
+          grep -F 'originalRGB.copyTo(rgb,stampMask)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'data-page-action="save"' src/page-manager.js
+          grep -F 'format===' src/tool-exports.js
+          grep -F 'manualErase' src/tools-hub.js
+          grep -F 'data-edit="eraser"' src/scan-editor.js
+          grep -F 'rivo-editor-filters' src/style.css
+          grep -F 'intent.putExtra("mode"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'scanMode="ID Card".equals(getIntent()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'home-quick-search' src/main.js
+          grep -F 'rivo-recent-actions' src/main.js
+          grep -F 'data-id-card-scan' src/main.js
+          grep -F 'rivo-shortcuts' src/style.css
+          grep -F 'rivo-dark-ui' src/style.css
+          grep -F 'createLibraryBulk' src/main.js
+          grep -F 'data-bulk="merge"' src/library-bulk.js
+          grep -F 'MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'Environment.DIRECTORY_DOCUMENTS' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'legacyDownloadsCollection()' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'ViewCompat.setOnApplyWindowInsetsListener(content' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'StatusBar.setStyle({style:Style.Light})' src/main.js
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'showCameraPicker()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'drawLoupe(canvas)' android/app/src/main/java/com/ribhlab/rivoscan/RivoCropEditor.java
+          # Native post-capture enhancement must run BEFORE saving a scanned page.
+          grep -F "'RivoDocumentEnhancer.java'" install-live-scanner.ps1
+          grep -F 'private void showEnhancementPreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'output=applyScanFilter(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoUVDocPlugin.unwarpBitmap(this,image)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'private void autoCleanAndSave()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'batchMode=getIntent().getBooleanExtra("batchDefault"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'rotationSampleSize(int width,int height)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'decodePageForRotation(source)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'public void printFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'PrintManager' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'out.putExtra("scanMode",scanMode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'scannerPreferenceRows()' src/main.js
+          grep -F 'async function idCardToPdf(pages)' src/main.js
+          grep -F 'saveOriginalScannedImage' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'private void saveEnhancedPage()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'static Bitmap apply(Bitmap image,String mode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.createCLAHE' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.adaptiveThreshold' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'cameraScore(CameraInfo info)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'bestAvailableCamera()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'translateStatus(language,text)' src/main.js
+          grep -F 'getAvailableCameraInfos()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'CameraSelector.DEFAULT_BACK_CAMERA' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getBoolean("basic"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'if(basicCameraMode)saveWithoutCrop(bmp)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoLiveScanner.scan({basic:true,language})' src/main.js
+          grep -F 'info.getLensFacing()!=CameraSelector.LENS_FACING_BACK' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'unusableCameraIds' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'freezePreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getCameraState().observe' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoSounds.java
+          grep -F 'getSoundSettings' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f install-rivoscan-android.cmd
+          test -f install-rivoscan-android.ps1
+          ! grep -Fq 'SM-S908B' install-rivoscan-android.ps1
+          grep -F 'RIVOSCAN_DEVICE_SERIAL' install-rivoscan-android.ps1
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
+          grep -F 'androidx.camera:camera-view' android/app/build.gradle
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle assembleDebug attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+      - name: Inspect final APK for RivoScan identity, launcher and native scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          test -x "$AAPT"
+          EXPECTED_CODE=$(sed -n 's/^versionCode=//p' rivoscan-version.properties | tr -d '\r')
+          EXPECTED_NAME=$(sed -n 's/^versionName=//p' rivoscan-version.properties | tr -d '\r')
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.ribhlab.rivoscan' versionCode='$EXPECTED_CODE' versionName='$EXPECTED_NAME'"
+          "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
+          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
+          cat /tmp/rivoscan-launcher-badging.txt
+          cat /tmp/rivoscan-launcher-resources.txt
+          unzip -Z -1 "$APK" | grep -E '^classes[0-9]*[.]dex$' > /tmp/rivoscan-dex-list.txt
+          while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
+          echo "PASS: APK $EXPECTED_NAME contains launcher resources and native scanner classes."
+      - name: Save APK for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+ rivoscan-version.properties
+          grep -F 'rivo-build-version' src/main.js
+          grep -F 'version as appVersion' src/main.js
+          grep -F 'rivo-library-version' src/main.js
+          grep -F 'versionName=0.44.5' rivoscan-version.properties
+          grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
+      - name: Verify live scanner and persistent Documents storage are registered
+        run: |
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'registerPlugin(RivoDocumentsPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          # The extra white bar is Android's native ActionBar, NOT the system status bar.
+          grep -F 'android:theme="@style/RivoScanNoActionBar"' android/app/src/main/AndroidManifest.xml
+          grep -F 'parent="Theme.AppCompat.DayNight.NoActionBar"' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'import '\''./theme-brand.css'\'';' src/main.js
+          grep -F '#0cb6aa' src/theme-brand.css
+          grep -F '#089b99' src/theme-brand.css
+          grep -F '#056f72' src/theme-brand.css
+          grep -F 'android:statusBarColor">#FFFFFF' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'setAppearanceLightStatusBars(true)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'nativeActionBar.hide()' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'web.setBackgroundColor(Color.rgb(241, 250, 248))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'public void shareFiles(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'public void organizeFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'makeLongImage' src/library-bulk.js
+          grep -F 'makeWordText' src/library-bulk.js
+          grep -F 'openScanEditor' src/main.js
+          grep -F 'data-hub-action' src/main.js
+          grep -F 'openPageManager' src/main.js
+          grep -F 'RivoScanPagesManager.java' install-live-scanner.ps1
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'RivoScanPagesManager.show(this,savedImages,nativeLanguage' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F "format==='xlsx'" src/tool-exports.js
+          grep -F 'createOCRWorkbook' src/xlsx-export.js
+          grep -F 'BrowserMultiFormatReader' src/barcode-scanner.js
+          grep -F "spec.type==='pdfLock'" src/main.js
+          grep -F "spec.type==='photoTranslation'" src/main.js
+          grep -F "spec.type==='formulaOcr'" src/main.js
+          grep -F 'coloredMarkMask' src/scan-editor.js
+          grep -F "spec.type==='aiDocument'" src/main.js
+          grep -F 'window.confirm(L[13])' src/document-ai.js
+          grep -F "store:false" src/ai-provider.js
+          test -f tests/ai-workflows.test.js
+          grep -F 'reconstructPositionedTable' src/tool-exports.js
+          grep -F 'wordTablesFromFile' src/tool-exports.js
+          grep -F "format:'wordTables'" src/tools-hub.js
+          grep -F "preset:'erase:auto-colored'" src/tools-hub.js
+          grep -F "preset:'erase:light-gray'" src/tools-hub.js
+          grep -F 'linearMathToLatex' src/formula-ocr.js
+          grep -F 'segmentPortrait' src/id-photo-maker.js
+          grep -F 'normalizeWhiteboardRGBA' src/scan-editor.js
+          grep -F 'class SignaturePlacementPreview extends View' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'editableSlidesFromFile' src/tool-exports.js
+          grep -F "format:'editablePptx'" src/tools-hub.js
+          grep -F 'await Translation.translate(' src/photo-translation.js
+          grep -F 'await recognize(file,model.ocr)' src/photo-translation.js
+          grep -F "encryptPDF(data,userPassword" src/pdf-lock.js
+          grep -F 'dewarpBookCanvas(canvas' src/book-split.js
+          grep -F 'estimateBookCurvature' src/book-split.js
+          grep -F 'showSignaturePad()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'composeSignature(output)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'countDetectedObjects' src/count-cam.js
+          grep -F "spec.type==='countCam'" src/main.js
+          grep -F 'const link=safeScannedUrl(value)' src/barcode-scanner.js
+          grep -F 'setPNGResolution' src/id-photo-maker.js
+          grep -F 'splitBookRegions' src/book-split.js
+          grep -F 'inpaintMaskedPixels' src/scan-editor.js
+          grep -F 'restorePhotoPixels' src/scan-editor.js
+          grep -F 'openWhatsNew' src/main.js
+          grep -F 'originalRGB.copyTo(rgb,stampMask)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'data-page-action="save"' src/page-manager.js
+          grep -F 'format===' src/tool-exports.js
+          grep -F 'manualErase' src/tools-hub.js
+          grep -F 'data-edit="eraser"' src/scan-editor.js
+          grep -F 'rivo-editor-filters' src/style.css
+          grep -F 'intent.putExtra("mode"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'scanMode="ID Card".equals(getIntent()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'home-quick-search' src/main.js
+          grep -F 'rivo-recent-actions' src/main.js
+          grep -F 'data-id-card-scan' src/main.js
+          grep -F 'rivo-shortcuts' src/style.css
+          grep -F 'rivo-dark-ui' src/style.css
+          grep -F 'createLibraryBulk' src/main.js
+          grep -F 'data-bulk="merge"' src/library-bulk.js
+          grep -F 'MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'Environment.DIRECTORY_DOCUMENTS' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'legacyDownloadsCollection()' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'ViewCompat.setOnApplyWindowInsetsListener(content' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'StatusBar.setStyle({style:Style.Light})' src/main.js
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'showCameraPicker()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'drawLoupe(canvas)' android/app/src/main/java/com/ribhlab/rivoscan/RivoCropEditor.java
+          # Native post-capture enhancement must run BEFORE saving a scanned page.
+          grep -F "'RivoDocumentEnhancer.java'" install-live-scanner.ps1
+          grep -F 'private void showEnhancementPreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'output=applyScanFilter(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoUVDocPlugin.unwarpBitmap(this,image)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'private void autoCleanAndSave()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'batchMode=getIntent().getBooleanExtra("batchDefault"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'rotationSampleSize(int width,int height)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'decodePageForRotation(source)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'public void printFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'PrintManager' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'out.putExtra("scanMode",scanMode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'scannerPreferenceRows()' src/main.js
+          grep -F 'async function idCardToPdf(pages)' src/main.js
+          grep -F 'saveOriginalScannedImage' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'private void saveEnhancedPage()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'static Bitmap apply(Bitmap image,String mode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.createCLAHE' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.adaptiveThreshold' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'cameraScore(CameraInfo info)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'bestAvailableCamera()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'translateStatus(language,text)' src/main.js
+          grep -F 'getAvailableCameraInfos()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'CameraSelector.DEFAULT_BACK_CAMERA' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getBoolean("basic"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'if(basicCameraMode)saveWithoutCrop(bmp)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoLiveScanner.scan({basic:true,language})' src/main.js
+          grep -F 'info.getLensFacing()!=CameraSelector.LENS_FACING_BACK' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'unusableCameraIds' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'freezePreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getCameraState().observe' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoSounds.java
+          grep -F 'getSoundSettings' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f install-rivoscan-android.cmd
+          test -f install-rivoscan-android.ps1
+          ! grep -Fq 'SM-S908B' install-rivoscan-android.ps1
+          grep -F 'RIVOSCAN_DEVICE_SERIAL' install-rivoscan-android.ps1
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
+          grep -F 'androidx.camera:camera-view' android/app/build.gradle
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle assembleDebug attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+      - name: Inspect final APK for RivoScan identity, launcher and native scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='81' versionName='0.44.5'"
+          "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
+          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
+          cat /tmp/rivoscan-launcher-badging.txt
+          cat /tmp/rivoscan-launcher-resources.txt
+          unzip -Z -1 "$APK" | grep -E '^classes[0-9]*[.]dex$' > /tmp/rivoscan-dex-list.txt
+          while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
+          echo "PASS: APK 0.44.3 contains launcher resources and native scanner classes."
+      - name: Save APK for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+ rivoscan-version.properties
+          grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
+      - name: Verify live scanner and persistent Documents storage are registered
+        run: |
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'registerPlugin(RivoDocumentsPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          # The extra white bar is Android's native ActionBar, NOT the system status bar.
+          grep -F 'android:theme="@style/RivoScanNoActionBar"' android/app/src/main/AndroidManifest.xml
+          grep -F 'parent="Theme.AppCompat.DayNight.NoActionBar"' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'import '\''./theme-brand.css'\'';' src/main.js
+          grep -F '#0cb6aa' src/theme-brand.css
+          grep -F '#089b99' src/theme-brand.css
+          grep -F '#056f72' src/theme-brand.css
+          grep -F 'android:statusBarColor">#FFFFFF' android/app/src/main/res/values/rivoscan_no_actionbar.xml
+          grep -F 'setAppearanceLightStatusBars(true)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'nativeActionBar.hide()' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'web.setBackgroundColor(Color.rgb(241, 250, 248))' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'public void shareFiles(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'public void organizeFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'makeLongImage' src/library-bulk.js
+          grep -F 'makeWordText' src/library-bulk.js
+          grep -F 'openScanEditor' src/main.js
+          grep -F 'data-hub-action' src/main.js
+          grep -F 'openPageManager' src/main.js
+          grep -F 'RivoScanPagesManager.java' install-live-scanner.ps1
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'RivoScanPagesManager.show(this,savedImages,nativeLanguage' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F "format==='xlsx'" src/tool-exports.js
+          grep -F 'createOCRWorkbook' src/xlsx-export.js
+          grep -F 'BrowserMultiFormatReader' src/barcode-scanner.js
+          grep -F "spec.type==='pdfLock'" src/main.js
+          grep -F "spec.type==='photoTranslation'" src/main.js
+          grep -F "spec.type==='formulaOcr'" src/main.js
+          grep -F 'coloredMarkMask' src/scan-editor.js
+          grep -F "spec.type==='aiDocument'" src/main.js
+          grep -F 'window.confirm(L[13])' src/document-ai.js
+          grep -F "store:false" src/ai-provider.js
+          test -f tests/ai-workflows.test.js
+          grep -F 'reconstructPositionedTable' src/tool-exports.js
+          grep -F 'wordTablesFromFile' src/tool-exports.js
+          grep -F "format:'wordTables'" src/tools-hub.js
+          grep -F "preset:'erase:auto-colored'" src/tools-hub.js
+          grep -F "preset:'erase:light-gray'" src/tools-hub.js
+          grep -F 'linearMathToLatex' src/formula-ocr.js
+          grep -F 'segmentPortrait' src/id-photo-maker.js
+          grep -F 'normalizeWhiteboardRGBA' src/scan-editor.js
+          grep -F 'class SignaturePlacementPreview extends View' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'editableSlidesFromFile' src/tool-exports.js
+          grep -F "format:'editablePptx'" src/tools-hub.js
+          grep -F 'await Translation.translate(' src/photo-translation.js
+          grep -F 'await recognize(file,model.ocr)' src/photo-translation.js
+          grep -F "encryptPDF(data,userPassword" src/pdf-lock.js
+          grep -F 'dewarpBookCanvas(canvas' src/book-split.js
+          grep -F 'estimateBookCurvature' src/book-split.js
+          grep -F 'showSignaturePad()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'composeSignature(output)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'countDetectedObjects' src/count-cam.js
+          grep -F "spec.type==='countCam'" src/main.js
+          grep -F 'const link=safeScannedUrl(value)' src/barcode-scanner.js
+          grep -F 'setPNGResolution' src/id-photo-maker.js
+          grep -F 'splitBookRegions' src/book-split.js
+          grep -F 'inpaintMaskedPixels' src/scan-editor.js
+          grep -F 'restorePhotoPixels' src/scan-editor.js
+          grep -F 'openWhatsNew' src/main.js
+          grep -F 'originalRGB.copyTo(rgb,stampMask)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'data-page-action="save"' src/page-manager.js
+          grep -F 'format===' src/tool-exports.js
+          grep -F 'manualErase' src/tools-hub.js
+          grep -F 'data-edit="eraser"' src/scan-editor.js
+          grep -F 'rivo-editor-filters' src/style.css
+          grep -F 'intent.putExtra("mode"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'scanMode="ID Card".equals(getIntent()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'home-quick-search' src/main.js
+          grep -F 'rivo-recent-actions' src/main.js
+          grep -F 'data-id-card-scan' src/main.js
+          grep -F 'rivo-shortcuts' src/style.css
+          grep -F 'rivo-dark-ui' src/style.css
+          grep -F 'createLibraryBulk' src/main.js
+          grep -F 'data-bulk="merge"' src/library-bulk.js
+          grep -F 'MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'Environment.DIRECTORY_DOCUMENTS' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'legacyDownloadsCollection()' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'ViewCompat.setOnApplyWindowInsetsListener(content' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'StatusBar.setStyle({style:Style.Light})' src/main.js
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'showCameraPicker()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'drawLoupe(canvas)' android/app/src/main/java/com/ribhlab/rivoscan/RivoCropEditor.java
+          # Native post-capture enhancement must run BEFORE saving a scanned page.
+          grep -F "'RivoDocumentEnhancer.java'" install-live-scanner.ps1
+          grep -F 'private void showEnhancementPreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'output=applyScanFilter(input,preset)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoUVDocPlugin.unwarpBitmap(this,image)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'private void autoCleanAndSave()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'batchMode=getIntent().getBooleanExtra("batchDefault"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'rotationSampleSize(int width,int height)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'decodePageForRotation(source)' android/app/src/main/java/com/ribhlab/rivoscan/RivoScanPagesManager.java
+          grep -F 'public void printFile(PluginCall call)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'PrintManager' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'out.putExtra("scanMode",scanMode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'scannerPreferenceRows()' src/main.js
+          grep -F 'async function idCardToPdf(pages)' src/main.js
+          grep -F 'saveOriginalScannedImage' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentsPlugin.java
+          grep -F 'private void saveEnhancedPage()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'static Bitmap apply(Bitmap image,String mode)' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.createCLAHE' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'Imgproc.adaptiveThreshold' android/app/src/main/java/com/ribhlab/rivoscan/RivoDocumentEnhancer.java
+          grep -F 'cameraScore(CameraInfo info)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'bestAvailableCamera()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'translateStatus(language,text)' src/main.js
+          grep -F 'getAvailableCameraInfos()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'CameraSelector.DEFAULT_BACK_CAMERA' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getBoolean("basic"' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          grep -F 'if(basicCameraMode)saveWithoutCrop(bmp)' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'RivoLiveScanner.scan({basic:true,language})' src/main.js
+          grep -F 'info.getLensFacing()!=CameraSelector.LENS_FACING_BACK' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'unusableCameraIds' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'freezePreview()' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'getCameraState().observe' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerActivity.java
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          test -f android/app/src/main/java/com/ribhlab/rivoscan/RivoSounds.java
+          grep -F 'getSoundSettings' android/app/src/main/java/com/ribhlab/rivoscan/RivoLiveScannerPlugin.java
+          test -f install-rivoscan-android.cmd
+          test -f install-rivoscan-android.ps1
+          ! grep -Fq 'SM-S908B' install-rivoscan-android.ps1
+          grep -F 'RIVOSCAN_DEVICE_SERIAL' install-rivoscan-android.ps1
+          grep -F 'registerPlugin(RivoLiveScannerPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          grep -F 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
+          grep -F 'androidx.camera:camera-view' android/app/build.gradle
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle assembleDebug attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+      - name: Inspect final APK for RivoScan identity, launcher and native scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='81' versionName='0.44.5'"
+          "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
+          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
+          cat /tmp/rivoscan-launcher-badging.txt
+          cat /tmp/rivoscan-launcher-resources.txt
+          unzip -Z -1 "$APK" | grep -E '^classes[0-9]*[.]dex$' > /tmp/rivoscan-dex-list.txt
+          while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
+          echo "PASS: APK 0.44.3 contains launcher resources and native scanner classes."
+      - name: Save APK for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+ rivoscan-version.properties
           grep -F 'rivo-build-version' src/main.js
           grep -F 'version as appVersion' src/main.js
           grep -F 'rivo-library-version' src/main.js
