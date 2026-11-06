@@ -105,11 +105,23 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# Development uses Google's official sample app ID. Explicit, verified
-# production builds use the actual AdMob APP ID (with ~, never a / unit ID).
+# Debug uses Google's official demo APP ID; production requires a verified
+# real APP ID, distinct from the / ad unit IDs.
 $productionAds = $env:RIVOSCAN_ADMOB_PRODUCTION -eq 'true'
 $admobAppId = if($productionAds) { [string]$env:RIVOSCAN_ADMOB_APP_ID } else { 'ca-app-pub-3940256099942544~3347511713' }
-if($productionAds -and ($admobAppId -notmatch '^ca-app-pub-\d{16}~\d{10}
+if($productionAds -and ($admobAppId -notmatch '^ca-app-pub-\d{16}~\d{10}$' -or $admobAppId.Contains('3940256099942544'))) {
+  throw 'Verified production AdMob APP ID is required. Google sample IDs cannot be published.'
+}
+$admobMeta = '    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + $admobAppId + '" />'
+if($xml -match 'com.google.android.gms.ads.APPLICATION_ID') {
+  $xml = [regex]::Replace($xml,'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*/>',[System.Text.RegularExpressions.MatchEvaluator]{ param($m) $admobMeta })
+} else {
+  if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing.' }
+  $xml = $xml.Replace('</application>',$admobMeta + [Environment]::NewLine + '</application>')
+}
+if(-not $xml.Contains('android:value="' + $admobAppId + '"')) { throw 'AdMob APP ID could not be written to the manifest.' }
+[IO.File]::WriteAllText($manifest,$xml,$utf8)
+Write-Host ('PASS: AdMob manifest '+$(if($productionAds){'production'}else{'test'})+' mode.')
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.
 # Generated Capacitor build.gradle is local and often keeps an older hardcoded
