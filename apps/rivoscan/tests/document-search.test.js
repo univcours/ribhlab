@@ -33,3 +33,20 @@ test('Unknown names and empty queries are safe; both screens use shared matcher'
  assert.ok(main.includes('matchesDocument(doc,{query:needle})'));
  assert.ok(main.includes('matchesDocument(item,{query:needle,filter:libraryFilter})'));
 });
+
+test('Search matches filename words separated by underscores, hyphens or punctuation in any order',()=>{
+ const item={name:'Invoice_2026-11_client.pdf'};
+ assert.ok(matchesDocument(item,{query:'client invoice',filter:'pdf'}));
+ assert.ok(matchesDocument(item,{query:'2026 invoice',filter:'pdf'}));
+ assert.ok(matchesDocument(item,{query:'invoice client 11',filter:'pdf'}));
+ assert.ok(!matchesDocument(item,{query:'invoice supplier',filter:'pdf'}));
+ assert.ok(!matchesDocument(item,{query:'invoice',filter:'images'}));
+ assert.equal(item.name,'Invoice_2026-11_client.pdf');
+});
+test('Arabic alef/hamza variants and whitespace are normalized for search only',()=>{
+ const item={name:'إيصال_أداء-آجل.pdf'};
+ assert.ok(matchesDocument(item,{query:'ايصال اداء'}));
+ assert.ok(matchesDocument(item,{query:'آجل   إيصال'}));
+ assert.equal(item.name,'إيصال_أداء-آجل.pdf');
+ assert.equal(normalizeDocumentSearch('  فَاتُورَة___2026  '),'فاتورة 2026');
+});

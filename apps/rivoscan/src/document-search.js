@@ -6,8 +6,12 @@
 export function normalizeDocumentSearch(value){
  return String(value??'').normalize('NFKD')
   .replace(/[\u0300-\u036f\u064b-\u065f\u0670\u0640]/g,'')
+  .replace(/[\u0622\u0623\u0625\u0671]/g,'ا')
   .replace(/\u0649/g,'ي')
-  .toLocaleLowerCase().trim();
+  .replace(/\u0624/g,'و')
+  .replace(/\u0626/g,'ي')
+  .replace(/[\p{P}\p{S}_]+/gu,' ')
+  .toLocaleLowerCase().replace(/\s+/g,' ').trim();
 }
 export function documentKind(item){
  const name=String(item?.name||'').toLowerCase();
@@ -20,5 +24,9 @@ export function matchesDocument(item,{query='',filter='all'}={}){
  if(!item)return false;
  if(filter!=='all'&&documentKind(item)!==filter)return false;
  const needle=normalizeDocumentSearch(query);
- return !needle||normalizeDocumentSearch(item.name).includes(needle);
+ if(!needle)return true;
+ const haystack=normalizeDocumentSearch(item.name);
+ // All words must occur, regardless of order; punctuation in saved filenames
+ // is treated as a separator. Search remains fully local and read-only.
+ return needle.split(' ').every(word=>haystack.includes(word));
 }

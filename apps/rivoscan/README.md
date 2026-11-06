@@ -289,3 +289,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - After saving/scanning, batch edits, search and expansion, the Home file list and the All/PDF/Images counters now refresh together without resetting the search query, current selection or view.
 - Real local PDF/photo thumbnails are rehydrated for the updated rows (lazy/size-limited); original documents are unchanged.
 - The scanner-first workflow, AD labels, 4 bottom tabs and center floating camera remain unchanged. Added regression coverage.
+
+## 0.44.6 — faster local multilingual filename search
+- Search across Home and Documents now treats filename punctuation, underscores, and hyphens as word separators; multiple search terms match regardless of order (e.g. `client invoice` finds `Invoice_2026-11_client.pdf`).
+- Arabic Alef/Hamza spelling variants are folded for search only. Saved names, PDFs, and document contents are never modified; no cloud or OCR indexing is introduced.
+- Added regression tests for Arabic spelling, French accent handling, multiword filenames, and type filters. CI checks versionCode 82/versionName 0.44.6.
