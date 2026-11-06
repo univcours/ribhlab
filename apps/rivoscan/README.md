@@ -320,3 +320,9 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - The optional rewarded ad still requires opt-in, Google UMP consent and a genuine SDK reward. No banner ads, no automatic rewards.
 - To build a live-ads candidate, supply the real RivoScan App ID via the GitHub Actions secret RIVOSCAN_ADMOB_APP_ID (same publisher, tilde separator) and the authorized Play signing secrets. The App ID is NOT shown in the screenshots and cannot be guessed. The Rewarded unit no longer requires a separate secret.
 - An AAB build is not publication or proof of AdMob account approval.
+
+## 0.44.15 — exact verified RivoScan AdMob App ID and production AAB
+- Owner confirmed RivoScan App ID `ca-app-pub-7945572016731367~1509328607` in AdMob App settings on November 6, 2026. This PUBLIC App ID matches the three verified Rewarded, Interstitial and App Open ad units.
+- The Play candidate AAB workflow now builds **production AdMob config on push**, using only the four confirmed RivoScan IDs, and checks both WebView JS and native AndroidManifest. Normal Android **debug builds remain Google test ad-only**; NEVER use production ad IDs on unregistered test devices.
+- If the authorized Play signing secrets are absent, the workflow will upload an **UNSIGNED, NOT PLAY-READY** AAB for inspection, not falsely label it as published. When configured, it creates a signed candidate, still requiring Play review.
+- **App state is NOT approved in AdMob:** owner screenshot shows `Requires review` and no linked store listing. Connect RivoScan's real Google Play listing via AdMob > App settings > App store details > Add and submit for review. Ensure developer website `https://ribhlab.github.io/rivoscan/` is listed in Play and that root `https://ribhlab.github.io/app-ads.txt` is publicly reachable and verified. App approval, Google consent, Play data safety, and review are independent of passing CI.

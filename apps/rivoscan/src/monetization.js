@@ -2,20 +2,20 @@
 // units ONLY for explicit production builds. Never synthesize real identifiers.
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
-import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID} from './admob-production-ids.js';
+import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID,RIVOSCAN_ADMOB_APP_ID} from './admob-production-ids.js';
 
 const adEnv=import.meta.env||{};
 const productionAds=adEnv.VITE_RIVOSCAN_ADMOB_PRODUCTION==='true';
 const liveUnits=buildProductionAds({
- appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID
+ appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||RIVOSCAN_ADMOB_APP_ID
 });
 export const AD_CONFIG=Object.freeze({
  testMode:!productionAds,
  configured:!productionAds||liveUnits.configured,
  androidAppId:productionAds?liveUnits.appId:'ca-app-pub-3940256099942544~3347511713',
  rewarded:productionAds?(liveUnits.configured?liveUnits.rewarded:''):'ca-app-pub-3940256099942544/5224354917',
- interstitial:productionAds?RIVOSCAN_INTERSTITIAL_ID:'ca-app-pub-3940256099942544/1033173712',
- appOpen:productionAds?RIVOSCAN_APP_OPEN_ID:'ca-app-pub-3940256099942544/9257395921',
+ interstitial:productionAds?(liveUnits.configured?RIVOSCAN_INTERSTITIAL_ID:''):'ca-app-pub-3940256099942544/1033173712',
+ appOpen:productionAds?(liveUnits.configured?RIVOSCAN_APP_OPEN_ID:''):'ca-app-pub-3940256099942544/9257395921',
  bannerEnabled:false
 });
 export const PREMIUM_MINUTES=10;

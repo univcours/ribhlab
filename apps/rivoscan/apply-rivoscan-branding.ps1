@@ -105,16 +105,15 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# AdMob production release needs a verified APP ID, not an ad unit ID.
+# AdMob app ID verified from RivoScan > App settings, 2026-11-06.
+# Debug uses Google demo ID; production uses ONLY the exact RivoScan App ID.
 $productionAds = $env:RIVOSCAN_ADMOB_PRODUCTION -eq 'true'
+$verifiedRivoScanAppId = 'ca-app-pub-7945572016731367~1509328607'
 if ($productionAds) {
-  $admobAppId = [string]$env:RIVOSCAN_ADMOB_APP_ID
-  if ($admobAppId -notmatch '^ca-app-pub-\d{16}~\d{10}$') {
-    throw 'Production AdMob APP ID is missing or invalid.'
+  if ($env:RIVOSCAN_ADMOB_APP_ID -and $env:RIVOSCAN_ADMOB_APP_ID -ne $verifiedRivoScanAppId) {
+    throw 'RivoScan production AdMob App ID does not match the verified ID.'
   }
-  if ($admobAppId.Contains('3940256099942544')) {
-    throw 'Google demo App ID cannot be published.'
-  }
+  $admobAppId = $verifiedRivoScanAppId
 } else {
   $admobAppId = 'ca-app-pub-3940256099942544~3347511713'
 }
@@ -122,9 +121,7 @@ $admobMeta = '<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID
 if ($xml.Contains('com.google.android.gms.ads.APPLICATION_ID')) {
   $xml = [regex]::Replace($xml, '<meta-data[^>]+com\.google\.android\.gms\.ads\.APPLICATION_ID[^>]*/>', $admobMeta)
 } else {
-  if (-not $xml.Contains('</application>')) {
-    throw 'Android manifest application tag is missing.'
-  }
+  if (-not $xml.Contains('</application>')) { throw 'Android manifest application tag is missing.' }
   $xml = $xml.Replace('</application>', $admobMeta + [Environment]::NewLine + '</application>')
 }
 if (-not $xml.Contains($admobAppId)) {
@@ -132,9 +129,9 @@ if (-not $xml.Contains($admobAppId)) {
 }
 [IO.File]::WriteAllText($manifest, $xml, $utf8)
 if ($productionAds) {
-  Write-Host 'PASS: Production AdMob manifest ID configured.'
+  Write-Host 'PASS: RivoScan production AdMob App ID configured.'
 } else {
-  Write-Host 'PASS: Debug Google demo AdMob manifest ID configured.'
+  Write-Host 'PASS: Debug Google demo AdMob App ID configured.'
 }
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.
