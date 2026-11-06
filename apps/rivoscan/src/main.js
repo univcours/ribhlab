@@ -744,6 +744,10 @@ function wire(){
     details.hidden=!open;
     button.setAttribute('aria-expanded',String(open));
   }));
+  document.querySelectorAll('[data-home-filter]').forEach(button=>button.addEventListener('click',()=>{
+    libraryFilter=button.dataset.homeFilter;
+    openLibrary();
+  }));
   document.querySelectorAll('[data-premium-unlock]').forEach(button=>button.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
       toast(premiumCopy(language).web);return;

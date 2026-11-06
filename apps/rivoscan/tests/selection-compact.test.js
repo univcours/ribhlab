@@ -24,3 +24,10 @@ test('bulk toolbar is compact, only 2+ and above Android safe area',()=>{
  assert.ok(!b.includes('data-bulk="rename"'));
  assert.ok(b.includes('data-bulk="organize"'));
 });
+
+test('Home category buttons navigate to actually filtered Documents',()=>{
+ const s=read('src/main.js');
+ assert.ok(s.includes("libraryFilter=button.dataset.homeFilter;"));
+ assert.ok(s.includes("document.querySelectorAll('[data-home-filter]').forEach(button=>button.addEventListener('click'"));
+ assert.ok(s.includes('openLibrary();'));
+});

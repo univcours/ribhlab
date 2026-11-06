@@ -9,7 +9,7 @@ test('Saved image is selectable and selected Share/Delete are adjacent with conf
  assert.ok(share>0&&del>share);
  assert.ok(!bar.slice(share,del).includes('data-bulk="organize"'));
  assert.ok(bar.includes('class="bulk-primary"'));
- assert.ok(b.includes("if(!mode&&!isImage(doc))return ''"));
+ assert.ok(!b.includes("if(!mode&&!isImage(doc))return ''"),'PDF and photo selection are both available');
  assert.ok(b.includes('if(!selected.size)mode=false'));
  assert.ok(b.includes("window.confirm(t('confirm')"));
  assert.ok(m.includes("file.klass==='image'?"));
