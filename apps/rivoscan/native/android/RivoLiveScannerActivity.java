@@ -357,6 +357,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
             TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(42,215,194):Color.rgb(190,193,202),()->{
+                // Never reinterpret already captured pages as another document type.
+                // In particular, a partial ID card must not become a normal scan
+                // or silently finish after the first side.
+                if(!savedImages.isEmpty()&&!scanMode.equals(mode)){
+                    Toast.makeText(this,trNative("finish")+" · "+savedImages.size()+
+                        " — "+trNative("manageScanPages"),Toast.LENGTH_LONG).show();
+                    return;
+                }
                 scanMode=mode;
                 if("ID Card".equals(scanMode))setBatch(true);
                 for(int i=0;i<modes.getChildCount();i++){
@@ -403,6 +411,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         startCamera();
     }
     private void setBatch(boolean next){
+        // Both sides of an ID must be captured in one session. Single mode
+        // would otherwise return immediately after the first side.
+        if("ID Card".equals(scanMode)&&!next){
+            Toast.makeText(this,trNative("idBack"),Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Existing pages remain intact when changing Single/Batch.
         batchMode=next;updateBatchButtons();
         if(message!=null)message.setText(next?trNative("batchReady"):trNative("singleReady"));
     }
@@ -1498,6 +1513,19 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void finishWithPages(){
         if(savingEnhancedPage)return;
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
+        // Explicitly warn on a one-sided ID, but never delete or alter it.
+        if("ID Card".equals(scanMode)&&savedImages.size()==1){
+            new android.app.AlertDialog.Builder(this)
+                .setTitle(trNative("id"))
+                .setMessage(trNative("idBack"))
+                .setNegativeButton(trNative("retake"),(dialog,which)->showCamera())
+                .setPositiveButton(trNative("finish"),(dialog,which)->deliverSavedPages())
+                .show();
+            return;
+        }
+        deliverSavedPages();
+    }
+    private void deliverSavedPages(){
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
         out.putExtra("scanMode",scanMode);
         setResult(Activity.RESULT_OK,out);finish();

@@ -274,3 +274,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Both Home and Documents now use the same local filename matcher. French/Latin accents and Arabic vowel marks/tatweel are ignored for searching only; original filenames and stored files are untouched.
 - PDF and image chips now detect common file extensions even when Android reports an empty/generic MIME type, matching the existing document-type icons and real thumbnails.
 - Added tests for accented French, Arabic harakat, missing MIME types, mixed-case extensions, safe null values, and shared matcher usage. No new permissions, ads, data migrations or document deletion.
+
+## v0.44.3 — Safe ID-card and multipage capture flow
+- A document scan session now locks its mode after the first saved page. Switching between Document, ID Card and Whiteboard cannot reinterpret previously saved pages.
+- ID Card mode cannot accidentally switch to Single capture. On finishing with only the front side, users can continue capturing the back or explicitly export the single saved side; neither action deletes existing pages.
+- Added source-level regression tests for page preservation and mode guards. Native build/emulator checks are required to validate the actual Android interaction.
