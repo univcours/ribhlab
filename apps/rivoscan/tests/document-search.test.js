@@ -50,3 +50,14 @@ test('Arabic alef/hamza variants and whitespace are normalized for search only',
  assert.equal(item.name,'إيصال_أداء-آجل.pdf');
  assert.equal(normalizeDocumentSearch('  فَاتُورَة___2026  '),'فاتورة 2026');
 });
+
+test('Arabic and Eastern Arabic-Indic invoice digits match ASCII without renaming files',()=>{
+ const arabic={name:'فاتورة_٢٠٢٦_١٢٣.pdf'};
+ const eastern={name:'رسيد_۲۰۲۶_۱۲۳.pdf'};
+ assert.ok(matchesDocument(arabic,{query:'فاتورة 2026 123',filter:'pdf'}));
+ assert.ok(matchesDocument(arabic,{query:'فاتورة ۲۰۲۶'}));
+ assert.ok(matchesDocument(eastern,{query:'رسيد ٢٠٢٦ 123'}));
+ assert.ok(!matchesDocument(arabic,{query:'2027'}));
+ assert.equal(arabic.name,'فاتورة_٢٠٢٦_١٢٣.pdf');
+ assert.equal(normalizeDocumentSearch('۱۲٣٤'), '1234');
+});
