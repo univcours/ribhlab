@@ -409,20 +409,21 @@ function home(){
  const copy=premiumCopy(language),scan=scanHomeCopy(language),access=getPremiumStatus();
  const unlocked=access.remainingMs>0;
  const android=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
+ const rewardAvailable=AD_CONFIG.testMode||Boolean(AD_CONFIG.rewarded);
  const counts=documentCategoryCounts(libraryItems,visualFileType);
  const quick=quickScanActions.map(item=>`<button type="button" class="rivo-scan-mode ${item.id==='document'?'rivo-scan-mode-main':''}"
    ${item.attribute} aria-label="${escapeHTML(scan[item.id])}">
    <span class="rivo-scan-mode-icon">${ico(item.icon,25)}</span><strong>${escapeHTML(scan[item.id])}</strong>
-   ${item.ad?'<span class="rivo-scan-mode-ad" aria-label="Ad-supported tool">ADS</span>':''}
+   ${item.ad&&isPremiumFeature(item.id==='book'?'bookScan':item.id)?'<span class="rivo-scan-mode-ad" aria-label="Ad-supported tool">ADS</span>':''}
   </button>`).join('');
  const tiles=homeTiles.map((item,i)=>`<button type="button" class="rivo-premium-tile ${item.featured?'rivo-premium-tile-main':''}"
    ${item.action} aria-label="${escapeHTML(copy.names[i])}">
    <span class="rivo-premium-tile-icon">${ico(item.icon,28)}</span>
    <strong>${escapeHTML(copy.names[i])}</strong>
-   ${item.premium?'<span class="rivo-premium-lock" aria-label="Ad-supported feature">ADS</span>':''}
+   ${item.premium&&isPremiumFeature(({flatten:'documentFlatten',erase:'manualErase',book:'bookScan'})[item.id]||item.id)?'<span class="rivo-premium-lock" aria-label="Ad-supported feature">ADS</span>':''}
   </button>`).join('');
  return `<section class="app-home rivo-home rivo-premium-home rivo-scan-first">
-  <div class="rivo-ai-compact" role="group" aria-label="${escapeHTML(copy.hero)}">
+  ${rewardAvailable?`<div class="rivo-ai-compact" role="group" aria-label="${escapeHTML(copy.hero)}">
    <button type="button" class="rivo-ai-toggle" data-ad-settings-toggle
      aria-controls="rivo-ai-details" aria-expanded="false" aria-label="${escapeHTML(copy.hero)}">
     <span class="rivo-ai-symbol">${ico('sparkle',22)}</span>
@@ -437,7 +438,7 @@ function home(){
     </button>
     <small>${ico('shield',13)} ${escapeHTML(copy.tiles)} · ${unlocked?'ON':'ADS'}</small>
    </div>
-  </div>
+  </div>`:''}
   <div class="rivo-scan-first-heading"><div><h2>${escapeHTML(scan.quick)}</h2><p>${escapeHTML(scan.quickSub)}</p></div></div>
   <div class="rivo-scan-modes" role="group" aria-label="${escapeHTML(scan.quick)}">${quick}</div>
   <div class="rivo-scan-first-heading rivo-scan-recent-title">

@@ -308,3 +308,9 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 
 ### v0.44.12 corrective QA
 - Reconnected all three Home file type shortcuts to open the actual filtered Documents tab after removing the header ADS shortcut. The previous legacy test expectation that PDFs were not selectable is now replaced by PDF/image parity tests.
+
+## 0.44.13 — confirmed RivoScan production AdMob ad units
+- AdMob publisher evidence (06 November 2026) confirms **Interstitial `ca-app-pub-7945572016731367/5608742752`** and **App Open `ca-app-pub-7945572016731367/6270875707`** for RivoScan, declared in `src/admob-production-ids.js`. These public identifiers are only injected when `production_ads=true`.
+- Still required before enabling paid ads: **RivoScan's own actual AdMob App ID** (uses `~`); set as GitHub Actions secret `RIVOSCAN_ADMOB_APP_ID`. Never copy the App ID from NovaGrid, another app or a Google sample. The App ID is checked against the pictured publisher number.
+- No RivoScan **Rewarded** ad unit was shown. It is optional: if `RIVOSCAN_ADMOB_REWARDED_ID` is absent, the production build does not show fake reward ADS badges, and ad-gated tools are temporarily FREE instead of inaccessible. Once created, set GitHub Actions secret `RIVOSCAN_ADMOB_REWARDED_ID` to enable genuine opt-in rewarded video.
+- CI Play release workflow uses those two confirmed units automatically in production, while debug builds retain Google test identifiers. Production release still requires the App ID, signing key, consent policy, Play QA, app-ads.txt, and AdMob review; an AAB build does not automatically publish to Google Play.

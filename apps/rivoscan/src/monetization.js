@@ -2,28 +2,21 @@
 // units ONLY for explicit production builds. Never synthesize real identifiers.
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
+import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID} from './admob-production-ids.js';
 
 const adEnv=import.meta.env||{};
 const productionAds=adEnv.VITE_RIVOSCAN_ADMOB_PRODUCTION==='true';
-const liveUnits={
- appId:String(adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||'').trim(),
- rewarded:String(adEnv.VITE_RIVOSCAN_ADMOB_REWARDED_ID||'').trim(),
- interstitial:String(adEnv.VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID||'').trim(),
- appOpen:String(adEnv.VITE_RIVOSCAN_ADMOB_APP_OPEN_ID||'').trim()
-};
-const formatApp=/^ca-app-pub-\d{16}~\d{10}$/;
-const formatUnit=/^ca-app-pub-\d{16}\/\d{10}$/;
-const prodConfigured=formatApp.test(liveUnits.appId)&&
- ['rewarded','interstitial','appOpen'].every(key=>formatUnit.test(liveUnits[key]))&&
- Object.values(liveUnits).every(id=>id.includes(liveUnits.appId.slice(0,27)))&&
- !liveUnits.appId.includes('3940256099942544');
+const liveUnits=buildProductionAds({
+ appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID,
+ rewarded:adEnv.VITE_RIVOSCAN_ADMOB_REWARDED_ID
+});
 export const AD_CONFIG=Object.freeze({
  testMode:!productionAds,
- configured:!productionAds||prodConfigured,
- androidAppId:productionAds?(prodConfigured?liveUnits.appId:''):'ca-app-pub-3940256099942544~3347511713',
- rewarded:productionAds?(prodConfigured?liveUnits.rewarded:''):'ca-app-pub-3940256099942544/5224354917',
- interstitial:productionAds?(prodConfigured?liveUnits.interstitial:''):'ca-app-pub-3940256099942544/1033173712',
- appOpen:productionAds?(prodConfigured?liveUnits.appOpen:''):'ca-app-pub-3940256099942544/9257395921',
+ configured:!productionAds||liveUnits.configured,
+ androidAppId:productionAds?liveUnits.appId:'ca-app-pub-3940256099942544~3347511713',
+ rewarded:productionAds?(liveUnits.configured?liveUnits.rewarded:''):'ca-app-pub-3940256099942544/5224354917',
+ interstitial:productionAds?RIVOSCAN_INTERSTITIAL_ID:'ca-app-pub-3940256099942544/1033173712',
+ appOpen:productionAds?RIVOSCAN_APP_OPEN_ID:'ca-app-pub-3940256099942544/9257395921',
  bannerEnabled:false
 });
 export const PREMIUM_MINUTES=10;
@@ -36,7 +29,11 @@ const PREMIUM_IDS=new Set([
  'restorePhoto','enhance','eraseColoredMarks','eraseLightWatermark',
  'manualErase','lockPdf','idPhotoMaker','ocr','compress'
 ]);
-export function isPremiumFeature(id){return PREMIUM_IDS.has(String(id||''));}
+export function isPremiumFeature(id){
+ // No Rewarded unit has been created for RivoScan yet. Until the owner
+ // configures it, do not block access to advanced tools or show fake ADS.
+ return PREMIUM_IDS.has(String(id||''))&&(!productionAds||Boolean(AD_CONFIG.rewarded));
+}
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
 export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0}){
  // A Back press is a natural page transition only when returning from an
@@ -72,7 +69,7 @@ export function configureAds({getLanguage,notify,onChange}={}){
 }
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,status:state.status,
- lastError:state.lastError,testMode:AD_CONFIG.testMode,configured:AD_CONFIG.configured,remainingMs:remainingPremiumMs(state.unlockedUntil),
+ lastError:state.lastError,testMode:AD_CONFIG.testMode,configured:AD_CONFIG.configured,rewardedAvailable:!!AD_CONFIG.rewarded,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,
  shownCount:state.shownCount};
 }
@@ -94,7 +91,7 @@ async function loadAppOpen(){
 }
 export async function initializeAds({retry=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
- if(!AD_CONFIG.configured){status('Production ad units missing or invalid');return false;}
+ if(!AD_CONFIG.configured){status('RivoScan production AdMob App ID missing or invalid');return false;}
  if(state.ready)return true;
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
