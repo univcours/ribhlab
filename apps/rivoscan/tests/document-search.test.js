@@ -61,3 +61,10 @@ test('Arabic and Eastern Arabic-Indic invoice digits match ASCII without renamin
  assert.equal(arabic.name,'فاتورة_٢٠٢٦_١٢٣.pdf');
  assert.equal(normalizeDocumentSearch('۱۲٣٤'), '1234');
 });
+
+test('MIME parameters and whitespace do not hide PDF or image documents',()=>{
+ assert.equal(documentKind({name:'scan',mimeType:' Application/PDF; charset=binary'}),'pdf');
+ assert.equal(documentKind({name:'photo',mimeType:'image/jpeg; charset=utf-8'}),'images');
+ assert.ok(matchesDocument({name:'scan',mimeType:'application/pdf; charset=binary'},{filter:'pdf'}));
+ assert.ok(!matchesDocument({name:'scan',mimeType:'application/pdf; charset=binary'},{filter:'images'}));
+});
