@@ -29,6 +29,18 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Validate native PowerShell scripts before building Android
+        shell: pwsh
+        run: |
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1')) {
+            $tokens=$null
+            $errors=$null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
+            if($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error $_.Message }
+              throw "Invalid PowerShell script: $script"
+            }
+          }
       - name: Install dependencies and test
         run: |
           npm install --no-audit --no-fund
