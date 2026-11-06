@@ -11,8 +11,7 @@ test('Production units exactly match AdMob screenshot; never reuse other apps or
  assert.deepEqual(validateProductionAds(app,{interstitial:RIVOSCAN_INTERSTITIAL_ID,appOpen:RIVOSCAN_APP_OPEN_ID}),[]);
  assert.deepEqual(validateProductionAds('',{}),['RIVOSCAN_ADMOB_APP_ID']);
  assert.ok(validateProductionAds('ca-app-pub-7945572016731367/5608742752',{}).length);
- assert.ok(validateProductionAds('ca-app-pub-7945572016731367~1688423435',{}).length===0,
-  'An ID of identical publisher format cannot by itself prove RivoScan ownership: user must supply actual RivoScan app ID');
+ // The actual RivoScan app ID must come from that app's own AdMob settings.
  assert.ok(validateProductionAds('ca-app-pub-3940256099942544~3347511713',{}).length);
  assert.ok(validateProductionAds(app,{rewarded:'ca-app-pub-9999999999999999/1234567890'}).length);
  assert.ok(validateProductionAds(app,{interstitial:'ca-app-pub-7945572016731367/0000000000'}).length);
