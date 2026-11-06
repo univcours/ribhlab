@@ -4,6 +4,7 @@ import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
 import {createDocumentThumbnailService} from './document-thumbnails.js';
+import {matchesDocument} from './document-search.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -363,9 +364,9 @@ function visualFileType(doc){
  return {code:'FILE',klass:'generic'};
 }
 function recentDocuments(limit=6,query=homeSearchQuery){
- const needle=String(query||'').trim().toLocaleLowerCase();
+ const needle=String(query||'').trim();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
-  .filter(({doc})=>!needle||doc.name.toLocaleLowerCase().includes(needle)).slice(0,needle?30:limit);
+  .filter(({doc})=>matchesDocument(doc,{query:needle})).slice(0,needle?30:limit);
  if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${hv('openFolder')}</button></div>`;
  return matched.map(({doc,index},visibleIndex)=>{
   const file=visualFileType(doc);
@@ -558,10 +559,8 @@ function scannerWorkspace(){
   </section>`;
 }
 function renderLibraryRows(needle=''){
-  const q=String(needle||'').trim().toLocaleLowerCase();
   const matched=libraryItems.map((item,index)=>({item,index}))
-    .filter(({item})=>(!q||item.name.toLocaleLowerCase().includes(q)) &&
-      (libraryFilter==='all'||(libraryFilter==='pdf'?/pdf/i.test(item.mimeType||''):/^image\//.test(item.mimeType||''))))
+    .filter(({item})=>matchesDocument(item,{query:needle,filter:libraryFilter}))
     .sort((a,b)=>librarySort==='oldest'?(a.item.created||0)-(b.item.created||0)
        :librarySort==='name'?a.item.name.localeCompare(b.item.name)
        :librarySort==='size'?(b.item.size||0)-(a.item.size||0)

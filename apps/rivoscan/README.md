@@ -269,3 +269,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Adds Android RivoDocuments.getThumbnail() restricted to verified RivoScan/legacy RivoScan folders. Uses PdfRenderer for the **first page only**, sampled image decode plus EXIF rotation, downsizes to at most 220px and exports only small JPEG preview bytes, off the main/UI thread.
 - WebView requests images lazily as they enter view, at most 2 native thumbnail calls in parallel, 64 cache entries, with file-type icon fallback on errors. Prevents pulling full 16MB PDF source into Home and does not touch source bytes or their metadata.
 - Real previews work on Recent and Documents lists without claiming any fake imagery or a cloud sync feature. Existing AD/ADS choices, floating camera and stored documents remain unchanged.
+
+## v0.44.2 — Consistent offline document search and filters
+- Both Home and Documents now use the same local filename matcher. French/Latin accents and Arabic vowel marks/tatweel are ignored for searching only; original filenames and stored files are untouched.
+- PDF and image chips now detect common file extensions even when Android reports an empty/generic MIME type, matching the existing document-type icons and real thumbnails.
+- Added tests for accented French, Arabic harakat, missing MIME types, mixed-case extensions, safe null values, and shared matcher usage. No new permissions, ads, data migrations or document deletion.
