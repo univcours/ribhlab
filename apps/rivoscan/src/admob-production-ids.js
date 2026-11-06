@@ -4,18 +4,17 @@
 export const RIVOSCAN_ADMOB_PUBLISHER='7945572016731367';
 export const RIVOSCAN_INTERSTITIAL_ID='ca-app-pub-7945572016731367/5608742752';
 export const RIVOSCAN_APP_OPEN_ID='ca-app-pub-7945572016731367/6270875707';
-export function buildProductionAds({appId='',rewarded=''}={}){
+export const RIVOSCAN_REWARDED_ID='ca-app-pub-7945572016731367/4148993879';
+export function buildProductionAds({appId=''}={}){
  const androidAppId=String(appId||'').trim();
- const rewardId=String(rewarded||'').trim();
  const publisherPrefix='ca-app-pub-'+RIVOSCAN_ADMOB_PUBLISHER;
  const appValid=new RegExp('^'+publisherPrefix+'~[0-9]{10}$').test(androidAppId);
- const rewardValid=!rewardId||new RegExp('^'+publisherPrefix+'/[0-9]{10}$').test(rewardId);
  return {
-  configured:appValid&&rewardValid,
+  configured:appValid,
   appId:appValid?androidAppId:'',
-  rewarded:rewardValid?rewardId:'',
+  rewarded:RIVOSCAN_REWARDED_ID,
   interstitial:RIVOSCAN_INTERSTITIAL_ID,
   appOpen:RIVOSCAN_APP_OPEN_ID,
-  rewardedAvailable:appValid&&rewardValid&&!!rewardId
+  rewardedAvailable:appValid
  };
 }

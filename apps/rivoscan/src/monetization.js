@@ -7,8 +7,7 @@ import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID} from '
 const adEnv=import.meta.env||{};
 const productionAds=adEnv.VITE_RIVOSCAN_ADMOB_PRODUCTION==='true';
 const liveUnits=buildProductionAds({
- appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID,
- rewarded:adEnv.VITE_RIVOSCAN_ADMOB_REWARDED_ID
+ appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID
 });
 export const AD_CONFIG=Object.freeze({
  testMode:!productionAds,
@@ -30,8 +29,8 @@ const PREMIUM_IDS=new Set([
  'manualErase','lockPdf','idPhotoMaker','ocr','compress'
 ]);
 export function isPremiumFeature(id){
- // No Rewarded unit has been created for RivoScan yet. Until the owner
- // configures it, do not block access to advanced tools or show fake ADS.
+ // RivoScan now has a real Rewarded unit. The user must opt in and the SDK
+ // must report a real reward before advanced access is granted.
  return PREMIUM_IDS.has(String(id||''))&&(!productionAds||Boolean(AD_CONFIG.rewarded));
 }
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}

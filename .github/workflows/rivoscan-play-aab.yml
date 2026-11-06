@@ -22,7 +22,6 @@ jobs:
       VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ inputs.production_ads && 'true' || 'false' }}
       RIVOSCAN_ADMOB_APP_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_APP_ID || '' }}
       VITE_RIVOSCAN_ADMOB_APP_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_APP_ID || '' }}
-      VITE_RIVOSCAN_ADMOB_REWARDED_ID: ${{ inputs.production_ads && secrets.RIVOSCAN_ADMOB_REWARDED_ID || '' }}
 
     timeout-minutes: 40
     defaults:
