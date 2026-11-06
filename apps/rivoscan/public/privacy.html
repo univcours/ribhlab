@@ -1,11 +1,92 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RivoScan Privacy Policy</title><style>body{font:16px/1.65 system-ui;color:#153b40;max-width:760px;padding:24px;margin:auto}h1,h2{color:#086e72}a{color:#076f88}</style></head>
-<body><h1>RivoScan Privacy Policy</h1><p>Last updated: November 6, 2026. RivoScan is developed by RibhLab. This notice covers the Android scanner and document utility, including optional AdMob advertising when a production build is enabled.</p>
-<h2>Documents and camera</h2><p>RivoScan uses camera access to scan when requested. Document scans, edits, PDF exports and OCR processing normally run locally on the device. Selected files remain on your device unless you explicitly share or transfer them. Google ML Kit scanner components or OCR language data may be downloaded to support scanning and recognition.</p>
-<h2>Advertising and consent</h2><p>RivoScan integrates Google AdMob. In development builds, Google demo ads are used and do not generate revenue. In a production build, ads may include optional rewarded videos that unlock advanced tools temporarily, occasional full-screen interstitial ads at natural breaks, and app-open ads after returning to the app. No banner ads are used. Advertising and consent technology may process network information, device or advertising identifiers, ad interactions and diagnostics as described by Google. Where required, a consent choice is requested before ads are loaded; you can revisit privacy options inside RivoScan settings.</p>
-<p>Read <a href="https://policies.google.com/privacy">Google's Privacy Policy</a> and <a href="https://support.google.com/admob/answer/6128543">AdMob privacy guidance</a> for more information.</p>
-<h2>Local settings and retention</h2><p>Language, scanner preferences and limited activity metadata may be stored locally. Scans exported to shared Documents/RivoScan remain under your device's file management; deleting or uninstalling the app may not remove shared documents. Cache and preferences may be cleared when the application is uninstalled.</p>
-<h2>Other optional connections</h2><p>Optional device-to-device file transfer may use internet connectivity for connection negotiation. OCR models and other selected features may connect to third-party services, while files themselves are only transferred when you choose a sharing or online feature. Review each feature before submitting sensitive documents.</p>
-<h2>Your choices</h2><p>You can use basic scanning and saved documents without watching a rewarded ad. You may refuse optional rewarded ads. You can change applicable advertising privacy choices within the app and can manage or delete locally saved files using device controls.</p>
-<h2>Contact</h2><p>For support and privacy requests, use the verified developer contact listed on the RivoScan Google Play listing. The developer must verify a working support contact and publish this policy at a public URL before store release.</p></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>RivoScan — Privacy Policy</title>
+  <style>
+    body{font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:#173c45;background:#f5fbfb;max-width:800px;padding:26px;margin:auto}
+    h1,h2{color:#086e72}h1{line-height:1.25}a{color:#076f88}
+    .notice{background:#e0f3f2;padding:12px 16px;border-left:4px solid #14858b}
+  </style>
+</head>
+<body>
+  <main id="main">
+    <h1>RivoScan Privacy Policy</h1>
+    <p>Last updated: November 6, 2026</p>
+    <p>This policy applies to the RivoScan Android application (<code>com.ribhlab.rivoscan</code>),
+    developed by RibhLab. This policy also has an
+    <a href="https://ribhlab.github.io/rivoscan/privacy/">online version</a>.</p>
+
+    <h2>Documents, camera and local storage</h2>
+    <p>You choose the documents and images you open. The core PDF scanner, PDF editing,
+    OCR, export and signature tools are designed to operate locally on your device.
+    Camera access is requested when you use scanning features. RivoScan's core tools
+    do not automatically upload your documents to an RibhLab-operated server or require
+    a RivoScan account. The device may store selected files, exports, temporary
+    previews, caches, language preferences and limited activity metadata.
+    Files saved in shared device folders are controlled by your file manager and may
+    remain after the app is uninstalled.</p>
+
+    <h2>OCR models and scanning technologies</h2>
+    <p>Google ML Kit scanner components, OCR training files or offline translation
+    models may be downloaded when first used. Service providers may receive technical
+    connection data, such as IP address and basic device information, during downloads.
+    Local OCR is designed to process selected content on the device after the required
+    models are available.</p>
+
+    <h2>Optional cloud AI</h2>
+    <p>The optional document AI features can contact OpenAI after you provide your own
+    API key, choose the content or question and approve sending it.
+    Selected text, images and prompts may be transmitted to OpenAI for processing.
+    This is not required for the basic scanner or PDF tools.
+    Only share content you are authorized to disclose.
+    See <a href="https://openai.com/policies/privacy-policy/">OpenAI's Privacy Policy</a>.
+    External providers manage data retention under their own policies.</p>
+
+    <h2>Advertising and consent</h2>
+    <p>The Android code integrates Google AdMob and Google consent management.
+    Development builds use demonstration ad identifiers. Other builds may include
+    optional rewarded video ads for unlocking advanced features, interstitial ads
+    at natural breaks and app-open ads after returning to the application.
+    Banner ads are disabled in the current configuration.
+    Google's ad services and partners may process advertising identifiers,
+    IP-derived approximate location, device information, ad interactions,
+    diagnostics and consent preferences. Depending on jurisdiction, you may be
+    asked for advertising consent; privacy options are available in the app settings.
+    See <a href="https://policies.google.com/technologies/ads">Google's advertising technologies</a>
+    and <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</p>
+
+    <h2>Optional device-to-device transfer</h2>
+    <p>When you explicitly use direct file transfer, RivoScan can negotiate a WebRTC
+    connection using connection codes shared with another device. Google's public
+    STUN server may receive network metadata, including public IP address, to help
+    establish the connection. Documents are sent to the chosen recipient device
+    when the transfer takes place. Some networks do not support this feature.</p>
+
+    <h2>Data retention, deletion and permissions</h2>
+    <p>Application preferences and caches may be deleted by clearing RivoScan's storage
+    in Android Settings or uninstalling the app. Files exported to shared storage must
+    be managed there separately. You can revoke camera and file access via Android
+    permissions. Data managed by third-party advertising, model download or AI providers
+    is governed by their own retention and deletion policies.</p>
+
+    <h2>Choices and security</h2>
+    <p>Basic document scanning and PDF editing do not need optional AI requests or
+    rewarded ad viewing. You control when to share or export a document.
+    You should avoid sending sensitive information through optional network features
+    unless you understand the recipient and provider's data handling.</p>
+
+    <h2>Contact</h2>
+    <p>For privacy questions or support contact RibhLab at
+    <a href="mailto:rachid022note4@gmail.com">rachid022note4@gmail.com</a>.
+    You can always see the newest policy at
+    <a href="https://ribhlab.github.io/rivoscan/privacy/">https://ribhlab.github.io/rivoscan/privacy/</a>.</p>
+    <p class="notice">Google Play Data safety declarations must match the final Android build
+    and the behavior of all included SDKs. This notice describes the currently reviewed
+    project, not a guarantee that every optional feature is available in every build.</p>
+  </main>
+</body>
+</html>
