@@ -114,7 +114,7 @@ if($productionAds -and ($admobAppId -notmatch '^ca-app-pub-\d{16}~\d{10}$' -or $
 }
 $admobMeta = '    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + $admobAppId + '" />'
 if($xml -match 'com.google.android.gms.ads.APPLICATION_ID') {
-  $xml = [regex]::Replace($xml,'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*/>',[System.Text.RegularExpressions.MatchEvaluator]{ param($m) $admobMeta })
+  $xml = [regex]::Replace($xml,'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*/>',$admobMeta)
 } else {
   if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing.' }
   $xml = $xml.Replace('</application>',$admobMeta + [Environment]::NewLine + '</application>')
