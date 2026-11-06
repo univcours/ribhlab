@@ -13,7 +13,9 @@ test('Home shortcuts and all seven locales work',()=>{
 test('No promo ads on Home/Tools, but real contextual reward verification remains',()=>{
  const main=read('src/main.js'),ads=read('src/monetization.js');
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
- assert.ok(!home.includes('>ADS<'));assert.ok(!home.includes('rivo-ai-compact'));
+ assert.ok(!home.includes('rivo-ai-compact'));
+ assert.ok(home.includes("isPremiumFeature('bookScan')"));
+ assert.ok(home.includes('gate&&isPremiumFeature(gate)'));
  for(const key of ['data-ad-test','data-ad-retry','data-premium-unlock','rivo-video-access" aria-label'])
   assert.ok(!main.includes(key),key);
  assert.ok(ads.includes('RewardAdPluginEvents.Rewarded'));

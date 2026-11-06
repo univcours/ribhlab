@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('Promotional ADS badges and test buttons removed, privacy choices remain',()=>{
  const main=read('src/main.js');
- assert.ok(!main.includes('>ADS<'));
+ assert.ok(main.includes("gate&&isPremiumFeature(gate)"),'ADS only on rewarded-gated tools');
  for(const key of ['data-ad-test','data-ad-retry','rivo-ai-compact','data-premium-unlock'])
   assert.ok(!main.includes(key),key);
  assert.ok(main.includes('data-ad-privacy'));

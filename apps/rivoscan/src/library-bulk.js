@@ -83,10 +83,10 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const mime=String(doc.mimeType||'').toLowerCase();
           const convertible=mime.includes('pdf')||mime.startsWith('image/')||/\.(pdf|jpe?g|png|webp|heic)$/.test(name);
           const actions=`<div class="rivo-selection-inline" role="group" aria-label="${t('menu')}">
-            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span aria-hidden="true">↗</span></button>
-            ${convertible?`<button type="button" data-doc-savepdf="${index}" aria-label="${t('pdf')}" title="${t('pdf')}"><span aria-hidden="true">▤</span></button>`:''}
-            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span aria-hidden="true">◉</span></button>
-            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span aria-hidden="true">⌫</span></button>
+            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span aria-hidden="true">↗</span><small>${t('share')}</small></button>
+            ${convertible?`<button type="button" data-doc-savepdf="${index}" aria-label="${t('pdf')}" title="${t('pdf')}"><span aria-hidden="true">▤</span><small>PDF</small></button>`:''}
+            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span aria-hidden="true">◉</span><small>${t('preview')}</small></button>
+            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span aria-hidden="true">⌫</span><small>${t('delete')}</small></button>
           </div>`;
           row.insertAdjacentHTML('beforeend',actions);
         }

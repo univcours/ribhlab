@@ -333,3 +333,8 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 ## 0.44.16 monetization
 - Removed all Google sample/demo identifiers and manual test ads from the app. Developer APK requests no ads. Real app ID is verified in the Android manifest, while real rewarded/interstitial/app-open units are initialized ONLY in the production Play AAB after Google UMP consent. Basic and advanced scanning remain available in debug; production rewarded flow still requires a real callback.
 - Live revenue depends on AdMob app review, correctly linked Play listing, signed AAB and Google serving approval.
+
+## v0.44.17 — compact selection, contextual ADS, Android back
+- Home has no standalone ADS button or large promotional AI panel. Gated Book Scan and applicable advanced tools show a small ADS badge **only in production with actual rewarded inventory**; unsigned developer APK does not pretend ads exist.
+- Single selected document has compact labelled Share/PDF/View/Delete controls next to the file instead of a bulky bottom toolbar. For 2+ files, seven compact actions stay above visible navigation and the full circular floating camera.
+- Android Back and edge swipe close image editor, Perfect Scan and ID photo dialogs before navigating. Native capture in progress is not interrupted; Retake stays a labelled control. Editor Paper Scan Pro branding becomes Paper Scan.
