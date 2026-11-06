@@ -11,8 +11,8 @@ const liveUnits={
  interstitial:String(adEnv.VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID||'').trim(),
  appOpen:String(adEnv.VITE_RIVOSCAN_ADMOB_APP_OPEN_ID||'').trim()
 };
-const formatApp=/^ca-app-pub-\\d{16}~\\d{10}$/;
-const formatUnit=/^ca-app-pub-\\d{16}\\/\\d{10}$/;
+const formatApp=/^ca-app-pub-\d{16}~\d{10}$/;
+const formatUnit=/^ca-app-pub-\d{16}\/\d{10}$/;
 const prodConfigured=formatApp.test(liveUnits.appId)&&
  ['rewarded','interstitial','appOpen'].every(key=>formatUnit.test(liveUnits[key]))&&
  Object.values(liveUnits).every(id=>id.includes(liveUnits.appId.slice(0,27)))&&
