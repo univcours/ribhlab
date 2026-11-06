@@ -423,3 +423,18 @@ body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-
  #app .rivo-scan-mode strong{font-size:10px}
  #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card{grid-template-columns:45px minmax(0,1fr) 31px!important;column-gap:7px}
 }
+
+/* Real native thumbnail previews for local documents; never an invented image. */
+#app .rivo-file-thumb[data-rivo-thumb],
+#app .document-icon[data-rivo-thumb]{
+ position:relative;overflow:hidden;display:grid;place-items:center;
+ flex:none;background:#eaf7f3;border-radius:12px;
+}
+#app .rivo-real-thumb{
+ display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit;
+ background:#fff;image-rendering:auto;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-file-thumb:has(.rivo-real-thumb){
+ border:1px solid #e5eae6;
+}
+#app .document-icon:has(.rivo-real-thumb){background:white;border:1px solid #e5eee8}

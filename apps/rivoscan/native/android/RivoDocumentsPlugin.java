@@ -16,6 +16,13 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.pdf.PdfRenderer;
+import android.media.ExifInterface;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -376,6 +383,108 @@ public class RivoDocumentsPlugin extends Plugin {
                 call.resolve(result);
             }
         } catch (Exception e) { call.reject("Cannot read document: " + e.getMessage(),e); }
+    }
+
+
+    /**
+     * Bounded thumbnails from real user-owned PDF/image documents.
+     * Only RivoScan/legacy RivoScan folder URIs pass verifiedUri().
+     * Rasterization is off the UI thread and does not mutate source bytes.
+     * Maximum output dimension 220px; never send an entire PDF to WebView.
+     */
+    @PluginMethod
+    public void getThumbnail(PluginCall call){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        final Uri uri=verifiedUri(call);
+        if(uri==null)return;
+        new Thread(()->{
+            Bitmap thumbnail=null;
+            try{
+                ContentResolver resolver=getContext().getContentResolver();
+                String mime=mimeOf(uri);
+                String name="";
+                try(Cursor c=resolver.query(uri,new String[]{MediaStore.MediaColumns.DISPLAY_NAME},null,null,null)){
+                    if(c!=null&&c.moveToFirst())name=c.getString(0);
+                }
+                String lower=name==null?"":name.toLowerCase(Locale.ROOT);
+                boolean isPdf="application/pdf".equals(mime)||lower.endsWith(".pdf");
+                boolean isImage=(mime!=null&&mime.startsWith("image/"))
+                    ||lower.matches(".*\\.(jpg|jpeg|png|webp|heic)$");
+                if(!isPdf&&!isImage){call.reject("Preview supports PDF or image files.");return;}
+                final int maxDimension=220;
+                if(isPdf){
+                    try(ParcelFileDescriptor descriptor=resolver.openFileDescriptor(uri,"r")){
+                        if(descriptor==null)throw new IllegalStateException("PDF cannot be opened.");
+                        try(PdfRenderer pdf=new PdfRenderer(descriptor)){
+                            if(pdf.getPageCount()<1)throw new IllegalStateException("Empty PDF.");
+                            try(PdfRenderer.Page page=pdf.openPage(0)){
+                                float scale=Math.min((float)maxDimension/Math.max(1,page.getWidth()),
+                                    (float)maxDimension/Math.max(1,page.getHeight()));
+                                int w=Math.max(1,Math.round(page.getWidth()*scale));
+                                int h=Math.max(1,Math.round(page.getHeight()*scale));
+                                thumbnail=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+                                Canvas canvas=new Canvas(thumbnail);
+                                canvas.drawColor(Color.WHITE);
+                                page.render(thumbnail,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                            }
+                        }
+                    }
+                }else{
+                    BitmapFactory.Options bounds=new BitmapFactory.Options();
+                    bounds.inJustDecodeBounds=true;
+                    try(InputStream in=resolver.openInputStream(uri)){
+                        if(in==null)throw new IllegalStateException("Image unavailable.");
+                        BitmapFactory.decodeStream(in,null,bounds);
+                    }
+                    if(bounds.outWidth<1||bounds.outHeight<1)throw new IllegalStateException("Image unreadable.");
+                    BitmapFactory.Options sample=new BitmapFactory.Options();
+                    sample.inSampleSize=1;
+                    while((bounds.outWidth/sample.inSampleSize)>maxDimension*2
+                        ||(bounds.outHeight/sample.inSampleSize)>maxDimension*2)
+                        sample.inSampleSize*=2;
+                    try(InputStream in=resolver.openInputStream(uri)){
+                        if(in==null)throw new IllegalStateException("Image unavailable.");
+                        thumbnail=BitmapFactory.decodeStream(in,null,sample);
+                    }
+                    if(thumbnail==null)throw new IllegalStateException("Image decode failed.");
+                    int orientation=ExifInterface.ORIENTATION_NORMAL;
+                    try(InputStream in=resolver.openInputStream(uri)){
+                        if(in!=null)orientation=new ExifInterface(in).getAttributeInt(
+                            ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL);
+                    }catch(Exception ignored){}
+                    int degrees=orientation==ExifInterface.ORIENTATION_ROTATE_90?90:
+                        orientation==ExifInterface.ORIENTATION_ROTATE_180?180:
+                        orientation==ExifInterface.ORIENTATION_ROTATE_270?270:0;
+                    if(degrees!=0){
+                        Matrix matrix=new Matrix();matrix.postRotate(degrees);
+                        Bitmap rotated=Bitmap.createBitmap(thumbnail,0,0,
+                            thumbnail.getWidth(),thumbnail.getHeight(),matrix,true);
+                        if(rotated!=thumbnail)thumbnail.recycle();
+                        thumbnail=rotated;
+                    }
+                    float ratio=Math.min(1f,(float)maxDimension/
+                        Math.max(thumbnail.getWidth(),thumbnail.getHeight()));
+                    if(ratio<1f){
+                        Bitmap reduced=Bitmap.createScaledBitmap(thumbnail,
+                            Math.max(1,Math.round(thumbnail.getWidth()*ratio)),
+                            Math.max(1,Math.round(thumbnail.getHeight()*ratio)),true);
+                        if(reduced!=thumbnail)thumbnail.recycle();
+                        thumbnail=reduced;
+                    }
+                }
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream(35000);
+                if(!thumbnail.compress(Bitmap.CompressFormat.JPEG,72,bytes))
+                    throw new IllegalStateException("Preview encoding failed.");
+                JSObject result=new JSObject();
+                result.put("base64",Base64.encodeToString(bytes.toByteArray(),Base64.NO_WRAP));
+                result.put("mimeType","image/jpeg");
+                call.resolve(result);
+            }catch(Exception error){
+                call.reject("Cannot render document thumbnail: "+error.getMessage(),error);
+            }finally{
+                if(thumbnail!=null&&!thumbnail.isRecycled())thumbnail.recycle();
+            }
+        },"RivoScan-Document-Thumb").start();
     }
 
     @PluginMethod

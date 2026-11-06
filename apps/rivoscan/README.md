@@ -264,3 +264,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Recent saved documents moved above advanced tools and displayed as compact one-row entries, with actual local file counts, search and All/PDF/Images navigation to filtered Documents.
 - Nine extended tools remain inside collapsed More tools; the full Tools screen remains available. The small AI/ADS drawer and visible, centered camera FAB remain unchanged.
 - Documents, share, PDF creation and local storage remain preserved; no fake cloud sync features or unsupported OCR claims.
+
+## v0.44.1 — Real previews in Recent and Documents
+- Adds Android RivoDocuments.getThumbnail() restricted to verified RivoScan/legacy RivoScan folders. Uses PdfRenderer for the **first page only**, sampled image decode plus EXIF rotation, downsizes to at most 220px and exports only small JPEG preview bytes, off the main/UI thread.
+- WebView requests images lazily as they enter view, at most 2 native thumbnail calls in parallel, 64 cache entries, with file-type icon fallback on errors. Prevents pulling full 16MB PDF source into Home and does not touch source bytes or their metadata.
+- Real previews work on Recent and Documents lists without claiming any fake imagery or a cloud sync feature. Existing AD/ADS choices, floating camera and stored documents remain unchanged.
