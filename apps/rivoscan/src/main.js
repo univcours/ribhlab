@@ -304,7 +304,7 @@ function render(){
   const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
     <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button type="button" class="rivo-premium-badge" data-ad-entry aria-label="Ad-supported advanced tools">${ico('play',17)} AD</button>
+   <div class="topright"><button type="button" class="rivo-premium-badge" data-ad-entry aria-label="Ad-supported advanced tools">${ico('play',17)} ADS</button>
    <button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
    <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
@@ -359,7 +359,7 @@ function home(){
    ${item.action} aria-label="${escapeHTML(copy.names[i])}">
    <span class="rivo-premium-tile-icon">${ico(item.icon,28)}</span>
    <strong>${escapeHTML(copy.names[i])}</strong>
-   ${item.premium?`<span class="rivo-premium-lock" aria-label="Ad-supported feature">AD</span>`:''}
+   ${item.premium?`<span class="rivo-premium-lock" aria-label="Ad-supported feature">ADS</span>`:''}
   </button>`).join('');
  return `<section class="app-home rivo-home rivo-premium-home">
   <div class="rivo-ai-compact" role="group" aria-label="${escapeHTML(copy.hero)}">
@@ -367,7 +367,7 @@ function home(){
      aria-controls="rivo-ai-details" aria-expanded="false" aria-label="${escapeHTML(copy.hero)}">
     <span class="rivo-ai-symbol">${ico('sparkle',22)}</span>
     <span class="rivo-ai-name"><small>RivoScan AI</small><strong>${escapeHTML(copy.hero)}</strong></span>
-    <span class="rivo-ai-status" aria-label="${unlocked?'Advanced tools unlocked':'Ad supported'}">${unlocked?'ON':'AD'}</span>
+    <span class="rivo-ai-status" aria-label="${unlocked?'Advanced tools unlocked':'Ad supported'}">${unlocked?'ON':'ADS'}</span>
     <span class="rivo-ai-chevron">${ico('back',17)}</span>
    </button>
    <div id="rivo-ai-details" class="rivo-ai-details" hidden>
@@ -375,7 +375,7 @@ function home(){
     <button type="button" class="rivo-ai-watch" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
      ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>
     </button>
-    <small>${ico('shield',13)} ${escapeHTML(copy.tiles)} · ${unlocked?'ON':'AD'}</small>
+    <small>${ico('shield',13)} ${escapeHTML(copy.tiles)} · ${unlocked?'ON':'ADS'}</small>
    </div>
   </div>
   <div class="rivo-premium-heading">
@@ -404,7 +404,7 @@ function toolsWorkspace(){
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Ad-supported feature">AD</span>':''}</button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Ad-supported feature">ADS</span>':''}</button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }

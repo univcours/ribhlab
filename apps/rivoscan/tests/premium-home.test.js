@@ -53,22 +53,23 @@ test('Camera remains a single independent floating action button above four bott
 
 test('Premium badges display AD (not countdown/duration), while reward duration stays disclosed at opt-in',()=>{
  const main=text('src/main.js'),copy=text('src/premium-home-model.js'),ads=text('src/monetization.js');
- assert.ok(main.includes('rivo-premium-lock" aria-label="Ad-supported feature">AD'));
- assert.ok(main.includes('rivo-video-access" aria-label="Ad-supported feature">AD'));
- assert.ok(main.includes("unlocked?'ON':'AD'"));
+ assert.ok(main.includes('rivo-premium-lock" aria-label="Ad-supported feature">ADS'));
+ assert.ok(main.includes('rivo-video-access" aria-label="Ad-supported feature">ADS'));
+ assert.ok(main.includes("unlocked?'ON':'ADS'"));
  assert.ok(!main.includes('▶ 10m'));
  assert.ok(!main.includes('10 MIN ·'));
  assert.ok(!main.includes("'10:00'"));
  assert.ok(!copy.includes('10 minutes')&&!copy.includes('10 دقائق'));
  assert.ok(ads.includes('PREMIUM_MINUTES=10'));
- assert.ok(ads.includes('Watch video · 10 minutes'));
+ assert.ok(ads.includes("watch:'ADS'"));
+ assert.ok(ads.includes('for 10 minutes'),'reward details remain disclosed, badges do not show time');
 });
 
 test('Ad unlock is never mislabeled as Premium or a paid PRO subscription',()=>{
  const main=text('src/main.js'),hub=text('src/tools-hub.js');
  const native=text('native/android/RivoLocale.java'),editor=text('src/scan-editor.js');
  assert.ok(main.includes('aria-label="Ad-supported advanced tools"'));
- assert.ok(main.includes("unlocked?'ON':'AD'"));
+ assert.ok(main.includes("unlocked?'ON':'ADS'"));
  assert.ok(!main.includes('aria-label="Premium tools"'));
  assert.ok(!main.includes("unlocked?'PRO':'AD'"));
  assert.ok(!main.includes("ico('crown',17)} PRO"));
@@ -93,4 +94,18 @@ test('AI settings are compact by default, expandable and contain the real reward
  assert.ok(css.includes('.rivo-ai-details[hidden]{display:none!important}'));
  assert.ok(css.includes('button:nth-of-type(3){grid-column:4}'),'tools keep a clear gap');
  assert.ok(css.includes('box-sizing:border-box!important'),'camera full circle fits');
+});
+
+test('All ad buttons and badges display ADS without a time suffix',()=>{
+ const main=text('src/main.js'),copy=text('src/premium-home-model.js'),ads=text('src/monetization.js');
+ assert.ok(main.includes('ADS</button>'),'header ADS button');
+ assert.ok(main.includes('rivo-ai-status'),'compact drawer remains');
+ assert.ok(main.includes('>ADS</span>'),'tool badges');
+ assert.ok(!main.includes('>AD</span>'),'no obsolete singular AD label');
+ assert.equal((ads.match(/watch:'ADS'/g)||[]).length,3,'three ad-dialog locales use only ADS');
+ assert.equal((copy.match(/watch:'ADS'/g)||[]).length,7,'all seven dashboard locales use ADS');
+ assert.ok(!ads.includes('Watch video · 10 minutes'));
+ assert.ok(!ads.includes('شاهد الفيديو · 10 دقائق'));
+ assert.ok(!ads.includes('Voir une vidéo · 10 min'));
+ assert.ok(ads.includes('PREMIUM_MINUTES=10'),'unlock mechanics are unchanged');
 });
