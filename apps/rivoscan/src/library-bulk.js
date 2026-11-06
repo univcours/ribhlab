@@ -33,7 +33,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
-    if(!mode)return '';
+    if(!mode||selected.size<2)return '';
     const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
     return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
       <div class="bulk-heading"><strong>${items.length} ${t('selected')}</strong>
@@ -49,7 +49,6 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           <button type="button" data-bulk="all">${t('all')}</button>
           <button type="button" data-bulk="invert">${t('invert')}</button>
           <button type="button" data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
-          <button type="button" data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
           <button type="button" data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
         </div>
       </div>
@@ -57,14 +56,14 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   }
   const isImage=doc=>/^image\//i.test(doc?.mimeType||'')||/\.(png|jpe?g|webp)$/i.test(doc?.name||'');
   function checkbox(doc,index){
-    // Allow selection of saved photos without entering multi-select first.
-    if(!mode&&!isImage(doc))return '';
+    // All file types must be selectable from their own rows, including PDFs.
     return `<input type="checkbox" class="doc-select-box" data-doc-select="${index}" aria-label="${t('select')}" ${chosen(doc)?'checked':''}>`;
   }
   function clear(){mode=false;selected.clear();document.body.classList.remove('rivo-multiselect');}
   function prune(){const known=new Set(getItems().map(x=>x.uri));for(const uri of selected)if(!known.has(uri))selected.delete(uri);if(!selected.size)mode=false;}
   function sync(){
-    document.body.classList.toggle('rivo-multiselect',mode);
+    // The bottom action bar and multi-select screen mode start at 2+ files.
+    document.body.classList.toggle('rivo-multiselect',mode&&selected.size>=2);
     for(const slotId of ['library-selection-root','home-selection-root']){
       const slot=document.getElementById(slotId);
       if(slot)slot.innerHTML=toolbar();
@@ -83,6 +82,21 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           if(div.firstElementChild)row.prepend(div.firstElementChild);
         } else if(!mode&&existing&&!alwaysVisible&&!isImage(doc))existing.remove();
         else if(existing)existing.checked=!!doc&&chosen(doc);
+        const previous=row.querySelector('.rivo-selection-inline');
+        if(previous)previous.remove();
+        if(mode&&selected.size===1&&doc&&chosen(doc)){
+          const index=Number(row.dataset.docOpen);
+          const name=String(doc.name||'').toLowerCase();
+          const mime=String(doc.mimeType||'').toLowerCase();
+          const convertible=mime.includes('pdf')||mime.startsWith('image/')||/\\.(pdf|jpe?g|png|webp|heic)$/.test(name);
+          const actions=`<div class="rivo-selection-inline" role="group" aria-label="${t('menu')}">
+            <button type="button" data-doc-share="${index}" aria-label="${t('share')}">↗ <span>${t('share')}</span></button>
+            ${convertible?`<button type="button" data-doc-savepdf="${index}" aria-label="${t('pdf')}">▤ <span>${t('pdf')}</span></button>`:''}
+            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}">◉ <span>${t('preview')}</span></button>
+            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}">⌫ <span>${t('delete')}</span></button>
+          </div>`;
+          row.insertAdjacentHTML('beforeend',actions);
+        }
       }
     }
     }

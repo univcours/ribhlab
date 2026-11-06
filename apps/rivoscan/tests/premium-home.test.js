@@ -68,7 +68,7 @@ test('Premium badges display AD (not countdown/duration), while reward duration 
 test('Ad unlock is never mislabeled as Premium or a paid PRO subscription',()=>{
  const main=text('src/main.js'),hub=text('src/tools-hub.js');
  const native=text('native/android/RivoLocale.java'),editor=text('src/scan-editor.js');
- assert.ok(main.includes('aria-label="Ad-supported advanced tools"'));
+ assert.ok(!main.includes('data-ad-entry'),'No standalone ADS header action');
  assert.ok(main.includes("unlocked?'ON':'ADS'"));
  assert.ok(!main.includes('aria-label="Premium tools"'));
  assert.ok(!main.includes("unlocked?'PRO':'AD'"));
@@ -90,7 +90,7 @@ test('AI settings are compact by default, expandable and contain the real reward
  assert.ok(home.includes("data-premium-unlock"),'rewarded ad remains opt-in');
  assert.ok(!home.includes('class="rivo-premium-hero"'),'bulky home hero removed');
  assert.ok(main.includes("document.querySelectorAll('[data-ad-settings-toggle]')"));
- assert.ok(main.includes("document.querySelectorAll('[data-ad-entry]')"));
+ assert.ok(!main.includes("document.querySelectorAll('[data-ad-entry]')"));
  assert.ok(css.includes('.rivo-ai-details[hidden]{display:none!important}'));
  assert.ok(css.includes('button:nth-of-type(3){grid-column:4}'),'tools keep a clear gap');
  assert.ok(css.includes('box-sizing:border-box!important'),'camera full circle fits');
@@ -98,7 +98,7 @@ test('AI settings are compact by default, expandable and contain the real reward
 
 test('All ad buttons and badges display ADS without a time suffix',()=>{
  const main=text('src/main.js'),copy=text('src/premium-home-model.js'),ads=text('src/monetization.js');
- assert.ok(main.includes('ADS</button>'),'header ADS button');
+ assert.ok(!main.includes('rivo-premium-badge" data-ad-entry'),'No ADS header button');
  assert.ok(main.includes('rivo-ai-status'),'compact drawer remains');
  assert.ok(main.includes('>ADS</span>'),'tool badges');
  assert.ok(!main.includes('>AD</span>'),'no obsolete singular AD label');

@@ -84,6 +84,7 @@ function refreshHomeDocuments(){
  const rows=document.getElementById('home-recents');
  if(!rows)return;
  rows.innerHTML=recentDocuments(8);
+ bulkUI.sync();
  const counts=documentCategoryCounts(libraryItems,visualFileType);
  const total=document.querySelector('[data-home-recent-count]');
  if(total)total.textContent=String(counts.all);
@@ -356,8 +357,7 @@ function render(){
   const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
     <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button type="button" class="rivo-premium-badge" data-ad-entry aria-label="Ad-supported advanced tools">${ico('play',17)} ADS</button>
-   <button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
+   <div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
    <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
@@ -368,6 +368,7 @@ function render(){
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
+  bulkUI.sync();
   hydrateDocumentThumbnails();
 }
 function visualFileType(doc){
@@ -671,6 +672,7 @@ function refreshVisibleLibrary(){
   const list=document.getElementById('library-list');
   if(!list)return;
   list.innerHTML=renderLibraryRows(document.getElementById('library-search')?.value||'');
+  bulkUI.sync();
   const slot=document.getElementById('library-selection-root');if(slot)slot.innerHTML=bulkUI.toolbar();
   list.classList.toggle('documents-grid',libraryLayout==='grid');
   hydrateDocumentThumbnails();
@@ -740,20 +742,6 @@ function wire(){
     details.hidden=!open;
     button.setAttribute('aria-expanded',String(open));
   }));
-  document.querySelectorAll('[data-ad-entry]').forEach(button=>button.addEventListener('click',()=>{
-    if(activeTool)openTab('home');
-    const details=document.getElementById('rivo-ai-details');
-    const control=document.querySelector('[data-ad-settings-toggle]');
-    if(details&&control){
-      details.hidden=false;
-      control.setAttribute('aria-expanded','true');
-      control.focus();
-    }
-  }));
-  document.querySelectorAll('[data-home-filter]').forEach(button=>button.addEventListener('click',()=>{
-    libraryFilter=button.dataset.homeFilter;
-    openLibrary();
-  }));
   document.querySelectorAll('[data-premium-unlock]').forEach(button=>button.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
       toast(premiumCopy(language).web);return;
@@ -806,7 +794,7 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -826,6 +814,11 @@ function wire(){
       if(target.hasAttribute('data-doc-savepdf')){
         const doc=libraryItems[Number(target.dataset.docSavepdf)];
         if(doc)bulkUI.savePdf([doc]);
+        return;
+      }
+      if(target.hasAttribute('data-doc-preview')){
+        const index=Number(target.dataset.docPreview);
+        if(libraryItems[index])handleLibraryAction('open',index);
         return;
       }
       if(target.hasAttribute('data-doc-print')){

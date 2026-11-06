@@ -438,3 +438,88 @@ body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-
  border:1px solid #e5eae6;
 }
 #app .document-icon:has(.rivo-real-thumb){background:white;border:1px solid #e5eee8}
+
+/* Compact RivoScan actions: horizontal pills, real 36px+ touch height. */
+#app .rivo-selection-inline{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-column:1/-1!important;grid-row:3!important;gap:5px!important;width:100%;
+ margin:7px 0 0!important;padding:8px 0 0!important;border-top:1px solid #dcece6;
+}
+#app .rivo-selection-inline button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-width:0!important;min-height:36px!important;max-height:41px!important;
+ padding:6px 4px!important;gap:4px!important;border-radius:11px!important;
+ border:1px solid #b4dfd5!important;background:#eefaf6!important;color:#106c67!important;
+ font-size:clamp(9px,2.6vw,12px)!important;font-weight:800!important;
+ white-space:nowrap!important;box-shadow:none!important;overflow:hidden!important;
+}
+#app .rivo-selection-inline button span{overflow:hidden;text-overflow:ellipsis}
+#app .rivo-selection-inline .rivo-inline-delete{
+ background:#fff3f4!important;color:#ad3b51!important;border-color:#f0cbd3!important;
+}
+#app .document-entry.doc-selected{flex-wrap:wrap!important}
+#app .document-entry.doc-selected>.rivo-selection-inline{flex:1 1 100%;grid-row:auto!important}
+#app .document-entry.doc-selected .document-buttons,
+#app .rivo-recent-card.doc-selected .rivo-recent-actions{display:none!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-expand-card{display:none!important}
+#app .rivo-recent-actions button,#app .document-buttons button,
+#app .library-heading-actions button,#app .rivo-scan-all-tools,
+#app .rivo-ai-watch,#app .rivo-premium-heading button,#app .btn{
+ box-sizing:border-box;min-height:36px!important;padding:7px 11px!important;
+ border-radius:11px!important;font-size:12px!important;
+}
+#app .rivo-scan-modes{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+#app .rivo-scan-mode{
+ display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+ text-align:start!important;gap:8px!important;min-height:59px!important;padding:8px 10px!important;
+}
+#app .rivo-scan-mode-icon{width:35px!important;height:35px!important;flex:none!important;border-radius:11px!important}
+#app .rivo-scan-mode strong{font-size:11px!important;line-height:1.3!important}
+#app .rivo-scan-mode-ad{top:2px!important;inset-inline-end:3px!important}
+#app .rivo-scan-first .rivo-premium-tools,
+#app .rivo-tools-hub .rivo-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#app .rivo-scan-first .rivo-premium-tile,
+#app .rivo-tools-hub .rivo-hub-tile{
+ display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+ align-items:center!important;min-height:62px!important;padding:8px 10px!important;
+ gap:7px!important;text-align:start!important;
+}
+#app .rivo-scan-first .rivo-premium-tile-icon,
+#app .rivo-tools-hub .rivo-hub-tile .tool-icon{flex:none!important;width:34px!important;height:34px!important}
+#app .rivo-scan-first .rivo-premium-tile strong,
+#app .rivo-tools-hub .rivo-hub-tile strong{font-size:11px!important;min-width:0!important;overflow-wrap:anywhere}
+body.rivo-multiselect #app .library-selection-toolbar{padding:8px!important;margin:5px 0 10px!important;border-radius:12px!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-heading{display:flex!important;align-items:center!important;gap:7px!important;font-size:11px!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions{
+ position:fixed!important;left:7px!important;right:7px!important;
+ bottom:calc(6px + env(safe-area-inset-bottom,0px))!important;z-index:100!important;
+ width:auto!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ grid-auto-rows:36px!important;gap:5px!important;padding:7px!important;
+ background:#ffffffed!important;border:1px solid #b4ded5!important;border-radius:17px!important;
+ box-shadow:0 -5px 21px #18453c29!important;
+ flex-direction:unset!important;align-items:stretch!important;max-height:45vh!important;overflow-y:auto!important;
+}
+body.rivo-multiselect #app .bulk-actions .bulk-primary,
+body.rivo-multiselect #app .bulk-actions .bulk-secondary{display:contents!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
+ width:100%!important;min-width:0!important;min-height:36px!important;max-height:42px!important;
+ padding:5px 4px!important;border-radius:11px!important;font-size:clamp(9px,2.8vw,12px)!important;
+ line-height:1.1!important;display:inline-flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:center!important;gap:5px!important;
+ background:#eefaf6!important;color:#146c69!important;border:1px solid #b9dfd8!important;
+ white-space:nowrap!important;overflow:hidden!important;box-shadow:none!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions .bulk-share-primary{
+ background:#008482!important;color:white!important;border-color:#008482!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions .bulk-delete-primary{
+ background:#fff0f2!important;color:#b33a51!important;border-color:#f2c8d1!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button span{font-size:12px!important;display:inline!important}
+body.rivo-multiselect #app .content{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))!important}
+@media(max-width:359px){
+ #app .rivo-selection-inline{gap:3px!important}
+ #app .rivo-selection-inline button{font-size:9px!important;padding:6px 2px!important}
+ #app .rivo-scan-mode{gap:5px!important;padding:7px!important}
+ #app .rivo-scan-mode-icon{width:30px!important;height:30px!important}
+}

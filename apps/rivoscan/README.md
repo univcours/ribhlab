@@ -294,3 +294,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - Search across Home and Documents now treats filename punctuation, underscores, and hyphens as word separators; multiple search terms match regardless of order (e.g. `client invoice` finds `Invoice_2026-11_client.pdf`).
 - Arabic Alef/Hamza spelling variants are folded for search only. Saved names, PDFs, and document contents are never modified; no cloud or OCR indexing is introduced.
 - Added regression tests for Arabic spelling, French accent handling, multiword filenames, and type filters. CI checks versionCode 82/versionName 0.44.6.
+
+## RivoScan 0.44.11 — compact selection
+- Removed standalone ADS header button. ADS labels remain only on ad-supported features.
+- A single selected document displays compact Share, PDF, View, Delete actions in its own card, with no bottom batch tray; PDF checkboxes are visible too.
+- Two or more selected files show a compact six-action bottom tray in three columns and two rows (safe-area aware), not a giant overlay. Buttons and quick-scan tools become horizontal rounded rectangles; centered camera FAB stays round.
