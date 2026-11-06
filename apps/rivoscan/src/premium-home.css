@@ -578,3 +578,10 @@ body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button span{
 }
 body.rivo-multiselect #app .library-selection-toolbar .bulk-actions .bulk-close{background:#fff6f0!important;color:#915124!important}
 body.rivo-multiselect #app .content{padding-bottom:calc(225px + env(safe-area-inset-bottom,0px))!important}
+
+/* Keep the complete camera circle visible even while multi-select toolbar is open. */
+@media(max-width:780px){
+ body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  display:grid!important;opacity:1!important;visibility:visible!important;
+ }
+}

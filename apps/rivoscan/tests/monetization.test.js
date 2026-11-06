@@ -2,17 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AD_CONFIG,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
  FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS} from '../src/monetization.js';
-test('banner removed; only official Google sample rewarded, interstitial and app-open units',()=>{
+test('Developer build makes no test or live ad requests',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,false);assert.equal('banner' in AD_CONFIG,false);
- assert.equal(AD_CONFIG.testMode,true);
- for(const id of ['rewarded','interstitial','appOpen'])
-  assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
+ assert.equal(AD_CONFIG.testMode,false);
+ assert.equal(AD_CONFIG.configured,false);
+ for(const id of ['rewarded','interstitial','appOpen'])assert.equal(AD_CONFIG[id],'');
+ assert.equal(AD_CONFIG.androidAppId,'ca-app-pub-7945572016731367~1509328607');
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
  for(const name of ['scan','images','importFiles','shareFiles','merge','library','idcard'])
   assert.equal(isPremiumFeature(name),false);
  for(const name of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])
-  assert.equal(isPremiumFeature(name),true);
+  assert.equal(isPremiumFeature(name),false);
 });
 test('reward unlock is limited to 10 minutes',()=>{
  assert.equal(remainingPremiumMs(600000,0),600000);

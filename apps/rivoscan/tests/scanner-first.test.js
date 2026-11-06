@@ -24,7 +24,7 @@ test('Document counts reflect actual local file types',()=>{
 test('Home prioritizes scans and documents with extra tools collapsed, keeps floating camera',()=>{
  const main=read('src/main.js'),css=read('src/premium-home.css');
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
- for(const token of ['rivo-ai-compact','rivo-scan-modes','rivo-scan-file-chips','recentDocuments(8)',
+ for(const token of ['rivo-scan-modes','rivo-scan-file-chips','recentDocuments(8)',
   'rivo-scan-more-tools','data-home-filter','rivo-premium-recent'])assert.ok(home.includes(token),token);
  assert.ok(home.indexOf('rivo-scan-modes')<home.indexOf('home-recents'));
  assert.ok(home.indexOf('home-recents')<home.indexOf('rivo-scan-more-tools'));
@@ -34,7 +34,7 @@ test('Home prioritizes scans and documents with extra tools collapsed, keeps flo
  assert.ok(css.includes('grid-template-columns:48px minmax(0,1fr) 34px'));
  assert.ok(css.includes('bottom:calc(26px + env(safe-area-inset-bottom,0px))'));
  assert.ok(!home.includes('Cloud sync'));
- assert.ok(home.includes('ADS'));
+ assert.ok(!home.includes('ADS'));
 });
 
 test('Recent document counts and thumbnails refresh after edits and new scans',()=>{

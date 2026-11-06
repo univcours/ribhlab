@@ -39,5 +39,7 @@ test('Production and debug modes stay isolated and Android Manifest needs actual
  assert.ok(ads.includes('RivoScan production AdMob App ID missing or invalid'));
  assert.ok(ads.includes('bannerEnabled:false'));
  assert.ok(ads.includes("Boolean(AD_CONFIG.rewarded)"));
+ assert.ok(ads.includes('testMode:false'));
+ assert.ok(!ads.includes('ca-app-pub-3940256099942544'),'no Google demo ad units in the bundle');
  assert.ok(ads.includes("appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||RIVOSCAN_ADMOB_APP_ID"));
 });
