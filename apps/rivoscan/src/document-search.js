@@ -30,5 +30,8 @@ export function matchesDocument(item,{query='',filter='all'}={}){
  const haystack=normalizeDocumentSearch(item.name);
  // All words must occur, regardless of order; punctuation in saved filenames
  // is treated as a separator. Search remains fully local and read-only.
- return needle.split(' ').every(word=>haystack.includes(word));
+ // Numeric-only terms (invoice numbers, years) must match complete tokens:
+ // a query for 123 must not accidentally return invoice 1234.
+ const tokens=haystack.split(' ');
+ return needle.split(' ').every(word=>/^\d+$/.test(word)?tokens.includes(word):haystack.includes(word));
 }
