@@ -12,6 +12,9 @@ adb wait-for-device
 adb shell wm size 1080x1920
 adb shell wm density 420
 adb install -r "$APK"
+# Grant the scanner's normal runtime CAMERA permission in the isolated
+# emulator before launch, to avoid photographing an Android permission sheet.
+adb shell pm grant com.ribhlab.rivoscan android.permission.CAMERA
 adb shell am force-stop com.ribhlab.rivoscan || true
 adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
 sleep 13
@@ -20,9 +23,7 @@ sleep 13
 # dismisses that sheet; capturing the sheet would not showcase product UI.
 # On a 1080x1920 / density 420 screen this is the bottom of the sheet.
 adb shell input tap 540 1726
-sleep 2
-adb shell input tap 540 1726
-sleep 2
+sleep 4
 
 adb exec-out screencap -p > "$OUT/01-rivoscan-home.png"
 
