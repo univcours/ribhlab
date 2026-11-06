@@ -279,3 +279,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - A document scan session now locks its mode after the first saved page. Switching between Document, ID Card and Whiteboard cannot reinterpret previously saved pages.
 - ID Card mode cannot accidentally switch to Single capture. On finishing with only the front side, users can continue capturing the back or explicitly export the single saved side; neither action deletes existing pages.
 - Added source-level regression tests for page preservation and mode guards. Native build/emulator checks are required to validate the actual Android interaction.
+
+## v0.44.4 — Safer multipage rotation and consistent scanner design
+- The native Manage Pages screen now uses RivoScan turquoise rather than unrelated dark blue.
+- Rotating pages now decodes a sampled bitmap (long edge ≤3600px, estimated pixels ≤12MP) instead of loading a full-resolution 50MP+ photo into memory; originals and published copies remain untouched. This may reduce rotation output resolution for very large photos, a deliberate tradeoff to avoid out-of-memory crashes.
+- If the scanner Activity closes while a page-edit thread is finishing, newly generated temporary rotated files are deleted rather than orphaned. CI source guards and regression tests added.
