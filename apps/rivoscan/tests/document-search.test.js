@@ -68,3 +68,13 @@ test('MIME parameters and whitespace do not hide PDF or image documents',()=>{
  assert.ok(matchesDocument({name:'scan',mimeType:'application/pdf; charset=binary'},{filter:'pdf'}));
  assert.ok(!matchesDocument({name:'scan',mimeType:'application/pdf; charset=binary'},{filter:'images'}));
 });
+
+test('Numeric-only search terms require exact filename tokens',()=>{
+ const item={name:'Invoice_2026_1234.pdf'};
+ assert.ok(matchesDocument(item,{query:'invoice 2026 1234',filter:'pdf'}));
+ assert.ok(!matchesDocument(item,{query:'invoice 123',filter:'pdf'}));
+ assert.ok(!matchesDocument(item,{query:'202',filter:'pdf'}));
+ assert.ok(matchesDocument({name:'فاتورة_١٢٣.pdf'},{query:'فاتورة 123'}));
+ assert.ok(!matchesDocument({name:'فاتورة_١٢٣٤.pdf'},{query:'فاتورة 123'}));
+ assert.equal(item.name,'Invoice_2026_1234.pdf');
+});
