@@ -8,7 +8,9 @@ test('Saved image is selectable and selected Share/Delete are adjacent with conf
  const share=bar.indexOf('data-bulk="share"'),del=bar.indexOf('data-bulk="delete"');
  assert.ok(share>0&&del>share);
  assert.ok(!bar.slice(share,del).includes('data-bulk="organize"'));
- assert.ok(bar.includes('class="bulk-primary"'));
+ assert.ok(bar.includes('class="bulk-actions"'));
+ assert.ok(bar.includes('data-bulk="cancel"'),'cancel is inside the compact toolbar');
+ assert.ok(bar.includes('data-bulk="merge"'),'merge works for multiple files');
  assert.ok(!b.includes("if(!mode&&!isImage(doc))return ''"),'PDF and photo selection are both available');
  assert.ok(b.includes('if(!selected.size)mode=false'));
  assert.ok(b.includes("window.confirm(t('confirm')"));
