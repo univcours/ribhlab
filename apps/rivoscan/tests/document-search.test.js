@@ -78,3 +78,13 @@ test('Numeric-only search terms require exact filename tokens',()=>{
  assert.ok(!matchesDocument({name:'فاتورة_١٢٣٤.pdf'},{query:'فاتورة 123'}));
  assert.equal(item.name,'Invoice_2026_1234.pdf');
 });
+
+test('Text search matches word prefixes but not substrings inside unrelated words',()=>{
+ const item={name:'Client_Invoice_2026.pdf'};
+ assert.ok(matchesDocument(item,{query:'cli inv',filter:'pdf'}));
+ assert.ok(matchesDocument(item,{query:'invoice client',filter:'pdf'}));
+ assert.ok(!matchesDocument(item,{query:'lient',filter:'pdf'}));
+ assert.ok(!matchesDocument({name:'Proinvoice_2026.pdf'},{query:'invoice'}));
+ assert.ok(!matchesDocument(item,{query:'202',filter:'pdf'}));
+ assert.equal(item.name,'Client_Invoice_2026.pdf');
+});
