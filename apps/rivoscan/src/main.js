@@ -516,6 +516,7 @@ function settingsWorkspace(){
  ${AD_CONFIG.testMode?`<button type="button" class="settings-row" data-ad-test><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'جرّب إعلان الشاشة الكاملة',fr:'Tester une annonce plein écran',en:'Show TEST interstitial'})[language]||'Show TEST interstitial'}</strong><small>Google demo — no paid impressions</small></span></button>`:''}
  </div>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'خيارات خصوصية الإشهارات',fr:'Confidentialité des publicités',en:'Ad privacy options'})[language]||'Ad privacy options'}</strong><small>AdMob · ${getPremiumStatus().native?'Android':'Web'}</small></span></button>
+ <a class="settings-row" href="./privacy.html" target="_blank" rel="noopener noreferrer" aria-label="RivoScan Privacy Policy"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'سياسة الخصوصية',fr:'Politique de confidentialité',en:'Privacy policy',es:'Política de privacidad',de:'Datenschutzerklärung',pt:'Política de privacidade',it:'Informativa sulla privacy'})[language]||'Privacy policy'}</strong><small>RivoScan · ${({ar:'متاحة داخل التطبيق',fr:'Accessible hors ligne',en:'Available offline'})[language]||'Available offline'}</small></span></a>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
