@@ -10,6 +10,8 @@ export function normalizeDocumentSearch(value){
   .replace(/\u0649/g,'ي')
   .replace(/\u0624/g,'و')
   .replace(/\u0626/g,'ي')
+  // Arabic-Indic and Eastern Arabic-Indic invoice numbers match ASCII digits.
+  .replace(/[\u0660-\u0669\u06f0-\u06f9]/g,d=>String(d.charCodeAt(0)-(d.charCodeAt(0)<=0x0669?0x0660:0x06f0)))
   .replace(/[\p{P}\p{S}_]+/gu,' ')
   .toLocaleLowerCase().replace(/\s+/g,' ').trim();
 }
