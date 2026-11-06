@@ -1,5 +1,5 @@
-// RivoScan AdMob: official Google demo units for debug, verified publisher
-// units ONLY for explicit production builds. Never synthesize real identifiers.
+// AdMob: RivoScan verified publisher units ONLY in explicit production.
+ // Developer APKs never request test or real ads.
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
 import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID,RIVOSCAN_ADMOB_APP_ID} from './admob-production-ids.js';
@@ -10,12 +10,12 @@ const liveUnits=buildProductionAds({
  appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||RIVOSCAN_ADMOB_APP_ID
 });
 export const AD_CONFIG=Object.freeze({
- testMode:!productionAds,
- configured:!productionAds||liveUnits.configured,
- androidAppId:productionAds?liveUnits.appId:'ca-app-pub-3940256099942544~3347511713',
- rewarded:productionAds?(liveUnits.configured?liveUnits.rewarded:''):'ca-app-pub-3940256099942544/5224354917',
- interstitial:productionAds?(liveUnits.configured?RIVOSCAN_INTERSTITIAL_ID:''):'ca-app-pub-3940256099942544/1033173712',
- appOpen:productionAds?(liveUnits.configured?RIVOSCAN_APP_OPEN_ID:''):'ca-app-pub-3940256099942544/9257395921',
+ testMode:false,
+ configured:productionAds&&liveUnits.configured,
+ androidAppId:RIVOSCAN_ADMOB_APP_ID,
+ rewarded:productionAds&&liveUnits.configured?liveUnits.rewarded:'',
+ interstitial:productionAds&&liveUnits.configured?RIVOSCAN_INTERSTITIAL_ID:'',
+ appOpen:productionAds&&liveUnits.configured?RIVOSCAN_APP_OPEN_ID:'',
  bannerEnabled:false
 });
 export const PREMIUM_MINUTES=10;
@@ -31,7 +31,7 @@ const PREMIUM_IDS=new Set([
 export function isPremiumFeature(id){
  // RivoScan now has a real Rewarded unit. The user must opt in and the SDK
  // must report a real reward before advanced access is granted.
- return PREMIUM_IDS.has(String(id||''))&&(!productionAds||Boolean(AD_CONFIG.rewarded));
+ return productionAds&&AD_CONFIG.configured&&PREMIUM_IDS.has(String(id||''))&&Boolean(AD_CONFIG.rewarded);
 }
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
 export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0}){
@@ -55,9 +55,9 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  interstitialReady:false,appOpenReady:false,status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 const strings={
- en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'ADS',cancel:'Not now',unavailable:'Ad not ready. Open Me → Ad diagnostics to retry.',success:'Advanced tools unlocked for 10 minutes.'},
- ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات ديالك كيبقاو متاحين.',watch:'ADS',cancel:'رجوع',unavailable:'الإعلان مازال ما وجدش. دخل للإعدادات > تشخيص الإشهارات وعاود المحاولة.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
- fr:{title:'Débloquer les outils avancés',body:'Regardez volontairement une publicité pour accéder aux outils avancés pendant 10 minutes. Documents et scan simple restent disponibles.',watch:'ADS',cancel:'Retour',unavailable:'Publicité indisponible. Réessayez dans Diagnostics publicitaires.',success:'Outils avancés débloqués pour 10 minutes.'}
+ en:{title:'Unlock advanced tools',body:'Choose to watch a rewarded video to use advanced tools for 10 minutes. Basic scanning and saved documents remain available.',watch:'Watch video',cancel:'Not now',unavailable:'Video unavailable for now. Try again later.',success:'Advanced tools unlocked for 10 minutes.'},
+ ar:{title:'فتح الأدوات المتقدمة',body:'يمكن ليك تختار تشاهد فيديو إعلاني باش تستعمل الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات متاحين.',watch:'شاهد الفيديو',cancel:'رجوع',unavailable:'الفيديو مازال ما متوفرش، عاود من بعد.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
+ fr:{title:'Débloquer les outils avancés',body:'Choisissez de regarder une vidéo publicitaire pour accéder aux outils avancés pendant 10 minutes. Le scan simple reste accessible.',watch:'Voir la vidéo',cancel:'Retour',unavailable:'Vidéo indisponible pour le moment.',success:'Outils avancés débloqués pour 10 minutes.'}
 };
 const tr=()=>strings[state.getLanguage()]||strings.en;
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
@@ -89,7 +89,8 @@ async function loadAppOpen(){
  }catch(error){status('App open unavailable',String(error?.message||error));return false;}
 }
 export async function initializeAds({retry=false}={}){
- if(!isAndroid){status('Ads need the Android app');return false;}
+ if(!isAndroid){status('AdMob is only available on Android');return false;}
+ if(!productionAds){status('Developer build: monetization disabled');return false;}
  if(!AD_CONFIG.configured){status('RivoScan production AdMob App ID missing or invalid');return false;}
  if(state.ready)return true;
  if(state.initializing)return state.initializing;
@@ -204,18 +205,6 @@ export async function onAppForeground({backgroundMs=0,working=false}={}){
   return true;
  }catch(error){status('App open failed',String(error?.message||error));return false;}
  finally{state.busy=false;void loadAppOpen();}
-}
-export async function showTestInterstitial(){
- if(!AD_CONFIG.testMode||!isAndroid)return false;
- if(!(await initializeAds()))return false;
- if(!state.interstitialReady){await loadInterstitial();}
- if(!state.interstitialReady||state.busy)return false;
- state.busy=true;state.interstitialReady=false;
- try{
-  await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
-  state.lastFullscreenAt=Date.now();status('TEST interstitial shown');return true;
- }catch(error){status('TEST interstitial failed',String(error?.message||error));return false;}
- finally{state.busy=false;void loadInterstitial();}
 }
 export async function openAdPrivacyOptions(){
  if(!isAndroid)return false;

@@ -105,33 +105,27 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# AdMob app ID verified from RivoScan > App settings, 2026-11-06.
-# Debug uses Google demo ID; production uses ONLY the exact RivoScan App ID.
+# Verified real App ID in all Android manifests; only the production
+# JavaScript build can initialize AdMob. Debug makes zero ad requests.
 $productionAds = $env:RIVOSCAN_ADMOB_PRODUCTION -eq 'true'
 $verifiedRivoScanAppId = 'ca-app-pub-7945572016731367~1509328607'
-if ($productionAds) {
-  if ($env:RIVOSCAN_ADMOB_APP_ID -and $env:RIVOSCAN_ADMOB_APP_ID -ne $verifiedRivoScanAppId) {
-    throw 'RivoScan production AdMob App ID does not match the verified ID.'
-  }
-  $admobAppId = $verifiedRivoScanAppId
-} else {
-  $admobAppId = 'ca-app-pub-3940256099942544~3347511713'
+if ($env:RIVOSCAN_ADMOB_APP_ID -and $env:RIVOSCAN_ADMOB_APP_ID -ne $verifiedRivoScanAppId) {
+  throw 'RivoScan AdMob App ID does not match the verified application.'
 }
+$admobAppId = $verifiedRivoScanAppId
 $admobMeta = '<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + $admobAppId + '" />'
 if ($xml.Contains('com.google.android.gms.ads.APPLICATION_ID')) {
-  $xml = [regex]::Replace($xml, '<meta-data[^>]+com\.google\.android\.gms\.ads\.APPLICATION_ID[^>]*/>', $admobMeta)
+  $xml = [regex]::Replace($xml,'<meta-data[^>]+com\.google\.android\.gms\.ads\.APPLICATION_ID[^>]*/>',$admobMeta)
 } else {
   if (-not $xml.Contains('</application>')) { throw 'Android manifest application tag is missing.' }
-  $xml = $xml.Replace('</application>', $admobMeta + [Environment]::NewLine + '</application>')
+  $xml = $xml.Replace('</application>',$admobMeta + [Environment]::NewLine + '</application>')
 }
-if (-not $xml.Contains($admobAppId)) {
-  throw 'AdMob APP ID was not written to the manifest.'
-}
+if (-not $xml.Contains($admobAppId)) { throw 'AdMob APP ID was not written to the manifest.' }
 [IO.File]::WriteAllText($manifest, $xml, $utf8)
 if ($productionAds) {
-  Write-Host 'PASS: RivoScan production AdMob App ID configured.'
+  Write-Host 'PASS: Verified production AdMob App ID.'
 } else {
-  Write-Host 'PASS: Debug Google demo AdMob App ID configured.'
+  Write-Host 'PASS: Developer build: verified App ID, AdMob disabled by JavaScript.'
 }
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.

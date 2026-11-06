@@ -329,3 +329,7 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 
 ## UI revision 0.44.16
 Removed promotional ADS labels/cards and testing controls; kept neutral privacy choices. Single selected file now has four small 2x2 icon actions inside its right edge. With 2+ files, 7-action toolbar is fixed in two compact rows above the bottom navigation and camera FAB, with Android safe area. No changes to stored document bytes.
+
+## 0.44.16 monetization
+- Removed all Google sample/demo identifiers and manual test ads from the app. Developer APK requests no ads. Real app ID is verified in the Android manifest, while real rewarded/interstitial/app-open units are initialized ONLY in the production Play AAB after Google UMP consent. Basic and advanced scanning remain available in debug; production rewarded flow still requires a real callback.
+- Live revenue depends on AdMob app review, correctly linked Play listing, signed AAB and Google serving approval.
