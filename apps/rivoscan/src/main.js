@@ -78,6 +78,23 @@ function hydrateDocumentThumbnails(){
  nodes.forEach(node=>thumbnailObserver.observe(node));
 }
 
+/** Refresh file previews and category counters without destroying the user's
+ * current search, document selection or expanded-file state. */
+function refreshHomeDocuments(){
+ const rows=document.getElementById('home-recents');
+ if(!rows)return;
+ rows.innerHTML=recentDocuments(8);
+ const counts=documentCategoryCounts(libraryItems,visualFileType);
+ const total=document.querySelector('[data-home-recent-count]');
+ if(total)total.textContent=String(counts.all);
+ document.querySelectorAll('[data-home-filter]').forEach(button=>{
+  const kind=button.dataset.homeFilter;
+  const badge=button.querySelector('small');
+  if(badge&&Object.hasOwn(counts,kind))badge.textContent=String(counts[kind]);
+ });
+ hydrateDocumentThumbnails();
+}
+
 const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
@@ -208,7 +225,7 @@ const docViewerUI=createDocumentViewer({
     if(activeTool?.id==='library')refreshVisibleLibrary();
     else if(!activeTool){
       const home=document.getElementById('home-recents');
-      if(home)home.innerHTML=recentDocuments(8);
+      if(home)refreshHomeDocuments();
     }
   },
   onEdit:async(tool,doc,bytes)=>{
@@ -228,7 +245,7 @@ const docViewerUI=createDocumentViewer({
         onRefresh:async()=>{
           await loadLibrary(false);
           if(activeTool?.id==='library')refreshVisibleLibrary();
-          else{const rows=document.getElementById('home-recents');if(rows)rows.innerHTML=recentDocuments(8);}
+          else refreshHomeDocuments();
         },
         notify:toast
       });
@@ -250,7 +267,7 @@ const bulkUI=createLibraryBulk({
   bridge:RivoDocuments,getLanguage:()=>language,getItems:()=>libraryItems,
   onRefresh:async()=>{
     await loadLibrary(false);refreshVisibleLibrary();
-    const recents=document.getElementById('home-recents');if(recents)recents.innerHTML=recentDocuments(8);
+    refreshHomeDocuments();
   },
   onPreview:doc=>docViewerUI.open(doc),
   onOpenLibrary:()=>openLibrary(),
@@ -423,7 +440,7 @@ function home(){
   <div class="rivo-scan-first-heading"><div><h2>${escapeHTML(scan.quick)}</h2><p>${escapeHTML(scan.quickSub)}</p></div></div>
   <div class="rivo-scan-modes" role="group" aria-label="${escapeHTML(scan.quick)}">${quick}</div>
   <div class="rivo-scan-first-heading rivo-scan-recent-title">
-   <div><h2>${escapeHTML(scan.recent)}</h2><p>${counts.all} · ${escapeHTML(scan.saved)}</p></div>
+   <div><h2>${escapeHTML(scan.recent)}</h2><p><span data-home-recent-count>${counts.all}</span> · ${escapeHTML(scan.saved)}</p></div>
    <button type="button" data-open-library>${escapeHTML(scan.all)} ${ico('back',16)}</button>
   </div>
   <label class="rivo-premium-search">${ico('search',19)}<input type="search" id="home-quick-search"
@@ -609,11 +626,7 @@ async function loadLibrary(show=true){
   finally{
     libraryLoading=false;
     if(show&&activeTool?.id==='library')render();
-    else if(!activeTool){
-      const homeRows=document.getElementById('home-recents');
-      if(homeRows)homeRows.innerHTML=recentDocuments(8);
-      hydrateDocumentThumbnails();
-    }
+    else if(!activeTool)refreshHomeDocuments();
   }
 }
 async function chooseLibraryFiles(kind='file'){
@@ -676,10 +689,7 @@ function launchPerfectScan(doc=null){
     onRefresh:async()=>{
       await loadLibrary(false);
       if(activeTool?.id==='library')refreshVisibleLibrary();
-      else{
-        const rows=document.getElementById('home-recents');
-        if(rows)rows.innerHTML=recentDocuments(8);
-      }
+      else refreshHomeDocuments();
     },
     notify:toast
   });
@@ -783,9 +793,7 @@ function wire(){
   bulkUI.wireToolbar(document.getElementById('home-selection-root'));
   document.getElementById('home-quick-search')?.addEventListener('input',event=>{
     homeSearchQuery=event.target.value;
-    const rows=document.getElementById('home-recents');
-    if(rows)rows.innerHTML=recentDocuments(8);
-    hydrateDocumentThumbnails();
+    refreshHomeDocuments();
     const heading=document.getElementById('home-results-title');
     if(heading)heading.textContent=homeSearchQuery.trim()?hv('results'):ut('recent');
     bulkUI.sync();
@@ -810,9 +818,7 @@ function wire(){
         const doc=libraryItems[Number(target.dataset.expandDoc)];
         if(doc){
           homeExpandedUri=homeExpandedUri===doc.uri?'none':doc.uri;
-          const list=document.getElementById('home-recents');
-          if(list)list.innerHTML=recentDocuments(8);
-          hydrateDocumentThumbnails();
+          refreshHomeDocuments();
           bulkUI.sync();
         }
         return;

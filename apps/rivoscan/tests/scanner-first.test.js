@@ -36,3 +36,19 @@ test('Home prioritizes scans and documents with extra tools collapsed, keeps flo
  assert.ok(!home.includes('Cloud sync'));
  assert.ok(home.includes('ADS'));
 });
+
+test('Recent document counts and thumbnails refresh after edits and new scans',()=>{
+ const main=read('src/main.js');
+ const refresh=main.slice(main.indexOf('function refreshHomeDocuments(){'),
+   main.indexOf('const RivoUVDoc =',main.indexOf('function refreshHomeDocuments(){')));
+ for(const key of ['recentDocuments(8)','documentCategoryCounts(libraryItems,visualFileType)',
+  "document.querySelector('[data-home-recent-count]')",
+  "document.querySelectorAll('[data-home-filter]')",'hydrateDocumentThumbnails()']){
+  assert.ok(refresh.includes(key),key);
+ }
+ assert.ok(main.includes('<span data-home-recent-count>'));
+ assert.ok(main.includes("else if(!activeTool)refreshHomeDocuments();"));
+ assert.ok(main.includes("homeSearchQuery=event.target.value;\\n    refreshHomeDocuments();"));
+ assert.ok(main.includes("homeExpandedUri=homeExpandedUri===doc.uri?'none':doc.uri;"));
+ assert.ok(!refresh.includes("render();"),'do not reset search or selection by rerendering all');
+});

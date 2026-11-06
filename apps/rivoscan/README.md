@@ -284,3 +284,8 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - The native Manage Pages screen now uses RivoScan turquoise rather than unrelated dark blue.
 - Rotating pages now decodes a sampled bitmap (long edge ≤3600px, estimated pixels ≤12MP) instead of loading a full-resolution 50MP+ photo into memory; originals and published copies remain untouched. This may reduce rotation output resolution for very large photos, a deliberate tradeoff to avoid out-of-memory crashes.
 - If the scanner Activity closes while a page-edit thread is finishing, newly generated temporary rotated files are deleted rather than orphaned. CI source guards and regression tests added.
+
+## 0.44.5 — live document counts and thumbnails
+- After saving/scanning, batch edits, search and expansion, the Home file list and the All/PDF/Images counters now refresh together without resetting the search query, current selection or view.
+- Real local PDF/photo thumbnails are rehydrated for the updated rows (lazy/size-limited); original documents are unchanged.
+- The scanner-first workflow, AD labels, 4 bottom tabs and center floating camera remain unchanged. Added regression coverage.
