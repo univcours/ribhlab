@@ -523,3 +523,58 @@ body.rivo-multiselect #app .content{padding-bottom:calc(130px + env(safe-area-in
  #app .rivo-scan-mode{gap:5px!important;padding:7px!important}
  #app .rivo-scan-mode-icon{width:30px!important;height:30px!important}
 }
+
+/* v0.44.16: single file actions 2x2 to the RIGHT of the card */
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ position:relative!important;grid-template-columns:44px minmax(0,1fr) 88px!important;
+ grid-template-rows:minmax(88px,auto)!important;column-gap:8px!important;min-height:104px!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-file-thumb{grid-column:1!important;grid-row:1!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .recent-file-meta{grid-column:2!important;grid-row:1!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-recent-check{
+ position:absolute!important;inset-inline-end:12px!important;top:8px!important;
+ width:28px!important;height:28px!important;margin:0!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-selection-inline{
+ grid-column:3!important;grid-row:1!important;align-self:end!important;
+ position:relative!important;inset:auto!important;display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ width:84px!important;margin:0!important;padding:32px 0 0!important;gap:4px!important;border:0!important;
+}
+#app .rivo-selection-inline button{display:grid!important;place-items:center!important;
+ min-width:0!important;width:100%!important;min-height:28px!important;height:28px!important;max-height:28px!important;
+ margin:0!important;padding:0!important;border-radius:8px!important;font-size:17px!important}
+#app .rivo-selection-inline button span{font-size:17px!important;line-height:1!important}
+#app .document-entry.doc-selected{position:relative!important;min-height:96px!important;padding-inline-end:105px!important}
+#app .document-entry.doc-selected>.rivo-selection-inline{
+ position:absolute!important;inset-inline-end:9px!important;inset-block-end:8px!important;
+ flex:none!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ width:84px!important;padding:0!important;margin:0!important;gap:5px!important;border:0!important;
+}
+/* multi file: two compact rows ABOVE nav and camera, full width */
+body.rivo-multiselect #app .library-selection-toolbar{
+ position:fixed!important;left:7px!important;right:7px!important;
+ bottom:calc(104px + env(safe-area-inset-bottom,0px))!important;
+ top:auto!important;width:auto!important;margin:0!important;padding:0!important;
+ background:transparent!important;box-shadow:none!important;border:0!important;z-index:91!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-heading{display:none!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions{
+ position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-auto-rows:32px!important;gap:5px!important;padding:7px!important;margin:0!important;
+ max-height:none!important;overflow:visible!important;background:#fffffffa!important;
+ border:1px solid #a9dcd2!important;border-radius:13px!important;box-shadow:0 5px 20px #0e585843!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex-direction:row!important;gap:3px!important;min-width:0!important;width:100%!important;
+ min-height:32px!important;height:32px!important;max-height:32px!important;
+ padding:3px 2px!important;border-radius:9px!important;
+ font-size:clamp(8px,2.5vw,10px)!important;white-space:nowrap!important;overflow:hidden!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button span{
+ font-size:inherit!important;line-height:1!important;overflow:hidden;text-overflow:ellipsis;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions .bulk-close{background:#fff6f0!important;color:#915124!important}
+body.rivo-multiselect #app .content{padding-bottom:calc(225px + env(safe-area-inset-bottom,0px))!important}

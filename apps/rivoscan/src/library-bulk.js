@@ -34,23 +34,16 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
     if(!mode||selected.size<2)return '';
-    const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
-    return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
-      <div class="bulk-heading"><strong>${items.length} ${t('selected')}</strong>
-        <small>${size(total)}</small>
-        <button class="bulk-close" type="button" data-bulk="cancel" aria-label="${t('cancel')}">✕</button>
-      </div>
+    const items=selectedDocs();
+    return `<div class="library-selection-toolbar" role="group" aria-label="${items.length} ${t('selected')}">
       <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
-        <div class="bulk-primary">
-          <button type="button" data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
-          <button type="button" data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
-        </div>
-        <div class="bulk-secondary">
-          <button type="button" data-bulk="all">${t('all')}</button>
-          <button type="button" data-bulk="invert">${t('invert')}</button>
-          <button type="button" data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
-          <button type="button" data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
-        </div>
+        <button type="button" data-bulk="share" class="bulk-share-primary" aria-label="${t('share')}"><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
+        <button type="button" data-bulk="delete" class="bulk-delete-primary" aria-label="${t('delete')}"><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
+        <button type="button" data-bulk="organize" aria-label="${t('move')} / ${t('copy')}"><span aria-hidden="true">▣</span><span>${t('move')} / ${t('copy')}</span></button>
+        <button type="button" data-bulk="merge" aria-label="${t('merge')}"><span aria-hidden="true">▤</span><span>${t('merge')}</span></button>
+        <button type="button" data-bulk="all" aria-label="${t('all')}"><span aria-hidden="true">☑</span><span>${t('all')}</span></button>
+        <button type="button" data-bulk="invert" aria-label="${t('invert')}"><span aria-hidden="true">⇄</span><span>${t('invert')}</span></button>
+        <button type="button" data-bulk="cancel" class="bulk-close" aria-label="${t('cancel')}"><span aria-hidden="true">×</span><span>${t('cancel')}</span></button>
       </div>
     </div>`;
   }
@@ -88,12 +81,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const index=Number(row.dataset.docOpen);
           const name=String(doc.name||'').toLowerCase();
           const mime=String(doc.mimeType||'').toLowerCase();
-          const convertible=mime.includes('pdf')||mime.startsWith('image/')||/\\.(pdf|jpe?g|png|webp|heic)$/.test(name);
+          const convertible=mime.includes('pdf')||mime.startsWith('image/')||/\.(pdf|jpe?g|png|webp|heic)$/.test(name);
           const actions=`<div class="rivo-selection-inline" role="group" aria-label="${t('menu')}">
-            <button type="button" data-doc-share="${index}" aria-label="${t('share')}">↗ <span>${t('share')}</span></button>
-            ${convertible?`<button type="button" data-doc-savepdf="${index}" aria-label="${t('pdf')}">▤ <span>${t('pdf')}</span></button>`:''}
-            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}">◉ <span>${t('preview')}</span></button>
-            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}">⌫ <span>${t('delete')}</span></button>
+            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span aria-hidden="true">↗</span></button>
+            ${convertible?`<button type="button" data-doc-savepdf="${index}" aria-label="${t('pdf')}" title="${t('pdf')}"><span aria-hidden="true">▤</span></button>`:''}
+            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span aria-hidden="true">◉</span></button>
+            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span aria-hidden="true">⌫</span></button>
           </div>`;
           row.insertAdjacentHTML('beforeend',actions);
         }
