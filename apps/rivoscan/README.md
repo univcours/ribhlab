@@ -257,3 +257,10 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 - All ad-funded tool badges, toolbar and compact AI drawer use **ADS** rather than AD or a timer label.
 - Opt-in rewarded video CTA uses **ADS** across seven dashboard languages and three ad dialog languages. The dialog body discloses the actual ten-minute reward before viewing; no misleading countdown badges remain.
 - Reward duration, consent, actual SDK reward callback, navigation and existing document storage unchanged.
+
+## v0.44.0 — Scanner-first workflow, CamScanner-inspired experience
+- Original RivoScan teal identity (no competitor names, logos, art or copied design).
+- Prioritizes four working scan modes: Document (native Google ML Kit with fallback), ID, Book (ADS gate) and Gallery import.
+- Recent saved documents moved above advanced tools and displayed as compact one-row entries, with actual local file counts, search and All/PDF/Images navigation to filtered Documents.
+- Nine extended tools remain inside collapsed More tools; the full Tools screen remains available. The small AI/ADS drawer and visible, centered camera FAB remain unchanged.
+- Documents, share, PDF creation and local storage remain preserved; no fake cloud sync features or unsupported OCR claims.
