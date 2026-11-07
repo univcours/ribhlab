@@ -14,7 +14,7 @@ test('One PDF: six right-aligned small horizontal buttons, no filename overlap',
  assert.ok(bulk.includes("if(!mode||selected.size<2)return '';"));
  assert.ok(bulk.includes("mode&&selected.size===1&&doc&&chosen(doc)"));
  for(const action of ['share','edit','preview','rename','delete','add'])
-  assert.ok(bulk.includes('data-doc-'+action+'="\${index}"'),action);
+  assert.ok(bulk.includes('data-doc-'+action+'="${index}"'),action);
  assert.ok(css.includes('0.44.21: the selected file stays readable'));
  assert.ok(css.includes('flex-flow:row nowrap!important'));
  assert.ok(css.includes('justify-content:flex-end!important'));
