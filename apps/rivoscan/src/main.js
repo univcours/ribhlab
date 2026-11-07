@@ -437,7 +437,7 @@ function home(){
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
   <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(8)}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
-  <details class="rivo-scan-more-tools">
+  <details class="rivo-scan-more-tools" open>
    <summary><span class="rivo-scan-more-icon">${ico('grid',19)}</span><span><strong>${escapeHTML(scan.more)}</strong><small>${escapeHTML(scan.moreSub)}</small></span>${ico('back',16)}</summary>
    <div class="rivo-premium-tools">${tiles}</div>
    <button type="button" data-tab="tools" class="rivo-scan-all-tools">${ut('seeAll')} ${ico('back',16)}</button>
