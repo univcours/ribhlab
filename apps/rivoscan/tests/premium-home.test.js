@@ -1,16 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {homeTiles,premiumCopy,premiumClock} from '../src/premium-home-model.js';
+import {homeTiles,premiumCopy} from '../src/premium-home-model.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('Home shortcuts and all seven locales work',()=>{
  assert.equal(homeTiles.length,9);assert.equal(new Set(homeTiles.map(x=>x.id)).size,9);
  for(const lang of ['en','ar','fr','es','de','pt','it']){
   const c=premiumCopy(lang);assert.equal(c.names.length,9);assert.equal(c.tabs.length,3);
  }
- assert.equal(premiumClock(600000),'10:00');
 });
-test('No promo ads on Home/Tools, but real contextual reward verification remains',()=>{
+test('No rewarded ad calls, gates or promos remain in Home and Tools',()=>{
  const main=read('src/main.js'),ads=read('src/monetization.js');
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
  assert.ok(!home.includes('rivo-ai-compact'));
@@ -20,6 +19,8 @@ test('No promo ads on Home/Tools, but real contextual reward verification remain
   assert.ok(!main.includes(key),key);
  assert.ok(ads.includes('requestPremium(){return true;}'));
  assert.ok(!ads.includes('offerReward()'));
+ assert.ok(!ads.includes('rewarded:'));
+ assert.ok(!read('src/premium-home-model.js').includes('watch:'));
  assert.ok(read('src/scan-editor.js').includes('rivo-editor-retake'));
 });
 test('FAB centered in four-tab nav and safe area',()=>{

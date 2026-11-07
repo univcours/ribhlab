@@ -1589,7 +1589,7 @@ document.addEventListener('touchend',event=>{
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
 render();
-// Google demo ads, GDPR/UMP privacy flow; no app-open interruption.
+// AdMob UMP consent: debug uses safe demo IDs, signed production uses real units.
 void initializeAds();
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))

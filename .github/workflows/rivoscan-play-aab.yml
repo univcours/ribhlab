@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       production_ads:
-        description: 'Build RivoScan with three verified real AdMob units'
+        description: 'Build RivoScan with two verified real AdMob units'
         required: false
         type: boolean
         default: true
@@ -18,8 +18,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      # Play candidate AAB (including push CI) uses real RivoScan IDs. Debug APK
-      # workflow remains Google demo-only, so developer installs are safe.
+      # Play candidate AAB uses real interstitial/app-open units. The developer APK
+      # uses Google demo units so testing cannot generate invalid production traffic.
       RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
       VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
       RIVOSCAN_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
@@ -61,10 +61,10 @@ jobs:
           npm run check:ads
           npm run build
           if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
-            grep -RqF 'ca-app-pub-7945572016731367/4148993879' dist/assets
             grep -RqF 'ca-app-pub-7945572016731367/5608742752' dist/assets
             grep -RqF 'ca-app-pub-7945572016731367/6270875707' dist/assets
-            echo 'PASS: Three real RivoScan ad units included in production bundle.'
+            ! grep -RqF 'ca-app-pub-7945572016731367/4148993879' dist/assets
+            echo 'PASS: Only real interstitial and app-open units included in production bundle.'
           fi
       - name: Generate Android and integrate scanner
         run: |
