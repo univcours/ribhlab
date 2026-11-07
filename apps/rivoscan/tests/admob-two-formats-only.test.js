@@ -16,7 +16,7 @@ test('Real ad IDs contain no rewarded unit, and debug only requests safe demo ad
  assert.ok(ads.includes("const demoAppOpen='ca-app-pub-3940256099942544/9257395921'"));
 });
 test('Release workflow builds real full-screen units and excludes rewarded',()=>{
- const workflow=get('../.github/workflows/rivoscan-play-aab.yml');
+ const workflow=get('../../.github/workflows/rivoscan-play-aab.yml');
  assert.ok(workflow.includes("VITE_RIVOSCAN_ADMOB_PRODUCTION:"));
  assert.ok(workflow.includes("! grep -RqF 'ca-app-pub-7945572016731367/4148993879'"));
  assert.ok(workflow.includes("RIVOSCAN_ADMOB_APP_ID:"));
