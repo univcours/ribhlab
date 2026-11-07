@@ -29,6 +29,6 @@ test('camera approval includes a real + Add Page and batch mode',()=>{
  assert.ok(n.includes('.setNegativeButton(add,'));
 });
 test('bumped build to distinguish previous installed APK',()=>{
- assert.ok(read('rivoscan-version.properties').includes('versionCode=97'));
- assert.equal(JSON.parse(read('package.json')).version,'0.44.21');
+ assert.ok(read('rivoscan-version.properties').includes('versionCode=98'));
+ assert.equal(JSON.parse(read('package.json')).version,'0.44.22');
 });

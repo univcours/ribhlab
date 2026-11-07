@@ -43,14 +43,33 @@ try {
   $sourceCode=[long]$codeMatch.Groups[1].Value
   $sourceName=$nameMatch.Groups[1].Value
   $npmName=(Get-Content -LiteralPath (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
-  if($sourceCode -lt 96 -or $sourceName -ne $npmName){
-    throw "Release is older than code 96 or its versions disagree. Stale install refused." }
+  if($sourceCode -lt 98 -or $sourceName -ne $npmName){
+    throw "RivoScan build is older than code 98, or versions disagree. Stale install refused." }
   Write-Host "VERIFIED LATEST SOURCE v$sourceName / code $sourceCode / $($localCommit.Substring(0,12))" -ForegroundColor Green
   $repair = Join-Path $root "repair-rivoscan-android.ps1"
   if(-not (Test-Path -LiteralPath $repair)){throw "Repair script missing: $repair"}
   Write-Host "RivoScan: rebuilding complete Android APK including native scanner and updated launcher..." -ForegroundColor Cyan
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $repair
-  Assert-Code "Android rebuild"
+  # An Android Studio production session must NEVER leak live ad settings into QA.
+  # This script always builds debug with Google-safe demo IDs, not revenue ads.
+  $previousRivoProduction=$env:RIVOSCAN_ADMOB_PRODUCTION
+  $previousViteProduction=$env:VITE_RIVOSCAN_ADMOB_PRODUCTION
+  $env:RIVOSCAN_ADMOB_PRODUCTION='false'
+  $env:VITE_RIVOSCAN_ADMOB_PRODUCTION='false'
+  try {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $repair
+    Assert-Code "Android rebuild"
+  } finally {
+    $env:RIVOSCAN_ADMOB_PRODUCTION=$previousRivoProduction
+    $env:VITE_RIVOSCAN_ADMOB_PRODUCTION=$previousViteProduction
+  }
+  # A branch update arriving during the native build must not yield a stale APK.
+  & git.exe -C $checkoutRoot fetch --no-tags origin "refs/heads/$($releaseBranch):refs/remotes/origin/$($releaseBranch)" | Out-Host
+  Assert-Code "Refresh latest RivoScan revision after build"
+  $latest=((& git.exe -C $checkoutRoot rev-parse "refs/remotes/origin/$releaseBranch") | Out-String).Trim()
+  Assert-Code "Verify latest revision after build"
+  if($latest -ne $localCommit){
+    throw "A NEWER RivoScan was published during compilation. Refusing stale APK: rerun the same installer."
+  }
   $apk = Join-Path $root "android\app\build\outputs\apk\debug\app-debug.apk"
   if(-not (Test-Path -LiteralPath $apk)){throw "New debug APK not found: $apk"}
 
@@ -77,9 +96,15 @@ try {
   if($targetSerial) {
     $targetSerial=$targetSerial.Trim()
     if($serials -notcontains $targetSerial) {
-      throw "Selected Android device $targetSerial is not connected/authorized. Online devices: $($serials -join ', ')."
+      if($serials.Count -eq 1){
+        Write-Host "Ignoring old/offline RIVOSCAN_DEVICE_SERIAL $targetSerial; using the only connected phone $($serials[0])." -ForegroundColor Yellow
+        $serial=$serials[0]
+      } else {
+        throw "Selected Android device $targetSerial is offline. Online devices: $($serials -join ', '). Set a current RIVOSCAN_DEVICE_SERIAL."
+      }
+    } else {
+      $serial=$targetSerial
     }
-    $serial=$targetSerial
   } elseif($serials.Count -eq 1) {
     $serial=$serials[0]
   } else {
@@ -190,7 +215,7 @@ try {
     throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
   }
   Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
-  if($after.VersionCode -lt 96){
+  if($after.VersionCode -lt 98){
     throw "The phone still reports an OLD build. Installation is NOT successful."
   }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
