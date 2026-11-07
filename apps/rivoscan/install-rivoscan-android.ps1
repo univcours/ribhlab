@@ -43,8 +43,8 @@ try {
   $sourceCode=[long]$codeMatch.Groups[1].Value
   $sourceName=$nameMatch.Groups[1].Value
   $npmName=(Get-Content -LiteralPath (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
-  if($sourceCode -lt 95 -or $sourceName -ne $npmName){
-    throw "Release is older than code 95 or its versions disagree. Stale install refused." }
+  if($sourceCode -lt 96 -or $sourceName -ne $npmName){
+    throw "Release is older than code 96 or its versions disagree. Stale install refused." }
   Write-Host "VERIFIED LATEST SOURCE v$sourceName / code $sourceCode / $($localCommit.Substring(0,12))" -ForegroundColor Green
   $repair = Join-Path $root "repair-rivoscan-android.ps1"
   if(-not (Test-Path -LiteralPath $repair)){throw "Repair script missing: $repair"}
@@ -190,6 +190,9 @@ try {
     throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
   }
   Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
+  if($after.VersionCode -lt 96){
+    throw "The phone still reports an OLD build. Installation is NOT successful."
+  }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
   & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
