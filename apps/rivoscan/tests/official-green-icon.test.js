@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+const root=new URL('../',import.meta.url);
+const sha=x=>createHash('sha256').update(x).digest('hex');
+test('Owner official green logo is the identical image in app and Android build',()=>{
+ const expected='67cd03f1d7e91e50ed398cc03c0a77482721e23053831df13984dbe3dffd9ce3';
+ const icon=readFileSync(new URL('assets/rivoscan-original-green-icon-512.png',root));
+ const web=readFileSync(new URL('public/rivoscan-icon.png',root));
+ assert.equal(icon.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(icon.readUInt32BE(16),512);
+ assert.equal(icon.readUInt32BE(20),512);
+ assert.equal(sha(icon),expected);
+ assert.equal(sha(web),expected);
+ const generated=readFileSync(new URL('scripts/create-turquoise-icon.mjs',root),'utf8');
+ assert.ok(generated.includes('rivoscan-original-green-icon-512.png'));
+ assert.ok(generated.includes(expected));
+ assert.ok(generated.includes('node_modules/.cache/rivoscan/icon.png.b64'));
+});
