@@ -43,6 +43,9 @@ jobs:
               throw "Invalid PowerShell script: $script"
             }
           }
+      - name: Verify phone versionCode file generation against simulated ADB
+        shell: pwsh
+        run: ./tests/debug-version-roundtrip.ps1
       - name: Install dependencies and test
         run: |
           npm install --no-audit --no-fund

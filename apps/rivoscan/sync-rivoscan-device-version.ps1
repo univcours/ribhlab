@@ -55,8 +55,28 @@ try {
   }
   [long]$new=[Math]::Max([Math]::Max($base,$previous),$installed+1)
   if($new -gt 2100000000L){throw 'versionCode too high for safe Android update.'}
-  $lines=@('# Generated for local debug builds only; do not commit','versionCode='+$new)
-  [IO.File]::WriteAllLines($file,[string[]]$lines,[Text.UTF8Encoding]::new($false))
+  # Explicit formatting is critical. PowerShell array-expression parsing can
+  # split the string concatenation into a blank versionCode plus a separate
+  # numeric line; Java Properties then sees an empty value and Gradle fails.
+  $value='versionCode={0}' -f $new
+  if($value -notmatch '^versionCode=[1-9][0-9]*
+  Write-Host "Android device ${serial}: installed code $installed -> new debug code $new" -ForegroundColor Green
+  exit 0
+}catch{
+  Write-Host ('VERSION CHECK STOPPED SAFELY: '+$_.Exception.Message) -ForegroundColor Red
+  exit 1
+}
+){
+    throw 'Generated debug versionCode has invalid format.'
+  }
+  [IO.File]::WriteAllLines($file,[string[]]@(
+    '# Generated for local debug builds only; do not commit',
+    $value
+  ),[Text.UTF8Encoding]::new($false))
+  $saved=[IO.File]::ReadAllLines($file)
+  if($saved.Count -ne 2 -or $saved[1] -ne $value){
+    throw 'Debug version file round-trip verification failed. No APK installation attempted.'
+  }
   Write-Host "Android device ${serial}: installed code $installed -> new debug code $new" -ForegroundColor Green
   exit 0
 }catch{
