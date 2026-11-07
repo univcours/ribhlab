@@ -348,3 +348,6 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 - Native CameraX now presents a full image review with Retake and ✓ Confirm; confirmation opens the preset enhancement and optional filters, and ✓ Done completes a PDF. No automatic exported JPG or original backup copies are added. Existing documents remain unchanged.
 - Saved PDFs support Share as PDF or JPG; converted JPGs are created in app cache and shared using Android FileProvider, not saved as permanent documents.
 - Single selected PDF and multi-file actions sit in narrow vertical stacks on the right. All tools remain accessible, no ADS labels or watch buttons. Consented automatic Interstitial/App Open ads can appear only at suitable pauses, never during scanning. Bright turquoise UI with contrasting highlighted Back and Close controls.
+
+### Scanner entry consistency
+- The primary scan action in Home, Scanner workspace and Tools all use CameraX with Retake → Confirm → default filter and alternatives → Done. ML Kit FULL remains available through its separate optional advanced tool.

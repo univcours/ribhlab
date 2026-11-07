@@ -8,7 +8,7 @@ test('Four quick scan modes all have implemented action attributes',()=>{
  assert.deepEqual(quickScanActions.map(x=>x.attribute),[
   'data-live-camera','data-id-card-scan','data-hub-action="bookScan"','data-import="image"'
  ]);
- assert.equal(quickScanActions.filter(x=>x.ad).length,1);
+ assert.equal(quickScanActions.filter(x=>x.ad).length,0);
  for(const lang of ['ar','en','fr','es','de','pt','it']){
   const copy=scanHomeCopy(lang);
   for(const key of ['quick','recent','all','more','document','id','book','gallery','saved'])assert.ok(copy[key]);

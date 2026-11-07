@@ -2,7 +2,7 @@
 export const quickScanActions=Object.freeze([
  {id:'document',icon:'camera',attribute:'data-live-camera'},
  {id:'id',icon:'idcard',attribute:'data-id-card-scan'},
- {id:'book',icon:'book',attribute:'data-hub-action="bookScan"',ad:true},
+ {id:'book',icon:'book',attribute:'data-hub-action="bookScan"'},
  {id:'gallery',icon:'image',attribute:'data-import="image"'}
 ]);
 const translations={

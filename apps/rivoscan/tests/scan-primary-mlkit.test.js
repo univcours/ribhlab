@@ -14,9 +14,9 @@ test('Native CameraX is primary for full user-controlled photo confirmation',()=
 test('ML Kit FULL is separately available and never recurses on cancelled capture',()=>{
  const m=get('src/main.js');
  for(const token of ["import { DocumentScanner } from '@capacitor-mlkit/document-scanner';",
- 'data-primary-scanner="mlkit-full"',"scannerMode:'FULL'",
- "document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner())",
- "if(spec.type==='scan'){await openSmartScanner();return}",
+ 'data-primary-scanner="native-review"',"scannerMode:'FULL'",
+ "document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner())",
+ "if(spec.type==='scan'){await openLiveScanner();return}",
  "if(/cancel|user dismissed|aborted/i.test(message))return",
  "await openSmartScanner({mode,allowNativeFallback:false})"])
  assert.ok(m.includes(token),token);
