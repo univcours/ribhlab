@@ -691,6 +691,91 @@ function openLibrary(){
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];bulkUI.clear();
   window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
 }
+function base64ToBytes(text){
+  const raw=atob(String(text||'').replace(/^data:[^,]+,/,''));
+  const out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+  return out;
+}
+async function appendToLibraryPdf(doc,addedFiles){
+  if(!(/\.pdf$/i.test(doc?.name||'')||/pdf/i.test(doc?.mimeType||'')))
+    throw Error('Adding pages requires one PDF file.');
+  if(!addedFiles?.length)return;
+  if(addedFiles.length>30)throw Error('Maximum 30 additional files.');
+  if(addedFiles.some(f=>f.size>25*1024*1024)||
+     addedFiles.reduce((sum,f)=>sum+f.size,0)>60*1024*1024)
+    throw Error('The selected pages are too large.');
+  showBusy('Adding pages to PDF...');
+  try{
+    const original=await RivoDocuments.readFile({uri:doc.uri});
+    const pdf=await PDFDocument.load(base64ToBytes(original.base64));
+    let count=0;
+    for(const file of addedFiles){
+      progress('Adding pages '+(count+1)+' / '+addedFiles.length);
+      if(/\.pdf$/i.test(file.name)||file.type==='application/pdf'){
+        const incoming=await PDFDocument.load(await file.arrayBuffer());
+        if(pdf.getPageCount()+incoming.getPageCount()>80)
+          throw Error('Maximum 80 PDF pages.');
+        const pages=await pdf.copyPages(incoming,incoming.getPageIndices());
+        for(const page of pages)pdf.addPage(page);
+      }else if(/^image\//i.test(file.type)||/\.(jpe?g|png|webp)$/i.test(file.name)){
+        if(pdf.getPageCount()+1>80)throw Error('Maximum 80 PDF pages.');
+        const canvas=await imageCanvas(file);
+        const jpeg=await canvasBlob(canvas,'image/jpeg',.9);
+        const image=await pdf.embedJpg(await jpeg.arrayBuffer());
+        const page=pdf.addPage([image.width,image.height]);
+        page.drawImage(image,{x:0,y:0,width:image.width,height:image.height});
+      }else throw Error('Select an image or PDF document.');
+      count++;
+    }
+    const base=String(doc.name||'RivoScan').replace(/\.pdf$/i,'');
+    await saveOut(await pdf.save({useObjectStreams:true}),
+      base+'_AddedPages_'+Date.now()+'.pdf','application/pdf');
+    await loadLibrary(false);
+    if(activeTool?.id==='library')refreshVisibleLibrary();
+    else refreshHomeDocuments();
+    toast('✓ Pages added; original PDF preserved as backup.');
+  }finally{clearBusy();}
+}
+async function choosePagesToAppend(doc){
+  if(!(/\.pdf$/i.test(doc?.name||'')||/pdf/i.test(doc?.mimeType||''))){
+    toast('Choose a PDF to add pages.',true);return;
+  }
+  const overlay=document.createElement('div');
+  overlay.className='bulk-overlay rivo-add-pages-overlay';
+  overlay.innerHTML=`<section class="bulk-sheet rivo-add-pages-dialog" role="dialog" aria-modal="true" aria-label="Add PDF pages">
+    <div class="bulk-sheet-title"><strong>Add pages · ${escapeHTML(doc.name)}</strong>
+    <button type="button" data-add-choice="close" aria-label="Close">✕</button></div>
+    <p>Scan more pages or import existing PDF and images. The original stays saved as a backup.</p>
+    <div class="bulk-sheet-actions">
+    <button type="button" data-add-choice="camera">${ico('camera',18)} Scan more pages</button>
+    <button type="button" data-add-choice="files">${ico('folder',18)} Choose PDF / Images</button>
+    </div></section>`;
+  overlay.addEventListener('click',async event=>{
+    const action=event.target.closest('[data-add-choice]')?.dataset.addChoice;
+    if(event.target===overlay||action==='close'){overlay.remove();return;}
+    if(!action)return;
+    overlay.remove();
+    if(action==='camera'){
+      try{await openLiveScanner({mode:'Document',appendToDoc:doc});}
+      catch(error){toast(error?.message||'Camera pages could not be added.',true);}
+      return;
+    }
+    if(action==='files'){
+      const input=document.createElement('input');
+      input.type='file';input.accept='.pdf,application/pdf,image/*';input.multiple=true;
+      input.onchange=async()=>{
+        const chosen=[...input.files];input.remove();
+        if(!chosen.length)return;
+        try{await appendToLibraryPdf(doc,chosen);}
+        catch(error){toast(error?.message||'Could not append PDF pages.',true);}
+      };
+      document.body.appendChild(input);input.click();
+    }
+  });
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-add-choice="camera"]')?.focus();
+}
 async function handleLibraryAction(type,index){
   const selected=libraryItems[index];if(!selected)return;
   try{
@@ -788,7 +873,7 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-edit],[data-doc-rename],[data-doc-add]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -813,6 +898,21 @@ function wire(){
       if(target.hasAttribute('data-doc-preview')){
         const index=Number(target.dataset.docPreview);
         if(libraryItems[index])handleLibraryAction('open',index);
+        return;
+      }
+      if(target.hasAttribute('data-doc-edit')){
+        const doc=libraryItems[Number(target.dataset.docEdit)];
+        if(doc)void bulkUI.editOne(doc);
+        return;
+      }
+      if(target.hasAttribute('data-doc-rename')){
+        const doc=libraryItems[Number(target.dataset.docRename)];
+        if(doc)void bulkUI.renameOne(doc);
+        return;
+      }
+      if(target.hasAttribute('data-doc-add')){
+        const doc=libraryItems[Number(target.dataset.docAdd)];
+        if(doc)void choosePagesToAppend(doc);
         return;
       }
       if(target.hasAttribute('data-doc-print')){
@@ -1033,7 +1133,7 @@ function addSelectedFiles(picked){
 
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
-async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={}){
+async function openLiveScanner({gallery=false,imageUri=null,mode='Document',appendToDoc=null}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
     return;
@@ -1048,7 +1148,14 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
   try{
     const prefs=readScanPrefs(localStorage);
     const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs});
-    await consumeSmartScan(result);
+    if(appendToDoc){
+      if(result?.scannedImages?.length){
+        const pages=[];
+        for(let i=0;i<result.scannedImages.length;i++)
+          pages.push(await readScannedImage(result.scannedImages[i],i));
+        await appendToLibraryPdf(appendToDoc,pages);
+      }
+    }else await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);
     if(/not implemented on android/i.test(message)){
