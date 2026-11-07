@@ -5,6 +5,9 @@ on:
     branches: [feat/rivoscan-android-beta]
     paths:
       - 'apps/rivoscan/scripts/play-store-screenshots.sh'
+      - 'apps/rivoscan/src/main.js'
+      - 'apps/rivoscan/src/turquoise-v2.css'
+      - 'apps/rivoscan/src/turquoise-v2-model.js'
       - '.github/workflows/rivoscan-play-screenshots.yml'
 
 permissions:
