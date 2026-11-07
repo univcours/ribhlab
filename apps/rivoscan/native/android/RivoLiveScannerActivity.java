@@ -9,6 +9,9 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
+import android.animation.ValueAnimator;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -114,6 +117,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Bitmap awaitingCaptureApproval; // never save a page before the user confirms ✓
     private Bitmap pendingWarp,enhancementPreview;
     private ImageView enhancementImage;
+    private FilterLaserView enhancementLaser;
     private TextView enhancementHint;
     private android.widget.ProgressBar enhancementProgress;
     private Button enhancementSaveButton;
@@ -1283,7 +1287,72 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
 
     /** Keep original corners and transformed photo available until user confirms ✓. */
+
+    /**
+     * Real before/after preview animation. The filtered Bitmap lives in the
+     * ImageView underneath; this view temporarily draws the ORIGINAL only
+     * below the moving turquoise scan line. Nothing is written to the saved
+     * page and no approximation is substituted for the real filter output.
+     */
+    private static final class FilterLaserView extends View {
+        private final Paint sourcePaint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        private final Paint glowPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF documentRect=new RectF();
+        private Bitmap original;
+        private float progress=0f;
+        private ValueAnimator sweep;
+        FilterLaserView(Activity activity){super(activity);setWillNotDraw(false);setClickable(false);}
+        void stop(){
+            if(sweep!=null){ValueAnimator old=sweep;sweep=null;old.cancel();}
+            original=null;setVisibility(View.GONE);invalidate();
+        }
+        void reveal(Bitmap source){
+            stop();
+            if(source==null||source.isRecycled())return;
+            // Honor Android's "Remove animations" accessibility setting.
+            if(Build.VERSION.SDK_INT>=26&&!ValueAnimator.areAnimatorsEnabled())return;
+            original=source;progress=0f;setVisibility(View.VISIBLE);invalidate();
+            final ValueAnimator next=ValueAnimator.ofFloat(0f,1f);
+            sweep=next;next.setDuration(960);
+            next.setInterpolator(new AccelerateDecelerateInterpolator());
+            next.addUpdateListener(anim->{
+                if(sweep!=next)return;
+                progress=(Float)anim.getAnimatedValue();invalidate();
+            });
+            next.addListener(new android.animation.AnimatorListenerAdapter(){
+                @Override public void onAnimationEnd(android.animation.Animator animator){
+                    if(sweep==next)stop();
+                }
+            });
+            next.start();
+        }
+        @Override protected void onDraw(Canvas canvas){
+            super.onDraw(canvas);
+            if(original==null||original.isRecycled()||getWidth()<1||getHeight()<1)return;
+            float scale=Math.min(getWidth()/(float)original.getWidth(),
+                getHeight()/(float)original.getHeight());
+            float imageW=original.getWidth()*scale,imageH=original.getHeight()*scale;
+            float left=(getWidth()-imageW)/2f,top=(getHeight()-imageH)/2f;
+            documentRect.set(left,top,left+imageW,top+imageH);
+            final float lineY=top+imageH*progress;
+            canvas.save();
+            canvas.clipRect(left,lineY,left+imageW,top+imageH);
+            canvas.drawBitmap(original,null,documentRect,sourcePaint);
+            canvas.restore();
+            float density=getResources().getDisplayMetrics().density;
+            glowPaint.setColor(Color.argb(35,28,246,219));
+            glowPaint.setStrokeWidth(20*density);
+            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
+            glowPaint.setColor(Color.argb(98,17,238,215));
+            glowPaint.setStrokeWidth(8*density);
+            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
+            glowPaint.setColor(Color.rgb(196,255,245));
+            glowPaint.setStrokeWidth(2.5f*density);
+            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
+        }
+    }
     private void releaseEnhancement(){
+        if(enhancementLaser!=null){enhancementLaser.stop();enhancementLaser=null;}
         if(enhancementPreview!=null && enhancementPreview!=pendingWarp &&
              !enhancementPreview.isRecycled())enhancementPreview.recycle();
         enhancementPreview=null;
@@ -1340,7 +1409,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementImage.setAdjustViewBounds(true);
         enhancementImage.setImageBitmap(pendingWarp);
         enhancementImage.setContentDescription(trNative("enhanceTitle"));
-        body.addView(enhancementImage,new LinearLayout.LayoutParams(-1,0,1));
+        FrameLayout picture=new FrameLayout(this);
+        picture.addView(enhancementImage,new FrameLayout.LayoutParams(-1,-1));
+        enhancementLaser=new FilterLaserView(this);
+        enhancementLaser.setVisibility(View.GONE);
+        picture.addView(enhancementLaser,new FrameLayout.LayoutParams(-1,-1));
+        body.addView(picture,new LinearLayout.LayoutParams(-1,0,1));
         enhancementProgress=new android.widget.ProgressBar(this,null,
             android.R.attr.progressBarStyleHorizontal);
         enhancementProgress.setIndeterminate(true);
@@ -1439,6 +1513,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void renderEnhancementPreview(String preset){
         if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;
+        if(enhancementLaser!=null)enhancementLaser.stop();
         final int serial=++enhancementSerial;
         final int width=pendingWarp.getWidth(),height=pendingWarp.getHeight();
         final double factor=Math.min(1,1050.0/Math.max(width,height));
@@ -1461,6 +1536,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     Bitmap previous=enhancementPreview;
                     enhancementPreview=result;
                     enhancementImage.setImageBitmap(result);
+                    if(enhancementLaser!=null&&
+                        !RivoDocumentEnhancer.ORIGINAL.equals(preset))
+                        enhancementLaser.reveal(pendingWarp);
                     if(enhancementSaveButton!=null)enhancementSaveButton.setEnabled(true);
                     if(enhancementProgress!=null)enhancementProgress.setVisibility(View.GONE);
                     if(enhancementHint!=null)enhancementHint.setText(
@@ -1591,6 +1669,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     @Override protected void onDestroy(){
         cameraBindSerial++;enhancementSerial++;
+        if(enhancementLaser!=null)enhancementLaser.stop();
         mainHandler.removeCallbacksAndMessages(null);
         clearFrozenPreview();
         if(cameraProvider!=null)cameraProvider.unbindAll();
