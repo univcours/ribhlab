@@ -17,7 +17,8 @@ test('single file icons are delegated, not decoration',()=>{
 test('adding pages creates PDF and keeps original backup',()=>{
  const m=read('src/main.js');
  assert.ok(m.includes('appendToLibraryPdf(doc,addedFiles)'));
- assert.ok(m.includes('PDFDocument.load(base64ToBytes(original.base64))'));
+ assert.ok(m.includes('const raw=base64ToBytes(original.base64)'));
+ assert.ok(m.includes('const pdf=sourceIsPDF?await PDFDocument.load(raw):await PDFDocument.create()'));
  assert.ok(m.includes('pdf.copyPages(incoming,incoming.getPageIndices())'));
  assert.ok(m.includes("'_AddedPages_'+Date.now()+'.pdf'"));
  assert.ok(m.includes('Scan more pages'));
