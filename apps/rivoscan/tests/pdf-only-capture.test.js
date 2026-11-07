@@ -23,10 +23,10 @@ test('PDF-only scans, temporary JPGs on Share',()=>{
  assert.ok(j.includes('FileProvider.getUriForFile'));
  assert.ok(i.includes('rivoscan_share_paths.xml'));
 });
-test('Right side actions, no ADS labels or forced video',()=>{
+test('New horizontal right-side actions, no ADS or forced video',()=>{
  const m=read('src/main.js'),css=read('src/premium-home.css'),ads=read('src/monetization.js');
  assert.ok(!m.includes('>ADS<'));
- assert.ok(css.includes('grid-template-columns:1fr!important'));
- assert.ok(css.includes('top:clamp(144px,25vh,225px)!important'));
+ assert.ok(css.includes('flex-flow:row nowrap!important'));
+ assert.ok(css.includes('bottom:calc(172px + env(safe-area-inset-bottom,0px))!important'));
  assert.ok(ads.includes('requestPremium(){return true;}'));
 });

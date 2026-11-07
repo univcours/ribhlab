@@ -360,3 +360,10 @@ Installer retrieves the exact current RivoScan feature branch before building, n
 - New files are routed to PDF, Images, Word, Excel, PowerPoint, Text and Other. If the folder is not configured, safe fallback is Documents/RivoScan/<Type>, not Downloads.
 - Old user files remain accessible from legacy Documents/RivoScan and Downloads/RivoScan without silent migration or deletion. Authorized selected-folder files support previews, rename, sharing and copy-first organization.
 - Version 0.44.20, code 96, requires an APK with matching metadata; installer verifies before and after installation.
+
+## 0.44.21 — compact right-hand actions, batch bar and additional PDF pages
+- Selecting one file shows small horizontal actions at the lower RIGHT of that file card: Share, Edit, Preview, Rename, Delete and **+**. The file name and real thumbnail remain visible above the icons. Add Pages is enabled for PDFs.
+- The **+** choice uses the scanner (CameraX) or imported PDFs/images to build a combined PDF. The original is preserved for safety; the new copy ends with `_AddedPages_` and is not an in-place destructive update. Up to 80 pages and bounded input sizes.
+- In native camera capture review, **+ Add Page** beside Retake/Confirm enables batch capture, and Done continues the standard filter approval.
+- Selecting 2+ files shows 7 actions in one horizontal bar ABOVE the camera button, without a group Add Pages action.
+- Rename is now wired by its dedicated selector, rather than accidentally clicking Delete by positional selector.
