@@ -42,8 +42,8 @@ try{
   Check-Exit 'Verify revision'
   if($revision -ne $remote){throw 'Checkout is not latest. Aborted.'}
   $versionText=[IO.File]::ReadAllText((Join-Path $root 'rivoscan-version.properties'))
-  if($versionText -notmatch '(?m)^versionCode=(\d+)\s*$' -or [long]$matches[1] -lt 100){
-    throw 'RivoScan versionCode is older than 100. Refusing a stale production build.'
+  if($versionText -notmatch '(?m)^versionCode=(\d+)\s*$' -or [long]$matches[1] -lt 101){
+    throw 'RivoScan versionCode is older than 101. Refusing a stale production build.'
   }
   $nameMatch=[regex]::Match($versionText,'(?m)^versionName=([0-9]+(?:\.[0-9]+){2})\s*$')
   $name=if($nameMatch.Success){$nameMatch.Groups[1].Value}else{''}
