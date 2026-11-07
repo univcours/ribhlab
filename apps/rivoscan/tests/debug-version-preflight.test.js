@@ -8,7 +8,7 @@ test('Android Studio debug build auto-detects installed version while Play relea
  assert.ok(g.includes("contains('release')"));
  assert.ok(g.includes('rivoscan-device-version.properties'));
  assert.ok(g.includes("new ProcessBuilder(adb.absolutePath, 'devices')"));
- assert.ok(g.includes("'dumpsys', 'package', 'com.ribhlab.rivoscan'"));
+ assert.ok(g.includes("'dumpsys', 'package', 'com.ribhlab.rivoscan.debug'"));
  assert.ok(g.includes('installed + 1L'));
  assert.ok(g.includes('versionCode effectiveCode'));
 });
@@ -22,7 +22,7 @@ test('Safe installer checks phone before build and never clears data',()=>{
  assert.ok(p.includes('$installed+1'));
  assert.ok(p.includes('Android device ${serial}: installed code'));
  assert.ok(!/\$serial:/.test(p), 'Avoid PowerShell variable parse errors before colon');
- assert.ok(p.includes('pm path com.ribhlab.rivoscan'));
+ assert.ok(p.includes('pm path com.ribhlab.rivoscan.debug'));
  assert.ok(p.includes("'versionCode={0}' -f $new"));
  assert.ok(p.includes('$saved.Length -ne 2'));
  assert.ok(!p.includes("'versionCode='+$new"));

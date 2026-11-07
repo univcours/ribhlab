@@ -151,7 +151,7 @@ try {
   $packageLine=(@($apkDetails | Where-Object { $_ -match "^package:\s" } | Select-Object -First 1) -join "")
   if($packageLine -notmatch "name='([^']+)'") { throw "APK package ID unreadable. Refusing unsafe installation." }
   $apkPackage=$matches[1]
-  if($apkPackage -ne "com.ribhlab.rivoscan") { throw "Wrong APK package $apkPackage. Refusing installation." }
+  if($apkPackage -ne "com.ribhlab.rivoscan.debug") { throw "Wrong APK package $apkPackage. Refusing installation." }
   if($packageLine -notmatch "versionCode='(\d+)'") { throw "APK versionCode unreadable. Refusing unsafe installation." }
   $apkVersionCode=[long]$matches[1]
   if($packageLine -notmatch "versionName='([^']+)'") { throw "APK versionName unreadable. Refusing unsafe installation." }
@@ -172,22 +172,22 @@ try {
   # pm path distinguishes an absent package from a malformed dumpsys result.
   # If an installed version cannot be read, stop instead of guessing.
   function Get-InstalledRivo {
-    $location=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan 2>&1)
+    $location=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan.debug 2>&1)
     $pathExit=$LASTEXITCODE
     if($pathExit -ne 0 -or -not ($location -match "^package:")) {
       # Some Samsung/Android 16 package managers return non-zero for "pm path"
       # when the app is missing. List exact installed package as fallback.
-      $location=@(& $adb -s $serial shell pm list packages com.ribhlab.rivoscan 2>&1)
+      $location=@(& $adb -s $serial shell pm list packages com.ribhlab.rivoscan.debug 2>&1)
       if($LASTEXITCODE -ne 0) {
         throw "Cannot inspect installed package: pm path and pm list packages both failed. No phone data changed."
       }
     }
     $foundApkPath=@($location | Where-Object { $_ -match '^package:/' }).Count -gt 0
-    $foundExactPackage=@($location | Where-Object { $_.Trim() -eq 'package:com.ribhlab.rivoscan' }).Count -gt 0
+    $foundExactPackage=@($location | Where-Object { $_.Trim() -eq 'package:com.ribhlab.rivoscan.debug' }).Count -gt 0
     if(-not ($foundApkPath -or $foundExactPackage)) {
       return [pscustomobject]@{ Installed=$false; VersionCode=$null; VersionName=$null }
     }
-    $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
+    $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan.debug 2>&1) | Out-String)
     if($LASTEXITCODE -ne 0 -or
        $details -notmatch "versionCode=(\d+)" -or
        $details -notmatch "versionName=(\S+)") {
@@ -228,7 +228,7 @@ try {
     throw "The phone still reports an OLD build. Installation is NOT successful."
   }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
-  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
+  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity" | Out-Host
   Assert-Code "Launching RivoScan"
   Write-Host ""
   Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green

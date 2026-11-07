@@ -86,7 +86,7 @@ jobs:
           test -x "$AAPT"
           CODE=$(sed -n 's/^versionCode=//p' rivoscan-version.properties | tr -d '\r')
           NAME=$(sed -n 's/^versionName=//p' rivoscan-version.properties | tr -d '\r')
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.ribhlab.rivoscan' versionCode='$CODE' versionName='$NAME'"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.ribhlab.rivoscan.debug' versionCode='$CODE' versionName='$NAME'"
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

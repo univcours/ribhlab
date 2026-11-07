@@ -37,11 +37,11 @@ try {
   }else{
     throw "Multiple connected devices: $($online -join ', '). Use -DeviceSerial."
   }
-  $pm=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan 2>&1)
+  $pm=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan.debug 2>&1)
   if($LASTEXITCODE -ne 0){throw 'Cannot inspect RivoScan package.'}
   [long]$installed=0
   if(@($pm | Where-Object {$_ -match '^package:/'}).Count -gt 0){
-    $dumpsys=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
+    $dumpsys=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan.debug 2>&1) | Out-String)
     if($LASTEXITCODE -ne 0){throw 'Installed package version query failed.'}
     $code=[regex]::Match($dumpsys,'versionCode=(\d+)')
     if(-not $code.Success){throw 'Installed versionCode unreadable. No changes made.'}

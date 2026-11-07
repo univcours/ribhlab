@@ -16,7 +16,7 @@ case "$1" in
       exit 0
     fi
     if [[ "$2" == "FAKE_RIVOSCAN" && "$3" == "shell" && "$4" == "dumpsys" && "$5" == "package" ]]; then
-      printf 'Package [com.ribhlab.rivoscan]\n  versionCode=145 minSdk=26 targetSdk=36\n'
+      printf 'Package [com.ribhlab.rivoscan.debug]\n  versionCode=145 minSdk=26 targetSdk=36\n'
       exit 0
     fi
     ;;

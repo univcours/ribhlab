@@ -41,7 +41,7 @@ if (!releaseRequested) {
                     .collect { it.trim().split(/\s+/)[0] }
                 for (def serial : serials) {
                     def scan = new ProcessBuilder(adb.absolutePath, '-s', serial, 'shell',
-                        'dumpsys', 'package', 'com.ribhlab.rivoscan').redirectErrorStream(true).start()
+                        'dumpsys', 'package', 'com.ribhlab.rivoscan.debug').redirectErrorStream(true).start()
                     if (!scan.waitFor(6, java.util.concurrent.TimeUnit.SECONDS) || scan.exitValue() != 0) {
                         scan.destroyForcibly()
                         continue
@@ -71,6 +71,28 @@ android {
     defaultConfig {
         versionCode effectiveCode
         versionName nameText
+    }
+    buildTypes {
+        debug {
+            // Android Studio Run MUST NEVER replace the real Play app.
+            applicationIdSuffix '.debug'
+            manifestPlaceholders['rivoscanAppLabel'] = 'RivoScan DEV'
+        }
+        release {
+            // Only this package ID is registered with Play.
+            manifestPlaceholders['rivoscanAppLabel'] = 'RivoScan'
+        }
+    }
+}
+// Asset mode is written by the Vite postbuild and copied by Capacitor sync.
+// Block Android Studio Run after production preparation and release after a debug build.
+tasks.matching { it.name in ['preDebugBuild', 'preReleaseBuild'] }.configureEach {
+    doFirst {
+        def marker = file('src/main/assets/public/rivoscan-build-mode.txt')
+        def expected = name == 'preReleaseBuild' ? 'production' : 'debug'
+        if (!marker.isFile() || marker.getText('UTF-8').trim() != expected)
+            throw new GradleException('[RivoScan] Refusing '+name+': assets are not '+expected+
+                '. Rebuild correct variant. NEVER uninstall the installed app.')
     }
 }
 println('[RivoScan] '+(releaseRequested ? 'RELEASE' : 'DEBUG/Android Studio')+

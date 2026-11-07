@@ -101,7 +101,13 @@ try{
     Write-Host ''
     Write-Host "READY FOR ANDROID STUDIO: RivoScan v$name / $($revision.Substring(0,12))" -ForegroundColor Green
     Write-Host "Open: $(Join-Path $root 'android')" -ForegroundColor Cyan
-    Write-Host 'Android Studio > Build > Generate Signed Bundle / APK > Android App Bundle.' -ForegroundColor Green
+    $modeFile=Join-Path $root 'android\app\src\main\assets\public\rivoscan-build-mode.txt'
+    if(-not (Test-Path -LiteralPath $modeFile) -or
+       ([IO.File]::ReadAllText($modeFile).Trim()) -ne 'production'){
+      throw 'Android assets are not marked production: refusing a mixed release.'
+    }
+    Write-Host 'Android Studio > Build > Generate Signed Bundle / APK > Android App Bundle (Release).' -ForegroundColor Green
+    Write-Host 'IMPORTANT: Android Studio Run installs a separate RivoScan DEV, NOT Production.' -ForegroundColor Yellow
     Write-Host 'Release AAB will include native SYMBOL_TABLE diagnostics when available.' -ForegroundColor Cyan
     Write-Host 'If R8 minification is disabled, no Java mapping.txt exists; that warning is informational.' -ForegroundColor Yellow
     Write-Host 'Never upload diagnostic files from this version to a different Play versionCode such as 74.' -ForegroundColor Yellow

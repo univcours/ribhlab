@@ -121,6 +121,15 @@ if ($xml.Contains('com.google.android.gms.ads.APPLICATION_ID')) {
   $xml = $xml.Replace('</application>',$admobMeta + [Environment]::NewLine + '</application>')
 }
 if (-not $xml.Contains($admobAppId)) { throw 'AdMob APP ID was not written to the manifest.' }
+# Keep production and debug clearly separate in the Android launcher.
+$labelExpression='(?s)(<application\b[^>]*?\bandroid:label=")[^"]+(")'
+if(-not [regex]::IsMatch($xml,$labelExpression)){
+  throw 'Application label missing; DEV/Production isolation could not be verified.'
+}
+$xml=[regex]::Replace($xml,$labelExpression,[Text.RegularExpressions.MatchEvaluator]{
+  param($match)
+  $match.Groups[1].Value + '${rivoscanAppLabel}' + $match.Groups[2].Value
+})
 [IO.File]::WriteAllText($manifest, $xml, $utf8)
 if ($productionAds) {
   Write-Host 'PASS: Verified production AdMob App ID.'
