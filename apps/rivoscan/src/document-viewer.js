@@ -236,7 +236,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
         close();await onChanged();
       }catch(e){feedback(e);}
     }));
-    actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
+    actionRow.appendChild(button('▤ '+word('rename'),'doc-action doc-rename',rename));
     root.appendChild(actionRow);
     root.appendChild(button('↗ '+word('external'),'doc-external-open',async()=>{try{await bridge.openFile({uri:current.uri});}catch(e){feedback(e);}}));
     document.body.appendChild(root);
