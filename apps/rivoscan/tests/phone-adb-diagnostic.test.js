@@ -10,7 +10,7 @@ test('Phone verification distinguishes missing, unauthorized, offline and multip
  ])assert.ok(s.includes(phrase),phrase);
  assert.ok(s.includes('@(& $adb start-server)'));
  assert.ok(s.includes('shell pm list packages $packageId 2>&1'));
- assert.ok(s.includes(" + JSON.stringify("('package:'+$packageId)") + "));
+ assert.ok(s.includes("('package:'+$packageId)"));
  assert.ok(s.includes('if(-not $installedExact)'));
  assert.ok(s.includes('shell pm path $packageId 2>&1'));
  assert.ok(s.includes('Not installed | '));
