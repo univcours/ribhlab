@@ -27,18 +27,22 @@ sleep 4
 
 adb exec-out screencap -p > "$OUT/01-rivoscan-home.png"
 
-# Bottom navigation: Home | Documents | Tools | Me
-# Capture the real app's Tools view and user document library.
-adb shell input tap 681 1850
+# Persistent navigation: Home | Tools | [Camera] | Documents | Me.
+# Use real 1080px positions after the turquoise redesign.
+adb shell input tap 313 1850
 sleep 3
 adb exec-out screencap -p > "$OUT/02-rivoscan-tools.png"
 adb shell input swipe 600 1480 600 630 420
 sleep 2
 adb exec-out screencap -p > "$OUT/03-rivoscan-more-tools.png"
 
-adb shell input tap 404 1850
+adb shell input tap 776 1850
 sleep 3
 adb exec-out screencap -p > "$OUT/04-rivoscan-documents.png"
+
+adb shell input tap 974 1850
+sleep 3
+adb exec-out screencap -p > "$OUT/05-rivoscan-me-camera-visible.png"
 
 python3 - <<'PY'
 from pathlib import Path
@@ -52,7 +56,7 @@ for path in sorted(folder.glob('*.png')):
     print('RIVOSCAN_REAL_SCREENSHOT',path.name,w,h,path.stat().st_size)
     if (w,h)!=(1080,1920) or path.stat().st_size<10000:
         raise SystemExit('Invalid capture dimensions/content: '+str(path))
-if len(list(folder.glob('*.png')))!=4:
-    raise SystemExit('Expected four genuine screenshots')
+if len(list(folder.glob('*.png')))!=5:
+    raise SystemExit('Expected five genuine screenshots')
 PY
-echo "PASS: four screen captures from running Android RivoScan, no fabricated UI"
+echo "PASS: five screen captures from running Android RivoScan, no fabricated UI"
