@@ -19,5 +19,5 @@ test('Production Studio preparation validates a new source revision before manua
   assert.ok(script.includes('git.exe -C $gitRoot fetch --no-tags origin'));
   assert.ok(script.includes('merge --ff-only'));
   assert.ok(script.includes('if($latest -ne $revision)'));
-  assert.ok(script.includes('versionCode is older than 100'));
+  assert.ok(script.includes('versionCode is older than 101'));
 });
