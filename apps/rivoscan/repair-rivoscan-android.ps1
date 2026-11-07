@@ -182,7 +182,19 @@ try {
   $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
   if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
   Write-Host ''
-  $builtName=[regex]::Match([IO.File]::ReadAllText((Join-Path $root 'rivoscan-version.properties')),'(?m)^versionName=([0-9.]+)$').Groups[1].Value
+  $builtName=[regex]::Match([IO.File]::ReadAllText((Join-Path $root 'rivoscan-version.properties')),'(?m)^versionName=([0-9]+(?:\.[0-9]+){2})\r?
+  Write-Host ("SUCCESS! RivoScan v"+$builtName+" built with live scanner and adaptive launcher icon.") -ForegroundColor Green
+  Write-Host "APK: $apk"
+  Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
+} catch {
+  Write-Host ''
+  Write-Host ('REPAIR FAILED: '+$_.Exception.Message) -ForegroundColor Red
+  exit 1
+} finally {
+  Pop-Location
+}
+).Groups[1].Value
+  if([string]::IsNullOrWhiteSpace($builtName)) { throw 'Could not read RivoScan versionName after build.' }
   Write-Host ("SUCCESS! RivoScan v"+$builtName+" built with live scanner and adaptive launcher icon.") -ForegroundColor Green
   Write-Host "APK: $apk"
   Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
