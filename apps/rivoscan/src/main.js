@@ -398,20 +398,11 @@ function recentDocuments(limit=6,query=homeSearchQuery){
  if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${hv('openFolder')}</button></div>`;
  return matched.map(({doc,index},visibleIndex)=>{
   const file=visualFileType(doc);
-  const expanded=!!homeExpandedUri&&homeExpandedUri===doc.uri;
-  const canPdf=file.klass==='pdf'||file.klass==='image';
-  return `<article class="recent-entry rivo-recent-card ${expanded?'rivo-recent-expanded':''} ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
+  return `<article class="recent-entry rivo-recent-card ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
+     <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
      <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" data-rivo-thumb="${index}" aria-hidden="true"><span>${file.code}</span></span>
      <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong>
        <small>${ico('clock',13)} ${doc.created?new Date(doc.created).toLocaleString(language,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'RivoScan'} <span class="rivo-metadata-dot">·</span> ${formatSize(doc.size||0)}</small></div>
-     <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
-     ${expanded?`<div class="rivo-recent-actions">
-       <button type="button" data-doc-share="${index}" class="rivo-recent-share">${ico('upload',18)} ${hv('share')}</button>
-       ${file.klass==='image'?`<button type="button" data-doc-delete="${index}" class="rivo-recent-delete" aria-label="${dl('remove')} ${escapeHTML(doc.name)}">${ico('delete',18)} ${dl('remove')}</button>`:''}
-       ${canPdf?`<button type="button" data-doc-savepdf="${index}" class="rivo-recent-pdf">${ico('file',18)} ${hv('savePdf')}</button>`:`<button type="button" data-doc-open="${index}" class="rivo-recent-pdf">${ico('folder',18)} ${hv('open')}</button>`}
-       <button type="button" data-doc-open="${index}" class="rivo-recent-view">${ico('eye',19)} ${hv('view')}</button>
-     </div>`:''}
-     <button type="button" data-expand-doc="${index}" class="rivo-expand-card" aria-label="${hv('more')}" aria-expanded="${expanded}">${ico('more',17)}</button>
    </article>`;
  }).join('');
 }
@@ -776,6 +767,16 @@ async function choosePagesToAppend(doc){
   document.body.appendChild(overlay);
   overlay.querySelector('[data-add-choice="camera"]')?.focus();
 }
+async function openRivoDocument(doc){
+  // Android selects a compatible viewer; if none exists, RivoScan shows its preview.
+  if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoDocuments')){
+    try{
+      const outcome=await RivoDocuments.openFile({uri:doc.uri});
+      if(outcome?.opened!==false)return;
+    }catch(error){console.warn('No external document viewer, using RivoScan:',error);}
+  }
+  await docViewerUI.open(doc);
+}
 async function handleLibraryAction(type,index){
   const selected=libraryItems[index];if(!selected)return;
   try{
@@ -783,7 +784,7 @@ async function handleLibraryAction(type,index){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
       toast(dl('remove')+' ✓');
-    } else if(type==='open')await docViewerUI.open(selected);
+    } else if(type==='open')await openRivoDocument(selected);
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
@@ -872,22 +873,12 @@ function wire(){
   for(const list of ['library-list','home-recents']){
     const el=document.getElementById(list);
     const activate=e=>{
-      if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
       const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-edit],[data-doc-rename],[data-doc-add]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
       if(target.hasAttribute('data-doc-select')){
         if(e.type==='click')bulkUI.toggle(libraryItems[Number(target.dataset.docSelect)]);
-        return;
-      }
-      if(target.hasAttribute('data-expand-doc')){
-        const doc=libraryItems[Number(target.dataset.expandDoc)];
-        if(doc){
-          homeExpandedUri=homeExpandedUri===doc.uri?'none':doc.uri;
-          refreshHomeDocuments();
-          bulkUI.sync();
-        }
         return;
       }
       if(target.hasAttribute('data-doc-savepdf')){
@@ -897,7 +888,7 @@ function wire(){
       }
       if(target.hasAttribute('data-doc-preview')){
         const index=Number(target.dataset.docPreview);
-        if(libraryItems[index])handleLibraryAction('open',index);
+        if(libraryItems[index])void docViewerUI.open(libraryItems[index]);
         return;
       }
       if(target.hasAttribute('data-doc-edit')){
@@ -924,12 +915,10 @@ function wire(){
       }
       const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
       const index=Number(target.getAttribute('data-doc-'+type));
-      if(type==='open'&&bulkUI.mode()){bulkUI.toggle(libraryItems[index]);return;}
       handleLibraryAction(type,index);
     };
     el?.addEventListener('click',activate);
     el?.addEventListener('keydown',activate);
-    bulkUI.wireLongPress(el);
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>{void openTool(el.dataset.tool)}));
   document.getElementById('tools-query')?.addEventListener('input',event=>{

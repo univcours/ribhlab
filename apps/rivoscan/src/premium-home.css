@@ -923,3 +923,60 @@ body.rivo-multiselect #app #home-recents{
 body.rivo-multiselect #app .content{
  padding-bottom:calc(225px + env(safe-area-inset-bottom,0px))!important;
 }
+
+/* Explicit left-side checkbox selection — only checked files get action icons. */
+#app .library-workspace #library-list .document-entry{
+ display:grid!important;grid-template-columns:25px 43px minmax(0,1fr)!important;
+ grid-template-rows:auto!important;gap:7px!important;align-items:center!important;
+}
+#app .library-workspace #library-list .document-entry>.doc-select-box{
+ display:block!important;visibility:visible!important;opacity:1!important;
+ position:static!important;grid-column:1!important;grid-row:1!important;
+ margin:0!important;width:24px!important;height:24px!important;min-width:24px!important;
+ border:2px solid #0b9990!important;background:#fff!important;
+}
+#app .library-workspace #library-list .document-entry>.doc-select-box:checked{
+ background:#0b9990!important;border-color:#0b9990!important;
+}
+#app .library-workspace #library-list .document-entry>.document-icon{
+ grid-column:2!important;grid-row:1!important;
+}
+#app .library-workspace #library-list .document-entry>.document-description{
+ grid-column:3!important;grid-row:1!important;min-width:0!important;
+}
+#app .library-workspace #library-list .document-entry>.document-buttons{display:none!important}
+#app .rivo-scan-first .rivo-premium-recent{grid-template-columns:minmax(0,1fr)!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ display:grid!important;grid-template-columns:25px 43px minmax(0,1fr)!important;
+ grid-template-rows:auto!important;gap:7px!important;
+ padding:10px!important;min-height:70px!important;overflow:visible!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card>.rivo-recent-check{
+ display:block!important;visibility:visible!important;opacity:1!important;
+ position:static!important;grid-column:1!important;grid-row:1!important;
+ justify-self:start!important;align-self:center!important;margin:0!important;
+ width:24px!important;height:24px!important;min-width:24px!important;
+ border:2px solid #0b9990!important;background:#fff!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card>.rivo-recent-check:checked{
+ background:#0b9990!important;border-color:#0b9990!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card>.rivo-file-thumb{
+ grid-column:2!important;grid-row:1!important;position:static!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card>.recent-file-meta{
+ grid-column:3!important;grid-row:1!important;min-width:0!important;overflow:hidden!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ grid-template-rows:auto auto!important;min-height:106px!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-selection-inline{
+ grid-column:2/-1!important;grid-row:2!important;justify-self:end!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-expand-card,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-actions{display:none!important}
+#app .rivo-selection-inline{max-width:100%!important;overflow-x:auto!important;overflow-y:hidden!important}
+#app .library-workspace #library-list .document-entry.doc-selected>.rivo-selection-inline{
+ grid-column:2/-1!important;grid-row:2!important;justify-self:end!important;
+}

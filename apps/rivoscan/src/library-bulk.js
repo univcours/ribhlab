@@ -5,7 +5,6 @@ import {makeLongImage,makeWordText} from './share-exports.js';
 export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
-  let suppressUntil=0;
   const translations={
     en:['Select','selected','Select all','Invert','Cancel','Delete','Share','Merge PDF','Edit','Preview','Document actions','Share as','Quality','PDF','JPG images','Original / best','Balanced','Small file','Prepare and share','Processed on your phone. Converted copies are saved in Documents/RivoScan.','Reduced PDF quality converts text to images; original preserves editable text.','Delete {n} documents permanently?','Limit: 30 documents.','Limit: 30 image pages.','File exceeds the 16 MB conversion limit. Share the original instead.','Select documents first.','Completed','Stopped; remaining files are safe.','Select at least two documents.','Long-press any document for more actions.','Add to selection','Remove from selection','Preparing document','Pages limit exceeded.'],
     ar:['تحديد','مختارة','تحديد الكل','عكس الاختيار','إلغاء','مسح','مشاركة','جمع PDF','تعديل','معاينة','خيارات الوثيقة','شارك بصيغة','الجودة','PDF','صور JPG','أصلية / أعلى جودة','متوازنة','حجم صغير','تحضير ومشاركة','التحويل كيتم فهاتفك. النسخ كتتحفظ فـDocuments/RivoScan.','الجودة المنخفضة كتبدل نص PDF بصور؛ الأصلية كتحافظ عليه.','واش تمسح {n} وثائق نهائياً؟','الحد الأقصى 30 وثيقة.','الحد الأقصى 30 صورة.','الوثيقة أكبر من 16 ميغا للتحويل. شارك الأصلية.','اختار الوثائق أولاً.','تكمّلات العملية','توقّفات العملية؛ الملفات الباقية ما تمسحاتش.','اختار جوج وثائق على الأقل.','ضغط مطوّل على وثيقة باش تختار وتفتح الخيارات.','زيد للتحديد','حيد من التحديد','كنوجدو الوثيقة','عدد الصفحات فات الحد.'],
@@ -69,12 +68,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         row.classList.toggle('doc-selected',!!doc&&chosen(doc));
         row.setAttribute('aria-selected',String(!!doc&&chosen(doc)));
         const existing=row.querySelector('.doc-select-box');
-        const alwaysVisible=rootId==='home-recents';
-        if(mode&&!existing){
-          const div=document.createElement('div');div.innerHTML=doc?checkbox(doc,Number(row.dataset.docOpen)):'';
+        // Selection is by the always-visible checkbox, never long press.
+        if(!existing&&doc){
+          const div=document.createElement('div');
+          div.innerHTML=checkbox(doc,Number(row.dataset.docOpen));
           if(div.firstElementChild)row.prepend(div.firstElementChild);
-        } else if(!mode&&existing&&!alwaysVisible&&!isImage(doc))existing.remove();
-        else if(existing)existing.checked=!!doc&&chosen(doc);
+        } else if(existing)existing.checked=!!doc&&chosen(doc);
         const previous=row.querySelector('.rivo-selection-inline');
         if(previous)previous.remove();
         if(mode&&selected.size===1&&doc&&chosen(doc)){
@@ -122,62 +121,6 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     shade.querySelector('button')?.focus();
     return shade;
   }
-  function longPress(doc){
-    if(!doc)return;
-    if(!selected.has(doc.uri)){mode=true;selected.add(doc.uri);sync();}
-    const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('menu')}</strong><button data-close-sheet aria-label="${t('cancel')}">✕</button></div>
-      <p class="bulk-document-name">${escape(doc.name)}</p>
-      <div class="bulk-sheet-actions">
-        <button data-menu="preview">${t('preview')}</button>
-        <button data-menu="edit">${t('edit')}</button>
-        <button data-menu="share">${t('share')}</button>
-        <button data-menu="delete">${t('delete')}</button>
-        <button data-menu="rename">${t('rename')}</button>
-        <button data-menu="copy">${t('copy')}</button>
-        <button data-menu="select">${chosen(doc)?t('remove'):t('add')}</button>
-      </div>`);
-    root.addEventListener('click',async e=>{
-      const action=e.target.closest('[data-menu]')?.dataset.menu;if(!action)return;
-      closeSheet();
-      if(action==='select'){toggle(doc);return;}
-      if(action==='preview'){await onPreview(doc);return;}
-      if(action==='rename'){await onRename?.(doc);return;}
-      if(action==='copy'){organize([doc],'copy');return;}
-      if(action==='edit'){await onEdit(doc);return;}
-      if(action==='share'){share([doc]);return;}
-      if(action==='delete')await erase([doc]);
-    });
-  }
-  function wireLongPress(root){
-    if(!root)return;
-    let timer=null,startX=0,startY=0,pressed=null;
-    const stop=()=>{if(timer!==null){clearTimeout(timer);timer=null;}};
-    root.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='mouse'||e.target.closest('button,input,select'))return;
-      const row=e.target.closest('[data-doc-open]');if(!row||!root.contains(row))return;
-      pressed=getItems()[Number(row.dataset.docOpen)];
-      startX=e.clientX;startY=e.clientY;stop();
-      timer=setTimeout(()=>{
-        timer=null;suppressUntil=Date.now()+900;
-        if(root.id==='home-recents')onOpenLibrary?.();
-        longPress(pressed);
-        try{navigator.vibrate?.(25)}catch{}
-      },550);
-    });
-    root.addEventListener('pointermove',e=>{if(Math.hypot(e.clientX-startX,e.clientY-startY)>12)stop()});
-    for(const name of ['pointerup','pointercancel','pointerleave'])root.addEventListener(name,stop);
-    root.addEventListener('contextmenu',e=>{
-      const row=e.target.closest('[data-doc-open]');
-      if(row&&root.contains(row)){
-        e.preventDefault();suppressUntil=Date.now()+900;
-        const doc=getItems()[Number(row.dataset.docOpen)];
-        if(root.id==='home-recents')onOpenLibrary?.();
-        longPress(doc);
-      }
-    });
-  }
-  function suppressClick(){return Date.now()<suppressUntil}
   async function erase(docs){
     if(!docs.length)return;
     if(!window.confirm(t('confirm').replace('{n}',String(docs.length))))return;
@@ -432,6 +375,6 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar,
+  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,share,savePdf,organize,action,wireToolbar,
     editOne:doc=>onEdit?.(doc),renameOne:doc=>onRename?.(doc)};
 }
