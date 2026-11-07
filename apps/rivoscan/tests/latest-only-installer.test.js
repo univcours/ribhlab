@@ -14,8 +14,8 @@ test('The latest version is 0.44.22 / 98 and the safe installer never downgrades
  assert.ok(installer.includes('if($installed.VersionCode -gt $apkVersionCode)'));
  assert.ok(installer.includes('if($apkVersionCode -ne $sourceCode'));
  assert.ok(installer.includes('install -r $apk'));
- const commands=installer.split(/\\r?\\n/).filter(line=>!line.trimStart().startsWith('#')).join('\\n');
- assert.ok(!/\\badb\\s+uninstall\\b|\\bpm\\s+clear\\b|\\binstall\\s+-r\\s+-d\\b/.test(commands));
+ const commands=installer.split(String.fromCharCode(10)).filter(line=>!line.trimStart().startsWith('#')).join(' ');
+ assert.ok(!/\badb\s+uninstall\b|\bpm\s+clear\b|\binstall\s+-r\s+-d\b/.test(commands));
 });
 test('Debug installs never inherit live-production AdMob settings',()=>{
  const installer=get('install-rivoscan-android.ps1');
