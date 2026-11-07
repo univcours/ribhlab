@@ -1259,3 +1259,83 @@ body.rivo-multiselect #app .content{
   grid-column:3!important;grid-row:1!important;
   min-width:0!important;overflow:visible!important;
 }
+
+
+
+/* Other feature panels: restore full-length action names and tall controls.
+   Scrollable editor toolbar preserves preview space and reaches every action. */
+@media(max-width:780px){
+ .rivo-editor-actions{
+   display:grid!important;
+   grid-template-columns:repeat(3,minmax(0,1fr))!important;
+   grid-auto-rows:minmax(115px,auto)!important;
+   gap:8px!important;
+   max-height:min(38dvh,320px)!important;
+   overflow-x:hidden!important;
+   overflow-y:auto!important;
+   overscroll-behavior:contain;
+   padding:10px 9px calc(12px + env(safe-area-inset-bottom,0px))!important;
+ }
+ .rivo-editor-actions button{
+   display:flex!important;flex-direction:column!important;
+   justify-content:center!important;align-items:center!important;
+   width:100%!important;min-width:0!important;
+   height:auto!important;min-height:115px!important;max-height:none!important;
+   aspect-ratio:4/5!important;
+   padding:12px 7px!important;
+   font-size:clamp(11px,3vw,14px)!important;line-height:1.45!important;
+   white-space:normal!important;overflow:visible!important;
+   overflow-wrap:anywhere!important;text-overflow:clip!important;
+   text-align:center!important;
+ }
+ .doc-detail-actions{
+   display:grid!important;
+   grid-template-columns:repeat(3,minmax(0,1fr))!important;
+   grid-auto-rows:minmax(107px,auto)!important;
+   gap:8px!important;
+   padding:12px 10px!important;
+   max-height:min(36dvh,275px)!important;
+   overflow-y:auto!important;
+ }
+ .doc-detail-actions .doc-action{
+   display:grid!important;place-items:center!important;
+   width:100%!important;height:auto!important;
+   min-width:0!important;min-height:107px!important;max-height:none!important;
+   aspect-ratio:4/5!important;
+   padding:11px 6px!important;
+   font-size:clamp(11px,3vw,13px)!important;line-height:1.4!important;
+   white-space:normal!important;overflow:visible!important;
+   overflow-wrap:anywhere!important;text-overflow:clip!important;
+ }
+ .rivo-pages-bottom{
+   max-height:min(36dvh,290px)!important;
+   overflow-y:auto!important;
+   overscroll-behavior:contain!important;
+ }
+ .rivo-page-operations{
+   display:grid!important;
+   grid-template-columns:repeat(3,minmax(0,1fr))!important;
+   grid-auto-rows:minmax(104px,auto)!important;
+   gap:7px!important;
+ }
+ .rivo-page-operations button{
+   box-sizing:border-box!important;
+   display:flex!important;flex-direction:column!important;
+   align-items:center!important;justify-content:center!important;
+   height:auto!important;min-height:104px!important;max-height:none!important;
+   width:100%!important;min-width:0!important;
+   aspect-ratio:4/5!important;
+   padding:10px 5px!important;
+   font-size:clamp(11px,3vw,13px)!important;line-height:1.4!important;
+   white-space:normal!important;overflow:visible!important;
+   overflow-wrap:anywhere!important;text-overflow:clip!important;
+ }
+ .rivo-code-actions button,
+ .bulk-sheet-actions button,
+ .rivo-share-tabs button{
+   height:auto!important;min-height:55px!important;max-height:none!important;
+   font-size:12px!important;line-height:1.45!important;
+   white-space:normal!important;overflow:visible!important;
+   overflow-wrap:anywhere!important;text-overflow:clip!important;
+ }
+}
