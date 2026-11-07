@@ -305,7 +305,7 @@ const bulkUI=createLibraryBulk({
   onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
   onRename:async doc=>{
     await docViewerUI.open(doc);
-    document.querySelector('.doc-detail-actions button:nth-child(3)')?.click();
+    document.querySelector('.doc-action.doc-rename')?.click();
   },
   showBusy,progress,clearBusy,saveOut,toast
 });
