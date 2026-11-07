@@ -1,7 +1,7 @@
 // AdMob: RivoScan verified publisher units ONLY in explicit production.
  // Developer APKs never request test or real ads.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus } from '@capacitor-community/admob';
 import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID,RIVOSCAN_ADMOB_APP_ID} from './admob-production-ids.js';
 
 const adEnv=import.meta.env||{};
@@ -28,11 +28,7 @@ const PREMIUM_IDS=new Set([
  'restorePhoto','enhance','eraseColoredMarks','eraseLightWatermark',
  'manualErase','lockPdf','idPhotoMaker','ocr','compress'
 ]);
-export function isPremiumFeature(id){
- // RivoScan now has a real Rewarded unit. The user must opt in and the SDK
- // must report a real reward before advanced access is granted.
- return productionAds&&AD_CONFIG.configured&&PREMIUM_IDS.has(String(id||''))&&Boolean(AD_CONFIG.rewarded);
-}
+export function isPremiumFeature(){return false;} // All tools are accessible without a rewarded ad.
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
 export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0}){
  // A Back press is a natural page transition only when returning from an
@@ -123,51 +119,8 @@ export async function initializeAds({retry=false}={}){
  })();
  return state.initializing;
 }
-function offerReward(){
- return new Promise(resolve=>{
-  if(typeof document==='undefined'){resolve(false);return;}
-  document.querySelector('.rivo-reward-overlay .rivo-reward-cancel')?.click();
-  const overlay=document.createElement('div');overlay.className='rivo-reward-overlay';
-  const dialog=document.createElement('div');dialog.className='rivo-reward-dialog';
-  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
-  const h=document.createElement('h2');h.textContent=tr().title;
-  const p=document.createElement('p');p.textContent=tr().body;
-  const watch=document.createElement('button');watch.className='rivo-reward-watch';watch.textContent=tr().watch;
-  const cancel=document.createElement('button');cancel.className='rivo-reward-cancel';cancel.textContent=tr().cancel;
-  const finish=v=>{overlay.remove();resolve(v);};
-  watch.addEventListener('click',()=>finish(true));cancel.addEventListener('click',()=>finish(false));
-  dialog.append(h,p,watch,cancel);overlay.append(dialog);document.body.append(overlay);cancel.focus();
- });
-}
-export async function requestPremium(id){
- if(!isPremiumFeature(id)||!isAndroid)return true;
- if(remainingPremiumMs(state.unlockedUntil)>0)return true;
- if(state.busy||!(await offerReward()))return false;
- if(!(await initializeAds())){state.notify(tr().unavailable,true);return false;}
- if(state.busy)return false;
- state.busy=true;
- let receivedReward=false,listener;
- try{
-  listener=await AdMob.addListener(RewardAdPluginEvents.Rewarded,reward=>{
-   if(Number(reward?.amount)>0)receivedReward=true;
-  });
-  status('Loading rewarded video');
-  await AdMob.prepareRewardVideoAd({adId:AD_CONFIG.rewarded,isTesting:AD_CONFIG.testMode});
-  const reward=await AdMob.showRewardVideoAd({adId:AD_CONFIG.rewarded});
-  if(!receivedReward&&!(Number(reward?.amount)>0)){
-   status('Video dismissed without reward');return false;
-  }
-  state.unlockedUntil=Date.now()+PREMIUM_MINUTES*60000;
-  state.lastFullscreenAt=Date.now();
-  status('Reward granted: 10 minutes');state.notify(tr().success);return true;
- }catch(error){
-  status('Rewarded video failed',String(error?.message||error));state.notify(tr().unavailable,true);
-  return false;
- }finally{
-  await listener?.remove().catch(()=>{});
-  state.busy=false;
- }
-}
+// Ads display automatically at consented natural breaks, never as a gate.
+export async function requestPremium(){return true;}
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;

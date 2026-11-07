@@ -411,15 +411,12 @@ function home(){
  const quick=quickScanActions.map(item=>`<button type="button" class="rivo-scan-mode ${item.id==='document'?'rivo-scan-mode-main':''}"
    ${item.attribute} aria-label="${escapeHTML(scan[item.id])}">
    <span class="rivo-scan-mode-icon">${ico(item.icon,25)}</span><strong>${escapeHTML(scan[item.id])}</strong>
-   ${item.id==='book'&&isPremiumFeature('bookScan')?'<span class="rivo-scan-mode-ad" aria-label="Ad-supported tool">ADS</span>':''}
   </button>`).join('');
  const tiles=homeTiles.map((item,i)=>{
-  const gate=({flatten:'documentFlatten',erase:'manualErase',enhance:'enhance',book:'bookScan',ocr:'ocr'})[item.id];
   return `<button type="button" class="rivo-premium-tile ${item.featured?'rivo-premium-tile-main':''}"
    ${item.action} aria-label="${escapeHTML(copy.names[i])}">
    <span class="rivo-premium-tile-icon">${ico(item.icon,28)}</span>
    <strong>${escapeHTML(copy.names[i])}</strong>
-   ${gate&&isPremiumFeature(gate)?'<span class="rivo-premium-lock" aria-label="Ad-supported tool">ADS</span>':''}
   </button>`}).join('');
  return `<section class="app-home rivo-home rivo-premium-home rivo-scan-first">
   <div class="rivo-scan-first-heading"><div><h2>${escapeHTML(scan.quick)}</h2><p>${escapeHTML(scan.quickSub)}</p></div></div>
@@ -455,7 +452,7 @@ function toolsWorkspace(){
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-hub-ad" aria-label="Ad-supported tool">ADS</span>':''}</button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
