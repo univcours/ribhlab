@@ -14,9 +14,9 @@ adb shell wm density 420
 adb install -r "$APK"
 # Grant the scanner's normal runtime CAMERA permission in the isolated
 # emulator before launch, to avoid photographing an Android permission sheet.
-adb shell pm grant com.ribhlab.rivoscan android.permission.CAMERA
-adb shell am force-stop com.ribhlab.rivoscan || true
-adb shell am start -W -n com.ribhlab.rivoscan/.MainActivity
+adb shell pm grant com.ribhlab.rivoscan.debug android.permission.CAMERA
+adb shell am force-stop com.ribhlab.rivoscan.debug || true
+adb shell am start -W -n com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity
 sleep 13
 
 # New builds can display a "What's New" sheet. The only interaction here
