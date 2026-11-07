@@ -663,3 +663,87 @@ body.rivo-multiselect #app .content{padding-bottom:calc(225px + env(safe-area-in
  justify-content:flex-start!important;
 }
 #app .rivo-editor-retake{min-width:72px!important;min-height:35px!important;padding:6px 12px!important}
+
+/* 0.44.18 — turquoise controls, vertically stacked actions to the RIGHT. */
+#app .rivo-dark-ui{--rivo-teal:#06b4ac;--rivo-ink:#123f44;--rivo-surface:#effbf7;--rivo-surface-alt:#e5f8f2}
+#app .rivo-dark-ui .main,#app .rivo-dark-ui .content,#app .rivo-home,#app .rivo-tools-hub,
+#app .library-workspace{background:#effbf7!important;color:#123f44!important}
+#app .rivo-dark-ui .topbar{background:#fbfffd!important;border-color:#b2e4d9!important}
+#app .rivo-scan-first .rivo-scan-mode-main,#app .rivo-scan-first .rivo-premium-tile-main{
+ background:linear-gradient(135deg,#07c8bb,#067d81)!important;color:#fff!important}
+#app .rivo-scan-mode,#app .rivo-hub-tile,#app .rivo-premium-tile,#app .document-entry,
+#app .rivo-recent-card,#app .rivo-dark-ui .settings-row,#app .library-panel{
+ border-color:#aedfd6!important;border-radius:13px!important}
+#app .rivo-scan-mode,#app .rivo-hub-tile,#app .rivo-premium-tile{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:flex-start!important;min-height:55px!important;
+ padding:8px 10px!important;text-align:start!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ grid-template-columns:42px minmax(0,1fr) 87px!important;
+ grid-template-rows:minmax(164px,auto)!important;min-height:176px!important}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-selection-inline{
+ grid-column:3!important;grid-row:1!important;align-self:center!important;
+ width:84px!important;display:grid!important;grid-template-columns:1fr!important;
+ grid-auto-rows:32px!important;gap:5px!important;padding:0!important;margin:0!important}
+#app .document-entry.doc-selected{padding-right:105px!important;padding-left:11px!important;min-height:166px!important}
+#app .document-entry.doc-selected>.rivo-selection-inline{
+ position:absolute!important;right:8px!important;left:auto!important;
+ inset-inline-start:auto!important;inset-inline-end:auto!important;
+ inset-block-end:8px!important;width:84px!important;display:grid!important;
+ grid-template-columns:1fr!important;grid-auto-rows:32px!important;gap:5px!important}
+#app .rivo-selection-inline button{
+ display:inline-flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:center!important;gap:4px!important;width:100%!important;
+ height:32px!important;min-height:32px!important;max-height:32px!important;
+ padding:3px 4px!important;border-radius:9px!important;
+ background:#eafbf6!important;color:#076e6b!important;border:1px solid #9ddace!important}
+#app .rivo-selection-inline button small{display:block!important;font-size:10px!important;font-weight:800!important}
+#app .rivo-selection-inline button.rivo-inline-delete{
+ background:#fff0f3!important;color:#ac294c!important;border-color:#f3bac8!important}
+/* For 2+ files: a narrow single-column rail at the physical right, not the footer. */
+body.rivo-multiselect #app .library-selection-toolbar{
+ position:fixed!important;top:clamp(144px,25vh,225px)!important;
+ right:7px!important;left:auto!important;bottom:auto!important;
+ width:94px!important;max-width:94px!important;padding:0!important;
+ margin:0!important;z-index:120!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions{
+ display:grid!important;grid-template-columns:1fr!important;grid-auto-rows:34px!important;
+ gap:5px!important;padding:6px!important;margin:0!important;
+ max-height:calc(100dvh - 240px)!important;overflow-y:auto!important;
+ background:#f8fffded!important;border:1px solid #a3dbce!important;
+ border-radius:14px!important}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
+ width:100%!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+ padding:3px 2px!important;font-size:9px!important;border-radius:9px!important}
+body.rivo-multiselect #app #home-recents,body.rivo-multiselect #app #library-list{
+ padding-right:104px!important;box-sizing:border-box!important;padding-bottom:95px!important}
+body.rivo-multiselect #app .rivo-dark-ui .mobilebar,
+body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:grid!important;visibility:visible!important;opacity:1!important}
+/* Back = bright mint; Close = contrasting bright coral. */
+#app .rivo-dark-ui .rivo-header-back,#app .rivo-dark-ui button.back,
+#app .rivo-dark-ui [data-inapp-back]{
+ background:#d8fff4!important;color:#005e65!important;border:2px solid #3cdac7!important;
+ border-radius:12px!important;box-shadow:0 0 0 2px #81ffdf55!important}
+.rivo-editor-overlay button[data-edit="cancel"],
+.rivo-perfectscan-modal button[data-perfect="close"],
+.bulk-sheet-title button[data-close-sheet],
+.rivo-code-dialog button[aria-label*="close" i],
+.rivo-release-dialog button[aria-label*="close" i]{
+ background:#ffe0e7!important;color:#a4214e!important;
+ border:2px solid #ef7799!important;min-width:40px!important;min-height:40px!important;
+ border-radius:12px!important;box-shadow:0 0 0 3px #f6b5c455!important}
+.rivo-editor-overlay .rivo-editor-retake{
+ background:#d9fff5!important;color:#006369!important;
+ border:2px solid #38d9c7!important;min-height:36px!important}
+@media(max-width:370px){
+ #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ grid-template-columns:37px minmax(0,1fr) 74px!important}
+ #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .rivo-selection-inline{
+ width:71px!important}
+ #app .document-entry.doc-selected{padding-right:90px!important}
+ #app .document-entry.doc-selected>.rivo-selection-inline{width:71px!important}
+ body.rivo-multiselect #app .library-selection-toolbar{width:82px!important;max-width:82px!important}
+ body.rivo-multiselect #app #home-recents,body.rivo-multiselect #app #library-list{
+ padding-right:90px!important}
+}
