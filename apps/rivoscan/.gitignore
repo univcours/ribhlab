@@ -9,3 +9,6 @@
 .env
 .env.*
 !.env.example
+
+# Local phone-only debug version override (never in a signed Play release)
+rivoscan-device-version.properties
