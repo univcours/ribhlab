@@ -338,3 +338,8 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 - Home has no standalone ADS button or large promotional AI panel. Gated Book Scan and applicable advanced tools show a small ADS badge **only in production with actual rewarded inventory**; unsigned developer APK does not pretend ads exist.
 - Single selected document has compact labelled Share/PDF/View/Delete controls next to the file instead of a bulky bottom toolbar. For 2+ files, seven compact actions stay above visible navigation and the full circular floating camera.
 - Android Back and edge swipe close image editor, Perfect Scan and ID photo dialogs before navigating. Native capture in progress is not interrupted; Retake stays a labelled control. Editor Paper Scan Pro branding becomes Paper Scan.
+
+## Capture QA: user-confirmed PDF-only scans
+- On CameraX: shutter → full photo review with **Retake** and **✓ Confirm** → automatic chosen default filter preview with alternate filters and crop adjustment → **✓ Done** → one final PDF. An optional ML Kit FULL tool retains its vendor-managed capture UI.
+- Native intermediate JPEGs are retained only inside app cache for PDF assembly; no automatic MediaStore JPG copies or Original JPG backups are added. New scans always create PDF even when an old preference said otherwise. Older saved documents remain untouched.
+- Share conversion to JPG is available from each PDF using Share → JPG images.

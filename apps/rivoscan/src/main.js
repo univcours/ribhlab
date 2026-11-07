@@ -240,7 +240,7 @@ const docViewerUI=createDocumentViewer({
       await openScanEditor({
         doc,bridge:RivoDocuments,getLanguage:()=>language,
         onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
-        onRetake:()=>openSmartScanner(),
+        onRetake:()=>openLiveScanner(),
         // The one native scanner has its own filters, including neural correction.
         preset:'crease',
         onRefresh:async()=>{
@@ -717,7 +717,7 @@ function wire(){
     openLibrary();
   }));
   document.querySelectorAll('[data-live-camera]').forEach(el=>el.addEventListener('click',async ()=>{
-    if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner();
+    if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openLiveScanner();
     else openTool('scan');
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
@@ -755,7 +755,7 @@ function wire(){
     bulkUI.sync();
   });
   document.querySelectorAll('[data-id-card-scan]').forEach(button=>button.addEventListener('click',()=>{
-    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')openSmartScanner({mode:'ID Card',pageLimit:2});
+    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')openLiveScanner({mode:'ID Card'});
     else openTool('scan');
   }));
   for(const list of ['library-list','home-recents']){
@@ -1077,16 +1077,8 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   if(!picked.length)return;
   showBusy(dl('saving'));
   try{
-    const prefs=readScanPrefs(localStorage);
-    if(mlkitFull){
-      // ML Kit's cleaned JPEGs are temporary; unlike CameraX results,
-      // they must be copied to permanent Documents/RivoScan storage.
-      for(const page of picked)await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg');
-    }
-    if(!prefs.autoSavePdf){
-      toast(scanPrefsText(language).autoSavePdfHelp);
-      return;
-    }
+    // Both native CameraX and ML Kit FULL return only temporary JPEG pages.
+    // The ONLY user-visible scan document created here is the final PDF.
     // Both native CameraX and ML Kit FULL return cleaned images. Double filters
     // can remove faint seals, handwriting and pale table lines, so do not reapply.
     const pdf=result.scanMode==='ID Card'
@@ -1138,12 +1130,9 @@ async function openCamera(){
   if(Capacitor.isNativePlatform())nativeCaptureDepth++;
   try{
     if(Capacitor.isNativePlatform()){
-      // Basic photo mode uses the same reliable CameraX preview, without cropping.
-      // Every captured photo is published to public Documents/RivoScan as JPG;
-      // consumeSmartScan also assembles and saves its searchable PDF in that folder.
+      // Native CameraX shows ✓/Retake, filters and Done; only the PDF is saved.
       if(Capacitor.getPlatform()==='android' && Capacitor.isPluginAvailable('RivoLiveScanner')){
-        const result=await RivoLiveScanner.scan({basic:true,language});
-        await consumeSmartScan(result);
+        await openLiveScanner();
         return;
       }
       // Backward compatibility for older APKs. The next installed build uses CameraX.
@@ -1152,7 +1141,6 @@ async function openCamera(){
       const blob=await(await fetch(photo.dataUrl)).blob();
       const original=new File([blob],`RivoScan_Photo_${Date.now()}.jpg`,{type:'image/jpeg'});
       addSelectedFiles([original]);
-      await saveOut(new Uint8Array(await blob.arrayBuffer()),original.name,'image/jpeg');
       const pdf=await imagesToPdf('color',[original]);
       await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
       openLibrary();

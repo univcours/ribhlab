@@ -13,7 +13,7 @@ const memory=()=>{
 test('Scanner defaults preserve documents with one-tap auto-clean',()=>{
  const prefs=normalizeScanPrefs();
  assert.equal(prefs.autoClean,true);
- assert.equal(prefs.keepOriginal,true);
+ assert.equal(prefs.keepOriginal,false);
  assert.equal(prefs.enhancement,'proscan');
  assert.equal(prefs.jpegQuality,94);
  assert.equal(prefs.pageSize,'a4');
@@ -48,4 +48,11 @@ test('All requested scanner controls have labels and finite options in seven lan
    if(field.options)for(const value of field.options)assert.ok(formatScanSettingValue(lang,field.key,value));
   }
  }
+});
+
+test('All new scans produce PDFs only, regardless of legacy original/JPG settings',()=>{
+ const prefs=normalizeScanPrefs({keepOriginal:true,autoSavePdf:false});
+ assert.equal(prefs.keepOriginal,false);
+ assert.equal(prefs.autoSavePdf,true);
+ assert.ok(!SCAN_PREF_FIELDS.some(x=>['keepOriginal','autoSavePdf'].includes(x.key)));
 });

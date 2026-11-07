@@ -6,7 +6,7 @@ export const DEFAULT_SCAN_PREFS=Object.freeze({
   cameraQuality:'hd',
   enhancement:'proscan',
   autoClean:true,
-  keepOriginal:true,
+  keepOriginal:false,
   jpegQuality:94,
   pdfQuality:0.85,
   pageSize:'a4',
@@ -24,6 +24,9 @@ export function normalizeScanPrefs(value={}){
  const prefs={...DEFAULT_SCAN_PREFS};
  if(!value||typeof value!=='object'||Array.isArray(value))return prefs;
  for(const key of Object.keys(DEFAULT_SCAN_PREFS)){
+  // PDF-only policy: old preferences cannot re-enable original JPG exports or
+  // disable the final PDF. Never delete previously saved user documents.
+  if(key==='keepOriginal'||key==='autoSavePdf')continue;
   if(boolKeys.has(key)){if(typeof value[key]==='boolean')prefs[key]=value[key];}
   else if(choices[key]?.includes(value[key]))prefs[key]=value[key];
  }
@@ -54,13 +57,11 @@ export const scanPrefsText=lang=>TEXT[lang]||TEXT.en;
 export const SCAN_PREF_FIELDS=[
  {key:'autoClean',type:'switch'},
  {key:'enhancement',type:'select',options:choices.enhancement},
- {key:'keepOriginal',type:'switch'},
  {key:'batch',type:'switch'},
  {key:'cameraQuality',type:'select',options:choices.cameraQuality},
  {key:'jpegQuality',type:'select',options:choices.jpegQuality},
  {key:'pdfQuality',type:'select',options:choices.pdfQuality},
- {key:'pageSize',type:'select',options:choices.pageSize},
- {key:'autoSavePdf',type:'switch'}
+ {key:'pageSize',type:'select',options:choices.pageSize}
 ];
 export function formatScanSettingValue(lang,key,value){
  const label=scanPrefsText(lang);

@@ -111,6 +111,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private ExecutorService analyzer;
     private RivoCropEditor editor;
     private Bitmap current;
+    private Bitmap awaitingCaptureApproval; // never save a page before the user confirms ✓
     private Bitmap pendingWarp,enhancementPreview;
     private ImageView enhancementImage;
     private TextView enhancementHint;
@@ -154,7 +155,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if("ID Card".equals(scanMode))batchMode=true;
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
-        try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
+        try{openCvReady=OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
         if(!openCvReady && !basicCameraMode){
             Toast.makeText(this,trNative("basicMode"),Toast.LENGTH_LONG).show();
@@ -234,9 +235,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // ambiguous tiny icon or truncated translated action.
         TextView back=touchLabel(editing?trNative("retake"):"✕",editing?15:27,Color.WHITE,()->showCamera());
         back.setContentDescription(editing?trNative("retake"):trNative("close"));
-        header.addView(back,new LinearLayout.LayoutParams(dp(editing?94:44),dp(55)));
+        back.setBackground(outlined(Color.rgb(4,114,125),13,Color.rgb(91,236,219)));
+        header.addView(back,new LinearLayout.LayoutParams(dp(editing?94:44),dp(48)));
         TextView title=text(trNative("title"),17,Color.WHITE,true);
+        title.setGravity(Gravity.CENTER);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
+        TextView close=touchLabel("✕",25,Color.WHITE,this::finishWithPages);
+        close.setContentDescription(trNative("close"));
+        close.setBackground(outlined(Color.rgb(160,48,73),13,Color.rgb(255,149,166)));
+        header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
         shell.addView(header);
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
@@ -266,12 +273,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] save={"Save","حفظ","Enregistrer","Guardar","Speichern","Guardar","Salva"};
         String[] check={"Compare and choose a filter, then save or retake.","قارن واختار المعالجة ثم احفظ أو عاود التصوير.","Comparez, choisissez un filtre puis enregistrez ou reprenez.","Compara, elige filtro y guarda o repite.","Vergleichen, Filter wählen, speichern oder neu aufnehmen.","Compare, escolha filtro, guarde ou repita.","Confronta, scegli filtro, salva o riprendi."};
         String[] qualityWarning={"Image may need retaking","قد تحتاج الصورة لإعادة التصوير","La photo doit peut-être être reprise","Puede necesitar repetir la foto","Foto möglicherweise neu aufnehmen","Poderá ter de repetir a fotografia","Potrebbe essere necessario ripetere la foto"};
+        String[] confirm={"Confirm","تأكيد","Confirmer","Confirmar","Bestätigen","Confirmar","Conferma"};
+        String[] approval={"Check the photo. ✓ Continue to default filter, or Retake.","راجع الصورة. ✓ باش تشوف الفلتر الافتراضي، أو Retake للإعادة.","Vérifiez la photo. ✓ pour les filtres, ou reprendre.","Revisa la foto. ✓ para filtros o repetir.","Foto prüfen. ✓ für Filter oder erneut aufnehmen.","Verifique a foto. ✓ para filtros ou repetir.","Controlla foto. ✓ filtri oppure riprendi."};
+        String[] done={"Done","تم","Terminé","Listo","Fertig","Concluído","Fine"};
         String[] uvdoc={"UVDoc AI · review result","UVDoc AI · شوف النتيجة","UVDoc IA · voir le résultat",
             "UVDoc IA · revisar resultado","UVDoc KI · Ergebnis prüfen","UVDoc IA · rever resultado",
             "UVDoc IA · verifica il risultato"};
         int index=0;for(int i=0;i<languages.length;i++)if(languages[i].equals(code)){index=i;break;}
         switch(key){
             case "review":return review[index];
+            case "confirm":return confirm[index];
+            case "approval":return approval[index];
+            case "done":return done[index];
             case "analyzing":return analyzing[index];
             case "processing":return processing[index];
             case "save":return save[index];
@@ -288,6 +301,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         clearSessionSignature();
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
+        if(awaitingCaptureApproval!=null&&!awaitingCaptureApproval.isRecycled())
+            awaitingCaptureApproval.recycle();
+        awaitingCaptureApproval=null;
         editing=false;
         cameraView=new PreviewView(this);
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
@@ -303,6 +319,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         top.setPadding(dp(7),0,dp(7),0);
         top.setBackgroundColor(Color.rgb(7,61,65));
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
+        close.setContentDescription(trNative("close"));
+        close.setBackground(outlined(Color.rgb(162,43,72),13,Color.rgb(255,150,169)));
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
         cameraPickerButton=touchLabel(selectedCamera==null?trNative("bestCamera")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
@@ -853,7 +871,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
                 captureInProgress=false;
                 if(isFinishing()||isDestroyed()){file.delete();return;}
-                try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
+                try{Bitmap bmp=decodeFile(file);showCaptureReview(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
             @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
@@ -929,9 +947,32 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         }
                     }
                 }catch(Exception ignored){}
-                if(basicCameraMode)saveWithoutCrop(img);else openEditor(img);
+                showCaptureReview(img);
             }
         }catch(Exception e){Toast.makeText(this,trNative("importError")+e.getMessage(),Toast.LENGTH_LONG).show();}
+    }
+    /** Captured image stays visible. The user must press ✓ or Retake before
+     * cropping, filters or a PDF can be finalized. This is NOT auto-save. */
+    private void showCaptureReview(Bitmap bitmap){
+        if(bitmap==null||bitmap.isRecycled())return;
+        editing=true;
+        awaitingCaptureApproval=bitmap;
+        ImageView image=new ImageView(this);
+        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        image.setBackgroundColor(Color.rgb(5,44,49));
+        image.setImageBitmap(bitmap);
+        image.setContentDescription(localizedCapture("review"));
+        layout(image,localizedCapture("approval"),
+            button(trNative("retake"),this::showCamera),
+            button("✓  "+localizedCapture("confirm"),()->{
+                if(awaitingCaptureApproval==null||savingEnhancedPage)return;
+                Bitmap approved=awaitingCaptureApproval;
+                awaitingCaptureApproval=null; // transfer ownership to crop/filter flow
+                openEditor(approved);
+                // Start selected default filter automatically. Crop can be reopened
+                // from the filter screen if the detected corners need correction.
+                if(openCvReady&&editor!=null)prepareEnhancementPreview();
+            }));
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
@@ -1000,7 +1041,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 final File saved=target;
                 // Keep an unmodified copy (in a dedicated Originals folder) so
                 // faint stamps can be checked against the captured source later.
-                if(saveOriginal)backupOriginalPage(source);
+                // Keep original in memory until the PDF is finalized; no public JPG backup.
                 mainHandler.post(()->completeProcessedPage(saved,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
@@ -1051,7 +1092,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             return;
         }
         savedImages.add(Uri.fromFile(saved).toString());
-        publishPageCopy(saved);
+        // Internal JPEG page remains in app cache only until PDF assembly.
+        // User-visible exports are PDFs, never auto-published JPG duplicates.
         RivoSounds.play(this,"saved");
         if(current!=null&&!current.isRecycled())current.recycle();
         current=null;
@@ -1322,7 +1364,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         scroll.addView(choices,new HorizontalScrollView.LayoutParams(-2,-1));
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
-        enhancementSaveButton=button("✓  "+localizedCapture("save"),this::saveEnhancedPage);
+        enhancementSaveButton=button("✓  "+localizedCapture("done"),this::saveEnhancedPage);
         enhancementSaveButton.setEnabled(false); // Enable only when the result is visible.
         layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
             button(trNative("retake"),this::showCamera),
@@ -1452,7 +1494,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 composeSignature(output);
                 target=writeProcessedJpeg(output);
                 final File completed=target;
-                if(saveOriginal&&current!=null)backupOriginalPage(current);
+                // Original is held only in this scan session; do not publish a JPG.
                 mainHandler.post(()->completeProcessedPage(completed,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
@@ -1477,7 +1519,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     throw new java.io.IOException("Could not encode camera photo.");
             }
             savedImages.add(Uri.fromFile(target).toString());
-            publishPageCopy(target);
+            // No duplicate JPG publication: JS combines the temp page into PDF.
             RivoSounds.play(this,"saved");
             Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
             if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
