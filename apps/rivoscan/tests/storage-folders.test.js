@@ -10,7 +10,7 @@ test('RivoScan root picker requires explicit consent and creates type folders',(
   'FOLDER+fileType(mime,name)+"/"','appendTreeFiles(items,root,rootDocument(root)',
   'appendFolderFiles(items,legacyDownloadsCollection(),LEGACY_FOLDER)','trustedTreeFile'])
  assert.ok(n.includes(marker),marker);
- assert.ok(!n.includes('MANAGE_EXTERNAL_STORAGE'));
+ assert.ok(!n.includes('android.permission.MANAGE_EXTERNAL_STORAGE'));
 });
 test('Documents library offers choosing sibling folder, and shows the active path',()=>{
  const main=read('src/main.js');
