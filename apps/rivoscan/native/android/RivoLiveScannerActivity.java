@@ -964,15 +964,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         image.setContentDescription(localizedCapture("review"));
         layout(image,localizedCapture("approval"),
             button(trNative("retake"),this::showCamera),
-            button("✓  "+localizedCapture("confirm"),()->{
-                if(awaitingCaptureApproval==null||savingEnhancedPage)return;
-                Bitmap approved=awaitingCaptureApproval;
-                awaitingCaptureApproval=null; // transfer ownership to crop/filter flow
-                openEditor(approved);
-                // Start selected default filter automatically. Crop can be reopened
-                // from the filter screen if the detected corners need correction.
-                if(openCvReady&&editor!=null)prepareEnhancementPreview();
-            }));
+            button("✓  "+localizedCapture("confirm"),()->approveCapturedPhoto(false)),
+            button("+  "+("ar".equals(nativeLanguage)?"زيد صفحة":"fr".equals(nativeLanguage)?"Ajouter une page":"Add Page"),()->approveCapturedPhoto(true)));
+    }
+    private void approveCapturedPhoto(boolean addAnother){
+        if(awaitingCaptureApproval==null||savingEnhancedPage)return;
+        if(addAnother)setBatch(true);
+        Bitmap approved=awaitingCaptureApproval;
+        awaitingCaptureApproval=null;
+        openEditor(approved);
+        // Automatically apply the default filter; Done still confirms the page.
+        // In batch mode, saving returns to CameraX for another page.
+        if(openCvReady&&editor!=null)prepareEnhancementPreview();
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
