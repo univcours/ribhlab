@@ -2,7 +2,7 @@ name: RivoScan - real Android Google Play screenshot capture
 on:
   workflow_dispatch:
   push:
-    branches: [feat/rivoscan-genuine-play-screenshots-20261106]
+    branches: [feat/rivoscan-android-beta]
     paths:
       - 'apps/rivoscan/scripts/play-store-screenshots.sh'
       - '.github/workflows/rivoscan-play-screenshots.yml'
