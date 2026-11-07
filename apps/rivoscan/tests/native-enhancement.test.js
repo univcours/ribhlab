@@ -53,7 +53,7 @@ test('Capture keeps the image on screen, evaluates quality and requires user-sel
 
 test('Scanner protects ✓ save against rapid filter taps, back navigation and repeated captures',()=>{
  assert.ok(activity.includes('captureInProgress||savingEnhancedPage'), 'camera shutter must be locked while busy');
- assert.ok(activity.includes('if(savingEnhancedPage)return;\n        enhancementSerial++;'), 'crop back must not cancel a save');
+ assert.match(activity,/if\(savingEnhancedPage\)return;\r?\n\s*enhancementSerial\+\+;/, 'crop back must not cancel a save');
  assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null)return;'), 'filter selections must not invalidate active save');
  assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;'), 'preview task must not invalidate an active save');
  assert.ok(activity.includes('if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();'), 'must not recycle live original bitmap after scaled preview');
