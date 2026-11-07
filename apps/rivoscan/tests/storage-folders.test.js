@@ -22,7 +22,7 @@ test('Documents library offers choosing sibling folder, and shows the active pat
 });
 test('Release bump prevents accidental stale install',()=>{
  const p=read('rivoscan-version.properties'),j=JSON.parse(read('package.json'));
- assert.ok(p.includes('versionCode=98'));
- assert.ok(p.includes('versionName=0.44.22'));
- assert.equal(j.version,'0.44.22');
+ assert.ok(p.includes('versionCode=99'));
+ assert.ok(p.includes('versionName=0.44.23'));
+ assert.equal(j.version,'0.44.23');
 });

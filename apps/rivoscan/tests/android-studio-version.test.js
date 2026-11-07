@@ -9,8 +9,8 @@ test('Android Studio, npm and build metadata agree on one monotonically increasi
  assert.ok(Number.isInteger(Number(version.versionCode)) && Number(version.versionCode)>=26);
  assert.equal(manifest.version,version.versionName);
  assert.ok(get('rivoscan-version.gradle').includes("file('../../rivoscan-version.properties')"));
- assert.ok(get('rivoscan-version.gradle').includes('versionCode rivoCode'));
- assert.ok(get('rivoscan-version.gradle').includes('versionName rivoNameText'));
+ assert.ok(get('rivoscan-version.gradle').includes('versionCode effectiveCode'));
+ assert.ok(get('rivoscan-version.gradle').includes('versionName nameText'));
 });
 test('Capacitor native integration always pins generated Gradle after the template defaults',()=>{
  const branding=get('apply-rivoscan-branding.ps1');

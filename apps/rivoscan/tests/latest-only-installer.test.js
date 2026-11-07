@@ -6,7 +6,7 @@ test('The latest version is 0.44.23 / 99 and the safe installer never downgrades
  const v=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
  assert.ok(v.includes('versionCode=99'));
  assert.ok(v.includes('versionName=0.44.23'));
- assert.equal(pkg.version,'0.44.22');
+ assert.equal(pkg.version,'0.44.23');
  const installer=get('install-rivoscan-android.ps1');
  assert.ok(installer.includes('fetch --no-tags origin'));
  assert.ok(installer.includes('Refresh latest RivoScan revision after build'));
