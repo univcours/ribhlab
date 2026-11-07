@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('The latest version is 0.44.24 / 100 and the safe installer never downgrades',()=>{
+test('The version is at least 101, coherent, and installer never downgrades',()=>{
  const v=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
- assert.ok(v.includes('versionCode=100'));
- assert.ok(v.includes('versionName=0.44.24'));
- assert.equal(pkg.version,'0.44.24');
+ assert.ok(Number(/^versionCode=(\d+)$/m.exec(v)?.[1])>=101);
+ assert.match(v,/^versionName=\d+\.\d+\.\d+$/m);
+ assert.equal(pkg.version,/^versionName=(.+)$/m.exec(v)?.[1]);
  const installer=get('install-rivoscan-android.ps1');
  assert.ok(installer.includes('fetch --no-tags origin'));
  assert.ok(installer.includes('Refresh latest RivoScan revision after build'));
