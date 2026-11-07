@@ -689,8 +689,12 @@ function base64ToBytes(text){
   return out;
 }
 async function appendToLibraryPdf(doc,addedFiles){
-  if(!(/\.pdf$/i.test(doc?.name||'')||/pdf/i.test(doc?.mimeType||'')))
-    throw Error('Adding pages requires one PDF file.');
+  const sourceIsPDF=/\.pdf$/i.test(doc?.name||'')||/pdf/i.test(doc?.mimeType||'');
+  const sourceIsImage=/\.(?:jpe?g|png|webp)$/i.test(doc?.name||'')||
+    /^image\//i.test(doc?.mimeType||'');
+  if(!sourceIsPDF&&!sourceIsImage)
+    throw Error('Adding pages requires one PDF or image file.');
+  if((doc.size||0)>25*1024*1024)throw Error('Original file is too large.');
   if(!addedFiles?.length)return;
   if(addedFiles.length>30)throw Error('Maximum 30 additional files.');
   if(addedFiles.some(f=>f.size>25*1024*1024)||
@@ -699,7 +703,19 @@ async function appendToLibraryPdf(doc,addedFiles){
   showBusy('Adding pages to PDF...');
   try{
     const original=await RivoDocuments.readFile({uri:doc.uri});
-    const pdf=await PDFDocument.load(base64ToBytes(original.base64));
+    const raw=base64ToBytes(original.base64);
+    const pdf=sourceIsPDF?await PDFDocument.load(raw):await PDFDocument.create();
+    if(sourceIsImage){
+      // Preserve the original photo; put its rendered page FIRST in the new PDF.
+      const imageFile=new File([raw],String(doc.name||'Scan.jpg'),{
+        type:doc.mimeType||original.mimeType||'image/jpeg'
+      });
+      const canvas=await imageCanvas(imageFile);
+      const jpeg=await canvasBlob(canvas,'image/jpeg',.9);
+      const image=await pdf.embedJpg(await jpeg.arrayBuffer());
+      const firstPage=pdf.addPage([image.width,image.height]);
+      firstPage.drawImage(image,{x:0,y:0,width:image.width,height:image.height});
+    }
     let count=0;
     for(const file of addedFiles){
       progress('Adding pages '+(count+1)+' / '+addedFiles.length);
@@ -719,22 +735,23 @@ async function appendToLibraryPdf(doc,addedFiles){
       }else throw Error('Select an image or PDF document.');
       count++;
     }
-    const base=String(doc.name||'RivoScan').replace(/\.pdf$/i,'');
+    const base=String(doc.name||'RivoScan').replace(/\.(pdf|jpe?g|png|webp)$/i,'');
     await saveOut(await pdf.save({useObjectStreams:true}),
       base+'_AddedPages_'+Date.now()+'.pdf','application/pdf');
     await loadLibrary(false);
     if(activeTool?.id==='library')refreshVisibleLibrary();
     else refreshHomeDocuments();
-    toast('✓ Pages added; original PDF preserved as backup.');
+    toast('✓ Pages added; original document kept unchanged.');
   }finally{clearBusy();}
 }
 async function choosePagesToAppend(doc){
-  if(!(/\.pdf$/i.test(doc?.name||'')||/pdf/i.test(doc?.mimeType||''))){
-    toast('Choose a PDF to add pages.',true);return;
+  if(!(/\.(pdf|jpe?g|png|webp)$/i.test(doc?.name||'')||
+      /^(application\/pdf|image\/)/i.test(doc?.mimeType||''))){
+    toast('Choose a PDF or an image to add pages.',true);return;
   }
   const overlay=document.createElement('div');
   overlay.className='bulk-overlay rivo-add-pages-overlay';
-  overlay.innerHTML=`<section class="bulk-sheet rivo-add-pages-dialog" role="dialog" aria-modal="true" aria-label="Add PDF pages">
+  overlay.innerHTML=`<section class="bulk-sheet rivo-add-pages-dialog" role="dialog" aria-modal="true" aria-label="Add document pages">
     <div class="bulk-sheet-title"><strong>Add pages · ${escapeHTML(doc.name)}</strong>
     <button type="button" data-add-choice="close" aria-label="Close">✕</button></div>
     <p>Scan more pages or import existing PDF and images. The original stays saved as a backup.</p>

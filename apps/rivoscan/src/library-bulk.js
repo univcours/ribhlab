@@ -81,13 +81,14 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const name=String(doc.name||'').toLowerCase();
           const mime=String(doc.mimeType||'').toLowerCase();
           const isPDF=mime.includes('pdf')||name.endsWith('.pdf');
+          const canAppend=isPDF||isImage(doc);
           const actions=`<div class="rivo-selection-inline" role="toolbar" aria-label="${t('menu')}">
             <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">↗</span><span class="rivo-action-label">${t('share')}</span></button>
             <button type="button" data-doc-edit="${index}" aria-label="${t('edit')}" title="${t('edit')}"><span class="rivo-action-icon" aria-hidden="true">✎</span><span class="rivo-action-label">${t('edit')}</span></button>
             <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">▣</span><span class="rivo-action-label">${t('preview')}</span></button>
             <button type="button" data-doc-rename="${index}" aria-label="${t('rename')}" title="${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">▤</span><span class="rivo-action-label">${t('rename')}</span></button>
             <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span class="rivo-action-icon" aria-hidden="true">⌫</span><span class="rivo-action-label">${t('delete')}</span></button>
-            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${isPDF?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true">+</span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
+            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true">+</span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
           </div>`;
           row.insertAdjacentHTML('beforeend',actions);
         }
