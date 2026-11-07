@@ -112,7 +112,11 @@ public final class RivoScanPagesManager {
         edit.addView(button("⌫ "+labels[6],this::remove),new LinearLayout.LayoutParams(0,dp(48),1));
         panel.addView(edit);
         LinearLayout actions=new LinearLayout(host);
-        actions.addView(button("× "+labels[8],()->dialog.dismiss()),new LinearLayout.LayoutParams(0,dp(52),1));
+        Button cancel=button("✕ "+labels[8],()->dialog.dismiss());
+        cancel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(184,45,78)));
+        cancel.setTextColor(Color.WHITE);
+        cancel.setElevation(dp(3));
+        actions.addView(cancel,new LinearLayout.LayoutParams(0,dp(52),1));
         actions.addView(button(labels[7],this::commit),new LinearLayout.LayoutParams(0,dp(52),1));
         panel.addView(actions);
         dialog=new AlertDialog.Builder(host).setView(panel).create();

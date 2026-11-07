@@ -195,6 +195,9 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       if(imageType(current))edit();
       else root.querySelector('.doc-detail-actions').scrollIntoView({block:'end',behavior:'smooth'});
     }));
+    const closeButton=button('✕','doc-viewer-close',close);
+    closeButton.setAttribute('aria-label','Close document');
+    header.appendChild(closeButton);
     root.appendChild(header);
     root.appendChild(tag('p','doc-viewer-subtitle',word('storage')+' · '+Math.round((doc.size||0)/1024)+' KB'));
     const body=tag('div','doc-detail-preview');
