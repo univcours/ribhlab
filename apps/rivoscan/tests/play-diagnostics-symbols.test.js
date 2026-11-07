@@ -14,7 +14,7 @@ test('The native integration enables release symbols without changing R8 or sign
 });
 
 test('The Play AAB workflow parses helper and retains only genuinely generated symbols',()=>{
- const w=file('../../../.github/workflows/rivoscan-play-aab.yml');
+ const w=file('../../.github/workflows/rivoscan-play-aab.yml');
  assert.ok(w.includes("'./configure-play-debug-symbols.ps1'"));
  assert.ok(w.includes('outputs/native-debug-symbols/release/native-debug-symbols.zip'));
  assert.ok(w.includes('outputs/mapping/release/mapping.txt'));
