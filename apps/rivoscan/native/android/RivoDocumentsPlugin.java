@@ -833,6 +833,63 @@ public class RivoDocumentsPlugin extends Plugin {
         }catch(Exception ignored){return null;}
     }
 
+
+    /** Safe, verified copy-then-optional-delete between legacy docs and user-
+     * selected RivoScan root. Failures keep the original; never delete first. */
+    private void organizeInSelectedRoot(PluginCall call,Uri source,Uri tree,
+        String requested,boolean move){
+        Uri target=null;
+        boolean published=false;
+        ContentResolver resolver=getContext().getContentResolver();
+        try{
+            String name,mime;long size;
+            try(Cursor c=resolver.query(source,new String[]{
+                MediaStore.MediaColumns.DISPLAY_NAME,MediaStore.MediaColumns.MIME_TYPE,
+                MediaStore.MediaColumns.SIZE},null,null,null)){
+                if(c==null||!c.moveToFirst())throw new IllegalStateException("File is missing.");
+                name=c.getString(0);mime=c.getString(1);size=c.isNull(2)?0:c.getLong(2);
+            }
+            if(size>300L*1024*1024)throw new IllegalStateException("Maximum copy size is 300 MB.");
+            if(mime==null||mime.isEmpty())mime="application/octet-stream";
+            String folder=requested.isEmpty()?fileType(mime,name):requested;
+            if(!requested.isEmpty()){
+                boolean allowed=false;
+                for(String nameOfFolder:ORGANIZE_FOLDERS)
+                    if(nameOfFolder.equals(requested))allowed=true;
+                if(!allowed)throw new IllegalArgumentException("Invalid destination folder.");
+            }
+            target=createTreeFile(tree,folder,name,mime);
+            long bytes=0;
+            try(InputStream in=resolver.openInputStream(source);
+                OutputStream out=resolver.openOutputStream(target,"w")){
+                if(in==null||out==null)throw new IllegalStateException("Could not read/write RivoScan file.");
+                byte[] buffer=new byte[32768];int n;
+                while((n=in.read(buffer))!=-1){
+                    bytes+=n;if(bytes>300L*1024*1024)throw new IllegalStateException("File exceeds limit.");
+                    out.write(buffer,0,n);
+                }
+                out.flush();
+            }
+            if(size>0&&bytes!=size)throw new IllegalStateException("Copied file size mismatch.");
+            published=true;
+            if(move){
+                boolean deleted=trustedTreeFile(source)
+                    ?DocumentsContract.deleteDocument(resolver,source)
+                    :resolver.delete(source,null,null)>0;
+                if(!deleted)throw new IllegalStateException(
+                    "The copy succeeded, but the old file could not be removed. Both are safe.");
+            }
+            JSObject out=new JSObject();out.put("uri",target.toString());
+            out.put("folder","RivoScan/"+folder+"/");out.put("moved",move);
+            out.put("name",name);call.resolve(out);
+        }catch(Exception error){
+            if(target!=null&&!published){
+                try{DocumentsContract.deleteDocument(resolver,target);}catch(Exception ignored){}
+            }
+            call.reject("Could not organize in RivoScan: "+error.getMessage(),error);
+        }
+    }
+
     /** Copy/move only between explicit RivoScan folders. The source is never removed
      * until the new MediaStore entry has been fully written and published. */
     @PluginMethod
@@ -842,6 +899,16 @@ public class RivoDocumentsPlugin extends Plugin {
         String folder=safeSubfolder(call.getString("folder",""));
         if(folder==null){call.reject("Invalid destination folder.");return;}
         boolean move=Boolean.TRUE.equals(call.getBoolean("move",false));
+
+        // When the user selected Internal storage/RivoScan, organizing also
+        // stays within that tree, even for old MediaStore documents.
+        Uri tree=null;
+        try{tree=selectedRoot();}
+        catch(Exception e){call.reject("Choose RivoScan folder again before organizing: "+e.getMessage(),e);return;}
+        if(tree!=null){
+            organizeInSelectedRoot(call,source,tree,call.getString("folder",""),move);
+            return;
+        }
         ContentResolver resolver=getContext().getContentResolver();
         Uri destination=null;
         try{
