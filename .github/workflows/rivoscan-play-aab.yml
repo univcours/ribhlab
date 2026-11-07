@@ -41,7 +41,7 @@ jobs:
       - name: Validate native PowerShell scripts before building Android
         shell: pwsh
         run: |
-          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1','./repair-rivoscan-android.ps1','./install-rivoscan-android.ps1','./prepare-rivoscan-production-android-studio.ps1')) {
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./configure-play-debug-symbols.ps1','./setup-rivoscan-play-signing.ps1','./repair-rivoscan-android.ps1','./install-rivoscan-android.ps1','./prepare-rivoscan-production-android-studio.ps1')) {
             $tokens=$null
             $errors=$null
             [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
@@ -103,6 +103,40 @@ jobs:
           done
           test "$success" -eq 1
           test -s app/build/outputs/bundle/release/app-release.aab
+      - name: Inspect release diagnostic metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          SYMBOLS=android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
+          MAPPING=android/app/build/outputs/mapping/release/mapping.txt
+          CODE=$(sed -n 's/^versionCode=//p' rivoscan-version.properties | head -1)
+          echo "Diagnostic artifacts apply ONLY to RivoScan versionCode $CODE."
+          if [[ -s "$SYMBOLS" ]]; then
+            unzip -t "$SYMBOLS" > /dev/null
+            echo "PASS: Generated native debug symbol archive: $SYMBOLS"
+          else
+            echo "::warning::Native symbol zip unavailable; dependent precompiled .so libraries may already be stripped."
+          fi
+          if unzip -Z -1 "$AAB" | grep -q '^BUNDLE-METADATA/com.android.tools.build.debugsymbols/'; then
+            echo "Native debugging metadata present inside AAB."
+          else
+            echo "::warning::AAB does not contain native debugging metadata. Review Gradle stripping logs."
+          fi
+          if [[ -s "$MAPPING" ]]; then
+            echo "R8 mapping generated for this AAB: $MAPPING"
+          else
+            echo "::notice::No R8 mapping.txt. This is expected when release minifyEnabled=false."
+          fi
+      - name: Retain available diagnostic symbols for this release
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-PLAY-DIAGNOSTICS
+          path: |
+            apps/rivoscan/android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
+            apps/rivoscan/android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
+          retention-days: 14
       - name: Inspect release AAB structure and version
         run: |
           set -euo pipefail

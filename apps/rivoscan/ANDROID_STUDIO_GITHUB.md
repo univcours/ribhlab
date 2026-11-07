@@ -83,3 +83,12 @@ If no phone is authorized, verify USB/Wireless debugging using
 
 Android will still reject an update whose APK signature differs. To update without
 uninstalling, both builds must use the same signing certificate.
+
+
+## Play Console: native symbols and R8 warning
+
+The native scanner integration enables release-only Gradle native symbols using SYMBOL_TABLE. During a bundle release, Google Play can read the embedded symbol metadata when the third-party native libraries provide it. Some bundled prebuilt libraries may already have their symbols removed; no automation can recover symbols missing from the vendors' files.
+
+The Play Console warning about a missing ProGuard/R8 mapping.txt does NOT block publication if code minification is disabled (no mapping.txt is expected). Avoid enabling R8 merely to silence this warning; it can affect reflection-based Capacitor plugins without keep rules and tests.
+
+For a locally built signed bundle, look for the native-debug-symbols.zip inside android/app/build/outputs/native-debug-symbols/release and mapping.txt inside android/app/build/outputs/mapping/release. In Play Console open Test and release > App bundle explorer > choose the exact uploaded versionCode > Downloads > Assets; upload only matching files if they were not included in the AAB. A bundle already uploaded as code 74 cannot use symbols from a separate build such as code 101. Do not re-sign a previously uploaded versionCode or attach mismatched files.
