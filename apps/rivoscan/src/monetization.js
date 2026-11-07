@@ -23,6 +23,10 @@ export const AD_CONFIG=Object.freeze({
 export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
 export const APP_OPEN_COOLDOWN_MS=20*60*1000;
 export const MIN_BACKGROUND_MS=60*1000;
+export const AD_RETRY_DELAY_MS=60*1000;
+export function canRetryAdLoad(lastAttemptAt,now=Date.now()){
+ return !lastAttemptAt||now-lastAttemptAt>=AD_RETRY_DELAY_MS;
+}
 // All tools are available without any rewarded-video gate.
 export function isPremiumFeature(){return false;}
 export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,ready=true,trigger='regular',backTransitions=0}){
@@ -42,7 +46,9 @@ export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFul
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
- interstitialReady:false,appOpenReady:false,status:'Not initialized',lastError:'',
+ interstitialReady:false,appOpenReady:false,initializingInterstitial:false,
+ initializingAppOpen:false,lastInitAttemptAt:0,lastInterstitialAttemptAt:0,
+ lastAppOpenAttemptAt:0,status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
 export function configureAds({getLanguage,notify,onChange}={}){
@@ -57,26 +63,36 @@ export function getPremiumStatus(){
  shownCount:state.shownCount};
 }
 async function loadInterstitial(){
- if(!state.ready||!AD_CONFIG.interstitial||state.interstitialReady||state.busy)return false;
+ if(!state.ready||!state.consent||!AD_CONFIG.interstitial||state.interstitialReady||
+    state.busy||state.initializingInterstitial||
+    !canRetryAdLoad(state.lastInterstitialAttemptAt))return false;
+ state.initializingInterstitial=true;state.lastInterstitialAttemptAt=Date.now();
  try{
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
   state.interstitialReady=true;status('Interstitial ready');return true;
  }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
+ finally{state.initializingInterstitial=false;}
 }
 async function loadAppOpen(){
- if(!state.ready||!AD_CONFIG.appOpen||state.appOpenReady||state.busy)return false;
+ if(!state.ready||!state.consent||!AD_CONFIG.appOpen||state.appOpenReady||
+    state.busy||state.initializingAppOpen||
+    !canRetryAdLoad(state.lastAppOpenAttemptAt))return false;
+ state.initializingAppOpen=true;state.lastAppOpenAttemptAt=Date.now();
  try{
   await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
   const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
   state.appOpenReady=check?.value===true;
   state.onChange();return state.appOpenReady;
  }catch(error){status('App open unavailable',String(error?.message||error));return false;}
+ finally{state.initializingAppOpen=false;}
 }
 export async function initializeAds({retry=false}={}){
  if(!isAndroid){status('AdMob is only available on Android');return false;}
  if(!AD_CONFIG.configured){status('RivoScan production AdMob App ID missing or invalid');return false;}
  if(state.ready)return true;
  if(state.initializing)return state.initializing;
+ if(retry&&!canRetryAdLoad(state.lastInitAttemptAt))return false;
+ state.lastInitAttemptAt=Date.now();
  state.initializing=(async()=>{
   try{
    status('Checking ad consent');
@@ -111,10 +127,13 @@ export async function requestPremium(){return true;}
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;
+ // A failed initial consent/SDK request must not disable ads for the entire session.
+ // Retry only at natural navigation and never interrupt the current action.
+ if(!state.ready){void initializeAds({retry:true});return false;}
  // Count actual tool -> Home transitions, not button taps, gesture duplicates
  // or app-exit presses. A first Back without work remains advertisement-free.
  if(trigger==='back')state.backTransitions++;
- if(!state.interstitialReady)return false;
+ if(!state.interstitialReady){void loadInterstitial();return false;}
  const now=Date.now();
  if(!shouldShowInterstitial({native:isAndroid,consent:state.consent,ready:state.ready,
     startedAt:state.startedAt,now,lastShownAt:state.lastFullscreenAt,
@@ -133,7 +152,9 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
- if(!state.appOpenReady||state.busy)return false;
+ if(state.busy||working||backgroundMs<MIN_BACKGROUND_MS)return false;
+ if(!state.ready){void initializeAds({retry:true});return false;}
+ if(!state.appOpenReady){void loadAppOpen();return false;}
  const now=Date.now();
  if(!shouldShowAppOpen({native:isAndroid,consent:state.consent,ready:state.ready,
     backgroundMs,now,lastFullscreenAt:state.lastFullscreenAt,
@@ -148,6 +169,17 @@ export async function onAppForeground({backgroundMs=0,working=false}={}){
 }
 export async function openAdPrivacyOptions(){
  if(!isAndroid)return false;
- try{await AdMob.showPrivacyOptionsForm();return true;}
- catch(error){status('Privacy options unavailable',String(error?.message||error));return false;}
+ try{
+  await AdMob.showPrivacyOptionsForm();
+  const consent=await AdMob.requestConsentInfo();
+  state.consent=consent.canRequestAds===true;
+  if(!state.consent){
+   state.interstitialReady=false;state.appOpenReady=false;
+   status('Ads paused: privacy choice');return true;
+  }
+  // Updated privacy choices can restore requesting ads without a forced restart.
+  if(!state.ready)void initializeAds({retry:true});
+  else{void loadInterstitial();void loadAppOpen();}
+  return true;
+ }catch(error){status('Privacy options unavailable',String(error?.message||error));return false;}
 }
