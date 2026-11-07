@@ -20,6 +20,8 @@ test('Safe installer checks phone before build and never clears data',()=>{
  assert.ok(s.includes('if($installed.VersionCode -ge $apkVersionCode)'));
  assert.ok(s.includes('install -r $apk'));
  assert.ok(p.includes('$installed+1'));
+ assert.ok(p.includes('Android device ${serial}: installed code'));
+ assert.ok(!/\$serial:/.test(p), 'Avoid PowerShell variable parse errors before colon');
  assert.ok(p.includes('pm path com.ribhlab.rivoscan'));
  assert.ok(get('.gitignore').includes('rivoscan-device-version.properties'));
  const executable=[s,p].join('\n').split('\n').filter(l=>!l.trim().startsWith('#')).join(' ');

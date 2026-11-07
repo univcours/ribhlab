@@ -57,7 +57,7 @@ try {
   if($new -gt 2100000000L){throw 'versionCode too high for safe Android update.'}
   $lines=@('# Generated for local debug builds only; do not commit','versionCode='+$new)
   [IO.File]::WriteAllLines($file,[string[]]$lines,[Text.UTF8Encoding]::new($false))
-  Write-Host "Android device $serial: installed code $installed -> new debug code $new" -ForegroundColor Green
+  Write-Host "Android device ${serial}: installed code $installed -> new debug code $new" -ForegroundColor Green
   exit 0
 }catch{
   Write-Host ('VERSION CHECK STOPPED SAFELY: '+$_.Exception.Message) -ForegroundColor Red
