@@ -1,0 +1,42 @@
+name: RivoScan Play source preflight
+on:
+  pull_request:
+    branches: [feat/rivoscan-android-beta, main]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-play-source-preflight.yml'
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-play-source-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check release preflight JavaScript syntax
+        run: node --check scripts/play-release-preflight.mjs
+      - name: Run offline release safety unit tests
+        run: node --test tests/play-release-preflight.test.js
+      - name: Unit-test offline AAB size inspection
+        run: python -m unittest discover tests -p 'test_aab_size_report.py' -v
+      - name: Verify current repository version and privacy disclosures
+        run: node scripts/play-release-preflight.mjs
+      - name: Validate PowerShell signing bootstrap syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path './setup-rivoscan-play-signing.ps1').Path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }

@@ -1,0 +1,170 @@
+name: RivoScan Play candidate AAB
+on:
+  workflow_dispatch:
+    inputs:
+      production_ads:
+        description: 'Build RivoScan with two verified real AdMob units'
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-play-aab.yml'
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # Play candidate AAB uses real interstitial/app-open units. The developer APK
+      # uses Google demo units so testing cannot generate invalid production traffic.
+      RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
+      VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
+      RIVOSCAN_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+      VITE_RIVOSCAN_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Validate native PowerShell scripts before building Android
+        shell: pwsh
+        run: |
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1','./repair-rivoscan-android.ps1','./install-rivoscan-android.ps1','./prepare-rivoscan-production-android-studio.ps1')) {
+            $tokens=$null
+            $errors=$null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
+            if($errors.Count -gt 0) {
+              $errors | ForEach-Object {
+                Write-Host ("Parse error in {0}:{1}:{2}: {3}" -f $script,$_.Extent.StartLineNumber,$_.Extent.StartColumnNumber,$_.Message)
+              }
+              throw "Invalid PowerShell script: $script"
+            }
+          }
+      - name: Test and bundle
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm run check:play
+          npm test
+          npm run check:ads
+          npm run build
+          if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
+            grep -RqF 'ca-app-pub-7945572016731367/5608742752' dist/assets
+            grep -RqF 'ca-app-pub-7945572016731367/6270875707' dist/assets
+            ! grep -RqF 'ca-app-pub-7945572016731367/4148993879' dist/assets
+            echo 'PASS: Only real interstitial and app-open units included in production bundle.'
+          fi
+      - name: Generate Android and integrate scanner
+        run: |
+          npx cap add android
+          npx cap sync android
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Integrate native camera
+        shell: pwsh
+        run: ./install-live-scanner.ps1
+      - name: Apply native brand and version
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Validate final native AdMob App ID
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
+            grep -Fq 'ca-app-pub-7945572016731367~1509328607' "$MANIFEST"
+            ! grep -Fq 'ca-app-pub-3940256099942544' "$MANIFEST"
+          else
+            grep -Fq 'ca-app-pub-3940256099942544~3347511713' "$MANIFEST"
+          fi
+      - name: Compile unsigned release bundle
+        run: |
+          cd android
+          chmod +x gradlew
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew bundleRelease --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle bundleRelease attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+          test -s app/build/outputs/bundle/release/app-release.aab
+      - name: Inspect release AAB structure and version
+        run: |
+          set -euo pipefail
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          unzip -t "$AAB" > /dev/null
+          unzip -Z -1 "$AAB" | grep -F 'base/manifest/AndroidManifest.xml'
+          grep -Eq '^versionCode=[1-9][0-9]*$' rivoscan-version.properties
+          grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+$' rivoscan-version.properties
+          node -e "const fs=require('fs'); const p=fs.readFileSync('rivoscan-version.properties','utf8'); const v=p.match(/^versionName=(.+)$/m)?.[1]; if(v!==require('./package.json').version) process.exit(1)"
+      - name: Inspect Play AAB layout and package metadata
+        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab
+      - name: Audit bundle size and largest Android assets
+        run: python scripts/aab-size-report.py android/app/build/outputs/bundle/release/app-release.aab --json-output play-aab-size-report.json
+      - name: Save detailed AAB size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-AAB-SIZE-REPORT
+          path: apps/rivoscan/play-aab-size-report.json
+          retention-days: 14
+      - name: Check authorized signing secrets
+        id: signing
+        env:
+          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
+          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
+          STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
+        run: |
+          if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No upload signing secrets: AAB stays UNSIGNED, NOT Play-ready."
+          fi
+      - name: Sign with user-supplied upload key
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.RIVOSCAN_PLAY_KEYSTORE_B64 }}
+          KEY_ALIAS: ${{ secrets.RIVOSCAN_PLAY_KEY_ALIAS }}
+          PLAY_STORE_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
+          PLAY_KEY_PASSWORD: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYFILE="$RUNNER_TEMP/rivoscan-upload-key.jks"
+          trap 'rm -f "$KEYFILE"' EXIT
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+      - name: Reject unsigned or corrupt signed releases
+        if: steps.signing.outputs.enabled == 'true'
+        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab --expect-signed
+      - name: Save signed AAB (Play QA still required)
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-SIGNED-AAB-NEEDS-PLAY-TEST
+          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+      - name: Save unsigned AAB for inspection ONLY
+        if: steps.signing.outputs.enabled != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-UNSIGNED-AAB-NOT-PLAY-READY
+          path: apps/rivoscan/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 7

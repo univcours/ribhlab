@@ -1,0 +1,101 @@
+/**
+ * Localized user-facing document commands and PDF tool descriptions.
+ * All strings are plain text (never parsed as HTML).
+ */
+const toolIds = ['scan','bundle','shareFiles','peerTransfer','images','merge','split','rotate','delete','reorder','numbers','watermark','text','sign','pdftoimages','extractText','ocr','compress','metadata'];
+const catalog = {
+ en:[
+ ['Smart Scanner','Capture documents, adjust edges and save PDFs'],['Combine Documents','Merge photos and PDF pages into one file'],['Share Any File','Share documents, photos and archives'],['Direct File Transfer','Send files directly to another device'],['Images to PDF','Save photos together as a PDF'],['Merge PDF','Join several PDFs'],['Extract Pages','Save only selected pages'],['Rotate Pages','Correct page orientation'],['Delete Pages','Remove unnecessary pages'],['Reorder Pages','Change the order of pages'],['Page Numbers','Add automatic page numbers'],['Watermark PDF','Place a watermark on each page'],['Add Text','Insert notes in PDF pages'],['Sign PDF','Add a handwritten signature'],['PDF to JPG','Export PDF pages as pictures'],['PDF to Text','Extract selectable PDF text'],['OCR Text Reader','Recognize text in scanned documents'],['Compress Scans','Reduce scanned PDF size'],['Clear Metadata','Remove common PDF document metadata']
+ ],
+ ar:[
+ ['السكانير الذكي','صور الوثائق وعدّل الحواف وحفظ PDF'],['جمع الوثائق','جمع الصور وصفحات PDF فملف واحد'],['مشاركة الملفات','شارك الوثائق والصور والملفات'],['نقل الملفات مباشرة','صيفط الملفات مباشرة لجهاز آخر'],['الصور إلى PDF','جمع الصور فملف PDF واحد'],['دمج PDF','جمع عدة ملفات PDF'],['استخراج الصفحات','حفظ غير الصفحات المختارة'],['تدوير الصفحات','تصحيح اتجاه الصفحات'],['حذف الصفحات','حذف الصفحات اللي ما محتاجهاش'],['ترتيب الصفحات','بدّل ترتيب الصفحات'],['ترقيم الصفحات','إضافة أرقام الصفحات'],['علامة مائية','إضافة علامة مائية للصفحات'],['إضافة نص','كتب ملاحظات داخل PDF'],['توقيع PDF','إضافة توقيع بخط اليد'],['PDF إلى صور','حوّل صفحات PDF لصور'],['PDF إلى نص','استخرج النص القابل للنسخ'],['قراءة النص OCR','التعرف على الكتابة فالوثائق'],['ضغط PDF','نقص حجم الوثائق الممسوحة'],['مسح البيانات الوصفية','حذف معلومات المؤلف والملف']
+ ],
+ fr:[
+ ['Scanner intelligent','Photographier, recadrer et sauvegarder en PDF'],['Assembler des documents','Réunir photos et pages PDF'],['Partager un fichier','Partager documents, images et archives'],['Transfert direct','Envoyer des fichiers à un autre appareil'],['Images vers PDF','Assembler des photos en PDF'],['Fusionner des PDF','Réunir plusieurs fichiers PDF'],['Extraire des pages','Enregistrer des pages choisies'],['Pivoter les pages','Corriger leur orientation'],['Supprimer des pages','Retirer les pages inutiles'],['Réorganiser les pages','Modifier leur ordre'],['Numéroter les pages','Ajouter la pagination'],['Filigrane PDF','Apposer un filigrane'],['Ajouter du texte','Insérer des annotations'],['Signer un PDF','Apposer une signature manuscrite'],['PDF vers JPG','Exporter les pages en images'],['PDF vers texte','Extraire le texte sélectionnable'],['Reconnaissance OCR','Reconnaître le texte des scans'],['Compresser un PDF','Réduire la taille des scans'],['Effacer les métadonnées','Supprimer les données descriptives']
+ ],
+ es:[
+ ['Escáner inteligente','Escanea, ajusta bordes y guarda PDF'],['Combinar documentos','Reúne fotos y páginas PDF'],['Compartir archivos','Envía documentos e imágenes'],['Transferencia directa','Envía archivos a otro dispositivo'],['Imágenes a PDF','Convierte fotos en un PDF'],['Unir PDF','Combina varios PDF'],['Extraer páginas','Guarda solo páginas elegidas'],['Girar páginas','Corrige la orientación'],['Eliminar páginas','Quita páginas innecesarias'],['Ordenar páginas','Cambia el orden'],['Numerar páginas','Añade números de página'],['Marca de agua','Pon una marca en el PDF'],['Añadir texto','Inserta notas en el PDF'],['Firmar PDF','Añade tu firma'],['PDF a JPG','Exporta páginas como imágenes'],['PDF a texto','Extrae texto seleccionable'],['Lector OCR','Reconoce texto de documentos'],['Comprimir PDF','Reduce el tamaño'],['Borrar metadatos','Quita los metadatos comunes']
+ ],
+ de:[
+ ['Intelligenter Scanner','Dokumente scannen und als PDF speichern'],['Dokumente kombinieren','Fotos und PDF-Seiten verbinden'],['Datei teilen','Dokumente und Bilder versenden'],['Direkter Transfer','Dateien an andere Geräte senden'],['Bilder zu PDF','Fotos als PDF speichern'],['PDF zusammenfügen','Mehrere PDFs verbinden'],['Seiten extrahieren','Ausgewählte Seiten speichern'],['Seiten drehen','Ausrichtung korrigieren'],['Seiten löschen','Unnötige Seiten entfernen'],['Seiten sortieren','Reihenfolge ändern'],['Seitenzahlen','Seitennummern hinzufügen'],['PDF Wasserzeichen','Wasserzeichen auf Seiten'],['Text hinzufügen','Notizen einfügen'],['PDF signieren','Unterschrift hinzufügen'],['PDF zu JPG','Seiten als Bilder speichern'],['PDF zu Text','Text extrahieren'],['OCR Texterkennung','Schrift in Scans erkennen'],['PDF komprimieren','Dateigröße verkleinern'],['Metadaten entfernen','PDF-Eigenschaften löschen']
+ ],
+ pt:[
+ ['Digitalização inteligente','Digitalize e guarde em PDF'],['Combinar documentos','Junte fotos e páginas PDF'],['Partilhar ficheiro','Partilhe documentos e imagens'],['Transferência direta','Envie ficheiros a outro dispositivo'],['Imagens para PDF','Guarde fotografias num PDF'],['Juntar PDF','Combine vários PDF'],['Extrair páginas','Guarde páginas selecionadas'],['Rodar páginas','Corrija a orientação'],['Eliminar páginas','Remova páginas desnecessárias'],['Reordenar páginas','Altere a ordem'],['Numerar páginas','Adicione números de página'],['Marca de água PDF','Adicione marca de água'],['Adicionar texto','Insira notas no PDF'],['Assinar PDF','Adicione a assinatura'],['PDF para JPG','Exporte páginas em imagem'],['PDF para texto','Extraia texto do PDF'],['Leitor OCR','Reconheça texto em documentos'],['Comprimir PDF','Reduza o tamanho'],['Limpar metadados','Remova metadados comuns']
+ ],
+ it:[
+ ['Scanner intelligente','Scansiona e salva i documenti in PDF'],['Unisci documenti','Riunisci foto e pagine PDF'],['Condividi file','Condividi documenti e immagini'],['Trasferimento diretto','Invia file ad altri dispositivi'],['Immagini in PDF','Crea un PDF da più foto'],['Unisci PDF','Combina più PDF'],['Estrai pagine','Salva le pagine selezionate'],['Ruota pagine','Correggi l’orientamento'],['Elimina pagine','Rimuovi pagine inutili'],['Riordina pagine','Cambia ordine delle pagine'],['Numeri di pagina','Aggiungi numerazione'],['Filigrana PDF','Inserisci una filigrana'],['Aggiungi testo','Inserisci note nel PDF'],['Firma PDF','Aggiungi la tua firma'],['PDF in JPG','Esporta pagine come immagini'],['PDF in testo','Estrai il testo selezionabile'],['Lettore OCR','Riconosci il testo nei documenti'],['Comprimi PDF','Riduci la dimensione'],['Rimuovi metadati','Elimina metadati comuni']
+ ]};
+const labels = {
+ en:{preview:'Document preview',edit:'Edit PDF',rename:'Rename',delete:'Delete',share:'Share',open:'Open',openExternal:'Open in another app',close:'Close',back:'Back',page:'Page',of:'of',next:'Next page',previous:'Previous page',loading:'Opening document…',tooLarge:'Preview is too large; open in another app.',noPreview:'Preview is not available for this file type.',editPages:'Edit pages',rotate:'Rotate',removePages:'Remove pages',sign:'Sign',addText:'Add text',imageToPdf:'Image to PDF',confirmDelete:'Delete this document permanently?',enterName:'New document name',saved:'Document updated',cancel:'Cancel',processing:'Preparing document…',error:'Could not open document',fileMissing:'Document no longer available',editHelp:'Choose how you want to edit this document',options:'Options',local:'Processed on your device',fileHint:'Password-protected or very large PDFs may need more memory.',choose:'Select files',formatAny:'Any supported file',other:'More',ready:'Ready',copy:'Copy',refresh:'Refresh',pdf:'PDF',photos:'Photos',shareNow:'Share now'},
+ ar:{preview:'معاينة الوثيقة',edit:'تعديل PDF',rename:'تغيير الاسم',delete:'حذف',share:'مشاركة',open:'فتح',openExternal:'فتح بتطبيق آخر',close:'إغلاق',back:'رجوع',page:'الصفحة',of:'من',next:'الصفحة الموالية',previous:'الصفحة السابقة',loading:'كنفتحو الوثيقة…',tooLarge:'الوثيقة كبيرة للمعاينة؛ فتحها بتطبيق آخر.',noPreview:'ما كايناش معاينة لهاد النوع من الملفات.',editPages:'تعديل الصفحات',rotate:'تدوير',removePages:'حذف الصفحات',sign:'توقيع',addText:'إضافة نص',imageToPdf:'الصورة إلى PDF',confirmDelete:'واش تحذف هاد الوثيقة نهائياً؟',enterName:'الاسم الجديد ديال الوثيقة',saved:'تبدلات الوثيقة بنجاح',cancel:'إلغاء',processing:'كنوجدو الوثيقة…',error:'تعذر فتح الوثيقة',fileMissing:'الوثيقة ما بقاتش موجودة',editHelp:'اختار التعديل اللي بغيتي',options:'الاختيارات',local:'المعالجة فالهاتف ديالك',fileHint:'بعض ملفات PDF المحمية أو الكبيرة كتحتاج ذاكرة أكثر.',choose:'اختيار الملفات',formatAny:'ملف مدعوم',other:'المزيد',ready:'جاهز',copy:'نسخ',refresh:'تحديث',pdf:'PDF',photos:'صور',shareNow:'شارك دابا'},
+ fr:{preview:'Aperçu du document',edit:'Modifier PDF',rename:'Renommer',delete:'Supprimer',share:'Partager',open:'Ouvrir',openExternal:'Ouvrir dans une autre appli',close:'Fermer',back:'Retour',page:'Page',of:'sur',next:'Page suivante',previous:'Page précédente',loading:'Ouverture du document…',tooLarge:'Fichier trop volumineux; ouvrir dans une autre appli.',noPreview:'Aperçu indisponible pour ce format.',editPages:'Modifier les pages',rotate:'Pivoter',removePages:'Supprimer des pages',sign:'Signer',addText:'Ajouter du texte',imageToPdf:'Image vers PDF',confirmDelete:'Supprimer définitivement ce document ?',enterName:'Nouveau nom du document',saved:'Document mis à jour',cancel:'Annuler',processing:'Préparation du document…',error:'Impossible d’ouvrir le document',fileMissing:'Fichier introuvable',editHelp:'Choisissez une modification',options:'Options',local:'Traité sur votre appareil',fileHint:'Les PDF protégés ou volumineux peuvent nécessiter davantage de mémoire.',choose:'Choisir des fichiers',formatAny:'Fichier pris en charge',other:'Plus',ready:'Prêt',copy:'Copier',refresh:'Actualiser',pdf:'PDF',photos:'Photos',shareNow:'Partager'},
+ es:{preview:'Vista previa',edit:'Editar PDF',rename:'Renombrar',delete:'Eliminar',share:'Compartir',open:'Abrir',openExternal:'Abrir en otra aplicación',close:'Cerrar',back:'Volver',page:'Página',of:'de',next:'Siguiente',previous:'Anterior',loading:'Abriendo…',tooLarge:'Archivo demasiado grande para la vista previa.',noPreview:'Vista previa no disponible.',editPages:'Editar páginas',rotate:'Girar',removePages:'Eliminar páginas',sign:'Firmar',addText:'Añadir texto',imageToPdf:'Imagen a PDF',confirmDelete:'¿Eliminar el documento para siempre?',enterName:'Nuevo nombre',saved:'Documento actualizado',cancel:'Cancelar',processing:'Preparando…',error:'No se pudo abrir',fileMissing:'Archivo no encontrado',editHelp:'Selecciona una edición',options:'Opciones',local:'Procesado en el dispositivo',fileHint:'Los PDF grandes o protegidos pueden necesitar más memoria.',choose:'Elegir archivos',formatAny:'Archivo compatible',other:'Más',ready:'Listo',copy:'Copiar',refresh:'Actualizar',pdf:'PDF',photos:'Fotos',shareNow:'Compartir'},
+ de:{preview:'Dokumentvorschau',edit:'PDF bearbeiten',rename:'Umbenennen',delete:'Löschen',share:'Teilen',open:'Öffnen',openExternal:'In anderer App öffnen',close:'Schließen',back:'Zurück',page:'Seite',of:'von',next:'Nächste',previous:'Vorherige',loading:'Dokument wird geöffnet…',tooLarge:'Datei zu groß für die Vorschau.',noPreview:'Keine Vorschau für diesen Dateityp.',editPages:'Seiten bearbeiten',rotate:'Drehen',removePages:'Seiten löschen',sign:'Unterschreiben',addText:'Text hinzufügen',imageToPdf:'Bild zu PDF',confirmDelete:'Dokument dauerhaft löschen?',enterName:'Neuer Dateiname',saved:'Dokument geändert',cancel:'Abbrechen',processing:'Dokument wird vorbereitet…',error:'Öffnen fehlgeschlagen',fileMissing:'Datei nicht gefunden',editHelp:'Bearbeitung auswählen',options:'Optionen',local:'Lokal verarbeitet',fileHint:'Große oder verschlüsselte PDFs benötigen möglicherweise mehr Speicher.',choose:'Dateien auswählen',formatAny:'Unterstützte Datei',other:'Mehr',ready:'Bereit',copy:'Kopieren',refresh:'Aktualisieren',pdf:'PDF',photos:'Fotos',shareNow:'Teilen'},
+ pt:{preview:'Pré-visualização',edit:'Editar PDF',rename:'Renomear',delete:'Eliminar',share:'Partilhar',open:'Abrir',openExternal:'Abrir noutra aplicação',close:'Fechar',back:'Voltar',page:'Página',of:'de',next:'Seguinte',previous:'Anterior',loading:'A abrir documento…',tooLarge:'Ficheiro grande demais para pré-visualizar.',noPreview:'Pré-visualização indisponível.',editPages:'Editar páginas',rotate:'Rodar',removePages:'Eliminar páginas',sign:'Assinar',addText:'Adicionar texto',imageToPdf:'Imagem para PDF',confirmDelete:'Eliminar documento permanentemente?',enterName:'Novo nome do documento',saved:'Documento atualizado',cancel:'Cancelar',processing:'A preparar documento…',error:'Não foi possível abrir',fileMissing:'Documento não encontrado',editHelp:'Escolha o tipo de edição',options:'Opções',local:'Processado no dispositivo',fileHint:'PDFs grandes ou protegidos podem exigir mais memória.',choose:'Selecionar ficheiros',formatAny:'Ficheiro suportado',other:'Mais',ready:'Pronto',copy:'Copiar',refresh:'Atualizar',pdf:'PDF',photos:'Fotos',shareNow:'Partilhar'},
+ it:{preview:'Anteprima documento',edit:'Modifica PDF',rename:'Rinomina',delete:'Elimina',share:'Condividi',open:'Apri',openExternal:'Apri con altra app',close:'Chiudi',back:'Indietro',page:'Pagina',of:'di',next:'Successiva',previous:'Precedente',loading:'Apertura documento…',tooLarge:'File troppo grande per l’anteprima.',noPreview:'Anteprima non disponibile.',editPages:'Modifica pagine',rotate:'Ruota',removePages:'Elimina pagine',sign:'Firma',addText:'Aggiungi testo',imageToPdf:'Immagine in PDF',confirmDelete:'Eliminare definitivamente il documento?',enterName:'Nuovo nome',saved:'Documento aggiornato',cancel:'Annulla',processing:'Preparazione documento…',error:'Impossibile aprire',fileMissing:'Documento non trovato',editHelp:'Scegli come modificare',options:'Opzioni',local:'Elaborato sul dispositivo',fileHint:'PDF protetti o grandi possono richiedere più memoria.',choose:'Seleziona file',formatAny:'File supportato',other:'Altro',ready:'Pronto',copy:'Copia',refresh:'Aggiorna',pdf:'PDF',photos:'Foto',shareNow:'Condividi'}
+};
+export function toolText(language,id,kind){
+  const index=toolIds.indexOf(id);
+  return (catalog[language]||catalog.en)[index]?.[kind==='desc'?1:0] || catalog.en[index]?.[kind==='desc'?1:0] || id;
+}
+export function label(language,key){return (labels[language]||labels.en)[key]||labels.en[key]||key;}
+export const supportedLanguages=Object.keys(labels);
+
+/** Translate PDF settings without altering input names, values or numeric page ranges. */
+const optionPhrases=[
+'Pages to keep (e.g. 1-3, 5, 8)','Select only the pages you want in the new PDF.','Pages to remove','Pages to rotate (empty = all)','Rotation',
+'90° clockwise','270° clockwise','New page order (one-based)','Starting page number','Position','Bottom center','Top right',
+'Watermark text','Opacity','Text to add on each page','Top','Bottom','Center','Draw signature (finger / mouse)',
+'Clear signature','Page number','Bottom right','Scan appearance','Original color','Enhanced document','Black & white (grayscale)',
+'High contrast monochrome','Image quality','High','Balanced','Smaller file','Image format','Resolution','Standard','Extra high',
+'Compression quality','Higher quality','OCR language','Your annotation'
+];
+const optionTranslations={
+ ar:['الصفحات اللي بغيت تحتافظ بها','اختار غير الصفحات اللي بغيتي فالـPDF الجديد.','الصفحات للحذف','الصفحات للتدوير (خاوي يعني الكل)','زاوية التدوير',
+ '90° مع عقارب الساعة','270° مع عقارب الساعة','الترتيب الجديد للصفحات','رقم البداية','المكان','لتحت فالوسط','لفوق فاليمين',
+ 'نص العلامة المائية','الشفافية','النص اللي بغيتي تزيد','فوق','تحت','الوسط','رسم التوقيع بالإصبع',
+ 'مسح التوقيع','رقم الصفحة','لتحت فاليمين','مظهر السكانير','الألوان الأصلية','تحسين الوثيقة','أبيض وأسود (رمادي)',
+ 'تباين قوي','جودة الصورة','عالية','متوازنة','حجم أصغر','صيغة الصور','الدقة','عادية','عالية جداً',
+ 'جودة الضغط','جودة أفضل','لغة OCR','الملاحظة ديالك'],
+ fr:['Pages à conserver','Sélectionnez les pages du nouveau PDF.','Pages à supprimer','Pages à pivoter (vide = toutes)','Rotation',
+ '90° sens horaire','270° sens horaire','Nouvel ordre des pages','Numéro de départ','Position','En bas au centre','En haut à droite',
+ 'Texte du filigrane','Opacité','Texte à ajouter sur chaque page','Haut','Bas','Centre','Dessinez votre signature',
+ 'Effacer la signature','Numéro de page','En bas à droite','Aspect du scan','Couleurs d’origine','Document amélioré','Noir et blanc (gris)',
+ 'Noir et blanc contrasté','Qualité des images','Élevée','Équilibrée','Fichier réduit','Format des images','Résolution','Standard','Très élevée',
+ 'Qualité de compression','Meilleure qualité','Langue OCR','Votre annotation'],
+ es:['Páginas a conservar','Selecciona páginas para el nuevo PDF.','Páginas a eliminar','Páginas para girar (vacío = todas)','Rotación',
+ '90° horario','270° horario','Nuevo orden de páginas','Número inicial','Posición','Abajo centro','Arriba derecha',
+ 'Texto de marca de agua','Opacidad','Texto para cada página','Arriba','Abajo','Centro','Dibuja tu firma',
+ 'Borrar firma','Número de página','Abajo derecha','Aspecto del escaneo','Color original','Documento mejorado','Blanco y negro (gris)',
+ 'Alto contraste','Calidad de imagen','Alta','Equilibrada','Archivo pequeño','Formato de imagen','Resolución','Estándar','Muy alta',
+ 'Calidad de compresión','Mayor calidad','Idioma OCR','Tu anotación'],
+ de:['Seiten behalten','Gewünschte Seiten für neues PDF auswählen.','Seiten löschen','Seiten drehen (leer = alle)','Drehung',
+ '90° im Uhrzeigersinn','270° im Uhrzeigersinn','Neue Seitenreihenfolge','Startseitennummer','Position','Unten mittig','Oben rechts',
+ 'Wasserzeichentext','Deckkraft','Text auf jeder Seite','Oben','Unten','Mitte','Unterschrift zeichnen',
+ 'Unterschrift löschen','Seitennummer','Unten rechts','Scan-Darstellung','Originalfarben','Dokument verbessert','Graustufen',
+ 'Hoher Kontrast','Bildqualität','Hoch','Ausgewogen','Kleine Datei','Bildformat','Auflösung','Standard','Sehr hoch',
+ 'Kompressionsqualität','Höhere Qualität','OCR-Sprache','Ihre Notiz'],
+ pt:['Páginas a manter','Selecione páginas para o novo PDF.','Páginas a eliminar','Páginas a rodar (vazio = todas)','Rotação',
+ '90° horário','270° horário','Nova ordem das páginas','Número inicial','Posição','Inferior ao centro','Superior à direita',
+ 'Texto da marca de água','Opacidade','Texto em cada página','Superior','Inferior','Centro','Desenhar assinatura',
+ 'Limpar assinatura','Número da página','Inferior à direita','Aspeto do scan','Cores originais','Documento melhorado','Preto e branco (cinzento)',
+ 'Contraste elevado','Qualidade da imagem','Alta','Equilibrada','Ficheiro menor','Formato da imagem','Resolução','Normal','Muito alta',
+ 'Qualidade de compressão','Qualidade superior','Idioma OCR','A sua anotação'],
+ it:['Pagine da mantenere','Seleziona le pagine per il nuovo PDF.','Pagine da eliminare','Pagine da ruotare (vuoto = tutte)','Rotazione',
+ '90° orario','270° orario','Nuovo ordine delle pagine','Numero iniziale','Posizione','In basso al centro','In alto a destra',
+ 'Testo filigrana','Opacità','Testo su ogni pagina','In alto','In basso','Centro','Disegna la firma',
+ 'Cancella firma','Numero di pagina','In basso a destra','Aspetto scansione','Colori originali','Documento migliorato','Bianco e nero (grigio)',
+ 'Contrasto elevato','Qualità immagine','Alta','Bilanciata','File ridotto','Formato immagine','Risoluzione','Standard','Molto alta',
+ 'Qualità compressione','Qualità superiore','Lingua OCR','La tua annotazione']
+};
+export function localizeOptions(lang,markup){
+  if(lang==='en'||!optionTranslations[lang])return markup;
+  const phrases=optionTranslations[lang];
+  const replaceText=text=>{
+    const index=optionPhrases.indexOf(text.trim());
+    return index<0?text:phrases[index];
+  };
+  return String(markup).replace(/>([^<>]+)</g,(_,content)=>'>'+replaceText(content)+'<')
+    .replace(/placeholder="([^"]+)"/g,(_,value)=>'placeholder="'+replaceText(value)+'"')
+    .replace(/aria-label="([^"]+)"/g,(_,value)=>'aria-label="'+replaceText(value)+'"');
+}

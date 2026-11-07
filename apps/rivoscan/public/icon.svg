@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RivoScan turquoise document scanner">
+ <defs>
+  <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#13D9CD"/><stop offset=".48" stop-color="#079A9A"/><stop offset="1" stop-color="#06565F"/></linearGradient>
+  <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E0FAF4"/></linearGradient>
+  <linearGradient id="laser" x1="0" x2="1"><stop stop-color="#64FFF2" stop-opacity="0"/><stop offset=".5" stop-color="#64FFF2"/><stop offset="1" stop-color="#64FFF2" stop-opacity="0"/></linearGradient>
+ </defs>
+ <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+ <rect x="21" y="21" width="470" height="470" rx="95" fill="none" stroke="#FFFFFF" stroke-opacity=".26" stroke-width="3"/>
+ <g fill="none" stroke="#D9FFFA" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M96 177v-49q0-31 31-31h49"/>
+  <path d="M335 97h50q31 0 31 31v49"/>
+  <path d="M96 335v49q0 31 31 31h49"/>
+  <path d="M335 415h50q31 0 31-31v-49"/>
+ </g>
+ <path d="M184 128h109l66 69v189q0 17-18 17H184q-20 0-20-20V147q0-19 20-19Z" fill="#003E49" opacity=".25" transform="translate(5 8)"/>
+ <path d="M184 128h109l66 69v189q0 17-18 17H184q-20 0-20-20V147q0-19 20-19Z" fill="url(#paper)"/>
+ <path d="M293 128v49q0 20 20 20h46Z" fill="#B2F1E8"/>
+ <path d="M203 232h100M203 273h116M203 315h110M203 353h76" fill="none" stroke="#078F95" stroke-width="17" stroke-linecap="round" opacity=".82"/>
+ <rect x="122" y="298" width="270" height="26" rx="12" fill="url(#laser)" opacity=".52"/>
+ <path d="M112 311h288" stroke="#D5FFFD" stroke-width="8" stroke-linecap="round"/>
+</svg>
