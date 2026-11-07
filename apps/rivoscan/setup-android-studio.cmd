@@ -53,7 +53,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix-gradle-rivosca
 if errorlevel 1 goto :fail
 
 echo.
-echo SUCCESS: Android Studio project prepared.
+echo SUCCESS: RivoScan DEV Android Studio project prepared. Production is separate.
 echo Open this folder in Android Studio:
 echo %CD%\android
 echo.

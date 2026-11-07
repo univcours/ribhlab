@@ -92,3 +92,14 @@ The native scanner integration enables release-only Gradle native symbols using 
 The Play Console warning about a missing ProGuard/R8 mapping.txt does NOT block publication if code minification is disabled (no mapping.txt is expected). Avoid enabling R8 merely to silence this warning; it can affect reflection-based Capacitor plugins without keep rules and tests.
 
 For a locally built signed bundle, look for the native-debug-symbols.zip inside android/app/build/outputs/native-debug-symbols/release and mapping.txt inside android/app/build/outputs/mapping/release. In Play Console open Test and release > App bundle explorer > choose the exact uploaded versionCode > Downloads > Assets; upload only matching files if they were not included in the AAB. A bundle already uploaded as code 74 cannot use symbols from a separate build such as code 101. Do not re-sign a previously uploaded versionCode or attach mismatched files.
+
+
+## Permanent fix: Android Studio DEV and Google Play Production are separate
+
+- Google Play Production: com.ribhlab.rivoscan (RivoScan).
+- Android Studio Run: com.ribhlab.rivoscan.debug (RivoScan DEV).
+- Debug can never overwrite the installed Production app or its private data.
+- A Vite build-mode marker makes Gradle reject debug built with live Production ads, and release built with demo ads.
+- To update REAL Production: prepare release, sign AAB with the existing upload key, upload to Play testing, and update via the Play opt-in link.
+- If Play App Signing is enabled, a local upload-key signed APK may have a different certificate; do not uninstall to work around it.
+- Verify the actual installed versions separately with the read-only script verify-rivoscan-on-phone.ps1.

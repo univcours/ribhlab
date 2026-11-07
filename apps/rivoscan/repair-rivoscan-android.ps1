@@ -188,7 +188,7 @@ try {
   $builtName=$versionMatch.Groups[1].Value
   Write-Host ("SUCCESS! RivoScan v"+$builtName+" built with live scanner and adaptive launcher icon.") -ForegroundColor Green
   Write-Host "APK: $apk"
-  Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
+  Write-Host 'Android Studio Run launches RivoScan DEV only; Production remains unchanged.' -ForegroundColor Green
 } catch {
   Write-Host ''
   Write-Host ('REPAIR FAILED: '+$_.Exception.Message) -ForegroundColor Red
