@@ -58,54 +58,46 @@ try {
     @{Label='DEV';Id='com.ribhlab.rivoscan.debug'}
   )){
     $packageId=$app.Id
-    # CHECK THE APK PATH FIRST: this previously detected Production code 74.
-    # "pm list packages <filter>" is not authoritative on every Samsung user
-    # profile and must never override a positive pm path result.
-    $paths=@(& $adb -s $serial shell pm path $packageId 2>&1)
+    # Use the exact same unqualified ADB command that the owner verified
+    # directly whenever one device is connected. -s is required only with
+    # multiple devices or a specific serial selection.
+    $adbPrefix=@()
+    if($online.Count -gt 1){$adbPrefix=@('-s',$serial)}
+    $paths=@(& $adb @adbPrefix shell pm path $packageId 2>&1)
     $pathExit=$LASTEXITCODE
-    $hasApkPath=@($paths | Where-Object {$_ -match '^\s*package:/'}).Count -gt 0
-    $listed=@(& $adb -s $serial shell pm list packages $packageId 2>&1)
-    $listExit=$LASTEXITCODE
-    $listedExact=@($listed | Where-Object {
-      $_.Trim() -eq ('package:'+$packageId)
-    }).Count -gt 0
-    $info=((& $adb -s $serial shell dumpsys package $packageId 2>&1)|Out-String)
+    $hasApkPath=@($paths | Where-Object {([string]$_).Trim() -match '^package:/' }).Count -gt 0
+    $info=((& $adb @adbPrefix shell dumpsys package $packageId 2>&1) | Out-String)
     $dumpExit=$LASTEXITCODE
     $versionCode=[regex]::Match($info,'versionCode=(\d+)')
     $versionName=[regex]::Match($info,'versionName=(\S+)')
     $hasVersion=$dumpExit -eq 0 -and $versionCode.Success -and $versionName.Success
-    if($hasApkPath) {
-      if(-not $hasVersion){
-        Write-Host ($app.Label+': INSTALLED (APK path confirmed), but version unreadable | '+$packageId) -ForegroundColor Yellow
-        continue
+    # Samsung's "pm list packages <filter>" has given false negatives. It is
+    # a secondary hint only, never sufficient to dismiss a successful pm path
+    # or a valid dumpsys package version.
+    $listed=@(& $adb @adbPrefix shell pm list packages $packageId 2>&1)
+    $listExit=$LASTEXITCODE
+    $listedExact=@($listed | Where-Object {([string]$_).Trim() -eq ('package:'+$packageId)}).Count -gt 0
+    if($hasVersion){
+      Write-Host ($app.Label+': '+$versionName.Groups[1].Value+' / code '+$versionCode.Groups[1].Value+' | '+$packageId) -ForegroundColor Green
+      if(-not $hasApkPath){
+        Write-Host ('  NOTE: dumpsys reported a version but pm path returned exit '+$pathExit+'. APK visibility uncertain; no uninstall assumed.') -ForegroundColor Yellow
       }
       if(-not $listedExact){
-        Write-Host ('NOTE: pm path confirms '+$packageId+', but pm list packages does not. Trusting APK path.') -ForegroundColor Yellow
+        Write-Host '  NOTE: package list filter disagrees with dumpsys; ignoring this false-negative hint.' -ForegroundColor Yellow
       }
-    } elseif($listedExact) {
-      if(-not $hasVersion){
-        Write-Host ($app.Label+': INSTALLED (package list confirmed), but version unreadable | '+$packageId) -ForegroundColor Yellow
-        continue
-      }
-      Write-Host ('NOTE: '+$packageId+' listed but pm path unavailable (exit '+$pathExit+').') -ForegroundColor Yellow
-    } elseif($hasVersion) {
-      # dumpsys can expose metadata invisible to the active shell user.
-      Write-Host ($app.Label+': Version metadata present but APK not visible. Check Android user/work profile | '+$packageId) -ForegroundColor Yellow
-      Write-Host ('  Reported metadata: '+$versionName.Groups[1].Value+' / code '+$versionCode.Groups[1].Value) -ForegroundColor Yellow
-      continue
-    } else {
-      if($listExit -ne 0){
-        Write-Host ($app.Label+': UNKNOWN: package list failed (exit '+$listExit+'). Not evidence of uninstall. | '+$packageId) -ForegroundColor Yellow
-      }else{
-        Write-Host ($app.Label+': Not found by ADB in active user | '+$packageId) -ForegroundColor Yellow
-        Write-Host '  This is NOT proof of uninstall; verify Android user/work profile if icon still exists.' -ForegroundColor Yellow
+      if($app.Label -eq 'Production' -and [long]$versionCode.Groups[1].Value -lt $currentCode){
+        Write-Host 'Production is older than source; update via Google Play testing. Android Studio Run is DEV only.' -ForegroundColor Yellow
       }
       continue
     }
-    Write-Host ($app.Label+': '+$versionName.Groups[1].Value+' / code '+$versionCode.Groups[1].Value+' | '+$packageId) -ForegroundColor Green
-    if($app.Label -eq 'Production' -and [long]$versionCode.Groups[1].Value -lt $currentCode){
-      Write-Host 'Production is older than source; update via Google Play testing. Android Studio Run is DEV only.' -ForegroundColor Yellow
+    if($hasApkPath -or $listedExact){
+      Write-Host ($app.Label+': APK/package confirmed, but version metadata unreadable | '+$packageId) -ForegroundColor Yellow
+      Write-Host ('  pm path exit '+$pathExit+'; dumpsys exit '+$dumpExit+'; list exit '+$listExit) -ForegroundColor Yellow
+      continue
     }
+    Write-Host ($app.Label+': UNKNOWN / not detected from active ADB shell | '+$packageId) -ForegroundColor Yellow
+    Write-Host ('  pm path exit '+$pathExit+'; dumpsys exit '+$dumpExit+'; list exit '+$listExit) -ForegroundColor Yellow
+    Write-Host '  This is NOT proof of uninstall. If the icon exists, check the Android user/work profile.' -ForegroundColor Yellow
   }
   Write-Host 'Read-only check completed. No app data or documents modified.' -ForegroundColor Cyan
 }catch{

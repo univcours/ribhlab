@@ -9,14 +9,15 @@ test('Phone verification distinguishes missing, unauthorized, offline and multip
  'ADB sees NO Android devices','-DeviceSerial','USB debugging is UNAUTHORIZED'
  ])assert.ok(s.includes(phrase),phrase);
  assert.ok(s.includes('@(& $adb start-server)'));
- assert.ok(s.includes('shell pm path $packageId 2>&1'));
- assert.ok(s.includes('shell pm list packages $packageId 2>&1'));
- assert.ok(s.includes('shell dumpsys package $packageId 2>&1'));
+ assert.ok(s.includes('$adbPrefix=@()'));
+ assert.ok(s.includes("@adbPrefix shell pm path $packageId 2>&1"));
+ assert.ok(s.includes("@adbPrefix shell dumpsys package $packageId 2>&1"));
+ assert.ok(s.includes("@adbPrefix shell pm list packages $packageId 2>&1"));
  assert.ok(s.indexOf('shell pm path $packageId 2>&1') < s.indexOf('shell pm list packages $packageId 2>&1'));
- assert.ok(s.includes('if($hasApkPath)'));
- assert.ok(s.includes('if(-not $listedExact)'));
- assert.ok(s.includes('pm path confirms '));
- assert.ok(s.includes('Not found by ADB in active user'));
+ assert.ok(s.includes('if($hasVersion)'));
+ assert.ok(s.includes('if($hasApkPath -or $listedExact)'));
+ assert.ok(s.includes("package list filter disagrees with dumpsys"));
+ assert.ok(s.includes('UNKNOWN / not detected from active ADB shell'));
  assert.ok(s.includes('NOT proof of uninstall'));
  assert.ok(s.includes("Id='com.ribhlab.rivoscan'"));
  assert.ok(s.includes("Id='com.ribhlab.rivoscan.debug'"));
