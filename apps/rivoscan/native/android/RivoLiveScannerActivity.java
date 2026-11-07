@@ -962,14 +962,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         image.setBackgroundColor(Color.rgb(5,44,49));
         image.setImageBitmap(bitmap);
         image.setContentDescription(localizedCapture("review"));
+        Button confirm=button("✓",this::approveCapturedPhoto);
+        confirm.setContentDescription(localizedCapture("confirm"));
         layout(image,localizedCapture("approval"),
-            button(trNative("retake"),this::showCamera),
-            button("✓  "+localizedCapture("confirm"),()->approveCapturedPhoto(false)),
-            button("+  "+("ar".equals(nativeLanguage)?"زيد صفحة":"fr".equals(nativeLanguage)?"Ajouter une page":"Add Page"),()->approveCapturedPhoto(true)));
+            button(trNative("retake"),this::showCamera),confirm);
     }
-    private void approveCapturedPhoto(boolean addAnother){
+    private void approveCapturedPhoto(){
         if(awaitingCaptureApproval==null||savingEnhancedPage)return;
-        if(addAnother)setBatch(true);
         Bitmap approved=awaitingCaptureApproval;
         awaitingCaptureApproval=null;
         openEditor(approved);
@@ -1105,7 +1104,25 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         clearSessionSignature();
         savingEnhancedPage=false;
         if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
-        else if(batchMode)showCamera();else finishWithPages();
+        else showPostSaveChoices();
+    }
+
+    /** The page is saved; now offer to scan one more or finalize the PDF. */
+    private void showPostSaveChoices(){
+        if(savingEnhancedPage||savedImages.isEmpty()||isFinishing())return;
+        String title="ar".equals(nativeLanguage)?"تحفظات الصفحة":
+            "fr".equals(nativeLanguage)?"Page enregistrée":"Page saved";
+        String prompt="ar".equals(nativeLanguage)?"زيد صفحة أخرى أو حفظ PDF":
+            "fr".equals(nativeLanguage)?"Ajouter une page ou enregistrer le PDF":
+            "Add another page or save the PDF";
+        String add="ar".equals(nativeLanguage)?"+ زيد صفحة":
+            "fr".equals(nativeLanguage)?"+ Ajouter une page":"+ Add Page";
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(title).setMessage(prompt)
+            .setNegativeButton(add,(dialog,which)->{setBatch(true);showCamera();})
+            .setPositiveButton("✓ "+localizedCapture("save"),
+                (dialog,which)->finishWithPages())
+            .setCancelable(false).show();
     }
 
     private void clearSessionSignature(){
@@ -1470,16 +1487,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     /** User explicitly accepts the visual result; low-quality photos get a retake prompt. */
     private void saveEnhancedPage(){
         if(pendingWarp==null||savingEnhancedPage||enhancementPreview==null)return;
-        if(captureQuality!=null&&captureQuality.retakeSuggested){
-            new android.app.AlertDialog.Builder(this)
-                .setTitle(localizedCapture("qualityWarning"))
-                .setMessage(captureQuality.summary(nativeLanguage))
-                .setNegativeButton(trNative("retake"),(d,w)->showCamera())
-                .setNeutralButton(trNative("enhanceBack"),(d,w)->{})
-                .setPositiveButton(localizedCapture("save"),(d,w)->commitEnhancedPage())
-                .show();
-            return;
-        }
+        // Done saves immediately, without a secondary quality-warning confirmation.
+        if(captureQuality!=null&&captureQuality.retakeSuggested)
+            android.util.Log.i("RivoScan","Saving scan after user accepted quality warning.");
         commitEnhancedPage();
     }
     /** Explicit ✓ applies the selected filter at full source resolution. */
@@ -1524,9 +1534,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             savedImages.add(Uri.fromFile(target).toString());
             // No duplicate JPG publication: JS combines the temp page into PDF.
             RivoSounds.play(this,"saved");
-            Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
             if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
-            else if(batchMode)showCamera();else finishWithPages();
+            else showPostSaveChoices();
         }catch(Exception error){
             Toast.makeText(this,trNative("saveError")+error.getMessage(),Toast.LENGTH_LONG).show();
         }finally{

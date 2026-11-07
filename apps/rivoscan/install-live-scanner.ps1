@@ -147,6 +147,21 @@ $themeXml=@'
 
 $manifest=Join-Path $android 'app\src\main\AndroidManifest.xml'
 $m=[System.IO.File]::ReadAllText($manifest)
+# Narrow Android package visibility: document viewers only, no QUERY_ALL_PACKAGES.
+if($m -notmatch 'android.intent.action.VIEW'){
+  $viewIntent=@'
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:mimeType="*/*" />
+    </intent>
+'@
+  if($m -match '<queries(?:\s[^>]*)?>'){
+    $m=[regex]::Replace($m,'(<queries(?:\s[^>]*)?>)',('$1' + "`r`n" + $viewIntent),1)
+  }else{
+    $m=$m.Replace('<application',('<queries>' + "`r`n" + $viewIntent +
+       "`r`n" + '</queries>' + "`r`n" + '<application'))
+  }
+}
 if($m -notmatch 'android\.permission\.CAMERA') {
  $m=$m.Replace('<application','<uses-permission android:name="android.permission.CAMERA" />' + "`r`n    " + '<uses-feature android:name="android.hardware.camera" android:required="false" />' + "`r`n    " + '<application')
 }

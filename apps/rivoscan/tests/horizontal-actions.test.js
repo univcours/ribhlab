@@ -24,9 +24,9 @@ test('adding pages creates PDF and keeps original backup',()=>{
 });
 test('camera approval includes a real + Add Page and batch mode',()=>{
  const n=read('native/android/RivoLiveScannerActivity.java');
- assert.ok(n.includes('approveCapturedPhoto(true)'));
- assert.ok(n.includes('if(addAnother)setBatch(true)'));
- assert.ok(n.includes('approveCapturedPhoto(false)'));
+ assert.ok(n.includes('Button confirm=button("✓",this::approveCapturedPhoto)'));
+ assert.ok(n.includes('showPostSaveChoices()'));
+ assert.ok(n.includes('.setNegativeButton(add,'));
 });
 test('bumped build to distinguish previous installed APK',()=>{
  assert.ok(read('rivoscan-version.properties').includes('versionCode=97'));

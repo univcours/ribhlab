@@ -14,7 +14,7 @@ test('Saved image is selectable and selected Share/Delete are adjacent with conf
  assert.ok(!b.includes("if(!mode&&!isImage(doc))return ''"),'PDF and photo selection are both available');
  assert.ok(b.includes('if(!selected.size)mode=false'));
  assert.ok(b.includes("window.confirm(t('confirm')"));
- assert.ok(m.includes("file.klass==='image'?"));
+ assert.ok(m.includes('class="doc-select-box rivo-recent-check"'));
  assert.ok(read('src/theme-brand.css').includes('recent-entry:not(.doc-selected) .rivo-recent-delete'));
  assert.ok(m.includes('data-doc-delete='));
 });

@@ -715,10 +715,20 @@ public class RivoDocumentsPlugin extends Plugin {
         try {
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, mimeOf(uri));
+            open.addCategory(Intent.CATEGORY_DEFAULT);
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            getContext().startActivity(Intent.createChooser(open, localized("openDocument"))
+            // Only inspect ACTION_VIEW handlers, declared under <queries>.
+            if(getActivity().getPackageManager().queryIntentActivities(open,
+                    android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).isEmpty()){
+                JSObject fallback=new JSObject();
+                fallback.put("opened",false);
+                call.resolve(fallback);
+                return;
+            }
+            getActivity().startActivity(Intent.createChooser(open, localized("openDocument"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            call.resolve();
+            JSObject result=new JSObject();result.put("opened",true);
+            call.resolve(result);
         } catch (Exception e) { call.reject("No compatible app can open this document.", e); }
     }
 
