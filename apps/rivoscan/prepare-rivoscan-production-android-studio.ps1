@@ -102,6 +102,9 @@ try{
     Write-Host "READY FOR ANDROID STUDIO: RivoScan v$name / $($revision.Substring(0,12))" -ForegroundColor Green
     Write-Host "Open: $(Join-Path $root 'android')" -ForegroundColor Cyan
     Write-Host 'Android Studio > Build > Generate Signed Bundle / APK > Android App Bundle.' -ForegroundColor Green
+    Write-Host 'Release AAB will include native SYMBOL_TABLE diagnostics when available.' -ForegroundColor Cyan
+    Write-Host 'If R8 minification is disabled, no Java mapping.txt exists; that warning is informational.' -ForegroundColor Yellow
+    Write-Host 'Never upload diagnostic files from this version to a different Play versionCode such as 74.' -ForegroundColor Yellow
     Write-Host 'Sign manually with YOUR existing Play upload keystore. This script has NOT signed or uploaded anything.' -ForegroundColor Yellow
     Write-Host 'WARNING: Do not run the DEBUG installer after this preparation and before signing; it rebuilds test-ad assets.' -ForegroundColor Yellow
   }finally{

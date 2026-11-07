@@ -205,4 +205,5 @@ if($oldActivity -match 'android:theme\s*=\s*"[^"]*"'){
 $m=$m.Replace($oldActivity,$newActivity)
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
 & (Join-Path $root 'apply-rivoscan-branding.ps1')
+& (Join-Path $root 'configure-play-debug-symbols.ps1')
 Write-Host 'RivoScan live edge camera + manual crop + gallery import integrated into Android.' -ForegroundColor Green
