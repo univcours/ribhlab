@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('The version is at least 101, coherent, and installer never downgrades',()=>{
  const v=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
- assert.ok(Number(/^versionCode=(\d+)$/m.exec(v)?.[1])>=101);
+ assert.ok(Number(/^versionCode=(\d+)$/m.exec(v)?.[1])>=102);
  assert.match(v,/^versionName=\d+\.\d+\.\d+$/m);
  assert.equal(pkg.version,/^versionName=(.+)$/m.exec(v)?.[1]);
  const installer=get('install-rivoscan-android.ps1');

@@ -43,8 +43,8 @@ try {
   $sourceCode=[long]$codeMatch.Groups[1].Value
   $sourceName=$nameMatch.Groups[1].Value
   $npmName=(Get-Content -LiteralPath (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
-  if($sourceCode -lt 100 -or $sourceName -ne $npmName){
-    throw "RivoScan build is older than code 100, or versions disagree. Stale install refused." }
+  if($sourceCode -lt 102 -or $sourceName -ne $npmName){
+    throw "RivoScan build is older than code 102, or versions disagree. Stale install refused." }
   Write-Host "VERIFIED LATEST SOURCE v$sourceName / code $sourceCode / $($localCommit.Substring(0,12))" -ForegroundColor Green
   # Inspect the phone version BEFORE building, never downgrade.
   $versionGuard=Join-Path $root 'sync-rivoscan-device-version.ps1'
@@ -224,7 +224,7 @@ try {
     throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
   }
   Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
-  if($after.VersionCode -lt 100){
+  if($after.VersionCode -lt 102){
     throw "The phone still reports an OLD build. Installation is NOT successful."
   }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green

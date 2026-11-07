@@ -4,13 +4,13 @@ import {readFileSync} from 'node:fs';
 const root=new URL('../',import.meta.url);
 const file=p=>readFileSync(new URL(p,root),'utf8');
 
-test('Play v101 bumps matching source, Android release name, and Studio signing path',()=>{
+test('Play v102 bumps matching source, Android release name, and Studio signing path',()=>{
  const p=Object.fromEntries(file('rivoscan-version.properties').split(/\r?\n/)
    .filter(x=>/^(versionName|versionCode)=/.test(x)).map(x=>x.split('=')));
- assert.equal(p.versionName,'0.44.25');
- assert.equal(Number(p.versionCode),101);
+ assert.equal(p.versionName,'0.44.26');
+ assert.equal(Number(p.versionCode),102);
  assert.equal(JSON.parse(file('package.json')).version,p.versionName);
- assert.match(file('prepare-rivoscan-production-android-studio.ps1'),/-lt 101/);
+ assert.match(file('prepare-rivoscan-production-android-studio.ps1'),/-lt 102/);
  assert.equal(JSON.parse(file('capacitor.config.json')).appId,'com.ribhlab.rivoscan');
 });
 test('Google Play candidate v101 embeds honest current advertising and AI policy',()=>{
