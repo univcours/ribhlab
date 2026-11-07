@@ -1,3 +1,4 @@
+import './filter-laser.css';
 import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
@@ -34,6 +35,9 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
    <header class="rivo-editor-header"><button data-edit="cancel" aria-label="${tr(18)}">✕</button>
      <strong title="${String(doc.name).replace(/[&<>"]/g,'')}">${tr(0)}</strong><button class="rivo-editor-retake" data-edit="retake">${tr(1)}</button></header>
    <div class="rivo-editor-picture"><canvas id="rivo-editor-preview" aria-label="${tr(0)}"></canvas>
+     <canvas id="rivo-editor-laser-before" class="rivo-editor-laser-before" aria-hidden="true" hidden></canvas>
+     <div class="rivo-editor-laser-beam" aria-hidden="true" hidden></div>
+     <span class="rivo-editor-laser-status" role="status" hidden>${({en:'Applying filter…',ar:'جاري تطبيق الفلتر…',fr:'Application du filtre…',es:'Aplicando filtro…',de:'Filter wird angewendet…',pt:'A aplicar filtro…',it:'Applicazione filtro…'})[getLanguage()]||'Applying filter…'}</span>
      <div class="rivo-compare-note">${tr(17)}</div></div>
    <div class="rivo-editor-filters" role="group">
      ${['original','proscan','crease','enhance','magic','shadow','gray','bw','whiteboard','restore'].map((id,i)=>`<button type="button" class="rivo-filter-choice ${id===preset?'active':''}" data-filter="${id}"><span class="rivo-filter-thumb"></span><small>${id==='crease'?({en:'Reduce wrinkles',ar:'تقليل التجاعيد',fr:'Réduire les plis',es:'Reducir arrugas',de:'Falten mindern',pt:'Reduzir vincos',it:'Riduci pieghe'})[getLanguage()]||'Reduce wrinkles':id==='proscan'?({en:'Paper Scan',ar:'سكانير ورقي',fr:'Scanner papier',es:'Escáner papel',de:'Papier-Scan',pt:'Digitalização',it:'Scanner carta'})[getLanguage()]||'Paper Scan':id==='restore'?({en:'Restore',ar:'ترميم',fr:'Restaurer',es:'Restaurar',de:'Restaurieren',pt:'Restaurar',it:'Restauro'})[getLanguage()]||'Restore':tr(({original:2,enhance:3,magic:4,shadow:5,gray:6,bw:7,whiteboard:8})[id]??2)}</small></button>`).join('')}
@@ -62,6 +66,46 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  </div>`;
  const preview=shell.querySelector('#rivo-editor-preview');
  const ctx=preview.getContext('2d',{willReadFrequently:true});
+ const laserBefore=shell.querySelector('#rivo-editor-laser-before');
+ const laserBeam=shell.querySelector('.rivo-editor-laser-beam');
+ const laserStatus=shell.querySelector('.rivo-editor-laser-status');
+ const picture=shell.querySelector('.rivo-editor-picture');
+ let laserFrame=0,laserToken=0;
+ // Laser only changes preview presentation. Saving always reads the actual
+ // fully processed #rivo-editor-preview, never the moving visual overlay.
+ function stopLaser(){
+  laserToken++;
+  if(laserFrame){cancelAnimationFrame(laserFrame);laserFrame=0;}
+  laserBefore.hidden=true;laserBeam.hidden=true;laserStatus.hidden=true;
+ }
+ function captureBefore(){
+  const scale=Math.min(1,1150/Math.max(preview.width,preview.height));
+  laserBefore.width=Math.max(1,Math.round(preview.width*scale));
+  laserBefore.height=Math.max(1,Math.round(preview.height*scale));
+  laserBefore.getContext('2d').drawImage(preview,0,0,laserBefore.width,laserBefore.height);
+ }
+ function startLaser(){
+  if(closed||!shell.isConnected||filter==='original')return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const r=preview.getBoundingClientRect(),host=picture.getBoundingClientRect();
+  if(r.width<8||r.height<8)return;
+  const x=r.left-host.left,y=r.top-host.top;
+  Object.assign(laserBefore.style,{left:x+'px',top:y+'px',width:r.width+'px',height:r.height+'px',clipPath:'inset(0 0 0 0)'});
+  Object.assign(laserBeam.style,{left:x+'px',top:y+'px',width:r.width+'px'});
+  laserBefore.hidden=false;laserBeam.hidden=false;laserStatus.hidden=false;
+  const token=++laserToken;
+  const start=performance.now(),duration=980;
+  const step=now=>{
+   if(closed||token!==laserToken)return;
+   const elapsed=Math.min(1,Math.max(0,(now-start)/duration));
+   const eased=elapsed<.5?2*elapsed*elapsed:1-Math.pow(-2*elapsed+2,2)/2;
+   laserBefore.style.clipPath='inset(0 0 '+(eased*100)+'% 0)';
+   laserBeam.style.top=(y+r.height*eased)+'px';
+   if(elapsed<1)laserFrame=requestAnimationFrame(step);
+   else stopLaser();
+  };
+  laserFrame=requestAnimationFrame(step);
+ }
  const filters=['original','proscan','crease','enhance','magic','shadow','gray','bw','whiteboard','restore'];
  let filter=filters.includes(preset)?preset:'enhance';
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
@@ -70,17 +114,20 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   let eraseColor=preset.startsWith('erase:')?preset.slice(6):'all';
  const strokes=[];let strokeBatch=0;
  const abs=n=>Math.max(0,Math.min(255,n));
- const close=()=>{closed=true;shell.remove();document.body.classList.remove('rivo-editing');};
+ const close=()=>{closed=true;stopLaser();shell.remove();document.body.classList.remove('rivo-editing');};
  function drawOriginal(){
   const rotated=angle%180!==0;preview.width=rotated?original.height:original.width;preview.height=rotated?original.width:original.height;
   ctx.fillStyle='#fff';ctx.fillRect(0,0,preview.width,preview.height);
   ctx.save();ctx.translate(preview.width/2,preview.height/2);ctx.rotate(angle*Math.PI/180);
   ctx.drawImage(original,-original.width/2,-original.height/2);ctx.restore();
  }
- async function paint(){
-  if(closed||rendering)return;rendering=true;renderCount++;
+ async function paint(withLaser=false){
+  if(closed||rendering)return;
+  stopLaser();rendering=true;renderCount++;
+  const reveal=withLaser&&filter!=='original'&&!eraserActive&&!timestampOn;
   try{
    drawOriginal();
+   if(reveal)captureBefore();
    shell.querySelector('.rivo-crease-intensity').hidden=filter!=='crease';
    if(filter==='original'&&brightness===0&&contrast===0&&!timestampOn&&!strokes.length)return;
    const base=filter==='magic'?'contrast(1.34) saturate(1.22) brightness(1.07)':filter==='enhance'?'contrast(1.19) saturate(1.06) brightness(1.05)':filter==='gray'?'grayscale(1) contrast(1.11)':filter==='bw'?'grayscale(1) contrast(1.6)':filter==='whiteboard'?'none':filter==='shadow'?'contrast(1.11)':'none';
@@ -216,7 +263,10 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(x,y,width,fontSize*1.8);
      ctx.fillStyle='#ffffff';ctx.fillText(text,x+pad,y+fontSize*1.2);ctx.restore();
    }
-  }finally{rendering=false;}
+  }finally{
+   rendering=false;
+   if(reveal&&!closed)startLaser();
+  }
  }
  // Small real-document previews under each filter, not decorative stock artwork.
  const thumb=document.createElement('canvas');thumb.width=64;thumb.height=70;
@@ -246,7 +296,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  shell.querySelector('[data-erase-color]').value=eraseColor;
  shell.querySelector('[data-erase-color]').addEventListener('change',e=>{eraseColor=e.target.value});
  document.body.appendChild(shell);document.body.classList.add('rivo-editing');
- await paint();
+ await paint(true);
  const apply=async action=>{
   if(action==='cancel'){close();return;}
   if(action==='left'||action==='right'){angle=(angle+(action==='left'?270:90))%360;await paint();return;}
@@ -288,7 +338,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  };
  shell.addEventListener('click',async e=>{
   const preset=e.target.closest('[data-filter]');
-  if(preset){filter=preset.dataset.filter; shell.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===preset));await paint();return;}
+  if(preset){filter=preset.dataset.filter; shell.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===preset));await paint(true);return;}
   const button=e.target.closest('[data-edit]');if(!button)return;
   try{button.disabled=true;await apply(button.dataset.edit);}
   catch(error){notify(error?.message||String(error),true);}
@@ -296,7 +346,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  });
  let compare=false;
  const btn=shell.querySelector('[data-edit="compare"]');
- const before=()=>{if(compare)return;compare=true;drawOriginal();};
+ const before=()=>{if(compare)return;compare=true;stopLaser();drawOriginal();};
  const after=()=>{if(!compare)return;compare=false;paint();};
  btn.addEventListener('pointerdown',before);btn.addEventListener('pointerup',after);btn.addEventListener('pointercancel',after);
  btn.addEventListener('pointerleave',after);
