@@ -10,6 +10,7 @@ import java.io.InputStream;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
+import androidx.core.content.FileProvider;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -541,6 +542,58 @@ public class RivoDocumentsPlugin extends Plugin {
             getActivity().startActivity(Intent.createChooser(share, localized("shareDocument")));
             call.resolve();
         } catch (Exception e) { call.reject("Sharing failed: " + e.getMessage(), e); }
+    }
+
+
+    /** Share temporary JPGs produced from a PDF. Unlike saveFile(), this never
+     * creates visible files in Documents/RivoScan, so scans remain PDF-only.
+     * Android grant URI persists long enough for the receiving application. */
+    @PluginMethod
+    public void shareJpgPages(PluginCall call){
+        JSArray images=call.getArray("imagesBase64");
+        if(images==null||images.length()<1||images.length()>30){
+            call.reject("Choose between 1 and 30 JPEG pages.");return;
+        }
+        java.util.ArrayList<Uri> uris=new java.util.ArrayList<>();
+        java.util.ArrayList<File> written=new java.util.ArrayList<>();
+        try{
+            File folder=new File(getContext().getCacheDir(),"rivo-shared-jpg");
+            if(!folder.isDirectory()&&!folder.mkdirs())
+                throw new IllegalStateException("Cannot prepare temporary share folder.");
+            File[] old=folder.listFiles();
+            if(old!=null)for(File file:old){
+                if(file.isFile()&&System.currentTimeMillis()-file.lastModified()>86400000L)file.delete();
+            }
+            long total=0;
+            String authority=getContext().getPackageName()+".rivoscan.share";
+            for(int i=0;i<images.length();i++){
+                String encoded=images.getString(i);
+                if(encoded==null||encoded.length()<4||encoded.length()>16*1024*1024)
+                    throw new IllegalArgumentException("Invalid JPEG page.");
+                byte[] bytes=Base64.decode(encoded,Base64.DEFAULT);
+                total+=bytes.length;
+                if(total>60L*1024*1024||bytes.length<4||bytes[0]!=(byte)0xff||bytes[1]!=(byte)0xd8)
+                    throw new IllegalArgumentException("JPG sharing limit or format mismatch.");
+                File file=new File(folder,"RivoScan_Page_"+System.currentTimeMillis()+"_"+(i+1)+".jpg");
+                try(FileOutputStream out=new FileOutputStream(file)){out.write(bytes);}
+                written.add(file);
+                uris.add(FileProvider.getUriForFile(getContext(),authority,file));
+            }
+            Intent share=new Intent(uris.size()==1?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE);
+            share.setType("image/jpeg");
+            if(uris.size()==1)share.putExtra(Intent.EXTRA_STREAM,uris.get(0));
+            else share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
+            android.content.ClipData clips=android.content.ClipData.newUri(
+                getContext().getContentResolver(),"RivoScan JPG",uris.get(0));
+            for(int i=1;i<uris.size();i++)clips.addItem(new android.content.ClipData.Item(uris.get(i)));
+            share.setClipData(clips);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(Intent.createChooser(share,localized("shareDocument")));
+            call.resolve();
+        }catch(Exception error){
+            for(File file:written)file.delete();
+            call.reject("Unable to share JPG pages: "+error.getMessage(),error);
+        }
     }
 
     /** Share existing documents together; no copies and no loss of original quality.
