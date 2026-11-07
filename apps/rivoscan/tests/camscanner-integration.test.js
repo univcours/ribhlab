@@ -17,13 +17,13 @@ test('User scanner settings are applied to native CameraX, not UI-only decoratio
  assert.ok(main.includes('updateScanPref(localStorage'));
  assert.ok(main.includes('scannerPreferenceRows()'));
  assert.ok(native.includes('autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL'));
- assert.ok(native.includes('if(saveOriginal)backupOriginalPage(source)'));
+ assert.ok(!native.includes('if(saveOriginal)backupOriginalPage(source)'),'No new JPEG Originals are published');
  assert.ok(native.includes('Bitmap.CompressFormat.JPEG,scanJpegQuality'));
 });
 test('Preserves scan ink: native enhancement is not repeated in PDF assembly',()=>{
  assert.ok(main.includes("imagesToPdf('color',picked)"));
  assert.ok(!main.includes("imagesToPdf('enhance',picked)"));
- assert.ok(main.includes('if(!prefs.autoSavePdf)'));
+ assert.ok(!main.includes('if(!prefs.autoSavePdf)'),'Every completed scan is saved as PDF');
  assert.ok(main.includes("pageSize==='letter'?[612,792]:[595.28,841.89]"));
 });
 test('ID card mode captures front and back and places both on a single A4 PDF page',()=>{
