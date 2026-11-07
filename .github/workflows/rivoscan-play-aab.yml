@@ -114,6 +114,14 @@ jobs:
           node -e "const fs=require('fs'); const p=fs.readFileSync('rivoscan-version.properties','utf8'); const v=p.match(/^versionName=(.+)$/m)?.[1]; if(v!==require('./package.json').version) process.exit(1)"
       - name: Inspect Play AAB layout and package metadata
         run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab
+      - name: Audit bundle size and largest Android assets
+        run: python scripts/aab-size-report.py android/app/build/outputs/bundle/release/app-release.aab --json-output play-aab-size-report.json
+      - name: Save detailed AAB size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-AAB-SIZE-REPORT
+          path: apps/rivoscan/play-aab-size-report.json
+          retention-days: 14
       - name: Check authorized signing secrets
         id: signing
         env:
