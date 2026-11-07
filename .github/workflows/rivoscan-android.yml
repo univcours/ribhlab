@@ -47,6 +47,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run check
+          npm run check:play
           npm test
           npm run build
       - name: Generate Android project
