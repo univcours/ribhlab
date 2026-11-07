@@ -32,7 +32,7 @@ jobs:
       - name: Validate native PowerShell scripts before building Android
         shell: pwsh
         run: |
-          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1')) {
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1','./repair-rivoscan-android.ps1','./install-rivoscan-android.ps1')) {
             $tokens=$null
             $errors=$null
             [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
