@@ -29,6 +29,8 @@ jobs:
         run: node --check scripts/play-release-preflight.mjs
       - name: Run offline release safety unit tests
         run: node --test tests/play-release-preflight.test.js
+      - name: Unit-test offline AAB size inspection
+        run: python -m unittest discover tests -p 'test_aab_size_report.py' -v
       - name: Verify current repository version and privacy disclosures
         run: node scripts/play-release-preflight.mjs
       - name: Validate PowerShell signing bootstrap syntax
