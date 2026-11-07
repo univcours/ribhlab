@@ -153,6 +153,29 @@ if($m -notmatch 'android\.permission\.CAMERA') {
 if($m -notmatch 'RivoLiveScannerActivity') {
  $m=$m.Replace('</application>','    <activity android:name=".RivoLiveScannerActivity" android:exported="false" android:screenOrientation="portrait" />' + "`r`n    " + '</application>')
 }
+if($m -notmatch 'com\.ribhlab\.rivoscan\.rivoscan\.share') {
+ $provider=@'
+    <provider android:name="androidx.core.content.FileProvider"
+      android:authorities="com.ribhlab.rivoscan.rivoscan.share"
+      android:exported="false" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/rivoscan_share_paths" />
+    </provider>
+'@
+ $m=$m.Replace('</application>',$provider + [Environment]::NewLine + '</application>')
+}
+# Temporary JPG sharing: Android FileProvider grants read access from app cache.
+# It NEVER publishes a duplicate JPEG in Documents/RivoScan.
+$shareXml=Join-Path $android 'app\src\main\res\xml\rivoscan_share_paths.xml'
+New-Item -ItemType Directory -Path (Split-Path -Parent $shareXml) -Force | Out-Null
+$sharePaths=@'
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+  <cache-path name="rivoscan_shared_jpg" path="rivo-shared-jpg/" />
+</paths>
+'@
+[IO.File]::WriteAllText($shareXml,$sharePaths,[Text.UTF8Encoding]::new($false))
+
 # Force the MainActivity theme without touching RivoLiveScannerActivity or
 # unrelated manifest declarations. Fail rather than silently shipping two bars.
 $activityPattern='(?s)<activity\b[^>]*android:name\s*=\s*"(?:\.MainActivity|com\.ribhlab\.rivoscan\.MainActivity)"[^>]*>'

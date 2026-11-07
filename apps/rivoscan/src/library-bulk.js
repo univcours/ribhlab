@@ -257,8 +257,9 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         const bytes=new Uint8Array(await blob.arrayBuffer());
         if(bytes.length>60*1024*1024)throw Error('Image exceeds 60 MB');
         let binary='';for(let i=0;i<bytes.length;i+=16384)binary+=String.fromCharCode(...bytes.subarray(i,i+16384));
-        const saved=await bridge.saveFile({name:`RivoScan_Share_${Date.now()}_${count+1}.jpg`,mimeType:'image/jpeg',base64:btoa(binary)});
-        uris.push(saved.uri);count++;
+        // Keep a temporary JPEG only inside Android app cache for ACTION_SEND.
+        // PDF remains the sole user-visible saved scan document.
+        uris.push(btoa(binary));count++;
       };
       if(isPDF(doc))await rasterPdf(file,q,add);
       else await add(await loadCanvas(file));
@@ -347,8 +348,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const saved=await saveOut(bytes,`RivoScan_Text_${Date.now()}.docx`,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
           uris=[saved.uri];mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         }else{
-          uris=await createJpgs(docs,q);mime='image/jpeg';
-          await onRefresh();
+          const imagesBase64=await createJpgs(docs,q);
+          if(typeof bridge.shareJpgPages!=='function')
+            throw Error('Update RivoScan to share PDFs as temporary JPG files.');
+          await bridge.shareJpgPages({imagesBase64});
+          return; // No permanent converted JPGs are written to Documents.
+
         }
         await bridge.shareFiles({uris,mimeType:mime});
       }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
