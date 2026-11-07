@@ -4,7 +4,7 @@ APK="apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk"
 test -s "$APK"
 adb wait-for-device
 adb install -r "$APK"
-adb shell pm path com.ribhlab.rivoscan
+adb shell pm path com.ribhlab.rivoscan.debug
 adb shell am start -W -n com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity
 sleep 9
 test -n "$(adb shell pidof com.ribhlab.rivoscan.debug | tr -d '\r')"
@@ -20,7 +20,7 @@ adb shell run-as com.ribhlab.rivoscan.debug touch "$PRIVATE_FILE"
 adb shell run-as com.ribhlab.rivoscan.debug ls -l "$PRIVATE_FILE"
 adb install -r "$APK"
 adb shell run-as com.ribhlab.rivoscan.debug ls -l "$PRIVATE_FILE"
-adb shell am force-stop com.ribhlab.rivoscan
+adb shell am force-stop com.ribhlab.rivoscan.debug
 adb shell am start -W -n com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity
 sleep 6
 test -n "$(adb shell pidof com.ribhlab.rivoscan.debug | tr -d '\r')"
