@@ -343,3 +343,8 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 - On CameraX: shutter → full photo review with **Retake** and **✓ Confirm** → automatic chosen default filter preview with alternate filters and crop adjustment → **✓ Done** → one final PDF. An optional ML Kit FULL tool retains its vendor-managed capture UI.
 - Native intermediate JPEGs are retained only inside app cache for PDF assembly; no automatic MediaStore JPG copies or Original JPG backups are added. New scans always create PDF even when an old preference said otherwise. Older saved documents remain untouched.
 - Share conversion to JPG is available from each PDF using Share → JPG images.
+
+## v0.44.18 — PDF-only camera, confirmation and free turquoise UI
+- Native CameraX now presents a full image review with Retake and ✓ Confirm; confirmation opens the preset enhancement and optional filters, and ✓ Done completes a PDF. No automatic exported JPG or original backup copies are added. Existing documents remain unchanged.
+- Saved PDFs support Share as PDF or JPG; converted JPGs are created in app cache and shared using Android FileProvider, not saved as permanent documents.
+- Single selected PDF and multi-file actions sit in narrow vertical stacks on the right. All tools remain accessible, no ADS labels or watch buttons. Consented automatic Interstitial/App Open ads can appear only at suitable pauses, never during scanning. Bright turquoise UI with contrasting highlighted Back and Close controls.

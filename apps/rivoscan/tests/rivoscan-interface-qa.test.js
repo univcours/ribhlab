@@ -7,9 +7,9 @@ test('Home has no giant ad promotion or standalone ADS header',()=>{
  assert.ok(!main.includes('data-ad-entry'));
  assert.ok(!home.includes('rivo-ai-compact'));
  assert.ok(home.includes('rivo-scan-more-tools'));
- assert.ok(home.includes("item.id==='book'&&isPremiumFeature('bookScan')"));
- assert.ok(home.includes('gate&&isPremiumFeature(gate)'));
- assert.ok(main.includes('isPremiumFeature(id)?'));
+ assert.ok(!home.includes('>ADS<'));
+ assert.ok(!home.includes('rivo-premium-lock'));
+ assert.ok(!main.includes('rivo-hub-ad'));
 });
 test('One file actions are inline horizontal buttons, multi file actions compact',()=>{
  const b=read('src/library-bulk.js'),css=read('src/premium-home.css');
@@ -17,9 +17,9 @@ test('One file actions are inline horizontal buttons, multi file actions compact
  assert.ok(b.includes("selected.size===1&&doc&&chosen(doc)"));
  for(const k of ['data-doc-share','data-doc-savepdf','data-doc-preview','data-doc-delete'])assert.ok(b.includes(k));
  assert.ok(b.includes('<small>PDF</small>'));
- assert.ok(css.includes('width:138px!important'));
- assert.ok(css.includes('height:34px!important'));
- assert.ok(css.includes('grid-auto-rows:minmax(36px,auto)!important'));
+ assert.ok(css.includes('width:84px!important'));
+ assert.ok(css.includes('height:32px!important'));
+ assert.ok(css.includes('grid-auto-rows:34px!important'));
  assert.ok(css.includes('body.rivo-multiselect #app .rivo-dark-ui .mobilebar'));
  assert.ok(css.includes('body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab'));
 });

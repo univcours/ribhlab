@@ -48,3 +48,11 @@ test('app open only on foreground return after >=60 seconds background and 20-mi
    {ready:false},{premiumUntil:now+1},{lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowAppOpen({...base,...change}),false);
 });
+
+test('All features remain usable without mandatory rewarded video',async()=>{
+ const {requestPremium,isPremiumFeature}=await import('../src/monetization.js');
+ for(const id of ['scan','bookScan','documentFlatten','ocr','toExcel','aiChat']){
+  assert.equal(isPremiumFeature(id),false);
+  assert.equal(await requestPremium(id),true);
+ }
+});

@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('Promotional ADS badges and test buttons removed, privacy choices remain',()=>{
  const main=read('src/main.js');
- assert.ok(main.includes("gate&&isPremiumFeature(gate)"),'ADS only on rewarded-gated tools');
+ assert.ok(!main.includes('>ADS<'));
  for(const key of ['data-ad-test','data-ad-retry','rivo-ai-compact','data-premium-unlock'])
   assert.ok(!main.includes(key),key);
  assert.ok(main.includes('data-ad-privacy'));
@@ -15,14 +15,14 @@ test('One file: icons to the right, four actions',()=>{
  assert.ok(bulk.includes("mode&&selected.size===1&&doc&&chosen(doc)"));
  for(const action of ['data-doc-share','data-doc-savepdf','data-doc-preview','data-doc-delete'])
   assert.ok(bulk.includes(action),action);
- assert.ok(css.includes('grid-column:3!important;grid-row:1!important;align-self:end!important'));
+ assert.ok(css.includes('grid-template-columns:1fr!important'));
 });
 test('Multi files: 7 actions above bottom camera and navigation',()=>{
  const bulk=read('src/library-bulk.js'),css=read('src/premium-home.css');
  for(const id of ['share','delete','organize','merge','all','invert','cancel'])
   assert.ok(bulk.includes('data-bulk="'+id+'"'),id);
- assert.ok(css.includes('bottom:calc(104px + env(safe-area-inset-bottom,0px))!important'));
- assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))!important'));
+ assert.ok(css.includes('top:clamp(144px,25vh,225px)!important'));
+ assert.ok(css.includes('grid-template-columns:1fr!important'));
 });
 test('Home file filter buttons still navigate',()=>{
  const main=read('src/main.js');

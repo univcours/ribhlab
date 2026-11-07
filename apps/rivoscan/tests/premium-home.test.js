@@ -14,12 +14,12 @@ test('No promo ads on Home/Tools, but real contextual reward verification remain
  const main=read('src/main.js'),ads=read('src/monetization.js');
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
  assert.ok(!home.includes('rivo-ai-compact'));
- assert.ok(home.includes("isPremiumFeature('bookScan')"));
- assert.ok(home.includes('gate&&isPremiumFeature(gate)'));
+ assert.ok(!home.includes('>ADS<'));
+ assert.ok(!home.includes('rivo-premium-lock'));
  for(const key of ['data-ad-test','data-ad-retry','data-premium-unlock','rivo-video-access" aria-label'])
   assert.ok(!main.includes(key),key);
- assert.ok(ads.includes('RewardAdPluginEvents.Rewarded'));
- assert.ok(ads.includes('receivedReward'));
+ assert.ok(ads.includes('requestPremium(){return true;}'));
+ assert.ok(!ads.includes('offerReward()'));
  assert.ok(read('src/scan-editor.js').includes('rivo-editor-retake'));
 });
 test('FAB centered in four-tab nav and safe area',()=>{

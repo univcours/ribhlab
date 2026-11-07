@@ -34,7 +34,7 @@ test('Home prioritizes scans and documents with extra tools collapsed, keeps flo
  assert.ok(css.includes('grid-template-columns:48px minmax(0,1fr) 34px'));
  assert.ok(css.includes('bottom:calc(26px + env(safe-area-inset-bottom,0px))'));
  assert.ok(!home.includes('Cloud sync'));
- assert.ok(home.includes("isPremiumFeature('bookScan')"));
+ assert.ok(!home.includes('>ADS<'));
 });
 
 test('Recent document counts and thumbnails refresh after edits and new scans',()=>{
