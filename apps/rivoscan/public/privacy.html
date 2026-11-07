@@ -48,10 +48,10 @@
 
     <h2>Advertising and consent</h2>
     <p>The Android code integrates Google AdMob and Google consent management.
-    Development builds use demonstration ad identifiers. Other builds may include
-    optional rewarded video ads for unlocking advanced features, interstitial ads
-    at natural breaks and app-open ads after returning to the application.
-    Banner ads are disabled in the current configuration.
+    Developer builds do not request advertisements. Published builds can display
+    consented interstitial ads only at natural pauses after completed work, and
+    app-open ads when returning from the background. All document features remain
+    available without watching videos or unlocking them. There are no banner ads.
     Google's ad services and partners may process advertising identifiers,
     IP-derived approximate location, device information, ad interactions,
     diagnostics and consent preferences. Depending on jurisdiction, you may be
@@ -75,7 +75,9 @@
 
     <h2>Choices and security</h2>
     <p>Basic document scanning and PDF editing do not need optional AI requests or
-    rewarded ad viewing. You control when to share or export a document.
+    advertising videos. New scans are saved as PDFs; when you choose Share as JPG,
+    temporary image copies are generated in the app cache and shared only after
+    your action. You control when to share or export a document.
     You should avoid sending sensitive information through optional network features
     unless you understand the recipient and provider's data handling.</p>
 
