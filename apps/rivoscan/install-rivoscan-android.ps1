@@ -6,6 +6,46 @@ function Assert-Code([string]$label) {
   if($LASTEXITCODE -ne 0){throw "$label failed (exit code $LASTEXITCODE)."}
 }
 try {
+  # Always build the newest exact RivoScan branch; never overwrite user changes.
+  $git=Get-Command git.exe -ErrorAction SilentlyContinue
+  if(-not $git){throw "Git is required to update source before installing. Phone unchanged."}
+  $checkoutRoot=((& git.exe -C $root rev-parse --show-toplevel 2>&1) | Out-String).Trim()
+  if($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $checkoutRoot -PathType Container)){
+    throw "Not a Git checkout. Refusing to install unverified/old source." }
+  $releaseBranch="feat/rivoscan-android-beta"
+  $dirty=@(& git.exe -C $checkoutRoot status --porcelain --untracked-files=no)
+  Assert-Code "Inspect source changes"
+  if($dirty.Count -gt 0){throw "Tracked local files modified. Commit or stash them before updating; no files overwritten."}
+  Write-Host "Checking latest origin/$releaseBranch..." -ForegroundColor Cyan
+  & git.exe -C $checkoutRoot fetch --no-tags origin "refs/heads/$($releaseBranch):refs/remotes/origin/$($releaseBranch)" | Out-Host
+  Assert-Code "Fetch RivoScan release"
+  $current=((& git.exe -C $checkoutRoot branch --show-current) | Out-String).Trim()
+  Assert-Code "Inspect branch"
+  if($current -ne $releaseBranch){
+    & git.exe -C $checkoutRoot show-ref --verify --quiet "refs/heads/$releaseBranch"
+    if($LASTEXITCODE -eq 0){
+      & git.exe -C $checkoutRoot switch $releaseBranch | Out-Host
+    }else{
+      & git.exe -C $checkoutRoot switch --track -c $releaseBranch "origin/$releaseBranch" | Out-Host
+    }
+    Assert-Code "Switch to latest RivoScan branch"
+  }
+  & git.exe -C $checkoutRoot merge --ff-only "refs/remotes/origin/$releaseBranch" | Out-Host
+  Assert-Code "Update RivoScan source"
+  $localCommit=((& git.exe -C $checkoutRoot rev-parse HEAD) | Out-String).Trim()
+  $remoteCommit=((& git.exe -C $checkoutRoot rev-parse "refs/remotes/origin/$releaseBranch") | Out-String).Trim()
+  Assert-Code "Verify remote revision"
+  if($localCommit -ne $remoteCommit){throw "Local checkout does not equal latest GitHub commit. Stale install refused."}
+  $versionText=[IO.File]::ReadAllText((Join-Path $root "rivoscan-version.properties"))
+  $codeMatch=[regex]::Match($versionText,'(?m)^versionCode=(\d+)\s*$')
+  $nameMatch=[regex]::Match($versionText,'(?m)^versionName=([0-9]+\.[0-9]+\.[0-9]+)\s*$')
+  if(-not $codeMatch.Success -or -not $nameMatch.Success){throw "Invalid source version manifest."}
+  $sourceCode=[long]$codeMatch.Groups[1].Value
+  $sourceName=$nameMatch.Groups[1].Value
+  $npmName=(Get-Content -LiteralPath (Join-Path $root "package.json") -Raw | ConvertFrom-Json).version
+  if($sourceCode -lt 95 -or $sourceName -ne $npmName){
+    throw "Release is older than code 95 or its versions disagree. Stale install refused." }
+  Write-Host "VERIFIED LATEST SOURCE v$sourceName / code $sourceCode / $($localCommit.Substring(0,12))" -ForegroundColor Green
   $repair = Join-Path $root "repair-rivoscan-android.ps1"
   if(-not (Test-Path -LiteralPath $repair)){throw "Repair script missing: $repair"}
   Write-Host "RivoScan: rebuilding complete Android APK including native scanner and updated launcher..." -ForegroundColor Cyan
@@ -86,6 +126,9 @@ try {
   $apkVersionCode=[long]$matches[1]
   if($packageLine -notmatch "versionName='([^']+)'") { throw "APK versionName unreadable. Refusing unsafe installation." }
   $apkVersionName=$matches[1]
+  if($apkVersionCode -ne $sourceCode -or $apkVersionName -ne $sourceName){
+    throw "Built APK is not the verified latest version. Refusing stale installation."
+  }
   Write-Host "New APK: RivoScan v$apkVersionName / versionCode=$apkVersionCode" -ForegroundColor Cyan
 
   # pm path distinguishes an absent package from a malformed dumpsys result.
@@ -127,9 +170,8 @@ try {
       Write-Host "SAFE SKIP: The phone already has a NEWER RivoScan. No downgrade, uninstall or data clearing was attempted." -ForegroundColor Green
       exit 0
     }
-    if($installed.VersionCode -eq $apkVersionCode -and $env:RIVOSCAN_REINSTALL_SAME_VERSION -ne "1") {
-      Write-Host "SAFE SKIP: The phone has the SAME versionCode. To intentionally reinstall the same release (without uninstalling), set RIVOSCAN_REINSTALL_SAME_VERSION=1." -ForegroundColor Yellow
-      exit 0
+    if($installed.VersionCode -eq $apkVersionCode) {
+      Write-Host "Same versionCode: updating in place to ensure latest code and UI are installed." -ForegroundColor Yellow
     }
   } else {
     Write-Host "RivoScan is not installed: this is a first installation." -ForegroundColor Cyan

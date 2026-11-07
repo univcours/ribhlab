@@ -351,3 +351,6 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 
 ### Scanner entry consistency
 - The primary scan action in Home, Scanner workspace and Tools all use CameraX with Retake → Confirm → default filter and alternatives → Done. ML Kit FULL remains available through its separate optional advanced tool.
+
+## v0.44.19: stale-install prevention
+Installer retrieves the exact current RivoScan feature branch before building, never overwrites modified tracked files, enforces latest package/versionCode 95 / version 0.44.19, and verifies installed APK after ADB upgrade. Same-version installs update in place rather than silently skipping. Existing app data and PDFs are preserved; mismatched signing certificates abort safely.
