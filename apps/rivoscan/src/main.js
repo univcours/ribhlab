@@ -218,6 +218,16 @@ try { history = JSON.parse(localStorage.getItem('rivo-history') || '[]'); if (!A
 let previewURLs = [];
 let closeTransfer = null;
 let libraryItems = [], libraryLoading = false, libraryError = '';
+let libraryStoragePath='Documents/RivoScan',libraryStorageConfigured=false;
+function storageText(){
+ return language==='ar'?{
+  setup:'اختار مجلد RivoScan',selected:'مجلد RivoScan واجد',hint:'صايب مجلد RivoScan فالتخزين الداخلي حد Download، واختارو مرة وحدة. التطبيق غادي يصايب داخلو PDF و Images و Word و Excel وغيرها تلقائياً.'
+ }:language==='fr'?{
+  setup:'Choisir le dossier RivoScan',selected:'Dossier RivoScan configuré',hint:'Créez RivoScan à la racine du stockage interne, à côté de Download, puis sélectionnez-le une fois. Les dossiers par type se créent automatiquement.'
+ }:{
+  setup:'Choose RivoScan folder',selected:'RivoScan folder configured',hint:'Create RivoScan at the root of Internal storage, next to Download, and select it once. PDF, Images, Word, Excel and other subfolders are created automatically.'
+ };
+}
 const docViewerUI=createDocumentViewer({
   bridge:RivoDocuments,
   getLanguage:()=>language,
@@ -575,9 +585,10 @@ function renderLibraryRows(needle=''){
 }
 function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
-    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p><small class="rivo-library-version">RivoScan v${appVersion} · Documents/RivoScan</small></div></div></div>
+    <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p><small class="rivo-library-version">RivoScan v${appVersion} · ${escapeHTML(libraryStoragePath)}</small></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
-    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
+    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="set-rivoscan-folder" type="button" class="scan-upload-link rivo-storage-choose">${ico('folder',17)} ${escapeHTML(storageText().setup)}</button><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
+    <p class="rivo-storage-status" role="status">${escapeHTML(libraryStorageConfigured?storageText().selected+' · RivoScan / PDF · Images · Word · Excel · PowerPoint · Text · Other':storageText().hint)}</p>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
@@ -598,6 +609,8 @@ async function loadLibrary(show=true){
   try{
     const result=await RivoDocuments.listFiles();
     libraryItems=(Array.isArray(result.files)?result.files:[]).sort((a,b)=>(b.created||0)-(a.created||0));
+    libraryStorageConfigured=Boolean(result.configured);
+    libraryStoragePath=result.folder||'Documents/RivoScan';
     bulkUI.prune();
     libraryError='';
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
@@ -629,7 +642,7 @@ async function chooseLibraryFiles(kind='file'){
         success++;
       }
       await loadLibrary(false);
-      toast(success+' file(s) saved to Documents/RivoScan.');
+      toast(success+' file(s) saved to '+libraryStoragePath+'.');
       if(success)openLibrary();
     }catch(error){console.error('Import to library:',error);toast(error?.message||'Import failed',true);}
     finally{clearBusy();}
@@ -722,6 +735,19 @@ function wire(){
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
+  document.getElementById('set-rivoscan-folder')?.addEventListener('click',async()=>{
+    if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments')){
+      toast('Storage folder selection requires RivoScan Android.',true);return;
+    }
+    try{
+      await RivoDocuments.chooseStorageFolder();
+      await loadLibrary(false);
+      toast('✓ RivoScan folder selected next to Download. Files are separated by type.');
+      if(activeTool?.id==='library')render();
+    }catch(error){
+      toast(error?.message||'Folder selection cancelled. Existing files remain safe.',true);
+    }
+  });
   document.getElementById('open-storage-folder')?.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments')){toast(dl('folder'),true);return;}
     try{await RivoDocuments.openFolder();}
@@ -1167,7 +1193,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
   const safe=String(name||'RivoScan.pdf').replace(/[^\w.\-]/g,'_').slice(0,110);
   if(Capacitor.isNativePlatform()){
     if(Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
-      // Genuine permanent public storage. MediaStore exposes Documents/RivoScan in Samsung My Files.
+      // SAF-selected root RivoScan; Documents/RivoScan/<Type> fallback.
       const saved=await RivoDocuments.saveFile({name:safe,base64:toBase64(data),mimeType:mime});
       record(activeTool?.name||'Saved document');
       await loadLibrary(false);

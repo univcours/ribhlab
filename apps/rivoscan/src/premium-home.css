@@ -796,3 +796,14 @@ body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  min-width:0!important;overflow:hidden!important}
 .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected .recent-file-meta strong{
  overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important}
+
+/* 0.44.20 — storage setup in Documents page, with clear turquoise actions. */
+#app .library-workspace .rivo-storage-status{
+ margin:6px 0 12px;padding:9px 12px;font-size:12px;line-height:1.5;
+ border:1px solid #b0e6d9;border-radius:12px;background:#ecfbf6;color:#126a68;
+}
+#app .library-workspace .rivo-storage-choose{
+ background:#d7f9ed!important;color:#046b67!important;
+ border:2px solid #3fcebd!important;box-shadow:0 0 0 2px #5be0d438!important;
+}
+#app .library-workspace .storage-actions{display:flex;flex-wrap:wrap;gap:7px}

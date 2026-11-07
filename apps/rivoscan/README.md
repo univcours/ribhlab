@@ -354,3 +354,9 @@ Removed promotional ADS labels/cards and testing controls; kept neutral privacy 
 
 ## v0.44.19: stale-install prevention
 Installer retrieves the exact current RivoScan feature branch before building, never overwrites modified tracked files, enforces latest package/versionCode 95 / version 0.44.19, and verifies installed APK after ADB upgrade. Same-version installs update in place rather than silently skipping. Existing app data and PDFs are preserved; mismatched signing certificates abort safely.
+
+## v0.44.20 — root RivoScan folder and file-type routing
+- Create **Internal storage/RivoScan** in Android Files once. Tap **Choose RivoScan folder** in Documents and select that exact folder (a sibling of Download). Android Storage Access Framework cannot grant the whole Internal storage root.
+- New files are routed to PDF, Images, Word, Excel, PowerPoint, Text and Other. If the folder is not configured, safe fallback is Documents/RivoScan/<Type>, not Downloads.
+- Old user files remain accessible from legacy Documents/RivoScan and Downloads/RivoScan without silent migration or deletion. Authorized selected-folder files support previews, rename, sharing and copy-first organization.
+- Version 0.44.20, code 96, requires an APK with matching metadata; installer verifies before and after installation.
