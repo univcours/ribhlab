@@ -13,7 +13,8 @@ test('Saving native scans requires perspective crop, enhancement preview and exp
  assert.ok(activity.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
  assert.ok(activity.includes('enhancementSaveButton.setEnabled(false)'));
  assert.ok(activity.includes('enhancementSaveButton.setEnabled(true)'));
- assert.ok(activity.includes('if(batchMode)showCamera();else finishWithPages();'));
+ assert.ok(activity.includes('else showPostSaveChoices();'));
+ assert.ok(activity.includes('setNegativeButton(add,'));
  assert.ok(!activity.includes('button(trNative("savePage"),this::saveCroppedPage)'));
 });
 test('Native enhancement modes operate on pixels, preserving document color or B&W',()=>{

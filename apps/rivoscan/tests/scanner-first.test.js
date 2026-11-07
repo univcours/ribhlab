@@ -49,6 +49,7 @@ test('Recent document counts and thumbnails refresh after edits and new scans',(
  assert.ok(main.includes('<span data-home-recent-count>'));
  assert.ok(main.includes("else if(!activeTool)refreshHomeDocuments();"));
  assert.ok(main.includes("homeSearchQuery=event.target.value;\n    refreshHomeDocuments();"));
- assert.ok(main.includes("homeExpandedUri=homeExpandedUri===doc.uri?'none':doc.uri;"));
+ assert.ok(main.includes('class="doc-select-box rivo-recent-check"'));
+ assert.ok(!main.includes("bulkUI.wireLongPress(el)"));
  assert.ok(!refresh.includes("render();"),'do not reset search or selection by rerendering all');
 });

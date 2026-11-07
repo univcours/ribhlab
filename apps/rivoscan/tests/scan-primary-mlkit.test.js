@@ -7,7 +7,8 @@ test('Native CameraX is primary for full user-controlled photo confirmation',()=
  assert.ok(m.includes("if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openLiveScanner();"));
  assert.ok(m.includes("onRetake:()=>openLiveScanner()"));
  assert.ok(java.includes('showCaptureReview(bmp)'));
- assert.ok(java.includes('button("✓  "+localizedCapture("confirm")'));
+ assert.ok(java.includes('Button confirm=button("✓",this::approveCapturedPhoto)'));
+ assert.ok(java.includes('confirm.setContentDescription(localizedCapture("confirm"))'));
  assert.ok(java.includes('if(openCvReady&&editor!=null)prepareEnhancementPreview()'));
  assert.ok(java.includes('localizedCapture("done")'));
 });
