@@ -32,7 +32,7 @@ jobs:
       - name: Validate native PowerShell scripts before building Android
         shell: pwsh
         run: |
-          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1')) {
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1')) {
             $tokens=$null
             $errors=$null
             [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
@@ -47,6 +47,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run check
+          npm run check:play
           npm test
           npm run build
       - name: Generate Android project

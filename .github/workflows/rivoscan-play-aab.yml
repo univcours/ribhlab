@@ -41,7 +41,7 @@ jobs:
       - name: Validate native PowerShell scripts before building Android
         shell: pwsh
         run: |
-          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1')) {
+          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./setup-rivoscan-play-signing.ps1')) {
             $tokens=$null
             $errors=$null
             [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
@@ -56,6 +56,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run check
+          npm run check:play
           npm test
           npm run check:ads
           npm run build
@@ -111,6 +112,8 @@ jobs:
           grep -Eq '^versionCode=[1-9][0-9]*$' rivoscan-version.properties
           grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+$' rivoscan-version.properties
           node -e "const fs=require('fs'); const p=fs.readFileSync('rivoscan-version.properties','utf8'); const v=p.match(/^versionName=(.+)$/m)?.[1]; if(v!==require('./package.json').version) process.exit(1)"
+      - name: Inspect Play AAB layout and package metadata
+        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab
       - name: Check authorized signing secrets
         id: signing
         env:
@@ -140,6 +143,9 @@ jobs:
           chmod 600 "$KEYFILE"
           jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
           jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+      - name: Reject unsigned or corrupt signed releases
+        if: steps.signing.outputs.enabled == 'true'
+        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab --expect-signed
       - name: Save signed AAB (Play QA still required)
         if: steps.signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
