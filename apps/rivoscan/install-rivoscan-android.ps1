@@ -46,11 +46,11 @@ try {
   if($sourceCode -lt 99 -or $sourceName -ne $npmName){
     throw "RivoScan build is older than code 99, or versions disagree. Stale install refused." }
   Write-Host "VERIFIED LATEST SOURCE v$sourceName / code $sourceCode / $($localCommit.Substring(0,12))" -ForegroundColor Green
-  # Device version preflight BEFORE the build: local-only debug versionCode.
+  # Inspect the phone version BEFORE building, never downgrade.
   $versionGuard=Join-Path $root 'sync-rivoscan-device-version.ps1'
-  if(-not (Test-Path -LiteralPath $versionGuard)){throw 'RivoScan safe Android version guard missing.'}
+  if(-not (Test-Path -LiteralPath $versionGuard)){throw 'Missing RivoScan safe debug version preflight.'}
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $versionGuard
-  Assert-Code 'Read installed versionCode and allocate a safe debug version'
+  Assert-Code 'Inspect phone versionCode and prepare a higher debug code'
   $repair = Join-Path $root "repair-rivoscan-android.ps1"
   if(-not (Test-Path -LiteralPath $repair)){throw "Repair script missing: $repair"}
   Write-Host "RivoScan: rebuilding complete Android APK including native scanner and updated launcher..." -ForegroundColor Cyan
@@ -156,86 +156,13 @@ try {
   $apkVersionCode=[long]$matches[1]
   if($packageLine -notmatch "versionName='([^']+)'") { throw "APK versionName unreadable. Refusing unsafe installation." }
   $apkVersionName=$matches[1]
-  # Debug builds may exceed the canonical code to prevent Android downgrades.
+  # DEBUG code can be higher than canonical source code; still reject stale APKs.
   $localDebug=Join-Path $root 'rivoscan-device-version.properties'
   [long]$minDebugCode=$sourceCode
   if(Test-Path -LiteralPath $localDebug){
-    $localCode=[regex]::Match([IO.File]::ReadAllText($localDebug),'(?m)^versionCode=(\d+)\s*
-  Write-Host "New APK: RivoScan v$apkVersionName / versionCode=$apkVersionCode" -ForegroundColor Cyan
-
-  # pm path distinguishes an absent package from a malformed dumpsys result.
-  # If an installed version cannot be read, stop instead of guessing.
-  function Get-InstalledRivo {
-    $location=@(& $adb -s $serial shell pm path com.ribhlab.rivoscan 2>&1)
-    $pathExit=$LASTEXITCODE
-    if($pathExit -ne 0 -or -not ($location -match "^package:")) {
-      # Some Samsung/Android 16 package managers return non-zero for "pm path"
-      # when the app is missing. List exact installed package as fallback.
-      $location=@(& $adb -s $serial shell pm list packages com.ribhlab.rivoscan 2>&1)
-      if($LASTEXITCODE -ne 0) {
-        throw "Cannot inspect installed package: pm path and pm list packages both failed. No phone data changed."
-      }
-    }
-    $foundApkPath=@($location | Where-Object { $_ -match '^package:/' }).Count -gt 0
-    $foundExactPackage=@($location | Where-Object { $_.Trim() -eq 'package:com.ribhlab.rivoscan' }).Count -gt 0
-    if(-not ($foundApkPath -or $foundExactPackage)) {
-      return [pscustomobject]@{ Installed=$false; VersionCode=$null; VersionName=$null }
-    }
-    $details=((& $adb -s $serial shell dumpsys package com.ribhlab.rivoscan 2>&1) | Out-String)
-    if($LASTEXITCODE -ne 0 -or
-       $details -notmatch "versionCode=(\d+)" -or
-       $details -notmatch "versionName=(\S+)") {
-      throw "Installed RivoScan version cannot be verified. Refusing installation; your data was not changed."
-    }
-    $codeMatch=[regex]::Match($details,"versionCode=(\d+)")
-    $nameMatch=[regex]::Match($details,"versionName=(\S+)")
-    return [pscustomobject]@{
-      Installed=$true
-      VersionCode=[long]$codeMatch.Groups[1].Value
-      VersionName=$nameMatch.Groups[1].Value
-    }
-  }
-  $installed=Get-InstalledRivo
-  if($installed.Installed) {
-    Write-Host "Currently installed: RivoScan v$($installed.VersionName) / versionCode=$($installed.VersionCode)" -ForegroundColor Yellow
-    if($installed.VersionCode -ge $apkVersionCode) {
-      throw "Installed versionCode is not lower than the new APK. No uninstall or downgrade attempted. Run this installer again."
-    }
-  } else {
-    Write-Host "RivoScan is not installed: this is a first installation." -ForegroundColor Cyan
-  }
-
-  Write-Host "Updating RivoScan on $model ($serial) with verified APK, preserving app data..." -ForegroundColor Cyan
-  # Android itself rejects downgrades too: deliberately NO -d, uninstall or pm clear.
-  $result = @(& $adb -s $serial install -r $apk 2>&1)
-  $installCode = $LASTEXITCODE
-  $result | Out-Host
-  if($installCode -ne 0 -or -not ($result -match '^Success$')) {
-    throw "Android installation failed. DO NOT uninstall or clear app data. If the signature differs (INSTALL_FAILED_UPDATE_INCOMPATIBLE), use the same signing key."
-  }
-  $after=Get-InstalledRivo
-  if(-not $after.Installed -or $after.VersionCode -ne $apkVersionCode -or $after.VersionName -ne $apkVersionName) {
-    throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
-  }
-  Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
-  if($after.VersionCode -lt 99){
-    throw "The phone still reports an OLD build. Installation is NOT successful."
-  }
-  Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
-  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan/.MainActivity" | Out-Host
-  Assert-Code "Launching RivoScan"
-  Write-Host ""
-  Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green
-  Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Never uninstall to fix an icon." -ForegroundColor Yellow
-  exit 0
-} catch {
-  Write-Host ""
-  Write-Host ("INSTALL STOPPED: " + $_.Exception.Message) -ForegroundColor Red
-  exit 1
-}
-)
-    if(-not $localCode.Success){throw 'Invalid local debug versionCode.'}
-    $minDebugCode=[Math]::Max($minDebugCode,[long]$localCode.Groups[1].Value)
+    $matchDebug=[regex]::Match([IO.File]::ReadAllText($localDebug),'(?m)^versionCode=(\d+)\s*$')
+    if(-not $matchDebug.Success){throw 'Invalid local debug versionCode.'}
+    $minDebugCode=[Math]::Max($minDebugCode,[long]$matchDebug.Groups[1].Value)
   }
   if($apkVersionCode -lt $minDebugCode -or $apkVersionName -ne $sourceName){
     throw "APK is older than the locally verified debug version. Refusing installation."
@@ -277,12 +204,8 @@ try {
   $installed=Get-InstalledRivo
   if($installed.Installed) {
     Write-Host "Currently installed: RivoScan v$($installed.VersionName) / versionCode=$($installed.VersionCode)" -ForegroundColor Yellow
-    if($installed.VersionCode -gt $apkVersionCode) {
-      Write-Host "SAFE SKIP: The phone already has a NEWER RivoScan. No downgrade, uninstall or data clearing was attempted." -ForegroundColor Green
-      exit 0
-    }
-    if($installed.VersionCode -eq $apkVersionCode) {
-      Write-Host "Same versionCode: updating in place to ensure latest code and UI are installed." -ForegroundColor Yellow
+    if($installed.VersionCode -ge $apkVersionCode) {
+      throw "Installed versionCode is not lower than new APK. No downgrade/uninstall was attempted. Rerun to allocate a higher debug code."
     }
   } else {
     Write-Host "RivoScan is not installed: this is a first installation." -ForegroundColor Cyan
@@ -301,7 +224,7 @@ try {
     throw "Installed APK verification FAILED: expected v$apkVersionName/code $apkVersionCode. Do not uninstall/clear app data."
   }
   Write-Host "AFTER install: v$($after.VersionName) / versionCode=$($after.VersionCode)" -ForegroundColor Green
-  if($after.VersionCode -lt 98){
+  if($after.VersionCode -lt 99){
     throw "The phone still reports an OLD build. Installation is NOT successful."
   }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
