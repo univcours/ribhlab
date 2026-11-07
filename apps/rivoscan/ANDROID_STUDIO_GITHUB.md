@@ -66,3 +66,20 @@ The workflow `.github/workflows/rivoscan-android.yml` builds a **debug APK** whe
 - `Git > Push` fails: sign in to GitHub through Android Studio or the system Git credential manager.
 
 Never share GitHub tokens, Google Play service account JSON keys, or Android upload keystores in chat. GitHub access inside ChatGPT does not remotely control your locally installed Android Studio.
+
+## Prevent Android Studio downgrade / uninstall prompt
+
+When Android Studio says the device already has a newer version, press **Cancel**, never
+OK: uninstalling can erase RivoScan documents and app data.
+
+The current DEBUG installer reads the installed versionCode *before* building,
+generates a higher local code, and uses ADB `install -r` to preserve app data.
+Android Studio **Run** also probes online ADB devices in Gradle. These debug-only
+adjustments are excluded from production RELEASE builds.
+
+In PowerShell inside `apps/rivoscan` run `.\fix-android-studio-version.cmd`.
+If no phone is authorized, verify USB/Wireless debugging using
+`& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices -l`.
+
+Android will still reject an update whose APK signature differs. To update without
+uninstalling, both builds must use the same signing certificate.

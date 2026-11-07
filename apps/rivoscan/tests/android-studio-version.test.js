@@ -23,7 +23,7 @@ test('Capacitor native integration always pins generated Gradle after the templa
 });
 test('Safe install never attempts -d, pm clear, uninstall or silent app deletion',()=>{
  const installer=get('install-rivoscan-android.ps1');
- assert.ok(installer.includes('if($installed.VersionCode -gt $apkVersionCode)'));
+ assert.ok(installer.includes('if($installed.VersionCode -ge $apkVersionCode)'));
  assert.ok(installer.includes('install -r $apk'));
  assert.ok(!/\binstall\s+-r\s+-d\b/.test(installer));
  assert.ok(!/\bshell\s+pm\s+clear\b/.test(installer));
