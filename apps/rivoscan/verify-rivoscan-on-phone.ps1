@@ -58,11 +58,24 @@ try {
     @{Label='DEV';Id='com.ribhlab.rivoscan.debug'}
   )){
     $packageId=$app.Id
-    $paths=@(& $adb -s $serial shell pm path $packageId)
-    if($LASTEXITCODE -ne 0){throw ('Cannot inspect '+$packageId)}
-    if(@($paths|Where-Object{$_ -match '^package:/'}).Count -eq 0){
+    # Android/Samsung can return a nonzero code for "pm path" when an app
+    # is simply absent. First query installed names exactly; a missing DEV
+    # package is normal and must not interrupt the Production version report.
+    $listed=@(& $adb -s $serial shell pm list packages $packageId 2>&1)
+    if($LASTEXITCODE -ne 0){
+      throw ('ADB could not list packages for '+$packageId+'. Phone unchanged.')
+    }
+    $installedExact=@($listed | Where-Object {
+      $_.Trim() -eq ('package:'+$packageId)
+    }).Count -gt 0
+    if(-not $installedExact){
       Write-Host ($app.Label+': Not installed | '+$packageId) -ForegroundColor Yellow
       continue
+    }
+    $paths=@(& $adb -s $serial shell pm path $packageId 2>&1)
+    if($LASTEXITCODE -ne 0 -or
+       @($paths | Where-Object {$_ -match '^package:/'}).Count -eq 0){
+      throw ('Package is listed as installed, but its APK path is unreadable: '+$packageId)
     }
     $info=((& $adb -s $serial shell dumpsys package $packageId)|Out-String)
     if($LASTEXITCODE -ne 0){throw ('Cannot read version of '+$packageId)}
