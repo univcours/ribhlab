@@ -29,6 +29,18 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     return item||((translations[getLanguage()]||translations.en)[keys.indexOf(key)]||key);
   };
   const size=bytes=>bytes<1024?bytes+' B':bytes<1048576?(bytes/1024).toFixed(1)+' KB':(bytes/1048576).toFixed(1)+' MB';
+  
+  // Vector glyphs keep every quick action recognizable on all phone fonts.
+  const fileActionGlyph={
+   share:'<path d="M12 16V3m-5 5 5-5 5 5"/><path d="M4 15v5h16v-5"/>',
+   edit:'<path d="M12 20h9"/><path d="M16 4a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16 4Z"/>',
+   preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+   rename:'<path d="M4 20h16M7 16l9-9 3 3-9 9-4 1 1-4Z"/>',
+   delete:'<path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/>',
+   add:'<path d="M5 3h10l5 5v13H5zM15 3v5h5M12 11v8m-4-4h8"/>'
+  };
+  const fileIcon=key=>'<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">'+fileActionGlyph[key]+'</svg>';
+
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
@@ -83,12 +95,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const isPDF=mime.includes('pdf')||name.endsWith('.pdf');
           const canAppend=isPDF||isImage(doc);
           const actions=`<div class="rivo-selection-inline" role="toolbar" aria-label="${t('menu')}">
-            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">↗</span><span class="rivo-action-label">${t('share')}</span></button>
-            <button type="button" data-doc-edit="${index}" aria-label="${t('edit')}" title="${t('edit')}"><span class="rivo-action-icon" aria-hidden="true">✎</span><span class="rivo-action-label">${t('edit')}</span></button>
-            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">▣</span><span class="rivo-action-label">${t('preview')}</span></button>
-            <button type="button" data-doc-rename="${index}" aria-label="${t('rename')}" title="${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">▤</span><span class="rivo-action-label">${t('rename')}</span></button>
-            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span class="rivo-action-icon" aria-hidden="true">⌫</span><span class="rivo-action-label">${t('delete')}</span></button>
-            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true">+</span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
+            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('share')}</span><span class="rivo-action-label">${t('share')}</span></button>
+            <button type="button" data-doc-edit="${index}" aria-label="${t('edit')}" title="${t('edit')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('edit')}</span><span class="rivo-action-label">${t('edit')}</span></button>
+            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('preview')}</span><span class="rivo-action-label">${t('preview')}</span></button>
+            <button type="button" data-doc-rename="${index}" aria-label="${t('rename')}" title="${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('rename')}</span><span class="rivo-action-label">${t('rename')}</span></button>
+            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('delete')}</span><span class="rivo-action-label">${t('delete')}</span></button>
+            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true">${fileIcon('add')}</span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
           </div>`;
           row.insertAdjacentHTML('beforeend',actions);
         }
