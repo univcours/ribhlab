@@ -1661,7 +1661,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementSaveButton.setEnabled(false); // Enable only when the result is visible.
         layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
             button(trNative("retake"),this::showCamera),
-            button(trNative("enhanceBack"),this::reopenCrop),
             button(trNative("enhanceCompare"),()->{
                 if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
                 boolean showingOriginal="original".equals(enhancementImage.getTag());
@@ -1892,8 +1891,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);
             if(getWidth()<1||getHeight()<1)return;
-            boolean found=points!=null;
-            Point[] drawn=found?points:RivoEdgeDetector.fallback();
+            // No fake yellow dotted frame: only display a real detected contour.
+            if(points==null)return;
+            boolean found=true;
+            Point[] drawn=points;
             // A guide must remain VISIBLE even before the first analyzed frame
             // (imageWidth/imageHeight are then 1x1) or when no page is found.
             // Only a real detected contour uses CameraX FILL_CENTER mapping.
@@ -1916,7 +1917,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(dp(found?3:2));
             paint.setColor(found?Color.rgb(40,238,204):Color.rgb(255,207,99));
-            paint.setPathEffect(found?null:new android.graphics.DashPathEffect(new float[]{dp(10),dp(6)},0));
+            paint.setPathEffect(null);
             canvas.drawPath(path,paint);
             paint.setPathEffect(null);
             if(found){paint.setStyle(Paint.Style.FILL);
