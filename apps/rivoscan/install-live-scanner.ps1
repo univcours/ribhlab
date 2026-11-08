@@ -31,7 +31,7 @@ if(-not(Test-Path -LiteralPath $rootGradle)){throw 'Generated Android root build
 $rootText=[IO.File]::ReadAllText($rootGradle)
 $kotlinDependency="classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.10'"
 if(-not $rootText.Contains($kotlinDependency)){
-  $androidPluginMatch=[regex]::Match($rootText,"classpath\s+['\x22]com\\.android\\.tools\\.build:gradle:[^'\x22]+['\x22]")
+  $androidPluginMatch=[regex]::Match($rootText,'classpath\s+.{1}com\.android\.tools\.build:gradle:[^\r\n]+')
   if(-not $androidPluginMatch.Success){throw 'Could not locate Android Gradle plugin for Kotlin installation.'}
   $rootText=$rootText.Insert($androidPluginMatch.Index+$androidPluginMatch.Length,
     [Environment]::NewLine + '        ' + $kotlinDependency)
@@ -59,9 +59,11 @@ if($gradleText -notmatch 'com\.microsoft\.onnxruntime:onnxruntime-android:') {
   $uvRuntime="    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.31.1'"
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$uvRuntime",1)
 }
-if($gradleText -notmatch "apply plugin: 'org\\.jetbrains\\.kotlin\\.android'") {
-  $gradleText=$gradleText.TrimEnd() + [Environment]::NewLine +
-    "apply plugin: 'org.jetbrains.kotlin.android'" + [Environment]::NewLine
+if(-not $gradleText.Contains("apply plugin: 'org.jetbrains.kotlin.android'")) {
+  if(-not $gradleText.Contains("apply plugin: 'com.android.application'")){throw 'Cannot find Android application plugin to integrate Kotlin.'}
+  $gradleText=$gradleText.Replace("apply plugin: 'com.android.application'",
+    "apply plugin: 'com.android.application'" + [Environment]::NewLine +
+    "apply plugin: 'org.jetbrains.kotlin.android'")
 }
 if($gradleText -notmatch 'RivoScan Kotlin JVM 17') {
   $gradleText=$gradleText.TrimEnd() + [Environment]::NewLine +
