@@ -128,6 +128,9 @@ const icons = {
   convert:'<path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/>',
   ocr:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10m-5 0v10M7 18h10"/>',
   compress:'<path d="M8 3v6H3m13-6v6h5M8 21v-6H3m13 6v-6h5M8 8l-5-5m13 5 5-5M8 16l-5 5m13-5 5 5"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1 4-10Z"/>',
+  volume:'<path d="M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13"/>',
+  'volume-x':'<path d="M11 5 6 9H3v6h3l5 4V5ZM16 9l5 6m0-6-5 6"/>',
   info:'<circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10v.01"/>',
   shield:'<path d="m12 22 8-4V6l-8-4-8 4v12z"/><path d="m8 12 3 3 5-6"/>',
   upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/>',
@@ -193,7 +196,37 @@ const soundWords={
   pt:['Sons dos botões','Sons leves ao digitalizar, guardar e navegar'],
   it:['Suoni dei pulsanti','Suoni discreti per scansione, salvataggio e navigazione']
 };
+
 const soundWord=(i)=>(soundWords[language]||soundWords.en)[i];
+const RIVO_LANGUAGES=[['en','EN','English'],['fr','FR','Français'],['ar','AR','العربية'],['es','ES','Español'],['de','DE','Deutsch'],['pt','PT','Português'],['it','IT','Italiano']];
+function soundLabel(){
+ const word={en:['Mute all sounds','Enable sounds'],ar:['كتم جميع الأصوات','تشغيل الأصوات'],fr:['Couper les sons','Activer les sons'],es:['Silenciar','Activar sonido'],de:['Alle Töne aus','Ton einschalten'],pt:['Silenciar','Ativar som'],it:['Disattiva audio','Attiva audio']}[language]||['Mute all sounds','Enable sounds'];
+ return soundsEnabled?word[0]:word[1];
+}
+function refreshSoundIcon(){
+ const button=document.getElementById('header-sound-toggle');
+ if(button){button.innerHTML=ico(soundsEnabled?'volume':'volume-x',19);button.setAttribute('aria-label',soundLabel());button.title=soundLabel();button.setAttribute('aria-pressed',String(!soundsEnabled));}
+ const sw=document.getElementById('sound-toggle');if(sw)sw.checked=soundsEnabled;
+}
+async function setGlobalSound(enabled){
+ soundsEnabled=Boolean(enabled);localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
+ refreshSoundIcon();
+ if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoLiveScanner')){
+  try{await RivoLiveScanner.setSoundSettings({enabled:soundsEnabled})}catch(error){console.warn('Sound settings:',error)}
+ }
+ if(soundsEnabled)soundFeedback('saved');
+}
+function changeRivoLanguage(next){
+ if(!RIVO_LANGUAGES.some(([id])=>id===next))return;
+ language=next;localStorage.setItem('rivo-language',language);
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  RivoDocuments.setLanguage({language}).catch(console.warn);
+  if(Capacitor.isPluginAvailable('RivoLiveScanner'))
+   RivoLiveScanner.setLanguageSettings({language}).catch(console.warn);
+ }
+ render();
+}
+
 function soundFeedback(kind='tap'){
   if(!soundsEnabled)return;
   if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android' &&
@@ -209,7 +242,7 @@ function soundForButton(button){
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');
-  if(button && button.id!=='sound-toggle')soundFeedback(soundForButton(button));
+  if(button && button.id!=='sound-toggle' && button.id!=='header-sound-toggle' && !button.hasAttribute('data-filter'))soundFeedback(soundForButton(button));
 },true);
 
 let files = [];
@@ -250,7 +283,7 @@ const docViewerUI=createDocumentViewer({
     }
     if(tool==='enhance'&&/^image\//.test(doc.mimeType||'')){
       await openScanEditor({
-        doc,bridge:RivoDocuments,getLanguage:()=>language,
+        doc,bridge:RivoDocuments,getLanguage:()=>language,onScanSound:()=>soundFeedback('scan'),
         onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
         onRetake:()=>openLiveScanner(),
         // The one native scanner has its own filters, including neural correction.
@@ -369,7 +402,7 @@ function render(){
   const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
     <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
+   <div class="topright"><label class="rivo-header-language" title="${ut('language')}">${ico('globe',15)}<select id="header-language" aria-label="${ut('language')}">${RIVO_LANGUAGES.map(([id,abbr,name])=>`<option value="${id}" ${language===id?'selected':''}>${abbr} · ${name}</option>`).join('')}</select></label><button type="button" id="header-sound-toggle" class="rivo-header-action rivo-sound-control" aria-pressed="${!soundsEnabled}" aria-label="${soundLabel()}" title="${soundLabel()}">${ico(soundsEnabled?'volume':'volume-x',19)}</button><button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
    <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
@@ -849,6 +882,8 @@ async function drawPreview(){
   box.innerHTML=`<div class="preview">${files.slice(0,20).map((f,i)=>{const url=URL.createObjectURL(f);previewURLs.push(url);return `<div class="preview-item"><img src="${url}" alt="Page ${i+1}" style="transform:rotate(${scanRotations[i]||0}deg)"><div class="mini-actions"><button data-turn="${i}" title="Rotate">↻</button><span>${i+1}</span></div></div>`;}).join('')}</div>`;
 }
 function wire(){
+  document.getElementById('header-language')?.addEventListener('change',e=>changeRivoLanguage(e.target.value));
+  document.getElementById('header-sound-toggle')?.addEventListener('click',()=>{void setGlobalSound(!soundsEnabled)});
   document.querySelectorAll('[data-open-library]').forEach(el=>el.addEventListener('click',()=>{
     openLibrary();
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
@@ -985,7 +1020,7 @@ function wire(){
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
-  document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
+  document.getElementById('language')?.addEventListener('change',e=>changeRivoLanguage(e.target.value));
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
     if(!field)return;
@@ -994,15 +1029,7 @@ function wire(){
     try{updateScanPref(localStorage,field.key,value);toast(scanPrefsText(language).settingsSaved)}
     catch(error){console.warn('Scanner settings:',error);render();toast(String(error.message),true)}
   }));
-  document.getElementById('sound-toggle')?.addEventListener('change',async e=>{
-    soundsEnabled=Boolean(e.target.checked);
-    localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
-    if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoLiveScanner')){
-      try{await RivoLiveScanner.setSoundSettings({enabled:soundsEnabled})}
-      catch(error){console.warn('Native sound setting:',error)}
-    }
-    if(soundsEnabled)soundFeedback('saved');
-  });
+  document.getElementById('sound-toggle')?.addEventListener('change',e=>{void setGlobalSound(Boolean(e.target.checked))});
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
@@ -1140,7 +1167,7 @@ async function openHubAction(id){
    const bytes=new Uint8Array(await file.arrayBuffer());
    const bridge={readFile:async()=>({base64:toBase64(bytes),mimeType:file.type||'image/jpeg'})};
    await openScanEditor({doc:{uri:'local',name:file.name,size:file.size,mimeType:file.type||'image/jpeg'},
-    bridge,getLanguage:()=>language,preset:spec.preset,onSave:saveOut,
+    bridge,getLanguage:()=>language,onScanSound:()=>soundFeedback('scan'),preset:spec.preset,onSave:saveOut,
     onCrop:async()=>{const saved=await saveOut(bytes,file.name,file.type||'image/jpeg');if(saved?.uri)await openLiveScanner({imageUri:saved.uri})},
     onRetake:openCamera,onRefresh:async()=>{await loadLibrary(false)},notify:toast});
   });return;
@@ -1181,6 +1208,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',appe
   try{
     const prefs=readScanPrefs(localStorage);
     const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs});
+    if(RIVO_LANGUAGES.some(([id])=>id===result?.language) && result.language!==language)changeRivoLanguage(result.language);
     if(appendToDoc){
       if(result?.scannedImages?.length){
         const pages=[];
@@ -1198,7 +1226,14 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',appe
       console.error('Rivo live scanner:',err);
       toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
     }
-  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
+  }finally{
+   nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);
+   if(Capacitor.isPluginAvailable('RivoLiveScanner'))
+    RivoLiveScanner.getSoundSettings().then(result=>{
+     if(RIVO_LANGUAGES.some(([id])=>id===result.language) && language!==result.language)changeRivoLanguage(result.language);
+     soundsEnabled=result.enabled!==false;refreshSoundIcon();
+    }).catch(()=>{});
+  }
 }
 async function editUploadedScanPhotos(selected){
   if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
@@ -1645,8 +1680,11 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     RivoLiveScanner.getSoundSettings().then(result=>{
       soundsEnabled=result.enabled!==false;
       localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
-      const control=document.getElementById('sound-toggle');
-      if(control)control.checked=soundsEnabled;
+      refreshSoundIcon();
+      if(RIVO_LANGUAGES.some(([id])=>id===result.language) && language!==result.language){
+       language=result.language;localStorage.setItem('rivo-language',language);
+       RivoDocuments.setLanguage({language}).catch(console.warn);render();
+      }
     }).catch(console.warn);
   };
   syncNativeSoundSetting();
