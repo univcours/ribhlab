@@ -51,6 +51,20 @@ test('Android host compiles Kotlin under explicit JVM target and preserves plugi
  assert.ok(install.includes('Remove-Item -LiteralPath $obsoleteMain -Force'));
  assert.ok(repair.includes('MainActivity.kt'));
 });
+test('the native CameraX screen uses real Kotlin premium materials and shared color tokens',()=>{
+ const kotlin=read('native/android/RivoPremiumChrome.kt');
+ const native=read('native/android/RivoLiveScannerActivity.java');
+ const install=read('install-live-scanner.ps1');
+ assert.ok(kotlin.includes('object RivoPremiumChrome'));
+ assert.ok(kotlin.includes('@JvmField val NAVY: Int'));
+ assert.ok(kotlin.includes('fun styleTouchTarget(label: TextView)'));
+ assert.ok(kotlin.includes('fun stylePrimaryButton(label: TextView)'));
+ for(const token of ['RivoPremiumChrome.styleTouchTarget(label)',
+   'RivoPremiumChrome.styleSurface(root)','RivoPremiumChrome.styleToolbar(footer)',
+   'RivoPremiumChrome.stylePrimaryButton(done)'])
+   assert.ok(native.includes(token),token);
+ assert.ok(install.includes("RivoPremiumChrome.kt"));
+});
 test('new screens retain accessible controls and respect reduced motion',()=>{
  const css=read('src/rivoscan-premium-native.css');
  const js=read('src/main.js');
