@@ -36,9 +36,14 @@ if (!releaseRequested) {
         try {
             def list = new ProcessBuilder(adb.absolutePath, 'devices').redirectErrorStream(true).start()
             if (list.waitFor(5, java.util.concurrent.TimeUnit.SECONDS) && list.exitValue() == 0) {
+                // ADB mDNS device names may contain spaces, such as '(2)'.
+                // Do not split at the first whitespace: preserve complete -s serial.
                 def serials = list.inputStream.getText('UTF-8').readLines()
-                    .findAll { it.trim() ==~ /[^\s]+\s+device(?:\s+.*)?/ }
-                    .collect { it.trim().split(/\s+/)[0] }
+                    .collect { line ->
+                        def matcher = (line =~ /^\s*(.+?)\s+device(?:\s+.*)?$/)
+                        matcher.matches() ? matcher.group(1).trim() : null
+                    }
+                    .findAll { it != null }
                 for (def serial : serials) {
                     def scan = new ProcessBuilder(adb.absolutePath, '-s', serial, 'shell',
                         'dumpsys', 'package', 'com.ribhlab.rivoscan.debug').redirectErrorStream(true).start()
