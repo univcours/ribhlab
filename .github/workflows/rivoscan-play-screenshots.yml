@@ -8,6 +8,9 @@ on:
       - 'apps/rivoscan/src/main.js'
       - 'apps/rivoscan/src/turquoise-v2.css'
       - 'apps/rivoscan/src/turquoise-v2-model.js'
+      - 'apps/rivoscan/src/scan-editor.js'
+      - 'apps/rivoscan/src/filter-laser.css'
+      - 'apps/rivoscan/native/android/RivoLiveScannerActivity.java'
       - '.github/workflows/rivoscan-play-screenshots.yml'
 
 permissions:
