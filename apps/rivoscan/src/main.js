@@ -3,6 +3,7 @@ import './theme-brand.css';
 import './premium-home.css';
 import './turquoise-v2.css';
 import './ui-consistency.css';
+import './rivoscan-layout-repairs.css';
 import { turquoiseCopy } from './turquoise-v2-model.js';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
@@ -430,6 +431,7 @@ function visualFileType(doc){
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image'};
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc'};
+ if(/\.(pptx?|odp)$/.test(name))return {code:'PPT',klass:'ppt'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip'};
  if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt'};
  return {code:'FILE',klass:'generic'};
