@@ -223,11 +223,14 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     pages.appendChild(button('›','doc-page-next',()=>{page++;showPage();}));
     body.appendChild(pages);root.appendChild(body);
     const actionRow=tag('div','doc-detail-actions');
-    actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',imageType(current)?async()=>{
-      if(!bytes){feedback(word('tooLarge'));return;}
-      const selected={...current},copy=bytes.slice();close();
-      try{await onEdit('enhance',selected,copy);}catch(error){feedback(error)}
-    }:edit));
+    // Edit explicitly delegates to an Android editor selected by the user.
+    // Internal PDF/Image tools remain available separately; never overwrite here.
+    actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',async()=>{
+      try{
+        if(!bridge?.editFile)throw Error('External editing requires the Android app.');
+        await bridge.editFile({uri:current.uri});
+      }catch(error){feedback(error);}
+    }));
     actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
     actionRow.appendChild(button('⌫ '+word('delete'),'doc-action doc-action-danger',async()=>{
       if(!window.confirm(word('confirm')))return;
