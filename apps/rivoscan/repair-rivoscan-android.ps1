@@ -30,7 +30,7 @@ try {
   Write-Host '[5/6] Installing and VERIFYING live scanner + launcher branding...' -ForegroundColor Cyan
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'install-live-scanner.ps1')
   FailIfBad 'Native live scanner installation'
-  $main=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\MainActivity.java'
+  $main=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\MainActivity.kt'
   $plugin=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\RivoLiveScannerPlugin.java'
   $activity=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\RivoLiveScannerActivity.java'
   $manifest=Join-Path $root 'android\app\src\main\AndroidManifest.xml'
@@ -38,7 +38,7 @@ try {
   foreach($path in @($main,$plugin,$activity,$manifest,$build)) {
     if(-not (Test-Path -LiteralPath $path)) { throw "Missing required native scanner source: $path" }
   }
-  if(-not ([System.IO.File]::ReadAllText($main).Contains('registerPlugin(RivoLiveScannerPlugin.class)'))) {
+  if(-not ([System.IO.File]::ReadAllText($main).Contains('registerPlugin(RivoLiveScannerPlugin::class.java)'))) {
     throw 'RivoLiveScanner is not registered in MainActivity.java. Rebuild aborted.'
   }
   if(-not ([System.IO.File]::ReadAllText($manifest).Contains('RivoLiveScannerActivity'))) {
