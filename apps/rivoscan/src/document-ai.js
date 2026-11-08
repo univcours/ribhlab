@@ -71,7 +71,15 @@ export function openDocumentAI({mode='chat',language='en',capture=null}={}){
   const label=document.createElement('label');label.className='rivo-id-row';
   label.textContent=name;label.append(input);panel.append(label);return input;
  };
- const input=row(L[3],document.createElement('input'));input.type='file';input.accept='.pdf,.txt,.md,.csv,image/*';
+ const input=document.createElement('input');input.type='file';input.accept='.pdf,.txt,.md,.csv,image/*';input.hidden=true;
+ const filePick=row(L[3],document.createElement('button'));filePick.type='button';
+ filePick.className='rivo-file-picker-button';
+ filePick.textContent=({en:'Choose document',fr:'Choisir un document',ar:'اختيار وثيقة',
+ es:'Elegir documento',de:'Dokument auswählen',pt:'Escolher documento',it:'Scegli documento'})[language]||'Choose document';
+ filePick.addEventListener('click',()=>input.click());panel.append(input);
+ const fileName=document.createElement('small');fileName.className='rivo-picker-filename';
+ fileName.setAttribute('aria-live','polite');panel.append(fileName);
+ input.addEventListener('change',()=>{fileName.textContent=input.files?.[0]?.name||''});
  const key=row(L[4],document.createElement('input'));key.type='password';key.autocomplete='off';key.spellcheck=false;key.placeholder='sk-…';
  const model=row(L[5],document.createElement('input'));model.type='text';model.value=AI_DEFAULT_MODEL;model.autocomplete='off';
  const question=row(L[6],document.createElement('textarea'));question.rows=3;

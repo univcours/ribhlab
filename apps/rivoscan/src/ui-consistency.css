@@ -260,3 +260,29 @@ body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
 .rivo-code-dialog input[type="file"][hidden],.rivo-id-dialog input[type="file"][hidden]{
  display:none!important;
 }
+
+/* Direct children controls in Book Scan / Document Flattening were still raw
+   browser-default buttons; make every option touchable, compact and turquoise. */
+.rivo-id-dialog>button:not([hidden]):not(.rivo-file-picker-button),
+.rivo-code-dialog>button:not([hidden]):not(.rivo-file-picker-button){
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;vertical-align:top!important;
+ width:calc(50% - 7px)!important;min-width:0!important;min-height:39px!important;
+ max-height:none!important;height:auto!important;margin:4px 3px!important;
+ padding:7px 6px!important;border:1px solid #99d9ce!important;border-radius:10px!important;
+ background:#e4faf4!important;color:#0a645e!important;
+ font-size:clamp(10px,2.7vw,12px)!important;line-height:1.25!important;
+ font-weight:750!important;white-space:normal!important;word-break:normal!important;
+ overflow-wrap:normal!important;hyphens:none!important;text-align:center!important;
+ box-shadow:none!important;
+}
+.rivo-id-dialog>button[hidden],.rivo-code-dialog>button[hidden]{display:none!important}
+/* Guard the remaining native file-picker button styling in unknown tool dialogs. */
+.rivo-id-dialog input[type=file]::file-selector-button,
+.rivo-code-dialog input[type=file]::file-selector-button{
+ background:#dbfaf2!important;color:#08675d!important;border:1px solid #8fd5c8!important;
+ padding:9px 12px!important;border-radius:10px!important;font-weight:750!important;
+}
+.rivo-id-dialog input[type=file],.rivo-code-dialog input[type=file]{
+ max-width:100%!important;font-size:12px!important;color:#406963!important;
+}

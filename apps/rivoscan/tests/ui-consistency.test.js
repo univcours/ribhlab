@@ -83,3 +83,17 @@ test('Full screenshot audit captures document action dialogs and release notes',
  const script=read('scripts/capture-webview-interactions.mjs');
  for(const s of ["'preview','edit','add'","'selected-file-'","'dialog-whats-new'","'SELECTED_ACTION_FAILED '"])assert.ok(script.includes(s),s);
 });
+
+test('All Book Scan direct control buttons use turquoise compact responsive styling',()=>{
+ const css=read('src/ui-consistency.css');
+ assert.ok(css.includes('.rivo-id-dialog>button:not([hidden])'));
+ assert.ok(css.includes('width:calc(50% - 7px)'));
+ assert.ok(css.includes('.rivo-id-dialog>button[hidden]'));
+});
+test('AI Chat and Solver document chooser is labelled and not a white native file control',()=>{
+ const source=read('src/document-ai.js');
+ assert.ok(source.includes("input.hidden=true"));
+ assert.ok(source.includes('rivo-file-picker-button'));
+ assert.ok(source.includes('Choose document'));
+ assert.ok(source.includes('rivo-picker-filename'));
+});
