@@ -20,7 +20,12 @@ test('dashboard hero matches Scan Document plus QR and every shortcut performs r
  const js=read('src/main.js');
  const home=js.slice(js.indexOf('function home(){'),js.indexOf('function toolsWorkspace(){'));
  const css=read('src/rivoscan-premium-native.css');
- for(const action of ['data-live-camera','data-hub-action="scanCode"','data-import="image"',
+ // The two hero buttons interpolate their action attributes from the
+ // scanner model rather than embedding them directly in the HTML template.
+ const scan=read('src/scanner-first-model.js');
+ assert.ok(scan.includes("attribute:'data-live-camera'"));
+ assert.ok(home.includes("attribute:quickScanActions[0].attribute"));
+ for(const action of ['data-hub-action="scanCode"','data-import="image"',
     'data-hub-action="pageManager"','data-tool="merge"','data-tool="images"'])
    assert.ok(home.includes(action),action);
  assert.ok(home.includes('featuredScanModes'));
