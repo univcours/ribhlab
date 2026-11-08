@@ -13,7 +13,8 @@ test('Official UVDoc ONNX runs natively on Android with pinned weights and no cl
   assert.ok(java.includes(token),token);
  assert.ok(installer.includes("implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.31.1'"));
  assert.ok(installer.includes(sha));
- assert.ok(installer.includes('registerPlugin(RivoUVDocPlugin.class)'));
+ assert.ok(src('native/android/MainActivity.kt').includes('registerPlugin(RivoUVDocPlugin::class.java)'));
+ assert.ok(installer.includes('MainActivity.kt'));
  assert.ok(web.includes('plugin.unwarp({imageBase64})'));
  assert.ok(web.includes('physical3D:false'));
  assert.ok(ui.includes('data-perfect-mode'));
@@ -33,7 +34,8 @@ test('Relative 3D mode uses real epipolar pose + triangulation with rejection ga
  assert.ok(ui.includes('processed.surface3DRejectedReason'));
  assert.ok(ui.includes('relativeSurface3DApplied'));
  assert.ok(ui.includes('surface3DCameraCalibrationApproximate'));
- assert.ok(install.includes('registerPlugin(RivoSurface3DPlugin.class)'));
+ assert.ok(src('native/android/MainActivity.kt').includes('registerPlugin(RivoSurface3DPlugin::class.java)'));
+ assert.ok(install.includes('MainActivity.kt'));
 });
 
 test('Neural and 3D mode require manual review and never claim metric depth',()=>{
