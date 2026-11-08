@@ -602,6 +602,9 @@ function scannerWorkspace(){
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="native-review">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
+  <div class="scan-google-auto"><button type="button" id="google-auto-scan" aria-label="Google ML Kit FULL · automatic document scanner">
+    ${ico('scan',22)} <span><strong>${({en:'Google Auto Scan · ML Kit FULL',ar:'مسح تلقائي من Google · ML Kit FULL',fr:'Scan automatique Google · ML Kit FULL',es:'Escaneo automático Google',de:'Automatischer Google-Scan',pt:'Scan automático Google',it:'Scansione automatica Google'})[language]||'Google Auto Scan'}</strong>
+    <small>${({en:'Google automatic document detection, crop and filters',ar:'تحديد الحواف والقص والفلاتر تلقائياً بواجهة Google',fr:'Détection et recadrage automatiques Google'})[language]||'Automatic edges and crop'}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button></div>
   <details class="rivo-unified-scan-advanced">
    <summary>${({en:'Advanced corrections · optional',ar:'تصحيحات متقدمة · اختيارية',fr:'Corrections avancées · facultatives',
@@ -1048,6 +1051,7 @@ function wire(){
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner());
+  document.getElementById('google-auto-scan')?.addEventListener('click',()=>openSmartScanner({mode:'Document',allowNativeFallback:true}));
   document.getElementById('scan-multi-angle')?.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()});
   document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()}));
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));

@@ -134,3 +134,17 @@ body .doc-external-open{background:white!important;color:#096d66!important;borde
  body .doc-detail-preview{height:43dvh!important;min-height:240px!important}
  #app .rivo-dark-ui .rivo-selection-inline>button{height:42px!important;min-height:42px!important}
 }
+
+/* Real Google ML Kit FULL option next to custom CameraX, without replacing either. */
+#app .scan-google-auto{margin:10px 0 14px;display:block}
+#app .scan-google-auto>button{
+ display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;
+ min-height:66px;padding:12px 14px;text-align:start;
+ border:1.5px solid #77d7c9;border-radius:16px;
+ background:linear-gradient(110deg,#e7fbf6,#fff);color:#085f5c;
+ box-shadow:0 4px 15px #00887813;cursor:pointer;
+}
+#app .scan-google-auto>button svg{width:25px;height:25px;flex:none;color:#008f81}
+#app .scan-google-auto>button span{display:flex;flex-direction:column;min-width:0;gap:3px}
+#app .scan-google-auto strong{font-size:14px;font-weight:850;white-space:normal}
+#app .scan-google-auto small{font-size:11px;color:#527b78;line-height:1.45;white-space:normal}
