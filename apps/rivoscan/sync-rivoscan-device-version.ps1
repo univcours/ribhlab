@@ -21,8 +21,10 @@ try {
   if($LASTEXITCODE -ne 0){throw 'ADB server failed to start.'}
   $devices=@(& $adb devices -l)
   if($LASTEXITCODE -ne 0){throw 'ADB devices failed.'}
+  # mDNS/Wireless Debugging serials can include spaces (e.g. '(2)').
+  # Match the status column, not a whitespace-only serial token.
   $online=@($devices | ForEach-Object {
-    if($_ -match '^\s*(\S+)\s+device(?:\s|$)'){$matches[1]}
+    if($_ -match '^\s*(.+?)\s+device(?:\s|$)'){$matches[1]}
   })
   $target=$DeviceSerial.Trim()
   if(-not $target){$target=[string]$env:RIVOSCAN_DEVICE_SERIAL}
