@@ -231,3 +231,99 @@ body .rivo-code-help{font-size:10px!important;line-height:1.25!important;margin:
 @media(prefers-reduced-motion:reduce){
   #app .rivo-dark-ui .rivo-hub-tile{transition:none!important}
 }
+
+
+/* RivoScan Siri-inspired animated camera halo — central camera FAB and Scan action. */
+/* The animation rotates only pseudo-elements, never the FAB itself: its
+   translateX(-50%) centering and touch area remain stable on small phones. */
+@keyframes rivoSiriCameraOrbit {
+  from {transform:rotate(0deg)}
+  to {transform:rotate(360deg)}
+}
+@keyframes rivoSiriCameraBreath {
+  0%,100% {opacity:.54;filter:blur(9px)}
+  50% {opacity:.88;filter:blur(11px)}
+}
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab {
+  isolation:isolate!important;
+  overflow:visible!important;
+  clip-path:none!important;
+  border:3px solid #b9faff!important;
+  background:radial-gradient(circle at 34% 20%,#39f9e7 0%,#00aca8 42%,#096478 82%,#083b61 100%)!important;
+  box-shadow:0 6px 18px #07576f5b,0 0 13px 2px #31d8f48c!important;
+}
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab::before,
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab::after {
+  content:"";
+  display:block;
+  pointer-events:none;
+  position:absolute;
+  border-radius:inherit;
+}
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab::before {
+  inset:-8px;
+  z-index:-1;
+  background:conic-gradient(from 0deg,
+    #36f3ff 0deg,#8885ff 55deg,#f26cd7 105deg,
+    #ffbfa8 165deg,#86ffdd 225deg,#41aaff 292deg,#36f3ff 360deg);
+  filter:blur(10px);
+  opacity:.73;
+  animation:rivoSiriCameraOrbit 5.2s linear infinite,
+            rivoSiriCameraBreath 2.6s ease-in-out infinite!important;
+}
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab::after {
+  inset:-3px;
+  z-index:1;
+  padding:3px;
+  background:conic-gradient(from 0deg,
+    #4af2ff 0deg,#ad7aff 48deg,#f778d7 108deg,
+    #ffe3aa 178deg,#58fad6 253deg,#6fb7ff 316deg,#4af2ff 360deg);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  animation:rivoSiriCameraOrbit 4.6s linear infinite!important;
+}
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab svg {
+  position:relative!important;
+  z-index:2!important;
+  filter:drop-shadow(0 1px 3px #034a6c8a);
+}
+/* The full-size camera action inside Scan has the same tasteful active edge. */
+#app .rivo-dark-ui #smart-scanner.scan-action-primary {
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:visible!important;
+  border:2px solid #9cfff0!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 13px #07999922,0 0 10px #5de8ff55!important;
+}
+#app .rivo-dark-ui #smart-scanner.scan-action-primary::after {
+  content:"";
+  pointer-events:none;
+  position:absolute;
+  inset:-3px;
+  z-index:1;
+  padding:3px;
+  border-radius:16px;
+  background:conic-gradient(#39f6ff,#9787ff,#f26fda,#ffe2a4,#54f5d0,#39f6ff);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+  animation:rivoSiriCameraOrbit 6.5s linear infinite!important;
+}
+#app .rivo-dark-ui #smart-scanner.scan-action-primary>* {
+  position:relative!important;
+  z-index:2!important;
+}
+@media(prefers-reduced-motion:reduce) {
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::before,
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::after,
+  #app .rivo-dark-ui #smart-scanner.scan-action-primary::after {
+    animation:none!important;
+  }
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::before {
+    opacity:.42!important;
+  }
+}
