@@ -1,0 +1,528 @@
+/* RivoScan PREMIUM • canonical visual system, replacing legacy bright theme.
+   All existing document actions remain wired; this file owns appearance.
+   Inputs and selected/deleted states have explicit keyboard/touch semantics. */
+:root,body,#app{
+  --rivo-premium-bg:#031022;
+  --rivo-premium-raise:#071c36;
+  --rivo-premium-panel:#0b2746;
+  --rivo-premium-panel2:#0d3255;
+  --rivo-premium-line:#255572;
+  --rivo-premium-text:#edfaff;
+  --rivo-premium-muted:#abc8dc;
+  --rivo-premium-cyan:#25e9ee;
+  --rivo-premium-blue:#2477ff;
+  --rivo-premium-positive:#32e7a2;
+  --rivo-premium-red:#ff657a;
+  --rivo-v2-ink:#edfaff;
+  --rivo-v2-muted:#abc8dc;
+  --rivo-v2-line:#255572;
+  --rivo-ui-ink:#edfaff;
+  --rivo-ui-border:#255572;
+  color-scheme:dark;
+}
+html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:var(--rivo-premium-text)!important}
+#app .rivo-dark-ui {
+  background:linear-gradient(180deg,#051528 0%,#061b34 48%,#031022 100%)!important;
+  color:var(--rivo-premium-text)!important;
+  min-height:100dvh!important;
+}
+#app .rivo-dark-ui .main,
+#app .rivo-dark-ui .content,
+#app .rivo-dark-ui .app-home,
+#app .rivo-dark-ui .workspace,
+#app .rivo-dark-ui .app-tools,
+#app .rivo-dark-ui .app-settings {
+  background:transparent!important;color:var(--rivo-premium-text)!important;
+}
+#app .rivo-dark-ui .content {max-width:1150px!important;margin-inline:auto!important}
+#app .rivo-dark-ui :is(h1,h2,h3,strong,b,.tool-card-title) {color:var(--rivo-premium-text)!important}
+#app .rivo-dark-ui :is(p,small,.hint,.section-head span,.rivo-metadata,.rivo-metadata-dot) {
+  color:var(--rivo-premium-muted)!important;
+}
+#app .rivo-dark-ui a {color:#77e8ff}
+#app .rivo-dark-ui button,#app .rivo-dark-ui a,#app .rivo-dark-ui summary {
+  -webkit-tap-highlight-color:transparent;
+}
+#app .rivo-dark-ui button:focus-visible,
+#app .rivo-dark-ui :is(input,select,textarea,a,summary):focus-visible,
+:is(.rivo-pages-overlay,.rivo-editor-overlay,.rivo-code-overlay,.doc-detail-overlay,.bulk-overlay) button:focus-visible {
+  outline:2px solid #2ff9fa!important;outline-offset:3px!important;
+}
+#app .rivo-dark-ui button:disabled,
+.rivo-pages-overlay button:disabled {
+  opacity:.42!important;cursor:not-allowed!important;
+  box-shadow:none!important;
+}
+[hidden] {display:none!important}
+#app .rivo-dark-ui .topbar {
+  background:#04182e!important;border-bottom:1px solid #173a5d!important;
+  color:var(--rivo-premium-text)!important;
+  box-shadow:0 5px 28px #0004!important;
+}
+#app .rivo-dark-ui .topbar :is(.crumb,strong,.topbar-brand-name) {color:var(--rivo-premium-text)!important}
+#app .rivo-dark-ui .sidebar {
+  background:#05192f!important;border-right:1px solid #194366!important;
+}
+#app .rivo-dark-ui .sidebar :is(.brand,.nav-label,.nav-button) {color:#d8efff!important}
+#app .rivo-dark-ui .nav-button.active {
+  background:linear-gradient(115deg,#06445a,#154b87)!important;
+  border:1px solid #20b6da!important;
+}
+/* Reusable elevated surfaces and input controls for every tool workspace. */
+#app .rivo-dark-ui :is(.panel,.stat,.tool-card,.rivo-peer-panel,.rivo-code-history,.busy-inner,.rivo-storage-banner) {
+  background:linear-gradient(155deg,#0c2b49,#071d36)!important;
+  color:var(--rivo-premium-text)!important;
+  border:1px solid var(--rivo-premium-line)!important;
+  box-shadow:0 9px 28px #0003!important;
+}
+#app .rivo-dark-ui :is(.panel,.tool-card,.rivo-peer-panel) {border-radius:18px!important}
+#app .rivo-dark-ui :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea,.field input,.field select,.field textarea) {
+  background:#06182f!important;border:1px solid #2d6386!important;
+  color:#f4fbff!important;border-radius:12px!important;
+  caret-color:#2ef3fc;
+}
+#app .rivo-dark-ui input::placeholder,#app .rivo-dark-ui textarea::placeholder{color:#8ab0c5!important;opacity:1}
+#app .rivo-dark-ui :is(.btn,.operation,button[data-hub-action],.rivo-scan-all-tools) {
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+#app .rivo-dark-ui .btn:not(.btn-outline):not(.btn-danger):not(.btn-white):not(.btn-light),
+#app .rivo-dark-ui .operation {
+  background:linear-gradient(110deg,#00d7cf,#0c7fe3 62%,#1949d4)!important;
+  border:1px solid #3dcaf3!important;color:#fff!important;
+  box-shadow:0 8px 22px #046fe043!important;
+}
+#app .rivo-dark-ui :is(.btn-outline,.btn-light,.btn-white,.back,.rivo-file-picker-button) {
+  background:#0c2c4a!important;color:#d9f8ff!important;border:1px solid #307391!important;
+}
+#app .rivo-dark-ui .btn-danger {background:#42243b!important;color:#ff9cad!important;border-color:#a64f71!important}
+#app .rivo-dark-ui :is(.tool-icon,.settings-row-icon) {
+  background:linear-gradient(140deg,#0b5770,#0c3562)!important;
+  color:#45f3f4!important;border:1px solid #226e91!important;
+}
+/* Home header and quick scan primary actions. */
+#app .rivo-v2-home-heading {padding:9px 1px 13px!important}
+#app .rivo-v2-home-heading h1 {
+  color:#f2fcff!important;font-size:clamp(23px,6vw,34px)!important;letter-spacing:-.7px!important;
+}
+#app .rivo-v2-home-heading p{color:#82ddea!important;font-size:12px!important}
+#app .rivo-v2-stats {
+  background:linear-gradient(115deg,#063a51,#0b3155)!important;
+  border:1px solid #1a718a!important;border-radius:17px!important;
+  box-shadow:inset 0 1px #58edfc20,0 9px 22px #0003!important;
+}
+#app .rivo-v2-stats :is(strong,small,svg){color:#d1faff!important}
+#app .rivo-scan-first .rivo-premium-search,
+#app .rivo-tools-hub .rivo-tools-search,
+#app .library-workspace .library-search {
+  background:#071e38!important;border:1px solid #215b7d!important;
+  box-shadow:inset 0 1px #36edfa0a!important;border-radius:14px!important;
+  color:#c9efff!important;min-height:46px!important;
+}
+#app .rivo-scan-first :is(.rivo-scan-first-heading,.rivo-v2-popular-head) h2,
+#app .rivo-tools-heading h1,#app .page-heading h1,#app .rivo-v2-documents h1 {
+  color:#f5fcff!important;
+}
+#app .rivo-scan-first .rivo-scan-modes {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;margin:10px 0 16px!important;
+}
+#app .rivo-scan-first .rivo-scan-mode {
+  position:relative!important;overflow:hidden!important;
+  box-sizing:border-box!important;min-width:0!important;min-height:116px!important;
+  display:flex!important;flex-direction:column!important;justify-content:space-between!important;
+  align-items:flex-start!important;text-align:start!important;
+  padding:14px!important;gap:10px!important;border-radius:19px!important;
+  color:#eafcff!important;background:linear-gradient(133deg,#0c3159,#0a2546)!important;
+  border:1.3px solid #317293!important;box-shadow:0 8px 20px #0004!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-main{
+  background:linear-gradient(137deg,#007f96,#0b3d8d 64%,#132d79)!important;
+  border:1.7px solid #35f4f1!important;
+  box-shadow:0 0 18px #0debe058,0 10px 26px #002943a8!important;
+}
+#app .rivo-scan-first .rivo-scan-mode strong {
+  display:block!important;color:#f4fdff!important;font-size:clamp(12px,3.55vw,16px)!important;
+  line-height:1.3!important;text-align:start!important;opacity:1!important;
+}
+#app .rivo-scan-mode .rivo-scan-mode-icon {
+  background:linear-gradient(140deg,#0e7293,#073d62)!important;
+  border:1px solid #38b7df!important;color:#d9fdff!important;
+  box-shadow:0 0 12px #12d4ea36!important;
+}
+#app .rivo-v2-popular {
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;
+}
+#app .rivo-v2-popular button {
+  min-width:0!important;min-height:77px!important;
+  border:1px solid #225a7e!important;border-radius:15px!important;
+  color:#f2fcff!important;background:linear-gradient(145deg,#0b2d50,#091e39)!important;
+  box-shadow:0 6px 16px #0003!important;
+}
+#app .rivo-v2-popular button :is(strong,svg){color:#e9fdff!important}
+#app .rivo-v2-popular button span{background:#0f4162!important;color:#54e9ff!important}
+/* More tools: replace blank, oversized white tiles with compact readable rows. */
+#app .rivo-scan-more-tools {
+  display:block!important;overflow:hidden!important;border-radius:19px!important;
+  border:1px solid #225d7c!important;
+  background:linear-gradient(155deg,#0b2d50,#071d38)!important;
+  margin:16px 0 12px!important;box-shadow:0 9px 20px #0003!important;
+}
+#app .rivo-scan-more-tools summary {color:#f2fbff!important;background:#0c304e!important;border-bottom:1px solid #1b506d!important}
+#app .rivo-scan-more-tools summary :is(strong,small){color:#e8fcff!important}
+#app .rivo-scan-more-tools summary .rivo-scan-more-icon{background:#114e6f!important;color:#51ebfc!important}
+#app .rivo-scan-first .rivo-premium-tools,
+#app .rivo-tools-hub .rivo-hub-grid {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;padding:10px!important;
+}
+#app .rivo-scan-first .rivo-premium-tile,
+#app .rivo-tools-hub .rivo-hub-tile {
+  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
+  align-items:center!important;box-sizing:border-box!important;
+  position:relative!important;min-width:0!important;min-height:68px!important;
+  padding:9px 10px!important;gap:9px!important;border-radius:13px!important;
+  border:1px solid #245879!important;color:#eafcff!important;
+  background:linear-gradient(135deg,#0d3556,#081e36)!important;
+  box-shadow:inset 0 1px #ffffff0b,0 5px 15px #0002!important;
+  text-align:start!important;opacity:1!important;visibility:visible!important;
+  white-space:normal!important;
+}
+#app .rivo-scan-first .rivo-premium-tile::before,
+#app .rivo-tools-hub .rivo-hub-tile::before {display:none!important}
+#app .rivo-scan-first .rivo-premium-tile-icon,
+#app .rivo-tools-hub .rivo-hub-tile .tool-icon {
+  display:grid!important;place-items:center!important;
+  flex:0 0 39px!important;width:39px!important;height:39px!important;
+  margin:0!important;border-radius:11px!important;
+  background:linear-gradient(135deg,#0d5778,#153d83)!important;
+  border:1px solid #2882aa!important;color:#55f4f4!important;
+}
+#app .rivo-scan-first .rivo-premium-tile strong,
+#app .rivo-tools-hub .rivo-hub-tile strong {
+  display:block!important;color:#f0faff!important;
+  font-size:clamp(11px,2.75vw,13px)!important;line-height:1.25!important;
+  font-weight:750!important;opacity:1!important;visibility:visible!important;
+  min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  text-align:start!important;
+}
+#app .rivo-tools-hub .rivo-tools-section {scroll-margin-top:75px!important}
+#app .rivo-tools-hub .rivo-tools-section h2 {color:#e9fbff!important}
+#app .rivo-tools-hub .rivo-tool-pills button,
+#app .rivo-scan-file-chips button,
+#app .rivo-v2-documents .library-chips button {
+  background:#0a2746!important;color:#b8e7f7!important;
+  border:1px solid #235778!important;border-radius:999px!important;
+}
+#app .rivo-tools-hub .rivo-tool-pills button.active,
+#app .rivo-scan-file-chips button.active,
+#app .rivo-v2-documents .library-chips button.active {
+  background:linear-gradient(120deg,#0084a7,#0963ca)!important;
+  color:white!important;border-color:#39e8f8!important;
+}
+/* File manager and previews: typed file glyphs remain legible. */
+#app :is(.rivo-premium-recent,.rivo-v2-documents,.recent-panel,.documents-grid) {
+  color:var(--rivo-premium-text)!important;
+}
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card,
+#app .library-workspace #library-list .document-entry,
+#app .rivo-dark-ui .document-entry {
+  background:linear-gradient(155deg,#0c2e4f,#081f3a)!important;
+  border:1px solid #255777!important;
+  color:#f0faff!important;border-radius:14px!important;
+  box-shadow:0 4px 14px #0003!important;
+}
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) :is(b,strong,.rivo-doc-name,.document-title){
+  color:#f3fbff!important;opacity:1!important;
+}
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) small {color:#a3cada!important}
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) .rivo-real-thumb {
+  border-radius:10px!important;object-fit:cover!important;
+}
+#app .rivo-dark-ui .rivo-file-type-icon,
+#app .rivo-dark-ui .document-icon {
+  background:#0c3b5d!important;color:#6ee7ff!important;
+  border:1px solid #2b83aa!important;box-shadow:none!important;
+}
+#app .rivo-dark-ui .doc-select-box:not(:checked) {
+  background:#0d304e!important;border:2px solid #50bfd8!important;
+}
+#app .rivo-dark-ui .doc-select-box:checked {
+  background:#08a5d5!important;border-color:#69f8fa!important;
+}
+#app .rivo-dark-ui :is(.document-entry,.rivo-recent-card).doc-selected {
+  border-color:#21eafa!important;box-shadow:0 0 0 1px #39e7fa80!important;
+}
+#app .rivo-v2-documents :is(.library-heading,.work-title,.library-controls,.library-selection-toolbar) {
+  color:#eafaff!important;
+}
+#app .rivo-v2-documents .library-heading p {color:#aad2e2!important}
+#app .rivo-v2-documents .library-sortbar button,
+#app .rivo-v2-documents .library-actions button {
+  background:#0d3050!important;color:#effbff!important;border-color:#357090!important;
+}
+#app .rivo-dark-ui .recent-empty,
+#app .rivo-dark-ui .empty {color:#b6d7e9!important}
+#app .rivo-dark-ui .rivo-dark-ui :is(.footer,.home-footer-note){color:#8eaec4!important}
+/* Settings uses deliberate grouped rows instead of bright white cards. */
+#app .rivo-v2-profile {
+  background:linear-gradient(125deg,#0e5874,#15367d 67%,#0d2557)!important;
+  border:1px solid #23b4d7!important;border-radius:21px!important;
+  box-shadow:0 10px 30px #0004!important;
+}
+#app .rivo-v2-profile :is(strong,small,svg,span){color:#e7fbff!important}
+#app .rivo-v2-profile-logo {background:#07294388!important;border-color:#20d4e4!important}
+#app .rivo-v2-me .settings-section{
+  background:linear-gradient(155deg,#0c2d50,#071e38)!important;
+  border:1px solid #275676!important;border-radius:18px!important;
+  box-shadow:0 8px 24px #0002!important;overflow:hidden!important;
+}
+#app .rivo-v2-me .settings-section>h2{color:#64f0f3!important}
+#app .rivo-v2-me .settings-row {
+  color:#eafaff!important;background:#091f3b!important;
+  border-color:#1c4d6a!important;min-height:52px!important;
+}
+#app .rivo-v2-me .settings-row :is(strong,small){color:#e5faff!important}
+#app .rivo-v2-me .settings-row-icon {color:#53e9fa!important}
+#app .rivo-v2-me .rivo-scanner-pref select{max-width:45%!important}
+#app .rivo-v2-me .rivo-scanner-pref input[type=checkbox],
+#app .rivo-dark-ui input[type=checkbox]{accent-color:#0bdaea!important}
+#app .rivo-v2-me .rivo-pref-section-subtitle {color:#b2cfdd!important}
+/* Bottom navigation: anchored five slots with camera gap, and no surprise scroll. */
+@media(max-width:780px){
+  #app .rivo-dark-ui .topbar {min-height:58px!important;height:auto!important;padding:8px 14px!important}
+  #app .rivo-dark-ui .content {
+    padding:12px 12px calc(115px + env(safe-area-inset-bottom,0px))!important;
+  }
+  #app .rivo-dark-ui .mobilebar {
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+    z-index:60!important;display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) 74px repeat(2,minmax(0,1fr))!important;
+    gap:2px!important;align-items:center!important;
+    padding:8px 6px calc(10px + env(safe-area-inset-bottom,0px))!important;
+    min-height:77px!important;overflow:visible!important;
+    background:#06182df7!important;border-top:1px solid #25607f!important;
+    box-shadow:0 -9px 28px #0006!important;
+  }
+  #app .rivo-dark-ui .mobilebar button {
+    background:transparent!important;color:#a2c6d9!important;
+    border:none!important;min-width:0!important;min-height:52px!important;
+    font-size:10px!important;gap:4px!important;
+  }
+  #app .rivo-dark-ui .mobilebar button:nth-of-type(1){grid-column:1!important}
+  #app .rivo-dark-ui .mobilebar button:nth-of-type(2){grid-column:2!important}
+  #app .rivo-dark-ui .mobilebar button:nth-of-type(3){grid-column:4!important}
+  #app .rivo-dark-ui .mobilebar button:nth-of-type(4){grid-column:5!important}
+  #app .rivo-dark-ui .mobilebar button.active{color:#24eeef!important}
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab {
+    position:fixed!important;left:50%!important;right:auto!important;
+    bottom:calc(21px + env(safe-area-inset-bottom,0px))!important;
+    transform:translateX(-50%)!important;
+    width:66px!important;height:66px!important;min-width:66px!important;
+    min-height:66px!important;box-sizing:border-box!important;
+    border-radius:50%!important;border:3px solid #74f6ff!important;
+    background:radial-gradient(circle at 32% 23%,#03e6da,#085fbb 63%,#1b2c8c)!important;
+    color:white!important;box-shadow:0 0 16px #03eafd80,0 8px 24px #0007!important;
+  }
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::before {
+    filter:blur(10px)!important;
+  }
+}
+@media(min-width:781px){
+  #app .rivo-dark-ui .mobilebar{display:none!important}
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab {
+    background:linear-gradient(135deg,#00e4d8,#1266dc)!important;
+  }
+}
+@media(max-width:380px){
+  #app .rivo-scan-first .rivo-scan-mode{min-height:105px!important;padding:11px!important}
+  #app .rivo-scan-first .rivo-premium-tools,
+  #app .rivo-tools-hub .rivo-hub-grid {gap:6px!important;padding:7px!important}
+  #app .rivo-scan-first .rivo-premium-tile,
+  #app .rivo-tools-hub .rivo-hub-tile {padding:7px!important;gap:6px!important;min-height:61px!important}
+  #app .rivo-scan-first .rivo-premium-tile strong,
+  #app .rivo-tools-hub .rivo-hub-tile strong {font-size:10px!important}
+}
+/* All modal families get the SAME dark premium material, no cropped buttons. */
+:is(.rivo-editor-overlay,.rivo-pages-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay,.rivo-perfectscan-overlay,.bulk-overlay,.doc-detail-overlay) {
+  color:#effaff!important;background:#010a18d9!important;
+  backdrop-filter:blur(12px);
+}
+:is(.rivo-editor-window,.rivo-pages-modal,.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet,.doc-detail-overlay,.doc-viewer-panel) {
+  box-sizing:border-box!important;
+  background:linear-gradient(162deg,#0d2d50,#06182f)!important;
+  color:#effaff!important;border:1px solid #286381!important;
+  box-shadow:0 20px 55px #0009!important;border-radius:20px!important;
+}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) {
+  width:min(calc(100vw - 20px),560px)!important;
+  max-height:calc(100dvh - 25px)!important;overflow-x:hidden!important;
+  overflow-y:auto!important;overscroll-behavior:contain!important;
+  padding:14px!important;
+}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) h2 {
+  color:#f2fcff!important;font-size:clamp(17px,4.2vw,21px)!important;
+}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) :is(small,p,label){
+  color:#c0dbe8!important;
+}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) :is(button,input,select,textarea):not([type=checkbox]) {
+  border-color:#357699!important;border-radius:12px!important;
+  color:#e9fbff!important;background:#0c3557!important;
+}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) input::placeholder{color:#a9c7d9!important}
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) button:disabled {
+  opacity:.45!important;box-shadow:none!important;
+}
+.rivo-code-dialog .rivo-code-result,.rivo-code-dialog .rivo-code-history-list,
+.rivo-code-dialog .rivo-code-status {background:#071f39!important;color:#c9f7ff!important;border-color:#275a75!important}
+.rivo-code-dialog .rivo-code-video {background:#000e1d!important;border:1px solid #1689ad!important;border-radius:14px!important}
+.rivo-code-dialog .rivo-code-actions {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+.rivo-code-dialog .rivo-code-actions button{min-height:43px!important}
+.rivo-code-dialog .rivo-code-history-list strong{color:#f2faff!important}
+.rivo-code-dialog .rivo-code-history-list small{color:#aac9d8!important}
+.bulk-sheet :is(.bulk-sheet-title,.bulk-sheet-actions,.bulk-field) {background:transparent!important;color:#f1fbff!important}
+.bulk-sheet button[aria-label*="Delete"],.rivo-code-dialog button[data-clear] {border-color:#a6546d!important;color:#ffc6ce!important}
+.doc-detail-overlay :is(.doc-viewer-header,.doc-detail-actions,.doc-viewer-title,.doc-viewer-subtitle){
+  background:#0c2b4c!important;color:#f0fcff!important;border-color:#286080!important;
+}
+.doc-detail-overlay .doc-detail-preview{background:#051629!important}
+.doc-detail-overlay .doc-detail-paper{background:#e8f2fa!important}
+.doc-detail-overlay .doc-viewer-title {overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important}
+:is(.rivo-editor-header,.rivo-editor-filters,.rivo-editor-sliders,.rivo-editor-actions) {
+  background:#0a2a49!important;color:#eafaff!important;border-color:#2a607e!important;
+}
+.rivo-editor-window{max-height:calc(100dvh - 14px)!important;overflow-y:auto!important}
+.rivo-editor-window :is(button,select,input){accent-color:#21dfea!important}
+.rivo-editor-window :is(.rivo-editor-header button,.rivo-editor-actions button,.rivo-filter-choice){
+  background:#0c3558!important;color:#e8fcff!important;border-color:#32718d!important;
+}
+.rivo-editor-window .rivo-filter-choice.active{
+  background:linear-gradient(120deg,#087f94,#145aba)!important;
+  border-color:#3cddff!important;color:white!important;
+}
+.rivo-editor-window .rivo-editor-picture{background:#041021!important}
+/* Page manager: gallery first, 48px toolbar, sticky save not giant action tiles. */
+.rivo-pages-overlay{position:fixed!important;inset:0!important;z-index:400!important;padding:0!important;overflow:hidden!important}
+.rivo-pages-modal{
+  width:min(100%,760px)!important;max-width:760px!important;
+  height:100dvh!important;max-height:100dvh!important;
+  min-height:0!important;margin:auto!important;border-radius:0!important;
+  display:flex!important;flex-direction:column!important;overflow:hidden!important;
+  background:linear-gradient(160deg,#0a2341,#031227)!important;
+}
+.rivo-pages-top {
+  flex:none!important;min-height:61px!important;gap:10px!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  background:#08213b!important;color:#f4fdff!important;
+  border-bottom:1px solid #245977!important;padding:8px 12px!important;
+}
+.rivo-pages-top strong{font-size:17px!important;font-weight:800!important;color:#f4fbff!important}
+.rivo-pages-top button{
+  min-height:43px!important;min-width:43px!important;padding:8px 10px!important;
+  border:1px solid #317796!important;border-radius:12px!important;
+  background:#103959!important;color:#e9faff!important;flex:none!important;
+}
+.rivo-pages-top [data-page-action=close]{color:#ff9ba9!important;border-color:#a84766!important;background:#46233c!important}
+.rivo-pages-top .rivo-pages-save{
+  background:linear-gradient(110deg,#07d7d1,#197cde)!important;
+  border:1px solid #6bf8ff!important;color:white!important;
+  box-shadow:0 0 12px #0bdcff61!important;font-size:13px!important;
+}
+.rivo-pages-count {
+  flex:none!important;background:#0a2746!important;
+  border-bottom:1px solid #2c5976!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:8px!important;padding:8px 12px!important;
+  color:#e9faff!important;
+}
+.rivo-pages-count strong{font-size:12px!important;color:#d8faff!important;white-space:nowrap!important}
+.rivo-pages-count button {
+  width:auto!important;min-width:0!important;min-height:37px!important;
+  padding:7px 10px!important;background:#0f3a5b!important;
+  color:#eafaff!important;border:1px solid #2c7194!important;
+  border-radius:10px!important;font-size:12px!important;white-space:nowrap!important;
+}
+.rivo-pages-tip {flex:none!important;color:#a9d3e5!important;font-size:11px!important;margin:8px 12px!important}
+.rivo-pages-grid {
+  display:grid!important;grid-template-columns:repeat(auto-fill,minmax(102px,1fr))!important;
+  align-content:start!important;justify-items:stretch!important;
+  gap:10px!important;padding:9px 12px 15px!important;margin:0!important;
+  flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+.rivo-page-item{
+  width:auto!important;min-width:0!important;min-height:0!important;
+  max-width:none!important;padding:6px!important;border-radius:14px!important;
+  background:#102e4d!important;border:1px solid #275776!important;
+  box-shadow:0 5px 16px #0003!important;
+}
+.rivo-page-item.selected {
+  background:#073c57!important;border:2px solid #2df6fb!important;
+  box-shadow:0 0 14px #11d6e75b!important;
+}
+.rivo-page-item.removed{opacity:.48!important}
+.rivo-page-tile{
+  width:100%!important;min-height:100px!important;height:auto!important;
+  max-height:220px!important;aspect-ratio:3/4!important;
+  display:block!important;position:relative!important;
+  background:#e6eef5!important;border:1px solid #557e98!important;
+  border-radius:9px!important;overflow:hidden!important;
+}
+.rivo-page-tile img{width:100%!important;height:100%!important;object-fit:contain!important}
+.rivo-page-check {
+  position:absolute!important;top:5px!important;right:5px!important;
+  width:22px!important;height:22px!important;display:grid!important;place-items:center!important;
+  border:2px solid #7fb7d9!important;background:#071d32!important;color:transparent!important;
+  border-radius:6px!important;box-shadow:0 2px 5px #0004!important;
+}
+.rivo-page-item.selected .rivo-page-check {
+  background:#13cfe7!important;color:#fff!important;border-color:#71fff9!important;
+}
+.rivo-page-row {
+  min-height:32px!important;display:flex!important;justify-content:space-between!important;
+  align-items:center!important;gap:5px!important;padding-top:5px!important;
+}
+.rivo-page-row b{font-size:13px!important;color:#f3fcff!important}
+.rivo-page-row button{
+  background:#0a3b5d!important;color:#deefff!important;
+  border:1px solid #3a7497!important;border-radius:7px!important;
+  width:30px!important;min-height:29px!important;max-height:31px!important;
+  padding:3px!important;font-size:14px!important;
+}
+.rivo-pages-bottom{
+  flex:none!important;margin:0!important;padding:9px 11px calc(11px + env(safe-area-inset-bottom,0px))!important;
+  background:#071d35!important;border-top:1px solid #2c5e7a!important;
+  color:#c8f5ff!important;
+  position:relative!important;bottom:auto!important;max-height:none!important;
+}
+.rivo-page-operations{
+  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  grid-auto-rows:auto!important;gap:6px!important;
+  padding:0!important;margin:0!important;
+}
+.rivo-page-operations button {
+  width:100%!important;min-width:0!important;height:auto!important;
+  min-height:48px!important;max-height:none!important;
+  aspect-ratio:auto!important;padding:6px 2px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:3px!important;
+  color:#d8f8ff!important;background:#103658!important;
+  border:1px solid #2e6d91!important;border-radius:11px!important;
+  box-shadow:none!important;font-size:10px!important;
+  line-height:1.2!important;white-space:normal!important;
+  overflow-wrap:anywhere!important;text-overflow:clip!important;
+}
+.rivo-page-operations button[data-page-action=delete] {color:#ff98a9!important;border-color:#8f4867!important}
+.rivo-page-operations button[data-page-action=restore] {color:#91f7c4!important}
+.rivo-pages-bottom small{display:block!important;font-size:10px!important;margin-top:6px!important;color:#8fb5c8!important}
+@media(max-width:359px){
+  .rivo-page-operations{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important}
+  .rivo-page-operations button{font-size:9px!important;padding:5px 1px!important}
+  .rivo-pages-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(min-width:760px){
+  .rivo-pages-modal{height:min(92dvh,960px)!important;max-height:960px!important;border-radius:24px!important;border:1px solid #3387a9!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .rivo-dark-ui *, .rivo-dark-ui *::before, .rivo-dark-ui *::after,
+  .rivo-pages-overlay *,.rivo-code-overlay * {animation:none!important;transition:none!important}
+}
