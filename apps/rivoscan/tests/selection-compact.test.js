@@ -9,17 +9,8 @@ test('Promotional ADS badges and test buttons removed, privacy choices remain',(
   assert.ok(!main.includes(key),key);
  assert.ok(main.includes('data-ad-privacy'));
 });
-test('One PDF: six right-aligned small horizontal buttons, no filename overlap',()=>{
- const bulk=read('src/library-bulk.js'),css=read('src/premium-home.css');
- assert.ok(bulk.includes("if(!mode||selected.size<2)return '';"));
- assert.ok(bulk.includes("mode&&selected.size===1&&doc&&chosen(doc)"));
- for(const action of ['share','edit','preview','rename','delete','add'])
-  assert.ok(bulk.includes('data-doc-'+action+'="${index}"'),action);
- assert.ok(css.includes('0.44.21: the selected file stays readable'));
- assert.ok(css.includes('flex-flow:row nowrap!important'));
- assert.ok(css.includes('justify-content:flex-end!important'));
- assert.ok(css.includes('grid-column:2/-1!important'));
-});
+test('One PDF selection has five accessible horizontal buttons, without hiding filename',()=>{const bulk=read('src/library-bulk.js'),css=read('src/selection-compact.css');assert.ok(bulk.includes("if(!mode||selected.size<2)return '';"));assert.ok(bulk.includes('mode&&selected.size===1&&doc&&chosen(doc)'));for(const k of ['share','preview','delete','add'])assert.ok(bulk.includes('data-doc-'+k+'='),k);assert.ok(bulk.includes('data-doc-edit-rename='));for(const k of ['justify-content:flex-end!important','flex-wrap:nowrap!important','grid-template-columns:24px minmax(0,1fr) auto!important'])assert.ok(css.includes(k),k);});
+
 test('Multi files: 7 actions in a horizontal row ABOVE the camera',()=>{
  const bulk=read('src/library-bulk.js'),css=read('src/premium-home.css');
  for(const id of ['share','delete','organize','merge','all','invert','cancel'])
