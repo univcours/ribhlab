@@ -475,6 +475,7 @@ function home(){
  const counts=documentCategoryCounts(libraryItems,visualFileType);
  const featuredScanModes=[
   {id:'document',icon:'camera',attribute:quickScanActions[0].attribute,label:scan.document},
+  {id:'gallery',icon:'image',attribute:quickScanActions[3].attribute,label:scan.gallery},
   {id:'qr',icon:'qr',attribute:'data-hub-action="scanCode"',
    label:hubLabel(language,'scanCode','Scan QR / Barcode')}
  ];
@@ -503,10 +504,9 @@ function home(){
   <div class="rivo-scan-modes" role="group" aria-label="${escapeHTML(scan.quick)}">${quick}</div>
   <div class="rivo-v2-popular-head"><h2>${escapeHTML(modern.popular)}</h2><button type="button" data-tab="tools">${ut('seeAll')} ${ico('back',16)}</button></div>
   <div class="rivo-v2-popular">
-   <button type="button" data-import="image"><span>${ico('image',23)}</span><strong>${escapeHTML(scan.gallery)}</strong></button>
-   <button type="button" data-hub-action="pageManager"><span>${ico('reorder',23)}</span><strong>${escapeHTML(hubLabel(language,'pageManager','Manage Pages'))}</strong></button>
+   <button type="button" data-open-library><span>${ico('folder',23)}</span><strong>${escapeHTML(ut('myFiles'))}</strong></button>
    <button type="button" data-tool="merge"><span>${ico('merge',23)}</span><strong>${escapeHTML(tn(tools.find(t=>t.id==='merge')))}</strong></button>
-   <button type="button" data-tool="images"><span>${ico('convert',23)}</span><strong>${escapeHTML(copy.names[7])}</strong></button>
+   <button type="button" data-category="convert"><span>${ico('convert',23)}</span><strong>${escapeHTML(hubGroupLabel(language,'convert'))}</strong></button>
   </div>
   <div class="rivo-scan-first-heading rivo-scan-recent-title">
    <div><h2>${escapeHTML(scan.recent)}</h2><p><span data-home-recent-count>${counts.all}</span> · ${escapeHTML(scan.saved)}</p></div>
@@ -520,7 +520,7 @@ function home(){
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
   <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(8)}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
-  <details class="rivo-scan-more-tools" open>
+  <details class="rivo-scan-more-tools">
    <summary><span class="rivo-scan-more-icon">${ico('grid',19)}</span><span><strong>${escapeHTML(scan.more)}</strong><small>${escapeHTML(scan.moreSub)}</small></span>${ico('back',16)}</summary>
    <div class="rivo-premium-tools">${tiles}</div>
    <button type="button" data-tab="tools" class="rivo-scan-all-tools">${ut('seeAll')} ${ico('back',16)}</button>
