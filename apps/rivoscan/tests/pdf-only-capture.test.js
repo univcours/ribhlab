@@ -6,7 +6,9 @@ test('Photo confirmation and filter preview before Done',()=>{
  const j=read('native/android/RivoLiveScannerActivity.java');
  for(const x of ['showCaptureReview(bmp)','showCaptureReview(img)',
  'localizedCapture("confirm")','localizedCapture("done")',
- 'if(openCvReady&&editor!=null)prepareEnhancementPreview()'])assert.ok(j.includes(x),x);
+ 'current=photo;'])assert.ok(j.includes(x),x);
+ assert.ok(j.includes('requestCropEdges(bitmap,editor,false)')); // Auto edges before filter.
+ assert.ok(j.includes('prepareEnhancementPreview();')); // Uses the same adjusted editor.
  assert.ok(!j.includes('publishPageCopy(saved);'));
  assert.ok(!j.includes('publishPageCopy(target);'));
 });
