@@ -25,20 +25,8 @@ test('Tools tab preserves every category, route and localized label',()=>{
   for(const lang of hubLanguages()) assert.ok(hubLabel(lang,id,id),lang+':'+id);
  }
 });
-test('All six single-file buttons show translated multiline text, not icons alone',()=>{
- for(const action of ['share','edit','preview','rename','delete','add']){
-  const at=bulk.indexOf('data-doc-'+action+'="'+'$'+'{index}"');
-  assert.ok(at>=0,action+' missing');
-  const segment=bulk.slice(at,at+390);
-  assert.ok(segment.includes('class="rivo-action-icon"'),action+' missing icon');
-  assert.ok(segment.includes('class="rivo-action-label"'),action+' missing full label');
- }
- assert.equal((bulk.match(/class="rivo-action-label"/g)||[]).length,6);
- assert.ok(css.includes('portrait button restoration'));
- assert.ok(css.includes('grid-auto-rows:minmax(114px,auto)!important'));
- assert.ok(css.includes('aspect-ratio:4/5!important'));
- assert.ok(css.includes('text-overflow:clip!important'));
-});
+test('five icon controls expose meaningful localized accessibility labels',()=>{const css=read('src/selection-compact.css');for(const k of ['share','preview','delete','add']){const at=bulk.indexOf('data-doc-'+k+'=');assert.ok(at>=0,k);const snippet=bulk.slice(at,at+390);assert.ok(snippet.includes('aria-label='),k);assert.ok(snippet.includes('rivo-action-icon'),k);}for(const k of ['data-doc-edit-rename=','data-edit-rename-choice="rename"','data-edit-rename-choice="edit"'])assert.ok(bulk.includes(k),k);assert.ok(css.includes('flex-wrap:nowrap!important'));});
+
 test('All seven bulk actions remain readable above the bottom camera navigation',()=>{
  for(const action of ['share','delete','organize','merge','all','invert','cancel'])
   assert.ok(bulk.includes('data-bulk="'+action+'"'),action);
