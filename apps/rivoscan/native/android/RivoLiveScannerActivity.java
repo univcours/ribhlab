@@ -89,6 +89,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private String scanMode="Document";
     private boolean basicCameraMode=false;
     private String nativeLanguage="en";
+    private TextView nativeLanguageChip;
     private String trNative(String key){return RivoLocale.get(nativeLanguage,key);}
     private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
     private final ArrayList<CameraChoice> cameraChoices=new ArrayList<>();
@@ -238,6 +239,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView locale=touchLabel("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾",
             11,Color.WHITE,this::chooseNativeLanguage);
         locale.setContentDescription("Language / اللغة / Langue");
+        nativeLanguageChip=locale;
         LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(77),dp(31));
         lp.setMargins(0,0,dp(7),0);row.addView(locale,lp);
         TextView audio=text(RivoSounds.enabled(this)?"🔊":"🔇",16,Color.WHITE,true);
@@ -261,6 +263,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 getSharedPreferences("RivoScanPreferences",MODE_PRIVATE)
                     .edit().putString("language",nativeLanguage).apply();
                 dialog.dismiss();
+                if(nativeLanguageChip!=null)
+                    nativeLanguageChip.setText("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾");
                 if(pendingWarp!=null){
                     enhancementSerial++;
                     if(enhancementLaser!=null)enhancementLaser.stop();
