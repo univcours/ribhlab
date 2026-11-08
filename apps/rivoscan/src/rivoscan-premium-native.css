@@ -526,3 +526,25 @@ html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:va
   .rivo-dark-ui *, .rivo-dark-ui *::before, .rivo-dark-ui *::after,
   .rivo-pages-overlay *,.rivo-code-overlay * {animation:none!important;transition:none!important}
 }
+
+
+/* Primary document export action stays reachable above Android gesture bar. */
+.rivo-pages-bottom>.rivo-pages-save{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:50px!important;margin:10px 0 0!important;
+  gap:11px!important;border:1px solid #58edff!important;border-radius:16px!important;
+  font-size:15px!important;font-weight:850!important;
+  color:#fff!important;
+  background:linear-gradient(112deg,#02d4c7 0%,#078ed7 54%,#1852d4 100%)!important;
+  box-shadow:0 0 15px #06d7ef47,0 7px 22px #002c7faa!important;
+}
+.rivo-pages-bottom>.rivo-pages-save>span:first-child{font-size:22px!important}
+.rivo-pages-bottom>.rivo-pages-save>span:last-child{font-size:24px!important;margin-inline-start:8px}
+.rivo-pages-top .rivo-pages-total{
+  display:grid;place-items:center;min-width:47px;padding:5px 8px;
+  border-radius:10px;border:1px solid #1e5a7c;background:#082943;
+  color:#a6f7fc;font-size:11px;font-weight:800;
+}
+.rivo-pages-grid[role=list] .rivo-page-item[role=listitem] {contain:layout paint}
+.rivo-page-item .rivo-page-tile:disabled {opacity:.35!important}
+.rivo-page-operations button[data-page-action=restore]:not(:disabled){color:#78efae!important}
