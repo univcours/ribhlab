@@ -1145,6 +1145,14 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='barcode'){
+   // Android WebView camera preview also needs the OS runtime CAMERA grant.
+   // Even if declined, the image picker remains usable in the scanner.
+   if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+     try{
+       const permission=await Camera.requestPermissions({permissions:['camera']});
+       if(permission.camera!=='granted')toast('Camera permission declined. You can still choose an image.',true);
+     }catch(error){console.warn('QR/Barcode camera permission:',error);}
+   }
    openBarcodeScanner({language,notify:toast,ledger:codeLedger,capture:async()=>{
      const photo=await Camera.getPhoto({quality:90,allowEditing:false,
        resultType:CameraResultType.Uri,source:CameraSource.Camera});
