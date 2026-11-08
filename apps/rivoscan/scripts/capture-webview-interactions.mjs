@@ -57,7 +57,7 @@ async function connection(){
  });
  const evaluate=async expr=>{
   const answer=await query('Runtime.evaluate',{expression:expr,awaitPromise:true,returnByValue:true});
-  if(answer.exceptionDetails)throw new Error(answer.exceptionDetails.text||'WebView JS exception');
+  if(answer.exceptionDetails)throw new Error([answer.exceptionDetails.text,answer.exceptionDetails.exception?.description,answer.exceptionDetails.exception?.value].filter(Boolean).join(' | ')||'WebView JS exception');
   return answer.result?.value;
  };
  return {evaluate,close:()=>ws.close(),target:target.url};
@@ -172,7 +172,7 @@ try {
     await sleep(600);
     await cd.evaluate('document.querySelector(".mobilebar [data-tab=tools]")?.click();true');
     await sleep(450);
-    const clicked=await cd.evaluate('(()=>{const b=document.querySelector("[data-hub-action='+JSON.stringify(entry.id)+']");if(!b)return false;b.click();return true})()');
+    const clicked=await cd.evaluate('(()=>{const b=[...document.querySelectorAll("[data-hub-action]")].find(el=>el.dataset.hubAction==='+JSON.stringify(entry.id)+');if(!b)return false;b.click();return true})()');
     if(!clicked){report.checks.push({name:'Open '+entry.id,result:'BUTTON NOT FOUND'});continue}
     await sleep(900);
     const scene='tool-'+String(entry.id).replace(/[^A-Za-z0-9_-]/g,'_');

@@ -58,3 +58,9 @@ test('Document actions are three compact labelled buttons and selection hint mat
  assert.ok(bulk.includes('Tick the checkbox to see document actions.'));
  assert.ok(!bulk.includes('Long-press any document for more actions.'));
 });
+
+test('Android screenshot automation safely selects tool buttons without nested quote syntax errors',()=>{
+ const code=read('scripts/capture-webview-interactions.mjs');
+ assert.ok(code.includes('find(el=>el.dataset.hubAction==='));
+ assert.ok(!code.includes('document.querySelector("[data-hub-action=\'+JSON.stringify(entry.id)'));
+});
