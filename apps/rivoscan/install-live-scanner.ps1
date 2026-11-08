@@ -17,6 +17,9 @@ $kotlinSource=Join-Path $source 'MainActivity.kt'
 $main=Join-Path $packageDir 'MainActivity.kt'
 if(-not(Test-Path -LiteralPath $kotlinSource)){throw 'Kotlin MainActivity source missing; no unsafe Java fallback.'}
 Copy-Item -LiteralPath $kotlinSource -Destination $main -Force
+$premiumChrome=Join-Path $source 'RivoPremiumChrome.kt'
+if(-not(Test-Path -LiteralPath $premiumChrome)){throw 'Kotlin CameraX premium chrome missing; cannot build native UI.'}
+Copy-Item -LiteralPath $premiumChrome -Destination (Join-Path $packageDir 'RivoPremiumChrome.kt') -Force
 # Capacitor generates a Java stub by default; remove it so only one
 # MainActivity class is compiled, without touching any other Java plugins.
 $obsoleteMain=Join-Path $packageDir 'MainActivity.java'
