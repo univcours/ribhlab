@@ -87,4 +87,6 @@ if changed<.035:
     raise SystemExit('Navigation failure: Me capture is still Documents; refuse mislabeled screenshot')
 
 PY
-echo "PASS: five screen captures from running Android RivoScan, no fabricated UI"
+echo "PASS: five baseline real screenshots"
+bash apps/rivoscan/scripts/capture-ui-audit.sh
+echo "PASS: detailed visual audit attempted"

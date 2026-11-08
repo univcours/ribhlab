@@ -5,6 +5,7 @@ on:
     branches: [feat/rivoscan-android-beta]
     paths:
       - 'apps/rivoscan/scripts/play-store-screenshots.sh'
+      - 'apps/rivoscan/scripts/capture-ui-audit.sh'
       - 'apps/rivoscan/src/main.js'
       - 'apps/rivoscan/src/turquoise-v2.css'
       - 'apps/rivoscan/src/turquoise-v2-model.js'
@@ -79,6 +80,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RivoScan-REAL-Android-Play-Screenshots
-          path: /tmp/rivoscan-play-screenshots/*.png
+          path: /tmp/rivoscan-play-screenshots/
           if-no-files-found: warn
           retention-days: 14
