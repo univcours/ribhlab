@@ -548,3 +548,30 @@ html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:va
 .rivo-pages-grid[role=list] .rivo-page-item[role=listitem] {contain:layout paint}
 .rivo-page-item .rivo-page-tile:disabled {opacity:.35!important}
 .rivo-page-operations button[data-page-action=restore]:not(:disabled){color:#78efae!important}
+
+
+/* Distinct, branded file icons even when thumbnails are not available. */
+#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) {
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:3px!important;
+  background:linear-gradient(140deg,#15385e,#0a2a4c)!important;
+  color:#e9faff!important;
+  border:1px solid #357c9f!important;border-radius:12px!important;
+  overflow:hidden!important;opacity:1!important;
+}
+#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) svg {
+  flex:none!important;width:24px!important;height:24px!important;
+  stroke-width:1.9!important;color:inherit!important;opacity:1!important;
+}
+#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) :is(span,small) {
+  color:inherit!important;font-size:9px!important;line-height:1.05!important;
+  font-weight:900!important;letter-spacing:.4px!important;text-align:center!important;
+}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-pdf{background:linear-gradient(145deg,#71304c,#b23a49)!important;color:#fff1f3!important;border-color:#ec7185!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-ppt{background:linear-gradient(145deg,#713b2e,#c55d22)!important;color:#fff3e3!important;border-color:#fa955d!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-doc{background:linear-gradient(145deg,#123e82,#1964bd)!important;color:#f0f8ff!important;border-color:#69afff!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-xls{background:linear-gradient(145deg,#175947,#127e52)!important;color:#eafff4!important;border-color:#6adea3!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-zip{background:linear-gradient(145deg,#512b8d,#7449ca)!important;color:#f6edff!important;border-color:#ac8dfb!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-image{background:linear-gradient(145deg,#145d76,#0b7e8d)!important;color:#e5fcff!important;border-color:#64e4ee!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-txt{background:linear-gradient(145deg,#35445d,#3f647a)!important;color:#eefaff!important;border-color:#84b6d4!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-generic{background:linear-gradient(145deg,#213c61,#284b6d)!important;color:#d6edf9!important}
