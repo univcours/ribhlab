@@ -40,7 +40,10 @@ export function openPDFLock({language='en',save,notify=()=>{}}={}){
  const cover=document.createElement('div');cover.className='rivo-code-overlay';
  const panel=document.createElement('section');panel.className='rivo-code-dialog';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  const heading=document.createElement('h2');heading.textContent=L[0];panel.append(heading);
- const input=document.createElement('input');input.type='file';input.accept='.pdf,application/pdf';input.setAttribute('aria-label',L[1]);panel.append(input);
+ const input=document.createElement('input');input.type='file';input.accept='.pdf,application/pdf';input.hidden=true;input.setAttribute('aria-label',L[1]);panel.append(input);
+ const filePick=document.createElement('button');filePick.type='button';filePick.className='rivo-file-picker-button';filePick.textContent=L[1];filePick.addEventListener('click',()=>input.click());panel.append(filePick);
+ const fileName=document.createElement('small');fileName.className='rivo-picker-filename';fileName.setAttribute('aria-live','polite');panel.append(fileName);
+ input.addEventListener('change',()=>{fileName.textContent=input.files?.[0]?.name||''});
  const makeField=(label,type='password')=>{
   const wrapper=document.createElement('label');wrapper.className='rivo-id-row';wrapper.textContent=label;
   const value=document.createElement('input');value.type=type;value.autocomplete='off';wrapper.append(value);panel.append(wrapper);return value;

@@ -64,3 +64,17 @@ test('Android screenshot automation safely selects tool buttons without nested q
  assert.ok(code.includes('find(el=>el.dataset.hubAction==='));
  assert.ok(!code.includes('document.querySelector("[data-hub-action=\'+JSON.stringify(entry.id)'));
 });
+
+test('File chooser labels replace bare white WebView pickers in Lock PDF and ID Photo',()=>{
+ for(const file of ['pdf-lock','id-photo-maker']){
+  const code=read('src/'+file+'.js');
+  assert.ok(code.includes("input.hidden=true"),file);
+  assert.ok(code.includes("rivo-file-picker-button"),file);
+  assert.ok(code.includes("rivo-picker-filename"),file);
+ }
+});
+test('Book Scan Back cannot interrupt a PDF save',()=>{
+ const code=read('src/book-split.js');
+ assert.ok(code.includes("const cleanup=()=>{if(busy)return;"));
+ assert.ok(code.includes("if(!closed){busy=false;cleanup();}"));
+});

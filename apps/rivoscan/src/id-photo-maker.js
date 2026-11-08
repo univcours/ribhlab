@@ -66,7 +66,13 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');title.textContent=L[0];panel.append(title);
  const select=document.createElement('select');for(const [key,size] of Object.entries(photoSizes)){const opt=document.createElement('option');opt.value=key;opt.textContent=size.label;select.append(opt)}
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label',L[1]);
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;input.setAttribute('aria-label',L[1]);
+ const filePick=document.createElement('button');filePick.type='button';filePick.className='rivo-file-picker-button';filePick.textContent=({
+  ar:'اختيار صورة',fr:'Choisir une photo',es:'Elegir foto',de:'Foto auswählen',
+  pt:'Escolher foto',it:'Scegli foto',en:'Choose photo'
+ })[language]||'Choose photo';filePick.addEventListener('click',()=>input.click());
+ const fileName=document.createElement('small');fileName.className='rivo-picker-filename';fileName.setAttribute('aria-live','polite');
+ input.addEventListener('change',()=>{fileName.textContent=input.files?.[0]?.name||''});
  const x=document.createElement('input');x.type='range';x.min='-100';x.max='100';x.value='0';
  const y=document.createElement('input');y.type='range';y.min='-100';y.max='100';y.value='0';
  const canvas=document.createElement('canvas');canvas.className='rivo-id-preview';
@@ -74,7 +80,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  const status=document.createElement('p');status.setAttribute('role','status');
  const actions=document.createElement('div');actions.className='rivo-code-actions';
  const row=(caption,control)=>{const label=document.createElement('label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
- row(L[1],input);row(L[2],select);row(L[3],y);row(L[4],x);
+ row(L[1],filePick);panel.append(input,fileName);row(L[2],select);row(L[3],y);row(L[4],x);
  const bgSelect=document.createElement('select');
  const names=({ar:['الأصلية','بيضاء','زرقاء','رمادية'],fr:['Original','Blanc','Bleu','Gris'],es:['Original','Blanco','Azul','Gris'],de:['Original','Weiß','Blau','Grau'],pt:['Original','Branco','Azul','Cinzento'],it:['Originale','Bianco','Blu','Grigio'],en:['Original','White','Light blue','Gray']})[language]||['Original','White','Light blue','Gray'];
  for(const [i,key] of ['original','white','blue','gray'].entries()){

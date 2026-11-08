@@ -242,3 +242,21 @@ body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
  #app .rivo-v2-documents .library-heading-actions{width:100%!important}
  #app .rivo-v2-documents .library-top .storage-actions button{padding:6px 3px!important}
 }
+
+/* Clear compact RivoScan selectors instead of browser-native white file buttons. */
+.rivo-code-dialog .rivo-file-picker-button,.rivo-id-dialog .rivo-file-picker-button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;min-height:42px!important;max-width:100%!important;
+ width:100%!important;border-radius:11px!important;border:1px solid #60cabc!important;
+ background:#dcfaf1!important;color:#075d58!important;font-size:13px!important;
+ font-weight:800!important;padding:8px 12px!important;white-space:normal!important;
+ overflow-wrap:normal!important;word-break:normal!important;cursor:pointer!important;
+}
+.rivo-code-dialog .rivo-picker-filename,.rivo-id-dialog .rivo-picker-filename{
+ display:block!important;width:100%!important;max-width:100%!important;
+ font-size:11px!important;color:#347e76!important;white-space:nowrap!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.rivo-code-dialog input[type="file"][hidden],.rivo-id-dialog input[type="file"][hidden]{
+ display:none!important;
+}
