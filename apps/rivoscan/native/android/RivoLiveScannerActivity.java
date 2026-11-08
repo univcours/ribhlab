@@ -302,7 +302,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         LinearLayout row=new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
         row.setPadding(dp(9),dp(2),dp(9),dp(2));
-        row.setBackgroundColor(Color.rgb(7,61,65));
+        RivoPremiumChrome.styleToolbar(row);
         row.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
         TextView locale=touchLabel("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾",
             11,Color.WHITE,this::chooseNativeLanguage);
@@ -346,7 +346,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // A dedicated document-corners editor with a visible safe header and bottom actions.
         content.removeAllViews();
         LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(Color.rgb(6,48,53));
+        RivoPremiumChrome.styleSurface(shell);
         content.addView(shell,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(14),0,dp(14),0);
@@ -451,7 +451,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
         cameraPickerButton=touchLabel(selectedCamera==null?trNative("bestCamera")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
-        cameraPickerButton.setBackground(outlined(Color.rgb(12,82,85),11,Color.rgb(101,217,202)));
+        RivoPremiumChrome.styleTouchTarget(cameraPickerButton);
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
         flashButton=touchLabel(torchOn?trNative("flashOn"):trNative("flashOff"),12,Color.WHITE,this::toggleTorch);
@@ -545,7 +545,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         for(TextView option:new TextView[]{photos,guidance,browse}){
             LinearLayout.LayoutParams slot=new LinearLayout.LayoutParams(0,dp(42),1);
             slot.setMargins(dp(3),0,dp(3),0);
-            option.setBackground(outlined(Color.rgb(11,86,86),11,Color.rgb(42,177,163)));
+            RivoPremiumChrome.styleTouchTarget(option);
             actions.addView(option,slot);
         }
         footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(49)));
