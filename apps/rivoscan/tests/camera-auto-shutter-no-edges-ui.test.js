@@ -2,14 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const s=readFileSync(new URL('../native/android/RivoLiveScannerActivity.java',import.meta.url),'utf8');
-test('auto shutter only fires on stable real edges with a readable frame',()=>{
- assert.match(s,/class AutoShutterGate/);
- assert.match(s,/stableFrames>=6 && timestamp-stableSince>=1000/);
- assert.match(s,/Math\.abs\(area\)\*\.5>=\.14/);
- assert.match(s,/readableLuma\(pixels,width,height\)/);
- assert.match(s,/autoShutterGate\.observe\(points,analysisStamp,qualityOk\)/);
- assert.match(s,/takePicture\(\);/);
-});
+test('auto shutter triggers only with stable real unsmoothed edges and readable image',()=>{assert.match(s,/class AutoShutterGate/);assert.match(s,/stableFrames>=6 && timestamp-stableSince>=1000/);assert.match(s,/Math\.abs\(area\)\*\.5>=\.14/);assert.match(s,/readableLuma\(pixels,width,height\)/);assert.match(s,/autoShutterGate\.observe\(\s*points,analysisStamp,qualityOk\s*\)/);const i=s.indexOf('final boolean captureStable=autoShutterGate.observe(');assert.ok(i>0&&s.indexOf('if(smoothCorners!=null)',i)>i);assert.match(s,/if\(captureStable && !captureInProgress && !savingEnhancedPage\)/);assert.match(s,/takePicture\(\);/);});
+
 test('native camera has no manual shutter button or Edges button, yet keeps four-corner review and retake',()=>{
  const camera=s.slice(s.indexOf('private void showCamera(){'),s.indexOf('private void setBatch('));
  assert.doesNotMatch(camera,/new Shutter\(this\)/);
