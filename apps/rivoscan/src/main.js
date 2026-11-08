@@ -5,6 +5,7 @@ import './turquoise-v2.css';
 import './ui-consistency.css';
 import './rivoscan-layout-repairs.css';
 import './selection-compact.css';
+import './compact-all-screens.css';
 import { turquoiseCopy } from './turquoise-v2-model.js';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
