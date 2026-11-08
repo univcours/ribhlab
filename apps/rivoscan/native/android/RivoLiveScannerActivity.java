@@ -1015,13 +1015,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void showCaptureReview(Bitmap bitmap){
         if(bitmap==null||bitmap.isRecycled())return;
         editing=true;awaitingCaptureApproval=bitmap;
+        // Keep the existing accessible ✓ approval contract across both modes.
+        Button confirm=button("✓",this::approveCapturedPhoto);
+        confirm.setContentDescription(localizedCapture("confirm"));
         if(!openCvReady){
             ImageView image=new ImageView(this);
             image.setScaleType(ImageView.ScaleType.FIT_CENTER);
             image.setImageBitmap(bitmap);
             layout(image,localizedCapture("approval"),
-                button(trNative("retake"),this::showCamera),
-                button("✓",this::approveCapturedPhoto));
+                button(trNative("retake"),this::showCamera),confirm);
             return;
         }
         editor=new RivoCropEditor(this);
@@ -1029,7 +1031,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         layout(editor,cropHint(false),
             button(trNative("retake"),this::showCamera),
             button(trNative("detect"),()->requestCropEdges(bitmap,editor,true)),
-            button("✓",this::approveCapturedPhoto));
+            confirm);
         requestCropEdges(bitmap,editor,false);
     }
     private String cropHint(boolean detected){
