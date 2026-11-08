@@ -235,12 +235,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             Toast.makeText(this,trNative("basicMode"),Toast.LENGTH_LONG).show();
         }
         analyzer=Executors.newSingleThreadExecutor();
-        root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(6,55,61));
+        root=new FrameLayout(this);RivoPremiumChrome.styleSurface(root);
         content=new FrameLayout(this);
         root.addView(content,new FrameLayout.LayoutParams(-1,-1));
         // RivoScan brand: deep blue camera chrome, white system icons.
-        getWindow().setStatusBarColor(Color.rgb(7,61,65));
-        getWindow().setNavigationBarColor(Color.rgb(7,61,65));
+        getWindow().setStatusBarColor(RivoPremiumChrome.NAVY);
+        getWindow().setNavigationBarColor(RivoPremiumChrome.NAVY);
         getWindow().getDecorView().setSystemUiVisibility(
             getWindow().getDecorView().getSystemUiVisibility()
               & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -285,7 +285,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         label.setOnClickListener(v->{RivoSounds.play(this,"tap");action.run();});
         label.setClickable(true);label.setFocusable(true);
         label.setContentDescription(title);
-        label.setBackground(outlined(Color.rgb(8,72,77),11,Color.rgb(42,215,194)));
+        RivoPremiumChrome.styleTouchTarget(label);
         return label;
     }
     private LinearLayout.LayoutParams weighted(){
@@ -294,7 +294,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
         b.setTextColor(Color.WHITE);
-        b.setBackground(outlined(Color.rgb(7,86,90),12,Color.rgb(101,217,202)));
+        RivoPremiumChrome.styleTouchTarget(b);
         b.setOnClickListener(v->{RivoSounds.play(this,"tool");onTap.run();});return b;
     }
     /** Tiny language and mute controls stay above the native camera and editors. */
@@ -435,16 +435,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         content.removeAllViews();
-        content.setBackgroundColor(Color.rgb(6,48,53));
+        RivoPremiumChrome.styleSurface(content);
         LinearLayout frame=new LinearLayout(this);frame.setOrientation(LinearLayout.VERTICAL);
-        frame.setBackgroundColor(Color.rgb(6,48,53));
+        RivoPremiumChrome.styleSurface(frame);
         content.addView(frame,new FrameLayout.LayoutParams(-1,-1));
 
         // The native status bar (time, signal, battery) remains outside the scanner.
         frame.addView(scannerQuickControls(),new LinearLayout.LayoutParams(-1,dp(37)));
         LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(7),0,dp(7),0);
-        top.setBackgroundColor(Color.rgb(7,61,65));
+        RivoPremiumChrome.styleToolbar(top);
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
         close.setContentDescription(trNative("close"));
         close.setBackground(outlined(Color.rgb(162,43,72),13,Color.rgb(255,150,169)));
@@ -464,7 +464,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
 
         FrameLayout cameraFrame=new FrameLayout(this);
-        cameraFrame.setBackgroundColor(Color.rgb(6,51,55));
+        RivoPremiumChrome.styleSurface(cameraFrame);
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
         if(!basicCameraMode)cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
@@ -485,7 +485,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(cameraFrame,new LinearLayout.LayoutParams(-1,0,1));
 
         LinearLayout footer=new LinearLayout(this);footer.setOrientation(LinearLayout.VERTICAL);
-        footer.setBackgroundColor(Color.rgb(7,61,65));footer.setPadding(dp(10),dp(3),dp(10),dp(8));
+        RivoPremiumChrome.styleToolbar(footer);footer.setPadding(dp(10),dp(3),dp(10),dp(8));
         LinearLayout switches=new LinearLayout(this);
         switches.setGravity(Gravity.CENTER);
         switches.setBackground(rounded(Color.rgb(12,82,85),23));
@@ -552,6 +552,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
                 savedImages.size()>0?Color.rgb(42,215,194):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
+        if(!savedImages.isEmpty())RivoPremiumChrome.stylePrimaryButton(done);
         if(savedImages.isEmpty()){
             footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
         }else{
