@@ -6,6 +6,7 @@ import './ui-consistency.css';
 import './rivoscan-layout-repairs.css';
 import './selection-compact.css';
 import './compact-all-screens.css';
+import './polish-density.css';
 import { turquoiseCopy } from './turquoise-v2-model.js';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
@@ -367,7 +368,7 @@ const bulkUI=createLibraryBulk({
   },
   showBusy,progress,clearBusy,saveOut,toast
 });
-let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'list';
+let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'grid';
 const uiText={
  en:{home:'Home',documents:'Documents',tools:'Tools',me:'Me',search:'Search your saved documents',recent:'Recent documents',seeAll:'See all',quick:'Quick tools',safe:'Private, saved on your phone',scan:'Smart Scan',pdf:'PDF Tools',import:'Import images',merge:'Merge documents',welcome:'Scan it. Find it. Share it.',myFiles:'My files',settings:'Settings',device:'Saved in Documents/RivoScan',privacy:'Your documents stay on your phone',noAccount:'No account needed',general:'General',language:'App language',about:'About RivoScan',help:'Help & support',storage:'Storage',openDocuments:'Open My Documents',allFiles:'All files',pdfFiles:'PDF',images:'Images',sort:'Sort',newest:'Newest first',oldest:'Oldest first',name:'Name',size:'Size',list:'List',grid:'Grid',noRecent:'Your saved documents appear here after your first scan.'},
  ar:{home:'الرئيسية',documents:'وثائقي',tools:'الأدوات',me:'حسابي',search:'قلب على الوثائق ديالك',recent:'آخر الوثائق',seeAll:'عرض الكل',quick:'أدوات سريعة',safe:'الوثائق محفوظة فالهاتف',scan:'سكانير ذكي',pdf:'أدوات PDF',import:'استيراد صور',merge:'جمع الوثائق',welcome:'صوّر، حفظ، وشارك بسهولة',myFiles:'ملفاتي',settings:'الإعدادات',device:'محفوظة في Documents/RivoScan',privacy:'وثائقك كتبقى فالهاتف',noAccount:'ما محتاجش حساب',general:'الإعدادات العامة',language:'لغة التطبيق',about:'حول RivoScan',help:'المساعدة',storage:'التخزين',openDocuments:'فتح وثائقي',allFiles:'جميع الملفات',pdfFiles:'PDF',images:'الصور',sort:'الترتيب',newest:'الأحدث',oldest:'الأقدم',name:'الاسم',size:'الحجم',list:'قائمة',grid:'شبكة',noRecent:'الوثائق ديالك غادي تبان هنا من بعد أول سكان.'},
