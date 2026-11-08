@@ -575,3 +575,29 @@ html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:va
 #app .rivo-dark-ui .rivo-file-thumb.rivo-file-image{background:linear-gradient(145deg,#145d76,#0b7e8d)!important;color:#e5fcff!important;border-color:#64e4ee!important}
 #app .rivo-dark-ui .rivo-file-thumb.rivo-file-txt{background:linear-gradient(145deg,#35445d,#3f647a)!important;color:#eefaff!important;border-color:#84b6d4!important}
 #app .rivo-dark-ui .rivo-file-thumb.rivo-file-generic{background:linear-gradient(145deg,#213c61,#284b6d)!important;color:#d6edf9!important}
+
+
+/* QR/Barcode is a true second hero action, not a buried tool. */
+#app .rivo-scan-first .rivo-scan-mode-qr{
+  background:linear-gradient(145deg,#163c97 0%,#29298b 70%,#27135a 100%)!important;
+  border:1.5px solid #978aff!important;
+  box-shadow:0 0 13px #7464f54d,0 9px 23px #050d35bb!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-qr .rivo-scan-mode-icon{
+  color:#edeeff!important;background:#2e4097!important;
+  border-color:#a5a6ff!important;
+}
+#app .rivo-v2-popular button{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;text-align:center!important;gap:6px!important;
+  padding:9px 4px!important;
+}
+#app .rivo-v2-popular button strong{
+  font-size:clamp(10px,2.5vw,12px)!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+  line-height:1.2!important;display:block!important;
+}
+#app .rivo-v2-popular button span{
+  width:33px!important;height:33px!important;border-radius:9px!important;
+  display:grid!important;place-items:center!important;flex:none!important;
+}
