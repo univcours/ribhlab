@@ -732,6 +732,29 @@ public class RivoDocumentsPlugin extends Plugin {
         } catch (Exception e) { call.reject("No compatible app can open this document.", e); }
     }
 
+    /** User-selected external editor. Grant the receiving app write access only
+     * to the verified RivoScan document URI; no broad storage permission. */
+    @PluginMethod
+    public void editFile(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        Uri uri=verifiedUri(call);if(uri==null)return;
+        try {
+            Intent edit=new Intent(Intent.ACTION_EDIT);
+            edit.setDataAndType(uri,mimeOf(uri));
+            edit.setClipData(android.content.ClipData.newUri(
+                getContext().getContentResolver(),"RivoScan document",uri));
+            edit.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                          Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            getActivity().startActivity(Intent.createChooser(edit,
+                "Choose an app to edit").addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+            JSObject result=new JSObject();result.put("opened",true);call.resolve(result);
+        } catch(Exception error) {
+            call.reject("Install an editor that supports this file type, then try again.",error);
+        }
+    }
+
     @PluginMethod
     public void shareFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
