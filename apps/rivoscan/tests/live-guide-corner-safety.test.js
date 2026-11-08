@@ -2,12 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('Camera guide is drawn in view space even if no image-analysis frame is available',()=>{
- const s=read('native/android/RivoLiveScannerActivity.java');
- assert.ok(s.includes('final float contentWidth=found?imageWidth*scale:getWidth()'));
- assert.ok(s.includes('final float contentHeight=found?imageHeight*scale:getHeight()'));
- assert.ok(s.includes('sx[i]=offsetX+screenX(drawn[i])*contentWidth;'));
-});
+test('camera maps true corners onto preview while hiding fake guide',()=>{const s=read('native/android/RivoLiveScannerActivity.java'),g=s.slice(s.indexOf('private static final class LiveEdges'));for(const k of ['points==null)return','float contentWidth=imageWidth*scale','float contentHeight=imageHeight*scale','sx[i]=offsetX+screenX(points[i])*contentWidth'])assert.ok(g.includes(k),k);assert.ok(!g.includes('RivoEdgeDetector.fallback()'));assert.ok(!g.includes('DashPathEffect'));});
+
 test('Edges button cannot erase manual corners or misrepresent a failed retry',()=>{
  const scanner=read('native/android/RivoLiveScannerActivity.java');
  const editor=read('native/android/RivoCropEditor.java');
