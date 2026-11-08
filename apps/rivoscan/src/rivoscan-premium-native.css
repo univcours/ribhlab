@@ -728,3 +728,89 @@ html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:va
 #app .rivo-dark-ui .mobilebar button.active svg{color:#49f5f7!important}
 /* Native status bars use white icons over dark status/nav chrome. */
 body{--rivo-premium-system-ink:#f2fcff}
+
+
+/* Reference-matched root dashboard, not a legacy four-tile matrix.
+   One full-width Scan, Gallery & QR on row two, three shortcuts on row three. */
+#app .rivo-scan-first .rivo-scan-modes{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-rows:auto!important;gap:9px!important;
+  margin:7px 0 13px!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-main{
+  grid-column:1/-1!important;min-height:128px!important;
+  flex-direction:column!important;justify-content:center!important;align-items:center!important;
+  text-align:center!important;gap:7px!important;
+  background:linear-gradient(125deg,#006f87 0%,#1543ba 83%,#1b30a1 100%)!important;
+  border:2px solid #52f9f8!important;
+  box-shadow:0 0 16px #10d9ed8f,inset 0 0 25px #24eaf522!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-main .rivo-scan-mode-icon{
+  width:49px!important;height:49px!important;border:none!important;
+  box-shadow:none!important;background:transparent!important;
+  color:#eaffff!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-main .rivo-scan-mode-icon svg{
+  width:47px!important;height:47px!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-main strong{
+  text-align:center!important;font-size:clamp(16px,4.3vw,19px)!important;
+  font-weight:850!important;line-height:1.15!important;
+}
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main){
+  min-height:78px!important;gap:6px!important;padding:9px 12px!important;
+  justify-content:space-between!important;
+  background:linear-gradient(150deg,#12365b,#0a294a)!important;
+}
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) .rivo-scan-mode-icon{
+  width:36px!important;height:36px!important;border-radius:10px!important;
+}
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) .rivo-scan-mode-icon svg{
+  width:23px!important;height:23px!important;
+}
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) strong{
+  text-align:start!important;font-size:12px!important;
+}
+#app .rivo-scan-first .rivo-v2-popular{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+}
+#app .rivo-scan-first .rivo-v2-popular button{
+  min-height:73px!important;max-width:100%!important;gap:5px!important;
+  padding:7px 3px!important;
+  border:1px solid #397a9c!important;
+}
+#app .rivo-scan-first .rivo-v2-popular button strong{
+  font-size:clamp(10px,2.65vw,12px)!important;
+}
+#app .rivo-scan-first .rivo-v2-stats{
+  display:flex!important;align-items:center!important;
+  justify-content:space-around!important;min-height:46px!important;
+  padding:7px 3px!important;margin:9px 0 12px!important;
+  border-radius:11px!important;gap:0!important;
+}
+#app .rivo-scan-first .rivo-v2-stats>span{
+  flex:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:5px!important;min-width:0!important;padding:2px 3px!important;
+}
+#app .rivo-scan-first .rivo-v2-stats svg{width:16px!important;height:16px!important;flex:none!important}
+#app .rivo-scan-first .rivo-v2-stats strong{font-size:13px!important;margin:0!important}
+#app .rivo-scan-first .rivo-v2-stats small{font-size:10px!important}
+#app .rivo-scan-first .rivo-scan-first-heading{
+  margin-block:12px 5px!important;padding:0!important;
+}
+#app .rivo-scan-first .rivo-scan-first-heading h2,
+#app .rivo-scan-first .rivo-v2-popular-head h2{
+  font-size:15px!important;
+}
+#app .rivo-scan-first .rivo-v2-popular-head {margin-block:12px 7px!important}
+#app .rivo-scan-first .rivo-scan-more-tools{margin:12px 0!important}
+#app .rivo-scan-first .rivo-scan-more-tools:not([open]) summary{
+  border-bottom:none!important;min-height:48px!important;padding:8px 13px!important;
+}
+#app .rivo-scan-first .rivo-scan-more-tools summary small{display:none!important}
+@media(max-width:375px){
+ #app .rivo-scan-first .rivo-v2-stats>span{gap:3px!important}
+ #app .rivo-scan-first .rivo-v2-stats small{font-size:9px!important}
+ #app .rivo-scan-first .rivo-scan-mode-main{min-height:115px!important}
+}
