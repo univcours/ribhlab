@@ -11,7 +11,7 @@ test('all major tool cards and home cards render icons',()=>{
  const tools=read('../src/tools-hub.js');
  assert.match(main,/rivo-hub-tile[^\n]*|rivo-hub-tile/);
  assert.match(main,/tool-icon \$\{color\}">\$\{ico\(icon,26\)\}/);
- assert.match(main,/rivo-scan-mode-icon">\$\{ico\(item\.icon,25\)\}/);
+ assert.match(main,/rivo-scan-mode-icon">\$\{ico\(item\.icon,29\)\}/);
  assert.match(main,/rivo-premium-tile-icon">\$\{ico\(item\.icon,28\)\}/);
  const names=[...main.matchAll(/^\s*(['"]?)([a-z][\w-]*)\1\s*:\s*['"]</gm)].map(m=>m[2]);
  for(const source of [home,scan,tools]){
