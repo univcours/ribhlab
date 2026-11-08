@@ -32,11 +32,15 @@ test('Formula preview remains hidden until an image is selected',()=>{
  assert.ok(txt.includes('preview.hidden=false'));
 });
 
-test('CameraX-owned Android dialogs inherit turquoise rounded window and accessible options title',()=>{
- const setup=read('install-live-scanner.ps1'),native=read('native/android/RivoLiveScannerActivity.java');
+test('CameraX-owned Android dialogs inherit premium dark rounded window and accessible options title',()=>{
+ const setup=read('install-live-scanner.ps1'),native=read('native/android/RivoLiveScannerActivity.java'),host=read('native/android/MainActivity.kt');
+ assert.ok(host.includes('class MainActivity : BridgeActivity()'));
+ assert.ok(host.includes('registerPlugin(RivoLiveScannerPlugin::class.java)'));
+ assert.ok(setup.includes('MainActivity.kt'));
+ assert.ok(setup.includes('org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.10'));
  assert.ok(setup.includes('name="RivoTurquoiseDialog"'));
  assert.ok(setup.includes('rivoscan_dialog_bg.xml'));
- assert.ok(setup.includes('#03B8AA'));
+ assert.ok(setup.includes('#0CEBF4'));
  assert.ok(native.includes('R.style.RivoTurquoiseDialog'));
  assert.ok(native.includes('"Camera options"'));
  assert.ok(!native.includes('new android.app.AlertDialog.Builder(this)'));
