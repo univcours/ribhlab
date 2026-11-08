@@ -89,7 +89,7 @@ body .doc-detail-preview{
  flex:none!important;height:min(51dvh,560px)!important;min-height:260px!important;
  overflow:hidden!important;padding:9px!important;background:#f2fffa!important;
 }
-body .doc-detail-paper{min-height:190px!important;height:100%!important;
+body .doc-detail-paper{flex:1 1 auto!important;min-height:0!important;height:auto!important;
  border:1px solid #a9ded2!important;background:#fff!important}
 body .doc-detail-actions{
  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
