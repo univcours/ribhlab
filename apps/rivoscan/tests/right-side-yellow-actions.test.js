@@ -6,18 +6,7 @@ const css=readFileSync(new URL('../src/turquoise-v2.css', import.meta.url),'utf8
 const src=readFileSync(new URL('../src/library-bulk.js', import.meta.url),'utf8');
 const rules=css.slice(css.indexOf('/* Selected file: right-side yellow vertical actions'));
 
-test('single checked document has six original bound actions on its right side',()=>{
-  assert.ok(rules.startsWith('/* Selected file: right-side yellow vertical actions'));
-  assert.match(src,/if\(mode&&selected\.size===1&&doc&&chosen\(doc\)\)/);
-  for(const attr of ['share','edit','preview','rename','delete','add'])assert.ok(src.includes('data-doc-'+attr+'="${index}"'),'Missing action '+attr);
-  assert.match(rules,/grid-template-columns:25px 39px minmax\(0,1fr\) minmax\(96px,108px\)!important/);
-  assert.match(rules,/grid-column:4!important/);
-  assert.match(rules,/flex-direction:column!important/);
-  assert.match(rules,/aspect-ratio:auto!important/);
-  assert.match(rules,/#fff4c8/);
-  assert.match(rules,/#ffe29a/);
-  assert.doesNotMatch(rules,/aspect-ratio:4\/5!important/);
-});
+test('one checked file keeps five right-aligned turquoise icon actions',()=>{const compact=readFileSync(new URL('../src/selection-compact.css',import.meta.url),'utf8');assert.ok(src.includes('if(mode&&selected.size===1&&doc&&chosen(doc))'));for(const a of ['share','preview','delete','add'])assert.ok(src.includes('data-doc-'+a+'='),a);assert.ok(src.includes('data-doc-edit-rename='));for(const k of ['flex-wrap:nowrap!important','justify-content:flex-end!important','height:38px!important'])assert.ok(compact.includes(k),k);});
 
 test('multi-select retains its distinct bulk-action bar',()=>{
   assert.match(src,/selected\.size>=2/);
