@@ -197,3 +197,11 @@ body .doc-external-open{background:white!important;color:#096d66!important;borde
  color:#698580!important;background:#e6eeeb!important;border-color:#ceddd7!important;
  box-shadow:none!important;filter:none!important;
 }
+
+/* What's New is a RivoScan dialog too: match turquoise action styling. */
+body .rivo-release-dialog>button[data-rivo-dialog-close]{
+ background:linear-gradient(115deg,#04c7b6,#008f85)!important;
+ color:#fff!important;border:1px solid #07a89c!important;
+ border-radius:12px!important;min-height:48px!important;
+ font-size:14px!important;font-weight:800!important;
+}
