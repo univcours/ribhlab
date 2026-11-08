@@ -124,6 +124,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Button enhancementSaveButton;
     private RivoCaptureQuality.Result captureQuality;
     private int captureQualitySerial=0;
+    private int edgeDetectionSerial=0;
     private static final String AI_FLATTEN="uvdoc";
     private String selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
     private int enhancementSerial=0;
@@ -348,6 +349,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     private void showCamera(){
         if(savingEnhancedPage)return;
+        edgeDetectionSerial++;
         captureQualitySerial++;
         captureQuality=null;
         clearSessionSignature();
@@ -1009,28 +1011,62 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     /** Captured image stays visible. The user must press ✓ or Retake before
      * cropping, filters or a PDF can be finalized. This is NOT auto-save. */
+    /** Crop preview immediately follows Capture; user reviews corners BEFORE filters. */
     private void showCaptureReview(Bitmap bitmap){
         if(bitmap==null||bitmap.isRecycled())return;
-        editing=true;
-        awaitingCaptureApproval=bitmap;
-        ImageView image=new ImageView(this);
-        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        image.setBackgroundColor(Color.rgb(5,44,49));
-        image.setImageBitmap(bitmap);
-        image.setContentDescription(localizedCapture("review"));
-        Button confirm=button("✓",this::approveCapturedPhoto);
-        confirm.setContentDescription(localizedCapture("confirm"));
-        layout(image,localizedCapture("approval"),
-            button(trNative("retake"),this::showCamera),confirm);
+        editing=true;awaitingCaptureApproval=bitmap;
+        if(!openCvReady){
+            ImageView image=new ImageView(this);
+            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            image.setImageBitmap(bitmap);
+            layout(image,localizedCapture("approval"),
+                button(trNative("retake"),this::showCamera),
+                button("✓",this::approveCapturedPhoto));
+            return;
+        }
+        editor=new RivoCropEditor(this);
+        editor.setDocument(bitmap,null);
+        layout(editor,cropHint(false),
+            button(trNative("retake"),this::showCamera),
+            button(trNative("detect"),()->requestCropEdges(bitmap,editor,true)),
+            button("✓",this::approveCapturedPhoto));
+        requestCropEdges(bitmap,editor,false);
+    }
+    private String cropHint(boolean detected){
+        if("ar".equals(nativeLanguage))return detected
+            ?"لقينا الحواف. تقدر تحرك الزوايا الأربع باش تحدد المحتوى بدقة ثم ✓."
+            :"ما لقيناش حواف مؤكدة. حرّك الزوايا أو اضغط Edges من جديد.";
+        if("fr".equals(nativeLanguage))return detected
+            ?"Contours détectés. Ajustez les quatre coins, puis ✓."
+            :"Contours introuvables. Déplacez les coins ou relancez Edges.";
+        return detected?"Document edges found. Adjust all four corners, then ✓.":
+            "No reliable edges. Drag four corners or tap Edges to retry.";
+    }
+    private void requestCropEdges(Bitmap photo,RivoCropEditor target,boolean forced){
+        if(!openCvReady||photo==null||photo.isRecycled()||target==null)return;
+        final int serial=++edgeDetectionSerial;
+        if(message!=null)message.setText("ar".equals(nativeLanguage)?"جاري تحديد الحواف…":"Detecting edges…");
+        analyzer.execute(()->{
+            Point[] points=null;
+            try{points=RivoEdgeDetector.detect(photo);}
+            catch(Throwable error){android.util.Log.w("RivoScan","Edge detection failed",error);}
+            final Point[] result=points;
+            mainHandler.post(()->{
+                if(serial!=edgeDetectionSerial||!editing||editor!=target||photo.isRecycled()||isFinishing())return;
+                if(target.updateDetectedCorners(result,forced)&&message!=null)message.setText(cropHint(result!=null));
+                else if(forced&&message!=null)message.setText(cropHint(result!=null));
+            });
+        });
     }
     private void approveCapturedPhoto(){
         if(awaitingCaptureApproval==null||savingEnhancedPage)return;
-        Bitmap approved=awaitingCaptureApproval;
+        Bitmap photo=awaitingCaptureApproval;
         awaitingCaptureApproval=null;
-        openEditor(approved);
-        // Automatically apply the default filter; Done still confirms the page.
-        // In batch mode, saving returns to CameraX for another page.
-        if(openCvReady&&editor!=null)prepareEnhancementPreview();
+        // Existing corner editor retains user's manual coordinates; no second editor.
+        if(openCvReady&&editor!=null&&editor.getDocument()==photo){
+            current=photo;
+            prepareEnhancementPreview();
+        }else openEditor(photo);
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
@@ -1054,7 +1090,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,trNative("loupe")+"\n"+localizedCapture("analyzing"),
-            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
+            button(trNative("detect"),()->requestCropEdges(bitmap,editor,true)),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1417,7 +1453,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
         layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
-            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
+            button(trNative("detect"),()->requestCropEdges(current,editor,true)),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1721,7 +1757,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         else if(editing)showCamera();else finishWithPages();
     }
     @Override protected void onDestroy(){
-        cameraBindSerial++;enhancementSerial++;
+        cameraBindSerial++;enhancementSerial++;edgeDetectionSerial++;
         if(enhancementLaser!=null)enhancementLaser.stop();
         mainHandler.removeCallbacksAndMessages(null);
         clearFrozenPreview();
@@ -1740,17 +1776,37 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         private int imageWidth=1,imageHeight=1;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         LiveEdges(Activity owner){super(owner);setWillNotDraw(false);}
+        private float dp(float n){return n*getResources().getDisplayMetrics().density;}
         void update(Point[] corners,int w,int h){points=corners;imageWidth=Math.max(1,w);imageHeight=Math.max(1,h);invalidate();}
         @Override protected void onDraw(Canvas canvas){
-            super.onDraw(canvas);if(points==null)return;
+            super.onDraw(canvas);
+            if(getWidth()<1||getHeight()<1)return;
+            boolean found=points!=null;
+            Point[] drawn=found?points:RivoEdgeDetector.fallback();
             // CameraX PreviewView uses FILL_CENTER; map normalized analysis points through
             // the same center-crop transform instead of stretching them to the screen.
             float scale=Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight);
             float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
-            Path path=new Path();path.moveTo(offsetX+screenX(points[0])*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
-            for(int i=1;i<4;i++)path.lineTo(offsetX+screenX(points[i])*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
-            paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(45,45,123,255));canvas.drawPath(path,paint);
-            paint.setColor(Color.rgb(57,216,197));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
+            Path path=new Path();
+            float[] sx=new float[4],sy=new float[4];
+            for(int i=0;i<4;i++){
+                sx[i]=offsetX+screenX(drawn[i])*imageWidth*scale;
+                sy[i]=offsetY+(float)drawn[i].y*imageHeight*scale;
+                if(i==0)path.moveTo(sx[i],sy[i]);else path.lineTo(sx[i],sy[i]);
+            }
+            path.close();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(found?Color.argb(30,24,196,171):Color.argb(10,235,184,73));
+            canvas.drawPath(path,paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(found?3:2));
+            paint.setColor(found?Color.rgb(40,238,204):Color.rgb(255,207,99));
+            paint.setPathEffect(found?null:new android.graphics.DashPathEffect(new float[]{dp(10),dp(6)},0));
+            canvas.drawPath(path,paint);
+            paint.setPathEffect(null);
+            if(found){paint.setStyle(Paint.Style.FILL);
+                for(int i=0;i<4;i++)canvas.drawCircle(sx[i],sy[i],dp(5),paint);}
+
         }
     }
 }

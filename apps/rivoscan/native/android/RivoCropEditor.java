@@ -20,6 +20,7 @@ public final class RivoCropEditor extends View {
     private float left,top,scale;
     private int selected=-1;
     private boolean detected=false;
+    private boolean manuallyAdjusted=false;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint loupePaint=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final Paint decoration=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -30,13 +31,21 @@ public final class RivoCropEditor extends View {
     public void setDocument(Bitmap source,Point[] detected){
         bitmap=source;this.detected=detected!=null;
         corners=detected!=null?detected:RivoEdgeDetector.fallback();
-        selected=-1;invalidate();
+        selected=-1;manuallyAdjusted=false;invalidate();
+    }
+    public Bitmap getDocument(){return bitmap;}
+    /** Preserve manual drag against stale automatic edge detection. */
+    public boolean updateDetectedCorners(Point[] result,boolean forced){
+        if(bitmap==null||bitmap.isRecycled()||(!forced&&manuallyAdjusted))return false;
+        detected=result!=null;
+        corners=result!=null?result:RivoEdgeDetector.fallback();
+        selected=-1;manuallyAdjusted=false;invalidate();return true;
     }
     public Point[] getCorners(){return corners;}
     public void useAutoCorners(){
         if(bitmap==null)return;
         Point[] result=RivoEdgeDetector.detect(bitmap);
-        detected=result!=null;corners=result!=null?result:RivoEdgeDetector.fallback();selected=-1;invalidate();
+        updateDetectedCorners(result,true);
     }
     private float px(Point p){return left+(float)p.x*bitmap.getWidth()*scale;}
     private float py(Point p){return top+(float)p.y*bitmap.getHeight()*scale;}
@@ -130,7 +139,7 @@ public final class RivoCropEditor extends View {
             double y=(event.getY()-top)/(bitmap.getHeight()*scale);
             corners[selected].x=Math.max(0,Math.min(1,x));
             corners[selected].y=Math.max(0,Math.min(1,y));
-            invalidate();return true;
+            manuallyAdjusted=true;invalidate();return true;
         }
         if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){
             selected=-1;invalidate();return true;
