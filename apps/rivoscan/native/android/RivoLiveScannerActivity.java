@@ -103,6 +103,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private long lastAnalysisTime=0;
     private long lastValidEdgeTime=0;
     private Point[] smoothCorners;
+    private final AutoShutterGate autoShutterGate=new AutoShutterGate();
     private Observer<PreviewView.StreamState> streamObserver;
     private final Handler mainHandler=new Handler(Looper.getMainLooper());
 
@@ -112,6 +113,72 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         final double score;
         CameraChoice(String id,String label,int facing,double score){this.id=id;this.label=label;this.facing=facing;this.score=score;}
     }
+    /**
+     * Auto capture only after a large, stable, plausible page is detected on
+     * multiple frames. Never captures a guide/fallback quadrilateral. Gate is
+     * distinct from the user's four-corner review and never saves anything.
+     */
+    private static final class AutoShutterGate {
+        private Point[] previous;
+        private int stableFrames=0;
+        private long stableSince=0,lastFrame=0;
+        private boolean triggered=false;
+        void reset(){previous=null;stableFrames=0;stableSince=0;lastFrame=0;triggered=false;}
+        private boolean geometry(Point[] p){
+            if(p==null||p.length!=4)return false;
+            double area=0,minEdge=Double.POSITIVE_INFINITY;
+            for(int i=0;i<4;i++){
+                Point a=p[i],b=p[(i+1)%4];
+                if(a==null||b==null||!Double.isFinite(a.x)||!Double.isFinite(a.y)||
+                   a.x<.006||a.y<.006||a.x>.994||a.y>.994)return false;
+                area+=a.x*b.y-b.x*a.y;
+                minEdge=Math.min(minEdge,Math.hypot(b.x-a.x,b.y-a.y));
+            }
+            return Math.abs(area)*.5>=.14&&minEdge>=.14;
+        }
+        boolean observe(Point[] corners,long timestamp,boolean readable){
+            if(triggered)return false;
+            if(!readable||!geometry(corners)){
+                previous=null;stableFrames=0;stableSince=0;return false;
+            }
+            if(previous==null||timestamp-lastFrame>600){
+                stableSince=timestamp;stableFrames=1;
+            }else{
+                double maxMove=0;
+                for(int i=0;i<4;i++)
+                    maxMove=Math.max(maxMove,Math.hypot(corners[i].x-previous[i].x,
+                        corners[i].y-previous[i].y));
+                if(maxMove>.025){stableSince=timestamp;stableFrames=1;}
+                else stableFrames++;
+            }
+            lastFrame=timestamp;
+            previous=new Point[4];
+            for(int i=0;i<4;i++)previous[i]=new Point(corners[i].x,corners[i].y);
+            if(stableFrames>=6 && timestamp-stableSince>=1000){
+                triggered=true;return true;
+            }
+            return false;
+        }
+    }
+    /** Cheap luminance/edge contrast guard; full quality review remains after shot. */
+    private static boolean readableLuma(byte[] p,int w,int h){
+        if(p==null||w<120||h<120)return false;
+        long sum=0,contrast=0;int count=0;
+        final int step=12;
+        for(int y=step;y<h-step;y+=step){
+            for(int x=step;x<w-step;x+=step){
+                int index=y*w+x,v=p[index]&255;
+                sum+=v;
+                contrast+=Math.abs(v-(p[index+step]&255))+
+                    Math.abs(v-(p[index+step*w]&255));
+                count++;
+            }
+        }
+        if(count==0)return false;
+        double mean=sum/(double)count,localContrast=contrast/(double)(2*count);
+        return mean>=45&&mean<=243&&localContrast>=2.3;
+    }
+
     private ExecutorService analyzer;
     private RivoCropEditor editor;
     private Bitmap current;
@@ -303,17 +370,21 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         bottom.setPadding(dp(14),dp(10),dp(14),dp(13));
         bottom.setBackgroundColor(Color.rgb(7,54,56));
         message=text(hint,12,Color.rgb(219,253,247),false);
-        message.setMaxLines(3);
+        message.setMaxLines(2);
         message.setGravity(Gravity.CENTER_VERTICAL);
-        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(editing?74:46)));
+        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(editing?52:40)));
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
             if(i==buttons.length-1){action.setBackground(outlined(Color.rgb(6,157,150),13,Color.rgb(42,215,194)));action.setTextColor(Color.WHITE);}
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
-            p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
+            action.setAllCaps(false);
+            action.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP,12);
+            action.setSingleLine(false);
+            action.setMaxLines(2);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(46),1);
+            p.setMargins(dp(3),0,dp(3),0);actions.addView(action,p);
         }
-        bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(57)));
+        bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(50)));
         shell.addView(bottom,new LinearLayout.LayoutParams(-1,-2));
     }
 
@@ -359,6 +430,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             awaitingCaptureApproval.recycle();
         awaitingCaptureApproval=null;
         editing=false;
+        autoShutterGate.reset();
         cameraView=new PreviewView(this);
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
@@ -454,19 +526,29 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         if(!basicCameraMode)footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
 
-        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER_VERTICAL);
-        TextView photos=touchLabel("▧\n"+trNative("photos"),12,Color.WHITE,()->gallery.launch("image/*"));
+        // Scanning is automatic: camera toolbar only offers secondary actions.
+        // No manual Take Photo button (but native capture remains callable by gate).
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER);
+        TextView photos=touchLabel("＋  "+trNative("photos"),12,Color.WHITE,
+            ()->gallery.launch("image/*"));
         photos.setGravity(Gravity.CENTER);
-        actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
-        Shutter shutter=new Shutter(this);
-        shutter.setOnClickListener(v->{RivoSounds.play(this,"capture");takePicture();});
-        shutter.setContentDescription(trNative("capture"));
-        LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
-        actions.addView(shutter,buttonParams);
-        TextView browse=touchLabel("▤\n"+trNative("files"),12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
+        TextView browse=touchLabel("▤  "+trNative("files"),12,Color.WHITE,
+            ()->documentPicker.launch(new String[]{"image/*"}));
         browse.setGravity(Gravity.CENTER);
-        actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
-        footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
+        TextView guidance=touchLabel("◎  AUTO",12,Color.rgb(55,235,205),()->{
+            if(message!=null)message.setText("ar".equals(nativeLanguage)?
+                "ثبت الوثيقة كاملة داخل الإطار حتى يتم التصوير تلقائياً.":
+                "Hold the full document steady in the outline to auto-capture.");
+        });
+        guidance.setGravity(Gravity.CENTER);
+        for(TextView option:new TextView[]{photos,guidance,browse}){
+            LinearLayout.LayoutParams slot=new LinearLayout.LayoutParams(0,dp(42),1);
+            slot.setMargins(dp(3),0,dp(3),0);
+            option.setBackground(outlined(Color.rgb(11,86,86),11,Color.rgb(42,177,163)));
+            actions.addView(option,slot);
+        }
+        footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(49)));
         TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
                 savedImages.size()>0?Color.rgb(42,215,194):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
@@ -771,6 +853,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boundCamera=null;
         smoothCorners=null;
         lastValidEdgeTime=0;
+        autoShutterGate.reset();
         final ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
         future.addListener(()->{
             if(serial!=cameraBindSerial||editing||isFinishing()||isDestroyed()||cameraView==null)return;
@@ -886,6 +969,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 Point[] points=RivoEdgeDetector.detectGray(oriented);
                 final int observedW=oriented.width(),observedH=oriented.height();
                 final long analysisStamp=now;
+                final boolean qualityOk=readableLuma(pixels,width,height);
                 runOnUiThread(()->{
                     if(editing||overlay==null||capture==null)return;
                     if(points!=null){
@@ -902,8 +986,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         smoothCorners=points;
                         lastValidEdgeTime=analysisStamp;
                         overlay.update(points,observedW,observedH);
+                        if(autoShutterGate.observe(points,analysisStamp,qualityOk)
+                           && !captureInProgress && !savingEnhancedPage){
+                            if(message!=null)message.setText("ar".equals(nativeLanguage)?
+                                "تم تحديد الوثيقة. جاري التصوير التلقائي…":
+                                "Document stable — capturing automatically…");
+                            RivoSounds.play(this,"capture");
+                            takePicture();
+                        }
                     }else if(analysisStamp-lastValidEdgeTime>650){
                         smoothCorners=null;
+                        autoShutterGate.reset();
                         overlay.update(null,observedW,observedH);
                     }
                 });
@@ -932,7 +1025,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 try{Bitmap bmp=decodeFile(file);showCaptureReview(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
-            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
+            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;autoShutterGate.reset();file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
         });
     }
     private static int sampleSize(int width,int height){
@@ -1030,19 +1123,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         editor.setDocument(bitmap,null);
         layout(editor,cropHint(false),
             button(trNative("retake"),this::showCamera),
-            button(trNative("detect"),()->requestCropEdges(bitmap,editor,true)),
             confirm);
         requestCropEdges(bitmap,editor,false);
     }
     private String cropHint(boolean detected){
         if("ar".equals(nativeLanguage))return detected
             ?"لقينا الحواف. تقدر تحرك الزوايا الأربع باش تحدد المحتوى بدقة ثم ✓."
-            :"ما لقيناش حواف مؤكدة. حرّك الزوايا أو اضغط Edges من جديد.";
+            :"ما لقيناش حواف مؤكدة. حرّك الزوايا الأربع يدوياً.";
         if("fr".equals(nativeLanguage))return detected
             ?"Contours détectés. Ajustez les quatre coins, puis ✓."
-            :"Contours introuvables. Déplacez les coins ou relancez Edges.";
+            :"Contours introuvables. Ajustez les quatre coins manuellement.";
         return detected?"Document edges found. Adjust all four corners, then ✓.":
-            "No reliable edges. Drag four corners or tap Edges to retry.";
+            "No reliable edges. Drag the four corners manually.";
     }
     private void requestCropEdges(Bitmap photo,RivoCropEditor target,boolean forced){
         if(!openCvReady||photo==null||photo.isRecycled()||target==null)return;
@@ -1104,7 +1196,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,trNative("loupe")+"\n"+localizedCapture("analyzing"),
-            button(trNative("detect"),()->requestCropEdges(bitmap,editor,true)),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1467,7 +1558,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
         layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
-            button(trNative("detect"),()->requestCropEdges(current,editor,true)),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
