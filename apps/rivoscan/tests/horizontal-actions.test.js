@@ -2,18 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('single file icons are delegated, not decoration',()=>{
- const main=read('src/main.js'),bulk=read('src/library-bulk.js');
- for(const action of ['share','edit','preview','rename','delete','add']){
-  assert.ok(bulk.includes('data-doc-'+action+'='),action);
-  assert.ok(main.includes('data-doc-'+action),action);
- }
- assert.ok(main.includes('bulkUI.editOne(doc)'));
- assert.ok(main.includes('bulkUI.renameOne(doc)'));
- assert.ok(main.includes('choosePagesToAppend(doc)'));
- assert.ok(main.includes("document.querySelector('.doc-action.doc-rename')?.click()"));
- assert.ok(read('src/document-viewer.js').includes("'doc-action doc-rename',rename"));
-});
+test('five document actions connect to handlers and Android edit chooser',()=>{const main=read('src/main.js'),bulk=read('src/library-bulk.js');for(const k of ['share','preview','delete','add']){assert.ok(bulk.includes('data-doc-'+k+'='),k);assert.ok(main.includes('data-doc-'+k),k);}for(const k of ['data-doc-edit-rename','bulkUI.editRenameOne(doc)','RivoDocuments.editFile({uri:doc.uri})','choosePagesToAppend(doc)',"document.querySelector('.doc-action.doc-rename')?.click()"])assert.ok(main.includes(k),k);assert.ok(read('src/document-viewer.js').includes("'doc-action doc-rename',rename"));});
+
 test('adding pages creates PDF and keeps original backup',()=>{
  const m=read('src/main.js');
  assert.ok(m.includes('appendToLibraryPdf(doc,addedFiles)'));
