@@ -41,3 +41,11 @@ test('CameraX-owned Android dialogs inherit turquoise rounded window and accessi
  assert.ok(native.includes('"Camera options"'));
  assert.ok(!native.includes('new android.app.AlertDialog.Builder(this)'));
 });
+
+test('Screenshot audit awaits async Tools navigation before collecting all 48 buttons',()=>{
+ const src=read('scripts/capture-webview-interactions.mjs');
+ assert.ok(src.includes('await sleep(1100); // Navigation is async'));
+ assert.ok(src.includes('TOOLS_DISCOVERED'));
+ assert.ok(src.includes('48 Tools directory discovered after navigation'));
+ assert.ok(src.includes("await auditVisibleButtons(cd,'tools')"));
+});

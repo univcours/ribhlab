@@ -153,7 +153,14 @@ try {
   }
  }else log('NO_DOCS_SELECTION: QA files failed to appear in the real app');
  // Real tool opening tests. Each shot is from the installed Android app.
- const tools=await cd.evaluate('(()=>{document.querySelector(".mobilebar [data-tab=tools]")?.click();return [...document.querySelectorAll(".rivo-hub-tile[data-hub-action]")].map(b=>({id:b.dataset.hubAction,label:b.innerText.trim(),icon:!!b.querySelector("svg")}))})()');
+ await cd.evaluate('document.querySelector(".mobilebar [data-tab=tools]")?.click();true');
+ await sleep(1100); // Navigation is async: never query Tools in the same JS turn.
+ const tools=await cd.evaluate('([...document.querySelectorAll(".rivo-hub-tile[data-hub-action]")].map(b=>({id:b.dataset.hubAction,label:b.innerText.trim(),icon:!!b.querySelector("svg")})))');
+ report.checks.push({name:'48 Tools directory discovered after navigation',result:{count:tools.length,ids:tools.map(x=>x.id)}});
+ log('TOOLS_DISCOVERED '+tools.length+'/48');
+ screenshot('35-tools-48-buttons');
+ await auditVisibleButtons(cd,'tools');
+ if(tools.length!==48)log('WARNING: Not all 48 tools rendered; capture coverage is incomplete');
  report.buttons.push(...tools);
  if(Array.isArray(tools)){
   const seen=new Set();
