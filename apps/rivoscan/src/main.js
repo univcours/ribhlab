@@ -148,6 +148,11 @@ const icons = {
   idcard:'<rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M4 16c1-2 6-2 8 0m3-7h4m-4 4h4"/>',
   eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
   user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
+  layers:'<rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 7h14v14H7"/>',
+  printer:'<path d="M6 9V3h12v6M6 18H4V9h16v9h-2"/><path d="M6 15h12v6H6z"/>',
+  up:'<path d="M12 20V4m-7 7 7-7 7 7"/>',
+  down:'<path d="M12 4v16m-7-7 7 7 7-7"/>',
+  close:'<path d="M5 5l14 14M19 5 5 19"/>',
   more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'
 };
 const ico = (name,size=20) => `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.file}</svg>`;
@@ -432,7 +437,7 @@ function recentDocuments(limit=6,query=homeSearchQuery){
  const needle=String(query||'').trim();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
   .filter(({doc})=>matchesDocument(doc,{query:needle})).slice(0,needle?30:limit);
- if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${hv('openFolder')}</button></div>`;
+ if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${ico('folder',16)} ${hv('openFolder')}</button></div>`;
  return matched.map(({doc,index},visibleIndex)=>{
   const file=visualFileType(doc);
   return `<article class="recent-entry rivo-recent-card ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
@@ -544,8 +549,8 @@ function settingsWorkspace(){
  <span class="rivo-pref-copy"><strong>${({en:'Advanced document correction',ar:'تصحيح الوثائق المتقدم',fr:'Correction avancée des documents',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione documenti avanzata'})[language]||'Advanced document correction'}</strong>
  <small>${({en:'Combine 2–4 views, AI flatten or relative 3D (optional)',ar:'دمج 2 حتى 4 صور، تقويم AI أو 3D نسبي (اختياري)',fr:'Fusion 2–4 vues, mise à plat IA ou 3D relative'})[language]||'Multi-angle or AI flatten (optional)'}</small></span>${ico('back',18)}</button>
  <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
- <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
- <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
+ <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('globe',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
+ <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('volume',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'اختيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices',es:'Opciones de privacidad',de:'Datenschutzeinstellungen',pt:'Escolhas de privacidade',it:'Scelte sulla privacy'})[language]||'Privacy choices'}</strong><small>${ut('privacy')}</small></span></button>
  <a class="settings-row" href="./privacy.html" target="_blank" rel="noopener noreferrer" aria-label="RivoScan Privacy Policy"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'سياسة الخصوصية',fr:'Politique de confidentialité',en:'Privacy policy',es:'Política de privacidad',de:'Datenschutzerklärung',pt:'Política de privacidade',it:'Informativa sulla privacy'})[language]||'Privacy policy'}</strong><small>RivoScan · ${({ar:'متاحة داخل التطبيق',fr:'Accessible hors ligne',en:'Available offline'})[language]||'Available offline'}</small></span></a>
@@ -561,7 +566,7 @@ const opts = {
   numbers:`<div class="field"><label>Starting page number</label><input name="start" type="number" min="1" value="1"></div><div class="field"><label>Position</label><select name="position"><option value="bottom">Bottom center</option><option value="top">Top right</option></select></div>`,
   watermark:`<div class="field"><label>Watermark text</label><input name="watermark" value="CONFIDENTIAL" maxlength="80"></div><div class="field"><label>Opacity</label><input type="range" name="opacity" min="10" max="70" value="23"></div>`,
   text:`<div class="field"><label>Text to add on each page</label><textarea name="note" rows="3" placeholder="Your annotation"></textarea></div><div class="field"><label>Position</label><select name="position"><option value="top">Top</option><option value="bottom">Bottom</option><option value="center">Center</option></select></div>`,
-  sign:`<div class="field"><label>Draw signature (finger / mouse)</label><canvas id="signpad" class="signpad" aria-label="Signature drawing pad"></canvas><button class="btn btn-outline" style="margin-top:8px" id="clear-sign">Clear signature</button></div><div class="field"><label>Page number</label><input name="page" type="number" min="1" value="1"></div><div class="field"><label>Position</label><select name="position"><option value="bottom">Bottom right</option><option value="center">Center</option></select></div><p class="hint">This places a visual signature; it is not a cryptographic digital signature.</p>`,
+  sign:`<div class="field"><label>Draw signature (finger / mouse)</label><canvas id="signpad" class="signpad" aria-label="Signature drawing pad"></canvas><button class="btn btn-outline" style="margin-top:8px" id="clear-sign">${ico('delete',16)} Clear signature</button></div><div class="field"><label>Page number</label><input name="page" type="number" min="1" value="1"></div><div class="field"><label>Position</label><select name="position"><option value="bottom">Bottom right</option><option value="center">Center</option></select></div><p class="hint">This places a visual signature; it is not a cryptographic digital signature.</p>`,
   scan:`<p class="hint">LIVE CAMERA: Watch a green outline follow the paper. Capture, drag four corners to adjust them, then Save page. GALLERY: Import an existing photo, adjust its corners and save. Multiple saved pages become one PDF.</p><div class="field"><label>Scan appearance</label><select name="filter"><option value="color">Original color</option><option value="enhance" selected>Enhanced document</option><option value="gray">Black & white (grayscale)</option><option value="bw">High contrast monochrome</option></select></div><div class="field"><label>Image quality</label><select name="quality"><option value=".95">Maximum</option><option value=".85">High</option><option value=".65">Balanced</option></select></div>`,
   images:`<div class="field"><label>Image quality</label><select name="quality"><option value=".95">High</option><option value=".75" selected>Balanced</option><option value=".5">Smaller file</option></select></div>`,
   pdftoimages:`<div class="field"><label>Image format</label><select name="format"><option value="jpeg">JPG</option><option value="png">PNG</option></select></div><div class="field"><label>Resolution</label><select name="scale"><option value="1">Standard</option><option value="1.5" selected>High</option><option value="2">Extra high</option></select></div>`,
@@ -813,7 +818,7 @@ async function choosePagesToAppend(doc){
   overlay.className='bulk-overlay rivo-add-pages-overlay';
   overlay.innerHTML=`<section class="bulk-sheet rivo-add-pages-dialog" role="dialog" aria-modal="true" aria-label="Add document pages">
     <div class="bulk-sheet-title"><strong>Add pages · ${escapeHTML(doc.name)}</strong>
-    <button type="button" data-add-choice="close" aria-label="Close">✕</button></div>
+    <button type="button" data-add-choice="close" aria-label="Close">${ico('close',18)}</button></div>
     <p>Scan more pages or import existing PDF and images. The original stays saved as a backup.</p>
     <div class="bulk-sheet-actions">
     <button type="button" data-add-choice="camera">${ico('camera',18)} Scan more pages</button>
@@ -873,13 +878,13 @@ function workspace(){
   if(t.id==='scan')return scannerWorkspace();
   return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('DocumentScanner')?'AI Deep Clean · ML Kit FULL':'ML Kit FULL needs compatible Google Play services'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" data-primary-scanner="native-review" style="width:100%;margin-top:12px">${ico('scan')} AI Deep Clean · ML Kit FULL</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
 }
-function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
+function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up" aria-label="Move up">${ico('up',16)}</button><button data-move="${i}" data-dir="1" title="Move down" aria-label="Move down">${ico('down',16)}</button>`:''}<button data-remove="${i}" aria-label="Remove file">${ico('close',16)}</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
 async function drawPreview(){
   previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
   const box=document.getElementById('scanpreview');if(!box)return;
   if(!['scan','images'].includes(activeTool?.id)||!files.length){box.innerHTML='';return;}
-  box.innerHTML=`<div class="preview">${files.slice(0,20).map((f,i)=>{const url=URL.createObjectURL(f);previewURLs.push(url);return `<div class="preview-item"><img src="${url}" alt="Page ${i+1}" style="transform:rotate(${scanRotations[i]||0}deg)"><div class="mini-actions"><button data-turn="${i}" title="Rotate">↻</button><span>${i+1}</span></div></div>`;}).join('')}</div>`;
+  box.innerHTML=`<div class="preview">${files.slice(0,20).map((f,i)=>{const url=URL.createObjectURL(f);previewURLs.push(url);return `<div class="preview-item"><img src="${url}" alt="Page ${i+1}" style="transform:rotate(${scanRotations[i]||0}deg)"><div class="mini-actions"><button data-turn="${i}" title="Rotate" aria-label="Rotate">${ico('rotate',16)}</button><span>${i+1}</span></div></div>`;}).join('')}</div>`;
 }
 function wire(){
   document.getElementById('header-language')?.addEventListener('change',e=>changeRivoLanguage(e.target.value));
@@ -1456,9 +1461,9 @@ function peerWorkspace(){
    <div class="panel rivo-peer-panel">
      <p class="hint">${w[11]}</p>
      <div class="rivo-peer-actions">
-       <button id="peer-offer" type="button">${w[2]}</button>
-       <button id="peer-answer" type="button">${w[3]}</button>
-       <button id="peer-connect" type="button">${w[4]}</button>
+       <button id="peer-offer" type="button">${ico("upload",16)} ${w[2]}</button>
+       <button id="peer-answer" type="button">${ico("download",16)} ${w[3]}</button>
+       <button id="peer-connect" type="button">${ico("check",16)} ${w[4]}</button>
      </div>
      <label class="field"><span>${w[5]}</span><textarea id="peer-local" rows="3" readonly></textarea></label>
      <button id="peer-copy" class="btn btn-outline" type="button">${ico('file',18)} ${w[7]}</button>
