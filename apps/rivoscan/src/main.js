@@ -346,7 +346,11 @@ const bulkUI=createLibraryBulk({
     chooser.files=staged.files;
     if(staged.files.length)toast(staged.files.length+' '+dl('files')+' ✓');
   },
-  onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
+  onEdit:async doc=>{
+    if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments'))
+      throw Error('External editing requires the Android app.');
+    await RivoDocuments.editFile({uri:doc.uri});
+  },
   onRename:async doc=>{
     await docViewerUI.open(doc);
     document.querySelector('.doc-action.doc-rename')?.click();
