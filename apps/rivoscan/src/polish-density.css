@@ -241,8 +241,8 @@ body .rivo-code-help{font-size:10px!important;line-height:1.25!important;margin:
   to {transform:rotate(360deg)}
 }
 @keyframes rivoSiriCameraBreath {
-  0%,100% {opacity:.54;filter:blur(9px)}
-  50% {opacity:.88;filter:blur(11px)}
+  0%,100% {opacity:.54}
+  50% {opacity:.88}
 }
 #app .rivo-dark-ui .floating-scan.rivo-camera-fab {
   isolation:isolate!important;
