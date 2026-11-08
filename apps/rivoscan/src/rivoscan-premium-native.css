@@ -601,3 +601,130 @@ html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:va
   width:33px!important;height:33px!important;border-radius:9px!important;
   display:grid!important;place-items:center!important;flex:none!important;
 }
+
+
+/* Screenshot-driven refinements: no leftover bright cards or unreadable headings.
+   These selectors deliberately outrank the older named-screen theme rules. */
+#app .rivo-dark-ui .rivo-tools-hub .rivo-tools-heading h1,
+#app .rivo-dark-ui .rivo-v2-documents .library-heading h1,
+#app .rivo-dark-ui .rivo-v2-me .page-heading h1,
+#app .rivo-dark-ui .workspace .work-heading h1,
+#app .rivo-dark-ui .workspace .work-head h1,
+#app .rivo-dark-ui .workspace .work-title h1 {
+  color:#f1fcff!important;opacity:1!important;
+  -webkit-text-fill-color:#f1fcff!important;
+}
+#app .rivo-dark-ui .rivo-tools-hub .rivo-tools-heading p,
+#app .rivo-dark-ui .rivo-v2-documents .library-heading :is(p,small),
+#app .rivo-dark-ui .rivo-v2-me .page-heading p {
+  color:#a9cedf!important;-webkit-text-fill-color:currentColor!important;
+}
+#app .rivo-dark-ui .topbar .topright {
+  display:flex!important;align-items:center!important;gap:7px!important;
+}
+#app .rivo-dark-ui .topbar :is(.rivo-header-back,.rivo-header-action,.rivo-header-language),
+#app .rivo-dark-ui .topbar .topright :is(button,label,select){
+  color:#defbff!important;
+  background:linear-gradient(138deg,#0e3858,#09253f)!important;
+  border:1px solid #276e8e!important;
+  box-shadow:inset 0 1px #7cebf218!important;
+  border-radius:13px!important;
+}
+#app .rivo-dark-ui .topbar .topright svg,
+#app .rivo-dark-ui .topbar .rivo-header-back svg{color:#66eaff!important;stroke:#66eaff!important}
+#app .rivo-dark-ui .topbar .topright select{appearance:none!important;border:none!important;box-shadow:none!important}
+#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills{
+  background:#081f39!important;color:#e8faff!important;
+  border:1px solid #224b6a!important;border-radius:15px!important;
+  padding:8px!important;margin:13px 0!important;
+  box-shadow:0 4px 15px #0002!important;
+}
+#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills :is(button,button.active){
+  color:#d8faff!important;border-radius:12px!important;
+  background:#0c3357!important;border:1px solid #2b7095!important;
+  box-shadow:none!important;
+}
+#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills button.active{
+  background:linear-gradient(113deg,#007eaf,#1562bf)!important;
+  border-color:#3be8ff!important;
+  color:#fff!important;
+}
+#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats,
+#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button{
+  background:#0c3354!important;color:#d7faff!important;
+  border:1px solid #276c8b!important;
+}
+#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats{
+  padding:8px!important;gap:7px!important;border-radius:15px!important;
+}
+#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button{
+  border-radius:12px!important;min-height:60px!important;
+}
+#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button :is(svg,strong,small) {
+  color:#e8fcff!important;
+}
+#app .rivo-dark-ui .rivo-v2-documents .library-panel,
+#app .rivo-dark-ui .library-workspace .library-panel,
+#app .rivo-dark-ui .library-workspace .library-top,
+#app .rivo-dark-ui .library-workspace .rivo-library-chips,
+#app .rivo-dark-ui .library-workspace .storage-actions,
+#app .rivo-dark-ui .library-workspace .rivo-storage-card,
+#app .rivo-dark-ui .library-workspace .rivo-storage-notice {
+  color:#e6faff!important;background:#0a2743!important;
+  border-color:#29617e!important;
+}
+#app .rivo-dark-ui .library-workspace .library-panel button,
+#app .rivo-dark-ui .library-workspace .storage-actions button,
+#app .rivo-dark-ui .library-workspace .rivo-library-chips button {
+  color:#e4fbff!important;background:#103658!important;
+  border:1px solid #2b7395!important;border-radius:11px!important;
+}
+#app .rivo-dark-ui .library-workspace .rivo-library-chips button.active {
+  color:#fff!important;border-color:#2de8ef!important;
+  background:linear-gradient(120deg,#038dac,#1558b1)!important;
+}
+#app .rivo-dark-ui .library-workspace .library-panel :is(strong,small,p,span),
+#app .rivo-dark-ui .library-workspace .storage-actions :is(strong,small,span){
+  color:#d7efff!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel,
+#app .rivo-dark-ui .workspace .work-grid .panel h3,
+#app .rivo-dark-ui .workspace .work-grid .panel p {
+  background:#0b2949!important;color:#e6f9ff!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .dropzone {
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;
+  background:linear-gradient(147deg,#11375a,#071e38)!important;
+  color:#e7fbff!important;border:1.5px dashed #3899b6!important;
+  border-radius:16px!important;min-height:138px!important;
+  box-shadow:inset 0 1px #b6effa12!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .dropzone :is(strong,span,svg,.uploadicon){
+  color:#d9f7ff!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .dropzone .uploadicon {
+  background:#104c6f!important;border-radius:12px!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel .hint,
+#app .rivo-dark-ui .workspace .work-grid .panel .privacy-note,
+#app .rivo-dark-ui .workspace .work-grid .panel :is(.info,.notice){
+  background:#0c3150!important;color:#afd0df!important;border-color:#226084!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel button#process,
+#app .rivo-dark-ui .workspace .work-grid .panel .operation{
+  color:#fff!important;background:linear-gradient(110deg,#02c8ca,#1568df)!important;
+  border:1px solid #43eafa!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel button#process:disabled{
+  background:#153551!important;color:#a4c7d6!important;
+  border-color:#2b6680!important;
+}
+#app .rivo-dark-ui .mobilebar button.active,
+#app .rivo-dark-ui .mobilebar .active{
+  color:#49f5f7!important;background:#0c3859!important;
+  border:1px solid #256f90!important;border-radius:14px!important;
+}
+#app .rivo-dark-ui .mobilebar button.active svg{color:#49f5f7!important}
+/* Native status bars use white icons over dark status/nav chrome. */
+body{--rivo-premium-system-ink:#f2fcff}
