@@ -973,6 +973,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 runOnUiThread(()->{
                     if(editing||overlay==null||capture==null)return;
                     if(points!=null){
+                        // Judge real, unsmoothed detector corners. Display smoothing must
+                        // never make a moving document appear stable to auto-shutter.
+                        final boolean captureStable=autoShutterGate.observe(
+                            points,analysisStamp,qualityOk);
                         if(smoothCorners!=null){
                             for(int i=0;i<4;i++){
                                 double oldX=smoothCorners[i].x,oldY=smoothCorners[i].y;
@@ -986,18 +990,21 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         smoothCorners=points;
                         lastValidEdgeTime=analysisStamp;
                         overlay.update(points,observedW,observedH);
-                        if(autoShutterGate.observe(points,analysisStamp,qualityOk)
-                           && !captureInProgress && !savingEnhancedPage){
+                        if(captureStable && !captureInProgress && !savingEnhancedPage){
                             if(message!=null)message.setText("ar".equals(nativeLanguage)?
                                 "تم تحديد الوثيقة. جاري التصوير التلقائي…":
                                 "Document stable — capturing automatically…");
                             RivoSounds.play(this,"capture");
                             takePicture();
                         }
-                    }else if(analysisStamp-lastValidEdgeTime>650){
-                        smoothCorners=null;
+                    }else{
+                        // Any missed contour breaks the stability streak immediately.
+                        // Leave the fading visual guide briefly to avoid flickering.
                         autoShutterGate.reset();
-                        overlay.update(null,observedW,observedH);
+                        if(analysisStamp-lastValidEdgeTime>650){
+                            smoothCorners=null;
+                            overlay.update(null,observedW,observedH);
+                        }
                     }
                 });
             }finally{
