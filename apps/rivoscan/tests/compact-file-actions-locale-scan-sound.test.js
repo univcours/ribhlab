@@ -3,23 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 
-test('selected file: all 6 actions retain handlers and SVG icons',()=>{
- const bulk=read('../src/library-bulk.js');
- for(const action of ['share','edit','preview','rename','delete','add']){
-  assert.ok(bulk.includes('data-doc-'+action+'="${index}"'), 'missing action '+action);
-  assert.ok(bulk.includes("fileIcon('"+action+"')"), 'missing icon '+action);
- }
- assert.ok(bulk.includes('selected.size===1'));
-});
-test('selected file actions in 3 columns x 2 short rows on the right',()=>{
- const compact=read('../src/turquoise-v2.css').split('/* Selected file: six small')[1];
- assert.ok(compact);
- assert.match(compact,/grid-column:4!important/);
- assert.match(compact,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
- assert.match(compact,/grid-template-rows:repeat\(2,40px\)!important/);
- assert.match(compact,/height:40px!important/);
- assert.match(compact,/rivo-action-label/);
-});
+test('selected file keeps five functional icon actions including combined Edit/Rename',()=>{const bulk=read('../src/library-bulk.js'),main=read('../src/main.js');for(const action of ['share','preview','delete','add']){assert.ok(bulk.includes('data-doc-'+action+'='),action);assert.ok(bulk.includes("fileIcon('"+action+"')"),action);}assert.ok(bulk.includes('data-doc-edit-rename='));assert.ok(bulk.includes("fileIcon('edit')"));assert.ok(main.includes("target.hasAttribute('data-doc-edit-rename')"));assert.ok(bulk.includes('selected.size===1'));});
+
+test('selected file actions share one right-aligned compact horizontal row',()=>{const css=read('../src/selection-compact.css');for(const k of ['rivo-single-tools','flex-direction:row!important','flex-wrap:nowrap!important','justify-content:flex-end!important','height:38px!important'])assert.ok(css.includes(k),k);});
+
 test('top language and all-sound mute are present on every render',()=>{
  const main=read('../src/main.js');
  const css=read('../src/turquoise-v2.css');
