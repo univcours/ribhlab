@@ -1,4 +1,5 @@
-# CI regression: run the REAL device-version script against a fake connected phone.
+# CI regression: run real device-version guard against mDNS Wireless ADB device
+# whose serial contains spaces (a common Samsung Wireless Debugging case).
 # No real phone, install/uninstall, or changes to tracked metadata.
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -9,13 +10,13 @@ $bash=@'
 #!/usr/bin/env bash
 case "$1" in
   start-server) exit 0 ;;
-  devices) printf 'List of devices attached\nFAKE_RIVOSCAN\tdevice product:mock\n'; exit 0 ;;
+  devices) printf 'List of devices attached\nadb-RIVO_TEST (2)._adb-tls-connect._tcp\tdevice product:mock\n'; exit 0 ;;
   -s)
-    if [[ "$2" == "FAKE_RIVOSCAN" && "$3" == "shell" && "$4" == "pm" && "$5" == "path" ]]; then
+    if [[ "$2" == "adb-RIVO_TEST (2)._adb-tls-connect._tcp" && "$3" == "shell" && "$4" == "pm" && "$5" == "path" ]]; then
       printf 'package:/data/app/rivoscan/base.apk\n'
       exit 0
     fi
-    if [[ "$2" == "FAKE_RIVOSCAN" && "$3" == "shell" && "$4" == "dumpsys" && "$5" == "package" ]]; then
+    if [[ "$2" == "adb-RIVO_TEST (2)._adb-tls-connect._tcp" && "$3" == "shell" && "$4" == "dumpsys" && "$5" == "package" ]]; then
       printf 'Package [com.ribhlab.rivoscan.debug]\n  versionCode=145 minSdk=26 targetSdk=36\n'
       exit 0
     fi
@@ -48,7 +49,7 @@ try {
   if($props -notmatch '(?m)^versionCode=146\r?$'){
     throw 'Java Properties-compatible local versionCode not written'
   }
-  Write-Host 'PASS: real PowerShell preflight produced one valid Android DEBUG versionCode=146.' -ForegroundColor Green
+  Write-Host 'PASS: real PowerShell preflight preserved spaced mDNS serial and generated valid DEBUG versionCode=146.' -ForegroundColor Green
 } finally {
   $env:PATH=$previousPath
   $env:RIVOSCAN_DEVICE_SERIAL=$previousSerial
