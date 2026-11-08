@@ -478,3 +478,44 @@ body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
 body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button span:first-child{font-size:18px!important;line-height:1!important}
 body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button span:last-child{font-size:9px!important;line-height:1.05!important;overflow-wrap:anywhere!important}
 body.rivo-multiselect #app .content{padding-bottom:calc(210px + env(safe-area-inset-bottom,0px))!important}
+
+/* Small always-visible globe + language and full mute controls. */
+#app .rivo-dark-ui .topbar{gap:5px!important;min-width:0!important}
+#app .rivo-dark-ui .topbar .crumb{flex:1 1 auto!important;min-width:0!important;gap:6px!important}
+#app .rivo-dark-ui .topright{display:flex!important;align-items:center!important;gap:5px!important;flex:none!important}
+#app .rivo-dark-ui .rivo-header-language{
+ display:flex!important;align-items:center!important;gap:3px!important;height:34px!important;
+ min-width:0!important;padding:0 5px!important;color:#077c74!important;background:#e3faf4!important;
+ border:1px solid #9edcd0!important;border-radius:10px!important;
+}
+#app .rivo-dark-ui .rivo-header-language svg{flex:none;width:14px;height:14px}
+#app .rivo-dark-ui #header-language{
+ background:transparent!important;color:#07524c!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;outline-offset:2px!important;
+ width:50px!important;min-width:50px!important;max-width:50px!important;
+ font-size:11px!important;font-weight:850!important;padding:0!important;height:31px!important;min-height:31px!important;
+}
+#app .rivo-dark-ui .rivo-header-action{
+ width:35px!important;height:35px!important;min-height:35px!important;border-radius:10px!important;flex:none!important;
+}
+#app .rivo-dark-ui .rivo-sound-control{color:#087971!important}
+#app .rivo-dark-ui .rivo-sound-control[aria-pressed="true"]{
+ color:#956265!important;background:#fff1f1!important;border-color:#efc5c5!important;
+}
+@media(max-width:780px){
+ #app .rivo-dark-ui .topbar{padding:7px 7px!important;min-height:56px!important}
+ #app .rivo-dark-ui .topbar-brand-icon{width:31px!important;height:31px!important}
+ #app .rivo-dark-ui .crumb strong{font-size:17px!important;letter-spacing:-.6px!important}
+ #app .rivo-dark-ui .rivo-build-version{display:none!important}
+ #app .rivo-dark-ui .rivo-header-back{min-width:29px!important;width:29px!important;padding:3px!important}
+ #app .rivo-dark-ui .topright{gap:4px!important}
+ #app .rivo-dark-ui .rivo-header-action{width:32px!important;height:32px!important;min-height:32px!important}
+ #app .rivo-dark-ui .rivo-header-language{height:32px!important;padding:0 3px!important}
+ #app .rivo-dark-ui #header-language{width:43px!important;min-width:43px!important;max-width:43px!important}
+ #app .rivo-dark-ui .rivo-header-feature{display:none!important} /* Tools in bottom nav */
+}
+@media(max-width:350px){
+ #app .rivo-dark-ui .crumb strong{font-size:14px!important}
+ #app .rivo-dark-ui .topbar-brand-icon{width:26px!important;height:26px!important}
+ #app .rivo-dark-ui .rivo-header-action.rivo-header-feature{display:none!important}
+}
