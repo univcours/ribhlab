@@ -422,6 +422,7 @@ function render(){
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
+  updateProcessAvailability();
   bulkUI.sync();
   hydrateDocumentThumbnails();
 }
@@ -891,7 +892,21 @@ function workspace(){
   return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('DocumentScanner')?'AI Deep Clean · ML Kit FULL':'ML Kit FULL needs compatible Google Play services'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" data-primary-scanner="native-review" style="width:100%;margin-top:12px">${ico('scan')} AI Deep Clean · ML Kit FULL</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up" aria-label="Move up">${ico('up',16)}</button><button data-move="${i}" data-dir="1" title="Move down" aria-label="Move down">${ico('down',16)}</button>`:''}<button data-remove="${i}" aria-label="Remove file">${ico('close',16)}</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
-function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
+function updateProcessAvailability(){
+  const button=document.getElementById('process');
+  if(!button)return;
+  const minimum=activeTool?.id==='merge'?2:1;
+  button.disabled=files.length<minimum||busy;
+  button.setAttribute('aria-disabled',String(button.disabled));
+  if(button.disabled)button.title=minimum===2?'Select at least two files':'Select a file first';
+  else button.removeAttribute('title');
+}
+function updateFileDisplay(){
+ const box=document.getElementById('filelist');
+ if(box)box.innerHTML=renderFiles();
+ updateProcessAvailability();
+ drawPreview();
+}
 async function drawPreview(){
   previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
   const box=document.getElementById('scanpreview');if(!box)return;
