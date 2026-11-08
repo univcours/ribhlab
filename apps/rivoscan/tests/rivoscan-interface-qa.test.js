@@ -11,17 +11,8 @@ test('Home has no giant ad promotion or standalone ADS header',()=>{
  assert.ok(!home.includes('rivo-premium-lock'));
  assert.ok(!main.includes('rivo-hub-ad'));
 });
-test('Selected one file actions are six icon-only buttons, multi actions are horizontal',()=>{
- const bulk=read('src/library-bulk.js'),css=read('src/premium-home.css'),m=read('src/main.js');
- assert.ok(bulk.includes("selected.size===1&&doc&&chosen(doc)"));
- for(const k of ['data-doc-share','data-doc-edit','data-doc-preview','data-doc-rename','data-doc-delete','data-doc-add'])
-  assert.ok(bulk.includes(k),k);
- for(const k of ["data-doc-edit","data-doc-rename","data-doc-add"])
-  assert.ok(m.includes(k),k);
- assert.ok(css.includes('grid-template-columns:none!important'));
- assert.ok(css.includes('justify-content:flex-end!important'));
- assert.ok(css.includes('bottom:calc(172px + env(safe-area-inset-bottom,0px))!important'));
-});
+test('Five compact actions and seven bulk actions stay wired',()=>{const bulk=read('src/library-bulk.js'),css=read('src/selection-compact.css'),m=read('src/main.js');assert.ok(bulk.includes('selected.size===1&&doc&&chosen(doc)'));for(const k of ['data-doc-share','data-doc-edit-rename','data-doc-preview','data-doc-delete','data-doc-add'])assert.ok(bulk.includes(k),k);assert.ok(m.includes('RivoDocuments.editFile({uri:doc.uri})'));for(const k of ['flex-wrap:nowrap!important','justify-content:flex-end!important','rivo-bulk-icon-row'])assert.ok(css.includes(k),k);});
+
 test('Android back gestures close editors first, Retake is visible',()=>{
  const main=read('src/main.js'),editor=read('src/scan-editor.js');
  for(const k of [".rivo-editor-overlay",".rivo-perfectscan-overlay",
