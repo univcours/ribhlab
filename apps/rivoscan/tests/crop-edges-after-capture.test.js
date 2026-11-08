@@ -9,18 +9,10 @@ test('After shutter show draggable corners before automatic filter preview',()=>
  assert.match(area,/requestCropEdges\(bitmap,editor,false\)/);
  assert.match(area,/current=photo;\s*prepareEnhancementPreview\(\)/);
 });
-test('Edges retry reports failure honestly and runs off UI thread',()=>{
- const s=source('native/android/RivoLiveScannerActivity.java');
- assert.match(s,/requestCropEdges\(current,editor,true\)/);
- assert.match(s,/requestCropEdges\(bitmap,editor,true\)/);
- assert.match(s,/No reliable edges/);
- assert.match(s,/analyzer\.execute\(\(\)->\{/);
-});
-test('Live guide visible without detected edges, dashed not solid',()=>{
- const s=source('native/android/RivoLiveScannerActivity.java');
- assert.match(s,/Point\[\] drawn=found\?points:RivoEdgeDetector\.fallback\(\)/);
- assert.match(s,/android\.graphics\.DashPathEffect/);
-});
+test('automatic crop runs off UI thread and preserves manual corrections',()=>{const s=source('native/android/RivoLiveScannerActivity.java');for(const k of ['requestCropEdges(bitmap,editor,false)','target.getCornerRevision()!=cornerRevision','if(result==null){','analyzer.execute(()->{'])assert.ok(s.includes(k),k);assert.ok(!s.includes('button(trNative("enhanceBack"),this::reopenCrop)'));});
+
+test('live camera draws only real non-yellow green contours',()=>{const s=source('native/android/RivoLiveScannerActivity.java');const g=s.slice(s.indexOf('private static final class LiveEdges'));for(const k of ['points==null)return','screenX(points[i])','paint.setPathEffect(null)'])assert.ok(g.includes(k),k);assert.ok(!/DashPathEffect|Color.rgb\(255,207,99\)|RivoEdgeDetector.fallback/.test(g));});
+
 test('Manual corner drag is preserved against stale analysis',()=>{
  const s=source('native/android/RivoCropEditor.java');
  assert.match(s,/manuallyAdjusted=true/);
