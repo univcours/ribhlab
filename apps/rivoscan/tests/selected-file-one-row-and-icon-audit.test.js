@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
-test('Five bound selected-file actions fit a right-aligned icon row',()=>{const css=read('../src/selection-compact.css'),bulk=read('../src/library-bulk.js');for(const k of ['rivo-single-tools','flex-direction:row!important','flex-wrap:nowrap!important','justify-content:flex-end!important','height:38px!important'])assert.ok(css.includes(k),k);for(const k of ['share','preview','delete','add']){assert.ok(bulk.includes('data-doc-'+k+'='),k);assert.ok(bulk.includes("fileIcon('"+k+"')"),k);}assert.ok(bulk.includes('data-doc-edit-rename='));assert.ok(bulk.includes("fileIcon('edit')"));assert.match(bulk,/selected\.size===1/);});
+test('Five bound selected-file actions fit a right-aligned icon row',()=>{const css=read('../src/selection-compact.css'),bulk=read('../src/library-bulk.js');for(const k of ['rivo-single-tools','flex-direction:row!important','flex-wrap:nowrap!important','justify-content:flex-end!important','height:38px!important'])assert.ok(css.includes(k),k);for(const k of ['share','preview','delete']){assert.ok(bulk.includes('data-doc-'+k+'='),k);assert.ok(bulk.includes("fileIcon('"+k+"')"),k);}assert.ok(bulk.includes('data-doc-add='));assert.ok(bulk.includes('rivo-add-plus'));assert.ok(bulk.includes('data-doc-edit-rename='));assert.ok(bulk.includes("fileIcon('edit')"));assert.match(bulk,/selected\.size===1/);});
 
 test('all major tool cards and home cards render icons',()=>{
  const main=read('../src/main.js');
