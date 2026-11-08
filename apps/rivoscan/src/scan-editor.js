@@ -10,7 +10,7 @@ import {estimateTextGridWarp,applyTextGridCanvas} from './text-grid-dewarp.js';
 import {coloredMarkMask} from './colored-mark-erase.js';
 
 /** Offline editor: crop/retake are delegated to the native camera; editing saves a new copy. */
-export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,onDeepClean=null,onPerfectScan=null,preset='enhance'}){
+export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRetake,onRefresh,notify,onDeepClean=null,onPerfectScan=null,onScanSound=null,preset='enhance'}){
  const labels={
   en:['Edit scan','Retake','Original','Enhance','Magic','Remove shadow','Grayscale','Black & white','Whiteboard','Compare','Rotate left','Rotate right','Crop','Extract text','Save copy','Brightness','Contrast','Original / edited','Cancel','Processing photo…','Saving a new copy; original stays unchanged.'],
   ar:['تعديل الوثيقة','رتايك','الأصلية','تحسين','تحسين ذكي','حذف الظلال','رمادي','أبيض وأسود','سبورة','مقارنة','دور لليسار','دور لليمين','قص الحواف','استخراج النص','حفظ نسخة','الإضاءة','التباين','قبل / بعد','إلغاء','كنصلحو الصورة…','غادي نحفظ نسخة جديدة والأصل يبقى كيفما هو.'],
@@ -93,6 +93,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   Object.assign(laserBefore.style,{left:x+'px',top:y+'px',width:r.width+'px',height:r.height+'px',clipPath:'inset(0 0 0 0)'});
   Object.assign(laserBeam.style,{left:x+'px',top:y+'px',width:r.width+'px'});
   laserBefore.hidden=false;laserBeam.hidden=false;laserStatus.hidden=false;
+  try{onScanSound?.()}catch(error){console.warn('Scanner sound:',error)}
   const token=++laserToken;
   const start=performance.now(),duration=980;
   const step=now=>{

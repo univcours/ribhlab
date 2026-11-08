@@ -159,6 +159,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if("ID Card".equals(scanMode))batchMode=true;
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
+        getSharedPreferences("RivoScanPreferences",MODE_PRIVATE).edit().putString("language",nativeLanguage).apply();
         try{openCvReady=OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
         if(!openCvReady && !basicCameraMode){
@@ -227,6 +228,48 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         b.setBackground(outlined(Color.rgb(7,86,90),12,Color.rgb(101,217,202)));
         b.setOnClickListener(v->{RivoSounds.play(this,"tool");onTap.run();});return b;
     }
+    /** Tiny language and mute controls stay above the native camera and editors. */
+    private LinearLayout scannerQuickControls(){
+        LinearLayout row=new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+        row.setPadding(dp(9),dp(2),dp(9),dp(2));
+        row.setBackgroundColor(Color.rgb(7,61,65));
+        row.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
+        TextView locale=touchLabel("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾",
+            11,Color.WHITE,this::chooseNativeLanguage);
+        locale.setContentDescription("Language / اللغة / Langue");
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(77),dp(31));
+        lp.setMargins(0,0,dp(7),0);row.addView(locale,lp);
+        TextView audio=text(RivoSounds.enabled(this)?"🔊":"🔇",16,Color.WHITE,true);
+        audio.setBackground(outlined(Color.rgb(8,72,77),10,Color.rgb(42,215,194)));
+        audio.setContentDescription(RivoSounds.enabled(this)?"Mute all sounds":"Enable sounds");
+        audio.setOnClickListener(v->{
+            boolean enabled=!RivoSounds.enabled(this);
+            RivoSounds.setEnabled(this,enabled);audio.setText(enabled?"🔊":"🔇");
+            audio.setContentDescription(enabled?"Mute all sounds":"Enable sounds");
+        });
+        row.addView(audio,new LinearLayout.LayoutParams(dp(39),dp(31)));
+        return row;
+    }
+    private void chooseNativeLanguage(){
+        final String[] codes={"en","fr","ar","es","de","pt","it"};
+        final String[] names={"English","Français","العربية","Español","Deutsch","Português","Italiano"};
+        int chosen=0;for(int i=0;i<codes.length;i++)if(codes[i].equals(nativeLanguage)){chosen=i;break;}
+        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("🌐 Language")
+            .setSingleChoiceItems(names,chosen,(dialog,which)->{
+                nativeLanguage=codes[which];
+                getSharedPreferences("RivoScanPreferences",MODE_PRIVATE)
+                    .edit().putString("language",nativeLanguage).apply();
+                dialog.dismiss();
+                if(pendingWarp!=null){
+                    enhancementSerial++;
+                    if(enhancementLaser!=null)enhancementLaser.stop();
+                    showEnhancementPreview();
+                }else if(!editing)showCamera();
+                else if(message!=null)message.setText(trNative("found"));
+            }).setNegativeButton(android.R.string.cancel,null).show();
+    }
+
     private void layout(View body,String hint,Button... buttons){
         // A dedicated document-corners editor with a visible safe header and bottom actions.
         content.removeAllViews();
@@ -248,6 +291,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         close.setContentDescription(trNative("close"));
         close.setBackground(outlined(Color.rgb(160,48,73),13,Color.rgb(255,149,166)));
         header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        shell.addView(scannerQuickControls(),new LinearLayout.LayoutParams(-1,dp(37)));
         shell.addView(header);
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
@@ -319,6 +363,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         content.addView(frame,new FrameLayout.LayoutParams(-1,-1));
 
         // The native status bar (time, signal, battery) remains outside the scanner.
+        frame.addView(scannerQuickControls(),new LinearLayout.LayoutParams(-1,dp(37)));
         LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(7),0,dp(7),0);
         top.setBackgroundColor(Color.rgb(7,61,65));
@@ -1538,7 +1583,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     enhancementImage.setImageBitmap(result);
                     if(enhancementLaser!=null&&
                         !RivoDocumentEnhancer.ORIGINAL.equals(preset))
-                        enhancementLaser.reveal(pendingWarp);
+                        {RivoSounds.play(this,"scan");enhancementLaser.reveal(pendingWarp);}
                     if(enhancementSaveButton!=null)enhancementSaveButton.setEnabled(true);
                     if(enhancementProgress!=null)enhancementProgress.setVisibility(View.GONE);
                     if(enhancementHint!=null)enhancementHint.setText(
@@ -1660,6 +1705,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void deliverSavedPages(){
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
         out.putExtra("scanMode",scanMode);
+        out.putExtra("language",nativeLanguage);
         setResult(Activity.RESULT_OK,out);finish();
     }
     @Override public void onBackPressed(){
