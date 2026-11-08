@@ -112,7 +112,7 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{busy=false}
  });
- button(resultActions,L[10],close);
+ button(resultActions,L[10],close).dataset.rivoDialogClose='true';
  overlay.append(panel);document.body.append(overlay);
  return close;
 }

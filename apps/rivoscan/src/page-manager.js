@@ -28,7 +28,7 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
  async function close(){if(closed)return;closed=true;overlay.remove();document.body.classList.remove('rivo-pages-open');try{await pdf?.destroy()}catch{}}
  function draw(){
   if(closed)return;
-  panel.innerHTML=`<header class="rivo-pages-top"><button data-page-action="close">✕</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">✓ ${t(9)}</button></header>
+  panel.innerHTML=`<header class="rivo-pages-top"><button type="button" data-page-action="close" data-rivo-dialog-close="true" aria-label="Close page manager">✕</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">✓ ${t(9)}</button></header>
   <div class="rivo-pages-count"><strong>${selected().length} ${t(1)}</strong><button data-page-action="all">${t(2)}</button><button data-page-action="none">${t(3)}</button></div>
   <p class="rivo-pages-tip">${t(4)}</p><div class="rivo-pages-grid">${pages.map((p,i)=>`<div class="rivo-page-item ${p.selected?'selected':''} ${p.removed?'removed':''}" draggable="true" data-id="${p.id}">
     <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}"><img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)"><span class="rivo-page-check">${p.selected?'✓':p.removed?'×':''}</span></button>

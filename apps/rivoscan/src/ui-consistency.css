@@ -1,0 +1,205 @@
+/* RivoScan — unified turquoise touch UI. Imported LAST after legacy styles.
+   No scanner logic, storage, documents or production AdMob behaviour changes. */
+:root{--rivo-ui-turquoise:#03b8aa;--rivo-ui-ink:#0a4b4d;--rivo-ui-pale:#e5faf4;--rivo-ui-border:#b6e7db;}
+/* A native file input has a browser-owned white button. It must never be shown.
+   Keep it in the DOM for label activation and programmatic import. */
+#app input[type="file"]{
+ position:absolute!important;width:1px!important;height:1px!important;min-width:1px!important;
+ padding:0!important;margin:-1px!important;border:0!important;opacity:0!important;
+ clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;
+ overflow:hidden!important;pointer-events:none!important;
+}
+#app .dropzone,#app .scan-upload-link,#app .rivo-peer-file-picker{position:relative;cursor:pointer}
+/* All dialog families, including dynamic overlays attached outside #app. */
+.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+.rivo-pages-modal,.bulk-sheet,.rivo-editor-window,.doc-detail-overlay{
+ box-sizing:border-box!important;color:var(--rivo-ui-ink)!important;
+ border-color:var(--rivo-ui-border)!important;
+}
+.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog{
+ background:#f7fffc!important;border:1px solid var(--rivo-ui-border)!important;
+ width:min(100%,540px)!important;max-height:calc(100dvh - 32px)!important;
+ overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+ border-radius:22px!important;padding:16px!important;
+ box-shadow:0 18px 60px #084a4633!important;
+}
+.rivo-code-dialog h2,.rivo-id-dialog h2,.rivo-release-dialog h2{
+ color:#083f48!important;font-weight:900!important;font-size:clamp(17px,4.5vw,21px)!important;
+ line-height:1.3!important;overflow-wrap:break-word!important;
+}
+/* Two readable columns, never 5-6 narrow vertical text columns. */
+.rivo-code-dialog .rivo-code-actions,
+.rivo-id-dialog .rivo-code-actions{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:8px!important;align-items:stretch!important;margin:11px 0!important;
+}
+.rivo-code-dialog .rivo-code-actions>button,
+.rivo-id-dialog .rivo-code-actions>button{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:none!important;width:100%!important;min-width:0!important;
+ height:auto!important;min-height:43px!important;max-height:none!important;
+ padding:9px 10px!important;margin:0!important;
+ background:var(--rivo-ui-pale)!important;color:#075a5a!important;
+ border:1px solid #8dd9cc!important;border-radius:12px!important;
+ box-shadow:none!important;font-weight:750!important;
+ font-size:clamp(11px,3.1vw,13px)!important;line-height:1.3!important;
+ text-align:center!important;white-space:normal!important;
+ overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important;
+}
+.rivo-code-dialog .rivo-code-actions>button:focus-visible,
+.rivo-id-dialog .rivo-code-actions>button:focus-visible,
+#app button:focus-visible{outline:3px solid #00a594!important;outline-offset:2px!important}
+.rivo-code-dialog .rivo-code-actions>button[data-rivo-dialog-close],
+.rivo-id-dialog .rivo-code-actions>button[data-rivo-dialog-close]{
+ background:#f1f5f4!important;color:#526970!important;border-color:#c8d9d5!important;
+ box-shadow:none!important;
+}
+.rivo-id-dialog .rivo-code-actions>button[data-rivo-dialog-close]:last-child{
+ background:#f1f5f4!important;color:#526970!important;border-color:#c8d9d5!important;
+}
+.rivo-id-dialog .rivo-code-actions:last-child:has(>button:only-child) {
+ grid-template-columns:minmax(0,1fr)!important;
+}
+.rivo-id-dialog .rivo-code-actions:last-child>button:only-child{
+ background:linear-gradient(130deg,#04c7b6,#008b84)!important;color:#fff!important;
+ border-color:#08afa2!important;font-weight:900!important;
+}
+.rivo-id-dialog .rivo-code-actions:first-of-type>button:first-child,
+.rivo-code-dialog .rivo-code-actions:first-of-type>button:first-child{
+ background:linear-gradient(130deg,#05c7b8,#009387)!important;color:#fff!important;
+ border-color:#08ab9e!important;
+}
+/* Images and results must not create blank 300px blocks before input. */
+.rivo-code-dialog canvas[hidden],.rivo-code-dialog img[hidden],
+.rivo-id-dialog canvas[hidden],.rivo-id-dialog img[hidden]{display:none!important}
+.rivo-code-dialog .rivo-code-preview,.rivo-id-dialog .rivo-id-preview{
+ max-width:100%!important;max-height:32dvh!important;object-fit:contain!important;
+}
+.rivo-code-dialog .rivo-id-row textarea,.rivo-code-dialog .rivo-id-row input,
+.rivo-id-dialog .rivo-id-row textarea,.rivo-id-dialog .rivo-id-row input{
+ max-width:100%!important;box-sizing:border-box!important;
+}
+.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay{
+ padding:12px!important;align-items:center!important;
+}
+/* Compact cards across Home/Tools. Labels remain readable rather than tiny. */
+#app .rivo-scan-first .rivo-scan-mode{
+ min-height:65px!important;max-height:none!important;padding:10px!important;
+ border-radius:15px!important;gap:8px!important;
+ flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+}
+#app .rivo-scan-first .rivo-scan-mode-icon{
+ width:39px!important;height:39px!important;border-radius:11px!important;
+ flex:none!important;
+}
+#app .rivo-scan-first .rivo-scan-mode strong{
+ font-size:clamp(12px,3.5vw,15px)!important;line-height:1.2!important;
+ white-space:normal!important;text-align:start!important;
+ overflow-wrap:normal!important;word-break:normal!important;
+}
+#app .rivo-tools-hub .rivo-hub-tile{
+ min-height:70px!important;height:auto!important;padding:10px!important;
+ border-radius:15px!important;gap:8px!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;
+}
+#app .rivo-tools-hub .rivo-hub-tile .tool-icon{
+ width:37px!important;height:37px!important;border-radius:11px!important;
+ flex:none!important;
+}
+#app .rivo-tools-hub .rivo-hub-tile strong{
+ font-size:clamp(11px,3.1vw,13px)!important;line-height:1.25!important;
+ white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;
+}
+/* Selected document: CHECKBOX | NAME | six icon-only actions, ONE physical row.
+   Do not squeeze a full filename into 40px or stack actions into 2 rows. */
+#app .library-workspace #library-list .document-entry.doc-selected,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+ display:grid!important;grid-template-columns:21px minmax(0,1fr) min(192px,52vw)!important;
+ grid-template-rows:minmax(42px,auto)!important;align-items:center!important;
+ gap:5px!important;min-height:56px!important;height:auto!important;padding:7px!important;
+ overflow:hidden!important;direction:ltr!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.document-icon,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-file-thumb{
+ display:none!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.doc-select-box,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-recent-check{
+ grid-column:1!important;grid-row:1!important;position:static!important;
+ width:20px!important;height:20px!important;min-width:20px!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.document-description,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.recent-file-meta{
+ grid-column:2!important;grid-row:1!important;min-width:0!important;
+ width:100%!important;max-width:100%!important;overflow:hidden!important;padding:0!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.document-description strong,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.recent-file-meta strong{
+ display:block!important;max-width:100%!important;width:100%!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;overflow:hidden!important;
+ word-break:normal!important;overflow-wrap:normal!important;font-size:11px!important;
+ unicode-bidi:plaintext!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.document-description small,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.recent-file-meta small{
+ display:block!important;font-size:9px!important;white-space:nowrap!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.rivo-selection-inline,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-selection-inline{
+ grid-column:3!important;grid-row:1!important;position:static!important;
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ grid-template-rows:34px!important;grid-auto-rows:0!important;grid-auto-flow:column!important;
+ width:min(192px,52vw)!important;max-width:min(192px,52vw)!important;
+ min-width:0!important;height:34px!important;min-height:34px!important;max-height:34px!important;
+ gap:2px!important;margin:0!important;padding:0!important;border:0!important;
+ overflow:hidden!important;justify-self:end!important;direction:ltr!important;
+}
+#app .library-workspace #library-list .document-entry.doc-selected>.rivo-selection-inline>button,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-selection-inline>button{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;max-width:none!important;
+ height:34px!important;min-height:34px!important;max-height:34px!important;
+ padding:0!important;margin:0!important;line-height:1!important;
+ border-radius:8px!important;background:#e3faf4!important;border:1px solid #8eddd1!important;
+ color:#06776f!important;box-shadow:none!important;overflow:visible!important;
+}
+#app .rivo-selection-inline>button .rivo-action-icon{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:20px!important;height:20px!important;flex:none!important;visibility:visible!important;
+ opacity:1!important;
+}
+#app .rivo-selection-inline>button .rivo-action-icon svg{
+ display:block!important;width:19px!important;height:19px!important;visibility:visible!important;
+ opacity:1!important;stroke:currentColor!important;
+}
+#app .rivo-selection-inline>button.rivo-inline-delete{
+ background:#fff1f1!important;color:#ae3653!important;border-color:#f1c5cb!important;
+}
+#app .rivo-selection-inline>button:disabled{opacity:.35!important}
+#app .rivo-selection-inline .rivo-action-label{
+ position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;
+ overflow:hidden!important;clip-path:inset(50%)!important;
+}
+/* Smaller footer action bar for multi-file mode; keep explicit labels visible. */
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:4px!important;padding:6px!important;
+}
+body.rivo-multiselect #app .library-selection-toolbar .bulk-actions button{
+ border-radius:9px!important;font-size:10px!important;min-height:43px!important;
+ height:auto!important;padding:5px 2px!important;overflow:hidden!important;
+}
+/* Small screens: preserve button row by slightly scaling icon size. */
+@media(max-width:370px){
+ #app .library-workspace #library-list .document-entry.doc-selected,
+ #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{
+  grid-template-columns:19px minmax(0,1fr) min(180px,52vw)!important;
+  gap:3px!important;padding:5px!important;
+ }
+ #app .library-workspace #library-list .document-entry.doc-selected>.rivo-selection-inline,
+ #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.rivo-selection-inline{
+  width:min(180px,52vw)!important;max-width:min(180px,52vw)!important;
+ }
+ #app .rivo-selection-inline>button .rivo-action-icon svg{width:17px!important;height:17px!important}
+}

@@ -2,6 +2,7 @@ import './style.css';
 import './theme-brand.css';
 import './premium-home.css';
 import './turquoise-v2.css';
+import './ui-consistency.css';
 import { turquoiseCopy } from './turquoise-v2-model.js';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
@@ -1614,20 +1615,31 @@ function navigateRivoBack(){
  if(document.querySelector('.rivo-reward-overlay')){
   document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
  }
- // Android Back / edge swipe closes edit dialogs before changing the page.
- const editClose=document.querySelector('.rivo-editor-overlay [data-edit="cancel"]');
- if(editClose){editClose.click();lastBackHandled=now;return true;}
- const perfectClose=document.querySelector('.rivo-perfectscan-modal [data-perfect="close"]');
- if(perfectClose){perfectClose.click();lastBackHandled=now;return true;}
- const idClose=document.querySelector('.rivo-id-overlay .rivo-code-actions button:last-child');
- if(idClose){idClose.click();lastBackHandled=now;return true;}
- const sheet=document.querySelector('.bulk-overlay');
- if(sheet){sheet.querySelector('[data-close-sheet]')?.click();lastBackHandled=now;return true;}
- if(document.querySelector('.doc-detail-overlay')){
-  docViewerUI.close();lastBackHandled=now;return true;
- }
- if(document.querySelector('.rivo-release-overlay')){
-  document.querySelector('.rivo-release-dialog button')?.click();lastBackHandled=now;return true;
+ // Close the TOPMOST overlay rather than navigating to Home. All user tools
+ // opt in via data-rivo-dialog-close; never confuse Save with Close.
+ const overlays=[
+  '.rivo-editor-overlay','.rivo-perfectscan-overlay','.rivo-id-overlay',
+  '.rivo-code-overlay','.rivo-pages-overlay','.bulk-overlay',
+  '.rivo-release-overlay','.doc-detail-overlay'
+ ];
+ const stack=[...document.querySelectorAll(overlays.join(','))]
+  .filter(el=>el.isConnected&&getComputedStyle(el).display!=='none')
+  .sort((a,b)=>(parseInt(getComputedStyle(b).zIndex,10)||0)-
+               (parseInt(getComputedStyle(a).zIndex,10)||0));
+ if(stack.length){
+  const layer=stack[0];
+  const selector=layer.matches('.rivo-editor-overlay')?'[data-edit="cancel"]'
+   :layer.matches('.rivo-perfectscan-overlay')?'[data-perfect="close"]'
+   :layer.matches('.rivo-pages-overlay')?'[data-page-action="close"]'
+   :layer.matches('.doc-detail-overlay')?'.doc-viewer-close'
+   :layer.matches('.bulk-overlay')?'[data-close-sheet],[data-add-choice="close"]'
+   :'[data-rivo-dialog-close]';
+  const dismiss=layer.querySelector(selector);
+  if(dismiss&&!dismiss.disabled)dismiss.click();
+  // When a modal is busy, its own close handler refuses the close safely.
+  // Consume Back rather than accidentally leave the underlying document.
+  lastBackHandled=now;
+  return true;
  }
  if(bulkUI.mode()){
   void bulkUI.action('cancel');lastBackHandled=now;return true;
@@ -1654,6 +1666,15 @@ function navigateRivoBack(){
  }
  return false;
 }
+// Escape follows the same safe Back rules as Android's system button.
+// Capture phase prevents a modal-specific key listener from double-closing.
+document.addEventListener('keydown',event=>{
+ if(event.key!=='Escape')return;
+ const hasLayer=!!document.querySelector('.rivo-editor-overlay,.rivo-perfectscan-overlay,.rivo-id-overlay,.rivo-code-overlay,.rivo-pages-overlay,.bulk-overlay,.rivo-release-overlay,.doc-detail-overlay');
+ if(hasLayer||bulkUI.mode()){
+  event.preventDefault();event.stopImmediatePropagation();navigateRivoBack();
+ }
+},true);
 // Fallback swipe for immersive Android WebViews where the OS edge gesture is not
 // forwarded; OS backButton remains the main source of back actions.
 let edgeSwipeStart=null;

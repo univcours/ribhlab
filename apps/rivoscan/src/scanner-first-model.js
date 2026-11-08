@@ -6,13 +6,13 @@ export const quickScanActions=Object.freeze([
  {id:'gallery',icon:'image',attribute:'data-import="image"'}
 ]);
 const translations={
- en:['Quick scan','Choose a scan mode','Recent documents','All documents','PDF','Images','More tools','Edit, OCR, organize and convert','Document','ID card','Book','Gallery','Saved on this device'],
- ar:['المسح السريع','اختار طريقة التصوير','آخر الوثائق','كل الوثائق','PDF','الصور','أدوات إضافية','تعديل وOCR وتنظيم وتحويل','وثيقة','البطاقة','كتاب','المعرض','محفوظة فالهاتف'],
- fr:['Scan rapide','Choisissez un mode','Documents récents','Tous les documents','PDF','Images','Autres outils','Modifier, OCR, organiser et convertir','Document','Identité','Livre','Galerie','Enregistrés sur l’appareil'],
- es:['Escaneo rápido','Elige un modo','Documentos recientes','Todos los documentos','PDF','Imágenes','Más herramientas','Editar, OCR, organizar y convertir','Documento','Identidad','Libro','Galería','Guardados en tu dispositivo'],
- de:['Schnellscan','Scan-Modus wählen','Letzte Dokumente','Alle Dokumente','PDF','Bilder','Weitere Werkzeuge','Bearbeiten, OCR, ordnen und konvertieren','Dokument','Ausweis','Buch','Galerie','Auf dem Gerät gespeichert'],
- pt:['Digitalização rápida','Escolha um modo','Documentos recentes','Todos os documentos','PDF','Imagens','Mais ferramentas','Editar, OCR, organizar e converter','Documento','Identidade','Livro','Galeria','Guardados no dispositivo'],
- it:['Scansione rapida','Scegli la modalità','Documenti recenti','Tutti i documenti','PDF','Immagini','Altri strumenti','Modifica, OCR, organizza e converti','Documento','Identità','Libro','Galleria','Salvati sul dispositivo']
+ en:['Quick scan','Choose a scan mode','Recent documents','All documents','PDF','Images','More tools','Edit, OCR, organize and convert','Scan document','Scan ID card','Book scan','Import photos','Saved on this device'],
+ ar:['المسح السريع','اختار طريقة التصوير','آخر الوثائق','كل الوثائق','PDF','الصور','أدوات إضافية','تعديل وOCR وتنظيم وتحويل','تصوير وثيقة','تصوير بطاقة','مسح كتاب','استيراد الصور','محفوظة فالهاتف'],
+ fr:['Scan rapide','Choisissez un mode','Documents récents','Tous les documents','PDF','Images','Autres outils','Modifier, OCR, organiser et convertir','Scanner un document','Scanner une carte','Scanner un livre','Importer des photos','Enregistrés sur l’appareil'],
+ es:['Escaneo rápido','Elige un modo','Documentos recientes','Todos los documentos','PDF','Imágenes','Más herramientas','Editar, OCR, organizar y convertir','Escanear documento','Escanear ID','Escanear libro','Importar fotos','Guardados en tu dispositivo'],
+ de:['Schnellscan','Scan-Modus wählen','Letzte Dokumente','Alle Dokumente','PDF','Bilder','Weitere Werkzeuge','Bearbeiten, OCR, ordnen und konvertieren','Dokument scannen','Ausweis scannen','Buch scannen','Fotos importieren','Auf dem Gerät gespeichert'],
+ pt:['Digitalização rápida','Escolha um modo','Documentos recentes','Todos os documentos','PDF','Imagens','Mais ferramentas','Editar, OCR, organizar e converter','Digitalizar documento','Digitalizar cartão','Digitalizar livro','Importar fotos','Guardados no dispositivo'],
+ it:['Scansione rapida','Scegli la modalità','Documenti recenti','Tutti i documenti','PDF','Immagini','Altri strumenti','Modifica, OCR, organizza e converti','Scansiona documento','Scansiona ID','Scansiona libro','Importa foto','Salvati sul dispositivo']
 };
 const keys=['quick','quickSub','recent','all','pdf','images','more','moreSub','document','id','book','gallery','saved'];
 export function scanHomeCopy(language='en'){

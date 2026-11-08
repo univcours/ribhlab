@@ -61,7 +61,7 @@ export function openBarcodeScanner({language='en',capture,notify=()=>{}}={}){
   catch(error){if(!closed)status.textContent=error?.message||L[9]}
  });
  button(buttons,L[2],()=>input.click());
- button(buttons,L[6],cleanup);
+ button(buttons,L[6],cleanup).dataset.rivoDialogClose='true';
  input.addEventListener('change',()=>{
   const file=input.files?.[0];input.value='';
   if(!file)return;

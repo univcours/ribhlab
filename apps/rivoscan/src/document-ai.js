@@ -144,6 +144,6 @@ export function openDocumentAI({mode='chat',language='en',capture=null}={}){
   }catch(error){if(!closed)state.textContent=error?.message||String(error)}
   finally{busy=false;submit.disabled=false}
  });
- action(L[9],clear);
+ action(L[9],clear).dataset.rivoDialogClose='true';
  cover.append(panel);document.body.append(cover);return clear;
 }

@@ -166,7 +166,7 @@ export function openWhatsNew({language='en',version='0.0.0',storage=localStorage
  const subtitle=document.createElement('p');subtitle.textContent=copy.subtitle+' '+version;panel.append(subtitle);
  const list=document.createElement('ul');for(const note of copy.items){const item=document.createElement('li');item.textContent=note;list.append(item)}panel.append(list);
  const limits=document.createElement('p');limits.className='rivo-release-limits';limits.textContent=copy.limits;panel.append(limits);
- const ok=document.createElement('button');ok.type='button';ok.textContent=copy.close;panel.append(ok);
+ const ok=document.createElement('button');ok.type='button';ok.textContent=copy.close;ok.dataset.rivoDialogClose='true';panel.append(ok);
  const close=()=>{overlay.remove();try{storage.setItem('rivo-release-notes-read',version)}catch{}};
  ok.addEventListener('click',close);
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});

@@ -188,7 +188,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    draw();countSpreads();
    location.hidden=singlePage||currentIsSinglePage;autoSpine.hidden=singlePage||currentIsSinglePage;
   });
- makeButton(actions,L[5],cleanup);
+ makeButton(actions,L[5],cleanup).dataset.rivoDialogClose='true';
  fileInput.addEventListener('change',async()=>{
   const files=[...(fileInput.files||[])];fileInput.value='';
   for(const file of files){

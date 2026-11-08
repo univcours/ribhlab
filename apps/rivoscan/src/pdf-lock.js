@@ -73,7 +73,7 @@ export function openPDFLock({language='en',save,notify=()=>{}}={}){
   }catch(error){if(!closed){busy=false;status.textContent=L[13]+(error?.message||String(error))}}
   finally{encrypt.disabled=false}
  });
- makeButton(L[9],close);
+ makeButton(L[9],close).dataset.rivoDialogClose='true';
  cover.append(panel);document.body.append(cover);
  cover.addEventListener('click',e=>{if(e.target===cover)close()});
  return close;

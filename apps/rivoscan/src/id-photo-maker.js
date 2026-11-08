@@ -99,7 +99,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  };
  const close=()=>{closed=true;overlay.remove();if(blobURL)URL.revokeObjectURL(blobURL)};
  const button=(name,callback)=>{
-  const b=document.createElement('button');b.type='button';b.textContent=name;b.addEventListener('click',callback);actions.append(b);
+  const b=document.createElement('button');b.type='button';b.textContent=name;b.addEventListener('click',callback);actions.append(b);return b;
  };
  const applyBackground=async()=>{
   if(!image||closed)return;
@@ -126,7 +126,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
    if(!closed)notify('PNG ✓');
   }catch(error){if(!closed)status.textContent=error?.message||L[9]}
  });
- button(L[7],close);
+ button(L[7],close).dataset.rivoDialogClose='true';
  const load=async()=>{
   const file=input.files?.[0];if(!file)return;
   if(blobURL)URL.revokeObjectURL(blobURL);

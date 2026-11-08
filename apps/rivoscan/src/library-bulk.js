@@ -94,7 +94,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const mime=String(doc.mimeType||'').toLowerCase();
           const isPDF=mime.includes('pdf')||name.endsWith('.pdf');
           const canAppend=isPDF||isImage(doc);
-          const actions=`<div class="rivo-selection-inline" role="toolbar" aria-label="${t('menu')}">
+          const actions=`<div class="rivo-selection-inline" role="toolbar" aria-label="${t('menu')} · ${String(doc.name||'').replace(/[&<>"\']/g,'')}">
             <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('share')}</span><span class="rivo-action-label">${t('share')}</span></button>
             <button type="button" data-doc-edit="${index}" aria-label="${t('edit')}" title="${t('edit')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('edit')}</span><span class="rivo-action-label">${t('edit')}</span></button>
             <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('preview')}</span><span class="rivo-action-label">${t('preview')}</span></button>
