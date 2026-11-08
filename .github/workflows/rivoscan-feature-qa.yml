@@ -1,0 +1,44 @@
+name: RivoScan Android feature QA
+on:
+  pull_request:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-feature-qa.yml'
+  push:
+    branches:
+      - 'feat/rivoscan-polish-external-edit-code-ledger-20261108'
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-feature-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web-ui-and-code-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies for verification (no production deployment)
+        run: npm install --no-audit --no-fund
+      - name: Verify source syntax
+        run: npm run check
+      - name: Run full RivoScan regression tests
+        run: npm test
+      - name: Build web assets for Capacitor
+        run: npm run build
+      - name: Validate tracked Android source and XML references
+        run: |
+          test -f native/android/RivoDocumentsPlugin.java
+          test -f native/android/RivoLiveScannerActivity.java
+          test -f native/android/RivoCropEditor.java
+          grep -q 'upsertCodeLedger' native/android/RivoDocumentsPlugin.java
+          grep -q 'Intent.ACTION_EDIT' native/android/RivoDocumentsPlugin.java
+          grep -q 'if(getWidth()<1||getHeight()<1||points==null)return' native/android/RivoLiveScannerActivity.java
