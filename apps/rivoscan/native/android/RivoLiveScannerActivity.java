@@ -1047,6 +1047,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void requestCropEdges(Bitmap photo,RivoCropEditor target,boolean forced){
         if(!openCvReady||photo==null||photo.isRecycled()||target==null)return;
         final int serial=++edgeDetectionSerial;
+        final int cornerRevision=target.getCornerRevision();
         if(message!=null)message.setText("ar".equals(nativeLanguage)?"جاري تحديد الحواف…":"Detecting edges…");
         analyzer.execute(()->{
             Point[] points=null;
@@ -1055,8 +1056,19 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             final Point[] result=points;
             mainHandler.post(()->{
                 if(serial!=edgeDetectionSerial||!editing||editor!=target||photo.isRecycled()||isFinishing())return;
-                if(target.updateDetectedCorners(result,forced)&&message!=null)message.setText(cropHint(result!=null));
-                else if(forced&&message!=null)message.setText(cropHint(result!=null));
+                // The user may drag a corner while OpenCV is analysing; never
+                // replace those corrections with a late auto-detection result.
+                if(target.getCornerRevision()!=cornerRevision){
+                    if(message!=null)message.setText("ar".equals(nativeLanguage)?
+                        "الزوايا تضبطات يدوياً. اضغط ✓ للمتابعة.":"Manual corners retained. Tap ✓ to continue.");
+                    return;
+                }
+                if(result==null){
+                    // Do not reset a user's valid crop to fallback on a failed retry.
+                    if(message!=null)message.setText(cropHint(false));
+                    return;
+                }
+                if(target.updateDetectedCorners(result,forced)&&message!=null)message.setText(cropHint(true));
             });
         });
     }
@@ -1785,15 +1797,19 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             if(getWidth()<1||getHeight()<1)return;
             boolean found=points!=null;
             Point[] drawn=found?points:RivoEdgeDetector.fallback();
-            // CameraX PreviewView uses FILL_CENTER; map normalized analysis points through
-            // the same center-crop transform instead of stretching them to the screen.
-            float scale=Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight);
-            float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
+            // A guide must remain VISIBLE even before the first analyzed frame
+            // (imageWidth/imageHeight are then 1x1) or when no page is found.
+            // Only a real detected contour uses CameraX FILL_CENTER mapping.
+            float scale=found?Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight):1f;
+            float offsetX=found?(getWidth()-imageWidth*scale)/2f:0f;
+            float offsetY=found?(getHeight()-imageHeight*scale)/2f:0f;
+            final float contentWidth=found?imageWidth*scale:getWidth();
+            final float contentHeight=found?imageHeight*scale:getHeight();
             Path path=new Path();
             float[] sx=new float[4],sy=new float[4];
             for(int i=0;i<4;i++){
-                sx[i]=offsetX+screenX(drawn[i])*imageWidth*scale;
-                sy[i]=offsetY+(float)drawn[i].y*imageHeight*scale;
+                sx[i]=offsetX+screenX(drawn[i])*contentWidth;
+                sy[i]=offsetY+(float)drawn[i].y*contentHeight;
                 if(i==0)path.moveTo(sx[i],sy[i]);else path.lineTo(sx[i],sy[i]);
             }
             path.close();

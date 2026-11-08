@@ -21,6 +21,7 @@ public final class RivoCropEditor extends View {
     private int selected=-1;
     private boolean detected=false;
     private boolean manuallyAdjusted=false;
+    private int cornerRevision=0;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint loupePaint=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final Paint decoration=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -31,15 +32,17 @@ public final class RivoCropEditor extends View {
     public void setDocument(Bitmap source,Point[] detected){
         bitmap=source;this.detected=detected!=null;
         corners=detected!=null?detected:RivoEdgeDetector.fallback();
-        selected=-1;manuallyAdjusted=false;invalidate();
+        selected=-1;manuallyAdjusted=false;cornerRevision++;invalidate();
     }
+    public int getCornerRevision(){return cornerRevision;}
     public Bitmap getDocument(){return bitmap;}
     /** Preserve manual drag against stale automatic edge detection. */
     public boolean updateDetectedCorners(Point[] result,boolean forced){
         if(bitmap==null||bitmap.isRecycled()||(!forced&&manuallyAdjusted))return false;
-        detected=result!=null;
-        corners=result!=null?result:RivoEdgeDetector.fallback();
-        selected=-1;manuallyAdjusted=false;invalidate();return true;
+        if(result==null)return false;
+        detected=true;
+        corners=result;
+        selected=-1;manuallyAdjusted=false;cornerRevision++;invalidate();return true;
     }
     public Point[] getCorners(){return corners;}
     public void useAutoCorners(){
@@ -120,6 +123,25 @@ public final class RivoCropEditor extends View {
         canvas.drawCircle(cx,cy,radius+dp(3),decoration);
         decoration.setStyle(Paint.Style.FILL);
     }
+    private boolean isValidMove(int moved,double x,double y){
+        double[] ax=new double[4],ay=new double[4];
+        for(int i=0;i<4;i++){
+            ax[i]=i==moved?x:corners[i].x;
+            ay[i]=i==moved?y:corners[i].y;
+        }
+        double sign=0,area=0;
+        for(int i=0;i<4;i++){
+            int next=(i+1)%4,following=(i+2)%4;
+            double dx=ax[next]-ax[i],dy=ay[next]-ay[i];
+            if(Math.hypot(dx,dy)<.026)return false;
+            double cross=dx*(ay[following]-ay[next])-dy*(ax[following]-ax[next]);
+            if(Math.abs(cross)<.0005)return false;
+            if(sign==0)sign=Math.signum(cross);
+            else if(Math.signum(cross)!=sign)return false;
+            area+=ax[i]*ay[next]-ax[next]*ay[i];
+        }
+        return Math.abs(area)>.025;
+    }
     @Override public boolean onTouchEvent(MotionEvent event){
         if(bitmap==null||bitmap.isRecycled())return false;
         int action=event.getActionMasked();
@@ -137,9 +159,16 @@ public final class RivoCropEditor extends View {
             if(scale<=0)return true;
             double x=(event.getX()-left)/(bitmap.getWidth()*scale);
             double y=(event.getY()-top)/(bitmap.getHeight()*scale);
-            corners[selected].x=Math.max(0,Math.min(1,x));
-            corners[selected].y=Math.max(0,Math.min(1,y));
-            manuallyAdjusted=true;invalidate();return true;
+            // Keep the crop convex and non-degenerate so perspective
+            // correction never silently flips or loses the chosen target.
+            double nextX=Math.max(0,Math.min(1,x));
+            double nextY=Math.max(0,Math.min(1,y));
+            if(isValidMove(selected,nextX,nextY)){
+                corners[selected].x=nextX;
+                corners[selected].y=nextY;
+                manuallyAdjusted=true;cornerRevision++;invalidate();
+            }
+            return true;
         }
         if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){
             selected=-1;invalidate();return true;
