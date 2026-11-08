@@ -1890,39 +1890,32 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         void update(Point[] corners,int w,int h){points=corners;imageWidth=Math.max(1,w);imageHeight=Math.max(1,h);invalidate();}
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);
-            if(getWidth()<1||getHeight()<1)return;
-            // No fake yellow dotted frame: only display a real detected contour.
-            if(points==null)return;
-            boolean found=true;
-            Point[] drawn=points;
-            // A guide must remain VISIBLE even before the first analyzed frame
-            // (imageWidth/imageHeight are then 1x1) or when no page is found.
-            // Only a real detected contour uses CameraX FILL_CENTER mapping.
-            float scale=found?Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight):1f;
-            float offsetX=found?(getWidth()-imageWidth*scale)/2f:0f;
-            float offsetY=found?(getHeight()-imageHeight*scale)/2f:0f;
-            final float contentWidth=found?imageWidth*scale:getWidth();
-            final float contentHeight=found?imageHeight*scale:getHeight();
+            // Do not draw an artificial yellow/dashed guide when no page exists.
+            if(getWidth()<1||getHeight()<1||points==null)return;
+            float scale=Math.max(getWidth()/(float)imageWidth,
+                                 getHeight()/(float)imageHeight);
+            float offsetX=(getWidth()-imageWidth*scale)/2f;
+            float offsetY=(getHeight()-imageHeight*scale)/2f;
+            float contentWidth=imageWidth*scale;
+            float contentHeight=imageHeight*scale;
             Path path=new Path();
             float[] sx=new float[4],sy=new float[4];
             for(int i=0;i<4;i++){
-                sx[i]=offsetX+screenX(drawn[i])*contentWidth;
-                sy[i]=offsetY+(float)drawn[i].y*contentHeight;
+                sx[i]=offsetX+screenX(points[i])*contentWidth;
+                sy[i]=offsetY+(float)points[i].y*contentHeight;
                 if(i==0)path.moveTo(sx[i],sy[i]);else path.lineTo(sx[i],sy[i]);
             }
             path.close();
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(found?Color.argb(30,24,196,171):Color.argb(10,235,184,73));
+            paint.setColor(Color.argb(30,24,196,171));
             canvas.drawPath(path,paint);
             paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(dp(found?3:2));
-            paint.setColor(found?Color.rgb(40,238,204):Color.rgb(255,207,99));
+            paint.setStrokeWidth(dp(3));
+            paint.setColor(Color.rgb(40,238,204));
             paint.setPathEffect(null);
             canvas.drawPath(path,paint);
-            paint.setPathEffect(null);
-            if(found){paint.setStyle(Paint.Style.FILL);
-                for(int i=0;i<4;i++)canvas.drawCircle(sx[i],sy[i],dp(5),paint);}
-
+            paint.setStyle(Paint.Style.FILL);
+            for(int i=0;i<4;i++)canvas.drawCircle(sx[i],sy[i],dp(5),paint);
         }
     }
 }
