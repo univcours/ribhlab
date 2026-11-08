@@ -257,7 +257,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         final String[] codes={"en","fr","ar","es","de","pt","it"};
         final String[] names={"English","Français","العربية","Español","Deutsch","Português","Italiano"};
         int chosen=0;for(int i=0;i<codes.length;i++)if(codes[i].equals(nativeLanguage)){chosen=i;break;}
-        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("🌐 Language")
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle("🌐 Language")
             .setSingleChoiceItems(names,chosen,(dialog,which)->{
                 nativeLanguage=codes[which];
                 getSharedPreferences("RivoScanPreferences",MODE_PRIVATE)
@@ -516,14 +516,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         startCamera();
     }
     private void showHelp(){
-        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("helpTitle"))
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle(trNative("helpTitle"))
             .setMessage(trNative("helpText"))
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
         String[] options={trNative("chooseCamera"),trNative("importPhoto"),trNative("chooseFile"),
             trNative("finishScan"),"Sounds: "+(RivoSounds.enabled(this)?"On":"Off"),trNative("scannerHelp")};
-        new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+            .setTitle("ar".equals(nativeLanguage)?"خيارات الكاميرا":
+              "fr".equals(nativeLanguage)?"Options caméra":"Camera options")
+            .setItems(options,(d,which)->{
             if(which==0)showCameraPicker();
             else if(which==1)gallery.launch("image/*");
             else if(which==2)documentPicker.launch(new String[]{"image/*"});
@@ -662,7 +665,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         labels.add(trNative("bestCamera"));
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()&&!hasRear){
-            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("noRearTitle"))
+            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle(trNative("noRearTitle"))
                 .setMessage(trNative("noRearText"))
                 .setPositiveButton(trNative("importPhoto"),(d,w)->gallery.launch("image/*"))
                 .setNegativeButton(trNative("cancel"),null).show();
@@ -674,7 +677,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(cameraChoices.get(i).id.equals(selectedCamera.id)){selectedIndex=i+1;break;}
             }
         }
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
             .setTitle(trNative("cameraPicker"))
             .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,(dialog,which)->{
                 CameraChoice next=which==0?null:cameraChoices.get(which-1);
@@ -751,7 +754,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         clearFrozenPreview();
         if(message!=null)message.setText(trNative("noWorking"));
         RivoSounds.play(this,"error");
-        new androidx.appcompat.app.AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
             .setTitle(trNative("noCamera"))
             .setMessage(trNative("noWorkingText"))
             .setPositiveButton(trNative("importPhoto"),(dialog,which)->gallery.launch("image/*"))
@@ -1033,7 +1036,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(!openCvReady){
             // Never silently save a document when enhancement is unavailable:
             // the user must see the photo and decide whether to keep or retake.
-            new android.app.AlertDialog.Builder(this)
+            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
                 .setTitle("RivoScan")
                 .setMessage("Document processing unavailable on this device. Review the original photo before saving.")
                 .setNegativeButton(trNative("retake"),(dialog,which)->{
@@ -1170,7 +1173,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             "Add another page or save the PDF";
         String add="ar".equals(nativeLanguage)?"+ زيد صفحة":
             "fr".equals(nativeLanguage)?"+ Ajouter une page":"+ Add Page";
-        new android.app.AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
             .setTitle(title).setMessage(prompt)
             .setNegativeButton(add,(dialog,which)->{setBatch(true);showCamera();})
             .setPositiveButton("✓ "+localizedCapture("save"),
@@ -1198,7 +1201,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         view.addView(hint,new LinearLayout.LayoutParams(-1,dp(51)));
         pad.setBackground(outlined(Color.WHITE,9,Color.rgb(42,215,194)));
         view.addView(pad,new LinearLayout.LayoutParams(-1,dp(215)));
-        new android.app.AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
             .setTitle(trNative("signBeforeSave"))
             .setView(view)
             .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
@@ -1239,7 +1242,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onStopTrackingTouch(android.widget.SeekBar bar){}
         });
         panel.addView(scale,new LinearLayout.LayoutParams(-1,dp(42)));
-        new android.app.AlertDialog.Builder(this)
+        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
             .setTitle(trNative("signPlacementTitle"))
             .setView(panel)
             .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
@@ -1696,7 +1699,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
         // Explicitly warn on a one-sided ID, but never delete or alter it.
         if("ID Card".equals(scanMode)&&savedImages.size()==1){
-            new android.app.AlertDialog.Builder(this)
+            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
                 .setTitle(trNative("id"))
                 .setMessage(trNative("idBack"))
                 .setNegativeButton(trNative("retake"),(dialog,which)->showCamera())

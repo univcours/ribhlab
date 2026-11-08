@@ -141,9 +141,29 @@ $themeXml=@'
     <item name="android:navigationBarColor">#F3F8FF</item>
     <item name="android:windowLightStatusBar">true</item>
   </style>
+  <!-- All RivoScan-owned Android camera popups use the same turquoise theme. -->
+  <style name="RivoTurquoiseDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+    <item name="colorAccent">#03B8AA</item>
+    <item name="android:colorAccent">#03B8AA</item>
+    <item name="android:textColorPrimary">#093F44</item>
+    <item name="android:windowBackground">@drawable/rivoscan_dialog_bg</item>
+  </style>
 </resources>
 '@
 [IO.File]::WriteAllText($themeFile,$themeXml,[Text.UTF8Encoding]::new($false))
+$dialogDrawable=Join-Path $android 'app\src\main\res\drawable\rivoscan_dialog_bg.xml'
+$dialogXML=@'
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+  <solid android:color="#F4FFFB" />
+  <stroke android:width="1dp" android:color="#B9E8DE" />
+  <corners android:radius="22dp" />
+  <padding android:left="9dp" android:right="9dp"
+    android:top="8dp" android:bottom="8dp" />
+</shape>
+'@
+New-Item -ItemType Directory -Path (Split-Path -Parent $dialogDrawable) -Force | Out-Null
+[IO.File]::WriteAllText($dialogDrawable,$dialogXML,[Text.UTF8Encoding]::new($false))
 
 $manifest=Join-Path $android 'app\src\main\AndroidManifest.xml'
 $m=[System.IO.File]::ReadAllText($manifest)

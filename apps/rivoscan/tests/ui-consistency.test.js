@@ -31,3 +31,13 @@ test('Formula preview remains hidden until an image is selected',()=>{
  assert.ok(txt.includes('preview.hidden=true'));
  assert.ok(txt.includes('preview.hidden=false'));
 });
+
+test('CameraX-owned Android dialogs inherit turquoise rounded window and accessible options title',()=>{
+ const setup=read('install-live-scanner.ps1'),native=read('native/android/RivoLiveScannerActivity.java');
+ assert.ok(setup.includes('name="RivoTurquoiseDialog"'));
+ assert.ok(setup.includes('rivoscan_dialog_bg.xml'));
+ assert.ok(setup.includes('#03B8AA'));
+ assert.ok(native.includes('R.style.RivoTurquoiseDialog'));
+ assert.ok(native.includes('"Camera options"'));
+ assert.ok(!native.includes('new android.app.AlertDialog.Builder(this)'));
+});
