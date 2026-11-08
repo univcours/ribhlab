@@ -37,6 +37,7 @@ import { reconstructRelativeSurfaceAndroid } from './surface3d-android.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
+import {createCodeLedger} from './barcode-ledger.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
@@ -52,6 +53,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
+const codeLedger=createCodeLedger({bridge:RivoDocuments});
 const thumbnailService=createDocumentThumbnailService(args=>RivoDocuments.getThumbnail(args));
 let thumbnailObserver=null;
 function hydrateDocumentThumbnails(){
@@ -1134,7 +1136,7 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='barcode'){
-   openBarcodeScanner({language,notify:toast,capture:async()=>{
+   openBarcodeScanner({language,notify:toast,ledger:codeLedger,capture:async()=>{
      const photo=await Camera.getPhoto({quality:90,allowEditing:false,
        resultType:CameraResultType.Uri,source:CameraSource.Camera});
      return photo.webPath||photo.path;
