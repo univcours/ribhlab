@@ -188,9 +188,9 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
 let activeTool = null;
 let soundsEnabled = localStorage.getItem('rivo-sounds') !== 'off';
 const soundWords={
-  en:['Button sounds','Play a different subtle sound for scan, save and navigation'],
-  ar:['أصوات الأزرار','أصوات خفيفة ومختلفة للتصوير والحفظ والتنقل'],
-  fr:['Sons des boutons','Sons discrets pour scanner, enregistrer et naviguer'],
+  en:['All RivoScan sounds','Scanner laser, capture, save and navigation sounds'],
+  ar:['جميع أصوات RivoScan','صوت الليزر والتصوير والحفظ والتنقل'],
+  fr:['Tous les sons RivoScan','Son du laser, capture, sauvegarde et navigation'],
   es:['Sonidos de botones','Sonidos suaves al escanear, guardar y navegar'],
   de:['Tastentöne','Leise Töne beim Scannen, Speichern und Navigieren'],
   pt:['Sons dos botões','Sons leves ao digitalizar, guardar e navegar'],
@@ -480,9 +480,9 @@ function home(){
    <button type="button" data-open-library>${escapeHTML(scan.all)} ${ico('back',16)}</button>
   </div>
   <div class="rivo-scan-file-chips" role="group" aria-label="${escapeHTML(scan.all)}">
-   <button type="button" data-home-filter="all">${escapeHTML(scan.all)} <small>${counts.all}</small></button>
-   <button type="button" data-home-filter="pdf">${escapeHTML(scan.pdf)} <small>${counts.pdf}</small></button>
-   <button type="button" data-home-filter="images">${escapeHTML(scan.images)} <small>${counts.images}</small></button>
+   <button type="button" data-home-filter="all">${ico('grid',15)} ${escapeHTML(scan.all)} <small>${counts.all}</small></button>
+   <button type="button" data-home-filter="pdf">${ico('file',15)} ${escapeHTML(scan.pdf)} <small>${counts.pdf}</small></button>
+   <button type="button" data-home-filter="images">${ico('image',15)} ${escapeHTML(scan.images)} <small>${counts.images}</small></button>
   </div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
   <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(8)}</div>
@@ -500,7 +500,7 @@ function toolsWorkspace(){
  const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
  return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><div><h1>${ut('tools')}</h1><p class="rivo-v2-tools-subtitle">${escapeHTML(modern.toolsSubtitle)}</p></div><button data-tools-focus aria-label="${copy}">${ico('search',22)}</button></div>
  <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
- <nav class="rivo-tool-pills">${toolGroups.map((g,i)=>`<button type="button" data-hub-section="${g.id}" class="${i===0?'active':''}">${hubGroupLabel(language,g.id)}</button>`).join('')}</nav>
+ <nav class="rivo-tool-pills">${toolGroups.map((g,i)=>`<button type="button" data-hub-section="${g.id}" class="${i===0?'active':''}">${ico(({scan:'scan',import:'upload',convert:'convert',edit:'text',utilities:'grid'})[g.id]||'grid',15)} ${hubGroupLabel(language,g.id)}</button>`).join('')}</nav>
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
@@ -638,7 +638,7 @@ function libraryWorkspace(){
   return `<section class="workspace library-workspace rivo-v2-documents"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${escapeHTML(turquoiseCopy(language).docsSubtitle)}</p><small class="rivo-library-version">RivoScan v${appVersion} · ${escapeHTML(libraryStoragePath)}</small></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
-    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="set-rivoscan-folder" type="button" class="scan-upload-link rivo-storage-choose">${ico('folder',17)} ${escapeHTML(storageText().setup)}</button><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
+    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${ico((['grid','file','image'])[i],15)} ${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="set-rivoscan-folder" type="button" class="scan-upload-link rivo-storage-choose">${ico('folder',17)} ${escapeHTML(storageText().setup)}</button><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
     <p class="rivo-storage-status" role="status">${escapeHTML(libraryStorageConfigured?storageText().selected+' · RivoScan / PDF · Images · Word · Excel · PowerPoint · Text · Other':storageText().hint)}</p>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
