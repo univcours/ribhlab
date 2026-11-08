@@ -46,15 +46,17 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   function toolbar(){
     if(!mode||selected.size<2)return '';
     const items=selectedDocs();
-    return `<div class="library-selection-toolbar" role="group" aria-label="${items.length} ${t('selected')}">
-      <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
-        <button type="button" data-bulk="share" class="bulk-share-primary" aria-label="${t('share')}"><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
-        <button type="button" data-bulk="delete" class="bulk-delete-primary" aria-label="${t('delete')}"><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
-        <button type="button" data-bulk="organize" aria-label="${t('move')} / ${t('copy')}"><span aria-hidden="true">▣</span><span>${t('move')} / ${t('copy')}</span></button>
-        <button type="button" data-bulk="merge" aria-label="${t('merge')}"><span aria-hidden="true">▤</span><span>${t('merge')}</span></button>
-        <button type="button" data-bulk="all" aria-label="${t('all')}"><span aria-hidden="true">☑</span><span>${t('all')}</span></button>
-        <button type="button" data-bulk="invert" aria-label="${t('invert')}"><span aria-hidden="true">⇄</span><span>${t('invert')}</span></button>
-        <button type="button" data-bulk="cancel" class="bulk-close" aria-label="${t('cancel')}"><span aria-hidden="true">×</span><span>${t('cancel')}</span></button>
+    // Exactly one small horizontal menu for multi-selection; all actions remain available.
+    return `<div class="library-selection-toolbar rivo-compact-multi" role="group" aria-label="${items.length} ${t('selected')}">
+      <div class="bulk-actions rivo-bulk-icon-row" role="toolbar" aria-label="${t('menuActions')}">
+        <span class="rivo-bulk-count" aria-label="${items.length} ${t('selected')}">${items.length}</span>
+        <button type="button" data-bulk="share" class="bulk-share-primary" aria-label="${t('share')}" title="${t('share')}"><span aria-hidden="true">${fileIcon('share')}</span></button>
+        <button type="button" data-bulk="organize" aria-label="${t('move')} / ${t('copy')}" title="${t('move')} / ${t('copy')}"><span aria-hidden="true">▣</span></button>
+        <button type="button" data-bulk="merge" aria-label="${t('merge')}" title="${t('merge')}" ${items.length<2?'disabled':''}><span aria-hidden="true">▤</span></button>
+        <button type="button" data-bulk="delete" class="bulk-delete-primary" aria-label="${t('delete')}" title="${t('delete')}"><span aria-hidden="true">${fileIcon('delete')}</span></button>
+        <button type="button" data-bulk="all" aria-label="${t('all')}" title="${t('all')}"><span aria-hidden="true">☑</span></button>
+        <button type="button" data-bulk="invert" aria-label="${t('invert')}" title="${t('invert')}"><span aria-hidden="true">⇄</span></button>
+        <button type="button" data-bulk="cancel" class="bulk-close" aria-label="${t('cancel')}" title="${t('cancel')}"><span aria-hidden="true">×</span></button>
       </div>
     </div>`;
   }
@@ -94,13 +96,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const mime=String(doc.mimeType||'').toLowerCase();
           const isPDF=mime.includes('pdf')||name.endsWith('.pdf');
           const canAppend=isPDF||isImage(doc);
-          const actions=`<div class="rivo-selection-inline" role="toolbar" aria-label="${t('menu')} · ${String(doc.name||'').replace(/[&<>"\']/g,'')}">
+          const actions=`<div class="rivo-selection-inline rivo-single-tools" role="toolbar" aria-label="${t('menu')} · ${String(doc.name||'').replace(/[&<>"\']/g,'')}">
             <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('share')}</span><span class="rivo-action-label">${t('share')}</span></button>
-            <button type="button" data-doc-edit="${index}" aria-label="${t('edit')}" title="${t('edit')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('edit')}</span><span class="rivo-action-label">${t('edit')}</span></button>
+            <button type="button" data-doc-edit-rename="${index}" aria-label="${t('edit')} / ${t('rename')}" title="${t('edit')} / ${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('edit')}</span><span class="rivo-action-label">${t('edit')} / ${t('rename')}</span></button>
             <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('preview')}</span><span class="rivo-action-label">${t('preview')}</span></button>
-            <button type="button" data-doc-rename="${index}" aria-label="${t('rename')}" title="${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('rename')}</span><span class="rivo-action-label">${t('rename')}</span></button>
             <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('delete')}</span><span class="rivo-action-label">${t('delete')}</span></button>
-            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true">${fileIcon('add')}</span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
+            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true"><span class="rivo-add-plus">+</span></span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
           </div>`;
           row.insertAdjacentHTML('beforeend',actions);
         }
@@ -133,6 +134,23 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     document.body.appendChild(shade);
     shade.querySelector('button')?.focus();
     return shade;
+  }
+  function editRenameOne(doc){
+    if(!doc)return;
+    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('edit')} / ${t('rename')}</strong>
+      <button type="button" data-close-sheet aria-label="${t('cancel')}">✕</button></div>
+      <div class="rivo-edit-rename-options" role="group">
+       <button type="button" data-edit-rename-choice="edit"><span aria-hidden="true">${fileIcon('edit')}</span> ${t('edit')}</button>
+       <button type="button" data-edit-rename-choice="rename"><span aria-hidden="true">${fileIcon('rename')}</span> ${t('rename')}</button>
+      </div>`);
+    root.querySelectorAll('[data-edit-rename-choice]').forEach(button=>button.addEventListener('click',async()=>{
+      const which=button.dataset.editRenameChoice;
+      closeSheet();
+      try{
+        if(which==='edit')await onEdit?.(doc);
+        if(which==='rename')await onRename?.(doc);
+      }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
+    }));
   }
   async function erase(docs){
     if(!docs.length)return;
@@ -389,5 +407,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     });
   }
   return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,share,savePdf,organize,action,wireToolbar,
-    editOne:doc=>onEdit?.(doc),renameOne:doc=>onRename?.(doc)};
+    editOne:doc=>onEdit?.(doc),renameOne:doc=>onRename?.(doc),editRenameOne};
 }

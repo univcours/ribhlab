@@ -4,6 +4,7 @@ import './premium-home.css';
 import './turquoise-v2.css';
 import './ui-consistency.css';
 import './rivoscan-layout-repairs.css';
+import './selection-compact.css';
 import { turquoiseCopy } from './turquoise-v2-model.js';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {quickScanActions,scanHomeCopy,documentCategoryCounts} from './scanner-first-model.js';
@@ -984,7 +985,7 @@ function wire(){
   for(const list of ['library-list','home-recents']){
     const el=document.getElementById(list);
     const activate=e=>{
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-edit],[data-doc-rename],[data-doc-add]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-doc-preview],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-edit-rename],[data-doc-edit],[data-doc-rename],[data-doc-add]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -1000,6 +1001,11 @@ function wire(){
       if(target.hasAttribute('data-doc-preview')){
         const index=Number(target.dataset.docPreview);
         if(libraryItems[index])void docViewerUI.open(libraryItems[index]);
+        return;
+      }
+      if(target.hasAttribute('data-doc-edit-rename')){
+        const doc=libraryItems[Number(target.dataset.docEditRename)];
+        if(doc)bulkUI.editRenameOne(doc);
         return;
       }
       if(target.hasAttribute('data-doc-edit')){
