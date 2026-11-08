@@ -527,3 +527,16 @@ body.rivo-multiselect #app .content{padding-bottom:calc(210px + env(safe-area-in
 #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.recent-file-meta strong{
  unicode-bidi:plaintext!important;overflow-wrap:anywhere!important;
 }
+
+/* Icon-bearing category and file filters remain compact and legible. */
+#app .rivo-tools-hub .rivo-tool-pills button,
+#app .rivo-v2-documents .rivo-library-chips button,
+#app .rivo-scan-first .rivo-scan-file-chips button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:5px!important;white-space:nowrap!important;
+}
+#app .rivo-tool-pills button svg,
+#app .rivo-library-chips button svg,
+#app .rivo-scan-file-chips button svg{
+ display:block!important;width:15px!important;height:15px!important;flex:none!important;
+}
