@@ -143,6 +143,14 @@ const icons = {
   download:'<path d="M12 3v13m-5-5 5 5 5-5M4 16v4h16v-4"/>',
   back:'<path d="m15 18-6-6 6-6"/>',
   file:'<path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v6h6"/>',
+  'file-pdf':'<path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v6h6"/><path d="M8 13h8m-8 4h5"/>',
+  'file-sheet':'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12m5-12v12"/>',
+  'file-doc':'<path d="M5 2h10l4 4v16H5zM15 2v5h4M8 11h8M8 15h8M8 19h5"/>',
+  'file-slide':'<rect x="3" y="3" width="18" height="15" rx="2"/><path d="M12 18v3m-5 0h10M7 13l3-4 3 2 3-4"/>',
+  'file-zip':'<path d="M5 3h14v18H5zM11 3v9m3-7h-3m3 4h-3m3 4h-3m0 0v4h4v-4"/>',
+  'file-text':'<path d="M6 2h9l5 5v15H6zM14 2v6h6M9 12h8M9 16h8M9 20h5"/>',
+  'barcode':'<path d="M3 6v12M7 6v12M10 6v12M14 6v12M16 6v12M20 6v12M3 3h4m10 0h4M3 21h4m10 0h4"/>',
+  'qr':'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M6 6h1m10 0h1M6 17h1m7-3v3h3m4-3v7h-4"/>',
   camera:'<path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/>',
   clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
   check:'<path d="m4 12 5 5 11-11"/>',
@@ -436,14 +444,14 @@ function render(){
 }
 function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
- if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf'};
- if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image'};
- if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls'};
- if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc'};
- if(/\.(pptx?|odp)$/.test(name))return {code:'PPT',klass:'ppt'};
- if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip'};
- if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt'};
- return {code:'FILE',klass:'generic'};
+ if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',icon:'file-pdf'};
+ if(/^image\\//.test(mime)||/\\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',icon:'image'};
+ if(/\\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',icon:'file-sheet'};
+ if(/\\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',icon:'file-doc'};
+ if(/\\.(pptx?|odp)$/.test(name))return {code:'PPT',klass:'ppt',icon:'file-slide'};
+ if(/\\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',icon:'file-zip'};
+ if(/\\.(txt|md|json)$/.test(name))return {code:'TXT',klass:'txt',icon:'file-text'};
+ return {code:'FILE',klass:'generic',icon:'file'};
 }
 function recentDocuments(limit=6,query=homeSearchQuery){
  const needle=String(query||'').trim();
@@ -454,7 +462,7 @@ function recentDocuments(limit=6,query=homeSearchQuery){
   const file=visualFileType(doc);
   return `<article class="recent-entry rivo-recent-card ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
      <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
-     <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" data-rivo-thumb="${index}" aria-hidden="true"><span>${file.code}</span></span>
+     <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" data-rivo-thumb="${index}" aria-hidden="true">${ico(file.icon,22)}<span>${file.code}</span></span>
      <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong>
        <small>${ico('clock',13)} ${doc.created?new Date(doc.created).toLocaleString(language,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'RivoScan'} <span class="rivo-metadata-dot">·</span> ${formatSize(doc.size||0)}</small></div>
    </article>`;
@@ -487,7 +495,7 @@ function home(){
   <div class="rivo-scan-modes" role="group" aria-label="${escapeHTML(scan.quick)}">${quick}</div>
   <div class="rivo-v2-popular-head"><h2>${escapeHTML(modern.popular)}</h2><button type="button" data-tab="tools">${ut('seeAll')} ${ico('back',16)}</button></div>
   <div class="rivo-v2-popular">
-   <button type="button" data-hub-action="scanCode"><span>${ico('scan',23)}</span><strong>${escapeHTML(hubLabel(language,'scanCode','QR & Barcode'))}</strong></button>
+   <button type="button" data-hub-action="scanCode"><span>${ico('qr',23)}</span><strong>${escapeHTML(hubLabel(language,'scanCode','QR & Barcode'))}</strong></button>
    <button type="button" data-tool="images"><span>${ico('file',23)}</span><strong>${escapeHTML(copy.names[7])}</strong></button>
    <button type="button" data-hub-action="enhance"><span>${ico('sparkle',23)}</span><strong>${escapeHTML(hubLabel(language,'enhance','Enhance image'))}</strong></button>
    <button type="button" data-tab="tools"><span>${ico('grid',23)}</span><strong>${escapeHTML(scan.more)}</strong></button>
@@ -646,7 +654,7 @@ function renderLibraryRows(needle=''){
   if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
   return matched.map(({item,index})=>`<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
     ${bulkUI.checkbox(item,index)}
-    <div class="document-icon" data-rivo-thumb="${index}">${ico('file',25)}</div>
+    <div class="document-icon rivo-file-thumb rivo-file-${visualFileType(item).klass}" data-rivo-thumb="${index}">${ico(visualFileType(item).icon,23)}<small>${visualFileType(item).code}</small></div>
     <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
     <div class="document-buttons">
       <button type="button" data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',19)}<span>${dl('share')}</span></button>
