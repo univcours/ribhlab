@@ -370,6 +370,116 @@ public class RivoDocumentsPlugin extends Plugin {
         return name;
     }
 
+    // Reserved, single user-visible workbook; a private JSON record store in
+    // Capacitor Data is the recovery source if an XLSX update is interrupted.
+    private static final String CODE_LEDGER_NAME="RivoScan_Scanned_Codes.xlsx";
+    private static final String CODE_LEDGER_MIME=
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private Uri findCodeLedgerInMediaStore() throws Exception {
+        ContentResolver resolver=getContext().getContentResolver();
+        String folder=FOLDER+"Excel/";
+        String columns[]={MediaStore.MediaColumns._ID,
+            MediaStore.MediaColumns.OWNER_PACKAGE_NAME};
+        String selection=MediaStore.MediaColumns.DISPLAY_NAME+"=? AND "+
+            MediaStore.MediaColumns.RELATIVE_PATH+"=?";
+        try(Cursor c=resolver.query(documentsCollection(),columns,selection,
+            new String[]{CODE_LEDGER_NAME,folder},null)){
+            if(c!=null)while(c.moveToNext()){
+                // Do not overwrite or delete a same-named file belonging to
+                // another application, even inside the RivoScan folder.
+                if(getContext().getPackageName().equals(c.getString(1)))
+                    return ContentUris.withAppendedId(documentsCollection(),c.getLong(0));
+            }
+        }
+        return null;
+    }
+
+    private Uri findCodeLedgerInTree(Uri tree) throws Exception {
+        Uri folder=findChild(tree,rootDocument(tree),"Excel",
+            DocumentsContract.Document.MIME_TYPE_DIR);
+        return folder==null?null:findChild(tree,folder,CODE_LEDGER_NAME,CODE_LEDGER_MIME);
+    }
+
+    /** Replace exactly one RivoScan/Excel workbook, never create a new copy per scan. */
+    @PluginMethod
+    public void upsertCodeLedger(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        String encoded=call.getString("base64");
+        if(encoded==null||encoded.length()>28*1024*1024){call.reject("Invalid code ledger size.");return;}
+        byte[] bytes;
+        try{bytes=Base64.decode(encoded,Base64.DEFAULT);}
+        catch(Exception ex){call.reject("Invalid Excel workbook.",ex);return;}
+        if(bytes.length<4||bytes.length>20*1024*1024||
+           bytes[0]!='P'||bytes[1]!='K'||bytes[2]!=3||bytes[3]!=4){
+            call.reject("Code ledger must be a valid-size XLSX ZIP package.");return;
+        }
+        Uri created=null,existing=null,tree=null,target=null;
+        ContentResolver resolver=getContext().getContentResolver();
+        try{
+            tree=selectedRoot();
+            existing=tree!=null?findCodeLedgerInTree(tree):findCodeLedgerInMediaStore();
+            target=existing;
+            if(target==null){
+                if(tree!=null)created=createTreeFile(tree,"Excel",CODE_LEDGER_NAME,CODE_LEDGER_MIME);
+                else{
+                    ContentValues meta=new ContentValues();
+                    meta.put(MediaStore.MediaColumns.DISPLAY_NAME,CODE_LEDGER_NAME);
+                    meta.put(MediaStore.MediaColumns.MIME_TYPE,CODE_LEDGER_MIME);
+                    meta.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER+"Excel/");
+                    meta.put(MediaStore.MediaColumns.IS_PENDING,1);
+                    created=resolver.insert(documentsCollection(),meta);
+                }
+                target=created;
+            }
+            if(target==null)throw new IllegalStateException("Could not create Excel database.");
+            try(OutputStream out=resolver.openOutputStream(target,"wt")){
+                if(out==null)throw new IllegalStateException("Cannot write Excel database.");
+                out.write(bytes);out.flush();
+            }
+            if(created!=null&&tree==null){
+                ContentValues publish=new ContentValues();
+                publish.put(MediaStore.MediaColumns.IS_PENDING,0);
+                if(resolver.update(created,publish,null,null)<1)
+                    throw new IllegalStateException("Could not publish Excel database.");
+            }
+            JSObject response=new JSObject();
+            response.put("uri",target.toString());
+            response.put("name",CODE_LEDGER_NAME);
+            response.put("size",bytes.length);
+            response.put("updated",existing!=null);
+            call.resolve(response);
+        }catch(Exception error){
+            // On failure, delete only a newly created incomplete workbook.
+            // Existing workbook and the private scan-record database are retained.
+            if(created!=null)try{
+                if(tree!=null)DocumentsContract.deleteDocument(resolver,created);
+                else resolver.delete(created,null,null);
+            }catch(Exception ignored){}
+            call.reject("Could not update RivoScan Excel code database: "+error.getMessage(),error);
+        }
+    }
+
+    /** Explicit full clear, scoped to the reserved code workbook only. */
+    @PluginMethod
+    public void clearCodeLedger(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        try{
+            Uri tree=selectedRoot();
+            Uri target=tree!=null?findCodeLedgerInTree(tree):findCodeLedgerInMediaStore();
+            boolean deleted=false;
+            if(target!=null){
+                ContentResolver resolver=getContext().getContentResolver();
+                deleted=tree!=null?DocumentsContract.deleteDocument(resolver,target)
+                    :resolver.delete(target,null,null)>0;
+                if(!deleted)throw new IllegalStateException("Could not clear workbook.");
+            }
+            JSObject response=new JSObject();
+            response.put("deleted",deleted);
+            call.resolve(response);
+        }catch(Exception error){call.reject("Could not clear code database: "+error.getMessage(),error);}
+    }
+
     @PluginMethod
     public void saveFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
