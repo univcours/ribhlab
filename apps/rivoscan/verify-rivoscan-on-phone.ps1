@@ -19,14 +19,16 @@ try {
   if($LASTEXITCODE -ne 0){throw 'ADB devices query failed.'}
   Write-Host 'Connected Android devices reported by ADB:' -ForegroundColor Cyan
   $list | ForEach-Object { Write-Host $_ }
+  # mDNS Wireless Debugging serials may contain spaces, e.g. '(2)'.
+  # Capture the complete serial before its ADB status column.
   $online=@($list|ForEach-Object{
-    if($_ -match '^\s*(\S+)\s+device(?:\s|$)'){$matches[1]}
+    if($_ -match '^\s*(.+?)\s+device(?:\s|$)'){$matches[1]}
   })
   $unauthorized=@($list|ForEach-Object{
-    if($_ -match '^\s*(\S+)\s+unauthorized(?:\s|$)'){$matches[1]}
+    if($_ -match '^\s*(.+?)\s+unauthorized(?:\s|$)'){$matches[1]}
   })
   $offline=@($list|ForEach-Object{
-    if($_ -match '^\s*(\S+)\s+offline(?:\s|$)'){$matches[1]}
+    if($_ -match '^\s*(.+?)\s+offline(?:\s|$)'){$matches[1]}
   })
   if($DeviceSerial){
     if($online -contains $DeviceSerial){$serial=$DeviceSerial}
