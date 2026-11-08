@@ -473,10 +473,16 @@ function recentDocuments(limit=6,query=homeSearchQuery){
 function home(){
  const copy=premiumCopy(language),scan=scanHomeCopy(language),modern=turquoiseCopy(language);
  const counts=documentCategoryCounts(libraryItems,visualFileType);
- const quick=quickScanActions.map(item=>`<button type="button" class="rivo-scan-mode ${item.id==='document'?'rivo-scan-mode-main':''}"
-   ${item.attribute} aria-label="${escapeHTML(scan[item.id])}">
-   <span class="rivo-scan-mode-icon">${ico(item.icon,25)}</span><strong>${escapeHTML(scan[item.id])}</strong>
-  </button>`).join('');
+ const featuredScanModes=[
+  {id:'document',icon:'camera',attribute:quickScanActions[0].attribute,label:scan.document},
+  {id:'qr',icon:'qr',attribute:'data-hub-action="scanCode"',
+   label:hubLabel(language,'scanCode','Scan QR / Barcode')}
+ ];
+ const quick=featuredScanModes.map(item=>`<button type="button" class="rivo-scan-mode ${item.id==='document'?'rivo-scan-mode-main':'rivo-scan-mode-qr'}"
+  ${item.attribute} aria-label="${escapeHTML(item.label)}">
+  <span class="rivo-scan-mode-icon">${ico(item.icon,29)}</span>
+  <strong>${escapeHTML(item.label)}</strong>
+ </button>`).join('');
  const tiles=homeTiles.map((item,i)=>{
   return `<button type="button" class="rivo-premium-tile ${item.featured?'rivo-premium-tile-main':''}"
    ${item.action} aria-label="${escapeHTML(copy.names[i])}">
@@ -497,10 +503,10 @@ function home(){
   <div class="rivo-scan-modes" role="group" aria-label="${escapeHTML(scan.quick)}">${quick}</div>
   <div class="rivo-v2-popular-head"><h2>${escapeHTML(modern.popular)}</h2><button type="button" data-tab="tools">${ut('seeAll')} ${ico('back',16)}</button></div>
   <div class="rivo-v2-popular">
-   <button type="button" data-hub-action="scanCode"><span>${ico('qr',23)}</span><strong>${escapeHTML(hubLabel(language,'scanCode','QR & Barcode'))}</strong></button>
-   <button type="button" data-tool="images"><span>${ico('file',23)}</span><strong>${escapeHTML(copy.names[7])}</strong></button>
-   <button type="button" data-hub-action="enhance"><span>${ico('sparkle',23)}</span><strong>${escapeHTML(hubLabel(language,'enhance','Enhance image'))}</strong></button>
-   <button type="button" data-tab="tools"><span>${ico('grid',23)}</span><strong>${escapeHTML(scan.more)}</strong></button>
+   <button type="button" data-import="image"><span>${ico('image',23)}</span><strong>${escapeHTML(scan.gallery)}</strong></button>
+   <button type="button" data-hub-action="pageManager"><span>${ico('reorder',23)}</span><strong>${escapeHTML(hubLabel(language,'pageManager','Manage Pages'))}</strong></button>
+   <button type="button" data-tool="merge"><span>${ico('merge',23)}</span><strong>${escapeHTML(tn(tools.find(t=>t.id==='merge')))}</strong></button>
+   <button type="button" data-tool="images"><span>${ico('convert',23)}</span><strong>${escapeHTML(copy.names[7])}</strong></button>
   </div>
   <div class="rivo-scan-first-heading rivo-scan-recent-title">
    <div><h2>${escapeHTML(scan.recent)}</h2><p><span data-home-recent-count>${counts.all}</span> · ${escapeHTML(scan.saved)}</p></div>
