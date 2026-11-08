@@ -94,6 +94,8 @@ try {
  screenshot('30-real-documents-loaded');
  if(rows.boxes>0){
   await cd.evaluate('document.querySelector("#library-list input.doc-select-box")?.click();true');
+  await sleep(700);
+  await cd.evaluate('document.querySelector("#library-list .doc-selected")?.scrollIntoView({block:"center",behavior:"instant"});true');
   await sleep(1300);
   const selection=await cd.evaluate('(()=>{const bar=document.querySelector("#library-list .doc-selected .rivo-selection-inline");if(!bar)return {present:false};const r=bar.getBoundingClientRect();const buttons=[...bar.querySelectorAll("button")].map(b=>{const q=b.getBoundingClientRect();return {label:b.getAttribute("aria-label"),x:Math.round(q.x),y:Math.round(q.y),w:Math.round(q.width),h:Math.round(q.height),icon:!!b.querySelector("svg")}});return {present:true,grid:getComputedStyle(bar).gridTemplateColumns,rows:getComputedStyle(bar).gridTemplateRows,rect:{x:r.x,y:r.y,w:r.width,h:r.height},buttons,oneRow:buttons.length===6&&Math.max(...buttons.map(b=>b.y))-Math.min(...buttons.map(b=>b.y))<3}})()');
   report.checks.push({name:'Checkbox single row, all six buttons',result:selection});
@@ -102,8 +104,13 @@ try {
   if(selection.present){
    const check=await cd.evaluate('(()=>{const q=document.querySelector("#library-list .doc-selected .rivo-selection-inline");return [...q.querySelectorAll("button")].map(b=>({name:b.title,icon:b.querySelector("svg")?.outerHTML?.slice(0,70),visible:getComputedStyle(b).visibility!=="hidden"}))})()');
    report.buttons.push(...check);
-   await cd.evaluate('document.querySelector("#library-list [data-doc-preview]")?.click();true');
-   await sleep(1800);screenshot('32-preview-after-selection');
+   if(rows.boxes>1){
+    await cd.evaluate('document.querySelectorAll("#library-list input.doc-select-box")[1]?.click();true');
+    await sleep(1100);
+    const second=await cd.evaluate('(()=>{const bar=document.querySelector(".library-selection-toolbar");return {present:!!bar,buttons:[...bar?.querySelectorAll("button")||[]].map(b=>({label:b.getAttribute("aria-label"),icon:!!b.querySelector("svg")}))}})()');
+    report.checks.push({name:'Two PDFs selected, group toolbar',result:second});
+    screenshot('33-two-selected-group-toolbar');
+   }
   }
  }else log('NO_DOCS_SELECTION: QA files failed to appear in the real app');
  // Real tool opening tests. Each shot is from the installed Android app.
@@ -111,6 +118,7 @@ try {
  report.buttons.push(...tools);
  if(Array.isArray(tools)){
   const seen=new Set();
+  let consecutiveErrors=0;
   for(const entry of tools){
    if(!entry?.id||seen.has(entry.id))continue;seen.add(entry.id);
    try{
@@ -123,9 +131,15 @@ try {
     await sleep(900);
     screenshot('tool-'+String(entry.id).replace(/[^A-Za-z0-9_-]/g,'_'));
     report.checks.push({name:'Open '+entry.id,result:'captured (interaction not necessarily functional without input)'});
+    consecutiveErrors=0;
     adb('shell','input','keyevent','4');
     await sleep(600);
-   }catch(e){report.checks.push({name:'Open '+entry.id,result:'FAILED '+e.message});log('FAILED_TOOL '+entry.id+' '+e.message)}
+   }catch(e){
+     consecutiveErrors++;
+     report.checks.push({name:'Open '+entry.id,result:'FAILED '+e.message});
+     log('FAILED_TOOL '+entry.id+' '+e.message);
+     if(consecutiveErrors>=4){log('STOP_TOOL_LOOP repeated WebView failures');break}
+    }
   }
  }
 } catch(error) {

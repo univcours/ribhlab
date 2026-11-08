@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/rivoscan/scripts/play-store-screenshots.sh'
       - 'apps/rivoscan/scripts/capture-ui-audit.sh'
+      - 'apps/rivoscan/scripts/capture-webview-interactions.mjs'
       - 'apps/rivoscan/src/main.js'
       - 'apps/rivoscan/src/turquoise-v2.css'
       - 'apps/rivoscan/src/turquoise-v2-model.js'
