@@ -24,10 +24,13 @@ test('dashboard hero matches Scan Document plus QR and every shortcut performs r
  // scanner model rather than embedding them directly in the HTML template.
  const scan=read('src/scanner-first-model.js');
  assert.ok(scan.includes("attribute:'data-live-camera'"));
+ assert.ok(scan.includes('data-import="image"'));
  assert.ok(home.includes("attribute:quickScanActions[0].attribute"));
- for(const action of ['data-hub-action="scanCode"','data-import="image"',
-    'data-hub-action="pageManager"','data-tool="merge"','data-tool="images"'])
+ assert.ok(home.includes("attribute:quickScanActions[3].attribute"));
+ for(const action of ['data-hub-action="scanCode"','data-open-library',
+    'data-category="convert"','data-tool="merge"'])
    assert.ok(home.includes(action),action);
+ assert.ok(home.includes('rivo-scan-more-tools">'),'secondary tools begin collapsed');
  assert.ok(home.includes('featuredScanModes'));
  assert.ok(home.includes('rivo-scan-mode-qr'));
  assert.ok(css.includes('.rivo-scan-mode-qr'));
