@@ -67,8 +67,8 @@ if(-not $gradleText.Contains("apply plugin: 'org.jetbrains.kotlin.android'")) {
 }
 if($gradleText -notmatch 'RivoScan Kotlin JVM 17') {
   $gradleText=$gradleText.TrimEnd() + [Environment]::NewLine +
-    "// RivoScan Kotlin JVM 17: align with Capacitor Android Java toolchain" + [Environment]::NewLine +
-    "kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }" + [Environment]::NewLine
+    "// RivoScan Kotlin JVM 21: match Capacitor Java compile task on JDK 21" + [Environment]::NewLine +
+    "kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21) } }" + [Environment]::NewLine
 }
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
