@@ -62,6 +62,41 @@ async function connection(){
  };
  return {evaluate,close:()=>ws.close(),target:target.url};
 }
+// Capture every visibly rendered button and dialogue controls with true
+// layout metrics. Report blank/unreadable controls instead of pretending they pass.
+async function auditVisibleButtons(cd,scene){
+ const result=await cd.evaluate(`(()=>{
+  const selected=[...document.querySelectorAll('button')].filter(b=>{
+   const r=b.getBoundingClientRect(),style=getComputedStyle(b);
+   return r.width>0&&r.height>0&&style.visibility!=='hidden'&&
+     style.display!=='none'&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight;
+  });
+  const buttons=selected.map(b=>{
+   const r=b.getBoundingClientRect(),text=(b.innerText||'').trim();
+   const icon=!!b.querySelector('svg,img,.rivo-action-icon');
+   const style=getComputedStyle(b);
+   return {name:b.getAttribute('aria-label')||b.getAttribute('title')||text.slice(0,100),
+    text:text.slice(0,150),icon,x:Math.round(r.x),y:Math.round(r.y),
+    width:Math.round(r.width),height:Math.round(r.height),
+    background:style.backgroundColor,blank:!text&&!icon,
+    clipped:r.left<0||r.right>innerWidth||r.top<0||r.bottom>innerHeight,
+    narrowLabel:text.length>8&&r.width<80};
+  });
+  const overlays=[...document.querySelectorAll('.rivo-code-overlay,.rivo-id-overlay,.rivo-pages-overlay,.rivo-perfectscan-overlay,.rivo-editor-overlay,.bulk-overlay,.doc-detail-overlay,.rivo-release-overlay')]
+    .filter(o=>o.getBoundingClientRect().width>0&&getComputedStyle(o).display!=='none')
+    .map(o=>o.className);
+  return {viewport:{w:innerWidth,h:innerHeight},buttons,overlays,
+    blank:buttons.filter(b=>b.blank).map(b=>b.name),
+    clipped:buttons.filter(b=>b.clipped).map(b=>b.name),
+    narrow:buttons.filter(b=>b.narrowLabel).map(b=>b.name)};
+ })()`);
+ report.checks.push({name:'UI buttons '+scene,result});
+ report.buttons.push(...result.buttons.map(x=>({scene,...x})));
+ log('AUDIT '+scene+' buttons='+result.buttons.length+
+     ' blank='+result.blank.length+' clipped='+result.clipped.length+
+     ' narrow='+result.narrow.length+' dialogs='+result.overlays.join(';'));
+ return result;
+}
 let cd;
 try {
  cd=await connection();
@@ -86,12 +121,15 @@ try {
  }
  await cd.evaluate('location.reload()');
  await sleep(9000);
+ screenshot('34-home-ui-all-buttons');
+ await auditVisibleButtons(cd,'home');
  await cd.evaluate('document.querySelector(".mobilebar [data-open-library]")?.click();true');
  await sleep(4000);
  let rows=await cd.evaluate('({entries:[...document.querySelectorAll("#library-list .document-entry")].map(x=>x.textContent.trim().slice(0,130)),boxes:document.querySelectorAll("#library-list input.doc-select-box").length})');
  report.checks.push({name:'Visible document rows',result:rows});
  log('DOCS '+JSON.stringify(rows));
  screenshot('30-real-documents-loaded');
+ await auditVisibleButtons(cd,'documents');
  if(rows.boxes>0){
   await cd.evaluate('document.querySelector("#library-list input.doc-select-box")?.click();true');
   await sleep(700);
@@ -101,6 +139,7 @@ try {
   report.checks.push({name:'Checkbox single row, all six buttons',result:selection});
   log('SELECTION '+JSON.stringify(selection));
   screenshot('31-checkbox-six-buttons-on-right');
+  await auditVisibleButtons(cd,'selected-document');
   if(selection.present){
    const check=await cd.evaluate('(()=>{const q=document.querySelector("#library-list .doc-selected .rivo-selection-inline");return [...q.querySelectorAll("button")].map(b=>({name:b.title,icon:b.querySelector("svg")?.outerHTML?.slice(0,70),visible:getComputedStyle(b).visibility!=="hidden"}))})()');
    report.buttons.push(...check);
@@ -129,11 +168,19 @@ try {
     const clicked=await cd.evaluate('(()=>{const b=document.querySelector("[data-hub-action='+JSON.stringify(entry.id)+']");if(!b)return false;b.click();return true})()');
     if(!clicked){report.checks.push({name:'Open '+entry.id,result:'BUTTON NOT FOUND'});continue}
     await sleep(900);
-    screenshot('tool-'+String(entry.id).replace(/[^A-Za-z0-9_-]/g,'_'));
-    report.checks.push({name:'Open '+entry.id,result:'captured (interaction not necessarily functional without input)'});
+    const scene='tool-'+String(entry.id).replace(/[^A-Za-z0-9_-]/g,'_');
+    screenshot(scene);
+    const audit=await auditVisibleButtons(cd,scene);
+    report.checks.push({name:'Open '+entry.id,result:{
+     captured:true,overlays:audit.overlays,blank:audit.blank,clipped:audit.clipped,
+     requiresRealInput:audit.overlays.length===0
+    }});
     consecutiveErrors=0;
     adb('shell','input','keyevent','4');
-    await sleep(600);
+    await sleep(650);
+    const after=await cd.evaluate('([...document.querySelectorAll(".rivo-code-overlay,.rivo-id-overlay,.rivo-pages-overlay,.rivo-perfectscan-overlay,.rivo-editor-overlay,.bulk-overlay,.doc-detail-overlay")].filter(x=>x.getBoundingClientRect().width>0).map(x=>x.className))');
+    report.checks.push({name:'Android Back '+entry.id,result:{remainingModals:after}});
+    log('BACK '+entry.id+' remaining='+JSON.stringify(after));
    }catch(e){
      consecutiveErrors++;
      report.checks.push({name:'Open '+entry.id,result:'FAILED '+e.message});
@@ -149,4 +196,6 @@ try {
  try{cd?.close()}catch{}
  fs.writeFileSync(out+'/qa-webview-audit.json',JSON.stringify(report,null,2));
  log('SAVED '+report.scenes.length+' actual screenshots, '+report.buttons.length+' audited buttons');
+ const docs=report.checks.filter(x=>x.name.startsWith('Open '));
+ log('TOOL_COVERAGE '+docs.length+'/48; screenshot != functionality verified');
 }

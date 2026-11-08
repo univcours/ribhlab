@@ -24,8 +24,11 @@ test('Selected one file actions are six icon-only buttons, multi actions are hor
 });
 test('Android back gestures close editors first, Retake is visible',()=>{
  const main=read('src/main.js'),editor=read('src/scan-editor.js');
- for(const k of ['.rivo-editor-overlay [data-edit="cancel"]','.rivo-perfectscan-modal [data-perfect="close"]',
- '.rivo-id-overlay .rivo-code-actions button:last-child','nativeCaptureDepth>0)return true',
+ for(const k of [".rivo-editor-overlay",".rivo-perfectscan-overlay",
+ ".rivo-id-overlay",".rivo-code-overlay",".rivo-pages-overlay",
+ ".bulk-overlay",".doc-detail-overlay","[data-edit=\"cancel\"]",
+ "[data-perfect=\"close\"]","[data-rivo-dialog-close]",
+ "nativeCaptureDepth>0","if(bulkUI.mode())",
  "CapacitorApp.addListener('backButton'", "document.addEventListener('touchend'"])
  assert.ok(main.includes(k),k);
  assert.ok(editor.includes('data-edit="retake"'));
