@@ -13,10 +13,10 @@ import android.widget.TextView
  * Never changes scanner capture settings, permissions, or saved files.
  */
 object RivoPremiumChrome {
-    val NAVY: Int = 0xFF031022.toInt()
-    val PANEL: Int = 0xFF092641.toInt()
-    val CYAN: Int = 0xFF2CE9F1.toInt()
-    val MUTED: Int = 0xFFB5D9E9.toInt()
+    @JvmField val NAVY: Int = 0xFF031022.toInt()
+    @JvmField val PANEL: Int = 0xFF092641.toInt()
+    @JvmField val CYAN: Int = 0xFF2CE9F1.toInt()
+    @JvmField val MUTED: Int = 0xFFB5D9E9.toInt()
     private val PANEL_BRIGHT: Int = 0xFF104467.toInt()
 
     @JvmStatic
