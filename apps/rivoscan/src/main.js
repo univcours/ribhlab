@@ -445,12 +445,12 @@ function render(){
 function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
  if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',icon:'file-pdf'};
- if(/^image\\//.test(mime)||/\\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',icon:'image'};
- if(/\\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',icon:'file-sheet'};
- if(/\\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',icon:'file-doc'};
- if(/\\.(pptx?|odp)$/.test(name))return {code:'PPT',klass:'ppt',icon:'file-slide'};
- if(/\\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',icon:'file-zip'};
- if(/\\.(txt|md|json)$/.test(name))return {code:'TXT',klass:'txt',icon:'file-text'};
+ if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',icon:'image'};
+ if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',icon:'file-sheet'};
+ if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',icon:'file-doc'};
+ if(/\.(pptx?|odp)$/.test(name))return {code:'PPT',klass:'ppt',icon:'file-slide'};
+ if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',icon:'file-zip'};
+ if(/\.(txt|md|json)$/.test(name))return {code:'TXT',klass:'txt',icon:'file-text'};
  return {code:'FILE',klass:'generic',icon:'file'};
 }
 function recentDocuments(limit=6,query=homeSearchQuery){
