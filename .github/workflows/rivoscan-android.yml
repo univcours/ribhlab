@@ -7,7 +7,7 @@ on:
       - 'apps/rivoscan/**'
       - '.github/workflows/rivoscan-android.yml'
   pull_request:
-    branches: [main]
+    branches: [main, feat/rivoscan-android-beta]
     paths:
       - 'apps/rivoscan/**'
       - '.github/workflows/rivoscan-android.yml'
