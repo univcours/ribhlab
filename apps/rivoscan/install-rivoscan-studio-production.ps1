@@ -48,7 +48,7 @@ try{
   $src=[regex]::Match($props,'(?m)^versionCode=(\d+)\s*$')
   if(-not $src.Success){throw 'Source version metadata missing.'}
   $sourceCode=[long]$src.Groups[1].Value
-  if($code -lt 102 -or $code -ne $sourceCode){
+  if($code -lt 103 -or $code -ne $sourceCode){
     throw "APK code $code is not current Production code $sourceCode. Generate a fresh signed Release APK."
   }
   $newSign=Signature $signer $ApkPath
