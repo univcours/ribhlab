@@ -85,3 +85,5 @@ else
  note "QA_PDF_ROW_NOT_ACCESSIBLE: selected-file screenshot NOT VERIFIED."
 fi
 note "Audit captured real screens; optional PDF selection status above."
+node apps/rivoscan/scripts/capture-webview-interactions.mjs 2>&1 | tee -a "$LOG" || true
+
