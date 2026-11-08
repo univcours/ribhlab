@@ -17,13 +17,15 @@ for n in 1 2 3 4 5 6 7; do scroll; shot "tools-scroll-$n"; done
 tap 975 1780 4
 shot "14-me-top"
 for n in 1 2 3 4; do scroll; shot "me-scroll-$n"; done
+# Header coordinates verified from an actual 1080x1920 emulator screenshot:
+# language spans ~673-845; mute spans ~860-945; folder ~965-1063.
 # Native language selector dialog and sound mute state.
-tap 635 125 2
+tap 725 125 2
 shot "19-language-picker"
 adb shell input keyevent 4; sleep 2
-tap 785 125 2
+tap 905 125 2
 shot "20-all-sounds-muted"
-tap 785 125 1
+tap 905 125 1
 # Native camera and more controls.
 tap 535 1780 7
 shot "21-native-camera"
