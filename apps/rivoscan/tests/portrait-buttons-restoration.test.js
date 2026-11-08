@@ -6,9 +6,11 @@ import {homeTiles} from '../src/premium-home-model.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const main=read('src/main.js'),bulk=read('src/library-bulk.js'),css=read('src/premium-home.css');
 
-test('Every home shortcut is accessible without a hidden More Tools panel',()=>{
+test('Every home shortcut is accessible through native collapsed More Tools and Tools directory',()=>{
  assert.equal(homeTiles.length,9);
- assert.ok(main.includes('<details class="rivo-scan-more-tools" open>'));
+ assert.ok(main.includes('<details class="rivo-scan-more-tools">'));
+ assert.ok(main.includes('<summary><span class="rivo-scan-more-icon"'));
+ assert.ok(main.includes('data-tab="tools">${ut(\'seeAll\')}'));
  assert.ok(main.includes('data-tab="tools" class="rivo-scan-all-tools"'));
  assert.ok(css.includes('.rivo-scan-more-tools[open] .rivo-premium-tools'));
 });
