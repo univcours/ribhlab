@@ -97,3 +97,10 @@ test('AI Chat and Solver document chooser is labelled and not a white native fil
  assert.ok(source.includes('Choose document'));
  assert.ok(source.includes('rivo-picker-filename'));
 });
+
+test('Screenshot UI audit measures active popup not obscured underlying controls and scrolls long modals',()=>{
+ const s=read('scripts/capture-webview-interactions.mjs');
+ assert.ok(s.includes('topLayer||document'));
+ assert.ok(s.includes('scrollHeight-node.clientHeight<80'));
+ assert.ok(s.includes("scene+'-scrolled-bottom'"));
+});

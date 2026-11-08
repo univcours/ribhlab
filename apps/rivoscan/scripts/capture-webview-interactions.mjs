@@ -66,7 +66,11 @@ async function connection(){
 // layout metrics. Report blank/unreadable controls instead of pretending they pass.
 async function auditVisibleButtons(cd,scene){
  const result=await cd.evaluate(`(()=>{
-  const selected=[...document.querySelectorAll('button')].filter(b=>{
+  const dialogSelectors='.rivo-code-overlay,.rivo-id-overlay,.rivo-pages-overlay,.rivo-perfectscan-overlay,.rivo-editor-overlay,.bulk-overlay,.doc-detail-overlay,.rivo-release-overlay';
+ const openLayers=[...document.querySelectorAll(dialogSelectors)]
+   .filter(x=>x.getBoundingClientRect().width>0&&getComputedStyle(x).display!=='none');
+ const topLayer=openLayers.sort((a,b)=>(parseInt(getComputedStyle(b).zIndex,10)||0)-(parseInt(getComputedStyle(a).zIndex,10)||0))[0];
+ const selected=[...(topLayer||document).querySelectorAll('button')].filter(b=>{
    const r=b.getBoundingClientRect(),style=getComputedStyle(b);
    return r.width>0&&r.height>0&&style.visibility!=='hidden'&&
      style.display!=='none'&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight;
@@ -206,6 +210,23 @@ try {
     const scene='tool-'+String(entry.id).replace(/[^A-Za-z0-9_-]/g,'_');
     screenshot(scene);
     const audit=await auditVisibleButtons(cd,scene);
+    // Tall tool dialogs contain buttons below the first viewport.
+    // Capture their real scrolled bottom, then restore the initial position.
+    const scrollInfo=await cd.evaluate(`(()=>{
+      const roots=[...document.querySelectorAll('.rivo-code-dialog,.rivo-id-dialog,.rivo-perfectscan-modal,.rivo-pages-modal,.bulk-sheet,.rivo-editor-window')]
+        .filter(x=>x.getBoundingClientRect().width>0&&getComputedStyle(x).display!=='none');
+      const node=roots.sort((a,b)=>(b.scrollHeight-b.clientHeight)-(a.scrollHeight-a.clientHeight))[0];
+      if(!node||node.scrollHeight-node.clientHeight<80)return {scrolled:false};
+      const max=node.scrollHeight-node.clientHeight;node.scrollTop=max;
+      return {scrolled:true,delta:max,node:node.className};
+    })()`);
+    if(scrollInfo?.scrolled){
+      await sleep(300);
+      screenshot(scene+'-scrolled-bottom');
+      await auditVisibleButtons(cd,scene+'-bottom');
+      report.checks.push({name:'Tool scroll '+entry.id,result:scrollInfo});
+      await cd.evaluate('document.querySelector(".rivo-code-dialog,.rivo-id-dialog,.rivo-perfectscan-modal,.rivo-pages-modal,.bulk-sheet,.rivo-editor-window")?.scrollTo(0,0)');
+    }
     report.checks.push({name:'Open '+entry.id,result:{
      captured:true,overlays:audit.overlays,blank:audit.blank,clipped:audit.clipped,
      requiresRealInput:audit.overlays.length===0
