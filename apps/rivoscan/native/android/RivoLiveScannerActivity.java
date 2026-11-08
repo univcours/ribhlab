@@ -1029,7 +1029,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
                 captureInProgress=false;
                 if(isFinishing()||isDestroyed()){file.delete();return;}
-                try{Bitmap bmp=decodeFile(file);showCaptureReview(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
+                try{Bitmap bmp=decodeFile(file);showCaptureReview(bmp);}catch(Exception e){autoShutterGate.reset();message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
             @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;autoShutterGate.reset();file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
