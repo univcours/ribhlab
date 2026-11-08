@@ -16,6 +16,19 @@ test('premium UI is the final active stylesheet for all screens',()=>{
   assert.ok(css.includes(name),name);
  }
 });
+test('dashboard hero matches Scan Document plus QR and every shortcut performs real work',()=>{
+ const js=read('src/main.js');
+ const home=js.slice(js.indexOf('function home(){'),js.indexOf('function toolsWorkspace(){'));
+ const css=read('src/rivoscan-premium-native.css');
+ for(const action of ['data-live-camera','data-hub-action="scanCode"','data-import="image"',
+    'data-hub-action="pageManager"','data-tool="merge"','data-tool="images"'])
+   assert.ok(home.includes(action),action);
+ assert.ok(home.includes('featuredScanModes'));
+ assert.ok(home.includes('rivo-scan-mode-qr'));
+ assert.ok(css.includes('.rivo-scan-mode-qr'));
+ assert.ok(js.includes("document.querySelectorAll('[data-hub-action]')"));
+ assert.ok(js.includes("document.querySelectorAll('[data-import]')"));
+});
 test('page manager actions are compact, no clipped bottom row and reachable Save PDF',()=>{
  const css=read('src/rivoscan-premium-native.css');
  const page=read('src/page-manager.js');
