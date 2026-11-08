@@ -78,3 +78,8 @@ test('Book Scan Back cannot interrupt a PDF save',()=>{
  assert.ok(code.includes("const cleanup=()=>{if(busy)return;"));
  assert.ok(code.includes("if(!closed){busy=false;cleanup();}"));
 });
+
+test('Full screenshot audit captures document action dialogs and release notes',()=>{
+ const script=read('scripts/capture-webview-interactions.mjs');
+ for(const s of ["'preview','edit','add'","'selected-file-'","'dialog-whats-new'","'SELECTED_ACTION_FAILED'"])assert.ok(script.includes(s),s);
+});

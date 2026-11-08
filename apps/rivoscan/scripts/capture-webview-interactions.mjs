@@ -143,6 +143,34 @@ try {
   if(selection.present){
    const check=await cd.evaluate('(()=>{const q=document.querySelector("#library-list .doc-selected .rivo-selection-inline");return [...q.querySelectorAll("button")].map(b=>({name:b.title,icon:b.querySelector("svg")?.outerHTML?.slice(0,70),visible:getComputedStyle(b).visibility!=="hidden"}))})()');
    report.buttons.push(...check);
+   // Real workflows behind each selected-file icon. These tests use only
+   // temporary QA documents saved to the isolated emulator.
+   for(const action of ['preview','edit','add']){
+    try{
+     const opened=await cd.evaluate('(()=>{const b=document.querySelector("#library-list .doc-selected [data-doc-'+action+']");if(!b)return false;b.click();return true})()');
+     if(!opened){report.checks.push({name:'Selected file '+action,result:'BUTTON NOT FOUND'});continue}
+     await sleep(1600);
+     const scene='selected-file-'+action;
+     screenshot(scene);
+     const buttons=await auditVisibleButtons(cd,scene);
+     report.checks.push({name:'Selected file '+action,result:{captured:true,overlays:buttons.overlays,blank:buttons.blank}});
+     adb('shell','input','keyevent','4');
+     await sleep(1000);
+     // Return to the Documents view if an editor navigated away from it.
+     const inDocs=await cd.evaluate('!!document.querySelector("#library-list")');
+     if(!inDocs){
+      await cd.evaluate('document.querySelector(".mobilebar [data-open-library]")?.click();true');
+      await sleep(1600);
+     }
+     const single=await cd.evaluate('!!document.querySelector("#library-list .doc-selected")');
+     if(!single)await cd.evaluate('document.querySelector("#library-list input.doc-select-box")?.click();true');
+    }catch(error){
+     report.checks.push({name:'Selected file '+action,result:'UNAVAILABLE '+error.message});
+     log('SELECTED_ACTION_FAILED '+action+' '+error.message);
+     try{adb('shell','input','keyevent','4')}catch{}
+     await sleep(800);
+    }
+   }
    if(rows.boxes>1){
     await cd.evaluate('document.querySelectorAll("#library-list input.doc-select-box")[1]?.click();true');
     await sleep(1100);
@@ -196,6 +224,19 @@ try {
     }
   }
  }
+ // Release notes are a separate modal outside the 48 Tools directory.
+ try{
+  await cd.evaluate('document.querySelector(".mobilebar [data-tab=me]")?.click();true');
+  await sleep(1100);
+  const release=await cd.evaluate('(()=>{const b=document.querySelector("[data-whats-new]");if(!b)return false;b.click();return true})()');
+  if(release){
+   await sleep(650);
+   screenshot('dialog-whats-new');
+   const audit=await auditVisibleButtons(cd,'dialog-whats-new');
+   report.checks.push({name:'Release notes modal',result:{captured:true,blank:audit.blank,clipped:audit.clipped}});
+   adb('shell','input','keyevent','4');
+  }
+ }catch(err){report.checks.push({name:'Release notes modal',result:'UNAVAILABLE '+err.message})}
 } catch(error) {
  report.checks.push({name:'Extended WebView audit',result:'UNAVAILABLE '+error.message});
  log('CDP_UNAVAILABLE '+error.message);
