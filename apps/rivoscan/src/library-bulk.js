@@ -34,7 +34,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const fileActionGlyph={
    share:'<path d="M12 16V3m-5 5 5-5 5 5"/><path d="M4 15v5h16v-5"/>',
    edit:'<path d="M12 20h9"/><path d="M16 4a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16 4Z"/>',
-   preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+   preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
    rename:'<path d="M4 20h16M7 16l9-9 3 3-9 9-4 1 1-4Z"/>',
    delete:'<path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/>',
    add:'<path d="M5 3h10l5 5v13H5zM15 3v5h5M12 11v8m-4-4h8"/>'

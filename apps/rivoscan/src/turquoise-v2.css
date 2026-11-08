@@ -519,3 +519,11 @@ body.rivo-multiselect #app .content{padding-bottom:calc(210px + env(safe-area-in
  #app .rivo-dark-ui .topbar-brand-icon{width:26px!important;height:26px!important}
  #app .rivo-dark-ui .rivo-header-action.rivo-header-feature{display:none!important}
 }
+
+/* Keep the quick-action grid on the physical right, including Arabic RTL. */
+#app .library-workspace #library-list .document-entry.doc-selected,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected{direction:ltr!important}
+#app .library-workspace #library-list .document-entry.doc-selected>.document-description strong,
+#app .rivo-scan-first .rivo-premium-recent .rivo-recent-card.doc-selected>.recent-file-meta strong{
+ unicode-bidi:plaintext!important;overflow-wrap:anywhere!important;
+}
