@@ -49,3 +49,12 @@ test('Screenshot audit awaits async Tools navigation before collecting all 48 bu
  assert.ok(src.includes('48 Tools directory discovered after navigation'));
  assert.ok(src.includes("await auditVisibleButtons(cd,'tools')"));
 });
+
+test('Document actions are three compact labelled buttons and selection hint matches checkbox behaviour',()=>{
+ const main=read('src/main.js'),bulk=read('src/library-bulk.js'),css=read('src/ui-consistency.css');
+ assert.ok(main.includes('Choose folder'));
+ assert.ok(main.includes('Open folder'));
+ assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
+ assert.ok(bulk.includes('Tick the checkbox to see document actions.'));
+ assert.ok(!bulk.includes('Long-press any document for more actions.'));
+});
