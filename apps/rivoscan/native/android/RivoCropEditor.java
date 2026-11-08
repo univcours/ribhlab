@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.DashPathEffect;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.MotionEvent;
@@ -68,7 +67,8 @@ public final class RivoCropEditor extends View {
         canvas.drawPath(path,paint);
         paint.setColor(detected?Color.rgb(32,220,198):Color.rgb(110,232,211));
         paint.setStrokeWidth(dp(2.5f));paint.setStyle(Paint.Style.STROKE);
-        paint.setPathEffect(detected?null:new DashPathEffect(new float[]{dp(9),dp(6)},0));
+        // A continuous turquoise outline avoids the confusing dashed guide.
+        paint.setPathEffect(null);
         canvas.drawPath(path,paint);
         paint.setPathEffect(null);
         paint.setStyle(Paint.Style.FILL);
