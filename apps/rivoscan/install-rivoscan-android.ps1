@@ -91,8 +91,10 @@ try {
   Assert-Code "ADB server startup"
   $output = & $adb devices
   Assert-Code "ADB devices"
+  # mDNS Wireless Debugging serials may contain spaces, e.g. '(2)'.
+  # Capture the complete serial before its ADB status column.
   $serials = @($output | ForEach-Object {
-    if($_ -match '^\s*([^\s]+)\s+device(?:\s|$)'){$matches[1]}
+    if($_ -match '^\s*(.+?)\s+device(?:\s|$)'){$matches[1]}
   })
   if($serials.Count -eq 0) {
     throw "No Android phone connected and authorized. Connect your phone via USB or wireless debugging and approve the prompt."
