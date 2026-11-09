@@ -1,6 +1,8 @@
 package com.ribhlab.rivoscan
 
+import android.content.Intent
 import android.graphics.Color
+import org.json.JSONObject
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -18,7 +20,7 @@ import com.getcapacitor.BridgeActivity
  * This class replaces the former generated Java MainActivity, not the scanner.
  */
 class MainActivity : BridgeActivity() {
-    private val premiumNavy = Color.rgb(3, 16, 34)
+    private val materialCanvas = Color.rgb(247, 249, 253)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Configure system bars before Capacitor constructs its WebView.
@@ -26,11 +28,11 @@ class MainActivity : BridgeActivity() {
             WindowManager.LayoutParams.FLAG_FULLSCREEN or
                 WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
         )
-        window.statusBarColor = premiumNavy
-        window.navigationBarColor = premiumNavy
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = false
-            isAppearanceLightNavigationBars = false
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
         }
 
         // Register all existing native plugins before super.onCreate.
@@ -38,6 +40,7 @@ class MainActivity : BridgeActivity() {
         registerPlugin(RivoDocumentsPlugin::class.java)
         registerPlugin(RivoUVDocPlugin::class.java)
         registerPlugin(RivoSurface3DPlugin::class.java)
+        registerPlugin(RivoUIBridgePlugin::class.java)
         super.onCreate(savedInstanceState)
 
         // Hide the AppCompat bar; the HTML header is the only app toolbar.
@@ -48,8 +51,8 @@ class MainActivity : BridgeActivity() {
             // of the HTML surface, respecting cutouts on Samsung phones.
             val content = findViewById<View>(android.R.id.content)
             val webView = bridge.webView
-            content.setBackgroundColor(premiumNavy)
-            webView.setBackgroundColor(premiumNavy)
+            content.setBackgroundColor(materialCanvas)
+            webView.setBackgroundColor(materialCanvas)
             ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
                 val bars = insets.getInsets(
                     WindowInsetsCompat.Type.statusBars() or
@@ -63,6 +66,21 @@ class MainActivity : BridgeActivity() {
                 insets
             }
             ViewCompat.requestApplyInsets(content)
+        }
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Keep the WebView session and its existing document state intact.
+        val route = intent.getStringExtra(RIVO_NATIVE_ROUTE)
+        if (!route.isNullOrBlank()) {
+            intent.removeExtra(RIVO_NATIVE_ROUTE)
+            val safe = JSONObject.quote(route)
+            bridge.webView.post {
+                bridge.webView.evaluateJavascript(
+                    "window.rivoNativeRoute && window.rivoNativeRoute($safe);", null
+                )
+            }
         }
     }
 }
