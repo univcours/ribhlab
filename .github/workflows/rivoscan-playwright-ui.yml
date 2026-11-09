@@ -1,0 +1,60 @@
+name: RivoScan Playwright UI layout audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/src/main.js'
+      - 'apps/rivoscan/src/compact-turquoise.css'
+      - 'apps/rivoscan/src/premium-home.css'
+      - 'apps/rivoscan/src/style.css'
+      - 'apps/rivoscan/src/tools-hub.js'
+      - 'apps/rivoscan/src/merged-tools.js'
+      - 'apps/rivoscan/scripts/visual-ui-audit.mjs'
+      - 'apps/rivoscan/maestro/navigation-smoke.yaml'
+      - '.github/workflows/rivoscan-playwright-ui.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  webview-visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project and Playwright
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Validate and build the actual app
+        run: |
+          npm run check
+          npm test
+          npm run build
+      - name: Run visual tap tests at 4 Android viewport sizes
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-vite-preview.log 2>&1 &
+          for n in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/visual-ui-audit.mjs
+      - name: Save screenshots, audit report and server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Playwright-UI-Audit
+          path: |
+            /tmp/rivoscan-visual-ui/
+            /tmp/rivoscan-vite-preview.log
+          retention-days: 14
+          if-no-files-found: warn
