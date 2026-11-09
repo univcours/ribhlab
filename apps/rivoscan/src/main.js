@@ -404,10 +404,6 @@ function settingsWorkspace(){
  <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>
 
  ${scannerPreferenceRows()}
- <button type="button" class="settings-row rivo-scanner-pref" data-scan-advanced>
- <span class="settings-row-icon">${ico('layers',22)}</span>
- <span class="rivo-pref-copy"><strong>${({en:'Advanced document correction',ar:'تصحيح الوثائق المتقدم',fr:'Correction avancée des documents',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione documenti avanzata'})[language]||'Advanced document correction'}</strong>
- <small>${({en:'Combine 2–4 views, AI flatten or relative 3D (optional)',ar:'دمج 2 حتى 4 صور، تقويم AI أو 3D نسبي (اختياري)',fr:'Fusion 2–4 vues, mise à plat IA ou 3D relative'})[language]||'Multi-angle or AI flatten (optional)'}</small></span>${ico('back',18)}</button>
  <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>

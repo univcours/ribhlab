@@ -95,12 +95,14 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   }catch{}
  }
  async function recordPlate(plate){
+  // Expire old sightings before testing duplicates; the same car may pass again later.
+  const now=Date.now();
+  for(const [p,time] of confirmed)if(now-time>30000)confirmed.delete(p);
   if(closed||confirmed.has(plate))return;
   const query=search.value;
   const match=matchesPlate(plate,query);
   // A brief second OCR confirmation suppresses false alarms/captures.
-  confirmed.set(plate,Date.now());
-  for(const [p,time] of confirmed)if(Date.now()-time>30000)confirmed.delete(p);
+  confirmed.set(plate,now);
   let photoName='';
   if(match){
    beep();
