@@ -1,7 +1,7 @@
 name: RivoScan standalone checks
 on:
   push:
-    branches: [main, develop, feat/**]
+    branches: [main, develop, rivoscan-standalone-ready, 'feat/**']
   workflow_dispatch:
 permissions:
   contents: read
