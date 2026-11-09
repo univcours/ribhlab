@@ -80,6 +80,14 @@ test('Document viewer, file actions and native editors inherit turquoise colors'
   assert.ok(css.includes(name),name);
  }
 });
+test('Settings switches, language selector and search icons follow teal system',()=>{
+ const css=file('src/compact-turquoise.css');
+ for(const marker of ['.rivo-scanner-pref input[type="checkbox"][role="switch"]:checked',
+   '.settings-sounds input[type="checkbox"][role="switch"]:checked',
+   '.rivo-scanner-pref select','.rivo-tools-search svg','.settings-identity']){
+  assert.ok(css.includes(marker),marker);
+ }
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));

@@ -451,3 +451,60 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 .rivo-perfectscan-overlay .rivo-perfectscan-modal header{
  border-color:#2f8e84!important;
 }
+
+/* Final emulator screenshot audit: Android switches and select widgets use teal. */
+#app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"],
+#app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]{
+ appearance:none!important;-webkit-appearance:none!important;
+ position:relative!important;width:47px!important;min-width:47px!important;
+ height:27px!important;min-height:27px!important;margin:0!important;
+ border-radius:17px!important;border:1px solid #a1c8c2!important;
+ background:#c9dcd8!important;box-shadow:none!important;cursor:pointer;
+}
+#app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"]:checked,
+#app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]:checked{
+ background:#079b97!important;border-color:#087f7d!important;
+}
+#app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"]::before,
+#app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]::before{
+ content:""!important;position:absolute!important;top:3px!important;left:3px!important;
+ width:19px!important;height:19px!important;border-radius:50%!important;
+ background:#fff!important;box-shadow:0 1px 4px #004c4a36!important;
+ transform:translateX(0)!important;transition:transform .16s ease;
+}
+#app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"]:checked::before,
+#app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]:checked::before{
+ transform:translateX(19px)!important;
+}
+#app .rivo-dark-ui .rivo-scanner-pref select,
+#app .rivo-dark-ui .settings-lang select{
+ color:#075f62!important;background:#f9fffd!important;
+ border:1.5px solid #a1d5cc!important;border-radius:10px!important;
+ box-shadow:none!important;
+}
+#app .rivo-dark-ui .rivo-scanner-pref:focus-within,
+#app .rivo-dark-ui .settings-lang:focus-within{
+ outline:2px solid #079b97!important;outline-offset:2px!important;
+}
+#app .rivo-dark-ui .rivo-tools-search svg,
+#app .rivo-dark-ui .library-search svg,
+#app .rivo-dark-ui .rivo-premium-search svg{
+ color:#079b97!important;
+}
+#app .rivo-dark-ui .settings-identity{
+ min-height:72px!important;padding:9px 11px!important;
+ gap:10px!important;border:1px solid #c7e8df!important;border-radius:13px!important;
+}
+#app .rivo-dark-ui .settings-logo{
+ width:49px!important;height:49px!important;border-radius:11px!important;
+ background:#e6f9f4!important;
+}
+#app .rivo-dark-ui .settings-logo img{
+ width:43px!important;height:43px!important;object-fit:contain;
+}
+#app .rivo-dark-ui .settings-identity h2{font-size:16px!important;margin:0 0 2px!important;color:#086c70!important}
+#app .rivo-dark-ui .settings-identity small{font-size:10px!important;color:#547d7a!important}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"]::before,
+ #app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]::before{transition:none!important}
+}
