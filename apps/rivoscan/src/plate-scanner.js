@@ -12,7 +12,11 @@ export function normalizePlate(value){
  }).toUpperCase().replace(/[^A-Z0-9\u0621-\u064A]/g,'');
 }
 export function plateCandidates(text){
- const raw=String(text||'').normalize('NFKC').toUpperCase();
+ const raw=String(text||'').normalize('NFKC')
+  .replace(/[٠-٩۰-۹]/g,d=>{
+   const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+   return String(i>=0?i:'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  }).toUpperCase();
  const out=[];
  for(const line of raw.split(/\n+/)){
   const patterns=[
@@ -124,10 +128,16 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(closed||processing||!worker||video.readyState<2)return;
   processing=true;
   try{
+   // Focus OCR on the on-screen number-plate target, not the whole vehicle/background.
    const canvas=snapshot();
-   const scale=Math.min(1,900/Math.max(canvas.width,canvas.height));
-   const small=document.createElement('canvas');small.width=Math.max(1,Math.round(canvas.width*scale));
-   small.height=Math.max(1,Math.round(canvas.height*scale));small.getContext('2d').drawImage(canvas,0,0,small.width,small.height);
+   const roi={x:Math.round(canvas.width*.10),y:Math.round(canvas.height*.29),
+    w:Math.round(canvas.width*.80),h:Math.round(canvas.height*.43)};
+   const scale=Math.min(1.35,1100/Math.max(roi.w,roi.h));
+   const small=document.createElement('canvas');
+   small.width=Math.max(1,Math.round(roi.w*scale));
+   small.height=Math.max(1,Math.round(roi.h*scale));
+   small.getContext('2d',{willReadFrequently:true}).drawImage(canvas,
+    roi.x,roi.y,roi.w,roi.h,0,0,small.width,small.height);
    const data=(await worker.recognize(small)).data;
    const candidates=plateCandidates(data.text);
    const now=Date.now();

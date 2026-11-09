@@ -307,3 +307,77 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 @media(prefers-reduced-motion:reduce){
  #app .rivo-dark-ui *,#app .rivo-live-overlay *{animation:none!important;scroll-behavior:auto!important}
 }
+
+/* Screenshot-audited global override: no residual electric-blue controls.
+   More specific than the legacy brand selectors imported earlier. */
+#app .rivo-dark-ui .crumb strong{
+ color:#056f72!important;-webkit-text-fill-color:#056f72!important;
+}
+#app .rivo-dark-ui .library-heading-actions .btn.btn-outline,
+#app .rivo-dark-ui .storage-actions .scan-upload-link,
+#app .rivo-dark-ui .library-workspace .scan-upload-link,
+#app .rivo-dark-ui .library-workspace .back,
+#app .rivo-dark-ui .settings-row[data-ad-privacy]{
+ color:#066c6e!important;background:#eaf9f6!important;
+ border:1px solid #a5dcd3!important;box-shadow:none!important;
+}
+#app .rivo-dark-ui .library-heading-actions .btn.btn-outline svg,
+#app .rivo-dark-ui .storage-actions .scan-upload-link svg{
+ color:#067f7b!important;
+}
+#app .rivo-dark-ui .mobilebar button.active{
+ color:#057c78!important;background:#e4f8f2!important;
+ border:1px solid #97d8cb!important;box-shadow:none!important;
+}
+#app .rivo-dark-ui .document-entry.doc-selected,
+#app .rivo-home .recent-entry.doc-selected{
+ background:#e9faf6!important;border:2px solid #079b97!important;
+ box-shadow:0 0 0 2px #86d6c437!important;
+}
+#app .rivo-dark-ui .doc-select-box:checked{
+ background:#079b97!important;border-color:#079b97!important;
+}
+#app .rivo-dark-ui .scan-action-primary,
+#app .rivo-dark-ui .scan-action-secondary,
+#app .rivo-dark-ui .scan-upload-link{
+ background:#e6f8f3!important;color:#086b6d!important;
+ border:1px solid #9bd6ce!important;box-shadow:none!important;
+}
+#app .rivo-dark-ui .scan-action-primary{
+ background:linear-gradient(125deg,#079b97,#0fbcae)!important;
+ color:white!important;border-color:#088c86!important;
+}
+#app .rivo-dark-ui .scan-action-primary small,
+#app .rivo-dark-ui .scan-action-primary strong{color:white!important}
+#app .rivo-dark-ui .scan-runtime,
+#app .rivo-dark-ui .rivo-pref-storage{
+ background:#eaf9f5!important;border-color:#b2dfd6!important;color:#296c6c!important;
+}
+#app .rivo-dark-ui .library-workspace .library-controls label:first-child{display:none!important}
+#app .rivo-dark-ui .library-workspace .library-controls label:nth-child(2){
+ flex:1 1 auto!important;min-width:0;
+}
+#app .rivo-dark-ui .library-workspace .library-controls #library-layout{
+ flex:0 0 33px!important;
+}
+#app .rivo-dark-ui .rivo-compact-home .recent-empty{
+ grid-column:1/-1!important;align-self:stretch!important;justify-self:stretch!important;
+ min-height:155px!important;max-height:210px!important;width:auto!important;
+ margin:4px 0!important;padding:22px 14px!important;border:1px dashed #b6ded6!important;
+ border-radius:12px!important;background:#f9fefd!important;color:#467a78!important;
+ display:flex!important;flex-direction:column!important;gap:10px!important;
+ align-items:center!important;justify-content:center!important;text-align:center!important;
+ font-size:12px!important;
+}
+#app .rivo-dark-ui .library-workspace #library-list .doc-empty{
+ grid-column:1/-1!important;min-height:90px!important;
+ margin:3px 0!important;padding:10px!important;color:#567d7c!important;
+}
+#app .rivo-dark-ui .rivo-tool-pills button.active,
+#app .rivo-dark-ui .rivo-library-chips button.active{
+ color:white!important;background:#078f8a!important;border-color:#078f8a!important;
+}
+#app .rivo-dark-ui .settings-row:focus-visible,
+#app .rivo-dark-ui button:focus-visible{
+ outline:2px solid #089e98!important;outline-offset:2px!important;
+}

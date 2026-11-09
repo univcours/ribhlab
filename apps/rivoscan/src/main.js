@@ -441,7 +441,6 @@ function scannerWorkspace(){
   const aiScanLabel=({en:'Document camera · Live edges',ar:'كاميرا الوثائق · تحديد الحواف',fr:'Caméra documents · Bords en direct',es:'Cámara · Bordes en vivo',de:'Dokumentkamera · Live-Kanten',pt:'Câmara · Contornos ao vivo',it:'Fotocamera · Bordi dal vivo'})[language]||'Document camera · Live edges';
   const aiScanHint=({en:'Capture · adjust four corners · save',ar:'صور · عدل الزوايا الأربعة · حفظ',fr:'Capturer · ajuster 4 coins · sauver',es:'Captura · ajusta esquinas · guarda',de:'Aufnehmen · 4 Ecken korrigieren · sichern',pt:'Capturar · ajustar 4 cantos · guardar',it:'Scatta · regola 4 angoli · salva'})[language]||'Capture · adjust corners · save';
   return `<section class="workspace scan-workspace">
-  <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
@@ -492,7 +491,7 @@ function renderLibraryRows(needle=''){
  }).join('');
 }
 function libraryWorkspace(){
-  return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
+  return `<section class="workspace library-workspace">
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p><small class="rivo-library-version">RivoScan v${appVersion} · Documents/RivoScan</small></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
     <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
@@ -617,7 +616,7 @@ function workspace(){
   const t=activeTool;
   if(t.id==='peerTransfer')return peerWorkspace();
   if(t.id==='scan')return scannerWorkspace();
-  return `<section class="workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('DocumentScanner')?'AI Deep Clean · ML Kit FULL':'ML Kit FULL needs compatible Google Play services'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" data-primary-scanner="mlkit-full" style="width:100%;margin-top:12px">${ico('scan')} AI Deep Clean · ML Kit FULL</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
+  return `<section class="workspace"><div class="work-title"><div class="tool-icon ${t.color}">${ico(t.icon,24)}</div><div><h1>${escapeHTML(tn(t))}</h1><p>${escapeHTML(td(t))}</p></div></div><div class="work-grid"><div class="panel"><h3>${tr('select')}</h3><label class="dropzone"><div class="uploadicon">${ico('upload',26)}</div><strong>${tr('upload')}</strong><span>${tr('drop')}</span><span style="font-weight:700;color:#5661db">${escapeHTML(t.id==='bundle'?'PDF, JPG & PNG':t.id==='shareFiles'?'Any file format':t.accept.includes('image/')?'JPG, PNG & photos':'PDF documents')}</span><input id="files" aria-label="${lt('choose')}" type="file" accept="${t.accept}" ${t.multiple?'multiple':''}></label>${t.id==='scan'?`<div class="scan-runtime" role="status">${Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'?(Capacitor.isPluginAvailable('DocumentScanner')?'AI Deep Clean · ML Kit FULL':'ML Kit FULL needs compatible Google Play services'):'Android native features require the installed RivoScan app'} <span>UI build 2026.10.31c</span></div><button class="btn" id="smart-scanner" data-primary-scanner="mlkit-full" style="width:100%;margin-top:12px">${ico('scan')} AI Deep Clean · ML Kit FULL</button><button class="btn btn-light" id="scanner-gallery" style="width:100%;margin-top:8px">${ico('image')} Import Photo · Adjust 4 Corners</button>`:''}<div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div></div><div class="panel"><h3>${lt('options')}</h3><div id="options">${localizeOptionMarkup(opts[t.id]||`<p class="hint">${lt('local')}</p>`)}</div><button class="btn operation" id="process">${ico('download')} ${tr('run')}</button><div class="privacy">${ico('lock',17)} <span>${tr('privacy')}</span></div><p class="hint" style="margin-top:14px">${lt('fileHint')}</p></div></div></section>`;
 }
 function renderFiles(){return files.length?files.map((f,i)=>`<div class="file">${ico('file',17)}<b title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</b><small>${formatSize(f.size)}</small>${activeTool?.multiple?`<button data-move="${i}" data-dir="-1" title="Move up">↑</button><button data-move="${i}" data-dir="1" title="Move down">↓</button>`:''}<button data-remove="${i}" aria-label="Remove file">×</button></div>`).join(''):'<div class="hint">No files selected yet</div>';}
 function updateFileDisplay(){const box=document.getElementById('filelist');if(box)box.innerHTML=renderFiles();drawPreview();}
@@ -1220,7 +1219,7 @@ function peerWorkspace(){
  };
  const w=copy[language]||copy.en;
  return `<section class="workspace rivo-peer-workspace">
-   <button class="back" data-go="home">${ico('back',18)} ${ut('home')}</button>
+   
    <div class="page-heading"><h1>${w[0]}</h1><p>${w[1]}</p></div>
    <div class="panel rivo-peer-panel">
      <p class="hint">${w[11]}</p>
@@ -1451,6 +1450,12 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     }).catch(console.warn);
   };
   syncNativeSoundSetting();
+  // Recover interrupted TXT/XLSX exports from the durable local scan journal.
+  // Never delete saved scans when native storage is unavailable.
+  void Promise.allSettled([scanLedger.resync('codes'),scanLedger.resync('plates')])
+    .then(results=>results.forEach((result,i)=>{
+      if(result.status==='rejected')console.warn('RivoScan scanner log recovery',i,result.reason);
+    }));
   loadLibrary(false);
   CapacitorApp.addListener('backButton',()=>{
     if(!navigateRivoBack())CapacitorApp.minimizeApp().catch(console.warn);

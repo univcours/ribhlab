@@ -58,6 +58,7 @@ test('A failed native write remains in journal and can be resynchronized',async(
 });
 test('Plate formatting handles Arabic digits; matching works on full or partial number',()=>{
  assert.equal(normalizePlate('١٢٣٤٥ - أ - ٦'),'12345أ6');
+ assert.deepEqual(plateCandidates('١٢٣٤٥ - أ - ٦'),['12345أ6']);
  assert.deepEqual(plateCandidates('12345-A-6\n78901-B-2'),['12345A6','78901B2']);
  assert.equal(matchesPlate('12345-A-6','12345'),true);
  assert.equal(matchesPlate('12345-A-6','A6'),false,'too-short searches cannot trigger alarms');

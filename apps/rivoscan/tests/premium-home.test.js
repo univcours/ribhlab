@@ -50,6 +50,19 @@ test('Turquoise density, accessible controls and no overflowing action rows',()=
   const c=premiumCopy(lang);assert.ok(c.files);assert.ok(c.search);
  }
 });
+test('Screenshots navigate actual four slots and reject duplicate documents/tools images',()=>{
+ const script=file('scripts/play-store-screenshots.sh');
+ assert.ok(script.includes('tap_bottom 71; capture 03-tools'));
+ assert.ok(script.includes('tap_bottom 89; capture 04-settings'));
+ assert.ok(script.includes('cmp -s'));
+ assert.ok(script.includes('duplicate navigation screenshot'));
+});
+test('No redundant Home/All Tools link inside Documents; native topbar handles Back',()=>{
+ const main=file('src/main.js');
+ const library=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary(',main.indexOf('function libraryWorkspace(){')));
+ assert.ok(!library.includes('class="back"'));
+ assert.ok(main.includes('data-inapp-back'));
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));

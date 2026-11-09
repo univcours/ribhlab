@@ -25,7 +25,7 @@ test "$height" -gt 400
 tap_bottom(){
   local fraction="$1"
   local x=$((width*fraction/100))
-  local y=$((height-52))
+  local y=$((height-34))
   adb shell input tap "$x" "$y"
   sleep 2
 }
@@ -35,9 +35,18 @@ capture(){
   test -s "$OUTPUT/$name.png"
 }
 # Four real screens. Side-by-side images can then be inspected for clipping/overlap.
-tap_bottom 13; capture 01-home
-tap_bottom 35; capture 02-documents
-tap_bottom 66; capture 03-tools
-tap_bottom 88; capture 04-settings
+# The camera occupies the middle notch; tap the actual nav slots, not the notch.
+tap_bottom 11; capture 01-home
+tap_bottom 29; capture 02-documents
+tap_bottom 71; capture 03-tools
+tap_bottom 89; capture 04-settings
+# Prevent false-green screenshots: previously Tools and Documents were identical!
+for pair in "01-home 02-documents" "02-documents 03-tools" "03-tools 04-settings"; do
+  set -- $pair
+  if cmp -s "$OUTPUT/$1.png" "$OUTPUT/$2.png"; then
+    echo "ERROR: duplicate navigation screenshot: $1 and $2" >&2
+    exit 1
+  fi
+done
 # Do not overwrite, publish or expose user documents; this is a clean emulator.
 echo "CAPTURED: $(ls "$OUTPUT"/*.png | wc -l) Android screenshots at ${width}x${height}."
