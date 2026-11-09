@@ -63,6 +63,23 @@ test('No redundant Home/All Tools link inside Documents; native topbar handles B
  assert.ok(!library.includes('class="back"'));
  assert.ok(main.includes('data-inapp-back'));
 });
+test('Right-edge Android Back closes page manager, editor and every supported full-screen tool first',()=>{
+ const main=file('src/main.js');
+ for(const tag of ['rivo-pages-overlay','rivo-editor-overlay','rivo-perfectscan-overlay',
+ 'rivo-code-overlay','rivo-id-overlay','data-page-action="close"',
+ 'data-edit="cancel"','data-perfect="close"']){
+  assert.ok(main.includes(tag),tag);
+ }
+ assert.ok(main.includes("start.side==='right'&&dx<=-84"));
+ assert.ok(main.includes("document.querySelector('.busy')"));
+});
+test('Document viewer, file actions and native editors inherit turquoise colors',()=>{
+ const css=file('src/compact-turquoise.css');
+ for(const name of ['.doc-detail-overlay','.doc-action.doc-edit','.bulk-overlay .bulk-sheet',
+ '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-perfectscan-overlay']){
+  assert.ok(css.includes(name),name);
+ }
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));

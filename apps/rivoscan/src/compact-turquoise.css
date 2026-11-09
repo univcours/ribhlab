@@ -381,3 +381,73 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 #app .rivo-dark-ui button:focus-visible{
  outline:2px solid #089e98!important;outline-offset:2px!important;
 }
+
+/* Unified turquoise details and secondary tool dialogs; no residual blue.
+   Editors stay dark for color-accurate image processing, with teal controls. */
+.doc-detail-overlay{background:#f3faf8!important;color:#1d4b4b!important}
+.doc-viewer-header,.doc-detail-actions{background:#fff!important;border-color:#cde7e0!important}
+.doc-viewer-back,.doc-viewer-menu,.doc-page-navigation button,
+.doc-action,.doc-external-open{
+ background:#effaf6!important;color:#086f70!important;
+ border:1px solid #abd9d0!important;box-shadow:none!important;
+}
+.doc-action.doc-edit{
+ color:white!important;background:linear-gradient(115deg,#079b97,#07b5a7)!important;
+ border-color:#078a85!important;box-shadow:none!important;
+}
+.doc-action.doc-action-danger{color:#a92e48!important;background:#fff3f6!important;border-color:#f5c5cf!important}
+.doc-viewer-subtitle,.doc-edit-options,.doc-rename-form{
+ background:#f0faf7!important;color:#427879!important;border-color:#b9e1d8!important;
+}
+.doc-detail-overlay input:focus-visible,.doc-detail-overlay button:focus-visible,
+.bulk-overlay input:focus-visible,.bulk-overlay button:focus-visible{
+ outline:2px solid #079b97!important;outline-offset:2px!important;
+}
+.bulk-overlay .bulk-sheet{
+ background:#f8fffc!important;color:#225e5b!important;
+ border:1px solid #94cec3!important;box-shadow:0 17px 55px #002f2a53!important;
+}
+.bulk-overlay .bulk-sheet-title,.bulk-overlay .bulk-field{color:#174f50!important}
+.bulk-overlay .bulk-sheet-title button,
+.bulk-overlay .bulk-sheet-actions button,
+.bulk-overlay .bulk-share-confirm,
+.bulk-overlay .bulk-field select{
+ background:#e8f9f5!important;color:#086b6b!important;
+ border:1px solid #a5dcd4!important;box-shadow:none!important;
+}
+.bulk-overlay .bulk-share-confirm,
+.bulk-overlay .bulk-sheet-actions [data-menu=share]{
+ background:#078f89!important;color:#fff!important;border-color:#078f89!important;
+}
+.bulk-overlay .bulk-sheet-actions [data-menu=delete]{
+ background:#fff0f3!important;color:#a32c45!important;border-color:#f3aebc!important;
+}
+.bulk-overlay .bulk-document-name,.bulk-overlay .bulk-note{
+ background:#eef9f6!important;color:#497879!important;
+}
+.rivo-editor-overlay,.rivo-pages-overlay{background:#071d23!important;color:#f1fbf8!important}
+.rivo-editor-window,.rivo-pages-modal{background:#0d272d!important;border-color:#285a5a!important}
+.rivo-editor-header,.rivo-editor-filters,.rivo-editor-actions,
+.rivo-pages-top,.rivo-pages-count,.rivo-pages-bottom{
+ background:#143439!important;border-color:#2f5f60!important;
+}
+.rivo-editor-header button,.rivo-editor-actions button,
+.rivo-pages-top button,.rivo-pages-count button,.rivo-page-operations button{
+ border-color:#427e79!important;background:#1b5150!important;color:#eafdf7!important;
+}
+.rivo-editor-actions .rivo-editor-save,.rivo-pages-top .rivo-pages-save{
+ background:#079b97!important;border-color:#46d0c2!important;color:#fff!important;
+}
+.rivo-editor-filters .rivo-filter-choice.active{
+ background:#11544f!important;border-color:#33d6c8!important;color:#5ef5df!important;
+}
+.rivo-code-overlay:not(.rivo-live-overlay),.rivo-id-overlay{
+ background:#051f25cf!important;
+}
+.rivo-code-dialog,.rivo-id-dialog{border-color:#a4dcd0!important}
+.rivo-code-actions button,.rivo-id-dialog button{
+ border-color:#8bd7c9!important;color:#0a7771!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-modal header{
+ border-color:#2f8e84!important;
+}

@@ -1378,7 +1378,31 @@ function navigateRivoBack(){
    document.querySelector('.rivo-live-overlay [data-scan-overlay-close]')?.click();
    lastBackHandled=now;return true;
   }
-  if(document.querySelector('.rivo-reward-overlay')){
+  // All heavy tools use full-screen dialogs. Android Back and either-edge swipe
+ // must close only the topmost tool; do not erase its underlying file selection.
+ if(document.querySelector('.busy'))return true; // Preserve in-progress saves.
+ const dialogs=[
+  ['.rivo-pages-overlay','[data-page-action="close"]'],
+  ['.rivo-editor-overlay','[data-edit="cancel"]'],
+  ['.rivo-perfectscan-overlay','[data-perfect="close"]']
+ ];
+ for(const [selector,closeSelector] of dialogs){
+  const modal=document.querySelector(selector);
+  if(!modal)continue;
+  modal.querySelector(closeSelector)?.click();
+  lastBackHandled=now;
+  return true;
+ }
+ for(const selector of ['.rivo-code-overlay','.rivo-id-overlay']){
+  const modal=document.querySelector(selector);
+  if(!modal)continue;
+  const bars=modal.querySelectorAll('.rivo-code-actions');
+  const last=bars[bars.length-1];
+  last?.querySelector('button:last-of-type')?.click();
+  lastBackHandled=now;
+  return true;
+ }
+ if(document.querySelector('.rivo-reward-overlay')){
   document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
  }
  const sheet=document.querySelector('.bulk-overlay');
