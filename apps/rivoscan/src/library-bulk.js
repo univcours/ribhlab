@@ -33,7 +33,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
-    if(!mode)return '';
+    if(!mode||selected.size<2)return '';
     const items=selectedDocs();
     return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
       <strong class="rivo-selected-count">${items.length}</strong>
