@@ -1,7 +1,7 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','photoTranslation','formulaOcr','ocr','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
+ {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
  {id:'import',entries:['importImages','importFiles']},
  {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
  {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
@@ -10,7 +10,8 @@ export const toolGroups=[
 export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
- scanCode:{icon:'scan',color:'blue',type:'barcode'},
+ scanCode:{icon:'scan',color:'green',type:'barcode'},
+ plateScanner:{icon:'scan',color:'green',type:'plates'},
  aiChat:{icon:'text',color:'violet',type:'aiDocument'},
  solverAI:{icon:'image',color:'blue',type:'aiSolver'},
  countCam:{icon:'camera',color:'green',type:'countCam'},
@@ -57,7 +58,8 @@ const labels={
  aiChat:['AI Chat (your own API key)','AI Chat (مفتاح شخصي)','AI Chat (clé API personnelle)','AI Chat (clave API propia)','AI Chat (eigener API-Schlüssel)','AI Chat (chave API própria)','AI Chat (chiave API personale)'],
  solverAI:['Solver AI (your own API key)','Solver AI (مفتاح شخصي)','Solver AI (clé API personnelle)','Solver AI (clave API propia)','Solver AI (eigener API-Schlüssel)','Solver AI (chave API própria)','Solver AI (chiave API personale)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
- scanCode:['Scan QR & Barcode','قراءة QR والباركود','Lire QR et code-barres','Leer QR y código','QR / Barcode lesen','Ler QR e código','Leggi QR e barcode'],
+ scanCode:['QR & Barcode Scanner Pro','قارئ QR والباركود Pro','Scanner QR et codes-barres Pro','Escáner QR y códigos Pro','QR / Barcode Scanner Pro','Scanner QR e código Pro','Scanner QR e barcode Pro'],
+ plateScanner:['License Plate Scanner Pro','قارئ لوحات السيارات Pro','Scanner de plaques Pro','Lector de matrículas Pro','Kennzeichen Scanner Pro','Leitor de matrículas Pro','Lettore targhe Pro'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],
  bookScan:['Book Scan (auto split & flatten)','مسح الكتب الاحترافي (فصل وتقويم تلقائي)','Scanner livre (séparer et redresser)','Escanear libro (dividir y aplanar)','Buchscan (trennen & glätten)','Digitalizar livro (separar e corrigir)','Scansiona libro (separa e correggi)'],
