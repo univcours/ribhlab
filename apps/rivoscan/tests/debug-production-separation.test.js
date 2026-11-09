@@ -31,7 +31,7 @@ test('Emulator and screenshots test DEV, not the real Play app',()=>{
  for(const script of [emulator,shots]){
   assert.ok(script.includes('com.ribhlab.rivoscan.debug'));
   assert.ok(script.includes('com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.RivoComposeActivity'));
-  assert.doesNotMatch(script,/com\.ribhlab\.rivoscan(?!\.debug|\.MainActivity)/);
+  assert.doesNotMatch(script,/com\.ribhlab\.rivoscan(?!\.debug|\.MainActivity|\.RivoComposeActivity)/);
  }
 });
 test('Read-only phone inspector distinguishes Production and DEV',()=>{
