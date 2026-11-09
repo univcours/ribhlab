@@ -1,85 +1,129 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
 
-const LABELS={
- en:['Scan QR / Barcode','Take a photo','Choose an image','Scanned code','Copy','Open website','Close','No readable code found. Try a sharper, brighter photo.','Scanning locally…','Camera unavailable: choose an image instead.','Result is text; links are never opened automatically.'],
- ar:['قراءة QR والباركود','تصوير الكود','اختيار صورة','الكود المقروء','نسخ','فتح الموقع','إغلاق','ما لقيناش كود مقروء. جرب صورة أوضح وإضاءة مزيانة.','جاري القراءة محلياً…','الكاميرا غير متاحة، اختار صورة.','النتيجة نص؛ الروابط ما كتتحلش تلقائياً.'],
- fr:['Lire QR / Code-barres','Photographier','Choisir une image','Code lu','Copier','Ouvrir le site','Fermer','Code illisible. Essayez une image plus nette.','Lecture locale…','Caméra indisponible : choisir une image.','Un lien ne sera jamais ouvert automatiquement.'],
- es:['Leer QR / Código','Fotografiar','Elegir imagen','Código detectado','Copiar','Abrir sitio','Cerrar','Código ilegible. Prueba una foto nítida.','Lectura local…','Cámara no disponible. Elige imagen.','Los enlaces nunca se abren automáticamente.'],
- de:['QR / Barcode lesen','Foto aufnehmen','Bild wählen','Erkannter Code','Kopieren','Webseite öffnen','Schließen','Code nicht lesbar. Schärfer fotografieren.','Lokal scannen…','Kamera nicht verfügbar. Bild wählen.','Links werden nie automatisch geöffnet.'],
- pt:['Ler QR / Código','Tirar foto','Escolher imagem','Código lido','Copiar','Abrir site','Fechar','Código ilegível. Fotografe com mais luz.','A ler localmente…','Câmara indisponível. Escolha imagem.','Os links nunca abrem automaticamente.'],
- it:['Leggi QR / Barcode','Scatta foto','Scegli immagine','Codice letto','Copia','Apri sito','Chiudi','Codice illeggibile. Scatta una foto nitida.','Lettura locale…','Fotocamera non disponibile. Scegli immagine.','I link non vengono aperti automaticamente.']
+const I18N={
+ en:['QR & Barcode Pro','Live camera · automatic recognition','Waiting for code…','Last result','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to TXT + Excel','Could not save: ','Close'],
+ ar:['قارئ QR والباركود','كاميرا مباشرة · قراءة تلقائية','وجّه الكاميرا نحو الكود…','آخر نتيجة','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فـTXT وExcel','تعذر الحفظ: ','إغلاق'],
+ fr:['QR et code-barres Pro','Caméra en direct · lecture automatique','Cadrez un code…','Dernier résultat','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré en TXT + Excel','Enregistrement impossible : ','Fermer']
 };
+const FORMATS=['AZTEC','CODABAR','CODE39','CODE93','CODE128','DATA_MATRIX','EAN8','EAN13','ITF','MAXICODE','PDF417','QR','RSS14','RSS_EXPANDED','UPCA','UPCE','UPC_EXTENSION'];
 export const safeScannedUrl=value=>{
  const raw=String(value??'').trim();
- if(raw.length>2048 || !/^https?:\/\//i.test(raw))return null;
- try{const url=new URL(raw);if(!['http:','https:'].includes(url.protocol)||!url.hostname)return null;return url.href;}
- catch{return null}
+ if(raw.length>2048||!/^https?:\/\//i.test(raw))return null;
+ try{const url=new URL(raw);return ['http:','https:'].includes(url.protocol)&&url.hostname?url.href:null;}catch{return null;}
 };
-function button(parent,caption,action){
- const b=document.createElement('button');b.type='button';b.textContent=caption;b.addEventListener('click',action);parent.append(b);return b;
+export function decodeFormat(result){
+ const raw=result?.getBarcodeFormat?.();
+ return FORMATS[Number(raw)]||String(raw??'UNKNOWN');
 }
-export function openBarcodeScanner({language='en',capture,notify=()=>{}}={}){
- const L=LABELS[language]||LABELS.en;
- const overlay=document.createElement('div');overlay.className='rivo-code-overlay';
- const box=document.createElement('section');box.className='rivo-code-dialog';
- box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',L[0]);
- const title=document.createElement('h2');title.textContent=L[0];box.append(title);
- const buttons=document.createElement('div');buttons.className='rivo-code-actions';box.append(buttons);
- const preview=document.createElement('img');preview.className='rivo-code-preview';preview.alt='';preview.hidden=true;box.append(preview);
- const status=document.createElement('p');status.setAttribute('role','status');box.append(status);
- const result=document.createElement('pre');result.className='rivo-code-result';result.hidden=true;box.append(result);
- const resultActions=document.createElement('div');resultActions.className='rivo-code-actions';box.append(resultActions);
- const help=document.createElement('p');help.className='rivo-code-help';help.textContent=L[10];box.append(help);
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;box.append(input);
- let closed=false,pending=false,objectUrl=null;
- const cleanup=()=>{closed=true;if(objectUrl)URL.revokeObjectURL(objectUrl);overlay.remove()};
- const decode=async url=>{
-  if(closed||pending)return;
-  pending=true;status.textContent=L[8];result.hidden=true;resultActions.replaceChildren();
-  try{
-   const reader=new BrowserMultiFormatReader();
-   const image=new Image();image.decoding='async';image.src=url;
-   await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error(L[7]));if(image.complete&&image.naturalWidth)resolve()});
-   if(closed)return;
-   preview.src=url;preview.hidden=false;
-   const code=reader.decodeFromCanvas(toCanvas(image));
-   if(closed)return;
-   const value=code.getText();result.textContent=value;result.hidden=false;
-   status.textContent=L[3]+' · '+String(code.getBarcodeFormat?.()??'');
-   button(resultActions,L[4],async()=>{
-    try{await navigator.clipboard.writeText(value);notify(L[4]+' ✓')}
-    catch{notify(L[4]+': '+value)}
-   });
-   const link=safeScannedUrl(value);
-   if(link)button(resultActions,L[5],()=>{if(window.confirm(L[5]+'?\n'+link))window.open(link,'_blank','noopener,noreferrer')});
-  }catch(error){if(!closed)status.textContent=L[7]}
-  finally{pending=false}
+export function newScanDeduplicator({gapMs=1800,clock=()=>Date.now()}={}){
+ let lastValue='',lastSeen=0;
+ return {
+  accept(value){
+   const now=clock(),next=String(value??'');
+   const duplicate=next===lastValue&&now-lastSeen<gapMs;
+   lastValue=next;lastSeen=now;
+   return !duplicate;
+  },
+  absence(){if(clock()-lastSeen>gapMs){lastValue='';lastSeen=0;}}
  };
- button(buttons,L[1],async()=>{
-  if(pending)return;
-  try{const uri=await capture?.();if(!uri)throw Error(L[9]);await decode(uri)}
-  catch(error){if(!closed)status.textContent=error?.message||L[9]}
- });
- button(buttons,L[2],()=>input.click());
- button(buttons,L[6],cleanup);
- input.addEventListener('change',()=>{
-  const file=input.files?.[0];input.value='';
-  if(!file)return;
-  if(objectUrl)URL.revokeObjectURL(objectUrl);
-  objectUrl=URL.createObjectURL(file);decode(objectUrl);
- });
- overlay.append(box);document.body.append(overlay);
- overlay.addEventListener('click',event=>{if(event.target===overlay)cleanup()});
- const escape=event=>{if(event.key==='Escape'){cleanup();document.removeEventListener('keydown',escape)}};
- document.addEventListener('keydown',escape);
- return cleanup;
 }
-function toCanvas(image){
- const max=2400,scale=Math.min(1,max/Math.max(image.naturalWidth,image.naturalHeight));
- const canvas=document.createElement('canvas');
- canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
- canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
- const ctx=canvas.getContext('2d',{willReadFrequently:true});
- ctx.drawImage(image,0,0,canvas.width,canvas.height);
- return canvas;
+function iconButton(label,action){
+ const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-label',label);
+ b.addEventListener('click',action);return b;
+}
+function drawOutline(canvas,video,points){
+ const bounds=canvas.getBoundingClientRect();
+ if(!bounds.width||!bounds.height)return;
+ canvas.width=Math.round(bounds.width*devicePixelRatio);
+ canvas.height=Math.round(bounds.height*devicePixelRatio);
+ const ctx=canvas.getContext('2d');
+ ctx.scale(devicePixelRatio,devicePixelRatio);
+ const w=bounds.width,h=bounds.height,vw=video.videoWidth||w,vh=video.videoHeight||h;
+ const scale=Math.max(w/vw,h/vh),offX=(w-vw*scale)/2,offY=(h-vh*scale)/2;
+ let xs=points.map(x=>offX+x.getX()*scale),ys=points.map(x=>offY+x.getY()*scale);
+ if(!xs.length){xs=[w*.27,w*.73];ys=[h*.39,h*.61];}
+ const minX=Math.max(4,Math.min(...xs)-14),maxX=Math.min(w-4,Math.max(...xs)+14);
+ const minY=Math.max(4,Math.min(...ys)-14),maxY=Math.min(h-4,Math.max(...ys)+14);
+ ctx.strokeStyle='#2CF2D5';ctx.lineWidth=3;ctx.shadowColor='#2CF2D5';ctx.shadowBlur=7;
+ ctx.strokeRect(minX,minY,maxX-minX,maxY-minY);
+}
+export function openBarcodeScanner({language='en',capture,notify=()=>{},onScan=async()=>({saved:false})}={}){
+ const L=I18N[language]||I18N.en;
+ const overlay=document.createElement('div');overlay.className='rivo-code-overlay rivo-live-overlay';
+ const box=document.createElement('section');box.className='rivo-live-dialog';
+ box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',L[0]);
+ const head=document.createElement('header');head.className='rivo-live-head';
+ const title=document.createElement('strong');title.textContent=L[0];
+ const close=iconButton('✕',()=>stop());close.dataset.scanOverlayClose='true';
+ head.append(title,close);
+ const camera=document.createElement('div');camera.className='rivo-live-preview';
+ const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;
+ const outline=document.createElement('canvas');outline.className='rivo-detection-outline';outline.setAttribute('aria-hidden','true');
+ camera.append(video,outline);
+ const help=document.createElement('p');help.className='rivo-live-help';help.textContent=L[1];
+ const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
+ const result=document.createElement('pre');result.className='rivo-live-result';result.hidden=true;
+ const actions=document.createElement('div');actions.className='rivo-live-actions';
+ const copy=iconButton(L[4],()=>navigator.clipboard?.writeText(result.textContent||'').catch(()=>notify('Copy unavailable',true)));
+ copy.hidden=true;
+ const torch=iconButton('⚡ '+L[6],()=>toggleTorch());
+ const file=iconButton(L[5],()=>picker.click());
+ actions.append(torch,file,copy);
+ const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
+ box.append(head,help,camera,status,result,actions,picker);overlay.append(box);document.body.append(overlay);
+ const reader=new BrowserMultiFormatReader();
+ const dedup=newScanDeduplicator(),streams=[],temporaryURLs=[];
+ let control=null,closed=false,light=false,busy=false;
+ const key=e=>{if(e.key==='Escape'||e.key==='Backspace'){e.preventDefault();stop();}};
+ const stop=()=>{
+  if(closed)return;closed=true;
+  try{control?.stop();}catch{}
+  for(const track of streams)try{track.stop();}catch{}
+  for(const url of temporaryURLs)URL.revokeObjectURL(url);
+  document.removeEventListener('keydown',key);overlay.remove();
+ };
+ document.addEventListener('keydown',key);
+ async function toggleTorch(){
+  const track=streams.find(x=>x.kind==='video');if(!track)return;
+  try{light=!light;await track.applyConstraints({advanced:[{torch:light}]});}
+  catch{light=false;torch.disabled=true;}
+ }
+ async function deliver(decoded){
+  if(closed)return;
+  const value=String(decoded.getText?.()||'').trim();
+  if(!value||!dedup.accept(value))return;
+  result.textContent=value;result.hidden=false;copy.hidden=false;
+  status.textContent=L[3]+' · '+decodeFormat(decoded);
+  drawOutline(outline,video,decoded.getResultPoints?.()||[]);
+  try{
+   const saved=await onScan({value,format:decodeFormat(decoded)});
+   if(!closed)status.textContent=(saved?.saved?L[8]:L[9]+(saved?.reason||'Local export unavailable'))+' · '+decodeFormat(decoded);
+  }catch(error){if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}}
+ }
+ picker.addEventListener('change',async()=>{
+  const item=picker.files?.[0];picker.value='';if(!item)return;
+  const url=URL.createObjectURL(item);temporaryURLs.push(url);
+  try{
+   const image=new Image();image.src=url;await image.decode();
+   const canvas=document.createElement('canvas'),s=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));
+   canvas.width=Math.max(1,Math.round(image.naturalWidth*s));canvas.height=Math.max(1,Math.round(image.naturalHeight*s));
+   canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+   const found=reader.decodeFromCanvas(canvas);await deliver(found);
+  }catch{status.textContent=L[2];}
+ });
+ async function start(){
+  try{
+   const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+   if(closed){stream.getTracks().forEach(t=>t.stop());return;}
+   streams.push(...stream.getTracks());video.srcObject=stream;await video.play();
+   control=await reader.decodeFromVideoElement(video,(decoded,error)=>{
+    if(closed)return;
+    if(decoded){void deliver(decoded);}
+    else if(error)dedup.absence();
+   });
+   if(closed)control?.stop();
+  }catch(error){if(!closed){status.textContent=L[7];torch.disabled=true;console.warn('Live code scanner:',error);}}
+ }
+ void start();
+ return stop;
 }
