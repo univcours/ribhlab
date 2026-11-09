@@ -9,6 +9,8 @@ on:
       - 'apps/rivoscan/scripts/capture-webview-interactions.mjs'
       - 'apps/rivoscan/tests/ui-consistency.test.js'
       - 'apps/rivoscan/src/main.js'
+      - 'apps/rivoscan/src/tools-hub.js'
+      - 'apps/rivoscan/tests/tools-hub.test.js'
       - 'apps/rivoscan/src/compact-turquoise.css'
       - 'apps/rivoscan/src/plate-scanner.js'
       - 'apps/rivoscan/src/scan-ledger.js'
