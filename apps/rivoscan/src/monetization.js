@@ -127,35 +127,9 @@ function offerReward(){
   dialog.append(h,p,watch,cancel);overlay.append(dialog);document.body.append(overlay);cancel.focus();
  });
 }
-export async function requestPremium(id){
- if(!isPremiumFeature(id)||!isAndroid)return true;
- if(remainingPremiumMs(state.unlockedUntil)>0)return true;
- if(state.busy||!(await offerReward()))return false;
- if(!(await initializeAds())){state.notify(tr().unavailable,true);return false;}
- if(state.busy)return false;
- state.busy=true;
- let receivedReward=false,listener;
- try{
-  listener=await AdMob.addListener(RewardAdPluginEvents.Rewarded,reward=>{
-   if(Number(reward?.amount)>0)receivedReward=true;
-  });
-  status('Loading rewarded video');
-  await AdMob.prepareRewardVideoAd({adId:AD_CONFIG.rewarded,isTesting:AD_CONFIG.testMode});
-  const reward=await AdMob.showRewardVideoAd({adId:AD_CONFIG.rewarded});
-  if(!receivedReward&&!(Number(reward?.amount)>0)){
-   status('Video dismissed without reward');return false;
-  }
-  state.unlockedUntil=Date.now()+PREMIUM_MINUTES*60000;
-  state.lastFullscreenAt=Date.now();
-  status('Reward granted: 10 minutes');state.notify(tr().success);return true;
- }catch(error){
-  status('Rewarded video failed',String(error?.message||error));state.notify(tr().unavailable,true);
-  return false;
- }finally{
-  await listener?.remove().catch(()=>{});
-  state.busy=false;
- }
-}
+// All tools are available without explicit rewarded-ad buttons.
+// Interstitial/App Open remain consent-gated at natural, non-work transitions.
+export async function requestPremium(_id){return true;}
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;
