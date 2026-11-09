@@ -39,7 +39,7 @@ async function jpegBytes(canvas){
  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image capture failed')),'image/jpeg',0.88));
  return new Uint8Array(await blob.arrayBuffer());
 }
-export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null}={}){
+export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null,onClose=()=>{}}={}){
  const L=labels[language]||labels.en;
  const layer=document.createElement('div');layer.className='rivo-plate-overlay rivo-live-overlay';
  const panel=document.createElement('section');panel.className='rivo-live-dialog';
@@ -67,9 +67,10 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(closed)return;closed=true;clearTimeout(nextTimer);
   stream?.getTracks().forEach(t=>t.stop());
   if(worker)void worker.terminate().catch(()=>{});
-  document.removeEventListener('keydown',key);layer.remove();
+  document.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',visibility);layer.remove();onClose();
  };
- document.addEventListener('keydown',key);
+ const visibility=()=>{if(document.hidden)stop();};
+ document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);
  async function toggleTorch(){
   const track=stream?.getVideoTracks()[0];if(!track)return;
   try{light=!light;await track.applyConstraints({advanced:[{torch:light}]});}
@@ -102,11 +103,11 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   for(const [p,time] of confirmed)if(Date.now()-time>30000)confirmed.delete(p);
   let photoName='';
   if(match){
+   beep();
    try{
     const bytes=await jpegBytes(snapshot());
     photoName=await onMatchPhoto({plate,bytes})||'';
    }catch(error){notify('Vehicle photo failed: '+String(error?.message||error),true);}
-   if(photoName)beep();
   }
   try{
    const result=await onPlate({value:plate,format:'LICENSE_PLATE',match,photoName});
@@ -145,7 +146,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
    if(closed){stream.getTracks().forEach(t=>t.stop());return;}
    video.srcObject=stream;await video.play();
-   worker=await createWorker('eng',1);
+   worker=await createWorker(['eng','ara'],1).catch(()=>createWorker('eng',1));
    if(closed){void worker.terminate();return;}
    working=true;status.textContent=L[2];void scanFrame();
   }catch(error){if(!closed){status.textContent=L[5];console.warn('Plate scanner start:',error);}}

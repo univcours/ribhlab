@@ -47,7 +47,7 @@ function drawOutline(canvas,video,points){
  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=3;ctx.shadowColor='#2CF2D5';ctx.shadowBlur=7;
  ctx.strokeRect(minX,minY,maxX-minX,maxY-minY);
 }
-export function openBarcodeScanner({language='en',capture,notify=()=>{},onScan=async()=>({saved:false})}={}){
+export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onClose=()=>{}}={}){
  const L=I18N[language]||I18N.en;
  const overlay=document.createElement('div');overlay.className='rivo-code-overlay rivo-live-overlay';
  const box=document.createElement('section');box.className='rivo-live-dialog';
@@ -80,9 +80,10 @@ export function openBarcodeScanner({language='en',capture,notify=()=>{},onScan=a
   try{control?.stop();}catch{}
   for(const track of streams)try{track.stop();}catch{}
   for(const url of temporaryURLs)URL.revokeObjectURL(url);
-  document.removeEventListener('keydown',key);overlay.remove();
+  document.removeEventListener('keydown',key);document.removeEventListener('visibilitychange',visibility);overlay.remove();onClose();
  };
- document.addEventListener('keydown',key);
+ const visibility=()=>{if(document.hidden)stop();};
+ document.addEventListener('keydown',key);document.addEventListener('visibilitychange',visibility);
  async function toggleTorch(){
   const track=streams.find(x=>x.kind==='video');if(!track)return;
   try{light=!light;await track.applyConstraints({advanced:[{torch:light}]});}

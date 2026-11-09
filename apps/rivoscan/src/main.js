@@ -863,17 +863,15 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='barcode'){
-   openBarcodeScanner({language,notify:toast,onScan:async entry=>{
+   openBarcodeScanner({language,notify:toast,onClose:()=>void loadLibrary(false),onScan:async entry=>{
     const result=await scanLedger.append('codes',entry);
-    if(result.saved)void loadLibrary(false);
     return result;
    }});
    return;
  }
  if(spec.type==='plates'){
-   openPlateScanner({language,notify:toast,onPlate:async entry=>{
+   openPlateScanner({language,notify:toast,onClose:()=>void loadLibrary(false),onPlate:async entry=>{
     const result=await scanLedger.append('plates',entry);
-    if(result.saved)void loadLibrary(false);
     return result;
    },onMatchPhoto:async ({plate,bytes})=>{
     const name='PlateMatch_'+plate.replace(/[^A-Z0-9]/g,'_')+'_'+Date.now()+'.jpg';
