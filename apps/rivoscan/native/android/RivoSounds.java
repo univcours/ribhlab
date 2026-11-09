@@ -27,7 +27,8 @@ final class RivoSounds {
             if (speaker == null) speaker = new ToneGenerator(AudioManager.STREAM_MUSIC, 42);
             int tone=ToneGenerator.TONE_PROP_BEEP;
             int ms=60;
-            if ("capture".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=90;}
+            if ("plateMatch".equals(event)) {tone=ToneGenerator.TONE_PROP_BEEP2;ms=240;}
+            else if ("capture".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=90;}
             else if ("saved".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=120;}
             else if ("error".equals(event)) {tone=ToneGenerator.TONE_PROP_NACK;ms=150;}
             else if ("camera".equals(event)) {tone=ToneGenerator.TONE_PROP_BEEP2;ms=70;}

@@ -15,7 +15,12 @@ test('Release notes are shown only for unseen version and describe real work',()
  const seen=new Map(),storage={getItem:k=>seen.get(k)||null,setItem:(k,v)=>seen.set(k,v)};
  assert.ok(shouldShowReleaseNotes(storage,'0.22.0'));storage.setItem('rivo-release-notes-read','0.22.0');
  assert.equal(shouldShowReleaseNotes(storage,'0.22.0'),false);assert.ok(shouldShowReleaseNotes(storage,'0.22.1'));
- for(const lang of ['ar','en','fr','de','es','pt','it'])assert.ok(changesForVersion(lang).items.length>=3);
+ for(const lang of ['ar','en','fr','de','es','pt','it']){
+  const current=changesForVersion(lang);
+  assert.ok(current.items.length>=6);
+  assert.ok(current.items.some(note=>/QR/i.test(note)));
+  assert.ok(current.items.some(note=>/Pro/i.test(note)));
+ }
 });
 test('Barcode live reader uses camera video and never opens scanned URLs automatically',()=>{
  const src=readFileSync(new URL('../src/barcode-scanner.js',import.meta.url),'utf8');

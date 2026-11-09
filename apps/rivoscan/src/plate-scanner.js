@@ -43,7 +43,7 @@ async function jpegBytes(canvas){
  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image capture failed')),'image/jpeg',0.88));
  return new Uint8Array(await blob.arrayBuffer());
 }
-export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null,onClose=()=>{}}={}){
+export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null,onMatchAlert=async()=>false,onClose=()=>{}}={}){
  const L=labels[language]||labels.en;
  const layer=document.createElement('div');layer.className='rivo-plate-overlay rivo-live-overlay';
  const panel=document.createElement('section');panel.className='rivo-live-dialog';
@@ -109,7 +109,11 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   confirmed.set(plate,now);
   let photoName='';
   if(match){
-   beep();
+   // Native alert is reliable after asynchronous OCR when WebAudio autoplay is blocked.
+   let alerted=false;
+   try{alerted=(await onMatchAlert(plate))===true;}
+   catch(error){console.warn('License plate alert fallback:',error);}
+   if(!alerted)beep();
    try{
     const bytes=await jpegBytes(snapshot());
     photoName=await onMatchPhoto({plate,bytes})||'';

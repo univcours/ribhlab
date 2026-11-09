@@ -855,7 +855,14 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='plates'){
-   openPlateScanner({language,notify:toast,onClose:()=>void loadLibrary(false),onPlate:async entry=>{
+   openPlateScanner({language,notify:toast,onClose:()=>void loadLibrary(false),
+    onMatchAlert:()=>{
+     if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoLiveScanner')){
+      void RivoLiveScanner.playFeedback({kind:'plateMatch'}).catch(console.warn);
+      return true;
+     }
+     return false;
+    },onPlate:async entry=>{
     const result=await scanLedger.append('plates',entry);
     return result;
    },onMatchPhoto:async ({plate,bytes})=>{

@@ -96,6 +96,14 @@ test('Live reader prevents duplicate frames without dropping distinct codes',()=
  assert.equal(safeScannedUrl('javascript:alert(1)'),null);
  assert.equal(safeScannedUrl('https://example.org/'),'https://example.org/');
 });
+test('Plate match alert is backed by Android ToneGenerator rather than WebAudio alone',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const camera=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
+ const java=readFileSync(new URL('../native/android/RivoSounds.java',import.meta.url),'utf8');
+ assert.ok(main.includes("RivoLiveScanner.playFeedback({kind:'plateMatch'})"));
+ assert.ok(camera.includes('onMatchAlert(plate)'));
+ assert.ok(java.includes('"plateMatch".equals(event)'));
+});
 test('Native scanner log storage only permits four reserved filenames',()=>{
  const java=readFileSync(new URL('../native/android/RivoDocumentsPlugin.java',import.meta.url),'utf8');
  for(const name of ['RivoScan_Scans.txt','RivoScan_Scans.xlsx','RivoScan_Plates.txt','RivoScan_Plates.xlsx'])
