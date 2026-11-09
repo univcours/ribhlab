@@ -252,10 +252,18 @@ $launcherFilters=@($filters | Where-Object {
   $_.Value.Contains('android.intent.action.MAIN') -and
   $_.Value.Contains('android.intent.category.LAUNCHER')
 })
-if($launcherFilters.Count -ne 1){throw 'Expected one existing MainActivity launcher filter.'}
-$bridgeWithoutLauncher=$bridgeBlock.Replace($launcherFilters[0].Value,'')
-$m=$m.Replace($bridgeBlock,$bridgeWithoutLauncher)
-if($m -notmatch 'android:name="\.RivoComposeActivity"'){
+$composeAlreadyLauncher=($m -match 'android:name="\.RivoComposeActivity"')
+if($launcherFilters.Count -eq 1){
+  # First npx cap add android: transfer the launcher once to Compose.
+  $bridgeWithoutLauncher=$bridgeBlock.Replace($launcherFilters[0].Value,'')
+  $m=$m.Replace($bridgeBlock,$bridgeWithoutLauncher)
+}elseif($launcherFilters.Count -eq 0 -and $composeAlreadyLauncher){
+  # Subsequent npx cap sync: migration already applied, keep it intact.
+  Write-Host 'RivoScan Material 3 launcher already installed; leaving manifest intact.'
+}else{
+  throw 'Launcher manifest is ambiguous; refusing to create duplicate icons.'
+}
+if(-not $composeAlreadyLauncher){
   $composeLauncher=@'
     <activity android:name=".RivoComposeActivity"
       android:exported="true" android:theme="@style/RivoScanNoActionBar">
