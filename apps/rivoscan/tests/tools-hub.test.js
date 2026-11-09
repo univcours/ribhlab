@@ -59,7 +59,7 @@ test('Merged dialog opens only approved original operations and supports Back',(
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  assert.ok(ui.includes("if(!def.choices.includes(action))return"));
  assert.ok(ui.includes("onChoose(action)"));
- assert.ok(ui.includes("data.mergedClose='true'"));
+ assert.ok(ui.includes("dataset.mergedClose='true'"));
  assert.ok(main.includes("if(spec.type==='mergedDialog')"));
  assert.ok(main.includes("openMergedToolDialog({id,language,onChoose:action=>openHubAction(action)"));
  assert.ok(main.includes("document.querySelector('.rivo-merged-overlay')"));
