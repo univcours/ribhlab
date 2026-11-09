@@ -1,816 +1,510 @@
-/* RivoScan PREMIUM • canonical visual system, replacing legacy bright theme.
-   All existing document actions remain wired; this file owns appearance.
-   Inputs and selected/deleted states have explicit keyboard/touch semantics. */
-:root,body,#app{
-  --rivo-premium-bg:#031022;
-  --rivo-premium-raise:#071c36;
-  --rivo-premium-panel:#0b2746;
-  --rivo-premium-panel2:#0d3255;
-  --rivo-premium-line:#255572;
-  --rivo-premium-text:#edfaff;
-  --rivo-premium-muted:#abc8dc;
-  --rivo-premium-cyan:#25e9ee;
-  --rivo-premium-blue:#2477ff;
-  --rivo-premium-positive:#32e7a2;
-  --rivo-premium-red:#ff657a;
-  --rivo-v2-ink:#edfaff;
-  --rivo-v2-muted:#abc8dc;
-  --rivo-v2-line:#255572;
-  --rivo-ui-ink:#edfaff;
-  --rivo-ui-border:#255572;
-  color-scheme:dark;
+/* RivoScan • Material 3 Expressive UI (Figma 2026-11-09)
+ * REPLACES the old dark premium CSS, rather than layering a second dark theme.
+ * Native Home/Tools/Settings are Jetpack Compose; these styles adapt remaining
+ * functional Capacitor screens, documents, page editor, overlays and dialogs.
+ * Android data, scanner algorithms and JavaScript action routes remain intact.
+ */
+:root,html,body,#app{
+  color-scheme:light!important;
+  --rivo-premium-bg:#f7f9fd;
+  --rivo-premium-raise:#ffffff;
+  --rivo-premium-panel:#ffffff;
+  --rivo-premium-panel2:#eef2f9;
+  --rivo-premium-line:#dfe5f0;
+  --rivo-premium-text:#18243b;
+  --rivo-premium-muted:#68788e;
+  --rivo-premium-cyan:#008f89;
+  --rivo-premium-blue:#225be8;
+  --rivo-premium-positive:#008f89;
+  --rivo-premium-red:#d84058;
+  --rivo-v2-ink:#18243b;
+  --rivo-v2-muted:#68788e;
+  --rivo-v2-line:#dfe5f0;
+  --rivo-ui-ink:#18243b;
+  --rivo-ui-border:#dfe5f0;
+  --rivo-brand:#225be8;
+  --rivo-compact-radius:14px;
+  background:#f7f9fd!important;color:#18243b!important;
+  font-family:Inter,Roboto,system-ui,-apple-system,sans-serif!important;
 }
-html,body,#app {min-width:0;background:var(--rivo-premium-bg)!important;color:var(--rivo-premium-text)!important}
-#app .rivo-dark-ui {
-  background:linear-gradient(180deg,#051528 0%,#061b34 48%,#031022 100%)!important;
-  color:var(--rivo-premium-text)!important;
-  min-height:100dvh!important;
+#app .rivo-dark-ui{background:#f7f9fd!important;color:#18243b!important;min-height:100dvh!important}
+#app .rivo-dark-ui :is(.main,.content,.app-home,.workspace,.app-tools,.app-settings){
+  color:#18243b!important;background:transparent!important;
 }
-#app .rivo-dark-ui .main,
-#app .rivo-dark-ui .content,
-#app .rivo-dark-ui .app-home,
-#app .rivo-dark-ui .workspace,
-#app .rivo-dark-ui .app-tools,
-#app .rivo-dark-ui .app-settings {
-  background:transparent!important;color:var(--rivo-premium-text)!important;
+#app .rivo-dark-ui .content{max-width:1120px!important;margin-inline:auto!important}
+#app .rivo-dark-ui :is(h1,h2,h3,h4,b,strong,.tool-card-title){
+  color:#18243b!important;-webkit-text-fill-color:currentColor!important;opacity:1!important;
 }
-#app .rivo-dark-ui .content {max-width:1150px!important;margin-inline:auto!important}
-#app .rivo-dark-ui :is(h1,h2,h3,strong,b,.tool-card-title) {color:var(--rivo-premium-text)!important}
-#app .rivo-dark-ui :is(p,small,.hint,.section-head span,.rivo-metadata,.rivo-metadata-dot) {
-  color:var(--rivo-premium-muted)!important;
+#app .rivo-dark-ui :is(p,small,.hint,.section-head span,.rivo-metadata,.rivo-metadata-dot){
+  color:#68788e!important;
 }
-#app .rivo-dark-ui a {color:#77e8ff}
-#app .rivo-dark-ui button,#app .rivo-dark-ui a,#app .rivo-dark-ui summary {
-  -webkit-tap-highlight-color:transparent;
-}
-#app .rivo-dark-ui button:focus-visible,
-#app .rivo-dark-ui :is(input,select,textarea,a,summary):focus-visible,
-:is(.rivo-pages-overlay,.rivo-editor-overlay,.rivo-code-overlay,.doc-detail-overlay,.bulk-overlay) button:focus-visible {
-  outline:2px solid #2ff9fa!important;outline-offset:3px!important;
+#app .rivo-dark-ui a{color:#225be8!important}
+#app .rivo-dark-ui :is(button,a,summary){-webkit-tap-highlight-color:transparent}
+#app .rivo-dark-ui :is(button,input,select,textarea,a,summary):focus-visible,
+:is(.rivo-pages-overlay,.rivo-editor-overlay,.rivo-code-overlay,.doc-detail-overlay,.bulk-overlay) button:focus-visible{
+  outline:2px solid #225be8!important;outline-offset:3px!important;
 }
 #app .rivo-dark-ui button:disabled,
-.rivo-pages-overlay button:disabled {
-  opacity:.42!important;cursor:not-allowed!important;
-  box-shadow:none!important;
+.rivo-pages-overlay button:disabled{opacity:.4!important;cursor:not-allowed!important;box-shadow:none!important}
+[hidden]{display:none!important}
+
+/* Containers: one paper-like Material 3 surface, no old navy gradients. */
+#app .rivo-dark-ui .topbar{
+  color:#18243b!important;background:#fff!important;border-bottom:1px solid #dfe5f0!important;
+  box-shadow:0 3px 14px #1e395414!important;
 }
-[hidden] {display:none!important}
-#app .rivo-dark-ui .topbar {
-  background:#04182e!important;border-bottom:1px solid #173a5d!important;
-  color:var(--rivo-premium-text)!important;
-  box-shadow:0 5px 28px #0004!important;
+#app .rivo-dark-ui .topbar :is(.crumb,.crumb strong,.topbar-brand-name,.rivo-build-version){
+  color:#18243b!important;
 }
-#app .rivo-dark-ui .topbar :is(.crumb,strong,.topbar-brand-name) {color:var(--rivo-premium-text)!important}
-#app .rivo-dark-ui .sidebar {
-  background:#05192f!important;border-right:1px solid #194366!important;
+#app .rivo-dark-ui .sidebar{background:#172e57!important;border-right:1px solid #334b6c!important}
+#app .rivo-dark-ui .sidebar :is(.brand,.nav-label,.nav-button){color:#e4ecff!important}
+#app .rivo-dark-ui .sidebar .nav-button.active{background:#3053a2!important;border-color:#5277cb!important}
+#app .rivo-dark-ui .topbar :is(.rivo-header-back,.rivo-header-action,.rivo-header-language),
+#app .rivo-dark-ui .topbar .topright :is(button,label,select){
+  color:#18243b!important;background:#f0f4fb!important;
+  border:1px solid #dfe5f0!important;box-shadow:none!important;border-radius:12px!important;
 }
-#app .rivo-dark-ui .sidebar :is(.brand,.nav-label,.nav-button) {color:#d8efff!important}
-#app .rivo-dark-ui .nav-button.active {
-  background:linear-gradient(115deg,#06445a,#154b87)!important;
-  border:1px solid #20b6da!important;
+#app .rivo-dark-ui .topbar :is(svg,.rivo-header-back svg){color:#225be8!important}
+#app .rivo-dark-ui :is(.panel,.stat,.tool-card,.rivo-peer-panel,.rivo-code-history,.busy-inner,.rivo-storage-banner){
+  color:#18243b!important;background:#fff!important;border:1px solid #dfe5f0!important;
+  border-radius:17px!important;box-shadow:0 5px 17px #1029470e!important;
 }
-/* Reusable elevated surfaces and input controls for every tool workspace. */
-#app .rivo-dark-ui :is(.panel,.stat,.tool-card,.rivo-peer-panel,.rivo-code-history,.busy-inner,.rivo-storage-banner) {
-  background:linear-gradient(155deg,#0c2b49,#071d36)!important;
-  color:var(--rivo-premium-text)!important;
-  border:1px solid var(--rivo-premium-line)!important;
-  box-shadow:0 9px 28px #0003!important;
+#app .rivo-dark-ui :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea,.field input,.field select,.field textarea){
+  background:#fff!important;color:#18243b!important;
+  border:1px solid #cbd5e4!important;border-radius:13px!important;caret-color:#225be8!important;
 }
-#app .rivo-dark-ui :is(.panel,.tool-card,.rivo-peer-panel) {border-radius:18px!important}
-#app .rivo-dark-ui :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea,.field input,.field select,.field textarea) {
-  background:#06182f!important;border:1px solid #2d6386!important;
-  color:#f4fbff!important;border-radius:12px!important;
-  caret-color:#2ef3fc;
-}
-#app .rivo-dark-ui input::placeholder,#app .rivo-dark-ui textarea::placeholder{color:#8ab0c5!important;opacity:1}
-#app .rivo-dark-ui :is(.btn,.operation,button[data-hub-action],.rivo-scan-all-tools) {
-  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
-}
+#app .rivo-dark-ui input::placeholder,
+#app .rivo-dark-ui textarea::placeholder{color:#748299!important;opacity:1!important}
 #app .rivo-dark-ui .btn:not(.btn-outline):not(.btn-danger):not(.btn-white):not(.btn-light),
-#app .rivo-dark-ui .operation {
-  background:linear-gradient(110deg,#00d7cf,#0c7fe3 62%,#1949d4)!important;
-  border:1px solid #3dcaf3!important;color:#fff!important;
-  box-shadow:0 8px 22px #046fe043!important;
+#app .rivo-dark-ui .operation{
+  background:#225be8!important;color:#fff!important;border:1px solid #225be8!important;
+  box-shadow:none!important;border-radius:13px!important;
 }
-#app .rivo-dark-ui :is(.btn-outline,.btn-light,.btn-white,.back,.rivo-file-picker-button) {
-  background:#0c2c4a!important;color:#d9f8ff!important;border:1px solid #307391!important;
+#app .rivo-dark-ui :is(.btn-outline,.btn-light,.btn-white,.back,.rivo-file-picker-button){
+  background:#eaf0ff!important;color:#225be8!important;border:1px solid #d5e1fb!important;
 }
-#app .rivo-dark-ui .btn-danger {background:#42243b!important;color:#ff9cad!important;border-color:#a64f71!important}
-#app .rivo-dark-ui :is(.tool-icon,.settings-row-icon) {
-  background:linear-gradient(140deg,#0b5770,#0c3562)!important;
-  color:#45f3f4!important;border:1px solid #226e91!important;
+#app .rivo-dark-ui .btn-danger{background:#fff0f2!important;color:#d84058!important;border:1px solid #f0c7ce!important}
+#app .rivo-dark-ui :is(.tool-icon,.settings-row-icon){
+  background:#eaf0ff!important;color:#225be8!important;border:1px solid #e4eafd!important;
 }
-/* Home header and quick scan primary actions. */
-#app .rivo-v2-home-heading {padding:9px 1px 13px!important}
-#app .rivo-v2-home-heading h1 {
-  color:#f2fcff!important;font-size:clamp(23px,6vw,34px)!important;letter-spacing:-.7px!important;
+#app .rivo-dark-ui :is(.toast,.busy-inner){color:#18243b!important}
+#app .rivo-dark-ui .toast.error{background:#d84058!important;color:#fff!important}
+
+/* Remaining WebView Home view: same light Figma visual palette if opened from web back. */
+#app .rivo-v2-home-heading{padding:6px 0 13px!important}
+#app .rivo-v2-home-heading h1{
+  font-size:clamp(23px,6vw,31px)!important;color:#18243b!important;letter-spacing:-.5px!important;
 }
-#app .rivo-v2-home-heading p{color:#82ddea!important;font-size:12px!important}
-#app .rivo-v2-stats {
-  background:linear-gradient(115deg,#063a51,#0b3155)!important;
-  border:1px solid #1a718a!important;border-radius:17px!important;
-  box-shadow:inset 0 1px #58edfc20,0 9px 22px #0003!important;
+#app .rivo-v2-home-heading p{color:#68788e!important;font-size:13px!important}
+#app .rivo-v2-stats{
+  background:#fff!important;border:1px solid #dfe5f0!important;
+  border-radius:15px!important;box-shadow:none!important;
 }
-#app .rivo-v2-stats :is(strong,small,svg){color:#d1faff!important}
+#app .rivo-v2-stats :is(strong,small,svg){color:#225be8!important}
 #app .rivo-scan-first .rivo-premium-search,
 #app .rivo-tools-hub .rivo-tools-search,
-#app .library-workspace .library-search {
-  background:#071e38!important;border:1px solid #215b7d!important;
-  box-shadow:inset 0 1px #36edfa0a!important;border-radius:14px!important;
-  color:#c9efff!important;min-height:46px!important;
+#app .library-workspace .library-search{
+  background:#fff!important;color:#18243b!important;border:1px solid #dfe5f0!important;
+  box-shadow:none!important;border-radius:13px!important;min-height:49px!important;
 }
-#app .rivo-scan-first :is(.rivo-scan-first-heading,.rivo-v2-popular-head) h2,
-#app .rivo-tools-heading h1,#app .page-heading h1,#app .rivo-v2-documents h1 {
-  color:#f5fcff!important;
-}
-#app .rivo-scan-first .rivo-scan-modes {
+#app .rivo-scan-first .rivo-scan-modes{
   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  gap:10px!important;margin:10px 0 16px!important;
+  gap:10px!important;margin:9px 0 16px!important;
 }
-#app .rivo-scan-first .rivo-scan-mode {
-  position:relative!important;overflow:hidden!important;
-  box-sizing:border-box!important;min-width:0!important;min-height:116px!important;
-  display:flex!important;flex-direction:column!important;justify-content:space-between!important;
-  align-items:flex-start!important;text-align:start!important;
-  padding:14px!important;gap:10px!important;border-radius:19px!important;
-  color:#eafcff!important;background:linear-gradient(133deg,#0c3159,#0a2546)!important;
-  border:1.3px solid #317293!important;box-shadow:0 8px 20px #0004!important;
+#app .rivo-scan-first .rivo-scan-mode{
+  display:flex!important;flex-direction:column!important;
+  align-items:flex-start!important;justify-content:space-between!important;
+  min-height:84px!important;padding:12px!important;gap:6px!important;
+  background:#fff!important;color:#18243b!important;border:1px solid #dfe5f0!important;
+  border-radius:17px!important;box-shadow:none!important;white-space:normal!important;
 }
 #app .rivo-scan-first .rivo-scan-mode-main{
-  background:linear-gradient(137deg,#007f96,#0b3d8d 64%,#132d79)!important;
-  border:1.7px solid #35f4f1!important;
-  box-shadow:0 0 18px #0debe058,0 10px 26px #002943a8!important;
+  grid-column:1/-1!important;min-height:163px!important;
+  align-items:flex-start!important;justify-content:center!important;padding:17px!important;
+  background:#225be8!important;color:#fff!important;border-color:#225be8!important;
+  border-radius:23px!important;
 }
-#app .rivo-scan-first .rivo-scan-mode strong {
-  display:block!important;color:#f4fdff!important;font-size:clamp(12px,3.55vw,16px)!important;
-  line-height:1.3!important;text-align:start!important;opacity:1!important;
+#app .rivo-scan-first .rivo-scan-mode-main :is(strong,svg,.rivo-scan-mode-icon){
+  color:#fff!important;
 }
-#app .rivo-scan-mode .rivo-scan-mode-icon {
-  background:linear-gradient(140deg,#0e7293,#073d62)!important;
-  border:1px solid #38b7df!important;color:#d9fdff!important;
-  box-shadow:0 0 12px #12d4ea36!important;
+#app .rivo-scan-first .rivo-scan-mode-main strong{
+  font-size:22px!important;line-height:1.25!important;text-align:start!important;
+  -webkit-text-fill-color:#fff!important;
 }
-#app .rivo-v2-popular {
-  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) strong{
+  font-size:13px!important;line-height:1.28!important;color:#18243b!important;
 }
-#app .rivo-v2-popular button {
-  min-width:0!important;min-height:77px!important;
-  border:1px solid #225a7e!important;border-radius:15px!important;
-  color:#f2fcff!important;background:linear-gradient(145deg,#0b2d50,#091e39)!important;
-  box-shadow:0 6px 16px #0003!important;
+#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) .rivo-scan-mode-icon{
+  width:37px!important;height:37px!important;
+  color:#008f89!important;background:#e2f7f3!important;border:0!important;border-radius:12px!important;
 }
-#app .rivo-v2-popular button :is(strong,svg){color:#e9fdff!important}
-#app .rivo-v2-popular button span{background:#0f4162!important;color:#54e9ff!important}
-/* More tools: replace blank, oversized white tiles with compact readable rows. */
-#app .rivo-scan-more-tools {
-  display:block!important;overflow:hidden!important;border-radius:19px!important;
-  border:1px solid #225d7c!important;
-  background:linear-gradient(155deg,#0b2d50,#071d38)!important;
-  margin:16px 0 12px!important;box-shadow:0 9px 20px #0003!important;
+#app .rivo-scan-first .rivo-scan-mode-qr{
+  background:#fff!important;border:1px solid #dfe5f0!important;box-shadow:none!important;
 }
-#app .rivo-scan-more-tools summary {color:#f2fbff!important;background:#0c304e!important;border-bottom:1px solid #1b506d!important}
-#app .rivo-scan-more-tools summary :is(strong,small){color:#e8fcff!important}
-#app .rivo-scan-more-tools summary .rivo-scan-more-icon{background:#114e6f!important;color:#51ebfc!important}
+#app .rivo-v2-popular{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;
+}
+#app .rivo-v2-popular button{
+  background:#fff!important;color:#18243b!important;border:1px solid #dfe5f0!important;
+  border-radius:13px!important;min-height:73px!important;box-shadow:none!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;padding:8px 4px!important;gap:5px!important;
+}
+#app .rivo-v2-popular button :is(strong,svg){color:#18243b!important}
+#app .rivo-v2-popular button strong{font-size:11px!important;line-height:1.2!important;white-space:normal!important}
+#app .rivo-v2-popular button span{background:#eaf0ff!important;color:#225be8!important}
+#app .rivo-scan-first :is(.rivo-scan-first-heading,.rivo-v2-popular-head) h2{color:#18243b!important}
+#app .rivo-scan-more-tools{
+  background:#fff!important;color:#18243b!important;
+  border:1px solid #dfe5f0!important;border-radius:16px!important;
+  box-shadow:none!important;margin:13px 0!important;overflow:hidden!important;
+}
+#app .rivo-scan-more-tools summary{
+  background:#fff!important;color:#18243b!important;
+  border-bottom:1px solid #e6ecf4!important;padding:12px 14px!important;
+}
+#app .rivo-scan-more-tools summary :is(strong,small,span,svg){color:#18243b!important}
+#app .rivo-scan-more-tools summary .rivo-scan-more-icon{background:#eaf0ff!important;color:#225be8!important}
+#app .rivo-scan-more-tools:not([open]) summary{border-bottom:none!important}
 #app .rivo-scan-first .rivo-premium-tools,
-#app .rivo-tools-hub .rivo-hub-grid {
+#app .rivo-tools-hub .rivo-hub-grid{
   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  gap:8px!important;padding:10px!important;
+  gap:9px!important;padding:10px!important;
 }
 #app .rivo-scan-first .rivo-premium-tile,
-#app .rivo-tools-hub .rivo-hub-tile {
-  display:flex!important;flex-direction:row!important;justify-content:flex-start!important;
-  align-items:center!important;box-sizing:border-box!important;
-  position:relative!important;min-width:0!important;min-height:68px!important;
-  padding:9px 10px!important;gap:9px!important;border-radius:13px!important;
-  border:1px solid #245879!important;color:#eafcff!important;
-  background:linear-gradient(135deg,#0d3556,#081e36)!important;
-  box-shadow:inset 0 1px #ffffff0b,0 5px 15px #0002!important;
-  text-align:start!important;opacity:1!important;visibility:visible!important;
-  white-space:normal!important;
+#app .rivo-tools-hub .rivo-hub-tile{
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:8px!important;min-width:0!important;min-height:67px!important;
+  padding:9px!important;border-radius:13px!important;background:#fff!important;
+  border:1px solid #dfe5f0!important;color:#18243b!important;
+  opacity:1!important;visibility:visible!important;box-shadow:none!important;
+  overflow-wrap:anywhere!important;text-align:start!important;white-space:normal!important;
 }
 #app .rivo-scan-first .rivo-premium-tile::before,
-#app .rivo-tools-hub .rivo-hub-tile::before {display:none!important}
+#app .rivo-tools-hub .rivo-hub-tile::before{display:none!important}
 #app .rivo-scan-first .rivo-premium-tile-icon,
-#app .rivo-tools-hub .rivo-hub-tile .tool-icon {
+#app .rivo-tools-hub .rivo-hub-tile .tool-icon{
   display:grid!important;place-items:center!important;
-  flex:0 0 39px!important;width:39px!important;height:39px!important;
-  margin:0!important;border-radius:11px!important;
-  background:linear-gradient(135deg,#0d5778,#153d83)!important;
-  border:1px solid #2882aa!important;color:#55f4f4!important;
+  flex:0 0 38px!important;width:38px!important;height:38px!important;margin:0!important;
+  background:#eaf0ff!important;color:#225be8!important;border:0!important;
+  border-radius:12px!important;
 }
 #app .rivo-scan-first .rivo-premium-tile strong,
-#app .rivo-tools-hub .rivo-hub-tile strong {
-  display:block!important;color:#f0faff!important;
-  font-size:clamp(11px,2.75vw,13px)!important;line-height:1.25!important;
-  font-weight:750!important;opacity:1!important;visibility:visible!important;
-  min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;
-  text-align:start!important;
+#app .rivo-tools-hub .rivo-hub-tile strong{
+  color:#18243b!important;font-size:clamp(11px,2.8vw,13px)!important;
+  line-height:1.25!important;opacity:1!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
 }
-#app .rivo-tools-hub .rivo-tools-section {scroll-margin-top:75px!important}
-#app .rivo-tools-hub .rivo-tools-section h2 {color:#e9fbff!important}
-#app .rivo-tools-hub .rivo-tool-pills button,
-#app .rivo-scan-file-chips button,
-#app .rivo-v2-documents .library-chips button {
-  background:#0a2746!important;color:#b8e7f7!important;
-  border:1px solid #235778!important;border-radius:999px!important;
+
+/* Tools: no white-on-white or dark cards. */
+#app .rivo-tools-hub .rivo-tools-heading :is(h1,h2,p){color:#18243b!important}
+#app .rivo-tools-hub .rivo-tools-heading p{color:#68788e!important}
+#app .rivo-tools-hub .rivo-tool-pills,
+#app .rivo-tools-hub .rivo-tool-pills button{
+  background:#fff!important;color:#18243b!important;
+  border:1px solid #dfe5f0!important;border-radius:12px!important;box-shadow:none!important;
 }
-#app .rivo-tools-hub .rivo-tool-pills button.active,
-#app .rivo-scan-file-chips button.active,
-#app .rivo-v2-documents .library-chips button.active {
-  background:linear-gradient(120deg,#0084a7,#0963ca)!important;
-  color:white!important;border-color:#39e8f8!important;
+#app .rivo-tools-hub .rivo-tool-pills{padding:7px!important}
+#app .rivo-tools-hub .rivo-tool-pills button.active{
+  background:#225be8!important;color:#fff!important;border-color:#225be8!important;
 }
-/* File manager and previews: typed file glyphs remain legible. */
-#app :is(.rivo-premium-recent,.rivo-v2-documents,.recent-panel,.documents-grid) {
-  color:var(--rivo-premium-text)!important;
+#app .rivo-tools-hub .rivo-tool-pills button.active svg{color:#fff!important}
+#app .rivo-tools-hub :is(.rivo-tools-section h2,.rivo-v2-tools-subtitle){color:#18243b!important}
+#app .rivo-tools-hub :is(.rivo-hub-tile,.rivo-tools-section,.rivo-tools-heading){scroll-margin-top:74px!important}
+#app .rivo-tools-hub .rivo-tool-pills button:focus-visible{outline-offset:2px!important}
+
+/* Real document library, thumbnails and contextual selection actions. */
+#app .rivo-dark-ui :is(.rivo-premium-recent,.rivo-v2-documents,.recent-panel,.documents-grid){
+  color:#18243b!important;
 }
 #app .rivo-scan-first .rivo-premium-recent .rivo-recent-card,
 #app .library-workspace #library-list .document-entry,
-#app .rivo-dark-ui .document-entry {
-  background:linear-gradient(155deg,#0c2e4f,#081f3a)!important;
-  border:1px solid #255777!important;
-  color:#f0faff!important;border-radius:14px!important;
-  box-shadow:0 4px 14px #0003!important;
+#app .rivo-dark-ui .document-entry{
+  background:#fff!important;color:#18243b!important;
+  border:1px solid #dfe5f0!important;border-radius:15px!important;
+  box-shadow:0 4px 15px #1029470b!important;
 }
 #app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) :is(b,strong,.rivo-doc-name,.document-title){
-  color:#f3fbff!important;opacity:1!important;
+  color:#18243b!important;opacity:1!important;
 }
-#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) small {color:#a3cada!important}
-#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) .rivo-real-thumb {
-  border-radius:10px!important;object-fit:cover!important;
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) small{color:#68788e!important}
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry) .rivo-real-thumb{border-radius:10px!important;object-fit:cover!important}
+#app .rivo-dark-ui :is(.rivo-file-thumb,.document-icon){
+  background:#eaf0ff!important;color:#225be8!important;border:1px solid #dce6fb!important;
 }
-#app .rivo-dark-ui .rivo-file-type-icon,
-#app .rivo-dark-ui .document-icon {
-  background:#0c3b5d!important;color:#6ee7ff!important;
-  border:1px solid #2b83aa!important;box-shadow:none!important;
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-pdf{background:#fff1f3!important;color:#c63351!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-doc{background:#eaf0ff!important;color:#225be8!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-xls{background:#e2f7f3!important;color:#147e64!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-ppt{background:#fff2e6!important;color:#cc612c!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-zip{background:#f2edff!important;color:#7664d8!important}
+#app .rivo-dark-ui .rivo-file-thumb.rivo-file-image{background:#e7f7fd!important;color:#008f89!important}
+#app .rivo-dark-ui .doc-select-box{accent-color:#225be8!important}
+#app .rivo-dark-ui .document-entry.doc-selected{
+  background:#eef3ff!important;border-color:#225be8!important;
+  box-shadow:0 0 0 1px #225be866!important;
 }
-#app .rivo-dark-ui .doc-select-box:not(:checked) {
-  background:#0d304e!important;border:2px solid #50bfd8!important;
+#app .rivo-v2-documents :is(.library-heading,.work-title,.library-controls,.library-selection-toolbar){color:#18243b!important}
+#app .rivo-v2-documents .library-heading p{color:#68788e!important}
+#app .library-workspace :is(.library-panel,.library-top,.rivo-library-chips,.storage-actions,.rivo-storage-card,.rivo-storage-notice){
+  background:#fff!important;color:#18243b!important;border-color:#dfe5f0!important;
 }
-#app .rivo-dark-ui .doc-select-box:checked {
-  background:#08a5d5!important;border-color:#69f8fa!important;
+#app .rivo-v2-documents :is(.library-sortbar,.library-actions,.rivo-library-chips,.storage-actions) button{
+  background:#eaf0ff!important;color:#225be8!important;border:1px solid #dce6fb!important;
+  border-radius:12px!important;
 }
-#app .rivo-dark-ui :is(.document-entry,.rivo-recent-card).doc-selected {
-  border-color:#21eafa!important;box-shadow:0 0 0 1px #39e7fa80!important;
+#app .library-workspace .rivo-library-chips button.active{background:#225be8!important;color:#fff!important;border-color:#225be8!important}
+#app .library-workspace :is(.library-panel,.storage-actions) :is(strong,small,p,span){color:#18243b!important}
+#app .rivo-dark-ui .recent-empty,#app .rivo-dark-ui .empty{color:#68788e!important}
+
+/* Settings: white grouped rows, blue accent, no invented toggles. */
+#app .rivo-v2-profile{
+  background:#225be8!important;border:1px solid #225be8!important;
+  border-radius:21px!important;box-shadow:none!important;
 }
-#app .rivo-v2-documents :is(.library-heading,.work-title,.library-controls,.library-selection-toolbar) {
-  color:#eafaff!important;
+#app .rivo-v2-profile :is(strong,small,svg,span){color:#fff!important;-webkit-text-fill-color:#fff!important}
+#app .rivo-v2-profile-logo{background:#4475f6!important;border:1px solid #80a3ff!important}
+#app .rivo-v2-me .rivo-v2-profile-stats,
+#app .rivo-v2-me .rivo-v2-profile-stats button{
+  background:#fff!important;color:#18243b!important;border:1px solid #dfe5f0!important;
+  border-radius:13px!important;
 }
-#app .rivo-v2-documents .library-heading p {color:#aad2e2!important}
-#app .rivo-v2-documents .library-sortbar button,
-#app .rivo-v2-documents .library-actions button {
-  background:#0d3050!important;color:#effbff!important;border-color:#357090!important;
-}
-#app .rivo-dark-ui .recent-empty,
-#app .rivo-dark-ui .empty {color:#b6d7e9!important}
-#app .rivo-dark-ui .rivo-dark-ui :is(.footer,.home-footer-note){color:#8eaec4!important}
-/* Settings uses deliberate grouped rows instead of bright white cards. */
-#app .rivo-v2-profile {
-  background:linear-gradient(125deg,#0e5874,#15367d 67%,#0d2557)!important;
-  border:1px solid #23b4d7!important;border-radius:21px!important;
-  box-shadow:0 10px 30px #0004!important;
-}
-#app .rivo-v2-profile :is(strong,small,svg,span){color:#e7fbff!important}
-#app .rivo-v2-profile-logo {background:#07294388!important;border-color:#20d4e4!important}
+#app .rivo-v2-me .rivo-v2-profile-stats button :is(svg,strong,small){color:#18243b!important}
 #app .rivo-v2-me .settings-section{
-  background:linear-gradient(155deg,#0c2d50,#071e38)!important;
-  border:1px solid #275676!important;border-radius:18px!important;
-  box-shadow:0 8px 24px #0002!important;overflow:hidden!important;
+  background:#fff!important;border:1px solid #dfe5f0!important;
+  border-radius:17px!important;box-shadow:none!important;overflow:hidden!important;
 }
-#app .rivo-v2-me .settings-section>h2{color:#64f0f3!important}
-#app .rivo-v2-me .settings-row {
-  color:#eafaff!important;background:#091f3b!important;
-  border-color:#1c4d6a!important;min-height:52px!important;
+#app .rivo-v2-me .settings-section>h2{color:#225be8!important}
+#app .rivo-v2-me .settings-row{
+  background:#fff!important;color:#18243b!important;min-height:55px!important;
+  border-color:#edf0f7!important;
 }
-#app .rivo-v2-me .settings-row :is(strong,small){color:#e5faff!important}
-#app .rivo-v2-me .settings-row-icon {color:#53e9fa!important}
-#app .rivo-v2-me .rivo-scanner-pref select{max-width:45%!important}
+#app .rivo-v2-me .settings-row :is(strong,small){color:#18243b!important}
+#app .rivo-v2-me .settings-row-icon{color:#225be8!important}
 #app .rivo-v2-me .rivo-scanner-pref input[type=checkbox],
-#app .rivo-dark-ui input[type=checkbox]{accent-color:#0bdaea!important}
-#app .rivo-v2-me .rivo-pref-section-subtitle {color:#b2cfdd!important}
-/* Bottom navigation: anchored five slots with camera gap, and no surprise scroll. */
+#app .rivo-dark-ui input[type=checkbox]{accent-color:#225be8!important}
+#app .rivo-v2-me .rivo-pref-section-subtitle{color:#68788e!important}
+
+/* PDF tools: keep file pickers/preview and Process & Save accessible. */
+#app .rivo-dark-ui .workspace .work-grid :is(.panel,.panel h3,.panel p){
+  background:#fff!important;color:#18243b!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .dropzone{
+  background:#f3f6fc!important;color:#18243b!important;
+  border:1.5px dashed #8ea8d9!important;border-radius:17px!important;min-height:132px!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .dropzone :is(strong,span,svg,.uploadicon){color:#18243b!important}
+#app .rivo-dark-ui .workspace .work-grid .dropzone .uploadicon{background:#eaf0ff!important;color:#225be8!important}
+#app .rivo-dark-ui .workspace .work-grid .panel :is(.hint,.privacy-note,.notice){
+  background:#f2f5fb!important;color:#68788e!important;border-color:#dfe5f0!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel :is(button#process,.operation){
+  color:#fff!important;background:#225be8!important;border-color:#225be8!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel button#process:disabled{
+  background:#e8edf7!important;color:#9ca9bd!important;border-color:#dfe5f0!important;
+}
+#app .rivo-dark-ui .workspace .work-grid .panel .signpad{background:#fff!important}
+
+/* Material 3 bottom navigation in WebView fallback — Android Compose owns the
+ * initial native navigation; this matches it when user works in PDF engine. */
 @media(max-width:780px){
-  #app .rivo-dark-ui .topbar {min-height:58px!important;height:auto!important;padding:8px 14px!important}
-  #app .rivo-dark-ui .content {
-    padding:12px 12px calc(115px + env(safe-area-inset-bottom,0px))!important;
+  #app .rivo-dark-ui .topbar{min-height:56px!important;height:auto!important;padding:8px 13px!important}
+  #app .rivo-dark-ui .content{padding:12px 12px calc(113px + env(safe-area-inset-bottom,0px))!important}
+  #app .rivo-dark-ui .mobilebar{
+    position:fixed!important;display:grid!important;z-index:60!important;
+    left:0!important;right:0!important;bottom:0!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:1px!important;
+    min-height:79px!important;padding:7px 5px calc(10px + env(safe-area-inset-bottom,0px))!important;
+    background:#fff!important;border-top:1px solid #dfe5f0!important;box-shadow:0 -6px 18px #15294716!important;
   }
-  #app .rivo-dark-ui .mobilebar {
-    position:fixed!important;left:0!important;right:0!important;bottom:0!important;
-    z-index:60!important;display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr)) 74px repeat(2,minmax(0,1fr))!important;
-    gap:2px!important;align-items:center!important;
-    padding:8px 6px calc(10px + env(safe-area-inset-bottom,0px))!important;
-    min-height:77px!important;overflow:visible!important;
-    background:#06182df7!important;border-top:1px solid #25607f!important;
-    box-shadow:0 -9px 28px #0006!important;
+  #app .rivo-dark-ui .mobilebar button{
+    min-width:0!important;min-height:56px!important;
+    border:0!important;background:transparent!important;color:#68788e!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    justify-content:center!important;gap:4px!important;font-size:10px!important;box-shadow:none!important;
   }
-  #app .rivo-dark-ui .mobilebar button {
-    background:transparent!important;color:#a2c6d9!important;
-    border:none!important;min-width:0!important;min-height:52px!important;
-    font-size:10px!important;gap:4px!important;
+  #app .rivo-dark-ui .mobilebar button.active{
+    background:#eaf0ff!important;color:#225be8!important;border-radius:14px!important;
   }
-  #app .rivo-dark-ui .mobilebar button:nth-of-type(1){grid-column:1!important}
-  #app .rivo-dark-ui .mobilebar button:nth-of-type(2){grid-column:2!important}
-  #app .rivo-dark-ui .mobilebar button:nth-of-type(3){grid-column:4!important}
-  #app .rivo-dark-ui .mobilebar button:nth-of-type(4){grid-column:5!important}
-  #app .rivo-dark-ui .mobilebar button.active{color:#24eeef!important}
-  #app .rivo-dark-ui .floating-scan.rivo-camera-fab {
-    position:fixed!important;left:50%!important;right:auto!important;
-    bottom:calc(21px + env(safe-area-inset-bottom,0px))!important;
-    transform:translateX(-50%)!important;
-    width:66px!important;height:66px!important;min-width:66px!important;
-    min-height:66px!important;box-sizing:border-box!important;
-    border-radius:50%!important;border:3px solid #74f6ff!important;
-    background:radial-gradient(circle at 32% 23%,#03e6da,#085fbb 63%,#1b2c8c)!important;
-    color:white!important;box-shadow:0 0 16px #03eafd80,0 8px 24px #0007!important;
+  #app .rivo-dark-ui .mobilebar button svg{color:inherit!important}
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+    position:fixed!important;bottom:calc(17px + env(safe-area-inset-bottom,0px))!important;
+    left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+    width:61px!important;height:61px!important;min-width:61px!important;min-height:61px!important;
+    border-radius:50%!important;border:3px solid #fff!important;
+    background:#225be8!important;color:#fff!important;box-shadow:0 5px 15px #2b58a73d!important;
   }
-  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::before {
-    filter:blur(10px)!important;
-  }
+  #app .rivo-dark-ui .floating-scan.rivo-camera-fab::before{display:none!important}
 }
-@media(min-width:781px){
-  #app .rivo-dark-ui .mobilebar{display:none!important}
-  #app .rivo-dark-ui .floating-scan.rivo-camera-fab {
-    background:linear-gradient(135deg,#00e4d8,#1266dc)!important;
-  }
+@media(min-width:781px){#app .rivo-dark-ui .mobilebar{display:none!important}}
+
+/* Unified Material 3 modal system for PDF, Camera options, QR, Rename,
+ * Delete, Export, Share and editing. All content can scroll on small phones. */
+:is(.rivo-editor-overlay,.rivo-pages-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay,.rivo-perfectscan-overlay,.bulk-overlay,.doc-detail-overlay){
+  background:#15233ab8!important;backdrop-filter:blur(4px)!important;color:#18243b!important;
 }
-@media(max-width:380px){
-  #app .rivo-scan-first .rivo-scan-mode{min-height:105px!important;padding:11px!important}
-  #app .rivo-scan-first .rivo-premium-tools,
-  #app .rivo-tools-hub .rivo-hub-grid {gap:6px!important;padding:7px!important}
-  #app .rivo-scan-first .rivo-premium-tile,
-  #app .rivo-tools-hub .rivo-hub-tile {padding:7px!important;gap:6px!important;min-height:61px!important}
-  #app .rivo-scan-first .rivo-premium-tile strong,
-  #app .rivo-tools-hub .rivo-hub-tile strong {font-size:10px!important}
+:is(.rivo-editor-window,.rivo-pages-modal,.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet,.doc-viewer-panel){
+  background:#fff!important;color:#18243b!important;border:1px solid #dfe5f0!important;
+  border-radius:24px!important;box-shadow:0 22px 60px #13243c3d!important;box-sizing:border-box!important;
 }
-/* All modal families get the SAME dark premium material, no cropped buttons. */
-:is(.rivo-editor-overlay,.rivo-pages-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay,.rivo-perfectscan-overlay,.bulk-overlay,.doc-detail-overlay) {
-  color:#effaff!important;background:#010a18d9!important;
-  backdrop-filter:blur(12px);
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet){
+  width:min(calc(100vw - 22px),560px)!important;max-height:calc(100dvh - 24px)!important;
+  overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+  padding:15px!important;
 }
-:is(.rivo-editor-window,.rivo-pages-modal,.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet,.doc-detail-overlay,.doc-viewer-panel) {
-  box-sizing:border-box!important;
-  background:linear-gradient(162deg,#0d2d50,#06182f)!important;
-  color:#effaff!important;border:1px solid #286381!important;
-  box-shadow:0 20px 55px #0009!important;border-radius:20px!important;
-}
-:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) {
-  width:min(calc(100vw - 20px),560px)!important;
-  max-height:calc(100dvh - 25px)!important;overflow-x:hidden!important;
-  overflow-y:auto!important;overscroll-behavior:contain!important;
-  padding:14px!important;
-}
-:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) h2 {
-  color:#f2fcff!important;font-size:clamp(17px,4.2vw,21px)!important;
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) h2{
+  color:#18243b!important;font-size:clamp(18px,4vw,23px)!important;
 }
 :is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) :is(small,p,label){
-  color:#c0dbe8!important;
+  color:#68788e!important;
 }
-:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) :is(button,input,select,textarea):not([type=checkbox]) {
-  border-color:#357699!important;border-radius:12px!important;
-  color:#e9fbff!important;background:#0c3557!important;
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) :is(button,input,select,textarea){
+  color:#18243b!important;background:#f3f6fc!important;border:1px solid #dfe5f0!important;border-radius:12px!important;
 }
-:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) input::placeholder{color:#a9c7d9!important}
-:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) button:disabled {
-  opacity:.45!important;box-shadow:none!important;
+:is(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,.bulk-sheet) button:disabled{opacity:.43!important}
+.rivo-code-dialog :is(.rivo-code-result,.rivo-code-history-list,.rivo-code-status){
+  background:#f2f5fb!important;color:#18243b!important;border-color:#dfe5f0!important;
 }
-.rivo-code-dialog .rivo-code-result,.rivo-code-dialog .rivo-code-history-list,
-.rivo-code-dialog .rivo-code-status {background:#071f39!important;color:#c9f7ff!important;border-color:#275a75!important}
-.rivo-code-dialog .rivo-code-video {background:#000e1d!important;border:1px solid #1689ad!important;border-radius:14px!important}
-.rivo-code-dialog .rivo-code-actions {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+.rivo-code-dialog .rivo-code-video{background:#17233b!important;border:1px solid #dfe5f0!important;border-radius:14px!important}
+.rivo-code-dialog .rivo-code-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
 .rivo-code-dialog .rivo-code-actions button{min-height:43px!important}
-.rivo-code-dialog .rivo-code-history-list strong{color:#f2faff!important}
-.rivo-code-dialog .rivo-code-history-list small{color:#aac9d8!important}
-.bulk-sheet :is(.bulk-sheet-title,.bulk-sheet-actions,.bulk-field) {background:transparent!important;color:#f1fbff!important}
-.bulk-sheet button[aria-label*="Delete"],.rivo-code-dialog button[data-clear] {border-color:#a6546d!important;color:#ffc6ce!important}
+.rivo-code-dialog .rivo-code-history-list strong{color:#18243b!important}
+.rivo-code-dialog .rivo-code-history-list small{color:#68788e!important}
+.bulk-sheet :is(.bulk-sheet-title,.bulk-sheet-actions,.bulk-field){background:transparent!important;color:#18243b!important}
 .doc-detail-overlay :is(.doc-viewer-header,.doc-detail-actions,.doc-viewer-title,.doc-viewer-subtitle){
-  background:#0c2b4c!important;color:#f0fcff!important;border-color:#286080!important;
+  background:#fff!important;color:#18243b!important;border-color:#dfe5f0!important;
 }
-.doc-detail-overlay .doc-detail-preview{background:#051629!important}
-.doc-detail-overlay .doc-detail-paper{background:#e8f2fa!important}
-.doc-detail-overlay .doc-viewer-title {overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important}
-:is(.rivo-editor-header,.rivo-editor-filters,.rivo-editor-sliders,.rivo-editor-actions) {
-  background:#0a2a49!important;color:#eafaff!important;border-color:#2a607e!important;
+.doc-detail-overlay .doc-detail-preview{background:#f2f5fb!important}
+.doc-detail-overlay .doc-detail-paper{background:#fff!important}
+.doc-detail-overlay .doc-viewer-title{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+:is(.rivo-editor-header,.rivo-editor-filters,.rivo-editor-sliders,.rivo-editor-actions){
+  background:#fff!important;color:#18243b!important;border-color:#dfe5f0!important;
 }
 .rivo-editor-window{max-height:calc(100dvh - 14px)!important;overflow-y:auto!important}
-.rivo-editor-window :is(button,select,input){accent-color:#21dfea!important}
+.rivo-editor-window :is(button,select,input){accent-color:#225be8!important}
 .rivo-editor-window :is(.rivo-editor-header button,.rivo-editor-actions button,.rivo-filter-choice){
-  background:#0c3558!important;color:#e8fcff!important;border-color:#32718d!important;
+  background:#eaf0ff!important;color:#225be8!important;border-color:#dfe5f0!important;
 }
-.rivo-editor-window .rivo-filter-choice.active{
-  background:linear-gradient(120deg,#087f94,#145aba)!important;
-  border-color:#3cddff!important;color:white!important;
-}
-.rivo-editor-window .rivo-editor-picture{background:#041021!important}
-/* Page manager: gallery first, 48px toolbar, sticky save not giant action tiles. */
+.rivo-editor-window .rivo-filter-choice.active{background:#225be8!important;color:#fff!important;border-color:#225be8!important}
+.rivo-editor-window .rivo-editor-picture{background:#ecf0f5!important}
+
+/* Manage Pages: matches editable Figma Page 2:133 while keeping the real PDF
+ * preview, undo, restore and rotation handlers; no giant/cut-off buttons. */
 .rivo-pages-overlay{position:fixed!important;inset:0!important;z-index:400!important;padding:0!important;overflow:hidden!important}
 .rivo-pages-modal{
   width:min(100%,760px)!important;max-width:760px!important;
-  height:100dvh!important;max-height:100dvh!important;
-  min-height:0!important;margin:auto!important;border-radius:0!important;
-  display:flex!important;flex-direction:column!important;overflow:hidden!important;
-  background:linear-gradient(160deg,#0a2341,#031227)!important;
+  height:100dvh!important;max-height:100dvh!important;min-height:0!important;
+  margin:auto!important;border-radius:0!important;display:flex!important;
+  flex-direction:column!important;overflow:hidden!important;background:#f7f9fd!important;
 }
-.rivo-pages-top {
-  flex:none!important;min-height:61px!important;gap:10px!important;
+.rivo-pages-top{
+  flex:none!important;min-height:59px!important;
   display:flex!important;align-items:center!important;justify-content:space-between!important;
-  background:#08213b!important;color:#f4fdff!important;
-  border-bottom:1px solid #245977!important;padding:8px 12px!important;
+  gap:8px!important;background:#fff!important;color:#18243b!important;
+  border-bottom:1px solid #dfe5f0!important;padding:8px 12px!important;
 }
-.rivo-pages-top strong{font-size:17px!important;font-weight:800!important;color:#f4fbff!important}
+.rivo-pages-top strong{font-size:18px!important;font-weight:800!important;color:#18243b!important}
 .rivo-pages-top button{
-  min-height:43px!important;min-width:43px!important;padding:8px 10px!important;
-  border:1px solid #317796!important;border-radius:12px!important;
-  background:#103959!important;color:#e9faff!important;flex:none!important;
+  min-height:43px!important;min-width:43px!important;padding:7px 10px!important;
+  background:#eaf0ff!important;color:#225be8!important;border:1px solid #dfe5f0!important;
+  border-radius:12px!important;
 }
-.rivo-pages-top [data-page-action=close]{color:#ff9ba9!important;border-color:#a84766!important;background:#46233c!important}
-.rivo-pages-top .rivo-pages-save{
-  background:linear-gradient(110deg,#07d7d1,#197cde)!important;
-  border:1px solid #6bf8ff!important;color:white!important;
-  box-shadow:0 0 12px #0bdcff61!important;font-size:13px!important;
+.rivo-pages-total{
+  display:grid!important;place-items:center!important;min-width:46px!important;
+  padding:5px!important;color:#225be8!important;background:#eaf0ff!important;border-radius:9px!important;
+  font-size:12px!important;
 }
-.rivo-pages-count {
-  flex:none!important;background:#0a2746!important;
-  border-bottom:1px solid #2c5976!important;
+.rivo-pages-count{
+  flex:none!important;background:#fff!important;color:#18243b!important;
   display:flex!important;align-items:center!important;justify-content:space-between!important;
-  gap:8px!important;padding:8px 12px!important;
-  color:#e9faff!important;
+  gap:7px!important;padding:8px 11px!important;border-bottom:1px solid #e6ecf4!important;
 }
-.rivo-pages-count strong{font-size:12px!important;color:#d8faff!important;white-space:nowrap!important}
-.rivo-pages-count button {
-  width:auto!important;min-width:0!important;min-height:37px!important;
-  padding:7px 10px!important;background:#0f3a5b!important;
-  color:#eafaff!important;border:1px solid #2c7194!important;
-  border-radius:10px!important;font-size:12px!important;white-space:nowrap!important;
+.rivo-pages-count strong{font-size:12px!important;color:#225be8!important;white-space:nowrap!important}
+.rivo-pages-count button{
+  width:auto!important;min-width:0!important;min-height:36px!important;
+  padding:7px 11px!important;background:#eaf0ff!important;color:#225be8!important;
+  border:1px solid #dfe5f0!important;border-radius:18px!important;font-size:12px!important;
 }
-.rivo-pages-tip {flex:none!important;color:#a9d3e5!important;font-size:11px!important;margin:8px 12px!important}
-.rivo-pages-grid {
-  display:grid!important;grid-template-columns:repeat(auto-fill,minmax(102px,1fr))!important;
+.rivo-pages-tip{flex:none!important;color:#68788e!important;font-size:11px!important;margin:7px 12px!important}
+.rivo-pages-grid{
+  display:grid!important;grid-template-columns:repeat(auto-fill,minmax(121px,1fr))!important;
   align-content:start!important;justify-items:stretch!important;
-  gap:10px!important;padding:9px 12px 15px!important;margin:0!important;
+  gap:10px!important;margin:0!important;padding:9px 12px 16px!important;
   flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;
 }
 .rivo-page-item{
-  width:auto!important;min-width:0!important;min-height:0!important;
-  max-width:none!important;padding:6px!important;border-radius:14px!important;
-  background:#102e4d!important;border:1px solid #275776!important;
-  box-shadow:0 5px 16px #0003!important;
+  box-sizing:border-box!important;width:auto!important;min-width:0!important;min-height:0!important;
+  max-width:none!important;padding:7px!important;border-radius:16px!important;
+  background:#fff!important;border:1px solid #dfe5f0!important;box-shadow:none!important;
 }
-.rivo-page-item.selected {
-  background:#073c57!important;border:2px solid #2df6fb!important;
-  box-shadow:0 0 14px #11d6e75b!important;
-}
-.rivo-page-item.removed{opacity:.48!important}
+.rivo-page-item.selected{background:#eef3ff!important;border:2px solid #225be8!important;box-shadow:none!important}
+.rivo-page-item.removed{opacity:.45!important}
 .rivo-page-tile{
-  width:100%!important;min-height:100px!important;height:auto!important;
-  max-height:220px!important;aspect-ratio:3/4!important;
-  display:block!important;position:relative!important;
-  background:#e6eef5!important;border:1px solid #557e98!important;
-  border-radius:9px!important;overflow:hidden!important;
+  position:relative!important;display:block!important;width:100%!important;
+  min-height:112px!important;height:auto!important;max-height:240px!important;
+  aspect-ratio:3/4!important;background:#ecf0f5!important;
+  border:1px solid #dce3ed!important;border-radius:9px!important;overflow:hidden!important;
 }
 .rivo-page-tile img{width:100%!important;height:100%!important;object-fit:contain!important}
-.rivo-page-check {
-  position:absolute!important;top:5px!important;right:5px!important;
-  width:22px!important;height:22px!important;display:grid!important;place-items:center!important;
-  border:2px solid #7fb7d9!important;background:#071d32!important;color:transparent!important;
-  border-radius:6px!important;box-shadow:0 2px 5px #0004!important;
+.rivo-page-check{
+  position:absolute!important;top:6px!important;right:6px!important;display:grid!important;place-items:center!important;
+  width:23px!important;height:23px!important;border:2px solid #8da7c4!important;
+  background:#fff!important;color:transparent!important;border-radius:7px!important;
 }
-.rivo-page-item.selected .rivo-page-check {
-  background:#13cfe7!important;color:#fff!important;border-color:#71fff9!important;
+.rivo-page-item.selected .rivo-page-check{background:#225be8!important;color:#fff!important;border-color:#225be8!important}
+.rivo-page-row{
+  min-height:32px!important;display:flex!important;align-items:center!important;
+  justify-content:space-between!important;gap:4px!important;padding-top:6px!important;
 }
-.rivo-page-row {
-  min-height:32px!important;display:flex!important;justify-content:space-between!important;
-  align-items:center!important;gap:5px!important;padding-top:5px!important;
-}
-.rivo-page-row b{font-size:13px!important;color:#f3fcff!important}
+.rivo-page-row b{font-size:13px!important;color:#18243b!important}
 .rivo-page-row button{
-  background:#0a3b5d!important;color:#deefff!important;
-  border:1px solid #3a7497!important;border-radius:7px!important;
-  width:30px!important;min-height:29px!important;max-height:31px!important;
-  padding:3px!important;font-size:14px!important;
+  min-height:29px!important;max-height:32px!important;width:31px!important;padding:3px!important;
+  color:#225be8!important;background:#eaf0ff!important;border:1px solid #dfe5f0!important;border-radius:9px!important;
 }
 .rivo-pages-bottom{
-  flex:none!important;margin:0!important;padding:9px 11px calc(11px + env(safe-area-inset-bottom,0px))!important;
-  background:#071d35!important;border-top:1px solid #2c5e7a!important;
-  color:#c8f5ff!important;
-  position:relative!important;bottom:auto!important;max-height:none!important;
+  flex:none!important;margin:0!important;position:relative!important;bottom:auto!important;
+  padding:10px 10px calc(11px + env(safe-area-inset-bottom,0px))!important;
+  background:#fff!important;color:#18243b!important;border-top:1px solid #dfe5f0!important;
 }
 .rivo-page-operations{
   display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
-  grid-auto-rows:auto!important;gap:6px!important;
-  padding:0!important;margin:0!important;
+  grid-auto-rows:auto!important;gap:5px!important;padding:0!important;margin:0!important;
 }
-.rivo-page-operations button {
-  width:100%!important;min-width:0!important;height:auto!important;
-  min-height:48px!important;max-height:none!important;
-  aspect-ratio:auto!important;padding:6px 2px!important;
+.rivo-page-operations button{
+  width:100%!important;min-width:0!important;min-height:51px!important;height:auto!important;
+  max-height:none!important;aspect-ratio:auto!important;padding:5px 2px!important;
   display:flex!important;flex-direction:column!important;align-items:center!important;
-  justify-content:center!important;gap:3px!important;
-  color:#d8f8ff!important;background:#103658!important;
-  border:1px solid #2e6d91!important;border-radius:11px!important;
-  box-shadow:none!important;font-size:10px!important;
-  line-height:1.2!important;white-space:normal!important;
-  overflow-wrap:anywhere!important;text-overflow:clip!important;
+  justify-content:center!important;gap:4px!important;
+  border:1px solid #dfe5f0!important;border-radius:13px!important;
+  background:#eaf0ff!important;color:#225be8!important;
+  box-shadow:none!important;font-size:10px!important;line-height:1.2!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;text-overflow:clip!important;
 }
-.rivo-page-operations button[data-page-action=delete] {color:#ff98a9!important;border-color:#8f4867!important}
-.rivo-page-operations button[data-page-action=restore] {color:#91f7c4!important}
-.rivo-pages-bottom small{display:block!important;font-size:10px!important;margin-top:6px!important;color:#8fb5c8!important}
-@media(max-width:359px){
-  .rivo-page-operations{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px!important}
-  .rivo-page-operations button{font-size:9px!important;padding:5px 1px!important}
-  .rivo-pages-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.rivo-page-operations button[data-page-action=delete]{
+  background:#fff0f2!important;color:#d84058!important;border-color:#f5dbe0!important;
 }
-@media(min-width:760px){
-  .rivo-pages-modal{height:min(92dvh,960px)!important;max-height:960px!important;border-radius:24px!important;border:1px solid #3387a9!important}
-}
-@media(prefers-reduced-motion:reduce){
-  .rivo-dark-ui *, .rivo-dark-ui *::before, .rivo-dark-ui *::after,
-  .rivo-pages-overlay *,.rivo-code-overlay * {animation:none!important;transition:none!important}
-}
-
-
-/* Primary document export action stays reachable above Android gesture bar. */
+.rivo-page-operations button[data-page-action=restore]:not(:disabled){color:#008f89!important}
 .rivo-pages-bottom>.rivo-pages-save{
   display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100%!important;min-height:50px!important;margin:10px 0 0!important;
-  gap:11px!important;border:1px solid #58edff!important;border-radius:16px!important;
+  gap:10px!important;width:100%!important;min-height:49px!important;
+  margin:9px 0 0!important;padding:11px 16px!important;
+  background:#225be8!important;color:#fff!important;border:1px solid #225be8!important;
+  box-shadow:none!important;border-radius:15px!important;
   font-size:15px!important;font-weight:850!important;
-  color:#fff!important;
-  background:linear-gradient(112deg,#02d4c7 0%,#078ed7 54%,#1852d4 100%)!important;
-  box-shadow:0 0 15px #06d7ef47,0 7px 22px #002c7faa!important;
 }
-.rivo-pages-bottom>.rivo-pages-save>span:first-child{font-size:22px!important}
-.rivo-pages-bottom>.rivo-pages-save>span:last-child{font-size:24px!important;margin-inline-start:8px}
-.rivo-pages-top .rivo-pages-total{
-  display:grid;place-items:center;min-width:47px;padding:5px 8px;
-  border-radius:10px;border:1px solid #1e5a7c;background:#082943;
-  color:#a6f7fc;font-size:11px;font-weight:800;
+.rivo-pages-bottom>.rivo-pages-save>span:first-child{font-size:21px!important}
+.rivo-pages-bottom>.rivo-pages-save>span:last-child{font-size:22px!important}
+.rivo-pages-bottom small{display:block!important;color:#68788e!important;font-size:10px!important;margin-top:5px!important}
+@media(max-width:359px){
+  .rivo-pages-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .rivo-page-operations{gap:4px!important}
+  .rivo-page-operations button{font-size:9px!important;padding:5px 0!important}
 }
-.rivo-pages-grid[role=list] .rivo-page-item[role=listitem] {contain:layout paint}
-.rivo-page-item .rivo-page-tile:disabled {opacity:.35!important}
-.rivo-page-operations button[data-page-action=restore]:not(:disabled){color:#78efae!important}
-
-
-/* Distinct, branded file icons even when thumbnails are not available. */
-#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) {
-  display:flex!important;flex-direction:column!important;align-items:center!important;
-  justify-content:center!important;gap:3px!important;
-  background:linear-gradient(140deg,#15385e,#0a2a4c)!important;
-  color:#e9faff!important;
-  border:1px solid #357c9f!important;border-radius:12px!important;
-  overflow:hidden!important;opacity:1!important;
+@media(min-width:760px){
+  .rivo-pages-modal{height:min(92dvh,960px)!important;max-height:960px!important;border-radius:24px!important}
 }
-#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) svg {
-  flex:none!important;width:24px!important;height:24px!important;
-  stroke-width:1.9!important;color:inherit!important;opacity:1!important;
-}
-#app .rivo-dark-ui .rivo-file-thumb:not(:has(.rivo-real-thumb)) :is(span,small) {
-  color:inherit!important;font-size:9px!important;line-height:1.05!important;
-  font-weight:900!important;letter-spacing:.4px!important;text-align:center!important;
-}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-pdf{background:linear-gradient(145deg,#71304c,#b23a49)!important;color:#fff1f3!important;border-color:#ec7185!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-ppt{background:linear-gradient(145deg,#713b2e,#c55d22)!important;color:#fff3e3!important;border-color:#fa955d!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-doc{background:linear-gradient(145deg,#123e82,#1964bd)!important;color:#f0f8ff!important;border-color:#69afff!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-xls{background:linear-gradient(145deg,#175947,#127e52)!important;color:#eafff4!important;border-color:#6adea3!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-zip{background:linear-gradient(145deg,#512b8d,#7449ca)!important;color:#f6edff!important;border-color:#ac8dfb!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-image{background:linear-gradient(145deg,#145d76,#0b7e8d)!important;color:#e5fcff!important;border-color:#64e4ee!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-txt{background:linear-gradient(145deg,#35445d,#3f647a)!important;color:#eefaff!important;border-color:#84b6d4!important}
-#app .rivo-dark-ui .rivo-file-thumb.rivo-file-generic{background:linear-gradient(145deg,#213c61,#284b6d)!important;color:#d6edf9!important}
-
-
-/* QR/Barcode is a true second hero action, not a buried tool. */
-#app .rivo-scan-first .rivo-scan-mode-qr{
-  background:linear-gradient(145deg,#163c97 0%,#29298b 70%,#27135a 100%)!important;
-  border:1.5px solid #978aff!important;
-  box-shadow:0 0 13px #7464f54d,0 9px 23px #050d35bb!important;
-}
-#app .rivo-scan-first .rivo-scan-mode-qr .rivo-scan-mode-icon{
-  color:#edeeff!important;background:#2e4097!important;
-  border-color:#a5a6ff!important;
-}
-#app .rivo-v2-popular button{
-  display:flex!important;flex-direction:column!important;align-items:center!important;
-  justify-content:center!important;text-align:center!important;gap:6px!important;
-  padding:9px 4px!important;
-}
-#app .rivo-v2-popular button strong{
-  font-size:clamp(10px,2.5vw,12px)!important;
-  white-space:normal!important;overflow-wrap:anywhere!important;
-  line-height:1.2!important;display:block!important;
-}
-#app .rivo-v2-popular button span{
-  width:33px!important;height:33px!important;border-radius:9px!important;
-  display:grid!important;place-items:center!important;flex:none!important;
-}
-
-
-/* Screenshot-driven refinements: no leftover bright cards or unreadable headings.
-   These selectors deliberately outrank the older named-screen theme rules. */
-#app .rivo-dark-ui .rivo-tools-hub .rivo-tools-heading h1,
-#app .rivo-dark-ui .rivo-v2-documents .library-heading h1,
-#app .rivo-dark-ui .rivo-v2-me .page-heading h1,
-#app .rivo-dark-ui .workspace .work-heading h1,
-#app .rivo-dark-ui .workspace .work-head h1,
-#app .rivo-dark-ui .workspace .work-title h1 {
-  color:#f1fcff!important;opacity:1!important;
-  -webkit-text-fill-color:#f1fcff!important;
-}
-#app .rivo-dark-ui .rivo-tools-hub .rivo-tools-heading p,
-#app .rivo-dark-ui .rivo-v2-documents .library-heading :is(p,small),
-#app .rivo-dark-ui .rivo-v2-me .page-heading p {
-  color:#a9cedf!important;-webkit-text-fill-color:currentColor!important;
-}
-#app .rivo-dark-ui .topbar .topright {
-  display:flex!important;align-items:center!important;gap:7px!important;
-}
-#app .rivo-dark-ui .topbar :is(.rivo-header-back,.rivo-header-action,.rivo-header-language),
-#app .rivo-dark-ui .topbar .topright :is(button,label,select){
-  color:#defbff!important;
-  background:linear-gradient(138deg,#0e3858,#09253f)!important;
-  border:1px solid #276e8e!important;
-  box-shadow:inset 0 1px #7cebf218!important;
-  border-radius:13px!important;
-}
-#app .rivo-dark-ui .topbar .topright svg,
-#app .rivo-dark-ui .topbar .rivo-header-back svg{color:#66eaff!important;stroke:#66eaff!important}
-#app .rivo-dark-ui .topbar .topright select{appearance:none!important;border:none!important;box-shadow:none!important}
-#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills{
-  background:#081f39!important;color:#e8faff!important;
-  border:1px solid #224b6a!important;border-radius:15px!important;
-  padding:8px!important;margin:13px 0!important;
-  box-shadow:0 4px 15px #0002!important;
-}
-#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills :is(button,button.active){
-  color:#d8faff!important;border-radius:12px!important;
-  background:#0c3357!important;border:1px solid #2b7095!important;
-  box-shadow:none!important;
-}
-#app .rivo-dark-ui .rivo-tools-hub .rivo-tool-pills button.active{
-  background:linear-gradient(113deg,#007eaf,#1562bf)!important;
-  border-color:#3be8ff!important;
-  color:#fff!important;
-}
-#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats,
-#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button{
-  background:#0c3354!important;color:#d7faff!important;
-  border:1px solid #276c8b!important;
-}
-#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats{
-  padding:8px!important;gap:7px!important;border-radius:15px!important;
-}
-#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button{
-  border-radius:12px!important;min-height:60px!important;
-}
-#app .rivo-dark-ui .rivo-v2-me .rivo-v2-profile-stats button :is(svg,strong,small) {
-  color:#e8fcff!important;
-}
-#app .rivo-dark-ui .rivo-v2-documents .library-panel,
-#app .rivo-dark-ui .library-workspace .library-panel,
-#app .rivo-dark-ui .library-workspace .library-top,
-#app .rivo-dark-ui .library-workspace .rivo-library-chips,
-#app .rivo-dark-ui .library-workspace .storage-actions,
-#app .rivo-dark-ui .library-workspace .rivo-storage-card,
-#app .rivo-dark-ui .library-workspace .rivo-storage-notice {
-  color:#e6faff!important;background:#0a2743!important;
-  border-color:#29617e!important;
-}
-#app .rivo-dark-ui .library-workspace .library-panel button,
-#app .rivo-dark-ui .library-workspace .storage-actions button,
-#app .rivo-dark-ui .library-workspace .rivo-library-chips button {
-  color:#e4fbff!important;background:#103658!important;
-  border:1px solid #2b7395!important;border-radius:11px!important;
-}
-#app .rivo-dark-ui .library-workspace .rivo-library-chips button.active {
-  color:#fff!important;border-color:#2de8ef!important;
-  background:linear-gradient(120deg,#038dac,#1558b1)!important;
-}
-#app .rivo-dark-ui .library-workspace .library-panel :is(strong,small,p,span),
-#app .rivo-dark-ui .library-workspace .storage-actions :is(strong,small,span){
-  color:#d7efff!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .panel,
-#app .rivo-dark-ui .workspace .work-grid .panel h3,
-#app .rivo-dark-ui .workspace .work-grid .panel p {
-  background:#0b2949!important;color:#e6f9ff!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .dropzone {
-  display:flex!important;flex-direction:column!important;align-items:center!important;
-  justify-content:center!important;
-  background:linear-gradient(147deg,#11375a,#071e38)!important;
-  color:#e7fbff!important;border:1.5px dashed #3899b6!important;
-  border-radius:16px!important;min-height:138px!important;
-  box-shadow:inset 0 1px #b6effa12!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .dropzone :is(strong,span,svg,.uploadicon){
-  color:#d9f7ff!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .dropzone .uploadicon {
-  background:#104c6f!important;border-radius:12px!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .panel .hint,
-#app .rivo-dark-ui .workspace .work-grid .panel .privacy-note,
-#app .rivo-dark-ui .workspace .work-grid .panel :is(.info,.notice){
-  background:#0c3150!important;color:#afd0df!important;border-color:#226084!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .panel button#process,
-#app .rivo-dark-ui .workspace .work-grid .panel .operation{
-  color:#fff!important;background:linear-gradient(110deg,#02c8ca,#1568df)!important;
-  border:1px solid #43eafa!important;
-}
-#app .rivo-dark-ui .workspace .work-grid .panel button#process:disabled{
-  background:#153551!important;color:#a4c7d6!important;
-  border-color:#2b6680!important;
-}
-#app .rivo-dark-ui .mobilebar button.active,
-#app .rivo-dark-ui .mobilebar .active{
-  color:#49f5f7!important;background:#0c3859!important;
-  border:1px solid #256f90!important;border-radius:14px!important;
-}
-#app .rivo-dark-ui .mobilebar button.active svg{color:#49f5f7!important}
-/* Native status bars use white icons over dark status/nav chrome. */
-body{--rivo-premium-system-ink:#f2fcff}
-
-
-/* Reference-matched root dashboard, not a legacy four-tile matrix.
-   One full-width Scan, Gallery & QR on row two, three shortcuts on row three. */
-#app .rivo-scan-first .rivo-scan-modes{
-  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  grid-auto-rows:auto!important;gap:9px!important;
-  margin:7px 0 13px!important;
-}
-#app .rivo-scan-first .rivo-scan-mode-main{
-  grid-column:1/-1!important;min-height:128px!important;
-  flex-direction:column!important;justify-content:center!important;align-items:center!important;
-  text-align:center!important;gap:7px!important;
-  background:linear-gradient(125deg,#006f87 0%,#1543ba 83%,#1b30a1 100%)!important;
-  border:2px solid #52f9f8!important;
-  box-shadow:0 0 16px #10d9ed8f,inset 0 0 25px #24eaf522!important;
-}
-#app .rivo-scan-first .rivo-scan-mode-main .rivo-scan-mode-icon{
-  width:49px!important;height:49px!important;border:none!important;
-  box-shadow:none!important;background:transparent!important;
-  color:#eaffff!important;
-}
-#app .rivo-scan-first .rivo-scan-mode-main .rivo-scan-mode-icon svg{
-  width:47px!important;height:47px!important;
-}
-#app .rivo-scan-first .rivo-scan-mode-main strong{
-  text-align:center!important;font-size:clamp(16px,4.3vw,19px)!important;
-  font-weight:850!important;line-height:1.15!important;
-}
-#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main){
-  min-height:78px!important;gap:6px!important;padding:9px 12px!important;
-  justify-content:space-between!important;
-  background:linear-gradient(150deg,#12365b,#0a294a)!important;
-}
-#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) .rivo-scan-mode-icon{
-  width:36px!important;height:36px!important;border-radius:10px!important;
-}
-#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) .rivo-scan-mode-icon svg{
-  width:23px!important;height:23px!important;
-}
-#app .rivo-scan-first .rivo-scan-mode:not(.rivo-scan-mode-main) strong{
-  text-align:start!important;font-size:12px!important;
-}
-#app .rivo-scan-first .rivo-v2-popular{
-  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:8px!important;
-}
-#app .rivo-scan-first .rivo-v2-popular button{
-  min-height:73px!important;max-width:100%!important;gap:5px!important;
-  padding:7px 3px!important;
-  border:1px solid #397a9c!important;
-}
-#app .rivo-scan-first .rivo-v2-popular button strong{
-  font-size:clamp(10px,2.65vw,12px)!important;
-}
-#app .rivo-scan-first .rivo-v2-stats{
-  display:flex!important;align-items:center!important;
-  justify-content:space-around!important;min-height:46px!important;
-  padding:7px 3px!important;margin:9px 0 12px!important;
-  border-radius:11px!important;gap:0!important;
-}
-#app .rivo-scan-first .rivo-v2-stats>span{
-  flex:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:5px!important;min-width:0!important;padding:2px 3px!important;
-}
-#app .rivo-scan-first .rivo-v2-stats svg{width:16px!important;height:16px!important;flex:none!important}
-#app .rivo-scan-first .rivo-v2-stats strong{font-size:13px!important;margin:0!important}
-#app .rivo-scan-first .rivo-v2-stats small{font-size:10px!important}
-#app .rivo-scan-first .rivo-scan-first-heading{
-  margin-block:12px 5px!important;padding:0!important;
-}
-#app .rivo-scan-first .rivo-scan-first-heading h2,
-#app .rivo-scan-first .rivo-v2-popular-head h2{
-  font-size:15px!important;
-}
-#app .rivo-scan-first .rivo-v2-popular-head {margin-block:12px 7px!important}
-#app .rivo-scan-first .rivo-scan-more-tools{margin:12px 0!important}
-#app .rivo-scan-first .rivo-scan-more-tools:not([open]) summary{
-  border-bottom:none!important;min-height:48px!important;padding:8px 13px!important;
-}
-#app .rivo-scan-first .rivo-scan-more-tools summary small{display:none!important}
-@media(max-width:375px){
- #app .rivo-scan-first .rivo-v2-stats>span{gap:3px!important}
- #app .rivo-scan-first .rivo-v2-stats small{font-size:9px!important}
- #app .rivo-scan-first .rivo-scan-mode-main{min-height:115px!important}
+@media(prefers-reduced-motion:reduce){
+  .rivo-dark-ui *, .rivo-dark-ui *::before,.rivo-dark-ui *::after,
+  .rivo-pages-overlay *,.rivo-code-overlay *{animation:none!important;transition:none!important}
 }
