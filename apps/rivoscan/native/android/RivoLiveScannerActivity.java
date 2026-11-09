@@ -72,6 +72,8 @@ import java.util.concurrent.Executors;
 /** Native live document camera: draws edges, captures full-resolution, then allows corner edits. */
 public final class RivoLiveScannerActivity extends AppCompatActivity {
     private FrameLayout root,content;
+    private FrameLayout activeCameraFrame;
+    private View shutterFlash;
     private PreviewView cameraView;
     private LiveEdges overlay;
     private ImageCapture capture;
@@ -328,10 +330,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
 
         FrameLayout cameraFrame=new FrameLayout(this);
+        activeCameraFrame=cameraFrame;
         cameraFrame.setBackgroundColor(Color.rgb(6,51,55));
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
         if(!basicCameraMode)cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
+        // Full-screen flash is visual only; it cannot intercept touches.
+        shutterFlash=new View(this);
+        shutterFlash.setBackgroundColor(Color.WHITE);
+        shutterFlash.setAlpha(0f);
+        shutterFlash.setClickable(false);
+        shutterFlash.setFocusable(false);
+        cameraFrame.addView(shutterFlash,new FrameLayout.LayoutParams(-1,-1));
         message=text("ID Card".equals(scanMode)
             ?trNative(savedImages.isEmpty()?"idFront":"idBack")
             :(basicCameraMode?trNative("basicHint"):trNative("align")),12,Color.WHITE,false);
@@ -387,7 +397,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         photos.setGravity(Gravity.CENTER);
         actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
         Shutter shutter=new Shutter(this);
-        shutter.setOnClickListener(v->{RivoSounds.play(this,"capture");takePicture();});
+        shutter.setOnClickListener(v->{
+            RivoSounds.play(this,"capture");
+            if(capture!=null&&!editing&&!captureInProgress&&!savingEnhancedPage){
+                shutter.animate().cancel();
+                shutter.animate().scaleX(.83f).scaleY(.83f).setDuration(90)
+                    .withEndAction(()->shutter.animate().scaleX(1f).scaleY(1f).setDuration(150).start()).start();
+            }
+            takePicture();
+        });
         shutter.setContentDescription(trNative("capture"));
         LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
         actions.addView(shutter,buttonParams);
@@ -837,9 +855,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             frame.close();
         }
     }
+    /** Instant shutter feedback, independent of OCR/cropping or photo storage. */
+    private void animateShutterCapture(){
+        if(shutterFlash==null||activeCameraFrame==null||!shutterFlash.isAttachedToWindow())return;
+        shutterFlash.animate().cancel();
+        shutterFlash.setAlpha(.48f);
+        shutterFlash.animate().alpha(0f).setDuration(240).start();
+    }
     private void takePicture(){
         if(capture==null||editing||captureInProgress||savingEnhancedPage)return;
         captureInProgress=true;
+        animateShutterCapture();
         File file=new File(getCacheDir(),"rivo_original_"+System.currentTimeMillis()+".jpg");
         ImageCapture.OutputFileOptions options=new ImageCapture.OutputFileOptions.Builder(file).build();
         message.setText(trNative("capturePage"));

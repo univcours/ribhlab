@@ -681,3 +681,30 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
   font-size:8.5px!important;letter-spacing:-0.25px!important;
  }
 }
+
+/* One automatic QR + barcode camera, no shutter/no photo capture.
+   A frame and success flash appear ONLY for actual decoded symbols. */
+.rivo-live-preview .rivo-detection-outline{
+ opacity:1;transition:filter .18s ease;will-change:filter;
+}
+.rivo-live-preview.rivo-code-accepted .rivo-detection-outline{
+ filter:drop-shadow(0 0 14px #37ffd2);
+ animation:rivo-code-success-frame .52s ease-out both;
+}
+.rivo-live-preview.rivo-code-accepted::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:radial-gradient(ellipse at center,#3bffbf38,#02a69312 60%,transparent 83%);
+ animation:rivo-code-success-flash .48s ease-out both;
+}
+@keyframes rivo-code-success-frame{
+ 0%{filter:drop-shadow(0 0 0 #00ffb1);opacity:.4}
+ 45%{filter:drop-shadow(0 0 18px #32ffc5);opacity:1}
+ 100%{filter:drop-shadow(0 0 4px #18daba);opacity:1}
+}
+@keyframes rivo-code-success-flash{
+ 0%{opacity:0}35%{opacity:1}100%{opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+ .rivo-live-preview.rivo-code-accepted .rivo-detection-outline,
+ .rivo-live-preview.rivo-code-accepted::after{animation:none!important}
+}

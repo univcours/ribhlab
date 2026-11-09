@@ -142,3 +142,40 @@ test('Tools are wired and camera overlays stop streaming on close or Android Bac
  assert.ok(plates.includes('stream?.getTracks().forEach(t=>t.stop())'));
  assert.ok(main.includes("document.querySelector('.rivo-live-overlay [data-scan-overlay-close]')"));
 });
+
+test('QR and barcode share one button, auto-detect live, frame ONLY detected symbols, and never photograph empty frames',()=>{
+ const source=readFileSync(new URL('../src/barcode-scanner.js',import.meta.url),'utf8');
+ const hub=readFileSync(new URL('../src/tools-hub.js',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../src/compact-turquoise.css',import.meta.url),'utf8');
+ assert.equal((hub.match(/scanCode:\{icon:/g)||[]).length,1);
+ assert.ok(hub.includes("scanCode:{icon:'scan',color:'green',type:'barcode'}"));
+ assert.ok(main.includes("spec.type==='barcode'"));
+ assert.ok(source.includes('decodeFromVideoElement(video'));
+ assert.ok(source.includes("recognizedCode(decoded)"));
+ assert.ok(source.includes("if(!entry)return"));
+ assert.ok(source.includes("if(!valid.length)return false"));
+ assert.ok(source.includes("const saved=await onScan(entry)"));
+ assert.ok(!source.includes('Camera.getPhoto('));
+ assert.ok(!source.includes('canvas.toBlob('));
+ assert.ok(source.includes('drawOutline(outline,video,decoded.getResultPoints?.()||[])'));
+ assert.ok(source.includes("if(lastDetectionAt&&Date.now()-lastDetectionAt>1700)"));
+ assert.ok(css.includes('rivo-code-success-frame'));
+});
+test('Detected symbol must have nonempty text AND a recognized QR/barcode format',async()=>{
+ const {recognizedCode}=await import('../src/barcode-scanner.js');
+ assert.deepEqual(recognizedCode({getText:()=> ' https://example.org ',getBarcodeFormat:()=>11}),
+  {value:'https://example.org',format:'QR'});
+ assert.deepEqual(recognizedCode({getText:()=> '6111234567890',getBarcodeFormat:()=>7}),
+  {value:'6111234567890',format:'EAN13'});
+ assert.equal(recognizedCode(null),null);
+ assert.equal(recognizedCode({getText:()=> '',getBarcodeFormat:()=>11}),null);
+ assert.equal(recognizedCode({getText:()=> '123',getBarcodeFormat:()=>999}),null);
+});
+test('Native document shutter animates only after user capture and never adds automatic code photos',()=>{
+ const native=readFileSync(new URL('../native/android/RivoLiveScannerActivity.java',import.meta.url),'utf8');
+ assert.ok(native.includes('private void animateShutterCapture()'));
+ assert.ok(native.includes('captureInProgress=true;\n        animateShutterCapture();'));
+ assert.ok(native.includes('shutterFlash.animate().alpha(0f).setDuration(240).start()'));
+ assert.ok(native.includes('shutter.animate().scaleX(.83f).scaleY(.83f)'));
+});

@@ -1,9 +1,9 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
 
 const I18N={
- en:['QR & Barcode Pro','Live camera · automatic recognition','Waiting for code…','Last result','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to TXT + Excel','Could not save: ','Close'],
- ar:['قارئ QR والباركود','كاميرا مباشرة · قراءة تلقائية','وجّه الكاميرا نحو الكود…','آخر نتيجة','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فـTXT وExcel','تعذر الحفظ: ','إغلاق'],
- fr:['QR et code-barres Pro','Caméra en direct · lecture automatique','Cadrez un code…','Dernier résultat','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré en TXT + Excel','Enregistrement impossible : ','Fermer']
+ en:['QR / Barcode','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to TXT + Excel','Could not save: ','Close','No code found — nothing captured'],
+ ar:['QR / Barcode','الكاميرا كتتعرف تلقائياً على QR والباركود','وجّه الكاميرا نحو QR أو الباركود…','تم التعرف على','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فـTXT وExcel','تعذر الحفظ: ','إغلاق','ما تلقا حتى كود — ما تصور وما تحفظ والو'],
+ fr:['QR / Barcode','Reconnaissance automatique QR et code-barres','Cadrez un QR ou code-barres…','Détecté','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré en TXT + Excel','Enregistrement impossible : ','Fermer','Aucun code détecté — rien capturé']
 };
 const FORMATS=['AZTEC','CODABAR','CODE39','CODE93','CODE128','DATA_MATRIX','EAN8','EAN13','ITF','MAXICODE','PDF417','QR','RSS14','RSS_EXPANDED','UPCA','UPCE','UPC_EXTENSION'];
 export const safeScannedUrl=value=>{
@@ -13,7 +13,15 @@ export const safeScannedUrl=value=>{
 };
 export function decodeFormat(result){
  const raw=result?.getBarcodeFormat?.();
- return FORMATS[Number(raw)]||String(raw??'UNKNOWN');
+ return Number.isInteger(raw)&&raw>=0&&raw<FORMATS.length?FORMATS[raw]:'UNKNOWN';
+}
+/** Decode-only gate: neither blank video frames nor unknown camera patterns
+ * may trigger a capture, a saved log entry, or a fake detected-code frame.
+ * The barcode library itself must recognize a supported format first. */
+export function recognizedCode(result){
+ const value=String(result?.getText?.()??'').trim();
+ const format=decodeFormat(result);
+ return value && format!=='UNKNOWN'?{value,format}:null;
 }
 export function newScanDeduplicator({gapMs=1800,clock=()=>Date.now()}={}){
  let lastValue='',lastSeen=0;
@@ -40,12 +48,17 @@ function drawOutline(canvas,video,points){
  ctx.scale(devicePixelRatio,devicePixelRatio);
  const w=bounds.width,h=bounds.height,vw=video.videoWidth||w,vh=video.videoHeight||h;
  const scale=Math.max(w/vw,h/vh),offX=(w-vw*scale)/2,offY=(h-vh*scale)/2;
- let xs=points.map(x=>offX+x.getX()*scale),ys=points.map(x=>offY+x.getY()*scale);
- if(!xs.length){xs=[w*.27,w*.73];ys=[h*.39,h*.61];}
+ // Do not draw a fabricated rectangle if the decoder did not locate a code.
+ // Barcode and QR detections have real result points in their camera image.
+ const valid=(points||[]).filter(p=>Number.isFinite(p?.getX?.())&&Number.isFinite(p?.getY?.()));
+ if(!valid.length)return false;
+ const xs=valid.map(x=>offX+x.getX()*scale),ys=valid.map(x=>offY+x.getY()*scale);
  const minX=Math.max(4,Math.min(...xs)-14),maxX=Math.min(w-4,Math.max(...xs)+14);
  const minY=Math.max(4,Math.min(...ys)-14),maxY=Math.min(h-4,Math.max(...ys)+14);
+ if(maxX<=minX||maxY<=minY)return false;
  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=3;ctx.shadowColor='#2CF2D5';ctx.shadowBlur=7;
  ctx.strokeRect(minX,minY,maxX-minX,maxY-minY);
+ return true;
 }
 export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onClose=()=>{}}={}){
  const L=I18N[language]||I18N.en;
@@ -73,10 +86,25 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  box.append(head,help,camera,status,result,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
  const dedup=newScanDeduplicator(),streams=[],temporaryURLs=[];
- let control=null,closed=false,light=false,busy=false;
+ let control=null,closed=false,light=false,lastDetectionAt=0;
+ let feedbackTimer=null;
+ const playDetectedAnimation=()=>{
+  camera.classList.remove('rivo-code-accepted');
+  // Restart the success pulse for each DISTINCT accepted code.
+  void camera.offsetWidth;
+  camera.classList.add('rivo-code-accepted');
+  if(feedbackTimer!==null)clearTimeout(feedbackTimer);
+  feedbackTimer=setTimeout(()=>{if(!closed)camera.classList.remove('rivo-code-accepted');feedbackTimer=null;},560);
+ };
+ const clearDetectionOutline=()=>{
+  const ctx=outline.getContext('2d');
+  ctx?.clearRect(0,0,outline.width,outline.height);
+ };
  const key=e=>{if(e.key==='Escape'||e.key==='Backspace'){e.preventDefault();stop();}};
  const stop=()=>{
   if(closed)return;closed=true;
+  if(feedbackTimer!==null)clearTimeout(feedbackTimer);
+  clearDetectionOutline();
   try{control?.stop();}catch{}
   for(const track of streams)try{track.stop();}catch{}
   for(const url of temporaryURLs)URL.revokeObjectURL(url);
@@ -91,14 +119,19 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  }
  async function deliver(decoded){
   if(closed)return;
-  const value=String(decoded.getText?.()||'').trim();
-  if(!value||!dedup.accept(value))return;
-  result.textContent=value;result.hidden=false;copy.hidden=false;
-  status.textContent=L[3]+' · '+decodeFormat(decoded);
+  const entry=recognizedCode(decoded);
+  // No valid decoded symbol = no photo, no outline, no capture, no log.
+  if(!entry)return;
+  if(!dedup.accept(entry.value))return;
+  lastDetectionAt=Date.now();
   drawOutline(outline,video,decoded.getResultPoints?.()||[]);
+  playDetectedAnimation();
+  result.textContent=entry.value;result.hidden=false;copy.hidden=false;
+  status.textContent=L[3]+' · '+entry.format;
   try{
-   const saved=await onScan({value,format:decodeFormat(decoded)});
-   if(!closed)status.textContent=(saved?.saved?L[8]:L[9]+(saved?.reason||'Local export unavailable'))+' · '+decodeFormat(decoded);
+   // Auto-save decoded TEXT only. Never take a still photo from empty frames.
+   const saved=await onScan(entry);
+   if(!closed)status.textContent=(saved?.saved?L[8]:L[9]+(saved?.reason||'Local export unavailable'))+' · '+entry.format;
   }catch(error){if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}}
  }
  picker.addEventListener('change',async()=>{
@@ -110,7 +143,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    canvas.width=Math.max(1,Math.round(image.naturalWidth*s));canvas.height=Math.max(1,Math.round(image.naturalHeight*s));
    canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
    const found=reader.decodeFromCanvas(canvas);await deliver(found);
-  }catch{status.textContent=L[2];}
+  }catch{status.textContent=L[11];clearDetectionOutline();}
  });
  async function start(){
   try{
@@ -120,7 +153,13 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    control=await reader.decodeFromVideoElement(video,(decoded,error)=>{
     if(closed)return;
     if(decoded){void deliver(decoded);}
-    else if(error)dedup.absence();
+    else {
+     if(error)dedup.absence();
+     // Never leave a code frame over empty live video.
+     if(lastDetectionAt&&Date.now()-lastDetectionAt>1700){
+      clearDetectionOutline();lastDetectionAt=0;
+     }
+    }
    });
    if(closed)control?.stop();
   }catch(error){if(!closed){status.textContent=L[7];torch.disabled=true;console.warn('Live code scanner:',error);}}
