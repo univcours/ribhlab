@@ -1,99 +1,254 @@
-# RibhLab — ربح لاب | العربية · English · Français
+# RivoScan • Android PDF Toolkit (Beta)
 
-موقع نشر تعليمي بثلاث لغات، جاهز للبناء والاستضافة على Netlify أو أي خدمة تستضيف ملفات HTML. **المشروع مكتمل كموقع، لكنه غير منشور على الإنترنت بعد**. يلزمك دومين، وبريد تواصل حقيقي، وربط مستودع GitHub بلوحة الإدارة.
+## 0.41.3 field-test features (all unlocked)
+The primary Scan action uses Google ML Kit Document Scanner FULL on compatible Android phones (capture, automatic document detection/cropping, native cleanup and review). CameraX remains a fallback and manual corner editor. The unified native scanner provides filter selection including real UVDoc offline ONNX for neural unwarping. Optional Google ML Kit FULL remains available internally as a supported fallback and specialized cleaning engine. Book Scan Pro adds optional ML Kit cleaned page capture and locally varying text-line straighten with review/undo. This does not guarantee true 3D reconstruction of damaged paper or lost text.
 
-## ما الذي يضمّه المشروع؟
+Do not uninstall or clear app data to update. No Pro payment or gating is enabled until user device testing is complete and a separate Play Billing release is approved.
 
-- **60 صفحة HTML**: ثلاث صفحات رئيسية، تسع صفحات أقسام، 27 صفحة مقالة، 18 صفحة تعريفية وقانونية، وثلاث صفحات أدوات تفاعلية.
-- **9 موضوعات مفيدة × 3 لغات** (27 نسخة لغوية أصلية/مترجمة بعناية)، قابلة للتعديل أو الحذف أو الإضافة.
-- إدارة محتوى مبنية على **Sveltia CMS** في `/admin/` مع محرر JSON قابل للتحرير، يتطلب ربط GitHub والاعتماد المناسب.
-- بحث سريع حسب اللغة، تصميم RTL بالعربية وLTR بالإنجليزية/الفرنسية، قائمة للهاتف وروابط لتغيير لغة المقال.
-- أدوات تعمل محلياً: حاسبة ميزانية مخاطرة التداول، حاسبة تسعير العمل الحر، ومولّد برومبت.
-- SEO: HTML جاهز للزحف، عناوين وأوصاف مختلفة، بيانات Article structured data، `robots.txt`، وملفات sitemap/canonical/hreflang تلقائية **بعد** إعداد الدومين.
-- صفحات: سياسة الخصوصية، شروط الاستخدام، من نحن، التواصل، إخلاء المسؤولية، السياسة التحريرية.
-- **AdSense غير مفعّل افتراضياً.** لا توجد إعلانات أو كوكيز تتبع أو تحليلات خارجية في هذا الإصدار.
 
-## 1. تشغيل الموقع محلياً
+**RivoScan** is a privacy-oriented PDF toolbox from RibhLab. This repository provides an editable, installable Android/Capacitor starter plus a responsive web interface. It is **not yet a tested or published Play Store release**.
 
-يلزم **Node.js 20 أو أحدث**؛ لا توجد مكتبات npm ضرورية.
+## Implemented source code
+
+1. Scan photos with camera, reorder pages, rotate previews, and create PDF.
+2. Images → PDF.
+3. Merge PDFs.
+4. Extract specified pages.
+5. Rotate PDF pages.
+6. Delete pages.
+7. Reorder PDF pages with numeric sequence.
+8. Page numbers.
+9. Text watermarks.
+10. Text annotations.
+11. Hand-drawn visual signatures (NOT certificate-based digital signing).
+12. PDF → JPG/PNG exported as ZIP.
+13. Selectable PDF text → TXT.
+14. OCR → TXT in English, French, Arabic, Spanish, German, Portuguese, Italian (language packs may download on first use).
+15. Compress scanned PDFs by rasterization (may lose selectable text, links, forms; size reduction not guaranteed).
+16. Clear common PDF metadata (NOT secure redaction).
+
+### Android Studio: prevent the "phone already has a newer version" uninstall dialog
+
+If Android Studio offers to **uninstall** the existing application, select **Cancel**. Never use the IDE uninstall/downgrade option, since it can erase local documents or settings.
+
+**Root cause:** The native `android/` Gradle project is generated locally by Capacitor; Android Studio can retain a stale `app/build.gradle` versionCode even after the safe ADB installer upgraded the phone.
+
+**Permanent fix:** RivoScan has one tracked authoritative `rivoscan-version.properties`, and `rivoscan-version.gradle` is appended LAST to the generated `android/app/build.gradle` by `apply-rivoscan-branding.ps1`, automatically on every Capacitor sync. Android Studio reads the correct version during Gradle sync and Run. Do not manually edit generated versionCodes.
+
+From the repository root in Windows PowerShell:
+```powershell
+git switch feat/rivoscan-android-beta
+git pull --ff-only origin feat/rivoscan-android-beta
+.\apps\rivoscan\fix-android-studio-version.cmd
+```
+Then select **File > Sync Project with Gradle Files** in Android Studio once, and use **Run (app)**. The repair script safely builds and updates the app without uninstalling or clearing data. If the phone already has a higher versionCode than the locally built APK, installation is skipped.
+
+**Beta safeguard:** selected files are limited to 30 MB each / 90 MB combined to reduce memory pressure. Basic page selection has automated unit tests.
+
+All core editing and conversion runs inside the device/browser, with no document-upload backend. **OCR language data** may be fetched from the library's training-data host on first use; no document needs to be sent to a remote server. Test this behavior before any privacy claim in production.
+
+
+
+## Native live edge scanner (new experimental implementation)
+
+The current Android beta includes a custom native CameraX + OpenCV document camera, in addition to the existing Google ML Kit scanner. The custom mode **shows a moving blue four-sided outline during camera preview**. Press **Capture** to use a high-resolution photo; the app opens an editor with **four draggable corner handles**. Adjust all four corners, press **Save page**, scan more pages if needed, then press **Done** to return the cropped images to the Scan Document tool. Press **Process & Save** to create one multi-page PDF.
+
+The **Gallery** button inside the live camera also imports images and opens the **same editable four-corner crop interface**. The main Scan Document screen exposes a separate **Import Photo · Adjust 4 Corners** action. Selecting images via Scan Document's file input also routes them through the Android native crop editor. The perspective warp uses OpenCV and can correct skewed quadrilaterals. If detection fails, a default quadrilateral appears; manually move the corners to cover the paper.
+
+**Important:** This is beta code, not a claim of verified CamScanner parity. Live contour recognition can fail in low light, low contrast, or complex backgrounds; the detected green polygon may not be perfectly aligned on all camera aspect ratios. The crop editor lets the user correct it. Test this feature on physical Samsung/Android devices. No continuous auto-shutter is implemented; press Capture manually.
+
+### Update an existing Android Studio installation
+
+The native Java sources live under \`apps/rivoscan/native/android/\`. They must be copied into the generated native Android wrapper. From \`apps/rivoscan\`:
+
+\`\`\`powershell
+npm install
+npm run build
+npx cap sync android
+.\install-live-scanner.cmd
+\`\`\`
+
+The provided \`setup-android-studio.cmd\` and \`start-rivoscan-autosync.cmd\` pipeline also invoke \`install-live-scanner.ps1\` automatically after Capacitor synchronization. Then in Android Studio use **Sync Project with Gradle Files** and **Run** to install the new APK on the phone.
+
+Native integration adds CameraX 1.6.2 and OpenCV Android 4.12.0 to \`android/app/build.gradle\`, declares Camera permission and the private scanner Activity in \`AndroidManifest.xml\`, and registers \`RivoLiveScanner\` in \`MainActivity.java\`. Because these are Android-native changes, simply copying web files without re-syncing and rebuilding is not enough.
+
+## Android camera compatibility (RivoScan 0.10 beta)
+
+Camera selection is **not tied to Samsung or a specific device model**.
+On compatible Android devices, the default rear camera is selected at startup.
+Tap **Cameras ▾** in the native scanner for the cameras that Android's CameraX backend actually exposes, including the front camera. When a rear camera is not present, the scanner tries the front camera or another available camera. If the phone cannot bind live edge analysis and high-resolution photo capture together, it falls back to ordinary preview/capture. When OpenCV is unavailable, it can still capture photographs without automatic edge correction.
+
+Physical lenses are not guaranteed to appear individually: Samsung, Xiaomi, Redmi, Oppo, Vivo, Pixel, Motorola, OnePlus and other vendors may expose a combined/logical camera to apps instead of all physical sensors. This is determined by the phone's camera HAL/OS. The app cannot repair a damaged physical camera or override cameras blocked by Android.
+
+**Android only:** This Capacitor project produces an Android APK; iOS requires a separate iOS native project and camera implementation. The persistent public Downloads/RivoScan library currently relies on Android 10+ MediaStore; on earlier compatible Android versions, storage capabilities and app permissions differ.
+
+For Windows, after pulling the branch, run:
+```powershell
+cd apps\rivoscan
+.\install-rivoscan-android.cmd
+```
+
+The older `install-rivoscan-on-samsung.cmd` remains an alias but is no longer brand-locked. If more than one authorized Android device is connected, select the intended serial first via `$env:RIVOSCAN_DEVICE_SERIAL = 'your-adb-device-id'` to prevent deploying to the wrong device. Installation replaces the existing build only when signing permits and does not uninstall or wipe user data.
+
+**QA:** Verify camera chooser/front/rear fallback, manual corners, batch PDF, torch/no-flash behavior and storage separately on multiple actual phones. A successful CI build is not a substitute for device tests.
+
+## New in 0.2 beta: smart scans, document bundles and transfer
+
+- **Smart Scanner (Android):** Uses the maintained `@capacitor-mlkit/document-scanner` (Capacitor 8) plugin and the Google ML Kit Document Scanner UI. It supports automatic document edge detection and perspective correction, manual adjustment in the system scanner, filters, multi-page scanning (up to 20), and **photo-gallery import**. The basic fallback camera and basic web image picker do not automatically crop edges. Google Play services may first need to download the scanner module.
+- **Multi-document bundle:** `Combine Documents` accepts mixed PDF/JPG/PNG/WebP files and combines their pages into one PDF in the selected order. `Scan Document` also supports accumulating multiple ML Kit scanned pages before exporting one PDF. `Merge PDF` remains available for PDF-only inputs.
+- **Share Any File:** Android native share sheet sends multiple selected files using the supported installed apps, including PDF, JPG, TXT, ZIP, Office files, etc. Actual recipient/file-type handling depends on the receiving Android app. The browser fallback uses Web Share API where supported.
+- **Direct File Transfer (Beta):** Manual offer/answer pairing over encrypted WebRTC, then file bytes travel device-to-device. No user accounts or file upload service; no TURN relay is supplied. Two devices must exchange codes through another channel, and some networks/NATs will block connection. Max 15 MB per file / 60 MB per batch. The recipient selects where to save/share received files.
+- **Privacy:** Smart Scanner UI and models are delivered by Google Play services; network access may be needed on the first use. WebRTC optionally uses Google's public STUN service for network discovery. Connection codes may reveal IP/network details and should be exchanged privately. Files themselves are not intentionally sent to STUN or an application backend.
+
+### Updating a previously generated Android Studio project
+
+After fetching `feat/rivoscan-android-beta`, go to `apps/rivoscan` and run:
+
+```powershell
+npm install
+npm run check
+npm test
+npm run build
+npx cap sync android
+```
+
+Then in Android Studio, click **Sync Project with Gradle Files**, select the phone, and **Run**. `npm install` + `npx cap sync android` are essential to register the new document scanning native plugin. When using the RivoScan auto-sync watcher, it runs the dependency install on `package.json` changes.
+
+**Testing status:** Feature code is a Beta integration. Validate the gallery flow, multi-page edge correction, mixed bundles, Android file share sheet, and two-device WebRTC transfer on real phones before marking them production-ready. No guarantee of connection across NATs and no one-tap nearby discovery yet.
+
+## Requirements
+
+- Node.js 22+
+- Android SDK and Android Studio for native development (or GitHub Actions)
+- GitHub Actions for building debug APK
+- Google Play Console developer account for production publishing
+
+## Setup
+
+```bash
+cd apps/rivoscan
+npm install
+npm run dev
+npm test
+```
+
+To build Android locally:
 
 ```bash
 npm run build
-npm run check
-npm run dev
+npx cap add android
+npx cap sync android
+npx cap open android
 ```
 
-افتح `http://localhost:4173/ar/`، أو `/en/`، أو `/fr/`. أوقف الخادم بـ `Ctrl+C`.
+Android package ID: `com.ribhlab.rivoscan` (verify uniqueness and branding before release).
 
-يمكن أيضاً استضافة محتوى مجلد `dist/` على أي استضافة ثابتة. لا ترفع المشروع كاملاً كموقع جاهز؛ ارفع `dist` فقط بعد البناء.
+To get a **debug APK**, run GitHub Actions → **RivoScan Android debug build** → **Run workflow**. Download the artifact `RivoScan-debug-APK`. It is for QA only, **not a signed release AAB for Google Play**. Dependencies are installed at build time; commit a lockfile before production releases for reproducibility.
 
-## 2. التحضير الفعلي للنشر — مطلوب
+## Before Google Play release
 
-حرّر `site.config.json`:
+- Test every tool on actual Android devices, including large files, Arabic OCR and Native Share.
+- Brand native launcher with the included `assets/icon.png.b64`; workflow applies it during build.
+- Add native image edge detection / perspective crop and true automatic scanner detection; current version uses enhance/grayscale filters, not automatic perspective correction.
+- Build a properly signed **release AAB** using upload key stored in GitHub Actions secrets; never commit keystore, JSON service account, or passwords.
+- Create the Play Console app entry, confirm package ID, app icon, and supported targets.
+- Prepare privacy policy at publicly accessible URL; check Data Safety, permissions, screenshots and declarations against real behavior.
+- Confirm RivoScan trademark/name availability. Avoid impersonating competitors.
+- Integrate Google Play publishing in a restricted test track once app and signing are ready; approval cannot be guaranteed.
 
-```json
-{
-  "brand": "RibhLab",
-  "domain": "https://YOUR-REAL-DOMAIN.COM",
-  "contactEmail": "YOUR-REAL-EMAIL@YOUR-DOMAIN.COM",
-  "publisherName": "RibhLab Editorial Team",
-  "adsensePublisherId": "",
-  "social": {"youtube":"", "linkedin":""}
-}
-```
+## Roadmap (NOT implemented)
 
-استعمل الدومين والبريد اللذين تملكهما فعلياً؛ لا تختلق بيانات اتصال. أدخل اسم الناشر الحقيقي والجهة المسؤولة عن المحتوى. بعد ذلك شغّل `npm run build` و `npm run check` من جديد. لا تنتج روابط canonical صحيحة أو sitemap إلا بعد تحديد الدومين.
+- True PDF → Word/Excel with layout reconstruction.
+- AI translation / summary / PDF chat (requires explicitly opt-in network backend and pricing/privacy consent).
+- Cryptographic signatures, encryption and redaction.
+- Camera auto-edge detection, perspective correction and live document framing.
+- In-app purchases, AdMob ads and subscription entitlement checks.
+- Fully translated tool UI (7 locales currently cover primary navigation, not every action label).
 
-**Netlify**: ضع المشروع في GitHub وأنشئ موقعاً من المستودع (Build command: `npm run build`; Publish directory: `dist`). ملف `netlify.toml` مهيأ. كل تغيير تُرسله إلى الفرع `main` يطلق إعادة بناء تلقائية وفق إعدادات الاستضافة.
+## Security
 
-## 3. لوحة إدارة المقالات (قابلة للتحديث)
+Never share service-account JSON, release keystore or Play Console password in chat. Avoid assigning admin access to CI when the narrower release permissions suffice. Do not release this beta before independent QA.
 
-1. أنشئ مستودع GitHub واحفظ فيه محتويات هذا المشروع.
-2. حرّر `admin/config.yml` ثم غيّر `repo: YOUR_GITHUB_USERNAME/YOUR_REPOSITORY` إلى اسم المستودع الصحيح.
-3. افتح `https://YOUR-REAL-DOMAIN.COM/admin/` بعد النشر.
-4. لتسجيل الدخول كمالك مستودع GitHub، اختر **Sign In with Token** في Sveltia CMS واستعمل access token بحدود الوصول المناسبة إلى المستودع فقط. لا تشارك المفتاح مع أحد، ولا تضفه إلى ملفات الموقع.
-5. بعد حفظ أي مقالة، يكتب CMS المحتوى إلى GitHub ويعيد Netlify بناء الموقع. قد تحتاج إلى مراجعة صلاحيات المستودع وواجهة التحكم عند أول نشر.
+## RivoScan 0.20.0 — restored CamScanner-like controls
 
-للفرق التي تفضّل دخولاً دون token، يمكن إعداد OAuth وفق توثيق Sveltia الرسمي. لوحة التحكم تعتمد على خدمة خارجية وقت التشغيل ولا تعمل بدون الربط والإنترنت.
+Open **Me > Scanner preferences** for nine persistent controls:
+- Auto-clean on ✓ (default on), enhancement preset (Auto / Enhance / Magic / No Shadow / Whiteboard / B&W / Original), optional original JPG backup in `Documents/RivoScan/Originals`.
+- Single vs. batch capture default, HD vs. SD camera, saved JPG quality (78/88/94%).
+- Output PDF quality (65/85/95%), A4 vs. US Letter paper, automatic PDF creation or manual page review before export.
 
-### تحرير مباشر دون لوحة تحكم
+Settings are stored locally (no cloud account) and passed into the **native CameraX scanner**. PDF creation does not repeat enhancement on already-cleaned native scans. Existing OCR and PDF tools remain available.
 
-كل مقالة ملف في `content/articles/*.json`. يمكنك فتحه وتعديل محتوى `translations.ar` و`translations.en` و`translations.fr` و`sections`. لنسخ مقال جديد، انسخ ملفاً، غيّر اسمه و`slug` والفئة والتواريخ واللغات الثلاث، ثم أعد البناء. سيظهر في الأقسام والبحث والخريطة تلقائياً. **تحتوي كل مقالة على اللغات الثلاث كاملة**؛ البناء يمنع النشر إذا نقصت ترجمة أو ثلاثة أقسام على الأقل. حافظ على استقلالية التحرير وجودة الترجمة.
+The ID Card tool now captures a front and back photograph and arranges both on ONE A4 PDF page. The PDF Print action uses Android's actual print dialog for a RivoScan PDF (requires printer setup). Scanner results, stamp visibility and physical folds still need testing on a real phone; this is not equivalent to a non-rigid dewarping or generative restoration engine.
 
-## 4. AdSense: التجهيز ≠ الموافقة
+Known gaps versus CamScanner: no advanced AI handwriting removal, nonrigid book dewarping, formula solver, photo translation, secure PDF encryption, public cloud sharing link, full Word/Excel layout recreation or semantic object repair. These are explicitly unimplemented, not silently advertised as working.
 
-تم تصميم التنقل والصفحات والمحتوى الأصلي والمراجعة لتسهيل استيفاء متطلبات شائعة، **لكن لا توجد أي طريقة تضمن القبول**؛ Google وحدها تقرر، وهي تتحقق من جودة الموقع الحقيقية وملاءمة المحتوى والالتزام بالسياسات. قبل تقديم الطلب:
+## 0.41.0 native PerfectScan
+Official UVDoc ONNX on Android plus optional relative 3D surface triangulation using 2–4 camera views. Original source preserved, review before save, no paywall until physical QA. See PERFECTSCAN_IMPLEMENTATION.md.
 
-- انشر الموقع على دومين صالح مع SSL، واختبره على الهاتف، واملأ بريد التواصل باسم حقيقي يعمل، واكتب تعريفاً صادقاً عن الناشر.
-- راجع جميع المقالات وأضف محتوى أصلياً من خبرتك، أمثلة أو اختبارات حقيقية، روابط مرجعية موثوقة، وتحديثات منتظمة حيث يلزم. المحتوى الحالي نقطة بداية، وليس ضماناً للجودة المطلوبة.
-- أصلح أي صفحات ناقصة أو مكررة، وأبقِ روابط التنقل والفهرسة فعّالة؛ أرسل sitemap إلى Search Console.
-- لا تعرض وعوداً بتحقيق أرباح مضمونة أو نتائج تداول مضللة، ولا تشجّع النقر على الإعلانات.
-- أضف الإفصاحات المناسبة لأي روابط تسويق بالعمولة وشروط المنتجات قبل إطلاقها.
-- بعد قبول الحساب، أدخل معرف الناشر `ca-pub-XXXXXXXXXXXXXXXX` في `adsensePublisherId`، وسيولّد الموقع `ads.txt` عند البناء.
-- **لا تفعّل تحميل سكربت الإعلانات قبل إعداد الموافقات المطلوبة.** لخدمة إعلانات مخصّصة للمستخدمين في EEA/UK/سويسرا، تتطلب Google منصة إدارة موافقة معتمدة من Google ومتكاملة مع IAB TCF. استخدم Google Privacy & messaging أو مزوداً معتمداً. هذا المشروع لا يحتوي CMP معتمدة؛ ولا يُعد أي إشعار كوكيز عادي بديلاً عنها.
-- بعد التفعيل القانوني والصحيح للـ CMP وتحديث سياسة الخصوصية، أضف `"enableAdsense": true` إلى `site.config.json`، وأعد البناء. سيُحمّل سكربت Auto Ads إذا أدخلت معرف ناشر صالحاً.
+## 0.41.1 scan-review and turquoise release
+Every scanned document remains visible for manual corner confirmation and locally computed sharpness/exposure/glare diagnostic; the UI advises Save or Retake instead of silently saving. Processing filters visibly render the source and enhanced output, with explicit user confirmation. The HD document perspective crop uses up to 3300px source detail when supported, while non-HD remains memory-bounded. A matching turquoise SVG, native adaptive icon and automatically generated PNGs replace the old blue palette. Do not uninstall an old signed build to force updates; all Pro tools remain open during field QA.
 
-الوثائق الرسمية:
+## 0.41.2 One Scanner UX
+One user-visible Scan entry. CameraX captures, analyzes and displays the photo before Save; adjust 4 corners, choose regular high-resolution color, paper-crease or UVDoc neural filter, compare, Save or Retake. Native Save stays disabled until the processed image appears. No approval checkbox, no empty white placeholder, no separate Smart Scan / PerfectScan Pro cards. Optional multi-angle 3D and fusion remains under Scan > Advanced Correction, with mode dropdown instead of checkbox; JPG/PDF integrity copy preserves originals. UVDoc effective AI resolution is bounded to 1024px while Pro Scan retains original HD text detail. Physical document QA pending.
 
-- Google AdSense eligibility: https://support.google.com/adsense/answer/9724
-- Page readiness: https://support.google.com/adsense/answer/7299563
-- Certified consent platforms: https://support.google.com/adsense/answer/13554116
-- Sveltia CMS GitHub: https://sveltiacms.app/en/docs/backends/github
+## 0.41.3 — AI Deep Clean is the scanner
+The single Scan action from Home, Scan workspace, Tools and ID Card now directly launches Google ML Kit FULL (gallery import allowed), saving the JPEG images that Google returns and creating an optional PDF. The native CameraX document camera is kept only for incompatible Google Play services or explicit manual edit. No separate Smart Scan, Deep Clean or PerfectScan Pro screen appears. Optional fusion, UVDoc and relative 3D are accessible under Scan > Advanced Corrections and in scanner settings. A user cancel never automatically launches backup CameraX. Note ML Kit output JPEGs are the cleaned Google scans; the plugin does not expose raw source photos. No delete/uninstall, no paywall or extra consent checkbox.
 
-## 5. حدود النسخة الحالية
+## 0.42.0 — AdMob field-test monetization (DEMO ADS ONLY)
+- One Android banner, offset away from bottom navigation. No advertising/SDK on the browser build.
+- Explicit, dismissible rewarded video grants all advanced tools for **10 minutes**. Only a confirmed Google rewarded callback or returned SDK reward unlocks; cancellation never unlocks.
+- After at least **2 successful document saves**, full-screen interstitial is eligible only on a subsequent user-initiated Home/Tools/Me transition, after 2 minutes elapsed, with an **8-minute cooldown and a maximum of 3 per foreground app process**; never during capture or saving. Skips if 10-minute access is active.
+- Essential Scan, file library, existing saved documents, imports, share and routine PDF tools stay accessible without a forced video.
+- Consent is requested through Google UMP before requesting ads and ad privacy options are available in settings. If Google consent or ad serving is unavailable, no ad is fabricated. Advanced ad-gated tools may be temporarily unavailable.
+- All AdMob IDs are **Google demonstration IDs**. They generate **zero real advertising revenue**. Before commercial publication, register the RivoScan app in AdMob, configure valid production IDs via a reviewed release process, verify consent/privacy notice, Play Data Safety, app-ads.txt and complete device QA. Never publish Google demo IDs as revenue units.
 
-- لا يمكنني نشره على دومين أو ربطه بحساب Google/GitHub نيابة عنك دون الحسابات وصلاحياتك.
-- الإدارة تحتاج إعداد GitHub مرة واحدة. المستخدم النهائي يرى موقعاً ثابتاً سريعاً؛ التحديثات ليست تلقائية من مصادر الأخبار، بل تتم بالنشر والتحرير والتحقق.
-- لم يتم تفعيل نموذج إرسال مباشر؛ التواصل عبر البريد الفعلي الذي ستحدده. يجب تهيئته قبل تقديم الموقع للمراجعة.
-- أدوات التداول تعليمية ولا تقدم حساب حجم عقد فعلي أو إشارات تداول.
-- صفحة `privacy` تصف النسخة الافتراضية بدون أدوات تتبع. **يجب تحديثها** إذا أضفت خدمات تحليل أو إعلانات أو نماذج أو تقنيات تخزين بيانات.
+## 0.42.1 — no banner, reliable test ad loading, Android back and responsive files
+- **No banner:** AdMob banner loading has been removed. Rewarded video, interstitial and app-open have separate official Google demonstration ad units in development builds.
+- **Consent corrected:** the Google UMP request/form runs before Android Mobile Ads SDK initialization; on consent rejection or unavailable ads, no ad appears and no simulated reward is granted.
+- **Rewarded video:** user chooses to watch; SDK reward callback or reward item is mandatory for 10-minute access. No video is forced into the editor. Essential scanner, document library, import and share remain available.
+- **Interstitial:** preloaded and shown only at an actual home/tools transition after 2 saved outputs, with 8-minute cooldown, 3 per process. No delayed surprise after a new screen renders.
+- **App open:** preloaded and shown only on a genuine return from ≥60s background, with at least a 20-minute fullscreen cooldown; never during scanning, editing or after a rewarded unlock.
+- **Ad diagnostics:** Me/Settings includes current native status, SDK loading failures, Retry and an explicit test-interstitial trigger. Debug builds do not earn revenue; use the production App ID and ad units only after actual AdMob configuration, privacy review and physical tests.
+- **Android navigation:** real Capacitor Android system-back listener, with narrow edge-swipe fallback. Back dismisses selection before leaving Documents, preserves files and does not interrupt saves.
+- **Files selection:** bottom fixed toolbar removed. Share/Delete stay side by side and remaining actions wrap inside the Documents panel, above Android gesture navigation bar.
+- **Turquoise brand** preserved throughout revised controls.
 
----
+- Header Back button added to every non-Home page; both left and right edge swipe fallbacks work alongside Android's system back gesture.
 
-**EN**: Build with `npm run build`; preview with `npm run dev`; edit `site.config.json`, configure `admin/config.yml` for your GitHub repository, then deploy `dist/` (Netlify build is preconfigured). Ads are intentionally off; the site is not automatically accepted to AdSense.
+## 0.42.2 — back-navigation interstitial placement
+- Android hardware Back, system gesture, edge-swipe fallback and visible toolbar Back share the same tool-to-Home route.
+- One preloaded interstitial is eligible only after 2 minutes of use and a meaningful tool break (a document saved or 2 real tool returns), with 8-minute fullscreen cooldown and max 3 per app process. Consent and ad readiness are required.
+- No ads on exiting/minimizing from Home, dismissing selection or dialogs, during scanner capture, editing, saving, or during a 10-minute rewarded unlock.
+- Interstitial *can* be video but may show images; creative cannot be forced to video. Rewarded video remains explicitly optional.
 
-**FR** : Lancez `npm run build`, puis `npm run dev` pour prévisualiser. Renseignez le domaine et l’e-mail dans `site.config.json`, configurez GitHub dans `admin/config.yml`, puis publiez `dist/` avec Netlify. AdSense est désactivé par défaut et l’admission n’est jamais garantie.
+## 0.42.3 — Retake UI label legibility
+- Native scan/crop editor header has a full-width Retake control (94 dp, 15 sp) with accessible label. It preserves the existing tap action to resume the camera.
+- The web-based scan editor now displays **Retake** instead of **Add / retake** in English, and **رتايك** in Arabic; native Arabic uses **رتايك**, matching the requested wording. Other translations remain localized.
+- Premium turquoise design mockup reviewed separately; the mockup is a concept, not a claim that all UI screens have been implemented.
 
-## Sharing and Google Search
+## v0.43.0 — approved turquoise Premium UI implemented
+- The Home dashboard now uses a real turquoise AI card, explicitly opt-in Google Rewarded video for 10-minute access (Android only), a clean 3x3 scanning tools layout and a compact recent-files grid. None of the nine tiles are fake actions; they route to existing scanner, import, ID card, flatten, eraser, enhance, books, images-to-PDF and OCR functions.
+- A five-position mobile navigation bar keeps the central camera capture action and leaves Android system gesture space unobstructed. Existing safe in-app Back logic remains intact.
+- The My Files page has functional All/PDF/Images chips, plus existing search, sort, share, delete, print, selection and long-press actions. Saved files are never migrated or deleted during the UI change.
+- The image editor Retake action is clearly labeled and styled in teal; native scanner retains its full Retake label. Premium CSS is loaded last to unify teal/white/gold without fake document thumbnails.
+- The Home premium card reflects actual rewarded access state. Web/browser previews do not pretend ads were viewed. The AdMob debug build still uses Google **test IDs** only and generates no revenue; native/device QA is required.
 
-Every article has share links for WhatsApp, Facebook, X, LinkedIn, Telegram, Pinterest, Reddit and email. Native device sharing and copy-link also support Instagram/TikTok/Snapchat manually (they do not offer universal web prefilled sharing links). Metadata includes Open Graph image, Twitter/X card, canonical, hreflang and Article JSON-LD. Sitemap and robots.txt are produced from `SITE_URL` during builds. After deployment, submit `https://univcours.github.io/ribhlab-site/sitemap.xml` to Google Search Console and verify ownership. Indexation is determined by search engines, not guaranteed.
+## v0.43.1 — Centered independent floating camera FAB
+- Camera is no longer a fifth bottom-navigation button: there are four navigation slots (Home, Documents, Tools, Me).
+- A separate 70dp teal circular camera FAB is centered just above the mobile nav, honoring Android safe-area and gesture insets. It opens the existing native scanner via data-live-camera on Home/Documents/Tools.
+- FAB hides on non-camera workspaces, file multi-selection, document viewer, editors and modal overlays. Tablet/desktop displays it floating at the lower corner. No change to document storage or AdMob policy.
+- Added a regression test for four nav entries, real scanner action, safe insets and overlay behavior.
+
+## v0.43.2 — polished AD badges
+- Premium tool tiles, tool hub and Home hero use concise **AD** badges instead of **10m / 10:00 / 10 MIN**. After reward, hero badge shows PRO. All seven localized Home descriptions omit timer marketing language.
+- Actual rewarded unlock remains ten minutes, disclosed clearly inside the opt-in video dialog. No change to AdMob test IDs, ad frequency, consent, or scanner behavior.
+
+## v0.43.3 — reserve Premium/PRO for a future paid offer
+- Ad-funded tools and the unlock card have **AD** before watching a video, **ON** when access is active; toolbar badge is AD, not PRO. The Tools navigation uses a grid icon rather than a paid-subscription crown.
+- Visible scan-filter labels Paper Scan, Book Scan and PerfectScan drop misleading Pro branding. The actual filtering, rewarded 10-minute access window, consent and documents are unchanged.
+- This is not a paid subscription. Do not show Premium/PRO branding unless a real premium subscription product is launched and its purchase/entitlement flow is implemented.
+
+## v0.43.4 — compact advanced AI drawer and lower full-circle scan FAB
+- Replaces oversized home AI/ad hero with a 57px compact turquoise AI control. Its accessible tap-to-expand details preserve ad choice, real rewarded-video activation and unlocked state; header AD shortcut opens the same drawer rather than firing a video unexpectedly.
+- The mobile navigation retains four real tabs with a new central 76px empty notch, and the distinct 70px camera FAB is moved down to 26px above Android's bottom safe inset. Full circular border, camera icon and click area remain visible; no overlap with Home/Documents/Tools/Me tabs.
+- The FAB still hides on selection and modal overlays, the scanner action remains native, saved files are untouched, and no Premium/PRO purchase branding is added.
