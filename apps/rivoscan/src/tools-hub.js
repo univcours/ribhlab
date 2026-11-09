@@ -1,11 +1,13 @@
 // Only tools with a real local implementation are shown.
 // Feature-specific labels are translated independently of legacy PDF workspace text.
+// Curated high-value hub. Previous implementations remain in source so the
+// user can restore them, but duplicated/experimental controls do not clutter Tools.
+// Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan','documentFlatten','slideScan','whiteboard','timestamp']},
- {id:'import',entries:['importImages','importFiles']},
- {id:'convert',entries:['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','pdfLong','pdftoimages','images','extractText']},
- {id:'edit',entries:['sign','watermark','enhance','restorePhoto','manualErase','eraseColoredMarks','eraseLightWatermark','merge','bundle','split','reorder','managePages','rotate','lockPdf','compress','metadata','numbers','text','delete']},
- {id:'utilities',entries:['aiChat','solverAI','countCam','peerTransfer','shareFiles','printPdf']}
+ {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'convert',entries:['toWord','toWordTables','toExcel','toPptEditable','pdftoimages','images','extractText']},
+ {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','managePages','lockPdf','compress','metadata','numbers','text']},
+ {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
@@ -85,6 +87,7 @@ const labels={
  printPdf:['Print PDF','طباعة PDF','Imprimer PDF','Imprimir PDF','PDF drucken','Imprimir PDF','Stampa PDF']
 };
 const langIndex={en:0,ar:1,fr:2,es:3,de:4,pt:5,it:6};
-export function hubGroupLabel(lang,id){const idx=langIndex[lang]??0;return groups[lang]?.[toolGroups.findIndex(x=>x.id===id)]||groups.en[toolGroups.findIndex(x=>x.id===id)]||id}
+const originalGroupOrder=['scan','import','convert','edit','utilities'];
+export function hubGroupLabel(lang,id){const index=originalGroupOrder.indexOf(id);return groups[lang]?.[index]||groups.en[index]||id}
 export function hubLabel(lang,id,fallback){const values=labels[id];return values?.[langIndex[lang]??0]||fallback||id}
 export function hubLanguages(){return Object.keys(langIndex)}
