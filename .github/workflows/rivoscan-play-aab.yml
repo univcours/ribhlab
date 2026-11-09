@@ -8,6 +8,9 @@ on:
       - '.github/workflows/rivoscan-play-aab.yml'
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   release:
     runs-on: ubuntu-latest
