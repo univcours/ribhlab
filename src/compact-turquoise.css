@@ -670,3 +670,14 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 @media(prefers-reduced-motion:reduce){
  #app .rivo-dark-ui .rivo-hub-grid{scroll-behavior:auto!important}
 }
+
+/* Visual audit at 320px: the Documents nav label must never split into
+   "Document" + "s" while all four navigation cells stay in one row. */
+#app .rivo-dark-ui .mobilebar button{
+ white-space:nowrap!important;word-break:normal!important;line-height:1.12!important;
+}
+@media(max-width:360px){
+ #app .rivo-dark-ui .mobilebar button{
+  font-size:8.5px!important;letter-spacing:-0.25px!important;
+ }
+}
