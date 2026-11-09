@@ -12,7 +12,7 @@ test('Android Studio debug cannot replace the Play app',()=>{
  assert.ok(brand.includes('rivoscanAppLabel'));
  const installer=read('install-rivoscan-android.ps1');
  assert.ok(installer.includes('if($apkPackage -ne "com.ribhlab.rivoscan.debug")'));
- assert.ok(installer.includes('com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity'));
+ assert.ok(installer.includes('com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.RivoComposeActivity'));
  assert.ok(!installer.includes('shell pm path com.ribhlab.rivoscan '));
  assert.ok(read('sync-rivoscan-device-version.ps1').includes('pm path com.ribhlab.rivoscan.debug'));
 });
@@ -30,7 +30,7 @@ test('Emulator and screenshots test DEV, not the real Play app',()=>{
  const emulator=read('scripts/emulator-smoke.sh'),shots=read('scripts/play-store-screenshots.sh');
  for(const script of [emulator,shots]){
   assert.ok(script.includes('com.ribhlab.rivoscan.debug'));
-  assert.ok(script.includes('com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity'));
+  assert.ok(script.includes('com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.RivoComposeActivity'));
   assert.doesNotMatch(script,/com\.ribhlab\.rivoscan(?!\.debug|\.MainActivity)/);
  }
 });
