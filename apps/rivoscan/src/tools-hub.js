@@ -5,11 +5,17 @@
 // Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
 export const toolGroups=[
  {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
- {id:'convert',entries:['toWord','toWordTables','toExcel','toPptEditable','pdftoimages','images','extractText']},
- {id:'edit',entries:['sign','watermark','enhance','manualErase','merge','bundle','managePages','lockPdf','compress','metadata','numbers','text']},
+ {id:'convert',entries:['convertDocument']},
+ {id:'edit',entries:['photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
+ // Composite tiles delegate to the already tested original implementations.
+ convertDocument:{icon:'convert',color:'green',type:'mergedDialog'},
+ annotatePdf:{icon:'sign',color:'green',type:'mergedDialog'},
+ pdfPrivacy:{icon:'lock',color:'green',type:'mergedDialog'},
+ photoStudio:{icon:'image',color:'green',type:'photo',preset:'enhance'},
+ combineFiles:{icon:'merge',color:'green',type:'legacyTool',toolId:'bundle'},
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
  scanCode:{icon:'scan',color:'green',type:'barcode'},
@@ -53,6 +59,11 @@ const groups={
  it:['Scansione','Importa','Converti','Modifica','Utilità']
 };
 const labels={
+ convertDocument:['Convert documents','تحويل الوثائق','Convertir des documents','Convertir documentos','Dokumente konvertieren','Converter documentos','Converti documenti'],
+ annotatePdf:['Write & sign PDF','الكتابة والتوقيع على PDF','Annoter et signer PDF','Anotar y firmar PDF','PDF beschriften & signieren','Anotar e assinar PDF','Annota e firma PDF'],
+ pdfPrivacy:['PDF Privacy','حماية وخصوصية PDF','Confidentialité PDF','Privacidad PDF','PDF Datenschutz','Privacidade PDF','Privacy PDF'],
+ photoStudio:['Photo Studio · Enhance & Erase','استوديو الصور · تحسين وممحاة','Studio photo · Améliorer et effacer','Estudio foto · Mejorar y borrar','Fotostudio · Verbessern & Entfernen','Estúdio foto · Melhorar e apagar','Studio foto · Migliora e cancella'],
+ combineFiles:['Combine PDFs & Images','دمج PDF والصور','Fusionner PDF et images','Combinar PDF e imágenes','PDFs und Bilder vereinen','Combinar PDFs e imagens','Unisci PDF e immagini'],
  idPhotoMaker:['ID Photo Sheet (print)','صور شخصية للطباعة','Planche photos identité','Hoja fotos de carné','Passfoto-Bogen','Folha fotos de identificação','Foglio fototessere'],
  formulaOcr:['Formula OCR + optional AI','قراءة المعادلات + AI اختياري','OCR formules + IA facultative','OCR fórmulas + IA opcional','Formel-OCR + optionale KI','OCR fórmulas + IA opcional','OCR formule + IA opzionale'],
  photoTranslation:['Photo Translation (offline after download)','ترجمة صورة على الهاتف','Traduction photo sur appareil','Traducción foto en el dispositivo','Foto lokal übersetzen','Tradução de foto no aparelho','Traduci foto sul telefono'],

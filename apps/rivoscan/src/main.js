@@ -41,6 +41,7 @@ import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
 import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
+import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -816,6 +817,12 @@ async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){await openTool(id);return;}
  if(!(await requestPremium(id)))return;
+ if(spec.type==='mergedDialog'){
+  openMergedToolDialog({id,language,onChoose:action=>openHubAction(action),
+   onError:error=>toast(error?.message||String(error),true)});
+  return;
+ }
+ if(spec.type==='legacyTool'){await openTool(spec.toolId);return;}
  if(spec.type==='aiDocument'||spec.type==='aiSolver'){
    openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:async()=>{
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
@@ -1390,6 +1397,9 @@ function navigateRivoBack(){
    document.querySelector('.rivo-live-overlay [data-scan-overlay-close]')?.click();
    lastBackHandled=now;return true;
   }
+ // Right-edge swipe and Android system Back close the merged tool selector.
+ const merged=document.querySelector('.rivo-merged-overlay');
+ if(merged){merged.querySelector('[data-merged-close]')?.click();lastBackHandled=now;return true;}
   // All heavy tools use full-screen dialogs. Android Back and either-edge swipe
  // must close only the topmost tool; do not erase its underlying file selection.
  if(document.querySelector('.busy'))return true; // Preserve in-progress saves.

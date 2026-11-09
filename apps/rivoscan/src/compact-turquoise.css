@@ -522,3 +522,40 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 .rivo-plate-detection{position:absolute;box-sizing:border-box;pointer-events:none;
  border:3px solid #24f5dc;border-radius:7px;box-shadow:0 0 12px #05d8c290;transition:all .15s linear}
 .rivo-plate-detection.matched{border-color:#4dff9a;box-shadow:0 0 16px #35f8a07c}
+
+/* Unified entrypoint for related tools. One format dropdown replaces many tiles. */
+.rivo-merged-overlay{
+ position:fixed;inset:0;z-index:100200;background:#031e25ce;
+ display:flex;align-items:center;justify-content:center;
+ padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));
+}
+.rivo-merged-dialog{
+ background:#f9fffd;color:#154e4e;box-shadow:0 15px 50px #002e306b;
+ border:1px solid #a4d9d0;border-radius:15px;
+ width:100%;max-width:480px;min-width:0;padding:12px;
+ display:flex;flex-direction:column;gap:10px;max-height:calc(100dvh - 40px);overflow:hidden;
+}
+.rivo-merged-dialog header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ font-size:15px;min-height:32px;
+}
+.rivo-merged-dialog header strong{font-size:15px;color:#066f6e}
+.rivo-merged-dialog p{font-size:12px;color:#597c7a;line-height:1.5;margin:0}
+.rivo-merged-dialog form{display:flex;flex-direction:column;gap:8px;margin:0;min-width:0}
+.rivo-merged-dialog label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:600;color:#356b68}
+.rivo-merged-dialog select{
+ display:block;min-height:42px;height:42px;max-width:100%;width:100%;
+ border:1.5px solid #86cfc4;border-radius:10px;
+ font-size:12px;padding:6px 9px;background:white;color:#155957;
+}
+.rivo-merged-dialog button{
+ padding:6px 11px;min-height:35px;border-radius:10px;
+ border:1px solid #a6ded4;background:#ebfaf6;color:#087972;
+}
+.rivo-merged-dialog .rivo-merged-start{
+ font-size:12px;font-weight:750;background:#078f8a;color:#fff;
+ border-color:#078f8a;min-height:39px;
+}
+.rivo-merged-dialog button:focus-visible,.rivo-merged-dialog select:focus-visible{
+ outline:2px solid #079b97;outline-offset:2px;
+}

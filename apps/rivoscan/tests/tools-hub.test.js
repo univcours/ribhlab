@@ -1,50 +1,67 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {toolGroups,hubSpecial,hubGroupLabel,hubLabel,hubLanguages} from '../src/tools-hub.js';
+import {mergedToolDefinitions,mergedToolOptions} from '../src/merged-tools.js';
 
-const kept=['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan',
- 'toWord','toWordTables','toExcel','toPptEditable','pdftoimages','images','extractText',
- 'sign','watermark','enhance','manualErase','merge','bundle','managePages','lockPdf','compress','metadata','numbers','text',
- 'peerTransfer','shareFiles'];
-const hidden=['documentFlatten','slideScan','whiteboard','timestamp','importImages','importFiles',
- 'toCSV','toPpt','pdfLong','restorePhoto','eraseColoredMarks','eraseLightWatermark',
- 'split','reorder','rotate','delete','aiChat','solverAI','countCam','printPdf'];
-
-test('Tools shows only useful categories without duplicated import/print actions',()=>{
+const groups=toolGroups.flatMap(g=>g.entries);
+test('RivoScan has seventeen high-value Tools, not repeated tiles for the same output',()=>{
  assert.deepEqual(toolGroups.map(g=>g.id),['scan','convert','edit','utilities']);
- const entries=toolGroups.flatMap(g=>g.entries);
- assert.equal(entries.length,29);
- assert.equal(entries.length,new Set(entries).size);
- assert.deepEqual(new Set(entries),new Set(kept));
- for(const id of hidden){
-  assert.ok(!entries.includes(id),id+' must not be a separate tile');
- }
- for(const id of ['scanCode','plateScanner','toWord','toExcel','managePages','bookScan','lockPdf','photoTranslation']){
-  assert.ok(entries.includes(id),id+' is a core feature that must remain visible');
- }
+ assert.equal(groups.length,17);
+ assert.equal(new Set(groups).size,17);
+ for(const required of ['scanCode','plateScanner','ocr','bookScan','convertDocument','photoStudio',
+ 'combineFiles','managePages','annotatePdf','pdfPrivacy','peerTransfer','shareFiles'])
+  assert.ok(groups.includes(required),required+' stays accessible');
+ for(const hidden of ['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','images',
+ 'pdftoimages','pdfLong','extractText','manualErase','enhance','restorePhoto','eraseColoredMarks',
+ 'eraseLightWatermark','merge','bundle','sign','watermark','numbers','text','metadata','lockPdf'])
+  assert.ok(!groups.includes(hidden),hidden+' is not a separate tile');
 });
-test('Hidden tiles do not destroy reversible feature implementations',()=>{
- for(const id of ['documentFlatten','slideScan','whiteboard','toCSV','toPpt','pdfLong','restorePhoto',
- 'eraseColoredMarks','eraseLightWatermark','countCam','aiChat','solverAI','printPdf'])
-  assert.ok(hubSpecial[id],id+' must remain recoverable in source');
-});
-test('Visible categories are correctly translated despite removed Import tab',()=>{
- const expected={
-  en:['Scan','Convert','Edit','Utilities'],
-  ar:['المسح','التحويل','التعديل','أدوات إضافية'],
-  fr:['Scanner','Convertir','Modifier','Utilitaires']
- };
- for(const [lang,labels] of Object.entries(expected)){
-  assert.deepEqual(toolGroups.map(g=>hubGroupLabel(lang,g.id)),labels);
+test('One converter exposes all original Word, Excel, CSV, PPT and PDF/Image variants',()=>{
+ const expected=['toWord','toWordTables','toExcel','toCSV','toPptEditable','toPpt','images','pdftoimages','pdfLong','extractText'];
+ assert.deepEqual(mergedToolDefinitions.convertDocument.choices,expected);
+ for(const option of expected){
+  const action=hubSpecial[option];
+  if(action)assert.equal(action.type,'export');
  }
+ const actions=mergedToolOptions('convertDocument','ar');
+ assert.equal(actions.length,10);
+ assert.ok(actions.every(o=>o.label&&o.action));
+});
+test('Photo Studio and Combine use the original functional editor and PDF+images composer',()=>{
+ assert.deepEqual(hubSpecial.photoStudio,{icon:'image',color:'green',type:'photo',preset:'enhance'});
+ assert.equal(hubSpecial.combineFiles.toolId,'bundle');
+ const editor=readFileSync(new URL('../src/scan-editor.js',import.meta.url),'utf8');
+ for(const feature of ["'restore'","data-edit=\"eraser\"","value=\"auto-colored\"","value=\"light-gray\"","data-edit=\"date\""])
+  assert.ok(editor.includes(feature),feature);
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.ok(main.includes("spec.type==='legacyTool'"));
+ assert.ok(main.includes("await openTool(spec.toolId)"));
+});
+test('PDF annotate and privacy retain original signature, text, page numbers and password protection',()=>{
+ assert.deepEqual(mergedToolDefinitions.annotatePdf.choices,['sign','watermark','text','numbers']);
+ assert.deepEqual(mergedToolDefinitions.pdfPrivacy.choices,['lockPdf','metadata']);
+ assert.equal(hubSpecial.lockPdf.type,'pdfLock');
+ assert.equal(mergedToolOptions('pdfPrivacy','fr').length,2);
+});
+test('Merged tool labels retain all seven supported languages and category order',()=>{
+ const translations={en:['Scan','Convert','Edit','Utilities'],ar:['المسح','التحويل','التعديل','أدوات إضافية'],fr:['Scanner','Convertir','Modifier','Utilitaires']};
+ for(const [lang,expected] of Object.entries(translations))
+  assert.deepEqual(toolGroups.map(g=>hubGroupLabel(lang,g.id)),expected);
  for(const lang of hubLanguages()){
-  for(const g of toolGroups)assert.ok(hubGroupLabel(lang,g.id));
-  for(const id of kept)assert.ok(hubLabel(lang,id));
+  for(const id of groups)assert.ok(hubLabel(lang,id));
+  for(const id of Object.keys(mergedToolDefinitions))
+   assert.ok(mergedToolOptions(id,lang).every(choice=>choice.label));
  }
 });
-test('Preserved conversion implementations remain distinguishable',()=>{
- assert.equal(hubSpecial.toCSV.format,'csv');
- assert.equal(hubSpecial.toExcel.format,'xlsx');
- assert.equal(hubSpecial.toPpt.format,'pptx');
- assert.equal(hubSpecial.toPptEditable.format,'editablePptx');
+test('Merged dialog opens only approved original operations and supports Back',()=>{
+ const ui=readFileSync(new URL('../src/merged-tools.js',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.ok(ui.includes("if(!def.choices.includes(action))return"));
+ assert.ok(ui.includes("onChoose(action)"));
+ assert.ok(ui.includes("data.mergedClose='true'"));
+ assert.ok(main.includes("if(spec.type==='mergedDialog')"));
+ assert.ok(main.includes("openMergedToolDialog({id,language,onChoose:action=>openHubAction(action)"));
+ assert.ok(main.includes("document.querySelector('.rivo-merged-overlay')"));
+ assert.ok(main.includes("[data-merged-close]"));
 });

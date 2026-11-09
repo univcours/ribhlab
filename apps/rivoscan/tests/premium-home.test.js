@@ -99,6 +99,14 @@ test('Tools/Settings navigation never waits for an ad or asynchronous promise',(
  assert.ok(!click.includes('await atNaturalNavigation'), 'Tabs must not wait on ads');
  assert.ok(!click.includes('async()=>'), 'Tabbed navigation must be synchronous');
 });
+test('All relevant processing is available in merged editors instead of repeated Home/Tools tiles',()=>{
+ const main=file('src/main.js'),hub=file('src/tools-hub.js'),css=file('src/compact-turquoise.css');
+ for(const key of ['convertDocument','photoStudio','combineFiles','annotatePdf','pdfPrivacy']){
+  assert.ok(hub.includes(key));
+ }
+ assert.ok(main.includes('openMergedToolDialog'));
+ assert.ok(css.includes('.rivo-merged-dialog'));
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));
