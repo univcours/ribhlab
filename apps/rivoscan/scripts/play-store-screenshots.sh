@@ -16,14 +16,12 @@ adb install -r "$APK"
 # emulator before launch, to avoid photographing an Android permission sheet.
 adb shell pm grant com.ribhlab.rivoscan.debug android.permission.CAMERA
 adb shell am force-stop com.ribhlab.rivoscan.debug || true
-adb shell am start -W -n com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity
+adb shell am start -W -n com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.RivoComposeActivity
 sleep 13
 
-# New builds can display a "What's New" sheet. The only interaction here
-# dismisses that sheet; capturing the sheet would not showcase product UI.
-# On a 1080x1920 / density 420 screen this is the bottom of the sheet.
-adb shell input tap 540 1726
-sleep 4
+# Material 3 Compose launches directly on Home; don't tap the Scan nav
+# item to dismiss a WebView-only release-notes dialog.
+sleep 2
 
 adb exec-out screencap -p > "$OUT/01-rivoscan-home.png"
 
