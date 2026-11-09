@@ -34,24 +34,17 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
     if(!mode)return '';
-    const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
-    return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
-      <div class="bulk-heading"><strong>${items.length} ${t('selected')}</strong>
-        <small>${size(total)}</small>
-        <button class="bulk-close" type="button" data-bulk="cancel" aria-label="${t('cancel')}">✕</button>
-      </div>
-      <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
-        <div class="bulk-primary">
-          <button type="button" data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
-          <button type="button" data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
-        </div>
-        <div class="bulk-secondary">
-          <button type="button" data-bulk="all">${t('all')}</button>
-          <button type="button" data-bulk="invert">${t('invert')}</button>
-          <button type="button" data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
-          <button type="button" data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
-          <button type="button" data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
-        </div>
+    const items=selectedDocs();
+    return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
+      <strong class="rivo-selected-count">${items.length}</strong>
+      <div class="rivo-inline-bulk">
+        <button type="button" data-bulk="share" title="${t('share')}" aria-label="${t('share')}" ${items.length?'':'disabled'}>↗</button>
+        <button type="button" data-bulk="merge" title="${t('merge')}" aria-label="${t('merge')}" ${items.length>1?'':'disabled'}>⧉</button>
+        <button type="button" data-bulk="organize" title="${t('move')} / ${t('copy')}" aria-label="${t('move')} / ${t('copy')}">▣</button>
+        <button type="button" data-bulk="rename" title="${t('rename')}" aria-label="${t('rename')}" ${items.length===1?'':'disabled'}>✎</button>
+        <button type="button" data-bulk="delete" title="${t('delete')}" aria-label="${t('delete')}">⌫</button>
+        <button type="button" data-bulk="all" title="${t('all')}" aria-label="${t('all')}">✓</button>
+        <button type="button" data-bulk="cancel" title="${t('cancel')}" aria-label="${t('cancel')}">✕</button>
       </div>
     </div>`;
   }
@@ -418,5 +411,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
+  return {t,toolbar,checkbox,mode:()=>mode,chosen,count:()=>selected.size,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
 }
