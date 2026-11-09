@@ -329,73 +329,37 @@ function visualFileType(doc){
  if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt'};
  return {code:'FILE',klass:'generic'};
 }
-function recentDocuments(limit=6,query=homeSearchQuery){
+function recentDocuments(limit=12,query=homeSearchQuery){
  const needle=String(query||'').trim().toLocaleLowerCase();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
-  .filter(({doc})=>!needle||doc.name.toLocaleLowerCase().includes(needle)).slice(0,needle?30:limit);
- if(!matched.length)return `<div class="recent-empty">${ico('search',27)}<span>${needle?hv('noResults'):ut('noRecent')}</span><button type="button" data-open-library>${hv('openFolder')}</button></div>`;
- return matched.map(({doc,index},visibleIndex)=>{
-  const file=visualFileType(doc);
-  const expanded=homeExpandedUri?homeExpandedUri===doc.uri:visibleIndex===0;
-  const canPdf=file.klass==='pdf'||file.klass==='image';
-  return `<article class="recent-entry rivo-recent-card ${expanded?'rivo-recent-expanded':''} ${bulkUI.chosen(doc)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-label="${hv('view')} ${escapeHTML(doc.name)}" aria-selected="${bulkUI.chosen(doc)}">
-     <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" aria-hidden="true"><span>${file.code}</span></span>
-     <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong>
-       <small>${ico('clock',13)} ${doc.created?new Date(doc.created).toLocaleString(language,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'RivoScan'} <span class="rivo-metadata-dot">·</span> ${formatSize(doc.size||0)}</small></div>
-     <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${bulkUI.chosen(doc)?'checked':''}>
-     ${expanded?`<div class="rivo-recent-actions">
-       <button type="button" data-doc-share="${index}" class="rivo-recent-share">${ico('upload',18)} ${hv('share')}</button>
-       ${file.klass==='image'?`<button type="button" data-doc-delete="${index}" class="rivo-recent-delete" aria-label="${dl('remove')} ${escapeHTML(doc.name)}">${ico('delete',18)} ${dl('remove')}</button>`:''}
-       ${canPdf?`<button type="button" data-doc-savepdf="${index}" class="rivo-recent-pdf">${ico('file',18)} ${hv('savePdf')}</button>`:`<button type="button" data-doc-open="${index}" class="rivo-recent-pdf">${ico('folder',18)} ${hv('open')}</button>`}
-       <button type="button" data-doc-open="${index}" class="rivo-recent-view">${ico('eye',19)} ${hv('view')}</button>
-     </div>`:''}
-     <button type="button" data-expand-doc="${index}" class="rivo-expand-card" aria-label="${hv('more')}" aria-expanded="${expanded}">${ico('more',17)}</button>
-   </article>`;
+  .filter(({doc})=>!needle||doc.name.toLocaleLowerCase().includes(needle))
+  .slice(0,needle?35:limit);
+ if(!matched.length)return `<div class="recent-empty">${ico('folder',21)} <span>${needle?hv('noResults'):ut('noRecent')}</span></div>`;
+ return matched.map(({doc,index})=>{
+  const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
+  return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
+   <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
+   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" aria-hidden="true"><span>${file.code}</span></span>
+   <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${formatSize(doc.size||0)}</small></div>
+   ${single?`<div class="rivo-file-quick-actions">
+    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('upload',17)}</button>
+    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('text',16)}</button>
+    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('delete',17)}</button>
+   </div>`:''}
+  </article>`;
  }).join('');
 }
 function home(){
- const copy=premiumCopy(language),access=getPremiumStatus();
- const unlocked=access.remainingMs>0;
- const android=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
- const tiles=homeTiles.map((item,i)=>`<button type="button" class="rivo-premium-tile ${item.featured?'rivo-premium-tile-main':''}"
-   ${item.action} aria-label="${escapeHTML(copy.names[i])}">
-   <span class="rivo-premium-tile-icon">${ico(item.icon,28)}</span>
-   <strong>${escapeHTML(copy.names[i])}</strong>
-   ${item.premium?`<span class="rivo-premium-lock" aria-label="Ad-supported feature">AD</span>`:''}
-  </button>`).join('');
- return `<section class="app-home rivo-home rivo-premium-home">
-  <div class="rivo-ai-compact" role="group" aria-label="${escapeHTML(copy.hero)}">
-   <button type="button" class="rivo-ai-toggle" data-ad-settings-toggle
-     aria-controls="rivo-ai-details" aria-expanded="false" aria-label="${escapeHTML(copy.hero)}">
-    <span class="rivo-ai-symbol">${ico('sparkle',22)}</span>
-    <span class="rivo-ai-name"><small>RivoScan AI</small><strong>${escapeHTML(copy.hero)}</strong></span>
-    <span class="rivo-ai-status" aria-label="${unlocked?'Advanced tools unlocked':'Ad supported'}">${unlocked?'ON':'AD'}</span>
-    <span class="rivo-ai-chevron">${ico('back',17)}</span>
-   </button>
-   <div id="rivo-ai-details" class="rivo-ai-details" hidden>
-    <p>${escapeHTML(copy.body)}</p>
-    <button type="button" class="rivo-ai-watch" ${unlocked?'data-tab="tools"':'data-premium-unlock'}>
-     ${ico(unlocked?'check':'play',18)} <span>${escapeHTML(unlocked?copy.active:android?copy.watch:copy.web)}</span>
-    </button>
-    <small>${ico('shield',13)} ${escapeHTML(copy.tiles)} · ${unlocked?'ON':'AD'}</small>
-   </div>
-  </div>
-  <div class="rivo-premium-heading">
-   <div><h2>${escapeHTML(copy.tiles)}</h2><p>${escapeHTML(copy.subtitle)}</p></div>
-   <button type="button" data-tab="tools">${ut('seeAll')} ${ico('back',16)}</button>
-  </div>
-  <div class="rivo-premium-tools">${tiles}</div>
-  <div class="rivo-premium-heading">
-   <div><h2>${escapeHTML(copy.files)}</h2><p>${escapeHTML(copy.local)}</p></div>
+ const copy=premiumCopy(language);
+ return `<section class="app-home rivo-home rivo-compact-home">
+  <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
    <button type="button" data-open-library>${ut('seeAll')} ${ico('back',16)}</button>
   </div>
-  <label class="rivo-premium-search">${ico('search',19)}<input type="search" id="home-quick-search"
-    placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}"
-    value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
+  <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
+  <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
-  <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(4)}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
-  <p class="home-footer-note">${ico('shield',15)} ${ut('privacy')}</p>
  </section>`;
 }
 function toolsWorkspace(){
@@ -504,26 +468,30 @@ function scannerWorkspace(){
   </section>`;
 }
 function renderLibraryRows(needle=''){
-  const q=String(needle||'').trim().toLocaleLowerCase();
-  const matched=libraryItems.map((item,index)=>({item,index}))
-    .filter(({item})=>(!q||item.name.toLocaleLowerCase().includes(q)) &&
-      (libraryFilter==='all'||(libraryFilter==='pdf'?/pdf/i.test(item.mimeType||''):/^image\//.test(item.mimeType||''))))
-    .sort((a,b)=>librarySort==='oldest'?(a.item.created||0)-(b.item.created||0)
-       :librarySort==='name'?a.item.name.localeCompare(b.item.name)
-       :librarySort==='size'?(b.item.size||0)-(a.item.size||0)
-       :(b.item.created||0)-(a.item.created||0));
-  if(libraryLoading)return `<div class="doc-empty">${lt('loading')}</div>`;
-  if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
-  if(!matched.length)return `<div class="doc-empty">${ico('file',32)}<p>${dl('empty')}</p><button class="btn" data-tool="scan">${ico('scan')} ${dl('scan')}</button></div>`;
-  return matched.map(({item,index})=>`<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
-    ${bulkUI.checkbox(item,index)}
-    <div class="document-icon">${ico('file',25)}</div>
-    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)} · ${item.created?new Date(item.created).toLocaleDateString(language):'RivoScan'}</small></div>
-    <div class="document-buttons">
-      <button type="button" data-doc-share="${index}" aria-label="${dl('share')} ${escapeHTML(item.name)}">${ico('upload',19)}<span>${dl('share')}</span></button>
-      ${(/\.pdf$/i.test(item.name)||/pdf/i.test(item.mimeType||''))?'<button type="button" data-doc-print="'+index+'" aria-label="'+escapeHTML(hubLabel(language,'printPdf','Print PDF'))+'">'+ico('file',18)+'<span>'+escapeHTML(hubLabel(language,'printPdf','Print PDF'))+'</span></button>':''}
-      <button type="button" data-doc-delete="${index}" class="document-delete" aria-label="${dl('remove')} ${escapeHTML(item.name)}">${ico('delete',19)}</button>
-    </div></article>`).join('');
+ const q=String(needle||'').trim().toLocaleLowerCase();
+ const matched=libraryItems.map((item,index)=>({item,index}))
+  .filter(({item})=>(!q||item.name.toLocaleLowerCase().includes(q)) &&
+   (libraryFilter==='all'||(libraryFilter==='pdf'?/pdf/i.test(item.mimeType||''):/^image\//.test(item.mimeType||''))))
+  .sort((a,b)=>librarySort==='oldest'?(a.item.created||0)-(b.item.created||0)
+   :librarySort==='name'?a.item.name.localeCompare(b.item.name)
+   :librarySort==='size'?(b.item.size||0)-(a.item.size||0)
+   :(b.item.created||0)-(a.item.created||0));
+ if(libraryLoading)return `<div class="doc-empty">${lt('loading')}</div>`;
+ if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
+ if(!matched.length)return `<div class="doc-empty">${ico('file',24)} ${dl('empty')}</div>`;
+ return matched.map(({item,index})=>{
+  const single=bulkUI.chosen(item)&&bulkUI.count()===1;
+  return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+   ${bulkUI.checkbox(item,index)}
+   <span class="document-icon">${ico('file',21)}</span>
+   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)}</small></div>
+   ${single?`<div class="document-buttons rivo-file-quick-actions">
+    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('upload',17)}</button>
+    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('text',16)}</button>
+    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('delete',17)}</button>
+   </div>`:''}</article>`;
+ }).join('');
 }
 function libraryWorkspace(){
   return `<section class="workspace library-workspace"><button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
@@ -725,7 +693,7 @@ function wire(){
   document.getElementById('home-quick-search')?.addEventListener('input',event=>{
     homeSearchQuery=event.target.value;
     const rows=document.getElementById('home-recents');
-    if(rows)rows.innerHTML=recentDocuments(4);
+    if(rows)rows.innerHTML=recentDocuments(14);
     const heading=document.getElementById('home-results-title');
     if(heading)heading.textContent=homeSearchQuery.trim()?hv('results'):ut('recent');
     bulkUI.sync();
@@ -738,12 +706,16 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
       if(target.hasAttribute('data-doc-select')){
-        if(e.type==='click')bulkUI.toggle(libraryItems[Number(target.dataset.docSelect)]);
+        if(e.type==='click'){
+          bulkUI.toggle(libraryItems[Number(target.dataset.docSelect)]);
+          if(list==='home-recents')el.innerHTML=recentDocuments(14);
+          else refreshVisibleLibrary();
+        }
         return;
       }
       if(target.hasAttribute('data-expand-doc')){
@@ -761,7 +733,8 @@ function wire(){
         if(doc)bulkUI.savePdf([doc]);
         return;
       }
-      if(target.hasAttribute('data-doc-print')){
+      if(target.hasAttribute('data-doc-rename')){void bulkUI.action('rename');return;}
+       if(target.hasAttribute('data-doc-print')){
         const doc=libraryItems[Number(target.dataset.docPrint)];
         if(doc&&Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoDocuments')){
           RivoDocuments.printFile({uri:doc.uri}).catch(error=>toast(error?.message||'Android printing is unavailable.',true));
