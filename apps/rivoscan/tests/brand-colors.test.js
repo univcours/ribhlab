@@ -20,13 +20,13 @@ test('Full turquoise theme and icon use matching palette in all major surfaces',
  assert.ok(!generator.includes("['public/rivoscan-icon.png',png]"));
  assert.ok(brand.includes('node_modules/.cache/rivoscan/icon.png.b64'));
 });
-test('Kotlin host and WebView match the premium navy Android status bar',()=>{
+test('Kotlin host and WebView use Material 3 light system bars',()=>{
  const kotlin=readFileSync(new URL('../native/android/MainActivity.kt',import.meta.url),'utf8');
  const premium=readFileSync(new URL('../src/rivoscan-premium-native.css',import.meta.url),'utf8');
  assert.ok(main.includes("import './rivoscan-premium-native.css'"));
- assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#031022'})"));
+ assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#FFFFFF'})"));
  assert.ok(main.includes('StatusBar.setStyle({style:Style.Dark})'));
- assert.ok(kotlin.includes('window.statusBarColor = premiumNavy'));
- assert.ok(kotlin.includes('isAppearanceLightStatusBars = false'));
- assert.ok(premium.includes('--rivo-premium-bg:#031022'));
+ assert.ok(kotlin.includes('window.statusBarColor = Color.WHITE'));
+ assert.ok(kotlin.includes('isAppearanceLightStatusBars = true'));
+ assert.ok(premium.includes('--rivo-premium-bg:#f7f9fd'));
 });
