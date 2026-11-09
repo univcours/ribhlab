@@ -36,6 +36,38 @@ export function matchesPlate(plate,query){
  const p=normalizePlate(plate),q=normalizePlate(query);
  return q.length>=3&&p.includes(q);
 }
+
+// Manual search stays live. Pinned targets are local-only, not uploaded.
+export function matchingPlateTargets(plate,targets=[]){
+ const qs=Array.isArray(targets)?targets:[targets];
+ return [...new Set(qs.map(normalizePlate).filter(q=>q.length>=3&&matchesPlate(plate,q)))];
+}
+export function plateOcrLines(blocks){
+ const rows=[];
+ for(const block of (Array.isArray(blocks)?blocks:[])){
+  for(const para of (block?.paragraphs||[])){
+   for(const line of (para?.lines||[])){
+    if(typeof line?.text==='string'&&line?.bbox)rows.push({text:line.text,bbox:line.bbox});
+   }
+  }
+ }
+ return rows;
+}
+export function plateBoxInView(bbox,roi,ocrScale,video,view){
+ if(!bbox||!roi||!Number.isFinite(ocrScale)||ocrScale<=0||video.width<=0||video.height<=0||view.width<=0||view.height<=0)return null;
+ const s=Math.max(view.width/video.width,view.height/video.height),cv=video.width/roi.canvasWidth;
+ const offX=(view.width-video.width*s)/2,offY=(view.height-video.height*s)/2;
+ const xy=(x,y)=>({
+  x:offX+(roi.x+x/ocrScale)*cv*s,
+  y:offY+(roi.y+y/ocrScale)*cv*s
+ });
+ const a=xy(bbox.x0,bbox.y0),b=xy(bbox.x1,bbox.y1);
+ if(![a.x,a.y,b.x,b.y].every(Number.isFinite))return null;
+ const left=Math.max(0,Math.min(view.width,a.x)),top=Math.max(0,Math.min(view.height,a.y));
+ const right=Math.max(left,Math.min(view.width,b.x)),bottom=Math.max(top,Math.min(view.height,b.y));
+ if(right-left<8||bottom-top<5)return null;
+ return {x:left,y:top,width:right-left,height:bottom-top};
+}
 function btn(label,fn){
  const el=document.createElement('button');el.type='button';el.textContent=label;el.setAttribute('aria-label',label);el.addEventListener('click',fn);return el;
 }
@@ -51,19 +83,49 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const header=document.createElement('header');header.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
  const close=btn('✕',()=>stop());close.dataset.scanOverlayClose='true';header.append(title,close);
+ const searchRow=document.createElement('div');searchRow.className='rivo-plate-search-row';
  const search=document.createElement('input');search.type='search';search.className='rivo-plate-search';
  search.placeholder=L[1];search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
+ const pinned=document.createElement('div');pinned.className='rivo-plate-watchlist';pinned.hidden=true;
+ const watchKey='rivo-plate-watchlist-v1';
+ let watch=[];
+ try{const saved=JSON.parse(localStorage.getItem(watchKey)||'[]');
+  if(Array.isArray(saved))watch=[...new Set(saved.map(normalizePlate).filter(q=>q.length>=3))].slice(0,20);
+ }catch{}
+ const persistWatch=()=>{try{localStorage.setItem(watchKey,JSON.stringify(watch));}catch{}};
+ const renderWatch=()=>{
+  pinned.replaceChildren();pinned.hidden=!watch.length;
+  for(const [i,number] of watch.entries()){
+   const chip=btn(number+' ✕',()=>{watch.splice(i,1);persistWatch();renderWatch();});
+   chip.className='rivo-plate-watch-chip';
+   chip.title=number;pinned.append(chip);
+  }
+ };
+ const addTarget=btn('＋',()=>{
+  const value=normalizePlate(search.value);
+  if(value.length<3){search.focus();return;}
+  if(!watch.includes(value)&&watch.length<20){watch.push(value);persistWatch();renderWatch();}
+  search.value='';search.focus();
+ });
+ addTarget.title=language==='ar'?'إضافة رقم للمراقبة':'Add watch target';
+ search.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();addTarget.click();}
+ });
+ searchRow.append(search,addTarget);renderWatch();
  const view=document.createElement('div');view.className='rivo-live-preview';
  const video=document.createElement('video');video.autoplay=true;video.playsInline=true;video.muted=true;
  const guide=document.createElement('div');guide.className='rivo-plate-guide';guide.textContent='▢';
- view.append(video,guide);
+ const detection=document.createElement('div');
+ detection.className='rivo-plate-detection';detection.hidden=true;
+ detection.setAttribute('aria-hidden','true');
+ view.append(video,guide,detection);
  const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
  const last=document.createElement('strong');last.className='rivo-live-result';last.hidden=true;
  const foot=document.createElement('div');foot.className='rivo-live-actions';
  const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
  const torch=btn('⚡',()=>toggleTorch());foot.append(count,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6];
- panel.append(header,search,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
+ panel.append(header,searchRow,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
  const key=e=>{if(e.key==='Escape'||e.key==='Backspace'&&e.target!==search){e.preventDefault();stop();}};
@@ -103,8 +165,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   const now=Date.now();
   for(const [p,time] of confirmed)if(now-time>30000)confirmed.delete(p);
   if(closed||confirmed.has(plate))return;
-  const query=search.value;
-  const match=matchesPlate(plate,query);
+  const match=matchingPlateTargets(plate,[search.value,...watch]).length>0;
   // A brief second OCR confirmation suppresses false alarms/captures.
   confirmed.set(plate,now);
   let photoName='';
@@ -142,17 +203,34 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    small.height=Math.max(1,Math.round(roi.h*scale));
    small.getContext('2d',{willReadFrequently:true}).drawImage(canvas,
     roi.x,roi.y,roi.w,roi.h,0,0,small.width,small.height);
-   const data=(await worker.recognize(small)).data;
+   // Tesseract 6 disables bounding geometry by default. Explicit blocks=true
+   // makes the real OCR line rectangle available without inventing a bounding box.
+   const data=(await worker.recognize(small,{}, {blocks:true})).data;
    const candidates=plateCandidates(data.text);
    const now=Date.now();
+   let framed=false;
    if(Number(data.confidence)>=55){
+    const lines=plateOcrLines(data.blocks);
     for(const plate of candidates){
+     const line=lines.find(row=>plateCandidates(row.text).includes(plate));
+     if(line){
+      const box=plateBoxInView(line.bbox,{...roi,canvasWidth:canvas.width},
+       scale,{width:video.videoWidth,height:video.videoHeight},
+       {width:view.clientWidth,height:view.clientHeight});
+      if(box){
+       detection.style.left=box.x+'px';detection.style.top=box.y+'px';
+       detection.style.width=box.width+'px';detection.style.height=box.height+'px';
+       detection.hidden=false;guide.hidden=true;framed=true;
+       detection.classList.toggle('matched',matchingPlateTargets(plate,[search.value,...watch]).length>0);
+      }
+     }
      const seen=observed.get(plate);
      const streak=seen&&now-seen.time<6500?seen.streak+1:1;
      observed.set(plate,{time:now,streak});
      if(streak>=2)await recordPlate(plate);
     }
    }
+   if(!framed){detection.hidden=true;guide.hidden=false;}
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
   }catch(error){if(!closed)console.warn('License plate OCR:',error);}
   finally{processing=false;if(!closed)nextTimer=setTimeout(scanFrame,650);}

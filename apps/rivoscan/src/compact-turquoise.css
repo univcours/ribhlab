@@ -508,3 +508,17 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  #app .rivo-dark-ui .rivo-scanner-pref input[type="checkbox"][role="switch"]::before,
  #app .rivo-dark-ui .settings-sounds input[type="checkbox"][role="switch"]::before{transition:none!important}
 }
+
+/* Continuous plate recognition: real OCR rectangle; compact pinned search. */
+.rivo-plate-search-row{display:flex;align-items:center;gap:5px;flex:none;min-width:0}
+.rivo-plate-search-row .rivo-plate-search{flex:1 1 auto;min-width:0}
+.rivo-plate-search-row button{flex:0 0 38px;height:38px;min-height:38px;min-width:38px;padding:0;
+ border:1px solid #4ed4c6;border-radius:10px;background:#096d6a;color:#fff;font-size:19px}
+.rivo-plate-watchlist{display:flex;flex:none;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;
+ max-height:34px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.rivo-plate-watchlist[hidden],.rivo-plate-detection[hidden],.rivo-plate-guide[hidden]{display:none!important}
+.rivo-plate-watch-chip{height:28px!important;min-height:28px!important;min-width:0!important;
+ flex:0 0 auto;padding:3px 8px!important;font-size:11px!important;white-space:nowrap}
+.rivo-plate-detection{position:absolute;box-sizing:border-box;pointer-events:none;
+ border:3px solid #24f5dc;border-radius:7px;box-shadow:0 0 12px #05d8c290;transition:all .15s linear}
+.rivo-plate-detection.matched{border-color:#4dff9a;box-shadow:0 0 16px #35f8a07c}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
 import {createScanLedger,scannerLogNames} from '../src/scan-ledger.js';
-import {normalizePlate,plateCandidates,matchesPlate} from '../src/plate-scanner.js';
+import {normalizePlate,plateCandidates,matchesPlate,matchingPlateTargets,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
 import {newScanDeduplicator,safeScannedUrl,decodeFormat} from '../src/barcode-scanner.js';
 import {readFileSync} from 'node:fs';
 
@@ -84,6 +84,22 @@ test('Plate formatting handles Arabic digits; matching works on full or partial 
  assert.equal(matchesPlate('12345-A-6','A6'),false,'too-short searches cannot trigger alarms');
  assert.equal(matchesPlate('12345-A-6','50001'),false);
  assert.deepEqual(plateCandidates('HELLO THERE'),[]);
+});
+test('Multiple locally pinned plate targets match while scanning unrelated plates',()=>{
+ assert.deepEqual(matchingPlateTargets('12345-A-6',['999','12345','45A6','12345']),['12345','45A6']);
+ assert.deepEqual(matchingPlateTargets('12345-A-6',['8888','9999']),[]);
+ assert.deepEqual(matchingPlateTargets('12345-A-6',['12']),[]);
+});
+test('Tesseract v6 OCR blocks project true plate bounds through video cover cropping',()=>{
+ const lines=plateOcrLines([{paragraphs:[{lines:[
+  {text:'12345-A-6',bbox:{x0:200,y0:70,x1:360,y1:100}}
+ ]}]}]);
+ assert.equal(lines[0].text,'12345-A-6');
+ const box=plateBoxInView(lines[0].bbox,
+  {x:100,y:100,w:800,h:400,canvasWidth:1000},
+  1,{width:1000,height:500},{width:500,height:250});
+ assert.deepEqual(box,{x:150,y:85,width:80,height:15});
+ assert.equal(plateBoxInView(null,{x:0,y:0,canvasWidth:100},1,{width:100,height:100},{width:100,height:100}),null);
 });
 test('Live reader prevents duplicate frames without dropping distinct codes',()=>{
  let tick=0;
