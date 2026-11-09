@@ -55,6 +55,8 @@ test('Screenshots navigate actual four slots and reject duplicate documents/tool
  assert.ok(script.includes('tap_bottom 71; capture 03-tools'));
  assert.ok(script.includes('tap_bottom 89; capture 04-settings'));
  assert.ok(script.includes('cmp -s'));
+ assert.ok(script.includes('local y=$((height-42))'));
+ assert.ok(script.includes('did not navigate on the first tap'));
  assert.ok(script.includes('duplicate navigation screenshot'));
 });
 test('No redundant Home/All Tools link inside Documents; native topbar handles Back',()=>{
