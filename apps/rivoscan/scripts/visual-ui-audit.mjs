@@ -24,7 +24,7 @@ try{
   await page.screenshot({path:out+'/'+width+'-home.png',fullPage:false});
   const navigate=async(tab,visible)=>{
    // Only the real, visible Android footer, never a hidden desktop sidebar.
-   const selector=tab==='library'?'.mobilebar [data-open-library]":tab==='home'?'.mobilebar [data-go=home]":'.mobilebar [data-tab="'+tab+'"]';
+   const selector=tab==='library'?'.mobilebar [data-open-library]':tab==='home'?'.mobilebar [data-go="home"]':'.mobilebar [data-tab="'+tab+'"]';
    await page.locator(selector).click({timeout:15000});
    await page.locator(visible).waitFor({state:'visible',timeout:10000});
   };
