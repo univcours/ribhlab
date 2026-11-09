@@ -30,7 +30,10 @@ test('Barcode live reader uses camera video and never opens scanned URLs automat
  assert.ok(src.includes('decodeFromCanvas'));
  assert.ok(src.includes('safeScannedUrl'));
  assert.ok(!src.includes('window.open('));
- assert.ok(src.includes('onScan({value,format:decodeFormat(decoded)})'));
+ assert.ok(src.includes('const entry=recognizedCode(decoded)'));
+ assert.ok(src.includes('if(!entry)return'));
+ assert.ok(src.includes('onScan(entry)'));
+ assert.ok(!src.includes('Camera.getPhoto('));
 });
 
 test('Book Scan splits a double-page photo into two non-overlapping pages',async()=>{
