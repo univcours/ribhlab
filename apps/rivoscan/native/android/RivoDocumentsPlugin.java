@@ -274,6 +274,83 @@ public class RivoDocumentsPlugin extends Plugin {
         }
     }
 
+    /**
+     * Overwrite ONLY our four reserved scanner logs in Documents/RivoScan.
+     * Unlike saveFile(), this keeps a single stable TXT/XLSX for each scanner.
+     * Source recovery journal lives in the app until the export succeeds.
+     */
+    @PluginMethod
+    public synchronized void upsertScannerLog(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        final String name=call.getString("name","");
+        final String mime=call.getString("mimeType","");
+        final boolean txt=name.equals("RivoScan_Scans.txt")||name.equals("RivoScan_Plates.txt");
+        final boolean xlsx=name.equals("RivoScan_Scans.xlsx")||name.equals("RivoScan_Plates.xlsx");
+        if(!txt&&!xlsx){call.reject("Not an approved scanner log.");return;}
+        if(!mime.equals(txt?"text/plain":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){
+            call.reject("Scanner log MIME type mismatch.");return;
+        }
+        final String encoded=call.getString("base64");
+        if(encoded==null||encoded.length()>16*1024*1024){call.reject("Scanner log exceeds size limit.");return;}
+        final byte[] bytes;
+        try{bytes=Base64.decode(encoded,Base64.DEFAULT);}
+        catch(IllegalArgumentException e){call.reject("Invalid scanner log encoding.",e);return;}
+        if(bytes.length>12*1024*1024){call.reject("Scanner log exceeds 12 MB.");return;}
+        ContentResolver resolver=getContext().getContentResolver();
+        Uri target=null;
+        boolean created=false;
+        try{
+            // Restrict to this exact known name in our own public folder.
+            try(Cursor cursor=resolver.query(documentsCollection(),
+                new String[]{MediaStore.MediaColumns._ID},
+                MediaStore.MediaColumns.DISPLAY_NAME+" = ? AND "+
+                    MediaStore.MediaColumns.RELATIVE_PATH+" = ?",
+                new String[]{name,FOLDER},null)){
+                if(cursor!=null&&cursor.moveToFirst())
+                    target=ContentUris.withAppendedId(documentsCollection(),cursor.getLong(0));
+            }
+            if(target==null){
+                ContentValues values=new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
+                values.put(MediaStore.MediaColumns.MIME_TYPE,mime);
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER);
+                values.put(MediaStore.MediaColumns.IS_PENDING,1);
+                target=resolver.insert(documentsCollection(),values);
+                if(target==null)throw new IllegalStateException("Cannot create scanner log.");
+                created=true;
+            }else{
+                ContentValues pending=new ContentValues();
+                pending.put(MediaStore.MediaColumns.IS_PENDING,1);
+                resolver.update(target,pending,null,null);
+            }
+            try(OutputStream output=resolver.openOutputStream(target,"wt")){
+                if(output==null)throw new IllegalStateException("Cannot overwrite scanner log.");
+                output.write(bytes);
+                output.flush();
+            }
+            ContentValues visible=new ContentValues();
+            visible.put(MediaStore.MediaColumns.IS_PENDING,0);
+            resolver.update(target,visible,null,null);
+            JSObject result=new JSObject();
+            result.put("uri",target.toString());
+            result.put("name",name);
+            result.put("size",bytes.length);
+            call.resolve(result);
+        }catch(Exception e){
+            if(target!=null){
+                try{
+                    if(created)resolver.delete(target,null,null);
+                    else{
+                        ContentValues restore=new ContentValues();
+                        restore.put(MediaStore.MediaColumns.IS_PENDING,0);
+                        resolver.update(target,restore,null,null);
+                    }
+                }catch(Exception ignored){}
+            }
+            call.reject("Scanner log could not be written: "+e.getMessage(),e);
+        }
+    }
+
     /** Keep old scans accessible while all new photos, PDFs and other files go to Documents. */
     private void appendFolderFiles(JSArray items,Uri collection,String folder) throws Exception{
         ContentResolver resolver=getContext().getContentResolver();
