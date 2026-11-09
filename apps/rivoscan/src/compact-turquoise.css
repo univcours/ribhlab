@@ -559,3 +559,114 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
 .rivo-merged-dialog button:focus-visible,.rivo-merged-dialog select:focus-visible{
  outline:2px solid #079b97;outline-offset:2px;
 }
+
+/* UI audit: all RELATED action controls are compact, strictly one horizontal row.
+   The horizontal rail scrolls internally when all actions cannot fit. */
+:root{--rivo-action-height:40px;--rivo-action-gap:5px}
+#app .rivo-dark-ui .rivo-library-chips,
+#app .rivo-dark-ui .library-heading-actions,
+#app .rivo-dark-ui .storage-actions,
+#app .rivo-dark-ui .rivo-settings-actions,
+#app .rivo-dark-ui .rivo-tool-pills,
+#app .rivo-dark-ui .rivo-inline-bulk,
+#app .rivo-dark-ui .rivo-file-quick-actions,
+.rivo-editor-actions,.rivo-page-operations,.rivo-code-actions,.rivo-live-actions,
+.rivo-peer-actions,.bulk-overlay .bulk-sheet-actions{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:var(--rivo-action-gap)!important;min-width:0!important;max-width:100%!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;scroll-snap-type:x proximity;
+}
+#app .rivo-dark-ui .rivo-library-chips > button,
+#app .rivo-dark-ui .library-heading-actions > button,
+#app .rivo-dark-ui .storage-actions > button,
+#app .rivo-dark-ui .rivo-settings-actions > button,
+#app .rivo-dark-ui .rivo-tool-pills > button,
+#app .rivo-dark-ui .rivo-inline-bulk > button,
+#app .rivo-dark-ui .rivo-file-quick-actions > button,
+.rivo-editor-actions > button,.rivo-page-operations > button,
+.rivo-code-actions > button,.rivo-live-actions > button,
+.rivo-peer-actions > button,.bulk-overlay .bulk-sheet-actions > button{
+ flex:0 0 auto!important;align-self:center!important;
+ flex-wrap:nowrap!important;white-space:nowrap!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;margin:0!important;
+ border-radius:9px!important;box-sizing:border-box!important;
+ font-size:11px!important;line-height:1.2!important;scroll-snap-align:start;
+}
+#app .rivo-dark-ui .rivo-library-chips > button{
+ min-height:34px!important;height:34px!important;min-width:62px!important;
+ padding:5px 9px!important;
+}
+#app .rivo-dark-ui .library-heading-actions > button,
+#app .rivo-dark-ui .storage-actions > button,
+#app .rivo-dark-ui .rivo-settings-actions > button,
+.rivo-page-operations > button,.rivo-code-actions > button,
+.rivo-live-actions > button,.rivo-peer-actions > button{
+ min-height:var(--rivo-action-height)!important;height:var(--rivo-action-height)!important;
+ padding:6px 10px!important;
+}
+#app .rivo-dark-ui .rivo-settings-actions{width:100%;padding:3px 0!important}
+#app .rivo-dark-ui .rivo-settings-actions .settings-row{
+ display:inline-flex!important;width:auto!important;min-width:0!important;
+ gap:5px!important;padding:6px 9px!important;
+}
+#app .rivo-dark-ui .rivo-settings-actions .settings-row .settings-row-icon{
+ width:21px!important;min-width:21px!important;height:21px!important;
+ background:transparent!important;
+}
+#app .rivo-dark-ui .rivo-settings-actions .settings-row strong{
+ font-size:11px!important;white-space:nowrap!important;
+}
+#app .rivo-dark-ui .rivo-settings-actions .settings-row small{display:none!important}
+/* The actual tool cards form one small horizontal ribbon per category. */
+#app .rivo-dark-ui .rivo-hub-grid{
+ display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap!important;
+ align-items:stretch!important;gap:6px!important;padding:2px 1px 6px!important;
+ max-width:100%!important;min-width:0!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain;scrollbar-width:thin;scroll-snap-type:x proximity;
+}
+#app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{
+ flex:0 0 108px!important;width:108px!important;
+ min-width:108px!important;max-width:108px!important;
+ min-height:80px!important;max-height:90px!important;
+ padding:8px 4px!important;scroll-snap-align:start;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk{
+ flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+/* Editing operations stay in one row and leave the image preview unobstructed. */
+.rivo-editor-actions{
+ display:flex!important;min-height:58px!important;
+ padding:6px 8px calc(7px + env(safe-area-inset-bottom,0px))!important;
+}
+.rivo-editor-actions > button{
+ display:inline-flex!important;flex-direction:row!important;
+ min-width:58px!important;max-width:138px!important;
+ min-height:42px!important;height:42px!important;
+ padding:5px 9px!important;justify-content:center!important;align-items:center!important;
+}
+.rivo-editor-actions > button[data-edit="save"]{
+ background:#079b97!important;color:white!important;
+}
+.rivo-page-operations{min-height:49px!important}
+.rivo-code-actions{margin:8px 0!important}
+.rivo-code-actions > button{min-width:65px!important}
+.rivo-peer-actions > button{min-width:96px!important}
+.rivo-live-preview{min-height:180px!important}
+#app .rivo-dark-ui .rivo-file-quick-actions > button{
+ width:28px!important;min-width:28px!important;max-width:28px!important;
+ height:34px!important;min-height:34px!important;max-height:34px!important;
+ padding:4px!important;
+}
+@media(max-width:360px){
+ #app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{
+  flex-basis:100px!important;width:100px!important;min-width:100px!important;max-width:100px!important;
+ }
+ .rivo-editor-actions > button{min-width:53px!important;padding:5px 7px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-dark-ui .rivo-hub-grid{scroll-behavior:auto!important}
+}

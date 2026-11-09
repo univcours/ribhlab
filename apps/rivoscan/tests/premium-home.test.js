@@ -107,6 +107,23 @@ test('All relevant processing is available in merged editors instead of repeated
  assert.ok(main.includes('openMergedToolDialog'));
  assert.ok(css.includes('.rivo-merged-dialog'));
 });
+test('Compact action rows never wrap and keep long tool lists in horizontal rails',()=>{
+ const css=file('src/compact-turquoise.css'),main=file('src/main.js');
+ for(const selector of ['.rivo-editor-actions','.rivo-page-operations','.rivo-code-actions',
+ '.rivo-live-actions','.rivo-peer-actions','.rivo-inline-bulk','.rivo-hub-grid',
+ '.rivo-library-chips','.rivo-settings-actions'])
+  assert.ok(css.includes(selector));
+ assert.ok(css.includes('flex-wrap:nowrap!important'));
+ assert.ok(css.includes('overflow-x:auto!important'));
+ assert.ok(css.includes('--rivo-action-height:40px'));
+ assert.ok(main.includes('class="rivo-settings-actions"'));
+});
+test('Documents refresh leaves the bottom navbar mounted during async file reads',()=>{
+ const main=file('src/main.js');
+ const load=main.slice(main.indexOf('async function loadLibrary('),main.indexOf('async function chooseLibraryFiles('));
+ assert.ok(load.includes('refreshVisibleLibrary()'));
+ assert.ok(!load.includes("if(show&&activeTool?.id==='library')render()"));
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));

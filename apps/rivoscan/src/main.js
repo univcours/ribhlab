@@ -408,8 +408,8 @@ function settingsWorkspace(){
  <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
- <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
- <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button>
+ <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
+ <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -512,7 +512,9 @@ async function loadLibrary(show=true){
     libraryItems=[];libraryLoading=false;libraryError='Documents storage component is missing. Update the Android app.';
     if(show&&activeTool?.id==='library')render();return;
   }
-  libraryLoading=true;if(show&&activeTool?.id==='library')render();
+  // Do not replace the bottom navbar while an asynchronous Documents read is active:
+  // detached nav buttons could swallow the first user tap.
+  libraryLoading=true;if(show&&activeTool?.id==='library')refreshVisibleLibrary();
   try{
     const result=await RivoDocuments.listFiles();
     libraryItems=(Array.isArray(result.files)?result.files:[]).sort((a,b)=>(b.created||0)-(a.created||0));
@@ -521,7 +523,7 @@ async function loadLibrary(show=true){
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
   finally{
     libraryLoading=false;
-    if(show&&activeTool?.id==='library')render();
+    if(show&&activeTool?.id==='library')refreshVisibleLibrary();
     else if(!activeTool){
       const homeRows=document.getElementById('home-recents');
       if(homeRows)homeRows.innerHTML=recentDocuments();
