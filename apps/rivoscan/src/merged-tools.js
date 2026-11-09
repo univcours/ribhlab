@@ -94,8 +94,9 @@ export function openMergedToolDialog({id,language='en',onChoose,onError=console.
   dismiss();
   // Calls the underlying implemented action, preserving its file picker,
   // processing and save semantics instead of inventing another converter.
-  Promise.resolve().then(()=>onChoose(action)).catch(onError);
+  try{Promise.resolve(onChoose(action)).catch(onError)}catch(error){onError(error)}
  });
  document.addEventListener('keydown',escape);
+ select.focus();
  return dismiss;
 }
