@@ -55,6 +55,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
+const RivoUIBridge = registerPlugin('RivoUIBridge');
 const codeLedger=createCodeLedger({bridge:RivoDocuments});
 const thumbnailService=createDocumentThumbnailService(args=>RivoDocuments.getThumbnail(args));
 let thumbnailObserver=null;
@@ -1757,6 +1758,52 @@ document.addEventListener('touchend',event=>{
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
+
+/**
+ * Kotlin Material 3 launcher -> existing production document engine.
+ * A native Compose route is never a mock: every action reuses existing
+ * Capacitor handlers. Unknown routes are rejected instead of making fake UI.
+ */
+async function openNativeComposeRoute(rawRoute){
+ const route=String(rawRoute||'').trim();
+ if(!route)return;
+ try{
+  if(route==='library'){openLibrary();return;}
+  if(route==='home'){openTab('home');return;}
+  if(route==='tools'){openTab('tools');return;}
+  if(route==='settings'){openTab('me');return;}
+  if(route==='scan'){await openLiveScanner();return;}
+  if(route==='gallery'){chooseLibraryFiles('image');return;}
+  if(route==='qr'){await openHubAction('scanCode');return;}
+  if(route.startsWith('tool:')){
+   const id=route.slice(5);
+   if(tools.some(tool=>tool.id===id)){await openTool(id);return;}
+  }
+  if(route.startsWith('hub:')){
+   const id=route.slice(4);
+   if(hubSpecial[id]||toolGroups.some(group=>group.entries.includes(id))){
+    await openHubAction(id);return;
+   }
+  }
+  if(route.startsWith('category:')){
+   const id=route.slice(9);
+   if(toolGroups.some(group=>group.id===id)){
+    openTab('tools');
+    document.querySelectorAll('[data-hub-section]').forEach(button=>{
+      if(button.dataset.hubSection===id)button.click();
+    });
+    return;
+   }
+  }
+  console.warn('Unsupported Kotlin Compose route:',route);
+  toast('This action is not available in this build.',true);
+ }catch(error){
+  console.error('Kotlin Compose action error:',error);
+  toast(error?.message||String(error),true);
+ }
+}
+window.rivoNativeRoute=(route)=>{void openNativeComposeRoute(route)};
+
 render();
 // AdMob UMP consent: debug uses safe demo IDs, signed production uses real units.
 void initializeAds();
@@ -1765,6 +1812,11 @@ try{
   requestAnimationFrame(()=>openWhatsNew({language,version:appVersion}));
 }catch(error){console.warn('Release notes unavailable:',error)}
 if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  // Consume exactly one route from the native launcher after WebView boot.
+  // All document state remains owned by the existing JavaScript engine.
+  RivoUIBridge.consumeRoute().then(({route})=>{
+    if(route)window.rivoNativeRoute(route);
+  }).catch(error=>console.warn('Native Compose route unavailable:',error));
   const syncNativeSoundSetting=()=>{
     if(!Capacitor.isPluginAvailable('RivoLiveScanner'))return;
     RivoLiveScanner.getSoundSettings().then(result=>{
