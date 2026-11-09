@@ -17,11 +17,15 @@ test('Release notes are shown only for unseen version and describe real work',()
  assert.equal(shouldShowReleaseNotes(storage,'0.22.0'),false);assert.ok(shouldShowReleaseNotes(storage,'0.22.1'));
  for(const lang of ['ar','en','fr','de','es','pt','it'])assert.ok(changesForVersion(lang).items.length>=3);
 });
-test('Barcode reader has real camera/image decoding, and does not auto-open untrusted URLs',()=>{
+test('Barcode live reader uses camera video and never opens scanned URLs automatically',()=>{
  const src=readFileSync(new URL('../src/barcode-scanner.js',import.meta.url),'utf8');
- assert.ok(src.includes('BrowserMultiFormatReader'));assert.ok(src.includes('reader.decodeFromCanvas'));
- assert.ok(src.includes("input.type='file'"));assert.ok(src.includes('const link=safeScannedUrl(value)'));
- assert.ok(src.includes('window.confirm'));assert.ok(!src.includes('window.location='));
+ assert.ok(src.includes('BrowserMultiFormatReader'));
+ assert.ok(src.includes('reader.decodeFromVideoElement'));
+ assert.ok(src.includes("picker.type='file'"));
+ assert.ok(src.includes('decodeFromCanvas'));
+ assert.ok(src.includes('safeScannedUrl'));
+ assert.ok(!src.includes('window.open('));
+ assert.ok(src.includes('onScan({value,format:decodeFormat(decoded)})'));
 });
 
 test('Book Scan splits a double-page photo into two non-overlapping pages',async()=>{
