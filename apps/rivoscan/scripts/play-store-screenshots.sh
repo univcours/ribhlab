@@ -25,7 +25,9 @@ test "$height" -gt 400
 tap_bottom(){
   local fraction="$1"
   local x=$((width*fraction/100))
-  local y=$((height-34))
+  # Tap the visual centre of the bottom navigation; the device screenshot is
+  # in physical pixels (the WebView uses a smaller density-independent grid).
+  local y=$((height-25))
   adb shell input tap "$x" "$y"
   sleep 2
 }
@@ -39,6 +41,15 @@ capture(){
 tap_bottom 11; capture 01-home
 tap_bottom 29; capture 02-documents
 tap_bottom 71; capture 03-tools
+# The old build stayed on Documents after the Tools tap. Record UI hierarchy
+# if that regresses, rather than claiming a successful visual audit.
+if cmp -s "$OUTPUT/02-documents.png" "$OUTPUT/03-tools.png"; then
+  adb shell uiautomator dump /sdcard/rivoscan-window.xml >/dev/null 2>&1 || true
+  adb exec-out cat /sdcard/rivoscan-window.xml > "$OUTPUT/navigation-failure.xml" || true
+  adb shell input tap "$((width*71/100))" "$((height-42))"
+  sleep 2
+  capture 03-tools
+fi
 tap_bottom 89; capture 04-settings
 # Prevent false-green screenshots: previously Tools and Documents were identical!
 for pair in "01-home 02-documents" "02-documents 03-tools" "03-tools 04-settings"; do

@@ -88,6 +88,15 @@ test('Settings switches, language selector and search icons follow teal system',
   assert.ok(css.includes(marker),marker);
  }
 });
+test('Tools/Settings navigation never waits for an ad or asynchronous promise',()=>{
+ const main=file('src/main.js');
+ const start=main.indexOf("document.querySelectorAll('[data-tab]').forEach(");
+ const end=main.indexOf("document.querySelectorAll('[data-inapp-back]')",start);
+ const click=main.slice(start,end);
+ assert.ok(click.includes('openTab(el.dataset.tab)'));
+ assert.ok(!click.includes('await atNaturalNavigation'), 'Tabs must not wait on ads');
+ assert.ok(!click.includes('async()=>'), 'Tabbed navigation must be synchronous');
+});
 test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  const main=file('src/main.js'),ads=file('src/monetization.js');
  assert.ok(!main.includes('rivo-premium-badge'));

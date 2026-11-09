@@ -631,7 +631,12 @@ function wire(){
     openLibrary();
     if(el.hasAttribute('data-focus-search'))document.getElementById('library-search')?.focus();
   }));
-  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab(el.dataset.tab)}));
+  // Primary navigation must happen synchronously on click, even when ads are loading.
+  // Never block Tools, Documents or Settings behind network/ad promises.
+  document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{
+    if(busy)return;
+    openTab(el.dataset.tab);
+  }));
   document.querySelectorAll('[data-inapp-back]').forEach(button=>button.addEventListener('click',()=>navigateRivoBack()));
   document.querySelectorAll('[data-ad-settings-toggle]').forEach(button=>button.addEventListener('click',()=>{
     const details=document.getElementById('rivo-ai-details');
