@@ -105,37 +105,14 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# Verified real App ID in all Android manifests; only the production
-# JavaScript build can initialize AdMob. Debug makes zero ad requests.
-$productionAds = $env:RIVOSCAN_ADMOB_PRODUCTION -eq 'true'
-$verifiedRivoScanAppId = 'ca-app-pub-7945572016731367~1509328607'
-if ($env:RIVOSCAN_ADMOB_APP_ID -and $env:RIVOSCAN_ADMOB_APP_ID -ne $verifiedRivoScanAppId) {
-  throw 'RivoScan AdMob App ID does not match the verified application.'
+# AdMob: use Google sample app ID in all beta/QA builds. Never bundle real ads
+# until merchant account, privacy policy and production ad units are verified.
+$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+if($xml -notmatch 'com.google.android.gms.ads.APPLICATION_ID') {
+  if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing' }
+  $xml=$xml.Replace('</application>',$admobMeta+"`r`n"+'</application>')
 }
-$admobAppId = $verifiedRivoScanAppId
-$admobMeta = '<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + $admobAppId + '" />'
-if ($xml.Contains('com.google.android.gms.ads.APPLICATION_ID')) {
-  $xml = [regex]::Replace($xml,'<meta-data[^>]+com\.google\.android\.gms\.ads\.APPLICATION_ID[^>]*/>',$admobMeta)
-} else {
-  if (-not $xml.Contains('</application>')) { throw 'Android manifest application tag is missing.' }
-  $xml = $xml.Replace('</application>',$admobMeta + [Environment]::NewLine + '</application>')
-}
-if (-not $xml.Contains($admobAppId)) { throw 'AdMob APP ID was not written to the manifest.' }
-# Keep production and debug clearly separate in the Android launcher.
-$labelExpression='(?s)(<application\b[^>]*?\bandroid:label=")[^"]+(")'
-if(-not [regex]::IsMatch($xml,$labelExpression)){
-  throw 'Application label missing; DEV/Production isolation could not be verified.'
-}
-$xml=[regex]::Replace($xml,$labelExpression,[Text.RegularExpressions.MatchEvaluator]{
-  param($match)
-  $match.Groups[1].Value + '${rivoscanAppLabel}' + $match.Groups[2].Value
-})
-[IO.File]::WriteAllText($manifest, $xml, $utf8)
-if ($productionAds) {
-  Write-Host 'PASS: Verified production AdMob App ID.'
-} else {
-  Write-Host 'PASS: Developer build: verified App ID, AdMob disabled by JavaScript.'
-}
+[IO.File]::WriteAllText($manifest,$xml,$utf8)
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.
 # Generated Capacitor build.gradle is local and often keeps an older hardcoded

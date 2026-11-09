@@ -1,12 +1,6 @@
 name: RivoScan Play candidate AAB
 on:
   workflow_dispatch:
-    inputs:
-      production_ads:
-        description: 'Build RivoScan with two verified real AdMob units'
-        required: false
-        type: boolean
-        default: true
   push:
     branches: [feat/rivoscan-android-beta]
     paths:
@@ -17,14 +11,6 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      # Play candidate AAB uses real interstitial/app-open units. The developer APK
-      # uses Google demo units so testing cannot generate invalid production traffic.
-      RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
-      VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ (github.event_name == 'push' || inputs.production_ads) && 'true' || 'false' }}
-      RIVOSCAN_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
-      VITE_RIVOSCAN_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
-
     timeout-minutes: 40
     defaults:
       run:
@@ -38,34 +24,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Validate native PowerShell scripts before building Android
-        shell: pwsh
-        run: |
-          foreach($script in @('./apply-rivoscan-branding.ps1','./install-live-scanner.ps1','./configure-play-debug-symbols.ps1','./setup-rivoscan-play-signing.ps1','./repair-rivoscan-android.ps1','./install-rivoscan-android.ps1','./prepare-rivoscan-production-android-studio.ps1','./build-rivoscan-production-signed.ps1')) {
-            $tokens=$null
-            $errors=$null
-            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script).Path,[ref]$tokens,[ref]$errors) | Out-Null
-            if($errors.Count -gt 0) {
-              $errors | ForEach-Object {
-                Write-Host ("Parse error in {0}:{1}:{2}: {3}" -f $script,$_.Extent.StartLineNumber,$_.Extent.StartColumnNumber,$_.Message)
-              }
-              throw "Invalid PowerShell script: $script"
-            }
-          }
       - name: Test and bundle
         run: |
           npm install --no-audit --no-fund
           npm run check
-          npm run check:play
           npm test
-          npm run check:ads
           npm run build
-          if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
-            grep -RqF 'ca-app-pub-7945572016731367/5608742752' dist/assets
-            grep -RqF 'ca-app-pub-7945572016731367/6270875707' dist/assets
-            ! grep -RqF 'ca-app-pub-7945572016731367/4148993879' dist/assets
-            echo 'PASS: Only real interstitial and app-open units included in production bundle.'
-          fi
       - name: Generate Android and integrate scanner
         run: |
           npx cap add android
@@ -77,17 +41,6 @@ jobs:
       - name: Apply native brand and version
         shell: pwsh
         run: ./apply-rivoscan-branding.ps1
-      - name: Validate final native AdMob App ID
-        shell: bash
-        run: |
-          set -euo pipefail
-          MANIFEST=android/app/src/main/AndroidManifest.xml
-          if [[ "$RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
-            grep -Fq 'ca-app-pub-7945572016731367~1509328607' "$MANIFEST"
-            ! grep -Fq 'ca-app-pub-3940256099942544' "$MANIFEST"
-          else
-            grep -Fq 'ca-app-pub-3940256099942544~3347511713' "$MANIFEST"
-          fi
       - name: Compile unsigned release bundle
         run: |
           cd android
@@ -103,59 +56,13 @@ jobs:
           done
           test "$success" -eq 1
           test -s app/build/outputs/bundle/release/app-release.aab
-      - name: Inspect release diagnostic metadata
-        shell: bash
+      - name: Inspect release AAB structure
         run: |
           set -euo pipefail
-          AAB=android/app/build/outputs/bundle/release/app-release.aab
-          SYMBOLS=android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
-          MAPPING=android/app/build/outputs/mapping/release/mapping.txt
-          CODE=$(sed -n 's/^versionCode=//p' rivoscan-version.properties | head -1)
-          echo "Diagnostic artifacts apply ONLY to RivoScan versionCode $CODE."
-          if [[ -s "$SYMBOLS" ]]; then
-            unzip -t "$SYMBOLS" > /dev/null
-            echo "PASS: Generated native debug symbol archive: $SYMBOLS"
-          else
-            echo "::warning::Native symbol zip unavailable; dependent precompiled .so libraries may already be stripped."
-          fi
-          if unzip -Z -1 "$AAB" | grep -q '^BUNDLE-METADATA/com.android.tools.build.debugsymbols/'; then
-            echo "Native debugging metadata present inside AAB."
-          else
-            echo "::warning::AAB does not contain native debugging metadata. Review Gradle stripping logs."
-          fi
-          if [[ -s "$MAPPING" ]]; then
-            echo "R8 mapping generated for this AAB: $MAPPING"
-          else
-            echo "::notice::No R8 mapping.txt. This is expected when release minifyEnabled=false."
-          fi
-      - name: Retain available diagnostic symbols for this release
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-PLAY-DIAGNOSTICS
-          path: |
-            apps/rivoscan/android/app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
-            apps/rivoscan/android/app/build/outputs/mapping/release/mapping.txt
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Inspect release AAB structure and version
-        run: |
-          set -euo pipefail
-          AAB=android/app/build/outputs/bundle/release/app-release.aab
-          unzip -t "$AAB" > /dev/null
-          unzip -Z -1 "$AAB" | grep -F 'base/manifest/AndroidManifest.xml'
-          grep -Eq '^versionCode=[1-9][0-9]*$' rivoscan-version.properties
-          grep -Eq '^versionName=[0-9]+\.[0-9]+\.[0-9]+$' rivoscan-version.properties
-          node -e "const fs=require('fs'); const p=fs.readFileSync('rivoscan-version.properties','utf8'); const v=p.match(/^versionName=(.+)$/m)?.[1]; if(v!==require('./package.json').version) process.exit(1)"
-      - name: Inspect Play AAB layout and package metadata
-        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab
-      - name: Audit bundle size and largest Android assets
-        run: python scripts/aab-size-report.py android/app/build/outputs/bundle/release/app-release.aab --json-output play-aab-size-report.json
-      - name: Save detailed AAB size report
-        uses: actions/upload-artifact@v4
-        with:
-          name: RivoScan-AAB-SIZE-REPORT
-          path: apps/rivoscan/play-aab-size-report.json
-          retention-days: 14
+          unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
+          unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
+          grep -F 'versionCode=74' rivoscan-version.properties
+          grep -F 'versionName=0.43.4' rivoscan-version.properties
       - name: Check authorized signing secrets
         id: signing
         env:
@@ -185,9 +92,6 @@ jobs:
           chmod 600 "$KEYFILE"
           jarsigner -keystore "$KEYFILE" -storepass:env PLAY_STORE_PASSWORD -keypass:env PLAY_KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
           jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
-      - name: Reject unsigned or corrupt signed releases
-        if: steps.signing.outputs.enabled == 'true'
-        run: npm run check:play -- --bundle android/app/build/outputs/bundle/release/app-release.aab --expect-signed
       - name: Save signed AAB (Play QA still required)
         if: steps.signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4

@@ -25,7 +25,6 @@ public class RivoLiveScannerPlugin extends Plugin {
     public void getSoundSettings(PluginCall call) {
         JSObject result=new JSObject();
         result.put("enabled",RivoSounds.enabled(getContext()));
-        result.put("language",getContext().getSharedPreferences("RivoScanPreferences",0).getString("language",null));
         call.resolve(result);
     }
 
@@ -37,16 +36,6 @@ public class RivoLiveScannerPlugin extends Plugin {
         JSObject result=new JSObject();
         result.put("enabled",enabled);
         call.resolve(result);
-    }
-
-    @PluginMethod
-    public void setLanguageSettings(PluginCall call) {
-        String language=call.getString("language");
-        if(language==null || !java.util.Arrays.asList("en","fr","ar","es","de","pt","it").contains(language)){
-            call.reject("Unsupported language");return;
-        }
-        getContext().getSharedPreferences("RivoScanPreferences",0).edit().putString("language",language).apply();
-        JSObject response=new JSObject();response.put("language",language);call.resolve(response);
     }
 
     @PluginMethod
@@ -107,7 +96,6 @@ public class RivoLiveScannerPlugin extends Plugin {
         JSObject data = new JSObject();
         data.put("scannedImages", images);
         data.put("scanMode",result.getData().getStringExtra("scanMode"));
-        data.put("language",result.getData().getStringExtra("language"));
         call.resolve(data);
     }
 }

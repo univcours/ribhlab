@@ -28,16 +28,16 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
  async function close(){if(closed)return;closed=true;overlay.remove();document.body.classList.remove('rivo-pages-open');try{await pdf?.destroy()}catch{}}
  function draw(){
   if(closed)return;
-  panel.innerHTML=`<header class="rivo-pages-top"><button type="button" data-page-action="close" data-rivo-dialog-close="true" aria-label="Close page manager">✕</button><strong>${t(0)}</strong><span class="rivo-pages-total">${pages.filter(x=>!x.removed).length} / ${pages.length}</span></header>
-  <div class="rivo-pages-count"><strong>${selected().length} ${t(1)}</strong><button data-page-action="all" ${pages.filter(x=>!x.removed).every(x=>x.selected)?'disabled':''}>${t(2)}</button><button data-page-action="none" ${selected().length?'':'disabled'}>${t(3)}</button></div>
-  <p class="rivo-pages-tip">${t(4)}</p><div class="rivo-pages-grid" role="list" aria-label="${t(0)}">${pages.map((p,i)=>`<div role="listitem" class="rivo-page-item ${p.selected?'selected':''} ${p.removed?'removed':''}" draggable="${!p.removed}" data-id="${p.id}">
-    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected&&!p.removed}" ${p.removed?'disabled':''}><img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)"><span class="rivo-page-check">${p.selected?'✓':p.removed?'×':''}</span></button>
-    <div class="rivo-page-row"><button data-page-action="up" data-id="${p.id}" ${i===0||p.removed?'disabled':''} aria-label="Move page ${i+1} up">↑</button><b>${i+1}</b><button data-page-action="down" data-id="${p.id}" ${i===pages.length-1||p.removed?'disabled':''} aria-label="Move page ${i+1} down">↓</button></div>
+  panel.innerHTML=`<header class="rivo-pages-top"><button data-page-action="close">✕</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">✓ ${t(9)}</button></header>
+  <div class="rivo-pages-count"><strong>${selected().length} ${t(1)}</strong><button data-page-action="all">${t(2)}</button><button data-page-action="none">${t(3)}</button></div>
+  <p class="rivo-pages-tip">${t(4)}</p><div class="rivo-pages-grid">${pages.map((p,i)=>`<div class="rivo-page-item ${p.selected?'selected':''} ${p.removed?'removed':''}" draggable="true" data-id="${p.id}">
+    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}"><img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)"><span class="rivo-page-check">${p.selected?'✓':p.removed?'×':''}</span></button>
+    <div class="rivo-page-row"><button data-page-action="up" data-id="${p.id}">↑</button><b>${i+1}</b><button data-page-action="down" data-id="${p.id}">↓</button></div>
   </div>`).join('')}</div>
   <footer class="rivo-pages-bottom"><div class="rivo-page-operations"><button data-page-action="left" ${selected().length?'':'disabled'}>↶ ${t(5)}</button>
    <button data-page-action="right" ${selected().length?'':'disabled'}>↷ ${t(6)}</button>
    <button data-page-action="delete" ${selected().length?'':'disabled'}>⌫ ${t(7)}</button>
-   <button data-page-action="restore" ${pages.some(x=>x.removed)?'':'disabled'}>↩ ${t(8)}</button><button data-page-action="undo" ${history.length?'':'disabled'}>⟲ ${t(13)}</button></div><button type="button" class="rivo-pages-save" data-page-action="save" ${pages.every(x=>x.removed)?'disabled':''}><span aria-hidden="true">▣</span> ${t(9)} <span aria-hidden="true">›</span></button><small>${t(12)}</small></footer>`;
+   <button data-page-action="restore">↩ ${t(8)}</button><button data-page-action="undo" ${history.length?'':'disabled'}>⟲ ${t(13)}</button></div><small>${t(12)}</small></footer>`;
  }
  overlay.addEventListener('dragstart',e=>{const row=e.target.closest('.rivo-page-item');if(!row)return;dragged=Number(row.dataset.id);e.dataTransfer.effectAllowed='move'});
  overlay.addEventListener('dragover',e=>{if(e.target.closest('.rivo-page-item'))e.preventDefault()});
@@ -47,7 +47,7 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
   const action=b.dataset.pageAction,p=pages.find(x=>x.id===Number(b.dataset.id));
   try{
    if(action==='close'){await close();return}
-   if(action==='select'&&p&&!p.removed){remember();p.selected=!p.selected}
+   if(action==='select'&&p){remember();p.selected=!p.selected}
    if(action==='all'){remember();pages.forEach(x=>x.selected=!x.removed)}
    if(action==='none'){remember();pages.forEach(x=>x.selected=false)}
    if(action==='up'||action==='down'){const from=pages.indexOf(p),to=from+(action==='up'?-1:1);if(from>=0&&to>=0&&to<pages.length){remember();[pages[from],pages[to]]=[pages[to],pages[from]]}}

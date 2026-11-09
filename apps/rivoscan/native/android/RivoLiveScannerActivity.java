@@ -9,9 +9,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
-import android.animation.ValueAnimator;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -89,7 +86,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private String scanMode="Document";
     private boolean basicCameraMode=false;
     private String nativeLanguage="en";
-    private TextView nativeLanguageChip;
     private String trNative(String key){return RivoLocale.get(nativeLanguage,key);}
     private TextView batchButton,singleButton,flashButton,qualityButton,countLabel,cameraPickerButton;
     private final ArrayList<CameraChoice> cameraChoices=new ArrayList<>();
@@ -103,7 +99,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private long lastAnalysisTime=0;
     private long lastValidEdgeTime=0;
     private Point[] smoothCorners;
-    private final AutoShutterGate autoShutterGate=new AutoShutterGate();
     private Observer<PreviewView.StreamState> streamObserver;
     private final Handler mainHandler=new Handler(Looper.getMainLooper());
 
@@ -113,85 +108,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         final double score;
         CameraChoice(String id,String label,int facing,double score){this.id=id;this.label=label;this.facing=facing;this.score=score;}
     }
-    /**
-     * Auto capture only after a large, stable, plausible page is detected on
-     * multiple frames. Never captures a guide/fallback quadrilateral. Gate is
-     * distinct from the user's four-corner review and never saves anything.
-     */
-    private static final class AutoShutterGate {
-        private Point[] previous;
-        private int stableFrames=0;
-        private long stableSince=0,lastFrame=0;
-        private boolean triggered=false;
-        void reset(){previous=null;stableFrames=0;stableSince=0;lastFrame=0;triggered=false;}
-        private boolean geometry(Point[] p){
-            if(p==null||p.length!=4)return false;
-            double area=0,minEdge=Double.POSITIVE_INFINITY;
-            for(int i=0;i<4;i++){
-                Point a=p[i],b=p[(i+1)%4];
-                if(a==null||b==null||!Double.isFinite(a.x)||!Double.isFinite(a.y)||
-                   a.x<.006||a.y<.006||a.x>.994||a.y>.994)return false;
-                area+=a.x*b.y-b.x*a.y;
-                minEdge=Math.min(minEdge,Math.hypot(b.x-a.x,b.y-a.y));
-            }
-            return Math.abs(area)*.5>=.14&&minEdge>=.14;
-        }
-        boolean observe(Point[] corners,long timestamp,boolean readable){
-            if(triggered)return false;
-            if(!readable||!geometry(corners)){
-                previous=null;stableFrames=0;stableSince=0;return false;
-            }
-            if(previous==null||timestamp-lastFrame>600){
-                stableSince=timestamp;stableFrames=1;
-            }else{
-                double maxMove=0;
-                for(int i=0;i<4;i++)
-                    maxMove=Math.max(maxMove,Math.hypot(corners[i].x-previous[i].x,
-                        corners[i].y-previous[i].y));
-                if(maxMove>.025){stableSince=timestamp;stableFrames=1;}
-                else stableFrames++;
-            }
-            lastFrame=timestamp;
-            previous=new Point[4];
-            for(int i=0;i<4;i++)previous[i]=new Point(corners[i].x,corners[i].y);
-            if(stableFrames>=6 && timestamp-stableSince>=1000){
-                triggered=true;return true;
-            }
-            return false;
-        }
-    }
-    /** Cheap luminance/edge contrast guard; full quality review remains after shot. */
-    private static boolean readableLuma(byte[] p,int w,int h){
-        if(p==null||w<120||h<120)return false;
-        long sum=0,contrast=0;int count=0;
-        final int step=12;
-        for(int y=step;y<h-step;y+=step){
-            for(int x=step;x<w-step;x+=step){
-                int index=y*w+x,v=p[index]&255;
-                sum+=v;
-                contrast+=Math.abs(v-(p[index+step]&255))+
-                    Math.abs(v-(p[index+step*w]&255));
-                count++;
-            }
-        }
-        if(count==0)return false;
-        double mean=sum/(double)count,localContrast=contrast/(double)(2*count);
-        return mean>=45&&mean<=243&&localContrast>=2.3;
-    }
-
     private ExecutorService analyzer;
     private RivoCropEditor editor;
     private Bitmap current;
-    private Bitmap awaitingCaptureApproval; // never save a page before the user confirms ✓
     private Bitmap pendingWarp,enhancementPreview;
     private ImageView enhancementImage;
-    private FilterLaserView enhancementLaser;
     private TextView enhancementHint;
     private android.widget.ProgressBar enhancementProgress;
     private Button enhancementSaveButton;
     private RivoCaptureQuality.Result captureQuality;
     private int captureQualitySerial=0;
-    private int edgeDetectionSerial=0;
     private static final String AI_FLATTEN="uvdoc";
     private String selectedEnhancement=RivoDocumentEnhancer.ENHANCE;
     private int enhancementSerial=0;
@@ -228,19 +154,18 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if("ID Card".equals(scanMode))batchMode=true;
         String requestedLanguage=getIntent().getStringExtra("language");
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
-        getSharedPreferences("RivoScanPreferences",MODE_PRIVATE).edit().putString("language",nativeLanguage).apply();
-        try{openCvReady=OpenCVLoader.initLocal();}
+        try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
         if(!openCvReady && !basicCameraMode){
             Toast.makeText(this,trNative("basicMode"),Toast.LENGTH_LONG).show();
         }
         analyzer=Executors.newSingleThreadExecutor();
-        root=new FrameLayout(this);RivoPremiumChrome.styleSurface(root);
+        root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(6,55,61));
         content=new FrameLayout(this);
         root.addView(content,new FrameLayout.LayoutParams(-1,-1));
         // RivoScan brand: deep blue camera chrome, white system icons.
-        getWindow().setStatusBarColor(RivoPremiumChrome.NAVY);
-        getWindow().setNavigationBarColor(RivoPremiumChrome.NAVY);
+        getWindow().setStatusBarColor(Color.rgb(7,61,65));
+        getWindow().setNavigationBarColor(Color.rgb(7,61,65));
         getWindow().getDecorView().setSystemUiVisibility(
             getWindow().getDecorView().getSystemUiVisibility()
               & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -285,7 +210,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         label.setOnClickListener(v->{RivoSounds.play(this,"tap");action.run();});
         label.setClickable(true);label.setFocusable(true);
         label.setContentDescription(title);
-        RivoPremiumChrome.styleTouchTarget(label);
+        label.setBackground(outlined(Color.rgb(8,72,77),11,Color.rgb(42,215,194)));
         return label;
     }
     private LinearLayout.LayoutParams weighted(){
@@ -294,59 +219,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private Button button(String title,Runnable onTap){
         Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(13);
         b.setTextColor(Color.WHITE);
-        RivoPremiumChrome.styleTouchTarget(b);
+        b.setBackground(outlined(Color.rgb(7,86,90),12,Color.rgb(101,217,202)));
         b.setOnClickListener(v->{RivoSounds.play(this,"tool");onTap.run();});return b;
     }
-    /** Tiny language and mute controls stay above the native camera and editors. */
-    private LinearLayout scannerQuickControls(){
-        LinearLayout row=new LinearLayout(this);
-        row.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
-        row.setPadding(dp(9),dp(2),dp(9),dp(2));
-        RivoPremiumChrome.styleToolbar(row);
-        row.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
-        TextView locale=touchLabel("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾",
-            11,Color.WHITE,this::chooseNativeLanguage);
-        locale.setContentDescription("Language / اللغة / Langue");
-        nativeLanguageChip=locale;
-        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(77),dp(31));
-        lp.setMargins(0,0,dp(7),0);row.addView(locale,lp);
-        TextView audio=text(RivoSounds.enabled(this)?"🔊":"🔇",16,Color.WHITE,true);
-        audio.setBackground(outlined(Color.rgb(8,72,77),10,Color.rgb(42,215,194)));
-        audio.setContentDescription(RivoSounds.enabled(this)?"Mute all sounds":"Enable sounds");
-        audio.setOnClickListener(v->{
-            boolean enabled=!RivoSounds.enabled(this);
-            RivoSounds.setEnabled(this,enabled);audio.setText(enabled?"🔊":"🔇");
-            audio.setContentDescription(enabled?"Mute all sounds":"Enable sounds");
-        });
-        row.addView(audio,new LinearLayout.LayoutParams(dp(39),dp(31)));
-        return row;
-    }
-    private void chooseNativeLanguage(){
-        final String[] codes={"en","fr","ar","es","de","pt","it"};
-        final String[] names={"English","Français","العربية","Español","Deutsch","Português","Italiano"};
-        int chosen=0;for(int i=0;i<codes.length;i++)if(codes[i].equals(nativeLanguage)){chosen=i;break;}
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle("🌐 Language")
-            .setSingleChoiceItems(names,chosen,(dialog,which)->{
-                nativeLanguage=codes[which];
-                getSharedPreferences("RivoScanPreferences",MODE_PRIVATE)
-                    .edit().putString("language",nativeLanguage).apply();
-                dialog.dismiss();
-                if(nativeLanguageChip!=null)
-                    nativeLanguageChip.setText("🌐 "+nativeLanguage.toUpperCase(java.util.Locale.ROOT)+" ▾");
-                if(pendingWarp!=null){
-                    enhancementSerial++;
-                    if(enhancementLaser!=null)enhancementLaser.stop();
-                    showEnhancementPreview();
-                }else if(!editing)showCamera();
-                else if(message!=null)message.setText(trNative("found"));
-            }).setNegativeButton(android.R.string.cancel,null).show();
-    }
-
     private void layout(View body,String hint,Button... buttons){
         // A dedicated document-corners editor with a visible safe header and bottom actions.
         content.removeAllViews();
         LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);
-        RivoPremiumChrome.styleSurface(shell);
+        shell.setBackgroundColor(Color.rgb(6,48,53));
         content.addView(shell,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(dp(14),0,dp(14),0);
@@ -354,37 +234,26 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // ambiguous tiny icon or truncated translated action.
         TextView back=touchLabel(editing?trNative("retake"):"✕",editing?15:27,Color.WHITE,()->showCamera());
         back.setContentDescription(editing?trNative("retake"):trNative("close"));
-        back.setBackground(outlined(Color.rgb(4,114,125),13,Color.rgb(91,236,219)));
-        header.addView(back,new LinearLayout.LayoutParams(dp(editing?94:44),dp(48)));
+        header.addView(back,new LinearLayout.LayoutParams(dp(editing?94:44),dp(55)));
         TextView title=text(trNative("title"),17,Color.WHITE,true);
-        title.setGravity(Gravity.CENTER);
         header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
-        TextView close=touchLabel("✕",25,Color.WHITE,this::finishWithPages);
-        close.setContentDescription(trNative("close"));
-        close.setBackground(outlined(Color.rgb(160,48,73),13,Color.rgb(255,149,166)));
-        header.addView(close,new LinearLayout.LayoutParams(dp(48),dp(48)));
-        shell.addView(scannerQuickControls(),new LinearLayout.LayoutParams(-1,dp(37)));
         shell.addView(header);
         shell.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
         bottom.setPadding(dp(14),dp(10),dp(14),dp(13));
         bottom.setBackgroundColor(Color.rgb(7,54,56));
         message=text(hint,12,Color.rgb(219,253,247),false);
-        message.setMaxLines(2);
+        message.setMaxLines(3);
         message.setGravity(Gravity.CENTER_VERTICAL);
-        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(editing?52:40)));
+        bottom.addView(message,new LinearLayout.LayoutParams(-1,dp(editing?74:46)));
         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER);
         for(int i=0;i<buttons.length;i++){
             Button action=buttons[i];
             if(i==buttons.length-1){action.setBackground(outlined(Color.rgb(6,157,150),13,Color.rgb(42,215,194)));action.setTextColor(Color.WHITE);}
-            action.setAllCaps(false);
-            action.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP,12);
-            action.setSingleLine(false);
-            action.setMaxLines(2);
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(46),1);
-            p.setMargins(dp(3),0,dp(3),0);actions.addView(action,p);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(53),1);
+            p.setMargins(dp(4),0,dp(4),0);actions.addView(action,p);
         }
-        bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(50)));
+        bottom.addView(actions,new LinearLayout.LayoutParams(-1,dp(57)));
         shell.addView(bottom,new LinearLayout.LayoutParams(-1,-2));
     }
 
@@ -397,18 +266,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] save={"Save","حفظ","Enregistrer","Guardar","Speichern","Guardar","Salva"};
         String[] check={"Compare and choose a filter, then save or retake.","قارن واختار المعالجة ثم احفظ أو عاود التصوير.","Comparez, choisissez un filtre puis enregistrez ou reprenez.","Compara, elige filtro y guarda o repite.","Vergleichen, Filter wählen, speichern oder neu aufnehmen.","Compare, escolha filtro, guarde ou repita.","Confronta, scegli filtro, salva o riprendi."};
         String[] qualityWarning={"Image may need retaking","قد تحتاج الصورة لإعادة التصوير","La photo doit peut-être être reprise","Puede necesitar repetir la foto","Foto möglicherweise neu aufnehmen","Poderá ter de repetir a fotografia","Potrebbe essere necessario ripetere la foto"};
-        String[] confirm={"Confirm","تأكيد","Confirmer","Confirmar","Bestätigen","Confirmar","Conferma"};
-        String[] approval={"Check the photo. ✓ Continue to default filter, or Retake.","راجع الصورة. ✓ باش تشوف الفلتر الافتراضي، أو Retake للإعادة.","Vérifiez la photo. ✓ pour les filtres, ou reprendre.","Revisa la foto. ✓ para filtros o repetir.","Foto prüfen. ✓ für Filter oder erneut aufnehmen.","Verifique a foto. ✓ para filtros ou repetir.","Controlla foto. ✓ filtri oppure riprendi."};
-        String[] done={"Done","تم","Terminé","Listo","Fertig","Concluído","Fine"};
         String[] uvdoc={"UVDoc AI · review result","UVDoc AI · شوف النتيجة","UVDoc IA · voir le résultat",
             "UVDoc IA · revisar resultado","UVDoc KI · Ergebnis prüfen","UVDoc IA · rever resultado",
             "UVDoc IA · verifica il risultato"};
         int index=0;for(int i=0;i<languages.length;i++)if(languages[i].equals(code)){index=i;break;}
         switch(key){
             case "review":return review[index];
-            case "confirm":return confirm[index];
-            case "approval":return approval[index];
-            case "done":return done[index];
             case "analyzing":return analyzing[index];
             case "processing":return processing[index];
             case "save":return save[index];
@@ -420,38 +283,30 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
 
     private void showCamera(){
         if(savingEnhancedPage)return;
-        edgeDetectionSerial++;
         captureQualitySerial++;
         captureQuality=null;
         clearSessionSignature();
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
-        if(awaitingCaptureApproval!=null&&!awaitingCaptureApproval.isRecycled())
-            awaitingCaptureApproval.recycle();
-        awaitingCaptureApproval=null;
         editing=false;
-        autoShutterGate.reset();
         cameraView=new PreviewView(this);
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         content.removeAllViews();
-        RivoPremiumChrome.styleSurface(content);
+        content.setBackgroundColor(Color.rgb(6,48,53));
         LinearLayout frame=new LinearLayout(this);frame.setOrientation(LinearLayout.VERTICAL);
-        RivoPremiumChrome.styleSurface(frame);
+        frame.setBackgroundColor(Color.rgb(6,48,53));
         content.addView(frame,new FrameLayout.LayoutParams(-1,-1));
 
         // The native status bar (time, signal, battery) remains outside the scanner.
-        frame.addView(scannerQuickControls(),new LinearLayout.LayoutParams(-1,dp(37)));
         LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(7),0,dp(7),0);
-        RivoPremiumChrome.styleToolbar(top);
+        top.setBackgroundColor(Color.rgb(7,61,65));
         TextView close=touchLabel("✕",28,Color.WHITE,this::finishWithPages);
-        close.setContentDescription(trNative("close"));
-        close.setBackground(outlined(Color.rgb(162,43,72),13,Color.rgb(255,150,169)));
         top.addView(close,new LinearLayout.LayoutParams(dp(54),dp(56)));
         top.addView(new Space(this),new LinearLayout.LayoutParams(0,1,1));
         cameraPickerButton=touchLabel(selectedCamera==null?trNative("bestCamera")+" ▾":shortCameraName(selectedCamera)+" ▾",12,Color.WHITE,this::showCameraPicker);
-        RivoPremiumChrome.styleTouchTarget(cameraPickerButton);
+        cameraPickerButton.setBackground(outlined(Color.rgb(12,82,85),11,Color.rgb(101,217,202)));
         cameraPickerButton.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
         top.addView(cameraPickerButton,new LinearLayout.LayoutParams(dp(92),dp(43)));
         flashButton=touchLabel(torchOn?trNative("flashOn"):trNative("flashOff"),12,Color.WHITE,this::toggleTorch);
@@ -464,7 +319,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(top,new LinearLayout.LayoutParams(-1,dp(56)));
 
         FrameLayout cameraFrame=new FrameLayout(this);
-        RivoPremiumChrome.styleSurface(cameraFrame);
+        cameraFrame.setBackgroundColor(Color.rgb(6,51,55));
         cameraFrame.addView(cameraView,new FrameLayout.LayoutParams(-1,-1));
         overlay=new LiveEdges(this);
         if(!basicCameraMode)cameraFrame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
@@ -485,7 +340,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         frame.addView(cameraFrame,new LinearLayout.LayoutParams(-1,0,1));
 
         LinearLayout footer=new LinearLayout(this);footer.setOrientation(LinearLayout.VERTICAL);
-        RivoPremiumChrome.styleToolbar(footer);footer.setPadding(dp(10),dp(3),dp(10),dp(8));
+        footer.setBackgroundColor(Color.rgb(7,61,65));footer.setPadding(dp(10),dp(3),dp(10),dp(8));
         LinearLayout switches=new LinearLayout(this);
         switches.setGravity(Gravity.CENTER);
         switches.setBackground(rounded(Color.rgb(12,82,85),23));
@@ -502,14 +357,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         String[] modesList={"Document","ID Card","Whiteboard"};
         for(String mode:modesList){
             TextView item=touchLabel(mode.equals("Document")?trNative("document"):mode.equals("ID Card")?trNative("id"):trNative("board"),13,scanMode.equals(mode)?Color.rgb(42,215,194):Color.rgb(190,193,202),()->{
-                // Never reinterpret already captured pages as another document type.
-                // In particular, a partial ID card must not become a normal scan
-                // or silently finish after the first side.
-                if(!savedImages.isEmpty()&&!scanMode.equals(mode)){
-                    Toast.makeText(this,trNative("finish")+" · "+savedImages.size()+
-                        " — "+trNative("manageScanPages"),Toast.LENGTH_LONG).show();
-                    return;
-                }
                 scanMode=mode;
                 if("ID Card".equals(scanMode))setBatch(true);
                 for(int i=0;i<modes.getChildCount();i++){
@@ -526,33 +373,22 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         if(!basicCameraMode)footer.addView(modes,new LinearLayout.LayoutParams(-1,dp(47)));
 
-        // Scanning is automatic: camera toolbar only offers secondary actions.
-        // No manual Take Photo button (but native capture remains callable by gate).
-        LinearLayout actions=new LinearLayout(this);
-        actions.setGravity(Gravity.CENTER);
-        TextView photos=touchLabel("＋  "+trNative("photos"),12,Color.WHITE,
-            ()->gallery.launch("image/*"));
+        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.CENTER_VERTICAL);
+        TextView photos=touchLabel("▧\n"+trNative("photos"),12,Color.WHITE,()->gallery.launch("image/*"));
         photos.setGravity(Gravity.CENTER);
-        TextView browse=touchLabel("▤  "+trNative("files"),12,Color.WHITE,
-            ()->documentPicker.launch(new String[]{"image/*"}));
+        actions.addView(photos,new LinearLayout.LayoutParams(0,dp(87),1));
+        Shutter shutter=new Shutter(this);
+        shutter.setOnClickListener(v->{RivoSounds.play(this,"capture");takePicture();});
+        shutter.setContentDescription(trNative("capture"));
+        LinearLayout.LayoutParams buttonParams=new LinearLayout.LayoutParams(dp(94),dp(94));
+        actions.addView(shutter,buttonParams);
+        TextView browse=touchLabel("▤\n"+trNative("files"),12,Color.WHITE,()->documentPicker.launch(new String[]{"image/*"}));
         browse.setGravity(Gravity.CENTER);
-        TextView guidance=touchLabel("◎  AUTO",12,Color.rgb(55,235,205),()->{
-            if(message!=null)message.setText("ar".equals(nativeLanguage)?
-                "ثبت الوثيقة كاملة داخل الإطار حتى يتم التصوير تلقائياً.":
-                "Hold the full document steady in the outline to auto-capture.");
-        });
-        guidance.setGravity(Gravity.CENTER);
-        for(TextView option:new TextView[]{photos,guidance,browse}){
-            LinearLayout.LayoutParams slot=new LinearLayout.LayoutParams(0,dp(42),1);
-            slot.setMargins(dp(3),0,dp(3),0);
-            RivoPremiumChrome.styleTouchTarget(option);
-            actions.addView(option,slot);
-        }
-        footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(49)));
+        actions.addView(browse,new LinearLayout.LayoutParams(0,dp(87),1));
+        footer.addView(actions,new LinearLayout.LayoutParams(-1,dp(103)));
         TextView done=touchLabel(savedImages.size()>0?"✓  "+trNative("finish")+" · "+savedImages.size():trNative("saveScan"),14,
                 savedImages.size()>0?Color.rgb(42,215,194):Color.rgb(134,143,149),this::finishWithPages);
         done.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD);
-        if(!savedImages.isEmpty())RivoPremiumChrome.stylePrimaryButton(done);
         if(savedImages.isEmpty()){
             footer.addView(done,new LinearLayout.LayoutParams(-1,dp(35)));
         }else{
@@ -567,13 +403,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         startCamera();
     }
     private void setBatch(boolean next){
-        // Both sides of an ID must be captured in one session. Single mode
-        // would otherwise return immediately after the first side.
-        if("ID Card".equals(scanMode)&&!next){
-            Toast.makeText(this,trNative("idBack"),Toast.LENGTH_SHORT).show();
-            return;
-        }
-        // Existing pages remain intact when changing Single/Batch.
         batchMode=next;updateBatchButtons();
         if(message!=null)message.setText(next?trNative("batchReady"):trNative("singleReady"));
     }
@@ -601,17 +430,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         startCamera();
     }
     private void showHelp(){
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle(trNative("helpTitle"))
+        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("helpTitle"))
             .setMessage(trNative("helpText"))
             .setPositiveButton("OK",null).show();
     }
     private void showMore(){
         String[] options={trNative("chooseCamera"),trNative("importPhoto"),trNative("chooseFile"),
             trNative("finishScan"),"Sounds: "+(RivoSounds.enabled(this)?"On":"Off"),trNative("scannerHelp")};
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
-            .setTitle("ar".equals(nativeLanguage)?"خيارات الكاميرا":
-              "fr".equals(nativeLanguage)?"Options caméra":"Camera options")
-            .setItems(options,(d,which)->{
+        new androidx.appcompat.app.AlertDialog.Builder(this).setItems(options,(d,which)->{
             if(which==0)showCameraPicker();
             else if(which==1)gallery.launch("image/*");
             else if(which==2)documentPicker.launch(new String[]{"image/*"});
@@ -750,7 +576,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         labels.add(trNative("bestCamera"));
         for(CameraChoice choice:cameraChoices)labels.add(choice.label);
         if(cameraChoices.isEmpty()&&!hasRear){
-            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog).setTitle(trNative("noRearTitle"))
+            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(trNative("noRearTitle"))
                 .setMessage(trNative("noRearText"))
                 .setPositiveButton(trNative("importPhoto"),(d,w)->gallery.launch("image/*"))
                 .setNegativeButton(trNative("cancel"),null).show();
@@ -762,7 +588,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(cameraChoices.get(i).id.equals(selectedCamera.id)){selectedIndex=i+1;break;}
             }
         }
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+        new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(trNative("cameraPicker"))
             .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,(dialog,which)->{
                 CameraChoice next=which==0?null:cameraChoices.get(which-1);
@@ -839,7 +665,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         clearFrozenPreview();
         if(message!=null)message.setText(trNative("noWorking"));
         RivoSounds.play(this,"error");
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+        new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(trNative("noCamera"))
             .setMessage(trNative("noWorkingText"))
             .setPositiveButton(trNative("importPhoto"),(dialog,which)->gallery.launch("image/*"))
@@ -854,7 +680,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boundCamera=null;
         smoothCorners=null;
         lastValidEdgeTime=0;
-        autoShutterGate.reset();
         final ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
         future.addListener(()->{
             if(serial!=cameraBindSerial||editing||isFinishing()||isDestroyed()||cameraView==null)return;
@@ -970,14 +795,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 Point[] points=RivoEdgeDetector.detectGray(oriented);
                 final int observedW=oriented.width(),observedH=oriented.height();
                 final long analysisStamp=now;
-                final boolean qualityOk=readableLuma(pixels,width,height);
                 runOnUiThread(()->{
                     if(editing||overlay==null||capture==null)return;
                     if(points!=null){
-                        // Judge real, unsmoothed detector corners. Display smoothing must
-                        // never make a moving document appear stable to auto-shutter.
-                        final boolean captureStable=autoShutterGate.observe(
-                            points,analysisStamp,qualityOk);
                         if(smoothCorners!=null){
                             for(int i=0;i<4;i++){
                                 double oldX=smoothCorners[i].x,oldY=smoothCorners[i].y;
@@ -991,21 +811,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         smoothCorners=points;
                         lastValidEdgeTime=analysisStamp;
                         overlay.update(points,observedW,observedH);
-                        if(captureStable && !captureInProgress && !savingEnhancedPage){
-                            if(message!=null)message.setText("ar".equals(nativeLanguage)?
-                                "تم تحديد الوثيقة. جاري التصوير التلقائي…":
-                                "Document stable — capturing automatically…");
-                            RivoSounds.play(this,"capture");
-                            takePicture();
-                        }
-                    }else{
-                        // Any missed contour breaks the stability streak immediately.
-                        // Leave the fading visual guide briefly to avoid flickering.
-                        autoShutterGate.reset();
-                        if(analysisStamp-lastValidEdgeTime>650){
-                            smoothCorners=null;
-                            overlay.update(null,observedW,observedH);
-                        }
+                    }else if(analysisStamp-lastValidEdgeTime>650){
+                        smoothCorners=null;
+                        overlay.update(null,observedW,observedH);
                     }
                 });
             }finally{
@@ -1030,10 +838,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onImageSaved(@NonNull ImageCapture.OutputFileResults result){
                 captureInProgress=false;
                 if(isFinishing()||isDestroyed()){file.delete();return;}
-                try{Bitmap bmp=decodeFile(file);showCaptureReview(bmp);}catch(Exception e){autoShutterGate.reset();message.setText(trNative("imageError")+e.getMessage());}
+                try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
-            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;autoShutterGate.reset();file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
+            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
         });
     }
     private static int sampleSize(int width,int height){
@@ -1106,87 +914,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         }
                     }
                 }catch(Exception ignored){}
-                showCaptureReview(img);
+                if(basicCameraMode)saveWithoutCrop(img);else openEditor(img);
             }
         }catch(Exception e){Toast.makeText(this,trNative("importError")+e.getMessage(),Toast.LENGTH_LONG).show();}
-    }
-    /** Captured image stays visible. The user must press ✓ or Retake before
-     * cropping, filters or a PDF can be finalized. This is NOT auto-save. */
-    /** Crop preview immediately follows Capture; user reviews corners BEFORE filters. */
-    private void showCaptureReview(Bitmap bitmap){
-        if(bitmap==null||bitmap.isRecycled())return;
-        editing=true;awaitingCaptureApproval=bitmap;
-        // Keep the existing accessible ✓ approval contract across both modes.
-        Button confirm=button("✓",this::approveCapturedPhoto);
-        confirm.setContentDescription(localizedCapture("confirm"));
-        if(!openCvReady){
-            ImageView image=new ImageView(this);
-            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            image.setImageBitmap(bitmap);
-            layout(image,localizedCapture("approval"),
-                button(trNative("retake"),this::showCamera),confirm);
-            return;
-        }
-        editor=new RivoCropEditor(this);
-        editor.setDocument(bitmap,null);
-        layout(editor,cropHint(false),
-            button(trNative("retake"),this::showCamera),
-            confirm);
-        requestCropEdges(bitmap,editor,false);
-    }
-    private String cropHint(boolean detected){
-        if("ar".equals(nativeLanguage))return detected
-            ?"لقينا الحواف. تقدر تحرك الزوايا الأربع باش تحدد المحتوى بدقة ثم ✓."
-            :"ما لقيناش حواف مؤكدة. حرّك الزوايا الأربع يدوياً.";
-        if("fr".equals(nativeLanguage))return detected
-            ?"Contours détectés. Ajustez les quatre coins, puis ✓."
-            :"Contours introuvables. Ajustez les quatre coins manuellement.";
-        return detected?"Document edges found. Adjust all four corners, then ✓.":
-            "No reliable edges. Drag the four corners manually.";
-    }
-    private void requestCropEdges(Bitmap photo,RivoCropEditor target,boolean forced){
-        if(!openCvReady||photo==null||photo.isRecycled()||target==null)return;
-        final int serial=++edgeDetectionSerial;
-        final int cornerRevision=target.getCornerRevision();
-        if(message!=null)message.setText("ar".equals(nativeLanguage)?"جاري تحديد الحواف…":"Detecting edges…");
-        analyzer.execute(()->{
-            Point[] points=null;
-            try{points=RivoEdgeDetector.detect(photo);}
-            catch(Throwable error){android.util.Log.w("RivoScan","Edge detection failed",error);}
-            final Point[] result=points;
-            mainHandler.post(()->{
-                if(serial!=edgeDetectionSerial||!editing||editor!=target||photo.isRecycled()||isFinishing())return;
-                // The user may drag a corner while OpenCV is analysing; never
-                // replace those corrections with a late auto-detection result.
-                if(target.getCornerRevision()!=cornerRevision){
-                    if(message!=null)message.setText("ar".equals(nativeLanguage)?
-                        "الزوايا تضبطات يدوياً. اضغط ✓ للمتابعة.":"Manual corners retained. Tap ✓ to continue.");
-                    return;
-                }
-                if(result==null){
-                    // Do not reset a user's valid crop to fallback on a failed retry.
-                    if(message!=null)message.setText(cropHint(false));
-                    return;
-                }
-                if(target.updateDetectedCorners(result,forced)&&message!=null)message.setText(cropHint(true));
-            });
-        });
-    }
-    private void approveCapturedPhoto(){
-        if(awaitingCaptureApproval==null||savingEnhancedPage)return;
-        Bitmap photo=awaitingCaptureApproval;
-        awaitingCaptureApproval=null;
-        // Existing corner editor retains user's manual coordinates; no second editor.
-        if(openCvReady&&editor!=null&&editor.getDocument()==photo){
-            current=photo;
-            prepareEnhancementPreview();
-        }else openEditor(photo);
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
             // Never silently save a document when enhancement is unavailable:
             // the user must see the photo and decide whether to keep or retake.
-            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+            new android.app.AlertDialog.Builder(this)
                 .setTitle("RivoScan")
                 .setMessage("Document processing unavailable on this device. Review the original photo before saving.")
                 .setNegativeButton(trNative("retake"),(dialog,which)->{
@@ -1204,6 +940,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,trNative("loupe")+"\n"+localizedCapture("analyzing"),
+            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1248,7 +985,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 final File saved=target;
                 // Keep an unmodified copy (in a dedicated Originals folder) so
                 // faint stamps can be checked against the captured source later.
-                // Keep original in memory until the PDF is finalized; no public JPG backup.
+                if(saveOriginal)backupOriginalPage(source);
                 mainHandler.post(()->completeProcessedPage(saved,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
@@ -1299,8 +1036,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             return;
         }
         savedImages.add(Uri.fromFile(saved).toString());
-        // Internal JPEG page remains in app cache only until PDF assembly.
-        // User-visible exports are PDFs, never auto-published JPG duplicates.
+        publishPageCopy(saved);
         RivoSounds.play(this,"saved");
         if(current!=null&&!current.isRecycled())current.recycle();
         current=null;
@@ -1309,25 +1045,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         clearSessionSignature();
         savingEnhancedPage=false;
         if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
-        else showPostSaveChoices();
-    }
-
-    /** The page is saved; now offer to scan one more or finalize the PDF. */
-    private void showPostSaveChoices(){
-        if(savingEnhancedPage||savedImages.isEmpty()||isFinishing())return;
-        String title="ar".equals(nativeLanguage)?"تحفظات الصفحة":
-            "fr".equals(nativeLanguage)?"Page enregistrée":"Page saved";
-        String prompt="ar".equals(nativeLanguage)?"زيد صفحة أخرى أو حفظ PDF":
-            "fr".equals(nativeLanguage)?"Ajouter une page ou enregistrer le PDF":
-            "Add another page or save the PDF";
-        String add="ar".equals(nativeLanguage)?"+ زيد صفحة":
-            "fr".equals(nativeLanguage)?"+ Ajouter une page":"+ Add Page";
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
-            .setTitle(title).setMessage(prompt)
-            .setNegativeButton(add,(dialog,which)->{setBatch(true);showCamera();})
-            .setPositiveButton("✓ "+localizedCapture("save"),
-                (dialog,which)->finishWithPages())
-            .setCancelable(false).show();
+        else if(batchMode)showCamera();else finishWithPages();
     }
 
     private void clearSessionSignature(){
@@ -1350,7 +1068,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         view.addView(hint,new LinearLayout.LayoutParams(-1,dp(51)));
         pad.setBackground(outlined(Color.WHITE,9,Color.rgb(42,215,194)));
         view.addView(pad,new LinearLayout.LayoutParams(-1,dp(215)));
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+        new android.app.AlertDialog.Builder(this)
             .setTitle(trNative("signBeforeSave"))
             .setView(view)
             .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
@@ -1391,7 +1109,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             @Override public void onStopTrackingTouch(android.widget.SeekBar bar){}
         });
         panel.addView(scale,new LinearLayout.LayoutParams(-1,dp(42)));
-        new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
+        new android.app.AlertDialog.Builder(this)
             .setTitle(trNative("signPlacementTitle"))
             .setView(panel)
             .setNegativeButton(trNative("enhanceBack"),(dialog,which)->{})
@@ -1488,72 +1206,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
 
     /** Keep original corners and transformed photo available until user confirms ✓. */
-
-    /**
-     * Real before/after preview animation. The filtered Bitmap lives in the
-     * ImageView underneath; this view temporarily draws the ORIGINAL only
-     * below the moving turquoise scan line. Nothing is written to the saved
-     * page and no approximation is substituted for the real filter output.
-     */
-    private static final class FilterLaserView extends View {
-        private final Paint sourcePaint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
-        private final Paint glowPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final RectF documentRect=new RectF();
-        private Bitmap original;
-        private float progress=0f;
-        private ValueAnimator sweep;
-        FilterLaserView(Activity activity){super(activity);setWillNotDraw(false);setClickable(false);}
-        void stop(){
-            if(sweep!=null){ValueAnimator old=sweep;sweep=null;old.cancel();}
-            original=null;setVisibility(View.GONE);invalidate();
-        }
-        void reveal(Bitmap source){
-            stop();
-            if(source==null||source.isRecycled())return;
-            // Honor Android's "Remove animations" accessibility setting.
-            if(Build.VERSION.SDK_INT>=26&&!ValueAnimator.areAnimatorsEnabled())return;
-            original=source;progress=0f;setVisibility(View.VISIBLE);invalidate();
-            final ValueAnimator next=ValueAnimator.ofFloat(0f,1f);
-            sweep=next;next.setDuration(960);
-            next.setInterpolator(new AccelerateDecelerateInterpolator());
-            next.addUpdateListener(anim->{
-                if(sweep!=next)return;
-                progress=(Float)anim.getAnimatedValue();invalidate();
-            });
-            next.addListener(new android.animation.AnimatorListenerAdapter(){
-                @Override public void onAnimationEnd(android.animation.Animator animator){
-                    if(sweep==next)stop();
-                }
-            });
-            next.start();
-        }
-        @Override protected void onDraw(Canvas canvas){
-            super.onDraw(canvas);
-            if(original==null||original.isRecycled()||getWidth()<1||getHeight()<1)return;
-            float scale=Math.min(getWidth()/(float)original.getWidth(),
-                getHeight()/(float)original.getHeight());
-            float imageW=original.getWidth()*scale,imageH=original.getHeight()*scale;
-            float left=(getWidth()-imageW)/2f,top=(getHeight()-imageH)/2f;
-            documentRect.set(left,top,left+imageW,top+imageH);
-            final float lineY=top+imageH*progress;
-            canvas.save();
-            canvas.clipRect(left,lineY,left+imageW,top+imageH);
-            canvas.drawBitmap(original,null,documentRect,sourcePaint);
-            canvas.restore();
-            float density=getResources().getDisplayMetrics().density;
-            glowPaint.setColor(Color.argb(35,28,246,219));
-            glowPaint.setStrokeWidth(20*density);
-            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
-            glowPaint.setColor(Color.argb(98,17,238,215));
-            glowPaint.setStrokeWidth(8*density);
-            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
-            glowPaint.setColor(Color.rgb(196,255,245));
-            glowPaint.setStrokeWidth(2.5f*density);
-            canvas.drawLine(left,lineY,left+imageW,lineY,glowPaint);
-        }
-    }
     private void releaseEnhancement(){
-        if(enhancementLaser!=null){enhancementLaser.stop();enhancementLaser=null;}
         if(enhancementPreview!=null && enhancementPreview!=pendingWarp &&
              !enhancementPreview.isRecycled())enhancementPreview.recycle();
         enhancementPreview=null;
@@ -1566,6 +1219,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
         layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
+            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1609,12 +1263,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementImage.setAdjustViewBounds(true);
         enhancementImage.setImageBitmap(pendingWarp);
         enhancementImage.setContentDescription(trNative("enhanceTitle"));
-        FrameLayout picture=new FrameLayout(this);
-        picture.addView(enhancementImage,new FrameLayout.LayoutParams(-1,-1));
-        enhancementLaser=new FilterLaserView(this);
-        enhancementLaser.setVisibility(View.GONE);
-        picture.addView(enhancementLaser,new FrameLayout.LayoutParams(-1,-1));
-        body.addView(picture,new LinearLayout.LayoutParams(-1,0,1));
+        body.addView(enhancementImage,new LinearLayout.LayoutParams(-1,0,1));
         enhancementProgress=new android.widget.ProgressBar(this,null,
             android.R.attr.progressBarStyleHorizontal);
         enhancementProgress.setIndeterminate(true);
@@ -1658,10 +1307,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         scroll.addView(choices,new HorizontalScrollView.LayoutParams(-2,-1));
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
-        enhancementSaveButton=button("✓  "+localizedCapture("done"),this::saveEnhancedPage);
+        enhancementSaveButton=button("✓  "+localizedCapture("save"),this::saveEnhancedPage);
         enhancementSaveButton.setEnabled(false); // Enable only when the result is visible.
         layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
             button(trNative("retake"),this::showCamera),
+            button(trNative("enhanceBack"),this::reopenCrop),
             button(trNative("enhanceCompare"),()->{
                 if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
                 boolean showingOriginal="original".equals(enhancementImage.getTag());
@@ -1712,7 +1362,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void renderEnhancementPreview(String preset){
         if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;
-        if(enhancementLaser!=null)enhancementLaser.stop();
         final int serial=++enhancementSerial;
         final int width=pendingWarp.getWidth(),height=pendingWarp.getHeight();
         final double factor=Math.min(1,1050.0/Math.max(width,height));
@@ -1735,9 +1384,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     Bitmap previous=enhancementPreview;
                     enhancementPreview=result;
                     enhancementImage.setImageBitmap(result);
-                    if(enhancementLaser!=null&&
-                        !RivoDocumentEnhancer.ORIGINAL.equals(preset))
-                        {RivoSounds.play(this,"scan");enhancementLaser.reveal(pendingWarp);}
                     if(enhancementSaveButton!=null)enhancementSaveButton.setEnabled(true);
                     if(enhancementProgress!=null)enhancementProgress.setVisibility(View.GONE);
                     if(enhancementHint!=null)enhancementHint.setText(
@@ -1764,9 +1410,16 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     /** User explicitly accepts the visual result; low-quality photos get a retake prompt. */
     private void saveEnhancedPage(){
         if(pendingWarp==null||savingEnhancedPage||enhancementPreview==null)return;
-        // Done saves immediately, without a secondary quality-warning confirmation.
-        if(captureQuality!=null&&captureQuality.retakeSuggested)
-            android.util.Log.i("RivoScan","Saving scan after user accepted quality warning.");
+        if(captureQuality!=null&&captureQuality.retakeSuggested){
+            new android.app.AlertDialog.Builder(this)
+                .setTitle(localizedCapture("qualityWarning"))
+                .setMessage(captureQuality.summary(nativeLanguage))
+                .setNegativeButton(trNative("retake"),(d,w)->showCamera())
+                .setNeutralButton(trNative("enhanceBack"),(d,w)->{})
+                .setPositiveButton(localizedCapture("save"),(d,w)->commitEnhancedPage())
+                .show();
+            return;
+        }
         commitEnhancedPage();
     }
     /** Explicit ✓ applies the selected filter at full source resolution. */
@@ -1784,7 +1437,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 composeSignature(output);
                 target=writeProcessedJpeg(output);
                 final File completed=target;
-                // Original is held only in this scan session; do not publish a JPG.
+                if(saveOriginal&&current!=null)backupOriginalPage(current);
                 mainHandler.post(()->completeProcessedPage(completed,serial));
             }catch(Throwable error){
                 if(target!=null&&target.exists())target.delete();
@@ -1809,10 +1462,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     throw new java.io.IOException("Could not encode camera photo.");
             }
             savedImages.add(Uri.fromFile(target).toString());
-            // No duplicate JPG publication: JS combines the temp page into PDF.
+            publishPageCopy(target);
             RivoSounds.play(this,"saved");
+            Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
             if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
-            else showPostSaveChoices();
+            else if(batchMode)showCamera();else finishWithPages();
         }catch(Exception error){
             Toast.makeText(this,trNative("saveError")+error.getMessage(),Toast.LENGTH_LONG).show();
         }finally{
@@ -1844,22 +1498,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void finishWithPages(){
         if(savingEnhancedPage)return;
         if(savedImages.isEmpty()){setResult(Activity.RESULT_CANCELED);finish();return;}
-        // Explicitly warn on a one-sided ID, but never delete or alter it.
-        if("ID Card".equals(scanMode)&&savedImages.size()==1){
-            new androidx.appcompat.app.AlertDialog.Builder(this,R.style.RivoTurquoiseDialog)
-                .setTitle(trNative("id"))
-                .setMessage(trNative("idBack"))
-                .setNegativeButton(trNative("retake"),(dialog,which)->showCamera())
-                .setPositiveButton(trNative("finish"),(dialog,which)->deliverSavedPages())
-                .show();
-            return;
-        }
-        deliverSavedPages();
-    }
-    private void deliverSavedPages(){
         Intent out=new Intent();out.putStringArrayListExtra("images",savedImages);
         out.putExtra("scanMode",scanMode);
-        out.putExtra("language",nativeLanguage);
         setResult(Activity.RESULT_OK,out);finish();
     }
     @Override public void onBackPressed(){
@@ -1868,8 +1508,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         else if(editing)showCamera();else finishWithPages();
     }
     @Override protected void onDestroy(){
-        cameraBindSerial++;enhancementSerial++;edgeDetectionSerial++;
-        if(enhancementLaser!=null)enhancementLaser.stop();
+        cameraBindSerial++;enhancementSerial++;
         mainHandler.removeCallbacksAndMessages(null);
         clearFrozenPreview();
         if(cameraProvider!=null)cameraProvider.unbindAll();
@@ -1887,36 +1526,17 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         private int imageWidth=1,imageHeight=1;
         private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         LiveEdges(Activity owner){super(owner);setWillNotDraw(false);}
-        private float dp(float n){return n*getResources().getDisplayMetrics().density;}
         void update(Point[] corners,int w,int h){points=corners;imageWidth=Math.max(1,w);imageHeight=Math.max(1,h);invalidate();}
         @Override protected void onDraw(Canvas canvas){
-            super.onDraw(canvas);
-            // Do not draw an artificial yellow/dashed guide when no page exists.
-            if(getWidth()<1||getHeight()<1||points==null)return;
-            float scale=Math.max(getWidth()/(float)imageWidth,
-                                 getHeight()/(float)imageHeight);
-            float offsetX=(getWidth()-imageWidth*scale)/2f;
-            float offsetY=(getHeight()-imageHeight*scale)/2f;
-            float contentWidth=imageWidth*scale;
-            float contentHeight=imageHeight*scale;
-            Path path=new Path();
-            float[] sx=new float[4],sy=new float[4];
-            for(int i=0;i<4;i++){
-                sx[i]=offsetX+screenX(points[i])*contentWidth;
-                sy[i]=offsetY+(float)points[i].y*contentHeight;
-                if(i==0)path.moveTo(sx[i],sy[i]);else path.lineTo(sx[i],sy[i]);
-            }
-            path.close();
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.argb(30,24,196,171));
-            canvas.drawPath(path,paint);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(dp(3));
-            paint.setColor(Color.rgb(40,238,204));
-            paint.setPathEffect(null);
-            canvas.drawPath(path,paint);
-            paint.setStyle(Paint.Style.FILL);
-            for(int i=0;i<4;i++)canvas.drawCircle(sx[i],sy[i],dp(5),paint);
+            super.onDraw(canvas);if(points==null)return;
+            // CameraX PreviewView uses FILL_CENTER; map normalized analysis points through
+            // the same center-crop transform instead of stretching them to the screen.
+            float scale=Math.max(getWidth()/(float)imageWidth,getHeight()/(float)imageHeight);
+            float offsetX=(getWidth()-imageWidth*scale)/2f,offsetY=(getHeight()-imageHeight*scale)/2f;
+            Path path=new Path();path.moveTo(offsetX+screenX(points[0])*imageWidth*scale,offsetY+(float)points[0].y*imageHeight*scale);
+            for(int i=1;i<4;i++)path.lineTo(offsetX+screenX(points[i])*imageWidth*scale,offsetY+(float)points[i].y*imageHeight*scale);path.close();
+            paint.setStyle(Paint.Style.FILL);paint.setColor(Color.argb(45,45,123,255));canvas.drawPath(path,paint);
+            paint.setColor(Color.rgb(57,216,197));paint.setStrokeWidth(6);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
         }
     }
 }

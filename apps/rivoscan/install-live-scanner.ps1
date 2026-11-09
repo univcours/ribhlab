@@ -12,51 +12,65 @@ foreach($filename in @('RivoLiveScannerPlugin.java','RivoDocumentsPlugin.java','
   if(-not(Test-Path $src)){throw "Missing native scanner source: $src"}
   Copy-Item -LiteralPath $src -Destination (Join-Path $packageDir $filename) -Force
 }
-# RivoScan premium host is authored in Kotlin, never generated Java.
-$kotlinSource=Join-Path $source 'MainActivity.kt'
-$main=Join-Path $packageDir 'MainActivity.kt'
-if(-not(Test-Path -LiteralPath $kotlinSource)){throw 'Kotlin MainActivity source missing; no unsafe Java fallback.'}
-Copy-Item -LiteralPath $kotlinSource -Destination $main -Force
-$premiumChrome=Join-Path $source 'RivoPremiumChrome.kt'
-if(-not(Test-Path -LiteralPath $premiumChrome)){throw 'Kotlin CameraX premium chrome missing; cannot build native UI.'}
-Copy-Item -LiteralPath $premiumChrome -Destination (Join-Path $packageDir 'RivoPremiumChrome.kt') -Force
-# Native Kotlin Compose UI and secure route plugin. No generated Java stand-ins.
-foreach($kotlinName in @('RivoComposeActivity.kt','RivoUIBridgePlugin.kt')) {
-  $kotlinPath=Join-Path $source $kotlinName
-  if(-not(Test-Path -LiteralPath $kotlinPath)) { throw "Native Material 3 Kotlin source missing: $kotlinName" }
-  Copy-Item -LiteralPath $kotlinPath -Destination (Join-Path $packageDir $kotlinName) -Force
-}
+$main=Join-Path $packageDir 'MainActivity.java'
+# Recreate the standard generated bridge entry point, with the local plugin registered.
+$mainJava=@'
+package com.ribhlab.rivoscan;
 
-# Capacitor generates a Java stub by default; remove it so only one
-# MainActivity class is compiled, without touching any other Java plugins.
-$obsoleteMain=Join-Path $packageDir 'MainActivity.java'
-if(Test-Path -LiteralPath $obsoleteMain){Remove-Item -LiteralPath $obsoleteMain -Force}
+import android.os.Bundle;
+import android.os.Build;
+import android.view.View;
+import android.view.WindowManager;
+import android.graphics.Color;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import com.getcapacitor.BridgeActivity;
+import androidx.appcompat.app.ActionBar;
 
-
-# Kotlin 2.3.10 supports this app's Android Gradle/Gradle combination.
-# Install the Gradle compiler in the generated native project on EVERY sync,
-# not just in CI; a plain Android Studio Run must compile Kotlin too.
-$rootGradle=Join-Path $android 'build.gradle'
-if(-not(Test-Path -LiteralPath $rootGradle)){throw 'Generated Android root build.gradle missing.'}
-$rootText=[IO.File]::ReadAllText($rootGradle)
-$kotlinDependency="classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.10'"
-if(-not $rootText.Contains($kotlinDependency)){
-  $androidPluginMatch=[regex]::Match($rootText,'classpath\s+.{1}com\.android\.tools\.build:gradle:[^\r\n]+')
-  if(-not $androidPluginMatch.Success){throw 'Could not locate Android Gradle plugin for Kotlin installation.'}
-  $rootText=$rootText.Insert($androidPluginMatch.Index+$androidPluginMatch.Length,
-    [Environment]::NewLine + '        ' + $kotlinDependency)
-  [IO.File]::WriteAllText($rootGradle,$rootText,[Text.UTF8Encoding]::new($false))
+public class MainActivity extends BridgeActivity {
+    @Override public void onCreate(Bundle savedInstanceState) {
+        // Keep Android's real clock, network and battery bar visible.
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+            WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        getWindow().setStatusBarColor(Color.WHITE);
+        getWindow().setNavigationBarColor(Color.rgb(237, 249, 246));
+        new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
+            .setAppearanceLightStatusBars(true);
+        registerPlugin(RivoLiveScannerPlugin.class);
+        registerPlugin(RivoDocumentsPlugin.class);
+        registerPlugin(RivoUVDocPlugin.class);
+        registerPlugin(RivoSurface3DPlugin.class);
+        super.onCreate(savedInstanceState);
+        // A second Android AppCompat ActionBar was displaying above RivoScan's
+        // own branded HTML header. Hide it even on upgraded installations.
+        ActionBar nativeActionBar=getSupportActionBar();
+        if(nativeActionBar!=null)nativeActionBar.hide();
+        // Android 15/16 target SDK 35+ enforces edge-to-edge. Capacitor StatusBar
+        // overlaysWebView=false alone cannot keep the app below the system bar.
+        if (Build.VERSION.SDK_INT >= 35) {
+            // Keep the Android system status bar entirely outside the WebView.
+            // Its native light strip remains visible while HTML scrolls below it.
+            View content = findViewById(android.R.id.content);
+            View web = getBridge().getWebView();
+            content.setBackgroundColor(Color.rgb(241, 250, 248));
+            web.setBackgroundColor(Color.rgb(241, 250, 248));
+            ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
+                Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars() |
+                    WindowInsetsCompat.Type.displayCutout());
+                if (view.getPaddingTop() != bars.top) {
+                    view.setPadding(view.getPaddingLeft(), bars.top,
+                        view.getPaddingRight(), view.getPaddingBottom());
+                }
+                return insets;
+            });
+            ViewCompat.requestApplyInsets(content);
+        }
+    }
 }
-# Keep Kotlin Compose Compiler exactly on Kotlin's version 2.3.10.
-$rootText=[IO.File]::ReadAllText($rootGradle)
-$composePlugin="classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.3.10'"
-if(-not $rootText.Contains($composePlugin)) {
-  $kotlinMatch=[regex]::Match($rootText,"classpath\s+['""']org\.jetbrains\.kotlin:kotlin-gradle-plugin:2\.3\.10['""']")
-  if(-not $kotlinMatch.Success){throw 'Cannot locate Kotlin Gradle plugin for Compose integration.'}
-  $rootText=$rootText.Insert($kotlinMatch.Index+$kotlinMatch.Length,
-      [Environment]::NewLine + '        ' + $composePlugin)
-  [IO.File]::WriteAllText($rootGradle,$rootText,[Text.UTF8Encoding]::new($false))
-}
+'@
+[System.IO.File]::WriteAllText($main,$mainJava,[System.Text.UTF8Encoding]::new($false))
 
 $gradle=Join-Path $android 'app\build.gradle'
 $gradleText=[System.IO.File]::ReadAllText($gradle)
@@ -80,39 +94,6 @@ if($gradleText -notmatch 'com\.microsoft\.onnxruntime:onnxruntime-android:') {
   $uvRuntime="    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.31.1'"
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$uvRuntime",1)
 }
-if(-not $gradleText.Contains("apply plugin: 'org.jetbrains.kotlin.android'")) {
-  if(-not $gradleText.Contains("apply plugin: 'com.android.application'")){throw 'Cannot find Android application plugin to integrate Kotlin.'}
-  $gradleText=$gradleText.Replace("apply plugin: 'com.android.application'",
-    "apply plugin: 'com.android.application'" + [Environment]::NewLine +
-    "apply plugin: 'org.jetbrains.kotlin.android'")
-}
-if($gradleText -notmatch 'RivoScan Kotlin JVM 17') {
-  $gradleText=$gradleText.TrimEnd() + [Environment]::NewLine +
-    "// RivoScan Kotlin JVM 21: match Capacitor Java compile task on JDK 21" + [Environment]::NewLine +
-    "kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21) } }" + [Environment]::NewLine
-}
-if(-not $gradleText.Contains("apply plugin: 'org.jetbrains.kotlin.plugin.compose'")) {
-  $gradleText=$gradleText.Replace(
-    "apply plugin: 'org.jetbrains.kotlin.android'",
-    "apply plugin: 'org.jetbrains.kotlin.android'" + [Environment]::NewLine +
-    "apply plugin: 'org.jetbrains.kotlin.plugin.compose'")
-}
-if($gradleText -notmatch '(?m)^\s*buildFeatures\s*\{\s*compose\s+true\s*\}') {
-  $gradleText=[regex]::Replace($gradleText,'(?m)^android\s*\{',
-      "android {" + [Environment]::NewLine + "    buildFeatures { compose true }",1)
-}
-if(-not $gradleText.Contains("androidx.compose:compose-bom:2026.04.01")) {
-  $material3=@'
-    implementation platform('androidx.compose:compose-bom:2026.04.01')
-    implementation 'androidx.compose.material3:material3'
-    implementation 'androidx.compose.foundation:foundation'
-    implementation 'androidx.activity:activity-compose:1.11.0'
-'@
-  if($gradleText -notmatch 'dependencies\s*\{') {throw 'Android dependencies block not found for Compose.'}
-  $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',
-      "dependencies {" + [Environment]::NewLine + $material3,1)
-}
-
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
 
@@ -155,81 +136,23 @@ $themeXml=@'
     <item name="windowNoTitle">true</item>
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
-    <item name="android:windowBackground">#F7F9FD</item>
+    <item name="android:windowBackground">#F4F9FF</item>
     <item name="android:statusBarColor">#FFFFFF</item>
-    <item name="android:navigationBarColor">#FFFFFF</item>
+    <item name="android:navigationBarColor">#F3F8FF</item>
     <item name="android:windowLightStatusBar">true</item>
-  </style>
-  <!-- All RivoScan-owned Android camera popups use the same turquoise theme. -->
-  <style name="RivoTurquoiseDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-    <item name="colorAccent">#0CEBF4</item>
-    <item name="android:colorAccent">#0CEBF4</item>
-    <item name="android:textColorPrimary">#EAFBFF</item>
-    <item name="android:windowBackground">@drawable/rivoscan_dialog_bg</item>
   </style>
 </resources>
 '@
 [IO.File]::WriteAllText($themeFile,$themeXml,[Text.UTF8Encoding]::new($false))
-$dialogDrawable=Join-Path $android 'app\src\main\res\drawable\rivoscan_dialog_bg.xml'
-$dialogXML=@'
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-  <solid android:color="#092641" />
-  <stroke android:width="1dp" android:color="#17B5D2" />
-  <corners android:radius="22dp" />
-  <padding android:left="9dp" android:right="9dp"
-    android:top="8dp" android:bottom="8dp" />
-</shape>
-'@
-New-Item -ItemType Directory -Path (Split-Path -Parent $dialogDrawable) -Force | Out-Null
-[IO.File]::WriteAllText($dialogDrawable,$dialogXML,[Text.UTF8Encoding]::new($false))
 
 $manifest=Join-Path $android 'app\src\main\AndroidManifest.xml'
 $m=[System.IO.File]::ReadAllText($manifest)
-# Narrow Android package visibility: document viewers only, no QUERY_ALL_PACKAGES.
-if($m -notmatch 'android.intent.action.VIEW'){
-  $viewIntent=@'
-    <intent>
-      <action android:name="android.intent.action.VIEW" />
-      <data android:mimeType="*/*" />
-    </intent>
-'@
-  if($m -match '<queries(?:\s[^>]*)?>'){
-    $m=[regex]::Replace($m,'(<queries(?:\s[^>]*)?>)',('$1' + "`r`n" + $viewIntent),1)
-  }else{
-    $m=$m.Replace('<application',('<queries>' + "`r`n" + $viewIntent +
-       "`r`n" + '</queries>' + "`r`n" + '<application'))
-  }
-}
 if($m -notmatch 'android\.permission\.CAMERA') {
  $m=$m.Replace('<application','<uses-permission android:name="android.permission.CAMERA" />' + "`r`n    " + '<uses-feature android:name="android.hardware.camera" android:required="false" />' + "`r`n    " + '<application')
 }
 if($m -notmatch 'RivoLiveScannerActivity') {
  $m=$m.Replace('</application>','    <activity android:name=".RivoLiveScannerActivity" android:exported="false" android:screenOrientation="portrait" />' + "`r`n    " + '</application>')
 }
-if($m -notmatch 'com\.ribhlab\.rivoscan\.rivoscan\.share') {
- $provider=@'
-    <provider android:name="androidx.core.content.FileProvider"
-      android:authorities="com.ribhlab.rivoscan.rivoscan.share"
-      android:exported="false" android:grantUriPermissions="true">
-      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/rivoscan_share_paths" />
-    </provider>
-'@
- $m=$m.Replace('</application>',$provider + [Environment]::NewLine + '</application>')
-}
-# Temporary JPG sharing: Android FileProvider grants read access from app cache.
-# It NEVER publishes a duplicate JPEG in Documents/RivoScan.
-$shareXml=Join-Path $android 'app\src\main\res\xml\rivoscan_share_paths.xml'
-New-Item -ItemType Directory -Path (Split-Path -Parent $shareXml) -Force | Out-Null
-$sharePaths=@'
-<?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-  <cache-path name="rivoscan_shared_jpg" path="rivo-shared-jpg/" />
-</paths>
-'@
-[IO.File]::WriteAllText($shareXml,$sharePaths,[Text.UTF8Encoding]::new($false))
-
 # Force the MainActivity theme without touching RivoLiveScannerActivity or
 # unrelated manifest declarations. Fail rather than silently shipping two bars.
 $activityPattern='(?s)<activity\b[^>]*android:name\s*=\s*"(?:\.MainActivity|com\.ribhlab\.rivoscan\.MainActivity)"[^>]*>'
@@ -242,41 +165,6 @@ if($oldActivity -match 'android:theme\s*=\s*"[^"]*"'){
   $newActivity=$oldActivity.Substring(0,$oldActivity.Length-1)+' android:theme="@style/RivoScanNoActionBar">'
 }
 $m=$m.Replace($oldActivity,$newActivity)
-# Exactly ONE launcher: Compose. Preserve Capacitor's other intent filters.
-$bridgePattern='(?s)<activity\b(?=[^>]*android:name\s*=\s*"(?:\.MainActivity|com\.ribhlab\.rivoscan\.MainActivity)")[^>]*>.*?</activity>'
-$bridgeBlocks=[regex]::Matches($m,$bridgePattern)
-if($bridgeBlocks.Count -ne 1){throw 'Unable to locate exactly one Capacitor bridge Activity.'}
-$bridgeBlock=$bridgeBlocks[0].Value
-$filters=[regex]::Matches($bridgeBlock,'(?s)<intent-filter\b[^>]*>.*?</intent-filter>')
-$launcherFilters=@($filters | Where-Object {
-  $_.Value.Contains('android.intent.action.MAIN') -and
-  $_.Value.Contains('android.intent.category.LAUNCHER')
-})
-$composeAlreadyLauncher=($m -match 'android:name="\.RivoComposeActivity"')
-if($launcherFilters.Count -eq 1){
-  # First npx cap add android: transfer the launcher once to Compose.
-  $bridgeWithoutLauncher=$bridgeBlock.Replace($launcherFilters[0].Value,'')
-  $m=$m.Replace($bridgeBlock,$bridgeWithoutLauncher)
-}elseif($launcherFilters.Count -eq 0 -and $composeAlreadyLauncher){
-  # Subsequent npx cap sync: migration already applied, keep it intact.
-  Write-Host 'RivoScan Material 3 launcher already installed; leaving manifest intact.'
-}else{
-  throw 'Launcher manifest is ambiguous; refusing to create duplicate icons.'
-}
-if(-not $composeAlreadyLauncher){
-  $composeLauncher=@'
-    <activity android:name=".RivoComposeActivity"
-      android:exported="true" android:theme="@style/RivoScanNoActionBar">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-      </intent-filter>
-    </activity>
-'@
-  $m=$m.Replace('</application>',$composeLauncher + [Environment]::NewLine + '</application>')
-}
-
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
 & (Join-Path $root 'apply-rivoscan-branding.ps1')
-& (Join-Path $root 'configure-play-debug-symbols.ps1')
 Write-Host 'RivoScan live edge camera + manual crop + gallery import integrated into Android.' -ForegroundColor Green

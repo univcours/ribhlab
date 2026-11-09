@@ -195,9 +195,6 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       if(imageType(current))edit();
       else root.querySelector('.doc-detail-actions').scrollIntoView({block:'end',behavior:'smooth'});
     }));
-    const closeButton=button('✕','doc-viewer-close',close);
-    closeButton.setAttribute('aria-label','Close document');
-    header.appendChild(closeButton);
     root.appendChild(header);
     root.appendChild(tag('p','doc-viewer-subtitle',word('storage')+' · '+Math.round((doc.size||0)/1024)+' KB'));
     const body=tag('div','doc-detail-preview');
@@ -223,14 +220,11 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     pages.appendChild(button('›','doc-page-next',()=>{page++;showPage();}));
     body.appendChild(pages);root.appendChild(body);
     const actionRow=tag('div','doc-detail-actions');
-    // Edit explicitly delegates to an Android editor selected by the user.
-    // Internal PDF/Image tools remain available separately; never overwrite here.
-    actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',async()=>{
-      try{
-        if(!bridge?.editFile)throw Error('External editing requires the Android app.');
-        await bridge.editFile({uri:current.uri});
-      }catch(error){feedback(error);}
-    }));
+    actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',imageType(current)?async()=>{
+      if(!bytes){feedback(word('tooLarge'));return;}
+      const selected={...current},copy=bytes.slice();close();
+      try{await onEdit('enhance',selected,copy);}catch(error){feedback(error)}
+    }:edit));
     actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
     actionRow.appendChild(button('⌫ '+word('delete'),'doc-action doc-action-danger',async()=>{
       if(!window.confirm(word('confirm')))return;
@@ -239,7 +233,7 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
         close();await onChanged();
       }catch(e){feedback(e);}
     }));
-    actionRow.appendChild(button('▤ '+word('rename'),'doc-action doc-rename',rename));
+    actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
     root.appendChild(actionRow);
     root.appendChild(button('↗ '+word('external'),'doc-external-open',async()=>{try{await bridge.openFile({uri:current.uri});}catch(e){feedback(e);}}));
     document.body.appendChild(root);

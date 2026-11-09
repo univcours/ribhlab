@@ -9,6 +9,6 @@ if errorlevel 1 (
   echo Check the error above or send a screenshot to troubleshoot.
 ) else (
   echo.
-  echo Install command finished. Read the VERIFIED version printed above; required RivoScan v0.44.20 / code 96 or newer.
+  echo Safe version check completed. RivoScan was updated or the already installed same/newer version was kept.
 )
 pause

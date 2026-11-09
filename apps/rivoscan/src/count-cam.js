@@ -114,7 +114,7 @@ export function openCountCam({language='en',capture}={}){
   }catch(error){modelPromise=null;if(!closed)status.textContent=L[9]+(error?.message||String(error))}
   finally{working=false}
  });
- action(L[4],close).dataset.rivoDialogClose='true';
+ action(L[4],close);
  input.addEventListener('change',async()=>{
   const file=input.files?.[0];input.value='';if(!file)return;
   if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(file);

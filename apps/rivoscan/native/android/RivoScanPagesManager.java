@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Bitmap.Config;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
@@ -44,8 +43,6 @@ public final class RivoScanPagesManager {
     private TextView count;
     private AlertDialog dialog;
     private boolean saving=false;
-    private static final int MAX_EDIT_EDGE=3600;
-    private static final int MAX_EDIT_PIXELS=12_000_000;
     private int dragged=-1;
 
     private static final class Page {
@@ -88,19 +85,19 @@ public final class RivoScanPagesManager {
     private Button button(String label,Runnable click){
         Button b=new Button(host);b.setText(label);b.setAllCaps(false);
         b.setTextSize(12);b.setTextColor(Color.WHITE);
-        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(5,111,114)));
+        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(25,79,150)));
         b.setOnClickListener(v->{if(!saving)click.run();});return b;
     }
     private void open(){
         panel=new LinearLayout(host);panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(8),dp(12),dp(8),dp(10));panel.setBackgroundColor(Color.rgb(7,61,65));
+        panel.setPadding(dp(8),dp(12),dp(8),dp(10));panel.setBackgroundColor(Color.rgb(18,24,45));
         panel.addView(text(labels[0],19),new LinearLayout.LayoutParams(-1,dp(42)));
         count=text("",13);panel.addView(count,new LinearLayout.LayoutParams(-1,dp(30)));
         LinearLayout top=new LinearLayout(host);
         top.addView(button(labels[2],()->{for(Page p:pages)p.selected=true;draw();}),new LinearLayout.LayoutParams(0,dp(46),1));
         top.addView(button(labels[3],()->{for(Page p:pages)p.selected=false;draw();}),new LinearLayout.LayoutParams(0,dp(46),1));
         panel.addView(top);
-        TextView instruction=text(labels[9],12);instruction.setTextColor(Color.rgb(179,231,220));
+        TextView instruction=text(labels[9],12);instruction.setTextColor(Color.rgb(191,208,235));
         panel.addView(instruction,new LinearLayout.LayoutParams(-1,dp(35)));
         ScrollView scroller=new ScrollView(host);scroller.setFillViewport(true);
         grid=new GridLayout(host);grid.setColumnCount(2);
@@ -112,11 +109,7 @@ public final class RivoScanPagesManager {
         edit.addView(button("⌫ "+labels[6],this::remove),new LinearLayout.LayoutParams(0,dp(48),1));
         panel.addView(edit);
         LinearLayout actions=new LinearLayout(host);
-        Button cancel=button("✕ "+labels[8],()->dialog.dismiss());
-        cancel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(184,45,78)));
-        cancel.setTextColor(Color.WHITE);
-        cancel.setElevation(dp(3));
-        actions.addView(cancel,new LinearLayout.LayoutParams(0,dp(52),1));
+        actions.addView(button("× "+labels[8],()->dialog.dismiss()),new LinearLayout.LayoutParams(0,dp(52),1));
         actions.addView(button(labels[7],this::commit),new LinearLayout.LayoutParams(0,dp(52),1));
         panel.addView(actions);
         dialog=new AlertDialog.Builder(host).setView(panel).create();
@@ -159,7 +152,7 @@ public final class RivoScanPagesManager {
             LinearLayout card=new LinearLayout(host);
             card.setOrientation(LinearLayout.VERTICAL);card.setGravity(Gravity.CENTER);
             card.setPadding(dp(5),dp(7),dp(5),dp(7));
-            card.setBackgroundColor(p.selected?Color.rgb(5,119,117):Color.rgb(12,82,85));
+            card.setBackgroundColor(p.selected?Color.rgb(7,104,155):Color.rgb(28,39,69));
             GridLayout.LayoutParams glp=new GridLayout.LayoutParams();
             glp.width=cardWidth;glp.height=dp(205);glp.setMargins(dp(3),dp(4),dp(3),dp(4));
             ImageView image=new ImageView(host);image.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -218,34 +211,6 @@ public final class RivoScanPagesManager {
         // This removes pages only from the current PDF session, NEVER Documents.
         pages.removeIf(p->p.selected);draw();
     }
-    /**
-     * Sample full-resolution scans before rotating to avoid allocating multiple
-     * 50+ megapixel bitmaps. Never modify the original page or public copy.
-     * The 12MP ceiling is independent of the longest-edge cap.
-     */
-    static int rotationSampleSize(int width,int height){
-        if(width<=0||height<=0)throw new IllegalArgumentException("Invalid scan dimensions");
-        int sample=1;
-        while((Math.max(width,height)/sample)>MAX_EDIT_EDGE
-            ||((long)Math.ceil((double)width/sample)
-                *(long)Math.ceil((double)height/sample))>MAX_EDIT_PIXELS){
-            if(sample>=128)throw new IllegalArgumentException("Scan is too large to rotate safely");
-            sample*=2;
-        }
-        return sample;
-    }
-    private static Bitmap decodePageForRotation(String source){
-        BitmapFactory.Options bounds=new BitmapFactory.Options();
-        bounds.inJustDecodeBounds=true;
-        BitmapFactory.decodeFile(source,bounds);
-        int sample=rotationSampleSize(bounds.outWidth,bounds.outHeight);
-        BitmapFactory.Options options=new BitmapFactory.Options();
-        options.inSampleSize=sample;
-        options.inPreferredConfig=Config.RGB_565;
-        Bitmap decoded=BitmapFactory.decodeFile(source,options);
-        if(decoded==null)throw new IllegalStateException("Cannot decode page");
-        return decoded;
-    }
     private void commit(){
         if(saving)return;saving=true;dialog.setCancelable(false);
         count.setText(labels[7]+" …");
@@ -257,7 +222,8 @@ public final class RivoScanPagesManager {
                     if(page.rotation==0){results.add(page.uri);continue;}
                     String source=Uri.parse(page.uri).getPath();
                     if(source==null)throw new IllegalStateException("Missing page");
-                    Bitmap original=decodePageForRotation(source);
+                    Bitmap original=BitmapFactory.decodeFile(source);
+                    if(original==null)throw new IllegalStateException("Cannot decode page");
                     Bitmap rotated=null;
                     try{
                         Matrix matrix=new Matrix();matrix.postRotate(page.rotation);
@@ -276,17 +242,13 @@ public final class RivoScanPagesManager {
                     }
                 }
                 host.runOnUiThread(()->{
-                    if(host.isFinishing()||host.isDestroyed()){
-                        for(File f:created)f.delete();
-                        return;
-                    }
+                    if(host.isFinishing()||host.isDestroyed())return;
                     dialog.dismiss();
                     onCommit.accept(results);
                 });
             }catch(Throwable error){
                 for(File f:created)f.delete();
                 host.runOnUiThread(()->{
-                    if(host.isFinishing()||host.isDestroyed())return;
                     saving=false;dialog.setCancelable(true);
                     Toast.makeText(host,labels[12]+error.getMessage(),Toast.LENGTH_LONG).show();
                     draw();

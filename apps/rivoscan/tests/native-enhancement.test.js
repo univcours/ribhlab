@@ -8,13 +8,12 @@ const nativeInstall=readFileSync(new URL('../install-live-scanner.ps1',import.me
 test('Saving native scans requires perspective crop, enhancement preview and explicit check',()=>{
  assert.ok(activity.includes('RivoEdgeDetector.warp(source,corners,highQuality?3300:2150)'));
  assert.ok(activity.includes('private void showEnhancementPreview()'));
- assert.ok(activity.includes('button("✓  "+localizedCapture("done"),this::saveEnhancedPage)'));
+ assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
  assert.ok(activity.includes('output=applyScanFilter(input,preset)'));
  assert.ok(activity.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
  assert.ok(activity.includes('enhancementSaveButton.setEnabled(false)'));
  assert.ok(activity.includes('enhancementSaveButton.setEnabled(true)'));
- assert.ok(activity.includes('else showPostSaveChoices();'));
- assert.ok(activity.includes('setNegativeButton(add,'));
+ assert.ok(activity.includes('if(batchMode)showCamera();else finishWithPages();'));
  assert.ok(!activity.includes('button(trNative("savePage"),this::saveCroppedPage)'));
 });
 test('Native enhancement modes operate on pixels, preserving document color or B&W',()=>{
@@ -38,14 +37,14 @@ test('Capture keeps the image on screen, evaluates quality and requires user-sel
  assert.ok(activity.includes('qualityResult.summary(nativeLanguage)'));
  assert.ok(activity.includes('button(trNative("retake"),this::showCamera)'));
  assert.ok(activity.includes('button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)'));
- assert.ok(activity.includes('button("✓  "+localizedCapture("done"),this::saveEnhancedPage)'));
+ assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
  assert.ok(activity.includes('if(captureQuality!=null&&captureQuality.retakeSuggested)'));
  assert.ok(activity.includes('setNegativeButton(trNative("retake")'));
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.VISIBLE)'));
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.GONE)'));
  assert.ok(activity.includes('selectedEnhancement=mode;renderEnhancementPreview(mode)'));
  assert.ok(activity.includes('enhancementImage.setImageBitmap(pendingWarp)'));
- assert.ok(!activity.includes('if(saveOriginal&&current!=null)backupOriginalPage(current)'));
+ assert.ok(activity.includes('if(saveOriginal&&current!=null)backupOriginalPage(current)'));
  assert.ok(processor.includes('PRO_SCAN="proscan"'));
  assert.ok(processor.includes('originalRGB.copyTo(rgb,stampMask)'));
  assert.ok(nativeInstall.includes('RivoCaptureQuality.java'));
@@ -53,7 +52,7 @@ test('Capture keeps the image on screen, evaluates quality and requires user-sel
 
 test('Scanner protects ✓ save against rapid filter taps, back navigation and repeated captures',()=>{
  assert.ok(activity.includes('captureInProgress||savingEnhancedPage'), 'camera shutter must be locked while busy');
- assert.match(activity,/if\(savingEnhancedPage\)return;\r?\n\s*enhancementSerial\+\+;/, 'crop back must not cancel a save');
+ assert.ok(activity.includes('if(savingEnhancedPage)return;\n        enhancementSerial++;'), 'crop back must not cancel a save');
  assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null)return;'), 'filter selections must not invalidate active save');
  assert.ok(activity.includes('if(savingEnhancedPage||pendingWarp==null||enhancementImage==null)return;'), 'preview task must not invalidate an active save');
  assert.ok(activity.includes('if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();'), 'must not recycle live original bitmap after scaled preview');

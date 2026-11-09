@@ -30,7 +30,7 @@ try {
   Write-Host '[5/6] Installing and VERIFYING live scanner + launcher branding...' -ForegroundColor Cyan
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'install-live-scanner.ps1')
   FailIfBad 'Native live scanner installation'
-  $main=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\MainActivity.kt'
+  $main=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\MainActivity.java'
   $plugin=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\RivoLiveScannerPlugin.java'
   $activity=Join-Path $root 'android\app\src\main\java\com\ribhlab\rivoscan\RivoLiveScannerActivity.java'
   $manifest=Join-Path $root 'android\app\src\main\AndroidManifest.xml'
@@ -38,7 +38,7 @@ try {
   foreach($path in @($main,$plugin,$activity,$manifest,$build)) {
     if(-not (Test-Path -LiteralPath $path)) { throw "Missing required native scanner source: $path" }
   }
-  if(-not ([System.IO.File]::ReadAllText($main).Contains('registerPlugin(RivoLiveScannerPlugin::class.java)'))) {
+  if(-not ([System.IO.File]::ReadAllText($main).Contains('registerPlugin(RivoLiveScannerPlugin.class)'))) {
     throw 'RivoLiveScanner is not registered in MainActivity.java. Rebuild aborted.'
   }
   if(-not ([System.IO.File]::ReadAllText($manifest).Contains('RivoLiveScannerActivity'))) {
@@ -182,13 +182,9 @@ try {
   $apk=Join-Path $root 'android\app\build\outputs\apk\debug\app-debug.apk'
   if(-not (Test-Path -LiteralPath $apk)) { throw 'Gradle completed but the debug APK file is missing.' }
   Write-Host ''
-  $versionText=[IO.File]::ReadAllText((Join-Path $root 'rivoscan-version.properties'))
-  $versionMatch=[regex]::Match($versionText,'(?m)^versionName=([0-9]+(?:\.[0-9]+){2})\r?$')
-  if(-not $versionMatch.Success) { throw 'Could not read valid RivoScan versionName after build.' }
-  $builtName=$versionMatch.Groups[1].Value
-  Write-Host ("SUCCESS! RivoScan v"+$builtName+" built with live scanner and adaptive launcher icon.") -ForegroundColor Green
+  Write-Host 'SUCCESS! RivoScan v0.31.0 built with live scanner and adaptive launcher icon.' -ForegroundColor Green
   Write-Host "APK: $apk"
-  Write-Host 'Android Studio Run launches RivoScan DEV only; Production remains unchanged.' -ForegroundColor Green
+  Write-Host 'Open Android Studio > Sync Project with Gradle Files > Run (app) on your connected Android phone.' -ForegroundColor Green
 } catch {
   Write-Host ''
   Write-Host ('REPAIR FAILED: '+$_.Exception.Message) -ForegroundColor Red

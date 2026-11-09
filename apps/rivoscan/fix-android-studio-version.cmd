@@ -1,10 +1,10 @@
 @echo off
 setlocal
-title RivoScan DEV - Safe Android Studio Run
+title RivoScan - Repair Android Studio version without deleting data
 cd /d "%~dp0" || exit /b 1
 echo.
 echo ==========================================================
-echo    RivoScan DEV, separate from Google Play Production
+echo    RivoScan Android Studio version repair
 echo    Safe update - NEVER uninstall or clear documents
 echo ==========================================================
 echo.
@@ -19,8 +19,7 @@ if errorlevel 1 goto :failed
 echo.
 echo SUCCESS: Gradle version aligned. Your phone data was NOT deleted.
 echo In Android Studio choose File ^> Sync Project with Gradle Files ONCE.
-echo Android Studio Run updates ONLY RivoScan DEV, NOT the Play Production app.
-echo Update the Production app with the Google Play testing link.
+echo Then press Run (app); do NOT accept any uninstall or downgrade prompt.
 exit /b 0
 :failed
 echo.

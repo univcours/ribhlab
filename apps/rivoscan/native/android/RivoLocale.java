@@ -62,7 +62,7 @@ final class RivoLocale {
     private static final String[][] ENHANCE_TEXT={
         {"Next: enhance","Clean up your scan","Original","Enhance","Magic","No shadow",
          "Whiteboard","B&W","Choose a filter, compare with original, then tap ✓ to save.",
-         "Back","Compare","Save","Preparing straightened page…",
+         "Edges","Compare","Save","Preparing straightened page…",
          "Cleaning full-quality page…","Enhancement preview unavailable. Try Original."},
         {"التالي: تحسين","تنقية الوثيقة","الأصلية","تحسين","تحسين قوي","حذف الظلال",
          "السبورة","أبيض وأسود","اختار التحسين وقارن بالأصل، ومن بعد اضغط ✓ للحفظ.",

@@ -75,7 +75,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
   (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads};
  countSpreads();
- const cleanup=()=>{if(busy)return;closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
+ const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async (src,{alreadySingle=false}={})=>{
   if(!singlePage&&image&&previousSpreads.length>=maxSpreads-1)
    throw Error('Book Scan maximum: '+maxSpreads+' spreads (12 pages).');
@@ -188,7 +188,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    draw();countSpreads();
    location.hidden=singlePage||currentIsSinglePage;autoSpine.hidden=singlePage||currentIsSinglePage;
   });
- makeButton(actions,L[5],cleanup).dataset.rivoDialogClose='true';
+ makeButton(actions,L[5],cleanup);
  fileInput.addEventListener('change',async()=>{
   const files=[...(fileInput.files||[])];fileInput.value='';
   for(const file of files){
@@ -287,7 +287,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
     }
    }
    await save(new Uint8Array(await pdf.save({useObjectStreams:true})),(singlePage?'RivoScan_Flatten_':'RivoScan_Book_')+Date.now()+'.pdf','application/pdf');
-   if(!closed){busy=false;cleanup();}
+   if(!closed)cleanup();
   }catch(error){status.textContent=error?.message||String(error)}
   finally{busy=false}
  });

@@ -157,11 +157,7 @@ final class RivoEdgeDetector {
                 double left=Math.max(0,(r.x-pad)/w),top=Math.max(0,(r.y-pad)/h);
                 double right=Math.min(1,(r.x+r.width+pad)/w);
                 double bottom=Math.min(1,(r.y+r.height+pad)/h);
-                // Preserve real perspective when the paper contour is a valid
-                // convex quadrilateral; bounding rectangle remains a safe fallback.
-                Point[] perspective=paperPerspectiveCorners(candidate,w,h);
-                result=perspective!=null?perspective:new Point[]{
-                    new Point(left,top),new Point(right,top),
+                result=new Point[]{new Point(left,top),new Point(right,top),
                     new Point(right,bottom),new Point(left,bottom)};
             }
             return result;
@@ -171,47 +167,6 @@ final class RivoEdgeDetector {
             for(MatOfPoint c:contours)c.release();
             mask.release();clean.release();kernel.release();inner.release();outer.release();hierarchy.release();
         }
-    }
-
-    /**
-     * A pale page seen at an angle must not be reduced to an axis-aligned rectangle.
-     * Try several Douglas-Peucker tolerances, accepting only a convex, reasonably
-     * large four-corner outline. If ambiguous, manual adjustment remains available.
-     */
-    private static Point[] paperPerspectiveCorners(MatOfPoint contour,int width,int height){
-        MatOfPoint2f curve=new MatOfPoint2f(contour.toArray()),approx=new MatOfPoint2f();
-        try{
-            double perimeter=Imgproc.arcLength(curve,true);
-            if(perimeter<=0)return null;
-            for(double tolerance:new double[]{.012,.018,.026,.038}){
-                Imgproc.approxPolyDP(curve,approx,perimeter*tolerance,true);
-                if(approx.total()!=4)continue;
-                MatOfPoint polygon=new MatOfPoint(approx.toArray());
-                boolean convex=Imgproc.isContourConvex(polygon);
-                polygon.release();
-                if(!convex)continue;
-                Point[] corners=order(approx.toArray());
-                double minX=1,minY=1,maxX=0,maxY=0;
-                boolean valid=true;
-                for(Point p:corners){
-                    p.x/=width;p.y/=height;
-                    if(!Double.isFinite(p.x)||!Double.isFinite(p.y)||
-                       p.x<0||p.y<0||p.x>1||p.y>1){valid=false;break;}
-                    minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);
-                    minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);
-                }
-                if(!valid||maxX-minX<.22||maxY-minY<.19)continue;
-                double signed=0,smallestEdge=Double.MAX_VALUE;
-                for(int i=0;i<4;i++){
-                    Point p=corners[i],q=corners[(i+1)%4];
-                    signed+=p.x*q.y-q.x*p.y;
-                    smallestEdge=Math.min(smallestEdge,Math.hypot(p.x-q.x,p.y-q.y));
-                }
-                if(Math.abs(signed)*.5<.07||smallestEdge<.10)continue;
-                return corners;
-            }
-            return null;
-        }finally{curve.release();approx.release();}
     }
 
     static Point[] fallback() {

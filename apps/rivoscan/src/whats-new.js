@@ -6,9 +6,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
-      "CameraX Scan now displays a visible guide before capture and automatically detects edges after capture. Drag four corners to refine the chosen content, then tap ✓ to preview filters; your manual edits are never silently replaced.",
-      "Google Auto Scan · ML Kit FULL is available as a separate option inside Scan on compatible Android phones. Google handles document detection, cropping and filters; CameraX keeps independent manual corner control.",
-      "Turquoise UI repairs: removed raw Choose File fields and blank tool tiles, enlarged PDF previews, gave selected-file actions adequate room, and disabled Process & save until files are selected.",
+      "AI Deep Clean (Google ML Kit FULL) now opens from the main Scan button, Home shortcut, ID Card and Tools. Google handles auto-crop, cleanup and review; native CameraX is only an on-device fallback or manual corner editor. Advanced photo fusion, UVDoc and relative 3D live under Scan settings, without any separate PerfectScan screen.",
+      "One document scanner: UVDoc AI flatten now works inside the native camera filters, with visible processing and a Save button that activates only after a real result. No separate Pro/Smart scan buttons, no consent checkbox, no empty white photo preview; optional 2–4-angle correction lives under Scan > Advanced.",
+      "Capture review is now mandatory: real photo stays on screen with paper-corner adjustment, quality check for blur, glare and lighting, live filter processing, Before/After and Save or Retake. High-resolution crop is increased in HD, with turquoise theme and redesigned launcher icon.",
       "Comfort design with checked-photo Share and Delete side-by-side; strong wrinkle correction slider and on-device AI Deep Clean.",
       "Interactive gallery: 6× pinch zoom, double tap, pan and direct edit. Reduce wrinkles protects originals, stamps and signatures.",
       "Paper Scan Pro enhances document brightness and colored seals without overwriting the original. AI Scan uses ML Kit FULL on supported Android phones.",
@@ -25,9 +25,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
-      "سكانير CameraX ولى كيبين إطار التوجيه قبل التصوير، ومن بعد الصورة كيكشف الحواف تلقائياً وكيعرض 4 زوايا تقدر تحركها بيدك. ✓ كيديك لمعاينة الفلاتر بلا ما يضيع التحديد اليدوي.",
-      "Google Auto Scan باستعمال ML Kit FULL متوفر كاختيار مستقل داخل Scan فالهواتف المدعومة. Google كيتكلف بالتحديد والقص والفلاتر تلقائياً؛ CameraX كيخليك تدقق الحواف يدوياً.",
-      "صلحنا الواجهة الفيروزية: إخفاء Choose File الخام، إصلاح البطاقات الفارغة، تكبير معاينة PDF، تنظيم أزرار الملفات، وتعطيل Process & save حتى تختار الملفات.",
+      "AI Deep Clean ديال Google ML Kit FULL ولى هو السكان الرئيسي من الرئيسية وScan وحتى البطاقة. Google كيدير قص الورقة والتنقية والمراجعة؛ CameraX غي احتياط أو لتعديل الزوايا. دمج الصور وUVDoc و3D بقاو فإعدادات السكان بلا PerfectScan بوحدو.",
+      "سكانير واحد: UVDoc AI دخل لفلاتر الكاميرا، المعالجة كتبان قدامك، والحفظ ما كيتفعل حتى تجهز النتيجة. حيدنا سكانات Pro/Smart المنفصلين، المربع الأبيض الفارغ وخانة الموافقة؛ تصحيح 2 حتى 4 صور باقي داخل السكان > المتقدم.",
+      "المعاينة ولات إجبارية: الصورة كتبقى قدامك مع تحديد الزوايا وفحص الوضوح والضوء والوهج؛ الفلاتر والتقدم والمقارنة، ومن بعد حفظ أو إعادة التصوير. جودة قص أعلى ووِجهة وأيقونة فيروزية.",
       "ستايل مريح، مشاركة ومسح حدا بعضهم ملي تختار الصورة، وقوة تقويم التجاعيد وتنقية AI على الهاتف.",
       "المعاينة فيها زوم 6 مرات، التنقل والتعديل المباشر. تقليل التجاعيد كيحافظ على الأصل والكاشيات والتواقيع.",
       "Paper Scan Pro كينقّي الورقة ويحافظ على الكاشيات والأصلية. AI Scan كيستعمل ML Kit FULL على هواتف Android المدعومة.",
@@ -44,9 +44,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
-      "Le scanner CameraX affiche un guide avant la photo, puis détecte les bords automatiquement. Ajustez les quatre coins à la main avant ✓ et les filtres, sans perdre vos corrections.",
-      "Google Auto Scan · ML Kit FULL reste une option distincte dans Scan sur Android compatible : détection, recadrage et filtres automatiques. CameraX conserve le réglage manuel précis.",
-      "Interface turquoise corrigée : champs Choose File masqués, cartes vides réparées, aperçu PDF agrandi, actions des documents lisibles et Process & save désactivé sans fichier.",
+      "AI Deep Clean (Google ML Kit FULL) est désormais le scanner principal depuis Accueil, Scan et Carte d'identité. CameraX sert de secours ou à ajuster les coins. Fusion multi-vues, UVDoc et 3D relative restent dans les réglages du scan, sans module séparé.",
+      "Un seul scanner : UVDoc IA intégré aux filtres natifs, traitement visible et Enregistrer activé après le résultat. Plus de boutons Pro/Smart séparés, case de consentement ou aperçu blanc vide ; correction multi-angle dans Scan > Avancé.",
+      "Photo conservée à l'écran pour contrôle des angles, flou, éclairage et reflets ; traitement visible, filtres, comparaison, enregistrer ou reprendre. Recadrage HD amélioré et thème/icône turquoise.",
       "Interface apaisée, Partager et Supprimer côte à côte pour les photos sélectionnées, correction des plis et nettoyage IA.",
       "Galerie tactile avec zoom 6× et édition directe. Réduction des plis avec cachets et signatures préservés.",
       "Paper Scan Pro corrige l'éclairage et conserve les cachets. AI Scan utilise ML Kit FULL sur les appareils Android compatibles.",
@@ -63,9 +63,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
-      "CameraX muestra una guía antes de fotografiar y detecta los bordes después. Ajusta las cuatro esquinas antes de ✓ y los filtros; tus cambios manuales se conservan.",
-      "Google Auto Scan · ML Kit FULL aparece como opción independiente en Scan para Android compatible, con detección, recorte y filtros automáticos.",
-      "Interfaz turquesa reparada: sin campos Choose File visibles ni tarjetas vacías, vista PDF mayor, acciones legibles y Guardar desactivado sin archivos.",
+      "AI Deep Clean (Google ML Kit FULL) ahora es el escáner principal desde Inicio, Escanear y DNI. CameraX solo como respaldo o editor de esquinas. Fusión, UVDoc y 3D relativa en ajustes, sin PerfectScan separado.",
+      "Un solo escáner: UVDoc IA integrado en filtros de cámara, procesamiento visible y Guardar activo tras la imagen. Sin botones Pro/Smart separados, casilla de aceptación ni vista blanca vacía; multiángulo en Escanear > Avanzado.",
+      "La foto permanece visible: ajustar esquinas, revisar enfoque, luz y reflejos, filtros, comparación y Guardar/Repetir. Recorte HD mejorado y estilo/icono turquesa.",
       "Diseño cómodo, Compartir y Eliminar juntos para fotos elegidas, ajuste de pliegues y limpieza IA local.",
       "Galería con zoom 6× y edición directa. Reduce pliegues manteniendo sellos y firmas.",
       "Paper Scan Pro améliore le papier sans effacer les tampons. AI Scan utilise ML Kit FULL sur Android compatible.",
@@ -82,9 +82,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Verstanden",
     "items": [
-      "CameraX zeigt vor der Aufnahme eine Führung und erkennt danach automatisch die Dokumentränder. Vier Ecken können vor ✓ und den Filtern präzise angepasst werden.",
-      "Google Auto Scan · ML Kit FULL ist eine separate Option in Scan auf kompatiblen Android-Geräten mit automatischer Erkennung, Zuschnitt und Filtern.",
-      "Türkisfarbenes Layout korrigiert: keine rohen Dateifelder oder leeren Kacheln, größere PDF-Vorschau, lesbare Dokumentaktionen und deaktiviertes Speichern ohne Datei.",
+      "AI Deep Clean (Google ML Kit FULL) startet jetzt über die Haupt-Scan-Taste, Startseite und Ausweis. CameraX bleibt nur Notlösung/Eckeneditor. Mehrfachaufnahme, UVDoc und relatives 3D in Scan-Einstellungen.",
+      "Ein Scanner: UVDoc KI direkt in der nativen Kamerafilterliste; Speichern erst nach Ergebnis. Keine separaten Smart/Pro-Scanner, Zustimmungskästchen oder leere weiße Vorschau; Mehrwinkelmodus unter Scan > Erweitert.",
+      "Foto bleibt sichtbar: Ecken, Unschärfe, Licht und Reflexe prüfen; Filter, Fortschritt und Vorher/Nachher, Speichern oder Neuaufnahme. Bessere HD-Auflösung und türkisfarbenes Design.",
       "Ruhiges Design, Teilen/Löschen nebeneinander für ausgewählte Bilder, Faltenstärke und lokale KI-Reinigung.",
       "Galerie: Zoom 6× und direkte Bearbeitung. Faltenkorrektur schützt Originalstempel und Unterschriften.",
       "Paper Scan Pro verbessert den Papierkontrast und schützt Stempel. AI Scan verwendet ML Kit FULL auf unterstützten Android-Geräten.",
@@ -101,9 +101,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versão",
     "close": "Entendi",
     "items": [
-      "CameraX apresenta um guia antes da fotografia e deteta automaticamente os contornos depois. Ajuste os quatro cantos antes de ✓ e dos filtros; as edições manuais são preservadas.",
-      "Google Auto Scan · ML Kit FULL é uma opção separada em Scan para Android compatível, com deteção, recorte e filtros automáticos.",
-      "Interface turquesa corrigida: seletores de ficheiros nativos ocultos, cartões vazios corrigidos, pré-visualização PDF maior e guardar desativado sem ficheiros.",
+      "AI Deep Clean (Google ML Kit FULL) é o scanner principal na página inicial, Scan e documentos de identidade. CameraX só como alternativa/editor de cantos. Fusão, UVDoc e 3D nas definições.",
+      "Um scanner: UVDoc IA nos filtros da câmera, processamento visível e Guardar apenas após o resultado. Sem scan Pro/Smart separado, consentimento obrigatório nem pré-visualização branca vazia; vários ângulos em Scan > Avançado.",
+      "Fotografia permanece visível para ajustar cantos, analisar nitidez, luz e reflexos, comparar e Guardar/Repetir. Maior resolução HD e tema/ícone turquesa.",
       "Design confortável, Partilhar/Eliminar juntos nas fotos selecionadas, controlo de vincos e limpeza IA.",
       "Zoom 6× na galeria e edição direta. Corrigir vincos preservando carimbos e assinaturas.",
       "Paper Scan Pro melhora a luz e mantém carimbos. AI Scan utiliza ML Kit FULL em Android compatível.",
@@ -120,9 +120,9 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versione",
     "close": "Capito",
     "items": [
-      "CameraX mostra una guida prima dello scatto e rileva automaticamente i bordi dopo. Regola i quattro angoli prima di ✓ e dei filtri: le modifiche manuali restano intatte.",
-      "Google Auto Scan · ML Kit FULL è un'opzione separata in Scan sui dispositivi Android compatibili, con rilevamento, ritaglio e filtri automatici.",
-      "Interfaccia turchese corretta: selettori file nativi nascosti, riquadri vuoti rimossi, anteprima PDF più grande, azioni leggibili e salvataggio disabilitato senza file.",
+      "AI Deep Clean (Google ML Kit FULL) è ora lo scanner principale nella Home, in Scan e per i documenti. CameraX solo come alternativa/editor degli angoli. Fusione, UVDoc e 3D nelle impostazioni.",
+      "Uno scanner: UVDoc IA nei filtri della fotocamera, elaborazione visibile e Salva solo dopo il risultato. Nessun Pro/Smart separato, casella di conferma o anteprima vuota; multiangolo in Scan > Avanzate.",
+      "La foto resta visibile: regolazione angoli, controllo nitidezza, luce e riflessi; filtri, confronto, Salva o Riprendi. HD migliore e tema/icona turchese.",
       "Design confortevole, Condividi/Elimina affiancati sulle immagini selezionate, riduzione pieghe e pulizia IA.",
       "Galleria con zoom 6× e modifica diretta. Riduci pieghe preservando timbri e firme.",
       "Paper Scan Pro migliora la luminosità senza cancellare i timbri. AI Scan usa ML Kit FULL su Android compatibile.",
@@ -166,7 +166,7 @@ export function openWhatsNew({language='en',version='0.0.0',storage=localStorage
  const subtitle=document.createElement('p');subtitle.textContent=copy.subtitle+' '+version;panel.append(subtitle);
  const list=document.createElement('ul');for(const note of copy.items){const item=document.createElement('li');item.textContent=note;list.append(item)}panel.append(list);
  const limits=document.createElement('p');limits.className='rivo-release-limits';limits.textContent=copy.limits;panel.append(limits);
- const ok=document.createElement('button');ok.type='button';ok.textContent=copy.close;ok.dataset.rivoDialogClose='true';panel.append(ok);
+ const ok=document.createElement('button');ok.type='button';ok.textContent=copy.close;panel.append(ok);
  const close=()=>{overlay.remove();try{storage.setItem('rivo-release-notes-read',version)}catch{}};
  ok.addEventListener('click',close);
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});

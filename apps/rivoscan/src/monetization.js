@@ -1,35 +1,30 @@
-// RivoScan AdMob: two real production units; safe demo units for debug.
-// No rewarded ads, video-to-unlock flow, or banners.
+// RivoScan Android AdMob field QA: no banner, no real ads in debug builds.
+// Production AdMob APP ID is NOT known; do not substitute an ad unit ID for it.
+// Google sample units prevent invalid paid traffic during development.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus } from '@capacitor-community/admob';
-import {buildProductionAds,RIVOSCAN_INTERSTITIAL_ID,RIVOSCAN_APP_OPEN_ID,RIVOSCAN_ADMOB_APP_ID} from './admob-production-ids.js';
+import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
 
-const adEnv=import.meta.env||{};
-const productionAds=adEnv.VITE_RIVOSCAN_ADMOB_PRODUCTION==='true';
-const liveUnits=buildProductionAds({
- appId:adEnv.VITE_RIVOSCAN_ADMOB_APP_ID||RIVOSCAN_ADMOB_APP_ID
-});
-// Google sample IDs serve TEST ads on locally installed debug builds.
-const demoInterstitial='ca-app-pub-3940256099942544/1033173712';
-const demoAppOpen='ca-app-pub-3940256099942544/9257395921';
 export const AD_CONFIG=Object.freeze({
- testMode:!productionAds,
- configured:productionAds?liveUnits.configured:true,
- androidAppId:RIVOSCAN_ADMOB_APP_ID,
- interstitial:productionAds?RIVOSCAN_INTERSTITIAL_ID:demoInterstitial,
- appOpen:productionAds?RIVOSCAN_APP_OPEN_ID:demoAppOpen,
+ testMode:true,
+ androidAppId:'ca-app-pub-3940256099942544~3347511713',
+ rewarded:'ca-app-pub-3940256099942544/5224354917',
+ interstitial:'ca-app-pub-3940256099942544/1033173712',
+ appOpen:'ca-app-pub-3940256099942544/9257395921',
  bannerEnabled:false
 });
+export const PREMIUM_MINUTES=10;
 export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
 export const APP_OPEN_COOLDOWN_MS=20*60*1000;
 export const MIN_BACKGROUND_MS=60*1000;
-export const AD_RETRY_DELAY_MS=60*1000;
-export function canRetryAdLoad(lastAttemptAt,now=Date.now()){
- return !lastAttemptAt||now-lastAttemptAt>=AD_RETRY_DELAY_MS;
-}
-// All tools are available without any rewarded-video gate.
-export function isPremiumFeature(){return false;}
-export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,ready=true,trigger='regular',backTransitions=0}){
+const PREMIUM_IDS=new Set([
+ 'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
+ 'countCam','toWord','toWordTables','toExcel','toPpt','toPptEditable',
+ 'restorePhoto','enhance','eraseColoredMarks','eraseLightWatermark',
+ 'manualErase','lockPdf','idPhotoMaker','ocr','compress'
+]);
+export function isPremiumFeature(id){return PREMIUM_IDS.has(String(id||''));}
+export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
+export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0}){
  // A Back press is a natural page transition only when returning from an
  // actual tool to Home, after either a completed save or two tool returns.
  // Never treat dismissing an overlay or exiting the app as an ad opportunity.
@@ -37,19 +32,24 @@ export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt
   ?(savedCount>=1||backTransitions>=2)
   :savedCount>=2;
  return !!(native&&consent&&ready&&meaningfulBreak&&shownCount<3&&
-  now-startedAt>=120000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS));
+  now-startedAt>=120000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
+  now>=premiumUntil);
 }
-export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFullscreenAt=0,working=false}){
+export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFullscreenAt=0,premiumUntil=0,working=false}){
  return !!(native&&consent&&ready&&!working&&backgroundMs>=MIN_BACKGROUND_MS&&
-  (!lastFullscreenAt||now-lastFullscreenAt>=APP_OPEN_COOLDOWN_MS));
+  now>=premiumUntil&&(!lastFullscreenAt||now-lastFullscreenAt>=APP_OPEN_COOLDOWN_MS));
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
- savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
- interstitialReady:false,appOpenReady:false,initializingInterstitial:false,
- initializingAppOpen:false,lastInitAttemptAt:0,lastInterstitialAttemptAt:0,
- lastAppOpenAttemptAt:0,status:'Not initialized',lastError:'',
+ unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
+ interstitialReady:false,appOpenReady:false,status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
+const strings={
+ en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad not ready. Open Me → Ad diagnostics to retry.',success:'Advanced tools unlocked for 10 minutes.'},
+ ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات ديالك كيبقاو متاحين.',watch:'شاهد الفيديو · 10 دقائق',cancel:'رجوع',unavailable:'الإعلان مازال ما وجدش. دخل للإعدادات > تشخيص الإشهارات وعاود المحاولة.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
+ fr:{title:'Débloquer les outils avancés',body:'Regardez volontairement une publicité pour accéder aux outils avancés pendant 10 minutes. Documents et scan simple restent disponibles.',watch:'Voir une vidéo · 10 min',cancel:'Retour',unavailable:'Publicité indisponible. Réessayez dans Diagnostics publicitaires.',success:'Outils avancés débloqués pour 10 minutes.'}
+};
+const tr=()=>strings[state.getLanguage()]||strings.en;
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
 export function configureAds({getLanguage,notify,onChange}={}){
  if(typeof getLanguage==='function')state.getLanguage=getLanguage;
@@ -58,41 +58,30 @@ export function configureAds({getLanguage,notify,onChange}={}){
 }
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,status:state.status,
- lastError:state.lastError,testMode:AD_CONFIG.testMode,configured:AD_CONFIG.configured,
+ lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,
  shownCount:state.shownCount};
 }
 async function loadInterstitial(){
- if(!state.ready||!state.consent||!AD_CONFIG.interstitial||state.interstitialReady||
-    state.busy||state.initializingInterstitial||
-    !canRetryAdLoad(state.lastInterstitialAttemptAt))return false;
- state.initializingInterstitial=true;state.lastInterstitialAttemptAt=Date.now();
+ if(!state.ready||state.interstitialReady||state.busy)return false;
  try{
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
   state.interstitialReady=true;status('Interstitial ready');return true;
  }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
- finally{state.initializingInterstitial=false;}
 }
 async function loadAppOpen(){
- if(!state.ready||!state.consent||!AD_CONFIG.appOpen||state.appOpenReady||
-    state.busy||state.initializingAppOpen||
-    !canRetryAdLoad(state.lastAppOpenAttemptAt))return false;
- state.initializingAppOpen=true;state.lastAppOpenAttemptAt=Date.now();
+ if(!state.ready||state.appOpenReady||state.busy)return false;
  try{
   await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
   const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
   state.appOpenReady=check?.value===true;
   state.onChange();return state.appOpenReady;
  }catch(error){status('App open unavailable',String(error?.message||error));return false;}
- finally{state.initializingAppOpen=false;}
 }
 export async function initializeAds({retry=false}={}){
- if(!isAndroid){status('AdMob is only available on Android');return false;}
- if(!AD_CONFIG.configured){status('RivoScan production AdMob App ID missing or invalid');return false;}
+ if(!isAndroid){status('Ads need the Android app');return false;}
  if(state.ready)return true;
  if(state.initializing)return state.initializing;
- if(retry&&!canRetryAdLoad(state.lastInitAttemptAt))return false;
- state.lastInitAttemptAt=Date.now();
  state.initializing=(async()=>{
   try{
    status('Checking ad consent');
@@ -103,7 +92,7 @@ export async function initializeAds({retry=false}={}){
     consent=await AdMob.showConsentForm();
    state.consent=consent.canRequestAds===true;
    if(!state.consent){status('Ads unavailable: privacy choice / consent not ready');return false;}
-   await AdMob.initialize(productionAds?{}:{initializeForTesting:true});
+   await AdMob.initialize();
    // Explicitly clear an obsolete banner if the old app previously showed one.
    await AdMob.removeBanner().catch(()=>{});
    document.body.classList.remove('rivo-has-ad-banner');
@@ -122,23 +111,63 @@ export async function initializeAds({retry=false}={}){
  })();
  return state.initializing;
 }
-// Full-screen ads only at consented natural breaks, never during editing or saving.
-export async function requestPremium(){return true;}
+function offerReward(){
+ return new Promise(resolve=>{
+  if(typeof document==='undefined'){resolve(false);return;}
+  document.querySelector('.rivo-reward-overlay .rivo-reward-cancel')?.click();
+  const overlay=document.createElement('div');overlay.className='rivo-reward-overlay';
+  const dialog=document.createElement('div');dialog.className='rivo-reward-dialog';
+  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  const h=document.createElement('h2');h.textContent=tr().title;
+  const p=document.createElement('p');p.textContent=tr().body;
+  const watch=document.createElement('button');watch.className='rivo-reward-watch';watch.textContent=tr().watch;
+  const cancel=document.createElement('button');cancel.className='rivo-reward-cancel';cancel.textContent=tr().cancel;
+  const finish=v=>{overlay.remove();resolve(v);};
+  watch.addEventListener('click',()=>finish(true));cancel.addEventListener('click',()=>finish(false));
+  dialog.append(h,p,watch,cancel);overlay.append(dialog);document.body.append(overlay);cancel.focus();
+ });
+}
+export async function requestPremium(id){
+ if(!isPremiumFeature(id)||!isAndroid)return true;
+ if(remainingPremiumMs(state.unlockedUntil)>0)return true;
+ if(state.busy||!(await offerReward()))return false;
+ if(!(await initializeAds())){state.notify(tr().unavailable,true);return false;}
+ if(state.busy)return false;
+ state.busy=true;
+ let receivedReward=false,listener;
+ try{
+  listener=await AdMob.addListener(RewardAdPluginEvents.Rewarded,reward=>{
+   if(Number(reward?.amount)>0)receivedReward=true;
+  });
+  status('Loading rewarded video');
+  await AdMob.prepareRewardVideoAd({adId:AD_CONFIG.rewarded,isTesting:AD_CONFIG.testMode});
+  const reward=await AdMob.showRewardVideoAd({adId:AD_CONFIG.rewarded});
+  if(!receivedReward&&!(Number(reward?.amount)>0)){
+   status('Video dismissed without reward');return false;
+  }
+  state.unlockedUntil=Date.now()+PREMIUM_MINUTES*60000;
+  state.lastFullscreenAt=Date.now();
+  status('Reward granted: 10 minutes');state.notify(tr().success);return true;
+ }catch(error){
+  status('Rewarded video failed',String(error?.message||error));state.notify(tr().unavailable,true);
+  return false;
+ }finally{
+  await listener?.remove().catch(()=>{});
+  state.busy=false;
+ }
+}
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;
- // A failed initial consent/SDK request must not disable ads for the entire session.
- // Retry only at natural navigation and never interrupt the current action.
- if(!state.ready){void initializeAds({retry:true});return false;}
  // Count actual tool -> Home transitions, not button taps, gesture duplicates
  // or app-exit presses. A first Back without work remains advertisement-free.
  if(trigger==='back')state.backTransitions++;
- if(!state.interstitialReady){void loadInterstitial();return false;}
+ if(!state.interstitialReady)return false;
  const now=Date.now();
  if(!shouldShowInterstitial({native:isAndroid,consent:state.consent,ready:state.ready,
     startedAt:state.startedAt,now,lastShownAt:state.lastFullscreenAt,
     savedCount:state.savedCount,shownCount:state.shownCount,
-    trigger,backTransitions:state.backTransitions}))return false;
+    premiumUntil:state.unlockedUntil,trigger,backTransitions:state.backTransitions}))return false;
  state.busy=true;state.interstitialReady=false;
  try{
   // Preloaded full-screen ad can contain video; its creative is chosen by
@@ -152,13 +181,11 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
- if(state.busy||working||backgroundMs<MIN_BACKGROUND_MS)return false;
- if(!state.ready){void initializeAds({retry:true});return false;}
- if(!state.appOpenReady){void loadAppOpen();return false;}
+ if(!state.appOpenReady||state.busy)return false;
  const now=Date.now();
  if(!shouldShowAppOpen({native:isAndroid,consent:state.consent,ready:state.ready,
     backgroundMs,now,lastFullscreenAt:state.lastFullscreenAt,
-    working}))return false;
+    premiumUntil:state.unlockedUntil,working}))return false;
  state.busy=true;state.appOpenReady=false;
  try{
   await AdMob.showAppOpen({adId:AD_CONFIG.appOpen});
@@ -167,19 +194,20 @@ export async function onAppForeground({backgroundMs=0,working=false}={}){
  }catch(error){status('App open failed',String(error?.message||error));return false;}
  finally{state.busy=false;void loadAppOpen();}
 }
+export async function showTestInterstitial(){
+ if(!AD_CONFIG.testMode||!isAndroid)return false;
+ if(!(await initializeAds()))return false;
+ if(!state.interstitialReady){await loadInterstitial();}
+ if(!state.interstitialReady||state.busy)return false;
+ state.busy=true;state.interstitialReady=false;
+ try{
+  await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
+  state.lastFullscreenAt=Date.now();status('TEST interstitial shown');return true;
+ }catch(error){status('TEST interstitial failed',String(error?.message||error));return false;}
+ finally{state.busy=false;void loadInterstitial();}
+}
 export async function openAdPrivacyOptions(){
  if(!isAndroid)return false;
- try{
-  await AdMob.showPrivacyOptionsForm();
-  const consent=await AdMob.requestConsentInfo();
-  state.consent=consent.canRequestAds===true;
-  if(!state.consent){
-   state.interstitialReady=false;state.appOpenReady=false;
-   status('Ads paused: privacy choice');return true;
-  }
-  // Updated privacy choices can restore requesting ads without a forced restart.
-  if(!state.ready)void initializeAds({retry:true});
-  else{void loadInterstitial();void loadAppOpen();}
-  return true;
- }catch(error){status('Privacy options unavailable',String(error?.message||error));return false;}
+ try{await AdMob.showPrivacyOptionsForm();return true;}
+ catch(error){status('Privacy options unavailable',String(error?.message||error));return false;}
 }

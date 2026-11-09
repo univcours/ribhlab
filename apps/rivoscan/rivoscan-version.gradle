@@ -1,104 +1,22 @@
-// RivoScan canonical production version + automatic safe Android Studio DEBUG updates.
-def versionFile = file('../../rivoscan-version.properties')
-if (!versionFile.isFile()) throw new GradleException('Missing rivoscan-version.properties')
-def versionProps = new Properties()
-versionFile.withInputStream { input -> versionProps.load(input) }
-def codeText = versionProps.getProperty('versionCode', '').trim()
-def nameText = versionProps.getProperty('versionName', '').trim()
-if (!(codeText ==~ /[1-9][0-9]*/) || !nameText) {
-    throw new GradleException('Invalid RivoScan versionCode/versionName')
+// Read the repository version on EVERY Gradle sync/build (including Android Studio Run).
+// The generated android/app/build.gradle may contain a stale Capacitor template
+// version; this override is deliberately evaluated after that defaultConfig.
+def rivoScanVersionFile = file('../../rivoscan-version.properties')
+if (!rivoScanVersionFile.isFile()) {
+    throw new GradleException('RivoScan version file missing. Run install-live-scanner.ps1 before Android Studio Run.')
 }
-def sourceCode = Integer.parseInt(codeText)
-def effectiveCode = sourceCode
-
-// Debug-only: never alter Play RELEASE versionCode to match a development phone.
-// For Android Studio Run, choose a code above ANY connected installed RivoScan.
-def releaseRequested = gradle.startParameter.taskNames.any {
-    it.toLowerCase(java.util.Locale.ROOT).contains('release')
+def rivoScanVersion = new Properties()
+rivoScanVersionFile.withInputStream { input -> rivoScanVersion.load(input) }
+def rivoCodeText = rivoScanVersion.getProperty('versionCode', '').trim()
+def rivoNameText = rivoScanVersion.getProperty('versionName', '').trim()
+if (!(rivoCodeText ==~ /[1-9][0-9]*/) || !rivoNameText) {
+    throw new GradleException('Invalid RivoScan versionCode/versionName in rivoscan-version.properties')
 }
-if (!releaseRequested) {
-    def localFile = file('../../rivoscan-device-version.properties')
-    if (localFile.isFile()) {
-        def localProps = new Properties()
-        localFile.withInputStream { input -> localProps.load(input) }
-        def localCode = localProps.getProperty('versionCode', '').trim()
-        if (!(localCode ==~ /[1-9][0-9]*/))
-            throw new GradleException('Invalid local RivoScan debug versionCode')
-        effectiveCode = Math.max(effectiveCode, Integer.parseInt(localCode))
-    }
-    def sdkDirs = [System.getenv('ANDROID_HOME'), System.getenv('ANDROID_SDK_ROOT'),
-        new File(System.getProperty('user.home'), 'AppData/Local/Android/Sdk').absolutePath
-    ].findAll { it != null && it.trim() }
-    def isWindows = System.getProperty('os.name').toLowerCase(java.util.Locale.ROOT).contains('win')
-    def adb = sdkDirs.collect { new File(it, isWindows ? 'platform-tools/adb.exe' : 'platform-tools/adb') }
-            .find { it.isFile() }
-    if (adb != null) {
-        try {
-            def list = new ProcessBuilder(adb.absolutePath, 'devices').redirectErrorStream(true).start()
-            if (list.waitFor(5, java.util.concurrent.TimeUnit.SECONDS) && list.exitValue() == 0) {
-                // ADB mDNS device names may contain spaces, such as '(2)'.
-                // Do not split at the first whitespace: preserve complete -s serial.
-                def serials = list.inputStream.getText('UTF-8').readLines()
-                    .collect { line ->
-                        def matcher = (line =~ /^\s*(.+?)\s+device(?:\s+.*)?$/)
-                        matcher.matches() ? matcher.group(1).trim() : null
-                    }
-                    .findAll { it != null }
-                for (def serial : serials) {
-                    def scan = new ProcessBuilder(adb.absolutePath, '-s', serial, 'shell',
-                        'dumpsys', 'package', 'com.ribhlab.rivoscan.debug').redirectErrorStream(true).start()
-                    if (!scan.waitFor(6, java.util.concurrent.TimeUnit.SECONDS) || scan.exitValue() != 0) {
-                        scan.destroyForcibly()
-                        continue
-                    }
-                    def details = scan.inputStream.getText('UTF-8')
-                    def match = (details =~ /versionCode=(\d+)/)
-                    if (match.find()) {
-                        def installed = Long.parseLong(match.group(1))
-                        if (installed >= 2100000000L)
-                            throw new GradleException('Installed versionCode exceeds safe Android limit')
-                        effectiveCode = Math.max(effectiveCode, (int)(installed + 1L))
-                    }
-                }
-            } else {
-                list.destroyForcibly()
-            }
-        } catch (GradleException error) {
-            throw error
-        } catch (Exception error) {
-            logger.warn('[RivoScan] ADB version probe unavailable: '+error.message)
-        }
-    }
-}
-if (effectiveCode > 2100000000)
-    throw new GradleException('RivoScan versionCode exceeds supported limit')
+def rivoCode = Integer.parseInt(rivoCodeText)
 android {
     defaultConfig {
-        versionCode effectiveCode
-        versionName nameText
-    }
-    buildTypes {
-        debug {
-            // Android Studio Run MUST NEVER replace the real Play app.
-            applicationIdSuffix '.debug'
-            manifestPlaceholders['rivoscanAppLabel'] = 'RivoScan DEV'
-        }
-        release {
-            // Only this package ID is registered with Play.
-            manifestPlaceholders['rivoscanAppLabel'] = 'RivoScan'
-        }
+        versionCode rivoCode
+        versionName rivoNameText
     }
 }
-// Asset mode is written by the Vite postbuild and copied by Capacitor sync.
-// Block Android Studio Run after production preparation and release after a debug build.
-tasks.matching { it.name in ['preDebugBuild', 'preReleaseBuild'] }.configureEach {
-    doFirst {
-        def marker = file('src/main/assets/public/rivoscan-build-mode.txt')
-        def expected = name == 'preReleaseBuild' ? 'production' : 'debug'
-        if (!marker.isFile() || marker.getText('UTF-8').trim() != expected)
-            throw new GradleException('[RivoScan] Refusing '+name+': assets are not '+expected+
-                '. Rebuild correct variant. NEVER uninstall the installed app.')
-    }
-}
-println('[RivoScan] '+(releaseRequested ? 'RELEASE' : 'DEBUG/Android Studio')+
-    ' version '+nameText+' (versionCode '+effectiveCode+', base '+sourceCode+')')
+println("[RivoScan] Android Studio/Gradle app version: " + rivoNameText + " (versionCode " + rivoCode + ")")

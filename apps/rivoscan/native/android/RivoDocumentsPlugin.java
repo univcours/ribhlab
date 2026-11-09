@@ -3,9 +3,6 @@ package com.ribhlab.rivoscan;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.provider.DocumentsContract;
-import android.content.UriPermission;
-import androidx.activity.result.ActivityResult;
-import com.getcapacitor.annotation.ActivityCallback;
 import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,20 +10,12 @@ import java.io.InputStream;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
-import androidx.core.content.FileProvider;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.pdf.PdfRenderer;
-import android.media.ExifInterface;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -60,137 +49,6 @@ import java.util.Locale;
 public class RivoDocumentsPlugin extends Plugin {
     private static final String FOLDER = Environment.DIRECTORY_DOCUMENTS + "/RivoScan/";
     private static final String LEGACY_FOLDER = Environment.DIRECTORY_DOWNLOADS + "/RivoScan/";
-    private static final String STORAGE_PREFS="rivoscan-storage";
-    private static final String STORAGE_TREE_KEY="selectedRoot";
-    private static final String STORAGE_ROOT_ID="primary:RivoScan";
-    private static final String[] TYPE_FOLDERS={"PDF","Images","Word","Excel","PowerPoint","Text","Other"};
-    private JSArray typeFoldersArray(){JSArray arr=new JSArray();for(String folder:TYPE_FOLDERS)arr.put(folder);return arr;}
-    private String fileType(String mime,String name){
-        String m=mime==null?"":mime.toLowerCase(Locale.ROOT);
-        String n=name==null?"":name.toLowerCase(Locale.ROOT);
-        if(m.equals("application/pdf")||n.endsWith(".pdf"))return "PDF";
-        if(m.startsWith("image/")||n.matches(".*\\.(jpg|jpeg|png|webp|heic|bmp|gif)$"))return "Images";
-        if(m.contains("word")||n.matches(".*\\.(doc|docx|odt)$"))return "Word";
-        if(m.contains("spreadsheet")||m.contains("excel")||n.matches(".*\\.(xls|xlsx|csv|ods)$"))return "Excel";
-        if(m.contains("presentation")||m.contains("powerpoint")||n.matches(".*\\.(ppt|pptx|odp)$"))return "PowerPoint";
-        if(m.startsWith("text/")||n.matches(".*\\.(txt|md|rtf)$"))return "Text";
-        return "Other";
-    }
-    private Uri selectedRoot(){
-        String value=getContext().getSharedPreferences(STORAGE_PREFS,Context.MODE_PRIVATE)
-            .getString(STORAGE_TREE_KEY,null);
-        if(value==null||value.isEmpty())return null;
-        Uri tree=Uri.parse(value);
-        boolean granted=false;
-        for(UriPermission p:getContext().getContentResolver().getPersistedUriPermissions())
-            if(p.getUri().equals(tree)&&p.isReadPermission()&&p.isWritePermission()){granted=true;break;}
-        if(!granted)throw new IllegalStateException("RivoScan folder access expired. Choose RivoScan again in Documents.");
-        return tree;
-    }
-    private Uri rootDocument(Uri tree){
-        return DocumentsContract.buildDocumentUriUsingTree(tree,DocumentsContract.getTreeDocumentId(tree));
-    }
-    private Uri findChild(Uri tree,Uri parent,String name,String mime) throws Exception{
-        ContentResolver resolver=getContext().getContentResolver();
-        Uri children=DocumentsContract.buildChildDocumentsUriUsingTree(tree,DocumentsContract.getDocumentId(parent));
-        try(Cursor c=resolver.query(children,new String[]{
-            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-            DocumentsContract.Document.COLUMN_MIME_TYPE},null,null,null)){
-            if(c!=null)while(c.moveToNext()){
-                if(name.equals(c.getString(1))&&mime.equals(c.getString(2)))
-                    return DocumentsContract.buildDocumentUriUsingTree(tree,c.getString(0));
-            }
-        }
-        return null;
-    }
-    private Uri ensureChildFolder(Uri tree,Uri parent,String name) throws Exception{
-        Uri found=findChild(tree,parent,name,DocumentsContract.Document.MIME_TYPE_DIR);
-        if(found!=null)return found;
-        Uri created=DocumentsContract.createDocument(getContext().getContentResolver(),parent,
-            DocumentsContract.Document.MIME_TYPE_DIR,name);
-        if(created==null)throw new IllegalStateException("Cannot create RivoScan/"+name);
-        return created;
-    }
-    private Uri targetTreeFolder(Uri tree,String folderName) throws Exception{
-        return ensureChildFolder(tree,rootDocument(tree),folderName);
-    }
-    private Uri createTreeFile(Uri tree,String folderName,String name,String mime) throws Exception{
-        Uri folder=targetTreeFolder(tree,folderName);
-        Uri target=DocumentsContract.createDocument(getContext().getContentResolver(),folder,mime,name);
-        if(target==null)throw new IllegalStateException("Cannot create file in RivoScan/"+folderName);
-        return target;
-    }
-    private boolean trustedTreeFile(Uri uri){
-        try{
-            Uri root=selectedRoot();
-            if(root==null||!root.getAuthority().equals(uri.getAuthority())||
-               !DocumentsContract.isDocumentUri(getContext(),uri))return false;
-            String treeId=DocumentsContract.getTreeDocumentId(root);
-            String parentId=DocumentsContract.getTreeDocumentId(uri);
-            String docId=DocumentsContract.getDocumentId(uri);
-            if(!STORAGE_ROOT_ID.equals(treeId)||!treeId.equals(parentId)||
-               !docId.startsWith(treeId+"/"))return false;
-            try(Cursor c=getContext().getContentResolver().query(uri,new String[]{
-                DocumentsContract.Document.COLUMN_MIME_TYPE},null,null,null)){
-                return c!=null&&c.moveToFirst()&&
-                    !DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(0));
-            }
-        }catch(Exception ignore){return false;}
-    }
-    @PluginMethod
-    public void chooseStorageFolder(PluginCall call){
-        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|
-            Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        try{
-            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI,
-                DocumentsContract.buildDocumentUri("com.android.externalstorage.documents",STORAGE_ROOT_ID));
-        }catch(Exception ignored){}
-        startActivityForResult(call,intent,"chosenStorageFolder");
-    }
-    @ActivityCallback
-    private void chosenStorageFolder(PluginCall call,ActivityResult result){
-        if(call==null)return;
-        if(result.getResultCode()!=android.app.Activity.RESULT_OK||result.getData()==null||
-            result.getData().getData()==null){
-            call.reject("Folder selection cancelled. Files have not moved.");return;
-        }
-        Uri root=result.getData().getData();
-        try{
-            // Never request storage-root or broad file access. The selected
-            // child RivoScan must be a sibling of Download on primary storage.
-            if(!"com.android.externalstorage.documents".equals(root.getAuthority())||
-                !STORAGE_ROOT_ID.equals(DocumentsContract.getTreeDocumentId(root))){
-                call.reject("Choose the folder named RivoScan at Internal storage root, next to Download. Do not select Download itself.");
-                return;
-            }
-            int flags=result.getData().getFlags()&
-                (Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            if((flags&Intent.FLAG_GRANT_READ_URI_PERMISSION)==0||
-               (flags&Intent.FLAG_GRANT_WRITE_URI_PERMISSION)==0)
-                throw new IllegalStateException("Read/write folder access was not granted.");
-            getContext().getContentResolver().takePersistableUriPermission(root,flags);
-            // Prepare all type folders before committing preference. A failed
-            // selection cannot redirect future saves to a half-working tree.
-            for(String folder:TYPE_FOLDERS)targetTreeFolder(root,folder);
-            getContext().getSharedPreferences(STORAGE_PREFS,Context.MODE_PRIVATE).edit()
-                .putString(STORAGE_TREE_KEY,root.toString()).apply();
-            JSObject out=new JSObject();out.put("configured",true);
-            out.put("path","RivoScan/");out.put("folders",typeFoldersArray());
-            call.resolve(out);
-        }catch(Exception e){call.reject("Could not prepare RivoScan folder: "+e.getMessage(),e);}
-    }
-    @PluginMethod
-    public void getStorageFolder(PluginCall call){
-        try{
-            Uri root=selectedRoot();
-            JSObject out=new JSObject();out.put("configured",root!=null);
-            out.put("path",root!=null?"RivoScan/":FOLDER);
-            out.put("requestedPath","Internal storage/RivoScan/");
-            out.put("folders",typeFoldersArray());call.resolve(out);
-        }catch(Exception e){call.reject("RivoScan directory permission needs renewal: "+e.getMessage(),e);}
-    }
     private static Uri documentsCollection(){
         return MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
     }
@@ -326,14 +184,14 @@ public class RivoDocumentsPlugin extends Plugin {
     public void openFolder(PluginCall call) {
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
         try{
-            Uri root=selectedRoot();
             Intent browse=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            Uri location=root==null?DocumentsContract.buildDocumentUri(
-                "com.android.externalstorage.documents","primary:Documents/RivoScan"):root;
+            Uri location=DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents","primary:Documents/RivoScan");
             browse.putExtra(DocumentsContract.EXTRA_INITIAL_URI,location);
             browse.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             getActivity().startActivity(browse);
-            JSObject out=new JSObject();out.put("path",root!=null?"RivoScan/":FOLDER);
+            JSObject out=new JSObject();
+            out.put("path",FOLDER);
             call.resolve(out);
         }catch(Exception e){call.reject("Could not open Android file browser: "+e.getMessage(),e);}
     }
@@ -370,116 +228,6 @@ public class RivoDocumentsPlugin extends Plugin {
         return name;
     }
 
-    // Reserved, single user-visible workbook; a private JSON record store in
-    // Capacitor Data is the recovery source if an XLSX update is interrupted.
-    private static final String CODE_LEDGER_NAME="RivoScan_Scanned_Codes.xlsx";
-    private static final String CODE_LEDGER_MIME=
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-    private Uri findCodeLedgerInMediaStore() throws Exception {
-        ContentResolver resolver=getContext().getContentResolver();
-        String folder=FOLDER+"Excel/";
-        String columns[]={MediaStore.MediaColumns._ID,
-            MediaStore.MediaColumns.OWNER_PACKAGE_NAME};
-        String selection=MediaStore.MediaColumns.DISPLAY_NAME+"=? AND "+
-            MediaStore.MediaColumns.RELATIVE_PATH+"=?";
-        try(Cursor c=resolver.query(documentsCollection(),columns,selection,
-            new String[]{CODE_LEDGER_NAME,folder},null)){
-            if(c!=null)while(c.moveToNext()){
-                // Do not overwrite or delete a same-named file belonging to
-                // another application, even inside the RivoScan folder.
-                if(getContext().getPackageName().equals(c.getString(1)))
-                    return ContentUris.withAppendedId(documentsCollection(),c.getLong(0));
-            }
-        }
-        return null;
-    }
-
-    private Uri findCodeLedgerInTree(Uri tree) throws Exception {
-        Uri folder=findChild(tree,rootDocument(tree),"Excel",
-            DocumentsContract.Document.MIME_TYPE_DIR);
-        return folder==null?null:findChild(tree,folder,CODE_LEDGER_NAME,CODE_LEDGER_MIME);
-    }
-
-    /** Replace exactly one RivoScan/Excel workbook, never create a new copy per scan. */
-    @PluginMethod
-    public void upsertCodeLedger(PluginCall call) {
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
-        String encoded=call.getString("base64");
-        if(encoded==null||encoded.length()>28*1024*1024){call.reject("Invalid code ledger size.");return;}
-        byte[] bytes;
-        try{bytes=Base64.decode(encoded,Base64.DEFAULT);}
-        catch(Exception ex){call.reject("Invalid Excel workbook.",ex);return;}
-        if(bytes.length<4||bytes.length>20*1024*1024||
-           bytes[0]!='P'||bytes[1]!='K'||bytes[2]!=3||bytes[3]!=4){
-            call.reject("Code ledger must be a valid-size XLSX ZIP package.");return;
-        }
-        Uri created=null,existing=null,tree=null,target=null;
-        ContentResolver resolver=getContext().getContentResolver();
-        try{
-            tree=selectedRoot();
-            existing=tree!=null?findCodeLedgerInTree(tree):findCodeLedgerInMediaStore();
-            target=existing;
-            if(target==null){
-                if(tree!=null)created=createTreeFile(tree,"Excel",CODE_LEDGER_NAME,CODE_LEDGER_MIME);
-                else{
-                    ContentValues meta=new ContentValues();
-                    meta.put(MediaStore.MediaColumns.DISPLAY_NAME,CODE_LEDGER_NAME);
-                    meta.put(MediaStore.MediaColumns.MIME_TYPE,CODE_LEDGER_MIME);
-                    meta.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER+"Excel/");
-                    meta.put(MediaStore.MediaColumns.IS_PENDING,1);
-                    created=resolver.insert(documentsCollection(),meta);
-                }
-                target=created;
-            }
-            if(target==null)throw new IllegalStateException("Could not create Excel database.");
-            try(OutputStream out=resolver.openOutputStream(target,"wt")){
-                if(out==null)throw new IllegalStateException("Cannot write Excel database.");
-                out.write(bytes);out.flush();
-            }
-            if(created!=null&&tree==null){
-                ContentValues publish=new ContentValues();
-                publish.put(MediaStore.MediaColumns.IS_PENDING,0);
-                if(resolver.update(created,publish,null,null)<1)
-                    throw new IllegalStateException("Could not publish Excel database.");
-            }
-            JSObject response=new JSObject();
-            response.put("uri",target.toString());
-            response.put("name",CODE_LEDGER_NAME);
-            response.put("size",bytes.length);
-            response.put("updated",existing!=null);
-            call.resolve(response);
-        }catch(Exception error){
-            // On failure, delete only a newly created incomplete workbook.
-            // Existing workbook and the private scan-record database are retained.
-            if(created!=null)try{
-                if(tree!=null)DocumentsContract.deleteDocument(resolver,created);
-                else resolver.delete(created,null,null);
-            }catch(Exception ignored){}
-            call.reject("Could not update RivoScan Excel code database: "+error.getMessage(),error);
-        }
-    }
-
-    /** Explicit full clear, scoped to the reserved code workbook only. */
-    @PluginMethod
-    public void clearCodeLedger(PluginCall call) {
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
-        try{
-            Uri tree=selectedRoot();
-            Uri target=tree!=null?findCodeLedgerInTree(tree):findCodeLedgerInMediaStore();
-            boolean deleted=false;
-            if(target!=null){
-                ContentResolver resolver=getContext().getContentResolver();
-                deleted=tree!=null?DocumentsContract.deleteDocument(resolver,target)
-                    :resolver.delete(target,null,null)>0;
-                if(!deleted)throw new IllegalStateException("Could not clear workbook.");
-            }
-            JSObject response=new JSObject();
-            response.put("deleted",deleted);
-            call.resolve(response);
-        }catch(Exception error){call.reject("Could not clear code database: "+error.getMessage(),error);}
-    }
-
     @PluginMethod
     public void saveFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
@@ -499,79 +247,34 @@ public class RivoDocumentsPlugin extends Plugin {
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
         values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH, FOLDER+fileType(mime,name)+"/");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH, FOLDER);
         values.put(MediaStore.MediaColumns.IS_PENDING, 1);
         Uri target = null;
-        Uri selectedTree = null;
         try {
-            selectedTree=selectedRoot();
-            target = selectedTree!=null
-                ?createTreeFile(selectedTree,fileType(mime,name),name,mime)
-                :resolver.insert(documentsCollection(), values);
-            if (target == null) throw new IllegalStateException("Could not create a document in RivoScan.");
+            target = resolver.insert(documentsCollection(), values);
+            if (target == null) throw new IllegalStateException("Could not create a document in Documents.");
             try (OutputStream output = resolver.openOutputStream(target, "w")) {
                 if (output == null) throw new IllegalStateException("Could not write the selected file.");
                 output.write(bytes);
                 output.flush();
             }
-            if(selectedTree==null){
-                ContentValues visible = new ContentValues();
-                visible.put(MediaStore.MediaColumns.IS_PENDING, 0);
-                if(resolver.update(target,visible,null,null)<1)
-                    throw new IllegalStateException("Could not finalize MediaStore document.");
-            }
+            ContentValues visible = new ContentValues();
+            visible.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            resolver.update(target, visible, null, null);
             JSObject out = new JSObject();
             out.put("uri", target.toString());
             out.put("name", name);
             out.put("mimeType", mime);
             out.put("size", bytes.length);
-            out.put("folder", selectedTree!=null?"RivoScan/"+fileType(mime,name)+"/":FOLDER+fileType(mime,name)+"/");
+            out.put("folder", FOLDER);
             call.resolve(out);
         } catch (Exception e) {
-            if (target != null) { try {
-                if(selectedTree!=null)DocumentsContract.deleteDocument(resolver,target);
-                else resolver.delete(target,null,null);
-            } catch (Exception ignored) {} }
-            call.reject("Document could not be saved in RivoScan: " + e.getMessage(), e);
+            if (target != null) { try { resolver.delete(target, null, null); } catch (Exception ignored) {} }
+            call.reject("Document could not be saved to Documents/RivoScan: " + e.getMessage(), e);
         }
     }
 
-
-    /** List only app-selected RivoScan tree descendants. No access to other
-     * internal-storage directories and no MANAGE_EXTERNAL_STORAGE permission. */
-    private int appendTreeFiles(JSArray items,Uri tree,Uri parent,String folder,int depth,int limit) throws Exception{
-        if(depth>3||limit<=0)return 0;
-        ContentResolver resolver=getContext().getContentResolver();
-        Uri children=DocumentsContract.buildChildDocumentsUriUsingTree(tree,DocumentsContract.getDocumentId(parent));
-        int added=0;
-        try(Cursor c=resolver.query(children,new String[]{
-            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-            DocumentsContract.Document.COLUMN_MIME_TYPE,
-            DocumentsContract.Document.COLUMN_SIZE,
-            DocumentsContract.Document.COLUMN_LAST_MODIFIED},null,null,null)){
-            if(c==null)return 0;
-            while(c.moveToNext()&&added<limit){
-                String name=c.getString(1),mime=c.getString(2),id=c.getString(0);
-                if(name==null||id==null)continue;
-                Uri doc=DocumentsContract.buildDocumentUriUsingTree(tree,id);
-                if(DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)){
-                    added+=appendTreeFiles(items,tree,doc,folder+name+"/",depth+1,limit-added);
-                }else{
-                    JSObject item=new JSObject();
-                    item.put("uri",doc.toString());item.put("name",name);
-                    item.put("size",c.isNull(3)?0:c.getLong(3));
-                    item.put("created",c.isNull(4)?0:c.getLong(4));
-                    item.put("mimeType",mime);
-                    item.put("folder",folder);
-                    item.put("legacy",false);
-                    items.put(item);added++;
-                }
-            }
-        }
-        return added;
-    }
-    /** Old user documents remain accessible even after changing the default folder. */
+    /** Keep old scans accessible while all new photos, PDFs and other files go to Documents. */
     private void appendFolderFiles(JSArray items,Uri collection,String folder) throws Exception{
         ContentResolver resolver=getContext().getContentResolver();
         try(Cursor cursor=resolver.query(collection,
@@ -605,8 +308,6 @@ public class RivoDocumentsPlugin extends Plugin {
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
         JSArray items=new JSArray();
         try{
-            Uri root=selectedRoot();
-            if(root!=null)appendTreeFiles(items,root,rootDocument(root),"RivoScan/",0,400);
             appendFolderFiles(items,documentsCollection(),FOLDER);
             try{appendFolderFiles(items,legacyDownloadsCollection(),LEGACY_FOLDER);}
             catch(Exception legacyError){
@@ -614,8 +315,7 @@ public class RivoDocumentsPlugin extends Plugin {
             }
             JSObject result=new JSObject();
             result.put("files",items);
-            result.put("folder",selectedRoot()!=null?"RivoScan/":FOLDER);
-            result.put("configured",selectedRoot()!=null);
+            result.put("folder",FOLDER);
             result.put("legacyFolder",LEGACY_FOLDER);
             call.resolve(result);
         }catch(Exception e){
@@ -626,11 +326,6 @@ public class RivoDocumentsPlugin extends Plugin {
     private Uri verifiedUri(PluginCall call){
         String raw=call.getString("uri");
         if(raw==null){call.reject("Invalid RivoScan document link.");return null;}
-        if(raw.startsWith("content://com.android.externalstorage.documents/")){
-            Uri saf=Uri.parse(raw);
-            if(trustedTreeFile(saf))return saf;
-            call.reject("Invalid RivoScan folder permission or document.");return null;
-        }
         boolean isNew=raw.startsWith(documentsCollection().toString()+"/");
         boolean isOld=raw.startsWith(legacyDownloadsCollection().toString()+"/");
         if(!isNew&&!isOld){call.reject("Invalid RivoScan document link.");return null;}
@@ -683,108 +378,6 @@ public class RivoDocumentsPlugin extends Plugin {
         } catch (Exception e) { call.reject("Cannot read document: " + e.getMessage(),e); }
     }
 
-
-    /**
-     * Bounded thumbnails from real user-owned PDF/image documents.
-     * Only RivoScan/legacy RivoScan folder URIs pass verifiedUri().
-     * Rasterization is off the UI thread and does not mutate source bytes.
-     * Maximum output dimension 220px; never send an entire PDF to WebView.
-     */
-    @PluginMethod
-    public void getThumbnail(PluginCall call){
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
-        final Uri uri=verifiedUri(call);
-        if(uri==null)return;
-        new Thread(()->{
-            Bitmap thumbnail=null;
-            try{
-                ContentResolver resolver=getContext().getContentResolver();
-                String mime=mimeOf(uri);
-                String name="";
-                try(Cursor c=resolver.query(uri,new String[]{MediaStore.MediaColumns.DISPLAY_NAME},null,null,null)){
-                    if(c!=null&&c.moveToFirst())name=c.getString(0);
-                }
-                String lower=name==null?"":name.toLowerCase(Locale.ROOT);
-                boolean isPdf="application/pdf".equals(mime)||lower.endsWith(".pdf");
-                boolean isImage=(mime!=null&&mime.startsWith("image/"))
-                    ||lower.matches(".*\\.(jpg|jpeg|png|webp|heic)$");
-                if(!isPdf&&!isImage){call.reject("Preview supports PDF or image files.");return;}
-                final int maxDimension=220;
-                if(isPdf){
-                    try(ParcelFileDescriptor descriptor=resolver.openFileDescriptor(uri,"r")){
-                        if(descriptor==null)throw new IllegalStateException("PDF cannot be opened.");
-                        try(PdfRenderer pdf=new PdfRenderer(descriptor)){
-                            if(pdf.getPageCount()<1)throw new IllegalStateException("Empty PDF.");
-                            try(PdfRenderer.Page page=pdf.openPage(0)){
-                                float scale=Math.min((float)maxDimension/Math.max(1,page.getWidth()),
-                                    (float)maxDimension/Math.max(1,page.getHeight()));
-                                int w=Math.max(1,Math.round(page.getWidth()*scale));
-                                int h=Math.max(1,Math.round(page.getHeight()*scale));
-                                thumbnail=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
-                                Canvas canvas=new Canvas(thumbnail);
-                                canvas.drawColor(Color.WHITE);
-                                page.render(thumbnail,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-                            }
-                        }
-                    }
-                }else{
-                    BitmapFactory.Options bounds=new BitmapFactory.Options();
-                    bounds.inJustDecodeBounds=true;
-                    try(InputStream in=resolver.openInputStream(uri)){
-                        if(in==null)throw new IllegalStateException("Image unavailable.");
-                        BitmapFactory.decodeStream(in,null,bounds);
-                    }
-                    if(bounds.outWidth<1||bounds.outHeight<1)throw new IllegalStateException("Image unreadable.");
-                    BitmapFactory.Options sample=new BitmapFactory.Options();
-                    sample.inSampleSize=1;
-                    while((bounds.outWidth/sample.inSampleSize)>maxDimension*2
-                        ||(bounds.outHeight/sample.inSampleSize)>maxDimension*2)
-                        sample.inSampleSize*=2;
-                    try(InputStream in=resolver.openInputStream(uri)){
-                        if(in==null)throw new IllegalStateException("Image unavailable.");
-                        thumbnail=BitmapFactory.decodeStream(in,null,sample);
-                    }
-                    if(thumbnail==null)throw new IllegalStateException("Image decode failed.");
-                    int orientation=ExifInterface.ORIENTATION_NORMAL;
-                    try(InputStream in=resolver.openInputStream(uri)){
-                        if(in!=null)orientation=new ExifInterface(in).getAttributeInt(
-                            ExifInterface.TAG_ORIENTATION,ExifInterface.ORIENTATION_NORMAL);
-                    }catch(Exception ignored){}
-                    int degrees=orientation==ExifInterface.ORIENTATION_ROTATE_90?90:
-                        orientation==ExifInterface.ORIENTATION_ROTATE_180?180:
-                        orientation==ExifInterface.ORIENTATION_ROTATE_270?270:0;
-                    if(degrees!=0){
-                        Matrix matrix=new Matrix();matrix.postRotate(degrees);
-                        Bitmap rotated=Bitmap.createBitmap(thumbnail,0,0,
-                            thumbnail.getWidth(),thumbnail.getHeight(),matrix,true);
-                        if(rotated!=thumbnail)thumbnail.recycle();
-                        thumbnail=rotated;
-                    }
-                    float ratio=Math.min(1f,(float)maxDimension/
-                        Math.max(thumbnail.getWidth(),thumbnail.getHeight()));
-                    if(ratio<1f){
-                        Bitmap reduced=Bitmap.createScaledBitmap(thumbnail,
-                            Math.max(1,Math.round(thumbnail.getWidth()*ratio)),
-                            Math.max(1,Math.round(thumbnail.getHeight()*ratio)),true);
-                        if(reduced!=thumbnail)thumbnail.recycle();
-                        thumbnail=reduced;
-                    }
-                }
-                ByteArrayOutputStream bytes=new ByteArrayOutputStream(35000);
-                if(!thumbnail.compress(Bitmap.CompressFormat.JPEG,72,bytes))
-                    throw new IllegalStateException("Preview encoding failed.");
-                JSObject result=new JSObject();
-                result.put("base64",Base64.encodeToString(bytes.toByteArray(),Base64.NO_WRAP));
-                result.put("mimeType","image/jpeg");
-                call.resolve(result);
-            }catch(Exception error){
-                call.reject("Cannot render document thumbnail: "+error.getMessage(),error);
-            }finally{
-                if(thumbnail!=null&&!thumbnail.isRecycled())thumbnail.recycle();
-            }
-        },"RivoScan-Document-Thumb").start();
-    }
-
     @PluginMethod
     public void renameFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
@@ -805,15 +398,10 @@ public class RivoDocumentsPlugin extends Plugin {
         if(base.length()>90)base=base.substring(0,90);
         String newName=base+originalExt;
         try{
-            if(trustedTreeFile(uri)){
-                Uri renamed=DocumentsContract.renameDocument(getContext().getContentResolver(),uri,newName);
-                if(renamed==null)throw new IllegalStateException("Android could not rename this file.");
-            }else{
-                ContentValues values=new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME,newName);
-                int updated=getContext().getContentResolver().update(uri,values,null,null);
-                if(updated<1){call.reject("Could not rename document.");return;}
-            }
+            ContentValues values=new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME,newName);
+            int updated=getContext().getContentResolver().update(uri,values,null,null);
+            if(updated<1){call.reject("Could not rename document.");return;}
             JSObject response=new JSObject();response.put("name",newName);call.resolve(response);
         }catch(Exception e){call.reject("Rename failed: "+e.getMessage(),e);}
     }
@@ -825,44 +413,11 @@ public class RivoDocumentsPlugin extends Plugin {
         try {
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, mimeOf(uri));
-            open.addCategory(Intent.CATEGORY_DEFAULT);
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            // Only inspect ACTION_VIEW handlers, declared under <queries>.
-            if(getActivity().getPackageManager().queryIntentActivities(open,
-                    android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).isEmpty()){
-                JSObject fallback=new JSObject();
-                fallback.put("opened",false);
-                call.resolve(fallback);
-                return;
-            }
-            getActivity().startActivity(Intent.createChooser(open, localized("openDocument"))
+            getContext().startActivity(Intent.createChooser(open, localized("openDocument"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            JSObject result=new JSObject();result.put("opened",true);
-            call.resolve(result);
+            call.resolve();
         } catch (Exception e) { call.reject("No compatible app can open this document.", e); }
-    }
-
-    /** User-selected external editor. Grant the receiving app write access only
-     * to the verified RivoScan document URI; no broad storage permission. */
-    @PluginMethod
-    public void editFile(PluginCall call) {
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
-        Uri uri=verifiedUri(call);if(uri==null)return;
-        try {
-            Intent edit=new Intent(Intent.ACTION_EDIT);
-            edit.setDataAndType(uri,mimeOf(uri));
-            edit.setClipData(android.content.ClipData.newUri(
-                getContext().getContentResolver(),"RivoScan document",uri));
-            edit.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                          Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            getActivity().startActivity(Intent.createChooser(edit,
-                "Choose an app to edit").addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
-            JSObject result=new JSObject();result.put("opened",true);call.resolve(result);
-        } catch(Exception error) {
-            call.reject("Install an editor that supports this file type, then try again.",error);
-        }
     }
 
     @PluginMethod
@@ -877,58 +432,6 @@ public class RivoDocumentsPlugin extends Plugin {
             getActivity().startActivity(Intent.createChooser(share, localized("shareDocument")));
             call.resolve();
         } catch (Exception e) { call.reject("Sharing failed: " + e.getMessage(), e); }
-    }
-
-
-    /** Share temporary JPGs produced from a PDF. Unlike saveFile(), this never
-     * creates visible files in Documents/RivoScan, so scans remain PDF-only.
-     * Android grant URI persists long enough for the receiving application. */
-    @PluginMethod
-    public void shareJpgPages(PluginCall call){
-        JSArray images=call.getArray("imagesBase64");
-        if(images==null||images.length()<1||images.length()>30){
-            call.reject("Choose between 1 and 30 JPEG pages.");return;
-        }
-        java.util.ArrayList<Uri> uris=new java.util.ArrayList<>();
-        java.util.ArrayList<File> written=new java.util.ArrayList<>();
-        try{
-            File folder=new File(getContext().getCacheDir(),"rivo-shared-jpg");
-            if(!folder.isDirectory()&&!folder.mkdirs())
-                throw new IllegalStateException("Cannot prepare temporary share folder.");
-            File[] old=folder.listFiles();
-            if(old!=null)for(File file:old){
-                if(file.isFile()&&System.currentTimeMillis()-file.lastModified()>86400000L)file.delete();
-            }
-            long total=0;
-            String authority=getContext().getPackageName()+".rivoscan.share";
-            for(int i=0;i<images.length();i++){
-                String encoded=images.getString(i);
-                if(encoded==null||encoded.length()<4||encoded.length()>16*1024*1024)
-                    throw new IllegalArgumentException("Invalid JPEG page.");
-                byte[] bytes=Base64.decode(encoded,Base64.DEFAULT);
-                total+=bytes.length;
-                if(total>60L*1024*1024||bytes.length<4||bytes[0]!=(byte)0xff||bytes[1]!=(byte)0xd8)
-                    throw new IllegalArgumentException("JPG sharing limit or format mismatch.");
-                File file=new File(folder,"RivoScan_Page_"+System.currentTimeMillis()+"_"+(i+1)+".jpg");
-                try(FileOutputStream out=new FileOutputStream(file)){out.write(bytes);}
-                written.add(file);
-                uris.add(FileProvider.getUriForFile(getContext(),authority,file));
-            }
-            Intent share=new Intent(uris.size()==1?Intent.ACTION_SEND:Intent.ACTION_SEND_MULTIPLE);
-            share.setType("image/jpeg");
-            if(uris.size()==1)share.putExtra(Intent.EXTRA_STREAM,uris.get(0));
-            else share.putParcelableArrayListExtra(Intent.EXTRA_STREAM,uris);
-            android.content.ClipData clips=android.content.ClipData.newUri(
-                getContext().getContentResolver(),"RivoScan JPG",uris.get(0));
-            for(int i=1;i<uris.size();i++)clips.addItem(new android.content.ClipData.Item(uris.get(i)));
-            share.setClipData(clips);
-            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            getActivity().startActivity(Intent.createChooser(share,localized("shareDocument")));
-            call.resolve();
-        }catch(Exception error){
-            for(File file:written)file.delete();
-            call.reject("Unable to share JPG pages: "+error.getMessage(),error);
-        }
     }
 
     /** Share existing documents together; no copies and no loss of original quality.
@@ -964,8 +467,6 @@ public class RivoDocumentsPlugin extends Plugin {
     private Uri validatedDocumentUri(String raw){
         if(raw==null)return null;
         Uri uri=Uri.parse(raw);
-        if(raw.startsWith("content://com.android.externalstorage.documents/"))
-            return trustedTreeFile(uri)?uri:null;
         String current=documentsCollection().toString()+"/";
         String legacy=legacyDownloadsCollection().toString()+"/";
         if(!raw.startsWith(current)&&!raw.startsWith(legacy))return null;
@@ -974,63 +475,6 @@ public class RivoDocumentsPlugin extends Plugin {
             if(cursor==null||!cursor.moveToFirst()||!isRivoFolder(cursor.getString(0)))return null;
             return uri;
         }catch(Exception ignored){return null;}
-    }
-
-
-    /** Safe, verified copy-then-optional-delete between legacy docs and user-
-     * selected RivoScan root. Failures keep the original; never delete first. */
-    private void organizeInSelectedRoot(PluginCall call,Uri source,Uri tree,
-        String requested,boolean move){
-        Uri target=null;
-        boolean published=false;
-        ContentResolver resolver=getContext().getContentResolver();
-        try{
-            String name,mime;long size;
-            try(Cursor c=resolver.query(source,new String[]{
-                MediaStore.MediaColumns.DISPLAY_NAME,MediaStore.MediaColumns.MIME_TYPE,
-                MediaStore.MediaColumns.SIZE},null,null,null)){
-                if(c==null||!c.moveToFirst())throw new IllegalStateException("File is missing.");
-                name=c.getString(0);mime=c.getString(1);size=c.isNull(2)?0:c.getLong(2);
-            }
-            if(size>300L*1024*1024)throw new IllegalStateException("Maximum copy size is 300 MB.");
-            if(mime==null||mime.isEmpty())mime="application/octet-stream";
-            String folder=requested.isEmpty()?fileType(mime,name):requested;
-            if(!requested.isEmpty()){
-                boolean allowed=false;
-                for(String nameOfFolder:ORGANIZE_FOLDERS)
-                    if(nameOfFolder.equals(requested))allowed=true;
-                if(!allowed)throw new IllegalArgumentException("Invalid destination folder.");
-            }
-            target=createTreeFile(tree,folder,name,mime);
-            long bytes=0;
-            try(InputStream in=resolver.openInputStream(source);
-                OutputStream out=resolver.openOutputStream(target,"w")){
-                if(in==null||out==null)throw new IllegalStateException("Could not read/write RivoScan file.");
-                byte[] buffer=new byte[32768];int n;
-                while((n=in.read(buffer))!=-1){
-                    bytes+=n;if(bytes>300L*1024*1024)throw new IllegalStateException("File exceeds limit.");
-                    out.write(buffer,0,n);
-                }
-                out.flush();
-            }
-            if(size>0&&bytes!=size)throw new IllegalStateException("Copied file size mismatch.");
-            published=true;
-            if(move){
-                boolean deleted=trustedTreeFile(source)
-                    ?DocumentsContract.deleteDocument(resolver,source)
-                    :resolver.delete(source,null,null)>0;
-                if(!deleted)throw new IllegalStateException(
-                    "The copy succeeded, but the old file could not be removed. Both are safe.");
-            }
-            JSObject out=new JSObject();out.put("uri",target.toString());
-            out.put("folder","RivoScan/"+folder+"/");out.put("moved",move);
-            out.put("name",name);call.resolve(out);
-        }catch(Exception error){
-            if(target!=null&&!published){
-                try{DocumentsContract.deleteDocument(resolver,target);}catch(Exception ignored){}
-            }
-            call.reject("Could not organize in RivoScan: "+error.getMessage(),error);
-        }
     }
 
     /** Copy/move only between explicit RivoScan folders. The source is never removed
@@ -1042,16 +486,6 @@ public class RivoDocumentsPlugin extends Plugin {
         String folder=safeSubfolder(call.getString("folder",""));
         if(folder==null){call.reject("Invalid destination folder.");return;}
         boolean move=Boolean.TRUE.equals(call.getBoolean("move",false));
-
-        // When the user selected Internal storage/RivoScan, organizing also
-        // stays within that tree, even for old MediaStore documents.
-        Uri tree=null;
-        try{tree=selectedRoot();}
-        catch(Exception e){call.reject("Choose RivoScan folder again before organizing: "+e.getMessage(),e);return;}
-        if(tree!=null){
-            organizeInSelectedRoot(call,source,tree,call.getString("folder",""),move);
-            return;
-        }
         ContentResolver resolver=getContext().getContentResolver();
         Uri destination=null;
         try{
@@ -1116,9 +550,7 @@ public class RivoDocumentsPlugin extends Plugin {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
         Uri uri = verifiedUri(call); if (uri == null) return;
         try {
-            int deleted = trustedTreeFile(uri)
-                ? (DocumentsContract.deleteDocument(getContext().getContentResolver(),uri)?1:0)
-                : getContext().getContentResolver().delete(uri,null,null);
+            int deleted = getContext().getContentResolver().delete(uri, null, null);
             if (deleted < 1) throw new IllegalStateException("Nothing was deleted.");
             call.resolve();
         } catch (Exception e) { call.reject("Could not delete document: " + e.getMessage(), e); }

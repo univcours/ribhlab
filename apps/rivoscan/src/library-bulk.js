@@ -5,14 +5,15 @@ import {makeLongImage,makeWordText} from './share-exports.js';
 export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
+  let suppressUntil=0;
   const translations={
-    en:['Select','selected','Select all','Invert','Cancel','Delete','Share','Merge PDF','Edit','Preview','Document actions','Share as','Quality','PDF','JPG images','Original / best','Balanced','Small file','Prepare and share','Processed on your phone. Converted copies are saved in Documents/RivoScan.','Reduced PDF quality converts text to images; original preserves editable text.','Delete {n} documents permanently?','Limit: 30 documents.','Limit: 30 image pages.','File exceeds the 16 MB conversion limit. Share the original instead.','Select documents first.','Completed','Stopped; remaining files are safe.','Select at least two documents.','Tick the checkbox to see document actions.','Add to selection','Remove from selection','Preparing document','Pages limit exceeded.'],
-    ar:['تحديد','مختارة','تحديد الكل','عكس الاختيار','إلغاء','مسح','مشاركة','جمع PDF','تعديل','معاينة','خيارات الوثيقة','شارك بصيغة','الجودة','PDF','صور JPG','أصلية / أعلى جودة','متوازنة','حجم صغير','تحضير ومشاركة','التحويل كيتم فهاتفك. النسخ كتتحفظ فـDocuments/RivoScan.','الجودة المنخفضة كتبدل نص PDF بصور؛ الأصلية كتحافظ عليه.','واش تمسح {n} وثائق نهائياً؟','الحد الأقصى 30 وثيقة.','الحد الأقصى 30 صورة.','الوثيقة أكبر من 16 ميغا للتحويل. شارك الأصلية.','اختار الوثائق أولاً.','تكمّلات العملية','توقّفات العملية؛ الملفات الباقية ما تمسحاتش.','اختار جوج وثائق على الأقل.','علّم على مربع الاختيار باش تبان عمليات الوثيقة.','زيد للتحديد','حيد من التحديد','كنوجدو الوثيقة','عدد الصفحات فات الحد.'],
-    fr:['Sélectionner','sélectionnés','Tout sélectionner','Inverser','Annuler','Supprimer','Partager','Fusionner PDF','Modifier','Aperçu','Actions du document','Partager en','Qualité','PDF','Images JPG','Originale / optimale','Équilibrée','Petit fichier','Préparer et partager','Traitement local. Copies dans Documents/RivoScan.','La qualité réduite transforme le texte PDF en images.','Supprimer définitivement {n} documents ?','Maximum 30 documents.','Maximum 30 images.','Fichier trop volumineux (16 Mo). Partagez l’original.','Sélectionnez des documents.','Terminé','Arrêté : les autres fichiers sont préservés.','Sélectionnez deux documents.','Cochez une case pour afficher les actions.','Ajouter','Désélectionner','Préparation…','Trop de pages.'],
-    es:['Seleccionar','seleccionados','Todo','Invertir','Cancelar','Eliminar','Compartir','Unir PDF','Editar','Vista previa','Acciones','Compartir como','Calidad','PDF','Imágenes JPG','Original / máxima','Equilibrada','Archivo pequeño','Preparar y compartir','Proceso local. Copias en Documents/RivoScan.','Menor calidad convierte el texto PDF en imágenes.','¿Eliminar {n} documentos definitivamente?','Máximo 30 documentos.','Máximo 30 imágenes.','Archivo demasiado grande (16 MB). Comparte el original.','Selecciona documentos.','Completado','Detenido. Los demás archivos siguen intactos.','Selecciona dos documentos.','Marca la casilla para ver las acciones.','Añadir','Quitar','Preparando…','Demasiadas páginas.'],
-    de:['Auswählen','ausgewählt','Alle auswählen','Umkehren','Abbrechen','Löschen','Teilen','PDF verbinden','Bearbeiten','Vorschau','Aktionen','Teilen als','Qualität','PDF','JPG-Bilder','Original / beste','Ausgewogen','Klein','Vorbereiten und teilen','Lokal verarbeitet. Kopien in Documents/RivoScan.','Reduzierte Qualität wandelt PDF-Text in Bilder um.','{n} Dokumente dauerhaft löschen?','Maximal 30 Dokumente.','Maximal 30 Bilder.','Datei zu groß (16 MB). Original teilen.','Dokumente wählen.','Fertig','Angehalten. Übrige Dateien sicher.','Zwei Dokumente wählen.','Kontrollkästchen auswählen, um Aktionen zu sehen.','Hinzufügen','Entfernen','Vorbereitung…','Zu viele Seiten.'],
-    pt:['Selecionar','selecionados','Selecionar tudo','Inverter','Cancelar','Eliminar','Partilhar','Unir PDF','Editar','Pré-visualizar','Ações','Partilhar como','Qualidade','PDF','Imagens JPG','Original / máxima','Equilibrada','Pequeno','Preparar e partilhar','Processamento local. Cópias em Documents/RivoScan.','Qualidade inferior transforma texto PDF em imagem.','Eliminar {n} documentos definitivamente?','Máximo 30 documentos.','Máximo 30 imagens.','Ficheiro muito grande (16 MB). Partilhe o original.','Selecione documentos.','Concluído','Interrompido. Restantes ficheiros intactos.','Selecione dois documentos.','Marque a caixa para ver as ações.','Adicionar','Remover','Preparando…','Demasiadas páginas.'],
-    it:['Seleziona','selezionati','Seleziona tutto','Inverti','Annulla','Elimina','Condividi','Unisci PDF','Modifica','Anteprima','Azioni','Condividi come','Qualità','PDF','Immagini JPG','Originale / massima','Bilanciata','Piccolo','Prepara e condividi','Elaborazione locale. Copie in Documents/RivoScan.','Qualità ridotta converte il testo PDF in immagini.','Eliminare {n} documenti definitivamente?','Massimo 30 documenti.','Massimo 30 immagini.','File troppo grande (16 MB). Condividi originale.','Seleziona documenti.','Completato','Interrotto. Altri file intatti.','Seleziona due documenti.','Seleziona la casella per vedere le azioni.','Aggiungi','Rimuovi','Preparazione…','Troppe pagine.']
+    en:['Select','selected','Select all','Invert','Cancel','Delete','Share','Merge PDF','Edit','Preview','Document actions','Share as','Quality','PDF','JPG images','Original / best','Balanced','Small file','Prepare and share','Processed on your phone. Converted copies are saved in Documents/RivoScan.','Reduced PDF quality converts text to images; original preserves editable text.','Delete {n} documents permanently?','Limit: 30 documents.','Limit: 30 image pages.','File exceeds the 16 MB conversion limit. Share the original instead.','Select documents first.','Completed','Stopped; remaining files are safe.','Select at least two documents.','Long-press any document for more actions.','Add to selection','Remove from selection','Preparing document','Pages limit exceeded.'],
+    ar:['تحديد','مختارة','تحديد الكل','عكس الاختيار','إلغاء','مسح','مشاركة','جمع PDF','تعديل','معاينة','خيارات الوثيقة','شارك بصيغة','الجودة','PDF','صور JPG','أصلية / أعلى جودة','متوازنة','حجم صغير','تحضير ومشاركة','التحويل كيتم فهاتفك. النسخ كتتحفظ فـDocuments/RivoScan.','الجودة المنخفضة كتبدل نص PDF بصور؛ الأصلية كتحافظ عليه.','واش تمسح {n} وثائق نهائياً؟','الحد الأقصى 30 وثيقة.','الحد الأقصى 30 صورة.','الوثيقة أكبر من 16 ميغا للتحويل. شارك الأصلية.','اختار الوثائق أولاً.','تكمّلات العملية','توقّفات العملية؛ الملفات الباقية ما تمسحاتش.','اختار جوج وثائق على الأقل.','ضغط مطوّل على وثيقة باش تختار وتفتح الخيارات.','زيد للتحديد','حيد من التحديد','كنوجدو الوثيقة','عدد الصفحات فات الحد.'],
+    fr:['Sélectionner','sélectionnés','Tout sélectionner','Inverser','Annuler','Supprimer','Partager','Fusionner PDF','Modifier','Aperçu','Actions du document','Partager en','Qualité','PDF','Images JPG','Originale / optimale','Équilibrée','Petit fichier','Préparer et partager','Traitement local. Copies dans Documents/RivoScan.','La qualité réduite transforme le texte PDF en images.','Supprimer définitivement {n} documents ?','Maximum 30 documents.','Maximum 30 images.','Fichier trop volumineux (16 Mo). Partagez l’original.','Sélectionnez des documents.','Terminé','Arrêté : les autres fichiers sont préservés.','Sélectionnez deux documents.','Appui long pour choisir plusieurs documents.','Ajouter','Désélectionner','Préparation…','Trop de pages.'],
+    es:['Seleccionar','seleccionados','Todo','Invertir','Cancelar','Eliminar','Compartir','Unir PDF','Editar','Vista previa','Acciones','Compartir como','Calidad','PDF','Imágenes JPG','Original / máxima','Equilibrada','Archivo pequeño','Preparar y compartir','Proceso local. Copias en Documents/RivoScan.','Menor calidad convierte el texto PDF en imágenes.','¿Eliminar {n} documentos definitivamente?','Máximo 30 documentos.','Máximo 30 imágenes.','Archivo demasiado grande (16 MB). Comparte el original.','Selecciona documentos.','Completado','Detenido. Los demás archivos siguen intactos.','Selecciona dos documentos.','Mantén pulsado para ver opciones.','Añadir','Quitar','Preparando…','Demasiadas páginas.'],
+    de:['Auswählen','ausgewählt','Alle auswählen','Umkehren','Abbrechen','Löschen','Teilen','PDF verbinden','Bearbeiten','Vorschau','Aktionen','Teilen als','Qualität','PDF','JPG-Bilder','Original / beste','Ausgewogen','Klein','Vorbereiten und teilen','Lokal verarbeitet. Kopien in Documents/RivoScan.','Reduzierte Qualität wandelt PDF-Text in Bilder um.','{n} Dokumente dauerhaft löschen?','Maximal 30 Dokumente.','Maximal 30 Bilder.','Datei zu groß (16 MB). Original teilen.','Dokumente wählen.','Fertig','Angehalten. Übrige Dateien sicher.','Zwei Dokumente wählen.','Lange drücken für Auswahl.','Hinzufügen','Entfernen','Vorbereitung…','Zu viele Seiten.'],
+    pt:['Selecionar','selecionados','Selecionar tudo','Inverter','Cancelar','Eliminar','Partilhar','Unir PDF','Editar','Pré-visualizar','Ações','Partilhar como','Qualidade','PDF','Imagens JPG','Original / máxima','Equilibrada','Pequeno','Preparar e partilhar','Processamento local. Cópias em Documents/RivoScan.','Qualidade inferior transforma texto PDF em imagem.','Eliminar {n} documentos definitivamente?','Máximo 30 documentos.','Máximo 30 imagens.','Ficheiro muito grande (16 MB). Partilhe o original.','Selecione documentos.','Concluído','Interrompido. Restantes ficheiros intactos.','Selecione dois documentos.','Toque longo para opções.','Adicionar','Remover','Preparando…','Demasiadas páginas.'],
+    it:['Seleziona','selezionati','Seleziona tutto','Inverti','Annulla','Elimina','Condividi','Unisci PDF','Modifica','Anteprima','Azioni','Condividi come','Qualità','PDF','Immagini JPG','Originale / massima','Bilanciata','Piccolo','Prepara e condividi','Elaborazione locale. Copie in Documents/RivoScan.','Qualità ridotta converte il testo PDF in immagini.','Eliminare {n} documenti definitivamente?','Massimo 30 documenti.','Massimo 30 immagini.','File troppo grande (16 MB). Condividi originale.','Seleziona documenti.','Completato','Interrotto. Altri file intatti.','Seleziona due documenti.','Tieni premuto per opzioni.','Aggiungi','Rimuovi','Preparazione…','Troppe pagine.']
   };
   const keys=['select','selected','all','invert','cancel','delete','share','merge','edit','preview','menu','format','quality','pdf','images','original','balanced','small','send','info','loss','confirm','limit','pageLimit','large','none','done','stop','needTwo','hint','add','remove','preparing','tooMany'];
   const extraWords={
@@ -29,47 +30,41 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     return item||((translations[getLanguage()]||translations.en)[keys.indexOf(key)]||key);
   };
   const size=bytes=>bytes<1024?bytes+' B':bytes<1048576?(bytes/1024).toFixed(1)+' KB':(bytes/1048576).toFixed(1)+' MB';
-  
-  // Vector glyphs keep every quick action recognizable on all phone fonts.
-  const fileActionGlyph={
-   share:'<path d="M12 16V3m-5 5 5-5 5 5"/><path d="M4 15v5h16v-5"/>',
-   edit:'<path d="M12 20h9"/><path d="M16 4a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16 4Z"/>',
-   preview:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-   rename:'<path d="M4 20h16M7 16l9-9 3 3-9 9-4 1 1-4Z"/>',
-   delete:'<path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/>',
-   add:'<path d="M5 3h10l5 5v13H5zM15 3v5h5M12 11v8m-4-4h8"/>'
-  };
-  const fileIcon=key=>'<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">'+fileActionGlyph[key]+'</svg>';
-
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
   function toolbar(){
-    if(!mode||selected.size<2)return '';
-    const items=selectedDocs();
-    // Exactly one small horizontal menu for multi-selection; all actions remain available.
-    return `<div class="library-selection-toolbar rivo-compact-multi" role="group" aria-label="${items.length} ${t('selected')}">
-      <div class="bulk-actions rivo-bulk-icon-row" role="toolbar" aria-label="${t('menuActions')}">
-        <span class="rivo-bulk-count" aria-label="${items.length} ${t('selected')}">${items.length}</span>
-        <button type="button" data-bulk="share" class="bulk-share-primary" aria-label="${t('share')}" title="${t('share')}"><span aria-hidden="true">${fileIcon('share')}</span></button>
-        <button type="button" data-bulk="organize" aria-label="${t('move')} / ${t('copy')}" title="${t('move')} / ${t('copy')}"><span aria-hidden="true">▣</span></button>
-        <button type="button" data-bulk="merge" aria-label="${t('merge')}" title="${t('merge')}" ${items.length<2?'disabled':''}><span aria-hidden="true">▤</span></button>
-        <button type="button" data-bulk="delete" class="bulk-delete-primary" aria-label="${t('delete')}" title="${t('delete')}"><span aria-hidden="true">${fileIcon('delete')}</span></button>
-        <button type="button" data-bulk="all" aria-label="${t('all')}" title="${t('all')}"><span aria-hidden="true">☑</span></button>
-        <button type="button" data-bulk="invert" aria-label="${t('invert')}" title="${t('invert')}"><span aria-hidden="true">⇄</span></button>
-        <button type="button" data-bulk="cancel" class="bulk-close" aria-label="${t('cancel')}" title="${t('cancel')}"><span aria-hidden="true">×</span></button>
+    if(!mode)return '';
+    const items=selectedDocs(),total=items.reduce((sum,d)=>sum+(d.size||0),0);
+    return `<div class="library-selection-toolbar" role="group" aria-label="${t('select')}">
+      <div class="bulk-heading"><strong>${items.length} ${t('selected')}</strong>
+        <small>${size(total)}</small>
+        <button class="bulk-close" type="button" data-bulk="cancel" aria-label="${t('cancel')}">✕</button>
+      </div>
+      <div class="bulk-actions" role="toolbar" aria-label="${t('menuActions')}">
+        <div class="bulk-primary">
+          <button type="button" data-bulk="share" class="bulk-share-primary" ${items.length?'':'disabled'}><span aria-hidden="true">↗</span><span>${t('share')}</span></button>
+          <button type="button" data-bulk="delete" class="bulk-delete-primary" ${items.length?'':'disabled'}><span aria-hidden="true">⌫</span><span>${t('delete')}</span></button>
+        </div>
+        <div class="bulk-secondary">
+          <button type="button" data-bulk="all">${t('all')}</button>
+          <button type="button" data-bulk="invert">${t('invert')}</button>
+          <button type="button" data-bulk="organize" ${items.length?'':'disabled'}>${t('move')} / ${t('copy')}</button>
+          <button type="button" data-bulk="rename" ${items.length===1?'':'disabled'}>${t('rename')}</button>
+          <button type="button" data-bulk="merge" ${items.length>1?'':'disabled'}>${t('merge')}</button>
+        </div>
       </div>
     </div>`;
   }
   const isImage=doc=>/^image\//i.test(doc?.mimeType||'')||/\.(png|jpe?g|webp)$/i.test(doc?.name||'');
   function checkbox(doc,index){
-    // All file types must be selectable from their own rows, including PDFs.
+    // Allow selection of saved photos without entering multi-select first.
+    if(!mode&&!isImage(doc))return '';
     return `<input type="checkbox" class="doc-select-box" data-doc-select="${index}" aria-label="${t('select')}" ${chosen(doc)?'checked':''}>`;
   }
   function clear(){mode=false;selected.clear();document.body.classList.remove('rivo-multiselect');}
   function prune(){const known=new Set(getItems().map(x=>x.uri));for(const uri of selected)if(!known.has(uri))selected.delete(uri);if(!selected.size)mode=false;}
   function sync(){
-    // The bottom action bar and multi-select screen mode start at 2+ files.
-    document.body.classList.toggle('rivo-multiselect',mode&&selected.size>=2);
+    document.body.classList.toggle('rivo-multiselect',mode);
     for(const slotId of ['library-selection-root','home-selection-root']){
       const slot=document.getElementById(slotId);
       if(slot)slot.innerHTML=toolbar();
@@ -82,29 +77,12 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         row.classList.toggle('doc-selected',!!doc&&chosen(doc));
         row.setAttribute('aria-selected',String(!!doc&&chosen(doc)));
         const existing=row.querySelector('.doc-select-box');
-        // Selection is by the always-visible checkbox, never long press.
-        if(!existing&&doc){
-          const div=document.createElement('div');
-          div.innerHTML=checkbox(doc,Number(row.dataset.docOpen));
+        const alwaysVisible=rootId==='home-recents';
+        if(mode&&!existing){
+          const div=document.createElement('div');div.innerHTML=doc?checkbox(doc,Number(row.dataset.docOpen)):'';
           if(div.firstElementChild)row.prepend(div.firstElementChild);
-        } else if(existing)existing.checked=!!doc&&chosen(doc);
-        const previous=row.querySelector('.rivo-selection-inline');
-        if(previous)previous.remove();
-        if(mode&&selected.size===1&&doc&&chosen(doc)){
-          const index=Number(row.dataset.docOpen);
-          const name=String(doc.name||'').toLowerCase();
-          const mime=String(doc.mimeType||'').toLowerCase();
-          const isPDF=mime.includes('pdf')||name.endsWith('.pdf');
-          const canAppend=isPDF||isImage(doc);
-          const actions=`<div class="rivo-selection-inline rivo-single-tools" role="toolbar" aria-label="${t('menu')} · ${String(doc.name||'').replace(/[&<>"\']/g,'')}">
-            <button type="button" data-doc-share="${index}" aria-label="${t('share')}" title="${t('share')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('share')}</span><span class="rivo-action-label">${t('share')}</span></button>
-            <button type="button" data-doc-edit-rename="${index}" aria-label="${t('edit')} / ${t('rename')}" title="${t('edit')} / ${t('rename')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('edit')}</span><span class="rivo-action-label">${t('edit')} / ${t('rename')}</span></button>
-            <button type="button" data-doc-preview="${index}" aria-label="${t('preview')}" title="${t('preview')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('preview')}</span><span class="rivo-action-label">${t('preview')}</span></button>
-            <button type="button" data-doc-delete="${index}" class="rivo-inline-delete" aria-label="${t('delete')}" title="${t('delete')}"><span class="rivo-action-icon" aria-hidden="true">${fileIcon('delete')}</span><span class="rivo-action-label">${t('delete')}</span></button>
-            <button type="button" data-doc-add="${index}" class="rivo-inline-add" aria-label="${t('add')} PDF" title="${t('add')} PDF" ${canAppend?'':'disabled'}><span class="rivo-action-icon" aria-hidden="true"><span class="rivo-add-plus">+</span></span><span class="rivo-action-label">${t('add')+' PDF'}</span></button>
-          </div>`;
-          row.insertAdjacentHTML('beforeend',actions);
-        }
+        } else if(!mode&&existing&&!alwaysVisible&&!isImage(doc))existing.remove();
+        else if(existing)existing.checked=!!doc&&chosen(doc);
       }
     }
     }
@@ -135,23 +113,62 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     shade.querySelector('button')?.focus();
     return shade;
   }
-  function editRenameOne(doc){
+  function longPress(doc){
     if(!doc)return;
-    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('edit')} / ${t('rename')}</strong>
-      <button type="button" data-close-sheet aria-label="${t('cancel')}">✕</button></div>
-      <div class="rivo-edit-rename-options" role="group">
-       <button type="button" data-edit-rename-choice="edit"><span aria-hidden="true">${fileIcon('edit')}</span> ${t('edit')}</button>
-       <button type="button" data-edit-rename-choice="rename"><span aria-hidden="true">${fileIcon('rename')}</span> ${t('rename')}</button>
+    if(!selected.has(doc.uri)){mode=true;selected.add(doc.uri);sync();}
+    const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('menu')}</strong><button data-close-sheet aria-label="${t('cancel')}">✕</button></div>
+      <p class="bulk-document-name">${escape(doc.name)}</p>
+      <div class="bulk-sheet-actions">
+        <button data-menu="preview">${t('preview')}</button>
+        <button data-menu="edit">${t('edit')}</button>
+        <button data-menu="share">${t('share')}</button>
+        <button data-menu="delete">${t('delete')}</button>
+        <button data-menu="rename">${t('rename')}</button>
+        <button data-menu="copy">${t('copy')}</button>
+        <button data-menu="select">${chosen(doc)?t('remove'):t('add')}</button>
       </div>`);
-    root.querySelectorAll('[data-edit-rename-choice]').forEach(button=>button.addEventListener('click',async()=>{
-      const which=button.dataset.editRenameChoice;
+    root.addEventListener('click',async e=>{
+      const action=e.target.closest('[data-menu]')?.dataset.menu;if(!action)return;
       closeSheet();
-      try{
-        if(which==='edit')await onEdit?.(doc);
-        if(which==='rename')await onRename?.(doc);
-      }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
-    }));
+      if(action==='select'){toggle(doc);return;}
+      if(action==='preview'){await onPreview(doc);return;}
+      if(action==='rename'){await onRename?.(doc);return;}
+      if(action==='copy'){organize([doc],'copy');return;}
+      if(action==='edit'){await onEdit(doc);return;}
+      if(action==='share'){share([doc]);return;}
+      if(action==='delete')await erase([doc]);
+    });
   }
+  function wireLongPress(root){
+    if(!root)return;
+    let timer=null,startX=0,startY=0,pressed=null;
+    const stop=()=>{if(timer!==null){clearTimeout(timer);timer=null;}};
+    root.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse'||e.target.closest('button,input,select'))return;
+      const row=e.target.closest('[data-doc-open]');if(!row||!root.contains(row))return;
+      pressed=getItems()[Number(row.dataset.docOpen)];
+      startX=e.clientX;startY=e.clientY;stop();
+      timer=setTimeout(()=>{
+        timer=null;suppressUntil=Date.now()+900;
+        if(root.id==='home-recents')onOpenLibrary?.();
+        longPress(pressed);
+        try{navigator.vibrate?.(25)}catch{}
+      },550);
+    });
+    root.addEventListener('pointermove',e=>{if(Math.hypot(e.clientX-startX,e.clientY-startY)>12)stop()});
+    for(const name of ['pointerup','pointercancel','pointerleave'])root.addEventListener(name,stop);
+    root.addEventListener('contextmenu',e=>{
+      const row=e.target.closest('[data-doc-open]');
+      if(row&&root.contains(row)){
+        e.preventDefault();suppressUntil=Date.now()+900;
+        const doc=getItems()[Number(row.dataset.docOpen)];
+        if(root.id==='home-recents')onOpenLibrary?.();
+        longPress(doc);
+      }
+    });
+  }
+  function suppressClick(){return Date.now()<suppressUntil}
   async function erase(docs){
     if(!docs.length)return;
     if(!window.confirm(t('confirm').replace('{n}',String(docs.length))))return;
@@ -233,9 +250,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         const bytes=new Uint8Array(await blob.arrayBuffer());
         if(bytes.length>60*1024*1024)throw Error('Image exceeds 60 MB');
         let binary='';for(let i=0;i<bytes.length;i+=16384)binary+=String.fromCharCode(...bytes.subarray(i,i+16384));
-        // Keep a temporary JPEG only inside Android app cache for ACTION_SEND.
-        // PDF remains the sole user-visible saved scan document.
-        uris.push(btoa(binary));count++;
+        const saved=await bridge.saveFile({name:`RivoScan_Share_${Date.now()}_${count+1}.jpg`,mimeType:'image/jpeg',base64:btoa(binary)});
+        uris.push(saved.uri);count++;
       };
       if(isPDF(doc))await rasterPdf(file,q,add);
       else await add(await loadCanvas(file));
@@ -324,12 +340,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
           const saved=await saveOut(bytes,`RivoScan_Text_${Date.now()}.docx`,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
           uris=[saved.uri];mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         }else{
-          const imagesBase64=await createJpgs(docs,q);
-          if(typeof bridge.shareJpgPages!=='function')
-            throw Error('Update RivoScan to share PDFs as temporary JPG files.');
-          await bridge.shareJpgPages({imagesBase64});
-          return; // No permanent converted JPGs are written to Documents.
-
+          uris=await createJpgs(docs,q);mime='image/jpeg';
+          await onRefresh();
         }
         await bridge.shareFiles({uris,mimeType:mime});
       }catch(error){console.error(error);toast(error?.message||t('stop'),true);}
@@ -406,6 +418,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,share,savePdf,organize,action,wireToolbar,
-    editOne:doc=>onEdit?.(doc),renameOne:doc=>onRename?.(doc),editRenameOne};
+  return {t,toolbar,checkbox,mode:()=>mode,chosen,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
 }
