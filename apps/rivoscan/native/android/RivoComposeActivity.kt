@@ -115,9 +115,9 @@ private val tools = listOf(
     RivoTool("Import photos", "Choose images from your device", "▧", "gallery"),
     RivoTool("Merge PDFs", "Combine multiple PDF files", "⇉", "tool:merge"),
     RivoTool("Compress PDF", "Reduce file size", "⇣", "tool:compress"),
-    RivoTool("PDF to Word", "Convert into editable document", "⇄", "tool:pdf-word"),
+    RivoTool("PDF to Word", "Convert into editable document", "⇄", "hub:toWord"),
     RivoTool("Sign document", "Draw or insert your signature", "✎", "tool:sign"),
-    RivoTool("Manage pages", "Reorder, rotate and delete", "▦", "hub:pageManager"),
+    RivoTool("Manage pages", "Reorder, rotate and delete", "▦", "hub:managePages"),
     RivoTool("Convert images", "Turn pictures into PDF", "▧", "tool:images"),
     RivoTool("More document tools", "Open all available tools", "＋", "tools")
 )
