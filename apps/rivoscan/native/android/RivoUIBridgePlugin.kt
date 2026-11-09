@@ -1,5 +1,6 @@
 package com.ribhlab.rivoscan
 
+import android.content.Intent
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -23,5 +24,16 @@ class RivoUIBridgePlugin : Plugin() {
         val result = JSObject()
         result.put("route", route)
         call.resolve(result)
+    }
+
+    @PluginMethod
+    fun openNativeHome(call: PluginCall) {
+        activity.runOnUiThread {
+            val intent = Intent(activity, RivoComposeActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            activity.startActivity(intent)
+            call.resolve()
+        }
     }
 }
