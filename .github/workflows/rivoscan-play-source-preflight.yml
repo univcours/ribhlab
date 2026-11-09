@@ -1,4 +1,4 @@
-name: RivoScan Play source preflight
+name: RivoScan source and release safety preflight
 on:
   pull_request:
     branches: [feat/rivoscan-android-beta, main]
@@ -16,7 +16,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: apps/rivoscan
@@ -25,15 +25,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check release preflight JavaScript syntax
-        run: node --check scripts/play-release-preflight.mjs
-      - name: Run offline release safety unit tests
-        run: node --test tests/play-release-preflight.test.js
-      - name: Unit-test offline AAB size inspection
-        run: python -m unittest discover tests -p 'test_aab_size_report.py' -v
-      - name: Verify current repository version and privacy disclosures
-        run: node scripts/play-release-preflight.mjs
-      - name: Validate PowerShell signing bootstrap syntax
+      - name: Install dependencies and validate all code
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          node --check src/plate-scanner.js
+          node --check src/barcode-scanner.js
+          node --check src/scan-ledger.js
+          npm test
+      - name: Check authoritative Android version and privacy guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq '^versionCode=[1-9][0-9]*$' rivoscan-version.properties
+          grep -Eq '^versionName=[0-9]+[.][0-9]+[.][0-9]+$' rivoscan-version.properties
+          node -e "const fs=require('node:fs');const t=fs.readFileSync('rivoscan-version.properties','utf8');if(t.match(/^versionName=(.+)$/m)?.[1]!==require('./package.json').version)process.exit(1)"
+          test -f public/privacy.html
+          grep -Fq 'upsertScannerLog' native/android/RivoDocumentsPlugin.java
+          grep -Fq 'RivoScan_Plates.xlsx' native/android/RivoDocumentsPlugin.java
+          grep -Fq 'RivoScan_Scans.xlsx' native/android/RivoDocumentsPlugin.java
+          grep -Fq 'shouldShowInterstitial' src/monetization.js
+          grep -Fq 'showPrivacyOptionsForm' src/monetization.js
+          test -f tests/live-scanners.test.js
+          npm run build
+      - name: Validate signing bootstrap PowerShell syntax
         shell: pwsh
         run: |
           $tokens = $null
