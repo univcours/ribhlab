@@ -743,7 +743,7 @@ function wire(){
       }
       const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
       const index=Number(target.getAttribute('data-doc-'+type));
-      if(type==='open'&&bulkUI.mode()){bulkUI.toggle(libraryItems[index]);return;}
+      if(type==='open'&&bulkUI.mode()&&target.tagName!=='BUTTON'){bulkUI.toggle(libraryItems[index]);if(list==='home-recents')el.innerHTML=recentDocuments(14);else refreshVisibleLibrary();return;}
       handleLibraryAction(type,index);
     };
     el?.addEventListener('click',activate);
