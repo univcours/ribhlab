@@ -230,8 +230,8 @@ try {
     throw "The phone still reports an OLD build. Installation is NOT successful."
   }
   Write-Host "VERIFIED: $model has newly installed RivoScan v$apkVersionName / code $apkVersionCode." -ForegroundColor Green
-  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.MainActivity" | Out-Host
-  Assert-Code "Launching RivoScan"
+  & $adb -s $serial shell am start -n "com.ribhlab.rivoscan.debug/com.ribhlab.rivoscan.RivoComposeActivity" | Out-Host
+  Assert-Code "Launching RivoScan Material 3 Kotlin home"
   Write-Host ""
   Write-Host "SUCCESS: RivoScan updated and started on $model ($serial)." -ForegroundColor Green
   Write-Host "If the launcher shows a cached old shortcut, remove ONLY that Home Screen shortcut and add RivoScan again from the app drawer. Never uninstall to fix an icon." -ForegroundColor Yellow
