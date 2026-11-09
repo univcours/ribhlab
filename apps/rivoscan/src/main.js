@@ -506,11 +506,11 @@ function libraryWorkspace(){
 async function loadLibrary(show=true){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     libraryItems=[];libraryLoading=false;libraryError='Saved files are accessible in the installed Android app.';
-    if(show&&activeTool?.id==='library')render();return;
+    if(show&&activeTool?.id==='library')refreshVisibleLibrary();return;
   }
   if(!Capacitor.isPluginAvailable('RivoDocuments')){
     libraryItems=[];libraryLoading=false;libraryError='Documents storage component is missing. Update the Android app.';
-    if(show&&activeTool?.id==='library')render();return;
+    if(show&&activeTool?.id==='library')refreshVisibleLibrary();return;
   }
   // Do not replace the bottom navbar while an asynchronous Documents read is active:
   // detached nav buttons could swallow the first user tap.
