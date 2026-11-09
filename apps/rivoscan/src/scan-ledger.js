@@ -57,7 +57,8 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
    chain=result.then(()=>{},()=>{});
    return result;
   },
-  async resync(kind){
+  resync(kind){
+   const result=chain.catch(()=>{}).then(async()=>{
    const config=CONFIG[kind];
    if(!config)throw Error('Unknown scanner log');
    const rows=read(kind);
@@ -70,6 +71,11 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
    await bridge.upsertScannerLog({name:config.text,mimeType:'text/plain',base64:toBase64(text)});
    await bridge.upsertScannerLog({name:config.excel,mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',base64:toBase64(xlsx)});
    return {saved:true,count:rows.length};
+   });
+   // Serialize recovery behind any active append; never overwrite newer scans
+   // with a stale XLSX/TXT generated during startup.
+   chain=result.then(()=>{},()=>{});
+   return result;
   }
  };
 }

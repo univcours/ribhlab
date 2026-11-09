@@ -32,6 +32,26 @@ test('Each successful QR/barcode scan appends to ONE persistent TXT and XLSX, ne
  assert.doesNotMatch(xml,/<f>/);
  assert.equal(ledger.read('codes').length,3);
 });
+test('Startup log recovery cannot overwrite a concurrently appended barcode',async()=>{
+ const bridgeWrites=[], storage=memory();
+ let release;
+ const gate=new Promise(resolve=>{release=resolve;});
+ let stalled=false;
+ const bridge={upsertScannerLog:async data=>{
+  if(!stalled){stalled=true;await gate;}
+  bridgeWrites.push({name:data.name,text:Buffer.from(data.base64,'base64').toString('utf8')});
+ }};
+ const db=createScanLedger({bridge,storage,clock:()=>new Date('2026-11-09T10:00:00Z')});
+ const first=db.append('codes',{value:'111111',format:'QR'});
+ // Recovery enqueued while a file upsert is in flight, then another scan.
+ const recovery=db.resync('codes');
+ const second=db.append('codes',{value:'222222',format:'QR'});
+ release();
+ await Promise.all([first,recovery,second]);
+ assert.equal(db.read('codes').length,2);
+ const finalTxt=bridgeWrites.filter(entry=>entry.name==='RivoScan_Scans.txt').at(-1).text;
+ assert.ok(finalTxt.includes('111111')&&finalTxt.includes('222222'));
+});
 test('Plate log always records unmatched plates; a match records linked photo',async()=>{
  const storage=memory(),calls=[];
  const bridge={upsertScannerLog:async value=>{calls.push(value);return {}}};
