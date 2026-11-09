@@ -319,8 +319,7 @@ function render(){
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
   const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
     <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
-    <div class="topright"><button class="rivo-header-action" data-open-library aria-label="${hv('openFolder')}">${ico('folder',20)}</button>
-    <button class="rivo-header-action" data-tab="tools" aria-label="${ut('tools')}">${ico('grid',20)}</button></div></header>`;
+    </header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
@@ -366,7 +365,6 @@ function home(){
  const copy=premiumCopy(language);
  return `<section class="app-home rivo-home rivo-compact-home">
   <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
-   <button type="button" data-open-library>${ut('seeAll')} ${ico('back',16)}</button>
   </div>
   <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
   <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
@@ -376,7 +374,7 @@ function home(){
 }
 function toolsWorkspace(){
  const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
- return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1><button data-tools-focus aria-label="${copy}">${ico('search',22)}</button></div>
+ return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
  <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
  <nav class="rivo-tool-pills">${toolGroups.map((g,i)=>`<button type="button" data-hub-section="${g.id}" class="${i===0?'active':''}">${hubGroupLabel(language,g.id)}</button>`).join('')}</nav>
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
@@ -403,10 +401,8 @@ function scannerPreferenceRows(){
 function settingsWorkspace(){
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
- <div class="settings-section"><h2>${ut('storage')}</h2><button data-open-library class="settings-row"><span class="settings-row-icon">${ico('file',22)}</span><span><strong>${ut('myFiles')}</strong><small>${ut('device')}</small></span>${ico('back',18)}</button>
- <button data-tool="scan" class="settings-row"><span class="settings-row-icon">${ico('camera',22)}</span><span><strong>${ut('scan')}</strong><small>AI Deep Clean · Google ML Kit FULL</small></span>${ico('back',18)}</button></div>
  <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>
- <p class="rivo-pref-section-subtitle">${({en:'AI Deep Clean (ML Kit FULL) is the primary scanner. CameraX quality controls apply only to the backup corner editor.',ar:'AI Deep Clean (ML Kit FULL) هو السكان الرئيسي. إعدادات CameraX كتطبق غير على محرر الزوايا الاحتياطي.',fr:'AI Deep Clean (ML Kit FULL) est le scanner principal. Les réglages CameraX concernent l’éditeur de secours.'})[language]||'AI Deep Clean (ML Kit FULL) is the primary scanner.'}</p>
+
  ${scannerPreferenceRows()}
  <button type="button" class="settings-row rivo-scanner-pref" data-scan-advanced>
  <span class="settings-row-icon">${ico('layers',22)}</span>
@@ -445,19 +441,13 @@ function scannerOptionsMarkup(){
  return markup.replace(chosen,chosen+' selected');
 }
 function scannerWorkspace(){
-  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('DocumentScanner');
-  const aiScanLabel=({en:'AI Deep Clean · Google ML Kit FULL',ar:'سكان AI Deep Clean · Google ML Kit FULL',
-    fr:'Scan IA Deep Clean · Google ML Kit FULL',es:'Escáner IA Deep Clean · Google ML Kit FULL',
-    de:'KI Scan Deep Clean · Google ML Kit FULL',pt:'Scanner IA Deep Clean · Google ML Kit FULL',
-    it:'Scanner IA Deep Clean · Google ML Kit FULL'})[language]||'AI Deep Clean · Google ML Kit FULL';
-  const aiScanHint=({en:'Auto-crop, cleanup and review in one scan',ar:'قص وتنقية ومراجعة الوثيقة فعملية وحدة',
-    fr:'Recadrage, nettoyage et aperçu en un scan',es:'Recorte, limpieza y vista previa en un escaneo',
-    de:'Automatisch zuschneiden, bereinigen, prüfen',pt:'Cortar, limpar e rever num só scan',
-    it:'Ritaglio, pulizia e revisione in un solo scan'})[language]||'Auto-crop, clean, review';
+  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
+  const aiScanLabel=({en:'Document camera · Live edges',ar:'كاميرا الوثائق · تحديد الحواف',fr:'Caméra documents · Bords en direct',es:'Cámara · Bordes en vivo',de:'Dokumentkamera · Live-Kanten',pt:'Câmara · Contornos ao vivo',it:'Fotocamera · Bordi dal vivo'})[language]||'Document camera · Live edges';
+  const aiScanHint=({en:'Capture · adjust four corners · save',ar:'صور · عدل الزوايا الأربعة · حفظ',fr:'Capturer · ajuster 4 coins · sauver',es:'Captura · ajusta esquinas · guarda',de:'Aufnehmen · 4 Ecken korrigieren · sichern',pt:'Capturar · ajustar 4 cantos · guardar',it:'Scatta · regola 4 angoli · salva'})[language]||'Capture · adjust corners · save';
   return `<section class="workspace scan-workspace">
   <button class="back" data-go="home">${ico('back')} ${dl('all')}</button>
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
-  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="mlkit-full">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button></div>
   <details class="rivo-unified-scan-advanced">
@@ -469,7 +459,7 @@ function scannerWorkspace(){
     de:'2–4 Ansichten kombinieren · 3D Beta',pt:'Combinar 2–4 fotos · 3D beta',
     it:'Unisci 2–4 foto · 3D beta'})[language]||'Multi-angle correction'}</button>
   </details>
-  <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Google ML Kit requires a supported Android phone with Google Play services; CameraX is available as fallback.',ar:'Google ML Kit خاصو هاتف مدعوم وخدمات Google Play؛ كاميرا CameraX غير للاحتياط.',fr:'Google ML Kit nécessite Google Play services, avec CameraX en solution de secours.'})[language]||'ML Kit FULL requires supported Google Play services.'}</div>
+  <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
   <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
