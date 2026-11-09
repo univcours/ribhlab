@@ -20,6 +20,13 @@ Copy-Item -LiteralPath $kotlinSource -Destination $main -Force
 $premiumChrome=Join-Path $source 'RivoPremiumChrome.kt'
 if(-not(Test-Path -LiteralPath $premiumChrome)){throw 'Kotlin CameraX premium chrome missing; cannot build native UI.'}
 Copy-Item -LiteralPath $premiumChrome -Destination (Join-Path $packageDir 'RivoPremiumChrome.kt') -Force
+# Native Kotlin Compose UI and secure route plugin. No generated Java stand-ins.
+foreach($kotlinName in @('RivoComposeActivity.kt','RivoUIBridgePlugin.kt')) {
+  $kotlinPath=Join-Path $source $kotlinName
+  if(-not(Test-Path -LiteralPath $kotlinPath)) { throw "Native Material 3 Kotlin source missing: $kotlinName" }
+  Copy-Item -LiteralPath $kotlinPath -Destination (Join-Path $packageDir $kotlinName) -Force
+}
+
 # Capacitor generates a Java stub by default; remove it so only one
 # MainActivity class is compiled, without touching any other Java plugins.
 $obsoleteMain=Join-Path $packageDir 'MainActivity.java'
@@ -40,6 +47,17 @@ if(-not $rootText.Contains($kotlinDependency)){
     [Environment]::NewLine + '        ' + $kotlinDependency)
   [IO.File]::WriteAllText($rootGradle,$rootText,[Text.UTF8Encoding]::new($false))
 }
+# Keep Kotlin Compose Compiler exactly on Kotlin's version 2.3.10.
+$rootText=[IO.File]::ReadAllText($rootGradle)
+$composePlugin="classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.3.10'"
+if(-not $rootText.Contains($composePlugin)) {
+  $kotlinMatch=[regex]::Match($rootText,"classpath\s+['""']org\.jetbrains\.kotlin:kotlin-gradle-plugin:2\.3\.10['""']")
+  if(-not $kotlinMatch.Success){throw 'Cannot locate Kotlin Gradle plugin for Compose integration.'}
+  $rootText=$rootText.Insert($kotlinMatch.Index+$kotlinMatch.Length,
+      [Environment]::NewLine + '        ' + $composePlugin)
+  [IO.File]::WriteAllText($rootGradle,$rootText,[Text.UTF8Encoding]::new($false))
+}
+
 $gradle=Join-Path $android 'app\build.gradle'
 $gradleText=[System.IO.File]::ReadAllText($gradle)
 $deps=@'
@@ -73,6 +91,28 @@ if($gradleText -notmatch 'RivoScan Kotlin JVM 17') {
     "// RivoScan Kotlin JVM 21: match Capacitor Java compile task on JDK 21" + [Environment]::NewLine +
     "kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21) } }" + [Environment]::NewLine
 }
+if(-not $gradleText.Contains("apply plugin: 'org.jetbrains.kotlin.plugin.compose'")) {
+  $gradleText=$gradleText.Replace(
+    "apply plugin: 'org.jetbrains.kotlin.android'",
+    "apply plugin: 'org.jetbrains.kotlin.android'" + [Environment]::NewLine +
+    "apply plugin: 'org.jetbrains.kotlin.plugin.compose'")
+}
+if($gradleText -notmatch '(?m)^\s*buildFeatures\s*\{\s*compose\s+true\s*\}') {
+  $gradleText=[regex]::Replace($gradleText,'(?m)^android\s*\{',
+      "android {" + [Environment]::NewLine + "    buildFeatures { compose true }",1)
+}
+if(-not $gradleText.Contains("androidx.compose:compose-bom:2026.04.01")) {
+  $material3=@'
+    implementation platform('androidx.compose:compose-bom:2026.04.01')
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.activity:activity-compose:1.11.0'
+'@
+  if($gradleText -notmatch 'dependencies\s*\{') {throw 'Android dependencies block not found for Compose.'}
+  $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',
+      "dependencies {" + [Environment]::NewLine + $material3,1)
+}
+
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
 
@@ -115,10 +155,10 @@ $themeXml=@'
     <item name="windowNoTitle">true</item>
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
-    <item name="android:windowBackground">#031022</item>
-    <item name="android:statusBarColor">#031022</item>
-    <item name="android:navigationBarColor">#031022</item>
-    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowBackground">#F7F9FD</item>
+    <item name="android:statusBarColor">#FFFFFF</item>
+    <item name="android:navigationBarColor">#FFFFFF</item>
+    <item name="android:windowLightStatusBar">true</item>
   </style>
   <!-- All RivoScan-owned Android camera popups use the same turquoise theme. -->
   <style name="RivoTurquoiseDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
@@ -202,6 +242,32 @@ if($oldActivity -match 'android:theme\s*=\s*"[^"]*"'){
   $newActivity=$oldActivity.Substring(0,$oldActivity.Length-1)+' android:theme="@style/RivoScanNoActionBar">'
 }
 $m=$m.Replace($oldActivity,$newActivity)
+# Exactly ONE launcher: Compose. Preserve Capacitor's other intent filters.
+$bridgePattern='(?s)<activity\b(?=[^>]*android:name\s*=\s*"(?:\.MainActivity|com\.ribhlab\.rivoscan\.MainActivity)")[^>]*>.*?</activity>'
+$bridgeBlocks=[regex]::Matches($m,$bridgePattern)
+if($bridgeBlocks.Count -ne 1){throw 'Unable to locate exactly one Capacitor bridge Activity.'}
+$bridgeBlock=$bridgeBlocks[0].Value
+$filters=[regex]::Matches($bridgeBlock,'(?s)<intent-filter\b[^>]*>.*?</intent-filter>')
+$launcherFilters=@($filters | Where-Object {
+  $_.Value.Contains('android.intent.action.MAIN') -and
+  $_.Value.Contains('android.intent.category.LAUNCHER')
+})
+if($launcherFilters.Count -ne 1){throw 'Expected one existing MainActivity launcher filter.'}
+$bridgeWithoutLauncher=$bridgeBlock.Replace($launcherFilters[0].Value,'')
+$m=$m.Replace($bridgeBlock,$bridgeWithoutLauncher)
+if($m -notmatch 'android:name="\.RivoComposeActivity"'){
+  $composeLauncher=@'
+    <activity android:name=".RivoComposeActivity"
+      android:exported="true" android:theme="@style/RivoScanNoActionBar">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+'@
+  $m=$m.Replace('</application>',$composeLauncher + [Environment]::NewLine + '</application>')
+}
+
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
 & (Join-Path $root 'apply-rivoscan-branding.ps1')
 & (Join-Path $root 'configure-play-debug-symbols.ps1')
