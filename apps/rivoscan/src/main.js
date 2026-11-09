@@ -1723,7 +1723,10 @@ function navigateRivoBack(){
    }catch(error){
     console.warn('Back navigation ad skipped:',error);
    }finally{
-    openTab('home');
+    if(enteredFromNativeCompose){
+     try{await RivoUIBridge.openNativeHome();}
+     catch(error){console.warn('Native Home unavailable:',error);openTab('home');}
+    }else{openTab('home');}
     backNavigationPending=false;
    }
   })();
@@ -1764,9 +1767,11 @@ document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true}
  * A native Compose route is never a mock: every action reuses existing
  * Capacitor handlers. Unknown routes are rejected instead of making fake UI.
  */
+let enteredFromNativeCompose=false;
 async function openNativeComposeRoute(rawRoute){
  const route=String(rawRoute||'').trim();
  if(!route)return;
+ enteredFromNativeCompose=true;
  try{
   if(route==='library'){openLibrary();return;}
   if(route==='home'){openTab('home');return;}
@@ -1832,7 +1837,13 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   syncNativeSoundSetting();
   loadLibrary(false);
   CapacitorApp.addListener('backButton',()=>{
-    if(!navigateRivoBack())CapacitorApp.minimizeApp().catch(console.warn);
+    if(!navigateRivoBack()){
+      if(enteredFromNativeCompose){
+        RivoUIBridge.openNativeHome().catch(()=>CapacitorApp.minimizeApp().catch(console.warn));
+      }else{
+        CapacitorApp.minimizeApp().catch(console.warn);
+      }
+    }
   }).catch(console.warn);
   let backgroundStartedAt=0;
   CapacitorApp.addListener('appStateChange',({isActive})=>{
