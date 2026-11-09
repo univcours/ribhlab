@@ -28,6 +28,9 @@ import { reconstructRelativeSurfaceAndroid } from './surface3d-android.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
+import {openPlateScanner} from './plate-scanner.js';
+import {createScanLedger} from './scan-ledger.js';
+import './compact-turquoise.css';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
@@ -43,6 +46,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
+const scanLedger=createScanLedger({bridge:RivoDocuments,storage:localStorage});
 const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
@@ -301,12 +305,10 @@ function render(){
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
   const aside = `<aside class="sidebar"><div class="brand"><img src="/icon.svg?v=20261101" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
-  const header = `<header class="topbar">${!isHome?`<button type="button" class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',22)}</button>`:''}
-   <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong>
-    <small class="rivo-build-version" aria-label="App version v${appVersion}">v${appVersion}</small></span>
-   <div class="topright"><button type="button" class="rivo-premium-badge" data-ad-entry aria-label="Ad-supported advanced tools">${ico('play',17)} AD</button>
-   <button class="rivo-header-action" data-open-library title="${hv('openFolder')}" aria-label="${hv('openFolder')}">${ico('folder',22)}</button>
-   <button class="rivo-header-action rivo-header-feature" data-tab="tools" title="${hv('toolsTip')}" aria-label="${hv('toolsTip')}">${ico('sparkle',22)}</button></div></header>`;
+  const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
+    <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
+    <div class="topright"><button class="rivo-header-action" data-open-library aria-label="${hv('openFolder')}">${ico('folder',20)}</button>
+    <button class="rivo-header-action" data-tab="tools" aria-label="${ut('tools')}">${ico('grid',20)}</button></div></header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
@@ -404,7 +406,7 @@ function toolsWorkspace(){
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong>${isPremiumFeature(id)?'<span class="rivo-video-access" aria-label="Ad-supported feature">AD</span>':''}</button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
 }
@@ -438,15 +440,7 @@ function settingsWorkspace(){
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
- <div class="settings-section rivo-ad-settings"><h2>${({ar:'تشخيص الإشهارات',fr:'Diagnostics des publicités',en:'Ad diagnostics'})[language]||'Ad diagnostics'}</h2>
- <div class="rivo-ads-diagnostics"><strong>${escapeHTML(getPremiumStatus().status)}</strong>
- <span>${({ar:'إعلانات Google التجريبية فقط · بلا بانر · الفيديو اختياري',fr:'Annonces de test Google · sans bannière · vidéo volontaire',en:'Google test ads only · no banner · optional rewarded video'})[language]||'Test ads only'}</span>
- <small>${getPremiumStatus().ready?'SDK ready':'SDK not ready'} · ${getPremiumStatus().interstitialReady?'Interstitial loaded':'Interstitial not loaded'} · ${getPremiumStatus().appOpenReady?'App open loaded':'App open not loaded'}</small>
- ${getPremiumStatus().lastError?'<small>'+escapeHTML(getPremiumStatus().lastError)+'</small>':''}</div>
- <button type="button" class="settings-row" data-ad-retry><span class="settings-row-icon">${ico('clock',22)}</span><span><strong>${({ar:'عاود الاتصال بالإشهارات',fr:'Réessayer le chargement des publicités',en:'Retry AdMob loading'})[language]||'Retry AdMob loading'}</strong></span></button>
- <button type="button" class="settings-row" data-ad-test><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'جرّب إعلان الشاشة الكاملة',fr:'Tester une annonce plein écran',en:'Show TEST interstitial'})[language]||'Show TEST interstitial'}</strong><small>Google demo — no paid impressions</small></span></button>
- </div>
- <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${({ar:'خيارات خصوصية الإشهارات',fr:'Confidentialité des publicités',en:'Ad privacy options'})[language]||'Ad privacy options'}</strong><small>AdMob · ${getPremiumStatus().native?'Android':'Web'}</small></span></button>
+ <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -884,10 +878,22 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='barcode'){
-   openBarcodeScanner({language,notify:toast,capture:async()=>{
-     const photo=await Camera.getPhoto({quality:90,allowEditing:false,
-       resultType:CameraResultType.Uri,source:CameraSource.Camera});
-     return photo.webPath||photo.path;
+   openBarcodeScanner({language,notify:toast,onScan:async entry=>{
+    const result=await scanLedger.append('codes',entry);
+    if(result.saved)void loadLibrary(false);
+    return result;
+   }});
+   return;
+ }
+ if(spec.type==='plates'){
+   openPlateScanner({language,notify:toast,onPlate:async entry=>{
+    const result=await scanLedger.append('plates',entry);
+    if(result.saved)void loadLibrary(false);
+    return result;
+   },onMatchPhoto:async ({plate,bytes})=>{
+    const name='PlateMatch_'+plate.replace(/[^A-Z0-9]/g,'_')+'_'+Date.now()+'.jpg';
+    const saved=await RivoDocuments.saveFile({name,mimeType:'image/jpeg',base64:toBase64(bytes)});
+    return saved.name||name;
    }});
    return;
  }
@@ -1397,7 +1403,11 @@ let backNavigationPending=false;
 function navigateRivoBack(){
  const now=Date.now();
  if(backNavigationPending||now-lastBackHandled<420)return true;
- if(document.querySelector('.rivo-reward-overlay')){
+ if(document.querySelector('.rivo-live-overlay')){
+   document.querySelector('.rivo-live-overlay [data-scan-overlay-close]')?.click();
+   lastBackHandled=now;return true;
+  }
+  if(document.querySelector('.rivo-reward-overlay')){
   document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
  }
  const sheet=document.querySelector('.bulk-overlay');
