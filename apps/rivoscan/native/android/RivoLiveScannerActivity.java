@@ -128,6 +128,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private TextView message;
     private boolean editing=false;
     private boolean openCvReady=false;
+    private android.window.OnBackInvokedCallback rightEdgeBackCallback;
+
     private int frames=0;
     private final ArrayList<String> savedImages=new ArrayList<>();
     private final ActivityResultLauncher<String> gallery=registerForActivityResult(
@@ -140,6 +142,13 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         // Native scanner already has its own toolbar: avoid the duplicated
         // blue "RivoScan" AppCompat ActionBar seen above the crop editor.
         if(getSupportActionBar()!=null)getSupportActionBar().hide();
+        // Android 13+ predictive back: right-edge swipe follows the exact same
+        // stepwise navigation as the toolbar/hardware back (no unexpected exit).
+        if(Build.VERSION.SDK_INT>=33){
+            rightEdgeBackCallback=()->runOnUiThread(this::onBackPressed);
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,rightEdgeBackCallback);
+        }
         basicCameraMode=getIntent().getBooleanExtra("basic",false);
         autoCleanEnabled=getIntent().getBooleanExtra("autoClean",true);
         saveOriginal=getIntent().getBooleanExtra("keepOriginal",true);
@@ -920,17 +929,14 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     }
     private void openEditor(Bitmap bitmap){
         if(!openCvReady){
-            // Never silently save a document when enhancement is unavailable:
-            // the user must see the photo and decide whether to keep or retake.
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("RivoScan")
-                .setMessage("Document processing unavailable on this device. Review the original photo before saving.")
-                .setNegativeButton(trNative("retake"),(dialog,which)->{
-                    if(bitmap!=null&&!bitmap.isRecycled())bitmap.recycle();
-                    showCamera();
-                })
-                .setPositiveButton(trNative("savePage"),(dialog,which)->saveWithoutCrop(bitmap))
-                .setCancelable(false).show();
+            // Always show the captured actual photo and an editable four-point frame.
+            // If OpenCV is missing, preserve the original image rather than faking perspective correction.
+            editing=true;current=bitmap;
+            editor=new RivoCropEditor(this);
+            editor.setDocument(bitmap,null);
+            layout(editor,trNative("loupe"),
+                button(trNative("retake"),this::showCamera),
+                button(trNative("savePage"),()->saveWithoutCrop(bitmap)));
             return;
         }
         editing=true;current=bitmap;
@@ -1508,6 +1514,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         else if(editing)showCamera();else finishWithPages();
     }
     @Override protected void onDestroy(){
+        if(Build.VERSION.SDK_INT>=33&&rightEdgeBackCallback!=null){
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(rightEdgeBackCallback);
+            rightEdgeBackCallback=null;
+        }
+
         cameraBindSerial++;enhancementSerial++;
         mainHandler.removeCallbacksAndMessages(null);
         clearFrozenPreview();
