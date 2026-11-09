@@ -245,8 +245,20 @@ const bulkUI=createLibraryBulk({
   },
   onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
   onRename:async doc=>{
-    await docViewerUI.open(doc);
-    document.querySelector('.doc-detail-actions button:nth-child(3)')?.click();
+    if(!Capacitor.isPluginAvailable('RivoDocuments')){toast('Renaming requires the Android app.',true);return;}
+    const proposed=window.prompt(language==='ar'?'اسم الملف الجديد':language==='fr'?'Nouveau nom':'Rename file',doc.name);
+    if(proposed===null)return;
+    const name=String(proposed).trim();
+    if(!name||name===doc.name)return;
+    try{
+      await RivoDocuments.renameFile({uri:doc.uri,name});
+      await loadLibrary(false);
+      bulkUI.clear();
+      if(activeTool?.id==='library')refreshVisibleLibrary();
+      else document.getElementById('home-recents')?.replaceChildren();
+      const home=document.getElementById('home-recents');if(home)home.innerHTML=recentDocuments(14);
+      toast(language==='ar'?'تبدل اسم الملف':'File renamed');
+    }catch(error){toast(error?.message||'Could not rename file',true);}
   },
   showBusy,progress,clearBusy,saveOut,toast
 });
@@ -1469,7 +1481,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
       // App-open ad only on a genuine foreground return and only if preloaded.
       if(secondsAway>=60000)void onAppForeground({
        backgroundMs:secondsAway,
-       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy')
+       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-live-overlay,.rivo-reward-overlay,.doc-detail-overlay,.busy')
       });
     }else{
       backgroundStartedAt=Date.now();
