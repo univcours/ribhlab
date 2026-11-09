@@ -1061,6 +1061,9 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
 }
 /** One primary Scan button: Google ML Kit FULL; native CameraX is an explicit fallback only. */
 async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true}={}){
+  // Native CameraX always previews the actual photo with draggable four-point outline.
+  // Official ML Kit FULL remains a compatibility fallback, never a silent auto-save path.
+  if(allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))return openLiveScanner({mode});
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('AI Deep Clean needs Android with Google Play services. Use photo upload on the web.',true);return;
   }
