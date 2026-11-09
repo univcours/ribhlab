@@ -1,0 +1,155 @@
+import {createWorker} from 'tesseract.js';
+
+const labels={
+ en:['Plate Scanner Pro','Search plate / digits while camera is live','Point camera toward a license plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
+ ar:['قارئ لوحات السيارات Pro','بحث عن لوحة أو أرقام والكاميرا خدامة','وجّه الكاميرا نحو لوحة السيارة','تسجلات اللوحة','مطابقة · تصورات السيارة','الكاميرا غير متاحة','أول مرة يمكن تحتاج تحميل نموذج OCR','بلا بحث'],
+ fr:['Scanner de plaques Pro','Rechercher une plaque ou des chiffres en direct','Cadrez une plaque','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut se télécharger au premier lancement','Aucune cible']
+};
+export function normalizePlate(value){
+ return String(value??'').normalize('NFKC').replace(/[٠-٩۰-۹]/g,d=>{
+  const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+  return i>=0?String(i):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+ }).toUpperCase().replace(/[^A-Z0-9\u0621-\u064A]/g,'');
+}
+export function plateCandidates(text){
+ const raw=String(text||'').normalize('NFKC').toUpperCase();
+ const out=[];
+ for(const line of raw.split(/\n+/)){
+  const patterns=[
+   /(?:^|\s)(\d{2,6})[\s\-|]*([A-Z\u0621-\u064A])[\s\-|]*(\d{1,2})(?:\s|$)/g,
+   /(?:^|\s)([A-Z]{1,3})[\s\-]*([0-9]{3,6})(?:\s|$)/g
+  ];
+  for(const pattern of patterns){
+   for(const match of line.matchAll(pattern)){
+    const plate=normalizePlate(match.slice(1).join(''));
+    if(plate.length>=5&&plate.length<=12&&!out.includes(plate))out.push(plate);
+   }
+  }
+ }
+ return out;
+}
+export function matchesPlate(plate,query){
+ const p=normalizePlate(plate),q=normalizePlate(query);
+ return q.length>=3&&p.includes(q);
+}
+function btn(label,fn){
+ const el=document.createElement('button');el.type='button';el.textContent=label;el.setAttribute('aria-label',label);el.addEventListener('click',fn);return el;
+}
+async function jpegBytes(canvas){
+ const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image capture failed')),'image/jpeg',0.88));
+ return new Uint8Array(await blob.arrayBuffer());
+}
+export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null}={}){
+ const L=labels[language]||labels.en;
+ const layer=document.createElement('div');layer.className='rivo-plate-overlay rivo-live-overlay';
+ const panel=document.createElement('section');panel.className='rivo-live-dialog';
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
+ const header=document.createElement('header');header.className='rivo-live-head';
+ const title=document.createElement('strong');title.textContent=L[0];
+ const close=btn('✕',()=>stop());close.dataset.scanOverlayClose='true';header.append(title,close);
+ const search=document.createElement('input');search.type='search';search.className='rivo-plate-search';
+ search.placeholder=L[1];search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
+ const view=document.createElement('div');view.className='rivo-live-preview';
+ const video=document.createElement('video');video.autoplay=true;video.playsInline=true;video.muted=true;
+ const guide=document.createElement('div');guide.className='rivo-plate-guide';guide.textContent='▢';
+ view.append(video,guide);
+ const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
+ const last=document.createElement('strong');last.className='rivo-live-result';last.hidden=true;
+ const foot=document.createElement('div');foot.className='rivo-live-actions';
+ const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
+ const torch=btn('⚡',()=>toggleTorch());foot.append(count,torch);
+ const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6];
+ panel.append(header,search,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
+ const observed=new Map(),confirmed=new Map();
+ let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
+ const key=e=>{if(e.key==='Escape'||e.key==='Backspace'&&e.target!==search){e.preventDefault();stop();}};
+ const stop=()=>{
+  if(closed)return;closed=true;clearTimeout(nextTimer);
+  stream?.getTracks().forEach(t=>t.stop());
+  if(worker)void worker.terminate().catch(()=>{});
+  document.removeEventListener('keydown',key);layer.remove();
+ };
+ document.addEventListener('keydown',key);
+ async function toggleTorch(){
+  const track=stream?.getVideoTracks()[0];if(!track)return;
+  try{light=!light;await track.applyConstraints({advanced:[{torch:light}]});}
+  catch{light=false;torch.disabled=true;}
+ }
+ function snapshot(){
+  const canvas=document.createElement('canvas');
+  const width=Math.min(1440,video.videoWidth||1280),ratio=width/(video.videoWidth||1280);
+  canvas.width=width;canvas.height=Math.max(1,Math.round((video.videoHeight||720)*ratio));
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+  return canvas;
+ }
+ function beep(){
+  try{
+   const Context=window.AudioContext||window.webkitAudioContext;
+   if(!Context)return;
+   const ctx=new Context(),osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.frequency.value=860;osc.type='sine';gain.gain.value=0.06;
+   osc.connect(gain);gain.connect(ctx.destination);osc.start();
+   gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.27);osc.stop(ctx.currentTime+.28);
+   osc.onended=()=>void ctx.close();
+  }catch{}
+ }
+ async function recordPlate(plate){
+  if(closed||confirmed.has(plate))return;
+  const query=search.value;
+  const match=matchesPlate(plate,query);
+  // A brief second OCR confirmation suppresses false alarms/captures.
+  confirmed.set(plate,Date.now());
+  for(const [p,time] of confirmed)if(Date.now()-time>30000)confirmed.delete(p);
+  let photoName='';
+  if(match){
+   try{
+    const bytes=await jpegBytes(snapshot());
+    photoName=await onMatchPhoto({plate,bytes})||'';
+   }catch(error){notify('Vehicle photo failed: '+String(error?.message||error),true);}
+   if(photoName)beep();
+  }
+  try{
+   const result=await onPlate({value:plate,format:'LICENSE_PLATE',match,photoName});
+   if(closed)return;
+   foundCount++;count.textContent=String(foundCount);
+   last.hidden=false;last.textContent=plate;
+   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · Excel not available');
+   guide.classList.toggle('matched',match);
+  }catch(error){if(!closed)status.textContent='Save failed: '+String(error?.message||error);}
+ }
+ async function scanFrame(){
+  if(closed||processing||!worker||video.readyState<2)return;
+  processing=true;
+  try{
+   const canvas=snapshot();
+   const scale=Math.min(1,900/Math.max(canvas.width,canvas.height));
+   const small=document.createElement('canvas');small.width=Math.max(1,Math.round(canvas.width*scale));
+   small.height=Math.max(1,Math.round(canvas.height*scale));small.getContext('2d').drawImage(canvas,0,0,small.width,small.height);
+   const data=(await worker.recognize(small)).data;
+   const candidates=plateCandidates(data.text);
+   const now=Date.now();
+   if(Number(data.confidence)>=55){
+    for(const plate of candidates){
+     const seen=observed.get(plate);
+     const streak=seen&&now-seen.time<6500?seen.streak+1:1;
+     observed.set(plate,{time:now,streak});
+     if(streak>=2)await recordPlate(plate);
+    }
+   }
+   for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
+  }catch(error){if(!closed)console.warn('License plate OCR:',error);}
+  finally{processing=false;if(!closed)nextTimer=setTimeout(scanFrame,650);}
+ }
+ async function start(){
+  try{
+   stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+   if(closed){stream.getTracks().forEach(t=>t.stop());return;}
+   video.srcObject=stream;await video.play();
+   worker=await createWorker('eng',1);
+   if(closed){void worker.terminate();return;}
+   working=true;status.textContent=L[2];void scanFrame();
+  }catch(error){if(!closed){status.textContent=L[5];console.warn('Plate scanner start:',error);}}
+ }
+ void start();
+ return stop;
+}
