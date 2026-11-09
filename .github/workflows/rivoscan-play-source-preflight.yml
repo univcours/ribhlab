@@ -48,10 +48,10 @@ jobs:
           grep -Fq 'showPrivacyOptionsForm' src/monetization.js
           test -f tests/live-scanners.test.js
           npm run build
-      - name: Validate signing bootstrap PowerShell syntax
+      - name: Validate non-destructive installer PowerShell syntax
         shell: pwsh
         run: |
           $tokens = $null
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path './setup-rivoscan-play-signing.ps1').Path, [ref]$tokens, [ref]$errors) | Out-Null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path './install-rivoscan-android.ps1').Path, [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
