@@ -101,13 +101,21 @@ test('Tesseract v6 OCR blocks project true plate bounds through video cover crop
  assert.deepEqual(box,{x:150,y:85,width:80,height:15});
  assert.equal(plateBoxInView(null,{x:0,y:0,canvasWidth:100},1,{width:100,height:100},{width:100,height:100}),null);
 });
-test('Live reader prevents duplicate frames without dropping distinct codes',()=>{
+test('Live reader prevents repeated scans for one continuously visible code',()=>{
  let tick=0;
  const d=newScanDeduplicator({clock:()=>tick,gapMs:1500});
- assert.equal(d.accept('ABC'),true);
- tick+=500;assert.equal(d.accept('ABC'),false);
- tick+=600;assert.equal(d.accept('XYZ'),true);
- tick+=2000;d.absence();assert.equal(d.accept('ABC'),true);
+ assert.equal(d.accept('QR\\u0000ABC'),true);
+ tick+=500;assert.equal(d.accept('QR\\u0000ABC'),false);
+ tick+=2000;assert.equal(d.accept('QR\\u0000ABC'),false,
+  'same code in continuous view cannot auto-save every two seconds');
+ assert.equal(d.accept('EAN13\\u0000ABC'),true,
+  'different barcode format is a distinct symbol');
+ tick+=100;d.absence();
+ tick+=1600;d.absence();
+ assert.equal(d.accept('QR\\u0000ABC'),true,
+  'returning after sustained absence is a fresh scan');
+ assert.equal(d.accept('QR\\u0000ABC'),false);
+ assert.equal(d.accept(''),false);
  assert.equal(decodeFormat({getBarcodeFormat:()=>11}),'QR');
  assert.equal(safeScannedUrl('javascript:alert(1)'),null);
  assert.equal(safeScannedUrl('https://example.org/'),'https://example.org/');
@@ -178,4 +186,14 @@ test('Native document shutter animates only after user capture and never adds au
  assert.ok(native.includes('captureInProgress=true;\n        animateShutterCapture();'));
  assert.ok(native.includes('shutterFlash.animate().alpha(0f).setDuration(240).start()'));
  assert.ok(native.includes('shutter.animate().scaleX(.83f).scaleY(.83f)'));
+});
+
+test('UltraScan frames reflect actual live symbols, never imported photo coordinates',()=>{
+ const src=readFileSync(new URL('../src/barcode-scanner.js',import.meta.url),'utf8');
+ assert.ok(src.includes('fromPhoto=false'));
+ assert.ok(src.includes('await deliver(found,{fromPhoto:true})'));
+ assert.ok(src.includes('lastDetectionAt=0;clearDetectionOutline()'));
+ assert.ok(src.includes("entry.format+'\\u0000'+entry.value"));
+ assert.ok(src.includes("dedup.absence();"));
+ assert.ok(src.includes('if(drawOutline(outline,video'));
 });

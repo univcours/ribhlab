@@ -8,6 +8,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const results={privacy:null,perfectScan:null};
 try{
  const ctx=await browser.newContext({viewport:{width:393,height:873},acceptDownloads:true});
+ await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.0'));
  const page=await ctx.newPage();
  await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
  await page.locator('.mobilebar [data-tab="tools"]').click();

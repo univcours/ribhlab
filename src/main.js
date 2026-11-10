@@ -358,6 +358,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
    <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${formatSize(doc.size||0)}</small></div>
    ${single?`<div class="rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('upload',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('text',16)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('delete',17)}</button>
@@ -503,12 +504,14 @@ function renderLibraryRows(needle=''){
  if(!matched.length)return `<div class="doc-empty">${ico('file',24)} ${dl('empty')}</div>`;
  return matched.map(({item,index})=>{
   const single=bulkUI.chosen(item)&&bulkUI.count()===1;
+  const file=visualFileType(item);
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
    <span class="document-icon">${ico('file',21)}</span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('upload',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('text',16)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('delete',17)}</button>
@@ -743,7 +746,7 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-delete],[data-doc-print],[data-doc-rename]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -768,6 +771,11 @@ function wire(){
       if(target.hasAttribute('data-doc-savepdf')){
         const doc=libraryItems[Number(target.dataset.docSavepdf)];
         if(doc)bulkUI.savePdf([doc]);
+        return;
+      }
+      if(target.hasAttribute('data-doc-shield')){
+        const item=libraryItems[Number(target.dataset.docShield)];
+        if(item)void launchPrivacyShield(item);
         return;
       }
       if(target.hasAttribute('data-doc-rename')){void bulkUI.action('rename');return;}
