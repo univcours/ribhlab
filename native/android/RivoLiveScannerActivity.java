@@ -103,7 +103,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private long lastAnalysisTime=0;
     private long lastValidEdgeTime=0;
     private Point[] smoothCorners;
-    private boolean autoCaptureEnabled=false,autoCaptureTriggered=false;
+    private boolean autoCaptureEnabled=true,autoCaptureTriggered=false;
     private TextView autoCaptureButton;
     private Point[] autoReferenceCorners;
     private long autoStableSince=0,autoLastCapture=0;
@@ -159,7 +159,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,rightEdgeBackCallback);
         }
         basicCameraMode=getIntent().getBooleanExtra("basic",false);
-        autoCaptureEnabled=!basicCameraMode&&getIntent().getBooleanExtra("autoCapture",false);
+        autoCaptureEnabled=!basicCameraMode&&getIntent().getBooleanExtra("autoCapture",true);
         autoCleanEnabled=getIntent().getBooleanExtra("autoClean",true);
         saveOriginal=getIntent().getBooleanExtra("keepOriginal",true);
         batchMode=getIntent().getBooleanExtra("batchDefault",false);
@@ -1146,7 +1146,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         Point[] found=RivoEdgeDetector.detect(bitmap);
         editor=new RivoCropEditor(this);editor.setDocument(bitmap,found);
         layout(editor,trNative("loupe")+"\n"+localizedCapture("analyzing"),
-            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
+            // Corners are auto-detected. Four handles remain draggable without an Edges button.
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
@@ -1425,7 +1425,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
         layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
-            button(trNative("detect"),()->{editor.useAutoCorners();message.setText(trNative("found"));}),
+            // Corners are auto-detected. Four handles remain draggable without an Edges button.
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
             button("→  "+localizedCapture("review"),this::prepareEnhancementPreview));
