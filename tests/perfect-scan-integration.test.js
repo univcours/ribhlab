@@ -8,6 +8,8 @@ test('Exactly one user-facing scan entry with Advanced multi-angle inside Scan w
  assert.ok(main.includes('id="smart-scanner"'),'native CameraX capture entry exists');
  assert.ok(main.includes('id="scan-multi-angle"'),'PerfectScan Pro directly accessible inside scanner');
  assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
+ assert.ok(get('src/compact-turquoise.css').includes('.scan-quick-toolbar .rivo-perfectscan-restore'));
+
  assert.ok(get('src/perfect-scan-ui.js').includes('PerfectScan Pro'));
 
  assert.ok(main.includes("document.getElementById('scan-multi-angle')?.addEventListener"));
