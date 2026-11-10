@@ -334,6 +334,49 @@ function render(){
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
+  observeDocumentThumbnails();
+}
+
+const documentThumbnailCache=new Map(),documentThumbnailPending=new Set();
+let documentThumbObserver=null,documentThumbQueued=false;
+function hydrateDocumentThumbnails(){
+ if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments'))return;
+ const install=(uri,b64)=>{
+  if(!/^[A-Za-z0-9+/=]+$/.test(b64)||b64.length>180000)return;
+  for(const el of document.querySelectorAll('[data-thumb-uri]')){
+   if(el.dataset.thumbUri!==uri)continue;
+   const img=document.createElement('img');img.src='data:image/jpeg;base64,'+b64;img.alt='';
+   img.decoding='async';el.replaceChildren(img);el.removeAttribute('data-thumb-uri');
+  }
+ };
+ for(const el of [...document.querySelectorAll('[data-thumb-uri]')].slice(0,72)){
+  const uri=el.dataset.thumbUri;
+  if(!uri||!uri.startsWith('content:'))continue;
+  const cached=documentThumbnailCache.get(uri);
+  if(cached){install(uri,cached);continue;}
+  if(documentThumbnailPending.has(uri))continue;
+  if(documentThumbnailPending.size>=6)break;
+  documentThumbnailPending.add(uri);
+  void RivoDocuments.getThumbnail({uri,width:56,height:74}).then(data=>{
+   if(!data?.base64)return;
+   if(documentThumbnailCache.size>110)documentThumbnailCache.clear();
+   documentThumbnailCache.set(uri,data.base64);install(uri,data.base64);
+  }).catch(()=>{
+   for(const el of document.querySelectorAll('[data-thumb-uri]'))
+    if(el.dataset.thumbUri===uri)el.removeAttribute('data-thumb-uri');
+  }).finally(()=>{documentThumbnailPending.delete(uri);scheduleDocumentThumbnails()});
+ }
+}
+function scheduleDocumentThumbnails(){
+ if(documentThumbQueued)return;documentThumbQueued=true;
+ requestAnimationFrame(()=>{documentThumbQueued=false;hydrateDocumentThumbnails()});
+}
+function observeDocumentThumbnails(){
+ if(documentThumbObserver)return;
+ const root=document.getElementById('app');if(!root)return;
+ documentThumbObserver=new MutationObserver(scheduleDocumentThumbnails);
+ documentThumbObserver.observe(root,{childList:true,subtree:true});
+ scheduleDocumentThumbnails();
 }
 function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
@@ -355,7 +398,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
   const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
   return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
    <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
-   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" aria-hidden="true"><span>${file.code}</span></span>
+   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span>${file.code}</span></span>
    <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${formatSize(doc.size||0)}</small></div>
    ${single?`<div class="rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
@@ -499,7 +542,7 @@ function renderLibraryRows(needle=''){
   const file=visualFileType(item);
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
-   <span class="document-icon">${ico('file',21)}</span>
+   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span>${file.code}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>

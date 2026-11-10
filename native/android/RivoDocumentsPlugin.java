@@ -380,6 +380,48 @@ public class RivoDocumentsPlugin extends Plugin {
         }
     }
 
+    /** On-device, real first-page PDF/image thumbnail, rendered at bounded size. */
+    @PluginMethod
+    public void getThumbnail(PluginCall call){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        Uri uri=verifiedUri(call);if(uri==null)return;
+        int w=Math.max(36,Math.min(140,call.getInt("width",56)));
+        int h=Math.max(48,Math.min(190,call.getInt("height",74)));
+        android.graphics.Bitmap bmp=null;
+        try{
+            ContentResolver resolver=getContext().getContentResolver();
+            String mime=mimeOf(uri);
+            if("application/pdf".equalsIgnoreCase(mime)){
+                try(ParcelFileDescriptor fd=resolver.openFileDescriptor(uri,"r")){
+                    if(fd==null)throw new java.io.IOException("PDF is unavailable");
+                    try(android.graphics.pdf.PdfRenderer render=new android.graphics.pdf.PdfRenderer(fd)){
+                        if(render.getPageCount()==0)throw new java.io.IOException("Empty PDF");
+                        android.graphics.pdf.PdfRenderer.Page page=render.openPage(0);
+                        try{
+                            double scale=Math.min(w/(double)page.getWidth(),h/(double)page.getHeight());
+                            bmp=android.graphics.Bitmap.createBitmap(Math.max(1,(int)(page.getWidth()*scale)),
+                                Math.max(1,(int)(page.getHeight()*scale)),android.graphics.Bitmap.Config.ARGB_8888);
+                            bmp.eraseColor(android.graphics.Color.WHITE);
+                            page.render(bmp,null,null,android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                        }finally{page.close();}
+                    }
+                }
+            }else if(mime!=null&&mime.toLowerCase(Locale.ROOT).startsWith("image/")){
+                bmp=resolver.loadThumbnail(uri,new android.util.Size(w,h),null);
+            }else{call.reject("Only PDF and image previews are supported");return;}
+            if(bmp==null)throw new java.io.IOException("Could not render first page");
+            try(ByteArrayOutputStream output=new ByteArrayOutputStream()){
+                if(!bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG,77,output))
+                    throw new java.io.IOException("Thumbnail export failed");
+                JSObject result=new JSObject();
+                result.put("base64",Base64.encodeToString(output.toByteArray(),Base64.NO_WRAP));
+                result.put("mimeType","image/jpeg");
+                call.resolve(result);
+            }
+        }catch(Exception error){call.reject("Preview unavailable: "+error.getMessage(),error);}
+        finally{if(bmp!=null&&!bmp.isRecycled())bmp.recycle();}
+    }
+
     @PluginMethod
     public void listFiles(PluginCall call){
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
