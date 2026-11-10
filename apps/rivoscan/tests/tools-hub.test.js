@@ -5,12 +5,12 @@ import {toolGroups,hubSpecial,hubGroupLabel,hubLabel,hubLanguages} from '../src/
 import {mergedToolDefinitions,mergedToolOptions} from '../src/merged-tools.js';
 
 const groups=toolGroups.flatMap(g=>g.entries);
-test('RivoScan has seventeen high-value Tools, not repeated tiles for the same output',()=>{
+test('RivoScan has twenty high-value Tools, not repeated tiles for the same output',()=>{
  assert.deepEqual(toolGroups.map(g=>g.id),['scan','convert','edit','utilities']);
- assert.equal(groups.length,17);
+ assert.equal(groups.length,20);
  assert.equal(new Set(groups).size,17);
  for(const required of ['scanCode','plateScanner','ocr','bookScan','convertDocument','photoStudio',
- 'combineFiles','managePages','annotatePdf','pdfPrivacy','peerTransfer','shareFiles'])
+ 'combineFiles','managePages','annotatePdf','pdfPrivacy','smartAutoCapture','perfectScanQuality','privacyShield','peerTransfer','shareFiles'])
   assert.ok(groups.includes(required),required+' stays accessible');
  for(const hidden of ['toWord','toWordTables','toExcel','toCSV','toPpt','toPptEditable','images',
  'pdftoimages','pdfLong','extractText','manualErase','enhance','restorePhoto','eraseColoredMarks',

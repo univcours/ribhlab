@@ -4,12 +4,15 @@
 // user can restore them, but duplicated/experimental controls do not clutter Tools.
 // Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'scan',entries:['smartAutoCapture','scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
  {id:'convert',entries:['convertDocument']},
- {id:'edit',entries:['photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
+ {id:'edit',entries:['privacyShield','photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
+ smartAutoCapture:{icon:'scan',color:'green',type:'smartAutoCapture'},
+ perfectScanQuality:{icon:'sparkle',color:'green',type:'perfectScan'},
+ privacyShield:{icon:'shield',color:'green',type:'privacyShield'},
  // Composite tiles delegate to the already tested original implementations.
  convertDocument:{icon:'convert',color:'green',type:'mergedDialog'},
  annotatePdf:{icon:'sign',color:'green',type:'mergedDialog'},
@@ -59,6 +62,9 @@ const groups={
  it:['Scansione','Importa','Converti','Modifica','Utilità']
 };
 const labels={
+ smartAutoCapture:['Smart AutoCapture','التصوير التلقائي الذكي','Capture auto intelligente','Captura automática','Intelligente Auto-Aufnahme','Captura automática inteligente','Cattura automatica intelligente'],
+ perfectScanQuality:['PerfectScan Quality','تحسين جودة الوثائق','Qualité PerfectScan','Calidad PerfectScan','PerfectScan Qualität','Qualidade PerfectScan','Qualità PerfectScan'],
+ privacyShield:['Privacy Shield','حماية وإخفاء المعلومات','Masquage sécurisé','Protección de privacidad','Datenschutz-Schutz','Proteção de privacidade','Protezione privacy'],
  convertDocument:['Convert documents','تحويل الوثائق','Convertir des documents','Convertir documentos','Dokumente konvertieren','Converter documentos','Converti documenti'],
  annotatePdf:['Write & sign PDF','الكتابة والتوقيع على PDF','Annoter et signer PDF','Anotar y firmar PDF','PDF beschriften & signieren','Anotar e assinar PDF','Annota e firma PDF'],
  pdfPrivacy:['PDF Privacy','حماية وخصوصية PDF','Confidentialité PDF','Privacidad PDF','PDF Datenschutz','Privacidade PDF','Privacy PDF'],
