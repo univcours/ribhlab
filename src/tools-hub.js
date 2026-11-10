@@ -63,7 +63,7 @@ const groups={
 };
 const labels={
  smartAutoCapture:['Smart AutoCapture','التصوير التلقائي الذكي','Capture auto intelligente','Captura automática','Intelligente Auto-Aufnahme','Captura automática inteligente','Cattura automatica intelligente'],
- perfectScanQuality:['PerfectScan Quality','تحسين جودة الوثائق','Qualité PerfectScan','Calidad PerfectScan','PerfectScan Qualität','Qualidade PerfectScan','Qualità PerfectScan'],
+ perfectScanQuality:['PerfectScan Pro · UVDoc AI','PerfectScan Pro · تحسين قوي للوثائق','PerfectScan Pro · UVDoc AI','PerfectScan Pro · UVDoc AI','PerfectScan Pro · UVDoc AI','PerfectScan Pro · UVDoc AI','PerfectScan Pro · UVDoc AI'],
  privacyShield:['Privacy Shield','حماية وإخفاء المعلومات','Masquage sécurisé','Protección de privacidad','Datenschutz-Schutz','Proteção de privacidade','Protezione privacy'],
  convertDocument:['Convert documents','تحويل الوثائق','Convertir des documents','Convertir documentos','Dokumente konvertieren','Converter documentos','Converti documenti'],
  annotatePdf:['Write & sign PDF','الكتابة والتوقيع على PDF','Annoter et signer PDF','Anotar y firmar PDF','PDF beschriften & signieren','Anotar e assinar PDF','Annota e firma PDF'],
