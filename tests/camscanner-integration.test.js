@@ -13,7 +13,7 @@ test('User scanner settings are applied to native CameraX, not UI-only decoratio
   assert.ok(plugin.includes('intent.putExtra("'+key+'"'),key);
   assert.ok(native.includes('getIntent().get'),key);
  }
- assert.ok(main.includes('RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs,autoCapture})'));
+ assert.ok(main.includes('RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs,autoCapture:useAutoCapture})'));
  assert.ok(main.includes('updateScanPref(localStorage'));
  assert.ok(main.includes('scannerPreferenceRows()'));
  assert.ok(native.includes('autoCleanEnabled?defaultEnhancement:RivoDocumentEnhancer.ORIGINAL'));
