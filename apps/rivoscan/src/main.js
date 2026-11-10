@@ -1447,7 +1447,8 @@ function navigateRivoBack(){
  const dialogs=[
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
-  ['.rivo-perfectscan-overlay','[data-perfect="close"]']
+  ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
+  ['.rivo-shield-overlay','[data-shield="close"]']
  ];
  for(const [selector,closeSelector] of dialogs){
   const modal=document.querySelector(selector);

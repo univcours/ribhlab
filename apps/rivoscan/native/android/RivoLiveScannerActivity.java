@@ -175,6 +175,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         if(requestedLanguage!=null)nativeLanguage=requestedLanguage;
         try{openCvReady=!basicCameraMode && OpenCVLoader.initLocal();}
         catch(Throwable failure){openCvReady=false;}
+        if(!openCvReady)autoCaptureEnabled=false;
         if(!openCvReady && !basicCameraMode){
             Toast.makeText(this,trNative("basicMode"),Toast.LENGTH_LONG).show();
         }
@@ -782,6 +783,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     boundCamera=provider.bindToLifecycle(this,selector,preview,nextCapture);
                 }
                 capture=nextCapture;
+                if(!liveEdges&&autoCaptureEnabled){
+                    autoCaptureEnabled=false;
+                    resetAutoCaptureHold();
+                    updateAutoCaptureButton();
+                    if(message!=null)message.setText("AutoCapture unavailable with this camera. Use manual shutter.");
+                }
                 frames=0;
                 if(overlay!=null)overlay.update(null,1,1);
                 if(boundCamera!=null){

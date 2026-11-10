@@ -77,7 +77,7 @@ const labels={
  aiChat:['AI Chat (your own API key)','AI Chat (مفتاح شخصي)','AI Chat (clé API personnelle)','AI Chat (clave API propia)','AI Chat (eigener API-Schlüssel)','AI Chat (chave API própria)','AI Chat (chiave API personale)'],
  solverAI:['Solver AI (your own API key)','Solver AI (مفتاح شخصي)','Solver AI (clé API personnelle)','Solver AI (clave API propia)','Solver AI (eigener API-Schlüssel)','Solver AI (chave API própria)','Solver AI (chiave API personale)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
- scanCode:['QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode'],
+ scanCode:['QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan'],
  plateScanner:['License Plate Scanner Pro','قارئ لوحات السيارات Pro','Scanner de plaques Pro','Lector de matrículas Pro','Kennzeichen Scanner Pro','Leitor de matrículas Pro','Lettore targhe Pro'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],

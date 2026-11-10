@@ -227,3 +227,8 @@
 .rivo-perfectscan-preview.rivo-perfect-split-active .rivo-perfectscan-tag{
  color:#fff!important;background:#064d54db!important;border:1px solid #4ee6cd!important;
 }
+
+/* Fullscreen privacy editing hides the bottom camera, but the source itself remains private. */
+body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:none!important;
+}

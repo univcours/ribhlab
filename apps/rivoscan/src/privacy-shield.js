@@ -47,6 +47,7 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
  const input=root.querySelector('input'),status=root.querySelector('[data-shield-status]');
  const button=a=>root.querySelector('[data-shield="'+a+'"]');
  const masks=new Map();let fileBytes=null,type=null,name='scan',pdf=null,pages=0,page=1,sourceCanvas=null,drag=null,busy=false,closed=false;
+ let backHandler=null;
  const update=()=>{
   if(closed)return;
   empty.hidden=!!sourceCanvas;
@@ -69,7 +70,12 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
   button('save').disabled=busy||total===0;
  };
  const clearPdf=async()=>{if(pdf){await pdf.destroy().catch(()=>{});pdf=null;}};
- const close=()=>{if(busy||closed)return;closed=true;void clearPdf();root.remove();};
+ const close=()=>{
+  if(busy||closed)return;
+  closed=true;
+  if(backHandler)document.removeEventListener('keydown',backHandler);
+  void clearPdf();root.remove();
+ };
  async function renderPage(n){
   if(!fileBytes||closed)return;
   let c;
@@ -185,12 +191,8 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
   else if(action==='save')await saveSanitized();
  });
  input.addEventListener('change',()=>{const selected=input.files?.[0];input.value='';if(selected)void pick(selected)});
- const back=e=>{if(e.key==='Escape'&&!busy){e.preventDefault();close()}};
- document.addEventListener('keydown',back);
- const oldClose=close;
- // Escape listeners are removed even when the dialog is closed by a tool switch.
- const closeButton=button('close');
- closeButton.addEventListener('click',()=>document.removeEventListener('keydown',back),{once:true});
+ backHandler=e=>{if(e.key==='Escape'&&!busy){e.preventDefault();close()}};
+ document.addEventListener('keydown',backHandler);
  if(doc){
   try{
    const source=await bridge.readFile({uri:doc.uri});
@@ -198,5 +200,5 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
    await openBytes(bytes,doc.name,doc.mimeType||source.mimeType||'');
   }catch(e){status.textContent=e.message;notify(t.failed+e.message,true)}
  }
- return oldClose;
+ return close;
 }
