@@ -8,6 +8,13 @@ on:
       - 'apps/rivoscan/src/compact-turquoise.css'
       - 'apps/rivoscan/src/premium-home.css'
       - 'apps/rivoscan/src/style.css'
+      - 'apps/rivoscan/src/privacy-shield.js'
+      - 'apps/rivoscan/src/privacy-shield-core.js'
+      - 'apps/rivoscan/src/privacy-shield.css'
+      - 'apps/rivoscan/src/perfect-scan-ui.js'
+      - 'apps/rivoscan/src/rivo-design-system.css'
+      - 'apps/rivoscan/src/barcode-scanner.js'
+      - 'apps/rivoscan/scripts/features-e2e-audit.mjs'
       - 'apps/rivoscan/src/tools-hub.js'
       - 'apps/rivoscan/src/merged-tools.js'
       - 'apps/rivoscan/scripts/visual-ui-audit.mjs'
@@ -48,6 +55,7 @@ jobs:
             sleep 1
           done
           node scripts/visual-ui-audit.mjs
+          node scripts/features-e2e-audit.mjs
       - name: Save screenshots, audit report and server logs
         if: always()
         uses: actions/upload-artifact@v4
