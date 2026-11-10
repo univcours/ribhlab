@@ -12,6 +12,7 @@ const memory=()=>{
 };
 test('Scanner defaults preserve documents with one-tap auto-clean',()=>{
  const prefs=normalizeScanPrefs();
+ assert.equal(prefs.autoCapture,true);
  assert.equal(prefs.autoClean,true);
  assert.equal(prefs.keepOriginal,true);
  assert.equal(prefs.enhancement,'proscan');
@@ -22,13 +23,14 @@ test('Scanner defaults preserve documents with one-tap auto-clean',()=>{
 test('Persistent camera settings survive reload and reject invalid values',()=>{
  const store=memory();
  updateScanPref(store,'batch',true);
+ updateScanPref(store,'autoCapture',false);
  updateScanPref(store,'jpegQuality',88);
  updateScanPref(store,'enhancement','shadow');
  updateScanPref(store,'pdfQuality',0.95);
  updateScanPref(store,'pageSize','letter');
  assert.equal(JSON.parse(store.getItem(SCAN_PREF_KEY)).jpegQuality,88);
  assert.deepEqual({...readScanPrefs(store)},{
-  ...DEFAULT_SCAN_PREFS,batch:true,jpegQuality:88,enhancement:'shadow',pdfQuality:0.95,pageSize:'letter'
+  ...DEFAULT_SCAN_PREFS,batch:true,autoCapture:false,jpegQuality:88,enhancement:'shadow',pdfQuality:0.95,pageSize:'letter'
  });
  assert.throws(()=>updateScanPref(store,'jpegQuality',4),/Unsupported/);
  assert.throws(()=>updateScanPref(store,'arbitrary','value'),/Unknown/);
