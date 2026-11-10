@@ -331,7 +331,7 @@ function render(){
     <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
 }
@@ -403,7 +403,6 @@ function toolsWorkspace(){
  const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
  return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
  <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
- <nav class="rivo-tool-pills">${toolGroups.map((g,i)=>`<button type="button" data-hub-section="${g.id}" class="${i===0?'active':''}">${hubGroupLabel(language,g.id)}</button>`).join('')}</nav>
  ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
@@ -469,7 +468,7 @@ function scannerWorkspace(){
   const aiScanHint=({en:'Detect paper · capture when sharp and stable',ar:'تصوير تلقائي ملي الورقة تكون واضحة وثابتة',fr:'Détection et photo quand nette et stable',es:'Foto automática cuando esté nítido y estable',de:'Auto-Foto bei stabiler und scharfer Seite',pt:'Fotografa quando estiver nítida e estável',it:'Scatta quando stabile e nitido'})[language]||'Detect paper · capture when stable';
   return `<section class="workspace scan-workspace">
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
-  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
+  <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('scan',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
    <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} PerfectScan Pro · UVDoc AI / 3D</button></div>
@@ -798,11 +797,6 @@ function wire(){
     document.getElementById('tools-no-results').hidden=count!==0;
   });
   document.querySelector('[data-tools-focus]')?.addEventListener('click',()=>document.getElementById('tools-query')?.focus());
-  document.querySelectorAll('[data-hub-section]').forEach(el=>el.addEventListener('click',()=>{
-    document.querySelectorAll('[data-hub-section]').forEach(b=>b.classList.toggle('active',b===el));
-    const search=document.getElementById('tools-query');search.value='';search.dispatchEvent(new Event('input'));
-    document.getElementById('section-'+el.dataset.hubSection)?.scrollIntoView({behavior:'smooth',block:'start'});
-  }));
   document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>{void openHubAction(el.dataset.hubAction)}));
   // Home shortcuts reuse the very same audited Tools handlers, never a second implementation.
   document.querySelectorAll('[data-rivo-feature]').forEach(el=>el.addEventListener('click',()=>{
@@ -1095,9 +1089,8 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   try{
     const prefs=readScanPrefs(localStorage);
     if(mlkitFull){
-      // ML Kit's cleaned JPEGs are temporary; unlike CameraX results,
-      // they must be copied to permanent Documents/RivoScan storage.
-      for(const page of picked)await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg');
+      // ML Kit JPEGs remain temporary inputs. Publish only the finished PDF,
+      // never extra JPGs in My Files (same policy as CameraX).
     }
     if(!prefs.autoSavePdf){
       toast(scanPrefsText(language).autoSavePdfHelp);
@@ -1157,9 +1150,7 @@ async function openCamera(){
   if(Capacitor.isNativePlatform())nativeCaptureDepth++;
   try{
     if(Capacitor.isNativePlatform()){
-      // Basic photo mode uses the same reliable CameraX preview, without cropping.
-      // Every captured photo is published to public Documents/RivoScan as JPG;
-      // consumeSmartScan also assembles and saves its searchable PDF in that folder.
+      // Even basic capture is assembled into a single public PDF; source JPEGs stay temporary.
       if(Capacitor.getPlatform()==='android' && Capacitor.isPluginAvailable('RivoLiveScanner')){
         const result=await RivoLiveScanner.scan({basic:true,language});
         await consumeSmartScan(result);
@@ -1171,7 +1162,6 @@ async function openCamera(){
       const blob=await(await fetch(photo.dataUrl)).blob();
       const original=new File([blob],`RivoScan_Photo_${Date.now()}.jpg`,{type:'image/jpeg'});
       addSelectedFiles([original]);
-      await saveOut(new Uint8Array(await blob.arrayBuffer()),original.name,'image/jpeg');
       const pdf=await imagesToPdf('color',[original]);
       await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
       openLibrary();

@@ -366,3 +366,25 @@ body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-
 @media(prefers-reduced-motion:reduce){
  #app .rivo-ai-chevron{transition:none}
 }
+
+/* Files-first: real thumbnail, one compact row per document. */
+#app .rivo-dark-ui .rivo-premium-recent{display:flex!important;flex-direction:column!important;gap:4px!important;overflow-y:auto!important}
+#app .rivo-dark-ui .rivo-premium-recent .rivo-recent-card{
+ display:grid!important;grid-template-columns:22px 45px minmax(0,1fr) auto!important;
+ grid-template-rows:minmax(48px,auto)!important;align-items:center!important;
+ min-height:56px!important;max-height:none!important;padding:4px 8px!important;
+ gap:5px!important;border-radius:9px!important;
+}
+#app .rivo-dark-ui .rivo-premium-recent .rivo-recent-check{
+ grid-column:1!important;grid-row:1!important;justify-self:center!important;
+}
+#app .rivo-dark-ui .rivo-premium-recent .rivo-file-thumb{
+ grid-column:2!important;grid-row:1!important;
+ width:38px!important;height:49px!important;border-radius:4px!important;
+}
+#app .rivo-dark-ui .rivo-premium-recent .recent-file-meta{
+ grid-column:3!important;grid-row:1!important;min-width:0!important;
+}
+#app .rivo-dark-ui .rivo-premium-recent .rivo-file-quick-actions{
+ grid-column:4!important;grid-row:1!important;display:flex!important;flex-wrap:nowrap!important;
+}
