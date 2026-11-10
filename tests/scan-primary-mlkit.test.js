@@ -28,15 +28,19 @@ test('CameraX fallback never replaces Google ML Kit FULL after cancellation, and
  assert.ok(!main.includes('id="camera"'),'no separate basic camera button next to main scanner');
 });
 
-test('PerfectScan not user-facing; advanced correction integrated with scanner settings',()=>{
+test('PerfectScan Pro UVDoc enhancement restored in scanner and documents editor',()=>{
  const main=get('src/main.js');
  const ui=get('src/perfect-scan-ui.js');
- assert.ok(main.includes('data-scan-advanced'));
- assert.ok(main.includes("document.querySelectorAll('[data-scan-advanced]')"));
+ assert.ok(main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
+ assert.ok(main.includes('onUVDoc:Capacitor.isNativePlatform()'));
+ assert.ok(main.includes('onSurface3D:Capacitor.isNativePlatform()'));
+
  assert.ok(main.includes('id="scan-multi-angle"'));
- assert.ok(!main.includes('PerfectScan Pro'));
+ assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
+ assert.ok(main.includes('id="scan-multi-angle"'));
+
  assert.ok(!main.includes('data-perfectscan-launch'));
- assert.ok(!ui.includes("title:'PerfectScan Pro'"));
+ assert.ok(ui.includes("title:'PerfectScan Pro'"));
  assert.ok(!ui.includes('data-perfect="mlkit"'));
  assert.ok(!ui.includes('data-perfect-review'));
  assert.ok(ui.includes('data-perfect-mode'));
