@@ -1,5 +1,6 @@
 import * as pdfjs from 'pdfjs-dist';
 import {PDFDocument} from 'pdf-lib';
+import {normalizeRedaction,redactCanvas} from './privacy-shield-core.js';
 
 const MAX_BYTES=24*1024*1024;
 const MAX_PDF_PAGES=30;
@@ -9,24 +10,6 @@ const WORDS={
  ar:{title:'Privacy Shield',subtitle:'إخفاء المعلومات الحساسة نهائياً فنسخة جديدة',pick:'اختار PDF أو صورة',hint:'جرّ صبعك فوق النص أو الصورة اللي بغيتي تخفي. تقدر تحدد عدة مناطق.',page:'الصفحة',previous:'السابقة',next:'التالية',undo:'تراجع',clear:'مسح التحديد',save:'حفظ نسخة آمنة',close:'إغلاق',pending:'اختار وثيقة أولاً.',ready:'المناطق السوداء غادي تندمج نهائياً فالنسخة الجديدة، والأصل غادي يبقى.',none:'حدد على الأقل منطقة وحدة.',saving:'كنوجد نسخة آمنة محلياً…',saved:'تحفظات النسخة الآمنة والأصل باقي.',failed:'تعذر إخفاء المعلومات: ',confirm:'واش بغيتي تحفظ نسخة جديدة والمعلومات المحددة مخفية نهائياً؟ الأصل ما غاديش يتبدل.',limit:'PDF فيه أكثر من 30 صفحة. قسمو قبل التعديل.',access:'المعالجة محلية. راجع كل صفحة قبل المشاركة.'},
  fr:{title:'Privacy Shield',subtitle:'Masquer définitivement les données dans une nouvelle copie',pick:'Choisir PDF ou image',hint:'Faites glisser sur la zone à masquer. Plusieurs rectangles possibles.',page:'Page',previous:'Précédente',next:'Suivante',undo:'Annuler',clear:'Effacer',save:'Enregistrer la copie masquée',close:'Fermer',pending:'Choisissez un document.',ready:'Les zones noires seront aplaties dans le nouveau fichier. Original intact.',none:'Sélectionnez au moins une zone.',saving:'Création locale de la copie…',saved:'Copie masquée enregistrée.',failed:'Masquage impossible : ',confirm:'Exporter une nouvelle copie avec les données définitivement masquées ?',limit:'PDF de plus de 30 pages. Divisez-le avant.',access:'Traitement local. Vérifiez chaque page.'}
 };
-export function normalizeRedaction({x1,y1,x2,y2},min=.008){
- if(![x1,y1,x2,y2].every(Number.isFinite))return null;
- const clamp=x=>Math.max(0,Math.min(1,x));
- const left=clamp(Math.min(x1,x2)),top=clamp(Math.min(y1,y2));
- const right=clamp(Math.max(x1,x2)),bottom=clamp(Math.max(y1,y2));
- if(right-left<min||bottom-top<min)return null;
- return {x:left,y:top,w:right-left,h:bottom-top};
-}
-export function redactCanvas(ctx,rects,width,height){
- // Rectangles are over-painted into decoded pixels, never PDF annotations.
- ctx.save();ctx.fillStyle='#000000';
- for(const r of rects||[]){
-  const box=normalizeRedaction({x1:r.x,y1:r.y,x2:r.x+r.w,y2:r.y+r.h},0.00001);
-  if(box)ctx.fillRect(Math.floor(box.x*width),Math.floor(box.y*height),
-   Math.ceil(box.w*width)+2,Math.ceil(box.h*height)+2);
- }
- ctx.restore();
-}
 const bytesFromBase64=str=>{
  const raw=String(str||'').split(',').at(-1),out=new Uint8Array(Math.floor(raw.length*3/4));
  const binary=atob(raw);return Uint8Array.from(binary,c=>c.charCodeAt(0));

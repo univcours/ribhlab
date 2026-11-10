@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {normalizeRedaction,redactCanvas} from '../src/privacy-shield.js';
+import {normalizeRedaction,redactCanvas} from '../src/privacy-shield-core.js';
 const code=readFileSync(new URL('../src/privacy-shield.js',import.meta.url),'utf8');
 test('Privacy Shield clips normalized masks to an immutable page coordinate space',()=>{
  assert.deepEqual(normalizeRedaction({x1:.8,y1:.7,x2:.2,y2:.3}),{x:.2,y:.3,w:.6000000000000001,h:.39999999999999997});
