@@ -110,6 +110,10 @@ test('Live reader prevents repeated scans for one continuously visible code',()=
   'same code in continuous view cannot auto-save every two seconds');
  assert.equal(d.accept('EAN13\\u0000ABC'),true,
   'different barcode format is a distinct symbol');
+ assert.equal(d.accept('QR\\u0000ABC'),false,
+  'alternating QR and barcode frames cannot repeatedly export the same code');
+ assert.equal(d.accept('EAN13\\u0000ABC'),false,
+  'second barcode remains deduplicated even while QR is visible');
  tick+=100;d.absence();
  tick+=1600;d.absence();
  assert.equal(d.accept('QR\\u0000ABC'),true,

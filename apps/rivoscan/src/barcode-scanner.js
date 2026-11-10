@@ -29,17 +29,23 @@ export function recognizedCode(result){
  * Key includes FORMAT, so a QR and EAN with identical text are distinct.
  */
 export function newScanDeduplicator({gapMs=1800,clock=()=>Date.now()}={}){
- let lastIdentity='',absenceSince=null;
+ const seen=new Set();
+ let absenceSince=null;
  return {
   accept(identity){
    const next=String(identity??'');
-   if(!next||next===lastIdentity)return false;
-   lastIdentity=next;absenceSince=null;return true;
+   if(!next)return false;
+   // Any recognized symbol cancels the tentative absence period, including
+   // an already-seen one. Alternating QR and barcode frames must not re-arm.
+   absenceSince=null;
+   if(seen.has(next))return false;
+   seen.add(next);
+   return true;
   },
   absence(){
    if(absenceSince===null)absenceSince=clock();
    else if(clock()-absenceSince>=gapMs){
-    lastIdentity='';
+    seen.clear();
     absenceSince=null;
    }
   }
