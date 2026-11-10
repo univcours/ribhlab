@@ -31,10 +31,13 @@ final class RivoEdgeDetector {
         } finally { rgba.release(); gray.release(); }
     }
 
-    static Point[] detectGray(Mat source) {
+    static Point[] detectGray(Mat source) {return detectGray(source,900);}
+    /** Max edge length is reduced only for LIVE CameraX frames. Still images use 900px
+     * plus full-resolution crop handles; neither preview nor saved image is fabricated. */
+    static Point[] detectGray(Mat source,int maxLongSide) {
         if(source.empty() || source.width()<40 || source.height()<40) return null;
         int w=source.width(),h=source.height();
-        double factor=Math.min(1.0,850.0/Math.max(w,h));
+        double factor=Math.min(1.0,Math.max(360,Math.min(1250,maxLongSide))/(double)Math.max(w,h));
         Mat small=new Mat(),blur=new Mat(),edges=new Mat(),closed=new Mat(),kernel=new Mat(),hierarchy=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();
         try {
@@ -112,60 +115,81 @@ final class RivoEdgeDetector {
      * prevent an entire desk or bright wall from being labeled as a document.
      */
     private static Point[] detectLightPaper(Mat gray) {
-        Mat mask=new Mat(),clean=new Mat(),kernel=new Mat(),inner=new Mat(),outer=new Mat(),hierarchy=new Mat();
+        // Accurate skewed corners, NOT an axis-aligned bounding rectangle.
+        // Otsu on the luminance plane is cheap for bright paper over darker desks.
+        Mat mask=new Mat(),clean=new Mat(),kernel=new Mat(),hierarchy=new Mat();
+        Mat inner=new Mat(),outer=new Mat();
         List<MatOfPoint> contours=new ArrayList<>();
-        try {
+        try{
             int w=gray.width(),h=gray.height();
             if(w<70||h<70)return null;
             Imgproc.threshold(gray,mask,0,255,Imgproc.THRESH_BINARY+Imgproc.THRESH_OTSU);
-            kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(9,9));
+            kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(7,7));
             Imgproc.morphologyEx(mask,clean,Imgproc.MORPH_CLOSE,kernel);
-            kernel.release();
-            kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5));
-            Imgproc.morphologyEx(clean,clean,Imgproc.MORPH_OPEN,kernel);
             Imgproc.findContours(clean,contours,hierarchy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_SIMPLE);
-            double frameArea=(double)w*h,best=-1;
-            Point[] result=null;
-            for (int index=0;index<contours.size();index++) {
-                MatOfPoint candidate=contours.get(index);
-                double area=Imgproc.contourArea(candidate),fraction=area/frameArea;
-                if(fraction<0.055||fraction>0.78)continue;
-                Rect r=Imgproc.boundingRect(candidate);
-                double rw=r.width/(double)w,rh=r.height/(double)h;
-                if(rw<.22||rh<.19||rw>.94||rh>.94)continue;
-                // Cropping around a table edge is a dangerous false positive.
-                if(r.x<.025*w||r.y<.025*h||r.x+r.width>.975*w||r.y+r.height>.975*h)continue;
-                double fill=area/(r.width*(double)r.height);
-                if(fill<.58)continue;
-                double cx=(r.x+r.width*.5)/w,cy=(r.y+r.height*.5)/h;
-                if(Math.abs(cx-.5)>.30||Math.abs(cy-.5)>.31)continue;
-                inner=Mat.zeros(h,w,CvType.CV_8UC1);
-                Imgproc.drawContours(inner,contours,index,new org.opencv.core.Scalar(255),-1);
-                outer=new Mat();
-                Core.bitwise_not(inner,outer);
-                double inside=Core.mean(gray,inner).val[0],outside=Core.mean(gray,outer).val[0];
-                inner.release();inner=new Mat();
-                outer.release();outer=new Mat();
-                double contrast=inside-outside;
-                if(inside<115||contrast<32)continue;
-                double score=contrast*.6+fill*28+fraction*18
-                    -(Math.abs(cx-.5)+Math.abs(cy-.5))*24;
-                if(score<=best)continue;
-                best=score;
-                // Small safety margin around irregular sheet edges.
-                double pad=Math.max(2,Math.min(w,h)*.008);
-                double left=Math.max(0,(r.x-pad)/w),top=Math.max(0,(r.y-pad)/h);
-                double right=Math.min(1,(r.x+r.width+pad)/w);
-                double bottom=Math.min(1,(r.y+r.height+pad)/h);
-                result=new Point[]{new Point(left,top),new Point(right,top),
-                    new Point(right,bottom),new Point(left,bottom)};
+            double frameArea=(double)w*h,best=0;
+            Point[] winner=null;
+            for(int index=0;index<contours.size();index++){
+                MatOfPoint contour=contours.get(index);
+                double area=Imgproc.contourArea(contour),fraction=area/frameArea;
+                if(fraction<.085||fraction>.89)continue;
+                Rect bounds=Imgproc.boundingRect(contour);
+                if(bounds.width<.26*w||bounds.height<.22*h)continue;
+                if(bounds.x<.017*w||bounds.y<.017*h
+                    ||bounds.x+bounds.width>.983*w||bounds.y+bounds.height>.983*h)continue;
+                double cx=(bounds.x+bounds.width*.5)/w,cy=(bounds.y+bounds.height*.5)/h;
+                if(Math.abs(cx-.5)>.29||Math.abs(cy-.5)>.30)continue;
+                // Only accept a genuine four-point contour. The previous detector
+                // returned boundingRect() corners and chopped off tilted page edges.
+                MatOfPoint2f curve=new MatOfPoint2f(contour.toArray());
+                MatOfPoint2f quad=new MatOfPoint2f();
+                try{
+                    double perimeter=Imgproc.arcLength(curve,true);
+                    Point[] corners=null;
+                    for(double epsilon:new double[]{.013,.020,.028,.038}){
+                        Imgproc.approxPolyDP(curve,quad,epsilon*perimeter,true);
+                        if(quad.total()==4){
+                            MatOfPoint round=new MatOfPoint(quad.toArray());
+                            boolean convex=Imgproc.isContourConvex(round);round.release();
+                            if(convex){corners=order(quad.toArray());break;}
+                        }
+                    }
+                    if(corners==null)continue;
+                    inner=Mat.zeros(h,w,CvType.CV_8UC1);
+                    Imgproc.drawContours(inner,contours,index,new org.opencv.core.Scalar(255),-1);
+                    outer=new Mat();Core.bitwise_not(inner,outer);
+                    double inside=Core.mean(gray,inner).val[0],outside=Core.mean(gray,outer).val[0];
+                    inner.release();inner=new Mat();outer.release();outer=new Mat();
+                    if(inside<105||inside-outside<24)continue;
+                    double sumX=0,sumY=0,penalty=0;
+                    for(int j=0;j<4;j++){
+                        Point p=corners[j],prev=corners[(j+3)%4],next=corners[(j+1)%4];
+                        sumX+=p.x/w;sumY+=p.y/h;
+                        double ax=prev.x-p.x,ay=prev.y-p.y,bx=next.x-p.x,by=next.y-p.y;
+                        double len=Math.hypot(ax,ay)*Math.hypot(bx,by);
+                        if(len<.001){penalty=5;break;}
+                        penalty+=Math.abs((ax*bx+ay*by)/len);
+                    }
+                    if(penalty>1.48)continue;
+                    double score=area/frameArea*.52+(inside-outside)/255*.34
+                        +(.15*(1-Math.min(1,penalty))) 
+                        -(.1*(Math.abs(sumX/4-.5)+Math.abs(sumY/4-.5)));
+                    if(score>best){
+                        best=score;
+                        winner=new Point[4];
+                        for(int j=0;j<4;j++)
+                            winner[j]=new Point(Math.max(0,Math.min(1,corners[j].x/w)),
+                                                Math.max(0,Math.min(1,corners[j].y/h)));
+                    }
+                }finally{curve.release();quad.release();}
             }
-            return result;
-        } catch(Exception e) {
-            return null; // Gracefully fall back to the quadrilateral detector.
-        } finally {
+            return winner;
+        }catch(Exception error){
+            return null; // Contrasts can vary; regular Canny quadrilateral fallback runs next.
+        }finally{
             for(MatOfPoint c:contours)c.release();
-            mask.release();clean.release();kernel.release();inner.release();outer.release();hierarchy.release();
+            mask.release();clean.release();kernel.release();hierarchy.release();
+            inner.release();outer.release();
         }
     }
 
@@ -174,13 +198,16 @@ final class RivoEdgeDetector {
     }
 
     static Point[] order(Point[] input) {
-        // For nearly rectangular pages: group top two and bottom two, then sort by x.
+        // Sort clockwise around the centroid, then rotate so top-left comes first.
+        // A simple "top two / bottom two" failed when the paper was tilted.
         Point[] p=Arrays.copyOf(input,4);
-        Arrays.sort(p,Comparator.comparingDouble(q->q.y));
-        Point[] top={p[0],p[1]},bottom={p[2],p[3]};
-        Arrays.sort(top,Comparator.comparingDouble(q->q.x));
-        Arrays.sort(bottom,Comparator.comparingDouble(q->q.x));
-        return new Point[]{top[0],top[1],bottom[1],bottom[0]};
+        double midX=0,midY=0;
+        for(Point q:p){midX+=q.x;midY+=q.y;}
+        final double cx=midX/4,cy=midY/4;
+        Arrays.sort(p,Comparator.comparingDouble(q->Math.atan2(q.y-cy,q.x-cx)));
+        int first=0;double best=Double.POSITIVE_INFINITY;
+        for(int i=0;i<4;i++){double sum=p[i].x+p[i].y;if(sum<best){best=sum;first=i;}}
+        return new Point[]{p[first],p[(first+1)%4],p[(first+2)%4],p[(first+3)%4]};
     }
 
     /** Perspective correct at document-readable resolution without upscaling fabricated detail. */

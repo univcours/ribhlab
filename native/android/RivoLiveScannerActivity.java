@@ -879,7 +879,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             // Time-based throttling reduces CPU heat and prevents drawing stale
             // polygons when different phones run at 15, 30 or 60 FPS.
             long now=SystemClock.elapsedRealtime();
-            if(now-lastAnalysisTime<190)return;
+            if(now-lastAnalysisTime<105)return;
             lastAnalysisTime=now;
             ImageProxy.PlaneProxy plane=frame.getPlanes()[0];
             ByteBuffer buffer=plane.getBuffer().duplicate();
@@ -887,20 +887,22 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             int width=frame.getWidth(),height=frame.getHeight();
             int stride=plane.getRowStride(),pixelStride=plane.getPixelStride();
             if(width<60||height<60||pixelStride<1)return;
-            byte[] pixels=new byte[width*height];
-            // Camera Y planes may include row padding and pixel strides.
-            for(int row=0;row<height;row++){
-                int start=row*stride;
-                if(start+(width-1)*pixelStride>=buffer.limit())return;
-                if(pixelStride==1){
-                    buffer.position(start);
-                    buffer.get(pixels,row*width,width);
-                }else{
-                    for(int col=0;col<width;col++)
-                        pixels[row*width+col]=buffer.get(start+col*pixelStride);
+            // Sample CameraX Y/luminance directly before OpenCV. Avoid an
+            // 1080p byte allocation + rotation on every frame; preserve normalized
+            // quad geometry for the full-resolution perspective crop.
+            int step=Math.max(1,(int)Math.ceil(Math.max(width,height)/780.0));
+            int sampledW=(width+step-1)/step,sampledH=(height+step-1)/step;
+            byte[] pixels=new byte[sampledW*sampledH];
+            for(int row=0;row<sampledH;row++){
+                int sourceY=Math.min(height-1,row*step);
+                int base=sourceY*stride;
+                if(base+(width-1)*pixelStride>=buffer.limit())return;
+                for(int col=0;col<sampledW;col++){
+                    int sourceX=Math.min(width-1,col*step);
+                    pixels[row*sampledW+col]=buffer.get(base+sourceX*pixelStride);
                 }
             }
-            Mat gray=new Mat(height,width,CvType.CV_8UC1);
+            Mat gray=new Mat(sampledH,sampledW,CvType.CV_8UC1);
             Mat rotated=new Mat();
             try{
                 gray.put(0,0,pixels);
@@ -909,7 +911,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 else if(degrees==180)Core.rotate(gray,rotated,Core.ROTATE_180);
                 else if(degrees==270)Core.rotate(gray,rotated,Core.ROTATE_90_COUNTERCLOCKWISE);
                 Mat oriented=degrees==0?gray:rotated;
-                Point[] points=RivoEdgeDetector.detectGray(oriented);
+                Point[] points=RivoEdgeDetector.detectGray(oriented,640);
                 // Only inspect blur when a real, bounded quadrilateral exists.
                 final double sharpness=autoCaptureEnabled&&points!=null
                     ?autoCaptureSharpness(oriented):0;
