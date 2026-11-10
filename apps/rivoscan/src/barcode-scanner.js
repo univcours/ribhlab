@@ -23,16 +23,26 @@ export function recognizedCode(result){
  const format=decodeFormat(result);
  return value && format!=='UNKNOWN'?{value,format}:null;
 }
+/**
+ * Treat a continuously visible symbol as a single scan, even across long
+ * camera sessions. Re-arm only after the code has been absent long enough.
+ * Key includes FORMAT, so a QR and EAN with identical text are distinct.
+ */
 export function newScanDeduplicator({gapMs=1800,clock=()=>Date.now()}={}){
- let lastValue='',lastSeen=0;
+ let lastIdentity='',absenceSince=null;
  return {
-  accept(value){
-   const now=clock(),next=String(value??'');
-   const duplicate=next===lastValue&&now-lastSeen<gapMs;
-   lastValue=next;lastSeen=now;
-   return !duplicate;
+  accept(identity){
+   const next=String(identity??'');
+   if(!next||next===lastIdentity)return false;
+   lastIdentity=next;absenceSince=null;return true;
   },
-  absence(){if(clock()-lastSeen>gapMs){lastValue='';lastSeen=0;}}
+  absence(){
+   if(absenceSince===null)absenceSince=clock();
+   else if(clock()-absenceSince>=gapMs){
+    lastIdentity='';
+    absenceSince=null;
+   }
+  }
  };
 }
 function iconButton(label,action){
@@ -117,15 +127,22 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   try{light=!light;await track.applyConstraints({advanced:[{torch:light}]});}
   catch{light=false;torch.disabled=true;}
  }
- async function deliver(decoded){
+ async function deliver(decoded,{fromPhoto=false}={}){
   if(closed)return;
   const entry=recognizedCode(decoded);
-  // No valid decoded symbol = no photo, no outline, no capture, no log.
+  // No verified symbol = no photo, no outline, no capture, no log.
   if(!entry)return;
-  if(!dedup.accept(entry.value))return;
-  lastDetectionAt=Date.now();
-  drawOutline(outline,video,decoded.getResultPoints?.()||[]);
-  playDetectedAnimation();
+  // Scanner sees both QR and ordinary barcode without changing any modes.
+  if(!dedup.accept(entry.format+'\u0000'+entry.value))return;
+  if(fromPhoto){
+   // Photo result points belong to the imported image, NOT to the live
+   // camera preview: drawing those there would be a misleading overlay.
+   lastDetectionAt=0;clearDetectionOutline();
+  }else{
+   lastDetectionAt=Date.now();
+   if(drawOutline(outline,video,decoded.getResultPoints?.()||[]))
+    playDetectedAnimation();
+  }
   result.textContent=entry.value;result.hidden=false;copy.hidden=false;
   status.textContent=L[3]+' · '+entry.format;
   try{
@@ -142,7 +159,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const canvas=document.createElement('canvas'),s=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));
    canvas.width=Math.max(1,Math.round(image.naturalWidth*s));canvas.height=Math.max(1,Math.round(image.naturalHeight*s));
    canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
-   const found=reader.decodeFromCanvas(canvas);await deliver(found);
+   const found=reader.decodeFromCanvas(canvas);await deliver(found,{fromPhoto:true});
   }catch{status.textContent=L[11];clearDetectionOutline();}
  });
  async function start(){
@@ -154,7 +171,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     if(closed)return;
     if(decoded){void deliver(decoded);}
     else {
-     if(error)dedup.absence();
+     // A long continuous view must not generate repeated exports. Re-arm
+     // only after a real absence window, independent of error subtype.
+     dedup.absence();
      // Never leave a code frame over empty live video.
      if(lastDetectionAt&&Date.now()-lastDetectionAt>1700){
       clearDetectionOutline();lastDetectionAt=0;
