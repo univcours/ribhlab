@@ -198,6 +198,7 @@ const docViewerUI=createDocumentViewer({
         onRetake:()=>openSmartScanner(),
         // The one native scanner has its own filters, including neural correction.
         preset:'crease',
+        onPerfectScan:d=>launchPerfectScan(d),
         onRefresh:async()=>{
           await loadLibrary(false);
           if(activeTool?.id==='library')refreshVisibleLibrary();
@@ -367,8 +368,8 @@ function recentDocuments(limit=12,query=homeSearchQuery){
  }).join('');
 }
 const RIVO_FEATURE_TEXT={
- en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Quality',perfectSub:'Sharper documents',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
- ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',perfect:'PerfectScan Quality',perfectSub:'تحسين جودة الوثائق',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
+ en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · folds, curves and shadows',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
+ ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · تقويم التجاعيد والانحناء',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
  fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
 };
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
@@ -464,22 +465,14 @@ function scannerOptionsMarkup(){
 }
 function scannerWorkspace(){
   const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
-  const aiScanLabel=({en:'Document camera · Live edges',ar:'كاميرا الوثائق · تحديد الحواف',fr:'Caméra documents · Bords en direct',es:'Cámara · Bordes en vivo',de:'Dokumentkamera · Live-Kanten',pt:'Câmara · Contornos ao vivo',it:'Fotocamera · Bordi dal vivo'})[language]||'Document camera · Live edges';
-  const aiScanHint=({en:'Capture · adjust four corners · save',ar:'صور · عدل الزوايا الأربعة · حفظ',fr:'Capturer · ajuster 4 coins · sauver',es:'Captura · ajusta esquinas · guarda',de:'Aufnehmen · 4 Ecken korrigieren · sichern',pt:'Capturar · ajustar 4 cantos · guardar',it:'Scatta · regola 4 angoli · salva'})[language]||'Capture · adjust corners · save';
+  const aiScanLabel=({en:'Smart AutoCapture · Camera',ar:'كاميرا التصوير التلقائي',fr:'Capture automatique intelligente',es:'Captura automática inteligente',de:'Intelligente Auto-Aufnahme',pt:'Captura automática inteligente',it:'Scatto automatico intelligente'})[language]||'Smart AutoCapture · Camera';
+  const aiScanHint=({en:'Detect paper · capture when sharp and stable',ar:'تصوير تلقائي ملي الورقة تكون واضحة وثابتة',fr:'Détection et photo quand nette et stable',es:'Foto automática cuando esté nítido y estable',de:'Auto-Foto bei stabiler und scharfer Seite',pt:'Fotografa quando estiver nítida e estável',it:'Scatta quando stabile e nitido'})[language]||'Detect paper · capture when stable';
   return `<section class="workspace scan-workspace">
   <div class="work-title"><div class="tool-icon sky">${ico('scan',27)}</div><div><h1>${tn(tools.find(t=>t.id==='scan'))}</h1><p>${td(tools.find(t=>t.id==='scan'))}</p></div></div>
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
-  <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button></div>
-  <details class="rivo-unified-scan-advanced">
-   <summary>${({en:'Advanced corrections · optional',ar:'تصحيحات متقدمة · اختيارية',fr:'Corrections avancées · facultatives',
-    es:'Correcciones avanzadas · opcionales',de:'Erweiterte Korrekturen · optional',
-    pt:'Correções avançadas · opcionais',it:'Correzioni avanzate · facoltative'})[language]||'Advanced corrections'}</summary>
-   <button type="button" id="scan-multi-angle">${ico('image',20)} ${({en:'Combine 2–4 camera angles · 3D beta',ar:'دمج 2 حتى 4 صور · 3D تجريبي',
-    fr:'Fusionner 2–4 photos · 3D bêta',es:'Combinar 2–4 fotos · 3D beta',
-    de:'2–4 Ansichten kombinieren · 3D Beta',pt:'Combinar 2–4 fotos · 3D beta',
-    it:'Unisci 2–4 foto · 3D beta'})[language]||'Multi-angle correction'}</button>
-  </details>
+  <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
+   <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} PerfectScan Pro · UVDoc AI / 3D</button></div>
   <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
@@ -1029,7 +1022,7 @@ function addSelectedFiles(picked){
 
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
-async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=false}={}){
+async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
     return;
@@ -1043,7 +1036,8 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
   nativeCaptureDepth++;
   try{
     const prefs=readScanPrefs(localStorage);
-    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs,autoCapture});
+    const useAutoCapture=typeof autoCapture==='boolean'?autoCapture:prefs.autoCapture;
+    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs,autoCapture:useAutoCapture});
     await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);
@@ -1123,7 +1117,7 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   }finally{clearBusy();}
 }
 /** One primary Scan button: Google ML Kit FULL; native CameraX is an explicit fallback only. */
-async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true,autoCapture=false}={}){
+async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true,autoCapture=null}={}){
   // Native CameraX always previews the actual photo with draggable four-point outline.
   // Official ML Kit FULL remains a compatibility fallback, never a silent auto-save path.
   if(allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))return openLiveScanner({mode,autoCapture});
