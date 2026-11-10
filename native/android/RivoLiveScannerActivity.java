@@ -451,6 +451,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         autoCaptureTriggered=false;
         resetAutoCaptureHold();
         updateAutoCaptureButton();
+        if(autoCaptureEnabled)showAutoCaptureHint("find",0);
+        else if(message!=null)message.setText(trNative("align"));
     }
     private void updateAutoCaptureButton(){
         if(autoCaptureButton==null)return;
@@ -459,6 +461,52 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         autoCaptureButton.setBackground(outlined(
             autoCaptureEnabled?Color.rgb(5,144,124):Color.rgb(12,82,85),12,
             autoCaptureEnabled?Color.rgb(74,255,198):Color.rgb(110,210,200)));
+    }
+    /** Short, localized feedback from real edge and focus measurements. */
+    private String autoCaptureHint(String stage,int progress){
+        String lang=nativeLanguage==null?"en":nativeLanguage;
+        switch(lang){
+            case "ar":
+                if("find".equals(stage))return "وجّه الكاميرا نحو ورقة كاملة";
+                if("focus".equals(stage))return "خلي الورقة واضحة وثبّت الهاتف";
+                if("frame".equals(stage))return "قرّب أو بعّد باش تبان الورقة كاملة";
+                return "ثبّت الهاتف · "+progress+"%";
+            case "fr":
+                if("find".equals(stage))return "Cadrez une feuille entière";
+                if("focus".equals(stage))return "Stabilisez le téléphone et améliorez la netteté";
+                if("frame".equals(stage))return "Cadrez entièrement le document";
+                return "Ne bougez pas · "+progress+"%";
+            case "es":
+                if("find".equals(stage))return "Encuadre un documento completo";
+                if("focus".equals(stage))return "Mantenga firme el móvil y enfoque";
+                if("frame".equals(stage))return "Muestre toda la hoja";
+                return "Mantenga firme · "+progress+"%";
+            case "de":
+                if("find".equals(stage))return "Ganzes Dokument ausrichten";
+                if("focus".equals(stage))return "Ruhig halten und scharf stellen";
+                if("frame".equals(stage))return "Ganzes Blatt im Bild halten";
+                return "Ruhig halten · "+progress+"%";
+            case "pt":
+                if("find".equals(stage))return "Enquadre o documento inteiro";
+                if("focus".equals(stage))return "Mantenha imóvel e foque";
+                if("frame".equals(stage))return "Mostre a folha inteira";
+                return "Mantenha imóvel · "+progress+"%";
+            case "it":
+                if("find".equals(stage))return "Inquadra il documento intero";
+                if("focus".equals(stage))return "Tieni fermo e metti a fuoco";
+                if("frame".equals(stage))return "Mostra l'intero foglio";
+                return "Tieni fermo · "+progress+"%";
+            default:
+                if("find".equals(stage))return "Point camera at a whole document";
+                if("focus".equals(stage))return "Hold steady · improve focus";
+                if("frame".equals(stage))return "Fit the entire page in view";
+                return "Hold steady · "+progress+"%";
+        }
+    }
+    private void showAutoCaptureHint(String stage,int progress){
+        if(message==null||!autoCaptureEnabled||captureInProgress||autoCaptureTriggered)return;
+        String next=autoCaptureHint(stage,progress);
+        if(!next.contentEquals(message.getText()))message.setText(next);
     }
     private void resetAutoCaptureHold(){
         autoStableSince=0;autoStableFrames=0;autoReferenceCorners=null;
@@ -928,12 +976,20 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private void updateAutoCapture(Point[] corners,double sharpness,long now){
         if(!autoCaptureEnabled||editing||captureInProgress||autoCaptureTriggered||
             savingEnhancedPage||cameraSwitching||capture==null)return;
-        if(!goodAutoPage(corners)||sharpness<48){
+        if(!goodAutoPage(corners)){
             resetAutoCaptureHold();
+            showAutoCaptureHint(corners==null?"find":"frame",0);
+            return;
+        }
+        if(sharpness<48){
+            resetAutoCaptureHold();
+            showAutoCaptureHint("focus",0);
             return;
         }
         if(autoReferenceCorners==null){
-            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;return;
+            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;
+            showAutoCaptureHint("steady",0);
+            return;
         }
         double maxDrift=0;
         for(int i=0;i<4;i++){
@@ -941,9 +997,12 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 corners[i].x-autoReferenceCorners[i].x,corners[i].y-autoReferenceCorners[i].y));
         }
         if(maxDrift>.022){
-            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;return;
+            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;
+            showAutoCaptureHint("steady",0);
+            return;
         }
         autoStableFrames++;
+        showAutoCaptureHint("steady",Math.min(100,(int)((now-autoStableSince)*100/1200)));
         if(now-autoStableSince>=1200&&autoStableFrames>=5&&now-autoLastCapture>=2200){
             autoCaptureTriggered=true;autoLastCapture=now;
             if(message!=null)message.setText("✓ "+trNative("capturePage"));
