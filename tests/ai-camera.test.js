@@ -24,7 +24,8 @@ test('Smart AutoCapture is on by default, needs sharp stable page, and retains m
   'goodAutoPage(corners)','sharpness<48','now-autoStableSince>=1200',
   'autoStableFrames>=5','maxDrift>.022','autoCaptureTriggered=true','takePicture();'])
   assert.ok(activity.includes(gate),gate);
- assert.ok(activity.includes('RivoEdgeDetector.detectGray(oriented)'));
+ assert.ok(activity.includes('RivoEdgeDetector.detectGray(oriented,640)'));
+ assert.ok(activity.includes('if(now-lastAnalysisTime<105)return'));
  assert.ok(activity.includes('updateAutoCapture(points,sharpness,analysisStamp)'));
  assert.ok(activity.includes('private void toggleAutoCapture()'));
  assert.ok(activity.includes('autoCaptureTriggered=false;resetAutoCaptureHold()'));

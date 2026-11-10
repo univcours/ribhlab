@@ -23,7 +23,9 @@ test('CameraX fallback never replaces Google ML Kit FULL after cancellation, and
  assert.ok(main.includes("if(incompatible&&allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))"));
  assert.ok(main.includes("await openSmartScanner({mode,allowNativeFallback:false})"));
  assert.ok(main.includes("await openLiveScanner({mode})"));
- assert.ok(main.includes("await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg')"));
+ assert.ok(!main.includes("await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg')"));
+ assert.ok(main.includes('const pdf=result.scanMode'));
+ assert.ok(main.includes('await saveOut(pdf,'));
  assert.ok(!main.includes("document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner())"));
  assert.ok(!main.includes('id="camera"'),'no separate basic camera button next to main scanner');
 });

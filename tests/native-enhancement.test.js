@@ -38,8 +38,9 @@ test('Capture keeps the image on screen, evaluates quality and requires user-sel
  assert.ok(activity.includes('button(trNative("retake"),this::showCamera)'));
  assert.ok(activity.includes('button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)'));
  assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
- assert.ok(activity.includes('if(captureQuality!=null&&captureQuality.retakeSuggested)'));
- assert.ok(activity.includes('setNegativeButton(trNative("retake")'));
+ assert.ok(activity.includes('private void saveEnhancedPage()'));
+ assert.ok(activity.includes('commitEnhancedPage();'));
+ assert.ok(!activity.includes('new android.app.AlertDialog.Builder(this)'));
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.VISIBLE)'));
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.GONE)'));
  assert.ok(activity.includes('selectedEnhancement=mode;renderEnhancementPreview(mode)'));
