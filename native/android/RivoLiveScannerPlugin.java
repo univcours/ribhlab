@@ -64,6 +64,8 @@ public class RivoLiveScannerPlugin extends Plugin {
         Intent intent = new Intent(getActivity(), RivoLiveScannerActivity.class);
         intent.putExtra("gallery", Boolean.TRUE.equals(call.getBoolean("gallery", false)));
         intent.putExtra("basic", Boolean.TRUE.equals(call.getBoolean("basic", false)));
+        // AutoCapture is explicit. Manual scans remain manual unless the user enables it.
+        intent.putExtra("autoCapture",Boolean.TRUE.equals(call.getBoolean("autoCapture",false)));
         intent.putExtra("language", call.getString("language", "en"));
         // Camera settings are normalized by the UI and validated again in Java.
         intent.putExtra("autoClean",Boolean.TRUE.equals(call.getBoolean("autoClean",true)));

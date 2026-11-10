@@ -23,6 +23,7 @@ import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import { openPerfectScan } from './perfect-scan-ui.js';
+import {openPrivacyShield} from './privacy-shield.js';
 import { unwarpPixelsAndroid } from './uvdoc-android.js';
 import { reconstructRelativeSurfaceAndroid } from './surface3d-android.js';
 import { openPageManager } from './page-manager.js';
@@ -31,6 +32,8 @@ import {openBarcodeScanner} from './barcode-scanner.js';
 import {openPlateScanner} from './plate-scanner.js';
 import {createScanLedger} from './scan-ledger.js';
 import './compact-turquoise.css';
+import './privacy-shield.css';
+import './rivo-design-system.css';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
@@ -362,9 +365,30 @@ function recentDocuments(limit=12,query=homeSearchQuery){
   </article>`;
  }).join('');
 }
+const RIVO_FEATURE_TEXT={
+ en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Quality',perfectSub:'Sharper documents',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
+ ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',perfect:'PerfectScan Quality',perfectSub:'تحسين جودة الوثائق',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
+ fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
+};
+const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
+const featureTiles=[
+ {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
+ {id:'scanCode',icon:'grid',label:'qr',detail:'qrSub'},
+ {id:'perfectScanQuality',icon:'sparkle',label:'perfect',detail:'perfectSub'},
+ {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
+];
 function home(){
  const copy=premiumCopy(language);
  return `<section class="app-home rivo-home rivo-compact-home">
+  <div class="rivo-home-identity" role="group" aria-label="RivoScan Smart Scanner">
+   <span class="rivo-home-logo">${ico('scan',25)}</span>
+   <span class="rivo-home-heading"><strong>RivoScan</strong><small>${escapeHTML(featureText('hero'))}</small></span>
+   <span class="rivo-home-secure" aria-label="${ut('privacy')}">${ico('shield',16)}</span>
+  </div>
+  <nav class="rivo-feature-rail" aria-label="${escapeHTML(featureText('short'))}">
+   ${featureTiles.map(f=>`<button type="button" class="rivo-feature-tile" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
+    <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(featureText(f.label))}</strong></button>`).join('')}
+  </nav>
   <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
   </div>
   <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
@@ -577,6 +601,14 @@ function refreshVisibleLibrary(){
   const toggle=document.getElementById('library-layout');
   if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
 }
+function launchPrivacyShield(doc=null){
+ return openPrivacyShield({doc,bridge:RivoDocuments,language,onSave:saveOut,notify:toast,
+  onRefresh:async()=>{
+   await loadLibrary(false);
+   if(activeTool?.id==='library')refreshVisibleLibrary();
+   else if(!activeTool){const recent=document.getElementById('home-recents');if(recent)recent.innerHTML=recentDocuments(14)}
+  }});
+}
 function launchPerfectScan(doc=null){
   return openPerfectScan({
     doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
@@ -771,6 +803,10 @@ function wire(){
     document.getElementById('section-'+el.dataset.hubSection)?.scrollIntoView({behavior:'smooth',block:'start'});
   }));
   document.querySelectorAll('[data-hub-action]').forEach(el=>el.addEventListener('click',()=>{void openHubAction(el.dataset.hubAction)}));
+  // Home shortcuts reuse the very same audited Tools handlers, never a second implementation.
+  document.querySelectorAll('[data-rivo-feature]').forEach(el=>el.addEventListener('click',()=>{
+   void openHubAction(el.dataset.rivoFeature);
+  }));
 
   document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('home')}));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
@@ -819,6 +855,9 @@ async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){await openTool(id);return;}
  if(!(await requestPremium(id)))return;
+ if(spec.type==='privacyShield'){void launchPrivacyShield();return;}
+ if(spec.type==='perfectScan'){void launchPerfectScan();return;}
+ if(spec.type==='smartAutoCapture'){await openSmartScanner({autoCapture:true});return;}
  if(spec.type==='mergedDialog'){
   openMergedToolDialog({id,language,onChoose:action=>openHubAction(action),
    onError:error=>toast(error?.message||String(error),true)});
@@ -982,7 +1021,7 @@ function addSelectedFiles(picked){
 
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
-async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={}){
+async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=false}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
     return;
@@ -996,7 +1035,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document'}={})
   nativeCaptureDepth++;
   try{
     const prefs=readScanPrefs(localStorage);
-    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs});
+    const result=await RivoLiveScanner.scan({gallery,imageUri,language,mode,...prefs,autoCapture});
     await consumeSmartScan(result);
   }catch(err){
     const message=String(err?.message||err);
@@ -1076,10 +1115,10 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   }finally{clearBusy();}
 }
 /** One primary Scan button: Google ML Kit FULL; native CameraX is an explicit fallback only. */
-async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true}={}){
+async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true,autoCapture=false}={}){
   // Native CameraX always previews the actual photo with draggable four-point outline.
   // Official ML Kit FULL remains a compatibility fallback, never a silent auto-save path.
-  if(allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))return openLiveScanner({mode});
+  if(allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))return openLiveScanner({mode,autoCapture});
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('AI Deep Clean needs Android with Google Play services. Use photo upload on the web.',true);return;
   }
@@ -1408,7 +1447,8 @@ function navigateRivoBack(){
  const dialogs=[
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
-  ['.rivo-perfectscan-overlay','[data-perfect="close"]']
+  ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
+  ['.rivo-shield-overlay','[data-shield="close"]']
  ];
  for(const [selector,closeSelector] of dialogs){
   const modal=document.querySelector(selector);

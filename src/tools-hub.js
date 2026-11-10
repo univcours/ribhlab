@@ -4,12 +4,15 @@
 // user can restore them, but duplicated/experimental controls do not clutter Tools.
 // Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
 export const toolGroups=[
- {id:'scan',entries:['idcard','idPhotoMaker','scanCode','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'scan',entries:['smartAutoCapture','scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
  {id:'convert',entries:['convertDocument']},
- {id:'edit',entries:['photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
+ {id:'edit',entries:['privacyShield','photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
+ smartAutoCapture:{icon:'scan',color:'green',type:'smartAutoCapture'},
+ perfectScanQuality:{icon:'sparkle',color:'green',type:'perfectScan'},
+ privacyShield:{icon:'shield',color:'green',type:'privacyShield'},
  // Composite tiles delegate to the already tested original implementations.
  convertDocument:{icon:'convert',color:'green',type:'mergedDialog'},
  annotatePdf:{icon:'sign',color:'green',type:'mergedDialog'},
@@ -59,6 +62,9 @@ const groups={
  it:['Scansione','Importa','Converti','Modifica','Utilità']
 };
 const labels={
+ smartAutoCapture:['Smart AutoCapture','التصوير التلقائي الذكي','Capture auto intelligente','Captura automática','Intelligente Auto-Aufnahme','Captura automática inteligente','Cattura automatica intelligente'],
+ perfectScanQuality:['PerfectScan Quality','تحسين جودة الوثائق','Qualité PerfectScan','Calidad PerfectScan','PerfectScan Qualität','Qualidade PerfectScan','Qualità PerfectScan'],
+ privacyShield:['Privacy Shield','حماية وإخفاء المعلومات','Masquage sécurisé','Protección de privacidad','Datenschutz-Schutz','Proteção de privacidade','Protezione privacy'],
  convertDocument:['Convert documents','تحويل الوثائق','Convertir des documents','Convertir documentos','Dokumente konvertieren','Converter documentos','Converti documenti'],
  annotatePdf:['Write & sign PDF','الكتابة والتوقيع على PDF','Annoter et signer PDF','Anotar y firmar PDF','PDF beschriften & signieren','Anotar e assinar PDF','Annota e firma PDF'],
  pdfPrivacy:['PDF Privacy','حماية وخصوصية PDF','Confidentialité PDF','Privacidad PDF','PDF Datenschutz','Privacidade PDF','Privacy PDF'],
@@ -71,7 +77,7 @@ const labels={
  aiChat:['AI Chat (your own API key)','AI Chat (مفتاح شخصي)','AI Chat (clé API personnelle)','AI Chat (clave API propia)','AI Chat (eigener API-Schlüssel)','AI Chat (chave API própria)','AI Chat (chiave API personale)'],
  solverAI:['Solver AI (your own API key)','Solver AI (مفتاح شخصي)','Solver AI (clé API personnelle)','Solver AI (clave API propia)','Solver AI (eigener API-Schlüssel)','Solver AI (chave API própria)','Solver AI (chiave API personale)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
- scanCode:['QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode','QR / Barcode'],
+ scanCode:['QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan','QR / Barcode UltraScan'],
  plateScanner:['License Plate Scanner Pro','قارئ لوحات السيارات Pro','Scanner de plaques Pro','Lector de matrículas Pro','Kennzeichen Scanner Pro','Leitor de matrículas Pro','Lettore targhe Pro'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],

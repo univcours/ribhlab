@@ -1,9 +1,9 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
 
 const I18N={
- en:['QR / Barcode','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to TXT + Excel','Could not save: ','Close','No code found — nothing captured'],
- ar:['QR / Barcode','الكاميرا كتتعرف تلقائياً على QR والباركود','وجّه الكاميرا نحو QR أو الباركود…','تم التعرف على','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فـTXT وExcel','تعذر الحفظ: ','إغلاق','ما تلقا حتى كود — ما تصور وما تحفظ والو'],
- fr:['QR / Barcode','Reconnaissance automatique QR et code-barres','Cadrez un QR ou code-barres…','Détecté','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré en TXT + Excel','Enregistrement impossible : ','Fermer','Aucun code détecté — rien capturé']
+ en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to TXT + Excel','Could not save: ','Close','No code found — nothing captured'],
+ ar:['QR / Barcode UltraScan','الكاميرا كتتعرف تلقائياً على QR والباركود','وجّه الكاميرا نحو QR أو الباركود…','تم التعرف على','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فـTXT وExcel','تعذر الحفظ: ','إغلاق','ما تلقا حتى كود — ما تصور وما تحفظ والو'],
+ fr:['QR / Barcode UltraScan','Reconnaissance automatique QR et code-barres','Cadrez un QR ou code-barres…','Détecté','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré en TXT + Excel','Enregistrement impossible : ','Fermer','Aucun code détecté — rien capturé']
 };
 const FORMATS=['AZTEC','CODABAR','CODE39','CODE93','CODE128','DATA_MATRIX','EAN8','EAN13','ITF','MAXICODE','PDF417','QR','RSS14','RSS_EXPANDED','UPCA','UPCE','UPC_EXTENSION'];
 export const safeScannedUrl=value=>{

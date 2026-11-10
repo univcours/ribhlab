@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Capture actual installed Android RivoScan screens, never generated mockups.
 set -euo pipefail
-APK="android/app/build/outputs/apk/debug/app-debug.apk"
+APK="apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk"
 OUTPUT="/tmp/rivoscan-play-screenshots"
 PACKAGE="com.ribhlab.rivoscan"
 mkdir -p "$OUTPUT"

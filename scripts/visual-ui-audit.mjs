@@ -54,7 +54,7 @@ try{
    });
    return {total:tiles.length,rows};
   });
-  check(tools.total===17,width+': 17 non-duplicated tool cards visible');
+  check(tools.total===20,width+': 20 non-duplicated tool cards visible');
   for(const [i,row] of tools.rows.entries()){
    check(row.display==='flex'&&row.wrap==='nowrap'&&row.sameLine,
     width+': Tools category '+i+' is one horizontal line');
