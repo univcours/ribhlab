@@ -23,7 +23,7 @@ test('User scanner settings are applied to native CameraX, not UI-only decoratio
 test('Preserves scan ink: native enhancement is not repeated in PDF assembly',()=>{
  assert.ok(main.includes("imagesToPdf('color',picked)"));
  assert.ok(!main.includes("imagesToPdf('enhance',picked)"));
- assert.ok(main.includes('if(!prefs.autoSavePdf)'));
+ assert.ok(!main.includes('if(!prefs.autoSavePdf)'),'all checked scans must create a PDF');;
  assert.ok(main.includes("pageSize==='letter'?[612,792]:[595.28,841.89]"));
 });
 test('ID card mode captures front and back and places both on a single A4 PDF page',()=>{
