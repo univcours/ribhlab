@@ -1,0 +1,22 @@
+name: RivoScan UVDoc ONNX model format check
+on:
+  push:
+    branches:
+      - feat/rivoscan-android-beta
+    paths:
+      - apps/rivoscan/scripts/uvdoc-model-audit.py
+      - .github/workflows/rivoscan-uvdoc-model-audit.yml
+  workflow_dispatch:
+jobs:
+  inspect-official-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect real official model tensors and license source
+        run: |
+          python -m pip install --disable-pip-version-check "huggingface_hub>=0.34,<2" "onnx>=1.16,<2" "onnxruntime>=1.23,<2" "numpy>=1.26,<3"
+          python apps/rivoscan/scripts/uvdoc-model-audit.py
