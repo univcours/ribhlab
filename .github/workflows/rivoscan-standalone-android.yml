@@ -151,7 +151,7 @@ jobs:
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='105' versionName='0.45.1'"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='106' versionName='0.45.2'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
           "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
@@ -160,7 +160,7 @@ jobs:
           while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
-          echo "PASS: APK 0.45.1 contains launcher resources and native scanner classes."
+          echo "PASS: APK 0.45.2 contains launcher resources and native scanner classes."
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:
