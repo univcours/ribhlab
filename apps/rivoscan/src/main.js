@@ -504,6 +504,7 @@ function renderLibraryRows(needle=''){
  if(!matched.length)return `<div class="doc-empty">${ico('file',24)} ${dl('empty')}</div>`;
  return matched.map(({item,index})=>{
   const single=bulkUI.chosen(item)&&bulkUI.count()===1;
+  const file=visualFileType(item);
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
    <span class="document-icon">${ico('file',21)}</span>
