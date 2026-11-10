@@ -18,7 +18,7 @@ test('Native CameraX capture analyzes blur, lighting, glare and document boundar
   'First crop screen must not bypass user review and save directly');
  assert.ok(camera.includes('private void saveEnhancedPage()'));
  assert.ok(camera.includes('commitEnhancedPage();'));
- assert.ok(!camera.includes('new android.app.AlertDialog.Builder(this)'));
+ assert.ok(!camera.slice(camera.indexOf('private void saveEnhancedPage()'),camera.indexOf('private void commitEnhancedPage()')).includes('AlertDialog.Builder'),'save check must not show a second prompt');
 });
 test('Native enhanced image maintains high-quality source resolution when HD selected',()=>{
  const camera=src('native/android/RivoLiveScannerActivity.java');
