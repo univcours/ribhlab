@@ -1227,8 +1227,15 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 if(!photo.compress(Bitmap.CompressFormat.JPEG,94,stream))
                     throw new Exception("Cannot encode original backup");
             }
-            RivoDocumentsPlugin.saveOriginalScannedImage(this,temp,
-                "RivoScan_Original_"+System.currentTimeMillis()+".jpg");
+            // Optional original is private app data, never another file in My Files.
+            File backupDir=new File(getFilesDir(),"scan-original-backups");
+            if(!backupDir.exists()&&!backupDir.mkdirs())throw new java.io.IOException("Private backup folder unavailable");
+            File target=new File(backupDir,"RivoScan_Original_"+System.currentTimeMillis()+".jpg");
+            try(java.io.FileInputStream in=new java.io.FileInputStream(temp);
+                FileOutputStream out=new FileOutputStream(target)){
+                byte[] buf=new byte[16384];int len;
+                while((len=in.read(buf))!=-1)out.write(buf,0,len);
+            }
         }catch(Exception error){
             android.util.Log.w("RivoScan","Could not back up original capture",error);
         }finally{
@@ -1242,7 +1249,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             return;
         }
         savedImages.add(Uri.fromFile(saved).toString());
-        publishPageCopy(saved);
+        // Cached JPG is only an intermediate page for the final PDF.
         RivoSounds.play(this,"saved");
         if(current!=null&&!current.isRecycled())current.recycle();
         current=null;
@@ -1613,19 +1620,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             }finally{if(sample!=pendingWarp&&!sample.isRecycled())sample.recycle();}
         });
     }
-    /** User explicitly accepts the visual result; low-quality photos get a retake prompt. */
+    /** ✓ commits the user's reviewed image immediately; no second confirmation. */
     private void saveEnhancedPage(){
         if(pendingWarp==null||savingEnhancedPage||enhancementPreview==null)return;
-        if(captureQuality!=null&&captureQuality.retakeSuggested){
-            new android.app.AlertDialog.Builder(this)
-                .setTitle(localizedCapture("qualityWarning"))
-                .setMessage(captureQuality.summary(nativeLanguage))
-                .setNegativeButton(trNative("retake"),(d,w)->showCamera())
-                .setNeutralButton(trNative("enhanceBack"),(d,w)->{})
-                .setPositiveButton(localizedCapture("save"),(d,w)->commitEnhancedPage())
-                .show();
-            return;
-        }
         commitEnhancedPage();
     }
     /** Explicit ✓ applies the selected filter at full source resolution. */
@@ -1668,7 +1665,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                     throw new java.io.IOException("Could not encode camera photo.");
             }
             savedImages.add(Uri.fromFile(target).toString());
-            publishPageCopy(target);
+            // Only one final public PDF is produced; never publish this JPEG.
             RivoSounds.play(this,"saved");
             Toast.makeText(this,basicCameraMode?trNative("saveBasic"):trNative("saveUncropped"),Toast.LENGTH_SHORT).show();
             if("ID Card".equals(scanMode)&&savedImages.size()>=2)finishWithPages();
@@ -1679,20 +1676,6 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             bitmap.recycle();
         }
     }
-    private void publishPageCopy(File temporaryPage){
-        // Make the scan visible to Samsung My Files immediately after Save Page.
-        // The original temporary page is still used to assemble the final PDF.
-        try{
-            String publicName="RivoScan_Page_"+System.currentTimeMillis()
-                +"_"+(savedImages.size())+".jpg";
-            RivoDocumentsPlugin.saveScannedImage(this,temporaryPage,publicName);
-            Toast.makeText(this,trNative("pageStored"),Toast.LENGTH_SHORT).show();
-        }catch(Exception e){
-            android.util.Log.e("RivoScan","Could not publish scanned page to Documents/RivoScan",e);
-            Toast.makeText(this,trNative("pageNotStored"),Toast.LENGTH_LONG).show();
-        }
-    }
-
     private void openScanPages(){
         if(savingEnhancedPage||captureInProgress||savedImages.isEmpty())return;
         RivoScanPagesManager.show(this,savedImages,nativeLanguage,updated->{
