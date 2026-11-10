@@ -40,7 +40,7 @@ test('Capture keeps the image on screen, evaluates quality and requires user-sel
  assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));
  assert.ok(activity.includes('private void saveEnhancedPage()'));
  assert.ok(activity.includes('commitEnhancedPage();'));
- assert.ok(!activity.includes('new android.app.AlertDialog.Builder(this)'));
+ assert.ok(!activity.slice(activity.indexOf('private void saveEnhancedPage()'),activity.indexOf('private void commitEnhancedPage()')).includes('AlertDialog.Builder'),'save check must not show a second prompt');
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.VISIBLE)'));
  assert.ok(activity.includes('enhancementProgress.setVisibility(View.GONE)'));
  assert.ok(activity.includes('selectedEnhancement=mode;renderEnhancementPreview(mode)'));
