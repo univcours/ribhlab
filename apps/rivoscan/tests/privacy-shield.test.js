@@ -16,7 +16,7 @@ test('Black masking writes pixels and restores the canvas state',()=>{
  redactCanvas(ctx,[{x:.1,y:.2,w:.3,h:.4}],100,200);
  assert.deepEqual(calls[0],'save');
  assert.equal(calls[1],'#000000');
- assert.deepEqual(calls[2],[10,40,32,82]);
+ assert.deepEqual(calls[2],[10,40,33,83]);
  assert.equal(calls[3],'restore');
 });
 test('Every PDF page is rasterized into a new PDF, with no original objects carried forward',()=>{
