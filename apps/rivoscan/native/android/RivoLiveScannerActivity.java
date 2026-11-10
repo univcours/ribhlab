@@ -56,6 +56,8 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.MatOfDouble;
+import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -101,6 +103,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
     private long lastAnalysisTime=0;
     private long lastValidEdgeTime=0;
     private Point[] smoothCorners;
+    private boolean autoCaptureEnabled=false,autoCaptureTriggered=false;
+    private TextView autoCaptureButton;
+    private Point[] autoReferenceCorners;
+    private long autoStableSince=0,autoLastCapture=0;
+    private int autoStableFrames=0;
     private Observer<PreviewView.StreamState> streamObserver;
     private final Handler mainHandler=new Handler(Looper.getMainLooper());
 
@@ -152,6 +159,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,rightEdgeBackCallback);
         }
         basicCameraMode=getIntent().getBooleanExtra("basic",false);
+        autoCaptureEnabled=!basicCameraMode&&getIntent().getBooleanExtra("autoCapture",false);
         autoCleanEnabled=getIntent().getBooleanExtra("autoClean",true);
         saveOriginal=getIntent().getBooleanExtra("keepOriginal",true);
         batchMode=getIntent().getBooleanExtra("batchDefault",false);
@@ -300,6 +308,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementSerial++;
         if(!savingEnhancedPage)releaseEnhancement();
         editing=false;
+        autoCaptureTriggered=false;
+        resetAutoCaptureHold();
         cameraView=new PreviewView(this);
         cameraView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
         cameraView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
@@ -367,6 +377,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         batchButton=touchLabel(trNative("batch"),14,Color.WHITE,()->setBatch(true));
         switches.addView(singleButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
         switches.addView(batchButton,new LinearLayout.LayoutParams(dp(85),dp(40)));
+        autoCaptureButton=touchLabel("AUTO",12,Color.WHITE,this::toggleAutoCapture);
+        switches.addView(autoCaptureButton,new LinearLayout.LayoutParams(dp(78),dp(40)));
+        updateAutoCaptureButton();
         LinearLayout switchRow=new LinearLayout(this);switchRow.setGravity(Gravity.CENTER);
         switchRow.addView(switches);
         footer.addView(switchRow,new LinearLayout.LayoutParams(-1,dp(43)));
@@ -428,6 +441,26 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }
         frame.addView(footer,new LinearLayout.LayoutParams(-1,-2));
         startCamera();
+    }
+    private void toggleAutoCapture(){
+        if(!openCvReady){
+            autoCaptureEnabled=false;
+            Toast.makeText(this,"Automatic capture needs live edge detection.",Toast.LENGTH_SHORT).show();
+        }else autoCaptureEnabled=!autoCaptureEnabled;
+        autoCaptureTriggered=false;
+        resetAutoCaptureHold();
+        updateAutoCaptureButton();
+    }
+    private void updateAutoCaptureButton(){
+        if(autoCaptureButton==null)return;
+        autoCaptureButton.setText(autoCaptureEnabled?"AUTO ✓":"AUTO");
+        autoCaptureButton.setContentDescription(autoCaptureEnabled?"Smart AutoCapture on":"Smart AutoCapture off");
+        autoCaptureButton.setBackground(outlined(
+            autoCaptureEnabled?Color.rgb(5,144,124):Color.rgb(12,82,85),12,
+            autoCaptureEnabled?Color.rgb(74,255,198):Color.rgb(110,210,200)));
+    }
+    private void resetAutoCaptureHold(){
+        autoStableSince=0;autoStableFrames=0;autoReferenceCorners=null;
     }
     private void setBatch(boolean next){
         batchMode=next;updateBatchButtons();
@@ -707,6 +740,8 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         boundCamera=null;
         smoothCorners=null;
         lastValidEdgeTime=0;
+        resetAutoCaptureHold();
+        autoCaptureTriggered=false;
         final ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
         future.addListener(()->{
             if(serial!=cameraBindSerial||editing||isFinishing()||isDestroyed()||cameraView==null)return;
@@ -820,6 +855,9 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 else if(degrees==270)Core.rotate(gray,rotated,Core.ROTATE_90_COUNTERCLOCKWISE);
                 Mat oriented=degrees==0?gray:rotated;
                 Point[] points=RivoEdgeDetector.detectGray(oriented);
+                // Only inspect blur when a real, bounded quadrilateral exists.
+                final double sharpness=autoCaptureEnabled&&points!=null
+                    ?autoCaptureSharpness(oriented):0;
                 final int observedW=oriented.width(),observedH=oriented.height();
                 final long analysisStamp=now;
                 runOnUiThread(()->{
@@ -842,6 +880,11 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                         smoothCorners=null;
                         overlay.update(null,observedW,observedH);
                     }
+                    if(autoCaptureEnabled){
+                        // Use the analyzed real document corners and actual image sharpness.
+                        // No stable, sharp page = no automatic shutter.
+                        updateAutoCapture(points,sharpness,analysisStamp);
+                    }
                 });
             }finally{
                 rotated.release();
@@ -854,6 +897,71 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         }finally{
             frame.close();
         }
+    }
+
+    /** Evaluate contrast of high frequency edges as a conservative focus proxy.
+     * Blurry and nearly blank frames deliberately never trigger AutoCapture. */
+    private static double autoCaptureSharpness(Mat source){
+        Mat small=new Mat(),laplace=new Mat();
+        MatOfDouble mean=new MatOfDouble(),deviation=new MatOfDouble();
+        try{
+            double scale=Math.min(1,440.0/Math.max(source.width(),source.height()));
+            Imgproc.resize(source,small,new org.opencv.core.Size(
+                Math.max(1,Math.round(source.width()*scale)),
+                Math.max(1,Math.round(source.height()*scale))));
+            Imgproc.Laplacian(small,laplace,CvType.CV_32F,3);
+            Core.meanStdDev(laplace,mean,deviation);
+            double std=deviation.get(0,0)[0];
+            return std*std;
+        }catch(Exception unsupported){return 0;}
+        finally{small.release();laplace.release();mean.release();deviation.release();}
+    }
+    /** Stable capture gate: quality + page coverage + alignment + minimum hold time.
+     * Normalized points must come from RivoEdgeDetector (never fallback()). */
+    private void updateAutoCapture(Point[] corners,double sharpness,long now){
+        if(!autoCaptureEnabled||editing||captureInProgress||autoCaptureTriggered||
+            savingEnhancedPage||cameraSwitching||capture==null)return;
+        if(!goodAutoPage(corners)||sharpness<48){
+            resetAutoCaptureHold();
+            return;
+        }
+        if(autoReferenceCorners==null){
+            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;return;
+        }
+        double maxDrift=0;
+        for(int i=0;i<4;i++){
+            maxDrift=Math.max(maxDrift,Math.hypot(
+                corners[i].x-autoReferenceCorners[i].x,corners[i].y-autoReferenceCorners[i].y));
+        }
+        if(maxDrift>.022){
+            autoReferenceCorners=copyCorners(corners);autoStableSince=now;autoStableFrames=1;return;
+        }
+        autoStableFrames++;
+        if(now-autoStableSince>=1200&&autoStableFrames>=5&&now-autoLastCapture>=2200){
+            autoCaptureTriggered=true;autoLastCapture=now;
+            if(message!=null)message.setText("✓ "+trNative("capturePage"));
+            RivoSounds.play(this,"capture");
+            takePicture(); // Existing CameraX JPEG review flow, never a silent upload.
+        }
+    }
+    private static Point[] copyCorners(Point[] source){
+        Point[] copy=new Point[4];
+        for(int i=0;i<4;i++)copy[i]=new Point(source[i].x,source[i].y);
+        return copy;
+    }
+    private static boolean goodAutoPage(Point[] p){
+        if(p==null||p.length!=4)return false;
+        double minX=1,minY=1,maxX=0,maxY=0,area=0;
+        for(int i=0;i<4;i++){
+            Point c=p[i],next=p[(i+1)%4];
+            if(c==null||next==null||!Double.isFinite(c.x)||!Double.isFinite(c.y)||
+                c.x<.04||c.x>.96||c.y<.04||c.y>.96)return false;
+            minX=Math.min(minX,c.x);maxX=Math.max(maxX,c.x);
+            minY=Math.min(minY,c.y);maxY=Math.max(maxY,c.y);
+            area+=c.x*next.y-next.x*c.y;
+        }
+        area=Math.abs(area)*.5;
+        return area>=.16&&area<=.78&&(maxX-minX)>.34&&(maxY-minY)>.35;
     }
     /** Instant shutter feedback, independent of OCR/cropping or photo storage. */
     private void animateShutterCapture(){
@@ -876,7 +984,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
                 try{Bitmap bmp=decodeFile(file);if(basicCameraMode)saveWithoutCrop(bmp);else openEditor(bmp);}catch(Exception e){message.setText(trNative("imageError")+e.getMessage());}
                 finally{file.delete();}
             }
-            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
+            @Override public void onError(@NonNull androidx.camera.core.ImageCaptureException e){captureInProgress=false;autoCaptureTriggered=false;resetAutoCaptureHold();file.delete();RivoSounds.play(RivoLiveScannerActivity.this,"error");message.setText(trNative("captureError")+e.getMessage());}
         });
     }
     private static int sampleSize(int width,int height){
