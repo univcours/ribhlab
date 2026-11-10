@@ -708,3 +708,19 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  .rivo-live-preview.rivo-code-accepted .rivo-detection-outline,
  .rivo-live-preview.rivo-code-accepted::after{animation:none!important}
 }
+
+/* PerfectScan Pro is visible alongside Documents, without stacking actions. */
+#app .rivo-dark-ui .scan-quick-toolbar{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;gap:6px!important;
+ min-width:0!important;max-width:100%!important;overflow-x:auto!important;
+ overflow-y:hidden!important;scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+}
+#app .rivo-dark-ui .scan-quick-toolbar .scan-documents-link{
+ flex:0 0 auto!important;white-space:nowrap!important;min-width:0!important;
+ min-height:40px!important;height:40px!important;padding:6px 10px!important;
+ font-size:11px!important;border-radius:10px!important;
+}
+#app .rivo-dark-ui .scan-quick-toolbar .rivo-perfectscan-restore{
+ color:#b4fff0!important;border-color:#16a98e!important;background:#075c59!important;
+}
