@@ -1130,15 +1130,9 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   if(!picked.length)return;
   showBusy(dl('saving'));
   try{
-    const prefs=readScanPrefs(localStorage);
-    if(mlkitFull){
-      // ML Kit JPEGs remain temporary inputs. Publish only the finished PDF,
-      // never extra JPGs in My Files (same policy as CameraX).
-    }
-    if(!prefs.autoSavePdf){
-      toast(scanPrefsText(language).autoSavePdfHelp);
-      return;
-    }
+    // Both CameraX and ML Kit pages are private JPEG intermediates.
+    // A checked ✓ ALWAYS creates one finished PDF. Do not expose a toggle
+    // that could leave the user with photographs but no document.
     // Both native CameraX and ML Kit FULL return cleaned images. Double filters
     // can remove faint seals, handwriting and pale table lines, so do not reapply.
     const pdf=result.scanMode==='ID Card'

@@ -61,8 +61,7 @@ export const SCAN_PREF_FIELDS=[
  {key:'cameraQuality',type:'select',options:choices.cameraQuality},
  {key:'jpegQuality',type:'select',options:choices.jpegQuality},
  {key:'pdfQuality',type:'select',options:choices.pdfQuality},
- {key:'pageSize',type:'select',options:choices.pageSize},
- {key:'autoSavePdf',type:'switch'}
+ {key:'pageSize',type:'select',options:choices.pageSize}
 ];
 export function formatScanSettingValue(lang,key,value){
  const label=scanPrefsText(lang);
