@@ -5,9 +5,9 @@ const java=readFileSync(new URL('../native/android/RivoLiveScannerActivity.java'
 const plugin=readFileSync(new URL('../native/android/RivoLiveScannerPlugin.java',import.meta.url),'utf8');
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 
-test('Smart AutoCapture is opt-in and uses actual document, sharpness and stable hold gating',()=>{
+test('Smart AutoCapture is enabled by default and uses actual document, sharpness and stable hold gating',()=>{
  for(const marker of [
-  'getBooleanExtra("autoCapture",false)',
+  'getBooleanExtra("autoCapture",true)',
   'private void updateAutoCapture(Point[] corners,double sharpness,long now)',
   '!goodAutoPage(corners)',
   'if(sharpness<48)',
@@ -18,6 +18,13 @@ test('Smart AutoCapture is opt-in and uses actual document, sharpness and stable
   'takePicture(); // Existing CameraX JPEG review flow, never a silent upload.'])
   assert.ok(java.includes(marker),marker);
  assert.ok(plugin.includes('intent.putExtra("autoCapture"'));
+ assert.ok(plugin.includes('call.getBoolean("autoCapture",true)'));
+ assert.ok(main.includes('autoCapture:useAutoCapture'));
+ assert.ok(main.includes('prefs.autoCapture'));
+ assert.ok(!java.includes('button(trNative("detect")'));
+ assert.ok(java.includes('editor.setDocument(bitmap,found)'));
+ assert.ok(java.includes('editor.getCorners()'));
+
  assert.ok(main.includes("openSmartScanner({autoCapture:true})"));
 });
 test('Camera uses real in-preview progress and explains absent/blurry/unstable pages in seven languages',()=>{
