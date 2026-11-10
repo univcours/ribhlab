@@ -212,3 +212,18 @@
 @media(prefers-reduced-motion:reduce){
  #app .rivo-feature-tile,#app .rivo-hub-tile{transition:none!important;animation:none!important}
 }
+
+/* PerfectScan before/after shows actual original vs processed pixels.
+   Slider redraws a split canvas; unlike CSS filters it never fakes the output. */
+.rivo-perfectscan-preview{position:relative!important}
+.rivo-perfect-compare-range{
+ position:absolute!important;inset-inline:13px!important;bottom:10px!important;
+ width:calc(100% - 26px)!important;max-width:530px!important;margin:auto!important;
+ z-index:6!important;accent-color:#08b4a7!important;
+ background:#e8faf3d9!important;border-radius:12px!important;
+ min-height:33px!important;padding:4px 7px!important;touch-action:pan-x!important;
+}
+.rivo-perfect-compare-range[hidden]{display:none!important}
+.rivo-perfectscan-preview.rivo-perfect-split-active .rivo-perfectscan-tag{
+ color:#fff!important;background:#064d54db!important;border:1px solid #4ee6cd!important;
+}

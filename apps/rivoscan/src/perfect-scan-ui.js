@@ -77,7 +77,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
  '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
- '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span></div>'+
+ '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span>'+'<input type="range" class="rivo-perfect-compare-range" min="0" max="100" value="52" hidden aria-label="Before/after comparison"></div>'+
  '<div class="rivo-perfectscan-control">'+
  '<label class="rivo-scan-method"><span>'+({en:'Correction method',ar:'طريقة التصحيح',fr:'Méthode de correction',
  es:'Método de corrección',de:'Korrekturmethode',pt:'Método de correção',
@@ -101,7 +101,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const compare=root.querySelector('[data-perfect="compare"]');
  const actions=root.querySelector('.rivo-perfectscan-actions');
  const preview=root.querySelector('.rivo-perfectscan-preview');
- let base=null,extra=[],result=null,closed=false,working=false;
+ const compareRange=root.querySelector('.rivo-perfect-compare-range');
+ let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
  const setStatus=(message,alert=false)=>{status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
@@ -110,8 +111,30 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
   const data=ctx.createImageData(w,h);data.data.set(rgba);ctx.putImageData(data,0,0);tag.textContent=label;
  };
+ const splitPreview=()=>{
+  if(!base||!result||closed)return;
+  if(!compareLayers){
+   const makeLayer=pixels=>{
+    const layer=document.createElement('canvas');layer.width=base.width;layer.height=base.height;
+    const layerContext=layer.getContext('2d');const image=layerContext.createImageData(base.width,base.height);
+    image.data.set(pixels);layerContext.putImageData(image,0,0);return layer;
+   };
+   compareLayers={before:makeLayer(base.data),after:makeLayer(result.pixels)};
+  }
+  const ratio=Number(compareRange.value)/100,edge=Math.max(0,Math.min(canvas.width,ratio*canvas.width));
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(compareLayers.before,0,0);
+  ctx.save();ctx.beginPath();ctx.rect(edge,0,canvas.width-edge,canvas.height);ctx.clip();
+  ctx.drawImage(compareLayers.after,0,0);ctx.restore();
+  ctx.save();ctx.strokeStyle='#00cfb8';ctx.lineWidth=Math.max(3,canvas.width/550);
+  ctx.beginPath();ctx.moveTo(edge,0);ctx.lineTo(edge,canvas.height);ctx.stroke();ctx.restore();
+  preview.classList.add('rivo-perfect-split-active');
+  tag.textContent=t.original+' / '+t.processed;
+ };
  const resetOutput=()=>{
-  result=null;save.disabled=true;save.hidden=true;
+  result=null;compareLayers=null;compareRange.hidden=true;
+  preview.classList.remove('rivo-perfect-split-active');
+  save.disabled=true;save.hidden=true;
   compare.disabled=true;compare.hidden=true;
   process.hidden=!base;process.disabled=!base;actions.hidden=!base;
  };
@@ -203,6 +226,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const elapsed=Math.round(performance.now()-started);
    result={...processed,sourceName:base.name,extraCount:extra.length,elapsed};
    previewPixels(processed.pixels,base.width,base.height,t.processed);
+   compareLayers=null;compareRange.hidden=false;splitPreview();
    const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
      (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
      ' · 2D: '+(processed.geometryApplied?'yes':'no')+
@@ -303,7 +327,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
  });
  const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
- const after=()=>{if(result)previewPixels(result.pixels,base.width,base.height,t.processed)};
+ const after=()=>{if(result)splitPreview()};
+ compareRange.addEventListener('input',splitPreview);
  compare.addEventListener('pointerdown',before);
  compare.addEventListener('pointerup',after);
  compare.addEventListener('pointercancel',after);
