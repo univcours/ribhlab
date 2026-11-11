@@ -1160,8 +1160,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
             mainHandler.post(()->{
                 if(qualityCheck!=captureQualitySerial||current!=bitmap||!editing||isFinishing())return;
                 captureQuality=qualityResult;
-                if(message!=null)message.setText(qualityResult!=null?
-                    qualityResult.summary(nativeLanguage):localizedCapture("review"));
+                if(message!=null)message.setText(localizedCapture("review"));
             });
         });
     }
@@ -1433,7 +1432,7 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         enhancementSerial++;
         releaseEnhancement();
         if(current==null||current.isRecycled()){showCamera();return;}
-        layout(editor,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("found"),
+        layout(editor,trNative("found"),
             // Corners are auto-detected. Four handles remain draggable without an Edges button.
             button(trNative("retake"),this::showCamera),
             button(trNative("signBeforeSave"),this::showSignaturePad),
@@ -1524,9 +1523,10 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         body.addView(scroll,new LinearLayout.LayoutParams(-1,dp(132)));
         enhancementSaveButton=button("✓  "+localizedCapture("save"),this::saveEnhancedPage);
         enhancementSaveButton.setEnabled(false); // Enable only when the result is visible.
-        layout(body,captureQuality!=null?captureQuality.summary(nativeLanguage):trNative("enhanceHint"),
+        // No Edges action or low-quality warning in the enhancement preview.
+        // Four-corner editing remains available on the crop screen.
+        layout(body,trNative("enhanceHint"),
             button(trNative("retake"),this::showCamera),
-            button(trNative("enhanceBack"),this::reopenCrop),
             button(trNative("enhanceCompare"),()->{
                 if(savingEnhancedPage||enhancementImage==null||pendingWarp==null)return;
                 boolean showingOriginal="original".equals(enhancementImage.getTag());

@@ -267,7 +267,7 @@ const bulkUI=createLibraryBulk({
   },
   showBusy,progress,clearBusy,saveOut,toast
 });
-let libraryFilter = 'all', librarySort = 'newest', libraryLayout = 'list';
+let libraryFilter = 'all', librarySort = 'newest';
 const uiText={
  en:{home:'Home',documents:'Documents',tools:'Tools',me:'Me',search:'Search your saved documents',recent:'Recent documents',seeAll:'See all',quick:'Quick tools',safe:'Private, saved on your phone',scan:'Smart Scan',pdf:'PDF Tools',import:'Import images',merge:'Merge documents',welcome:'Scan it. Find it. Share it.',myFiles:'My files',settings:'Settings',device:'Saved in Documents/RivoScan',privacy:'Your documents stay on your phone',noAccount:'No account needed',general:'General',language:'App language',about:'About RivoScan',help:'Help & support',storage:'Storage',openDocuments:'Open My Documents',allFiles:'All files',pdfFiles:'PDF',images:'Images',sort:'Sort',newest:'Newest first',oldest:'Oldest first',name:'Name',size:'Size',list:'List',grid:'Grid',noRecent:'Your saved documents appear here after your first scan.'},
  ar:{home:'الرئيسية',documents:'وثائقي',tools:'الأدوات',me:'حسابي',search:'قلب على الوثائق ديالك',recent:'آخر الوثائق',seeAll:'عرض الكل',quick:'أدوات سريعة',safe:'الوثائق محفوظة فالهاتف',scan:'سكانير ذكي',pdf:'أدوات PDF',import:'استيراد صور',merge:'جمع الوثائق',welcome:'صوّر، حفظ، وشارك بسهولة',myFiles:'ملفاتي',settings:'الإعدادات',device:'محفوظة في Documents/RivoScan',privacy:'وثائقك كتبقى فالهاتف',noAccount:'ما محتاجش حساب',general:'الإعدادات العامة',language:'لغة التطبيق',about:'حول RivoScan',help:'المساعدة',storage:'التخزين',openDocuments:'فتح وثائقي',allFiles:'جميع الملفات',pdfFiles:'PDF',images:'الصور',sort:'الترتيب',newest:'الأحدث',oldest:'الأقدم',name:'الاسم',size:'الحجم',list:'قائمة',grid:'شبكة',noRecent:'الوثائق ديالك غادي تبان هنا من بعد أول سكان.'},
@@ -561,9 +561,9 @@ function libraryWorkspace(){
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
-    <button id="library-layout" type="button" aria-label="${libraryLayout==='list'?ut('grid'):ut('list')}">${ico(libraryLayout==='list'?'merge':'file',18)}</button></div>
+    </div>
     <div id="library-selection-root">${bulkUI.toolbar()}</div><p class="bulk-longpress-hint">${bulkUI.t('hint')}</p>
-    <div id="library-list" class="library-list ${libraryLayout==='grid'?'documents-grid':''}">${renderLibraryRows()}</div></div></section>`;
+    <div id="library-list" class="library-list">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
@@ -635,9 +635,8 @@ function refreshVisibleLibrary(){
   if(!list)return;
   list.innerHTML=renderLibraryRows(document.getElementById('library-search')?.value||'');
   const slot=document.getElementById('library-selection-root');if(slot)slot.innerHTML=bulkUI.toolbar();
-  list.classList.toggle('documents-grid',libraryLayout==='grid');
-  const toggle=document.getElementById('library-layout');
-  if(toggle){toggle.setAttribute('aria-label',libraryLayout==='list'?ut('grid'):ut('list'));toggle.innerHTML=ico(libraryLayout==='list'?'merge':'file',18);}
+  list.classList.remove('documents-grid');
+
 }
 function launchPrivacyShield(doc=null){
  return openPrivacyShield({doc,bridge:RivoDocuments,language,onSave:saveOut,notify:toast,
@@ -762,7 +761,6 @@ function wire(){
     refreshVisibleLibrary();
   }));
   document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
-  document.getElementById('library-layout')?.addEventListener('click',()=>{libraryLayout=libraryLayout==='list'?'grid':'list';refreshVisibleLibrary()});
   bulkUI.wireToolbar(document.getElementById('library-selection-root'));
   bulkUI.wireToolbar(document.getElementById('home-selection-root'));
   document.getElementById('home-quick-search')?.addEventListener('input',event=>{

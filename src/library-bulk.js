@@ -32,19 +32,30 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const size=bytes=>bytes<1024?bytes+' B':bytes<1048576?(bytes/1024).toFixed(1)+' KB':(bytes/1048576).toFixed(1)+' MB';
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
+  const compactIcon=name=>{
+    const shapes={
+      share:'<path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/>',
+      merge:'<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M9 9h11v11H9z"/>',
+      move:'<path d="M3 7h6l2 2h10v11H3z"/><path d="m12 12 3 3-3 3m-4-3h7"/>',
+      trash:'<path d="M3 6h18M8 6V4h8v2m-11 0 1 15h12l1-15M10 10v7m4-7v7"/>',
+      all:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3.5 3.5L17 9"/>',
+      close:'<path d="M5 5l14 14M19 5 5 19"/>'
+    };
+    return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+shapes[name]+'</svg>';
+  };
+  const compactAction=(action,label,shape)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'">'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
   function toolbar(){
     if(!mode||selected.size<2)return '';
     const items=selectedDocs();
     return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
       <strong class="rivo-selected-count">${items.length}</strong>
       <div class="rivo-inline-bulk">
-        <button type="button" data-bulk="share" title="${t('share')}" aria-label="${t('share')}" ${items.length?'':'disabled'}>↗</button>
-        <button type="button" data-bulk="merge" title="${t('merge')}" aria-label="${t('merge')}" ${items.length>1?'':'disabled'}>⧉</button>
-        <button type="button" data-bulk="organize" title="${t('move')} / ${t('copy')}" aria-label="${t('move')} / ${t('copy')}">▣</button>
-        <button type="button" data-bulk="rename" title="${t('rename')}" aria-label="${t('rename')}" ${items.length===1?'':'disabled'}>✎</button>
-        <button type="button" data-bulk="delete" title="${t('delete')}" aria-label="${t('delete')}">⌫</button>
-        <button type="button" data-bulk="all" title="${t('all')}" aria-label="${t('all')}">✓</button>
-        <button type="button" data-bulk="cancel" title="${t('cancel')}" aria-label="${t('cancel')}">✕</button>
+        ${compactAction('share',t('share'),'share')}
+        ${compactAction('merge',t('merge'),'merge')}
+        ${compactAction('organize',t('move'),'move')}
+        ${compactAction('delete',t('delete'),'trash')}
+        ${compactAction('all',t('all'),'all')}
+        ${compactAction('cancel',t('cancel'),'close')}
       </div>
     </div>`;
   }
