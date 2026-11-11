@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Matrix;
+import java.io.ByteArrayOutputStream;
 import android.graphics.RectF;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
@@ -33,6 +35,9 @@ final class RivoPerfectClean {
     private RivoPerfectClean(){}
 
     static File createPdf(Context context, JSONArray images) throws Exception {
+        return createPdf(context,images,null,"clean");
+    }
+    static File createPdf(Context context, JSONArray images,JSONArray edits,String mode) throws Exception {
         if(images==null||images.length()<1||images.length()>25)
             throw new IllegalArgumentException("Unsupported page count for PerfectClean");
         PdfDocument pdf=new PdfDocument();
@@ -52,10 +57,11 @@ final class RivoPerfectClean {
                         throw new SecurityException("Scanned image outside app cache");
                 }
                 Bitmap page=loadBounded(resolver,uri);
-                Bitmap clean=null;
+                Bitmap cropped=null,clean=null;
                 try {
-                    clean=normalizePaper(page);
-                    boolean landscape=page.getWidth()>page.getHeight();
+                    cropped=reviewCrop(page,edits!=null&&!edits.isNull(i)?edits.optJSONArray(i):null);
+                    clean=finish(cropped,mode);
+                    boolean landscape=clean.getWidth()>clean.getHeight();
                     int pageWidth=landscape?842:595, pageHeight=landscape?595:842;
                     PdfDocument.PageInfo spec=new PdfDocument.PageInfo.Builder(pageWidth,pageHeight,i+1).create();
                     PdfDocument.Page canvasPage=pdf.startPage(spec);
@@ -69,7 +75,8 @@ final class RivoPerfectClean {
                         canvas.drawBitmap(clean,null,new RectF(x,y,x+clean.getWidth()*scale,y+clean.getHeight()*scale),paint);
                     }finally{pdf.finishPage(canvasPage);}
                 }finally{
-                    if(clean!=null&&!clean.isRecycled())clean.recycle();
+                    if(clean!=null&&clean!=cropped&&!clean.isRecycled())clean.recycle();
+                    if(cropped!=null&&cropped!=page&&!cropped.isRecycled())cropped.recycle();
                     if(!page.isRecycled())page.recycle();
                 }
             }
@@ -88,7 +95,75 @@ final class RivoPerfectClean {
         }
     }
 
+    /** Actual native Clean/B&W/Original preview, never a decorative CSS filter. */
+    static byte[] preview(Context ctx,Uri uri,JSONArray quad,String mode) throws Exception{
+        Bitmap page=loadBounded(ctx.getContentResolver(),uri,1100),crop=null,processed=null;
+        try{
+            crop=reviewCrop(page,quad);
+            processed=finish(crop,mode);
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            if(!processed.compress(Bitmap.CompressFormat.JPEG,85,output))
+                throw new IOException("Cannot encode preview");
+            return output.toByteArray();
+        }finally{
+            if(processed!=null&&processed!=crop&&!processed.isRecycled())processed.recycle();
+            if(crop!=null&&crop!=page&&!crop.isRecycled())crop.recycle();
+            if(!page.isRecycled())page.recycle();
+        }
+    }
+    /** Edit only Google's returned pixels. No camera or raw sensor capture here. */
+    private static Bitmap reviewCrop(Bitmap original,JSONArray quad) throws Exception{
+        if(quad==null)return original;
+        if(quad.length()!=8)throw new IllegalArgumentException("Need four corners");
+        int width=original.getWidth(),height=original.getHeight();
+        float[] source=new float[8];
+        for(int j=0;j<8;j++){
+            double coord=quad.getDouble(j);
+            if(!Double.isFinite(coord)||coord<0||coord>1)
+                throw new IllegalArgumentException("Corner outside document");
+            source[j]=(float)(coord*(j%2==0?width:height));
+        }
+        float twiceA=(source[2]-source[0])*(source[5]-source[3])-(source[3]-source[1])*(source[4]-source[2]);
+        float twiceB=(source[4]-source[2])*(source[7]-source[5])-(source[5]-source[3])*(source[6]-source[4]);
+        if(twiceA<=width*height*.005f||twiceB<=width*height*.005f)
+            throw new IllegalArgumentException("Invalid crossing scan corners");
+        float top=(float)Math.hypot(source[2]-source[0],source[3]-source[1]);
+        float bottom=(float)Math.hypot(source[4]-source[6],source[5]-source[7]);
+        float left=(float)Math.hypot(source[6]-source[0],source[7]-source[1]);
+        float right=(float)Math.hypot(source[4]-source[2],source[5]-source[3]);
+        float ww=Math.max(top,bottom),hh=Math.max(left,right);
+        float scale=Math.min(1,Math.min(MAX_SIDE/ww,(float)Math.sqrt(MAX_PIXELS/(ww*hh))));
+        int outWidth=Math.max(100,Math.round(ww*scale)),outHeight=Math.max(100,Math.round(hh*scale));
+        Matrix transform=new Matrix();
+        float[] target={0,0,outWidth,0,outWidth,outHeight,0,outHeight};
+        if(!transform.setPolyToPoly(source,0,target,0,4))
+            throw new IllegalArgumentException("Non-invertible scan corners");
+        Bitmap output=Bitmap.createBitmap(outWidth,outHeight,Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(output);canvas.drawColor(Color.WHITE);
+        canvas.drawBitmap(original,transform,new Paint(Paint.FILTER_BITMAP_FLAG|Paint.DITHER_FLAG));
+        return output;
+    }
+    /** Ordered scan pipeline: shadow estimation -> paper whiten -> ink retention. */
+    private static Bitmap finish(Bitmap page,String mode){
+        if("original".equals(mode))return page;
+        Bitmap result=normalizePaper(page);
+        if(!"bw".equals(mode))return result;
+        int width=result.getWidth(),height=result.getHeight();
+        int[] line=new int[width];
+        for(int y=0;y<height;y++){
+            result.getPixels(line,0,width,0,y,width,1);
+            for(int x=0;x<width;x++){
+                int pixel=line[x],gray=(Color.red(pixel)*54+Color.green(pixel)*183+Color.blue(pixel)*19)>>8;
+                line[x]=gray>=172?Color.WHITE:Color.BLACK;
+            }
+            result.setPixels(line,0,width,0,y,width,1);
+        }
+        return result;
+    }
     private static Bitmap loadBounded(ContentResolver resolver,Uri uri) throws IOException {
+        return loadBounded(resolver,uri,MAX_SIDE);
+    }
+    private static Bitmap loadBounded(ContentResolver resolver,Uri uri,int maxSide) throws IOException {
         BitmapFactory.Options info=new BitmapFactory.Options();
         info.inJustDecodeBounds=true;
         try(InputStream input=resolver.openInputStream(uri)){
@@ -98,7 +173,7 @@ final class RivoPerfectClean {
         if(info.outWidth<100||info.outHeight<100)
             throw new IOException("Image has invalid dimensions");
         int sample=1;
-        while(Math.max(info.outWidth,info.outHeight)/(double)sample>MAX_SIDE
+        while(Math.max(info.outWidth,info.outHeight)/(double)sample>maxSide
             || (long)Math.ceil(info.outWidth/(double)sample)*Math.ceil(info.outHeight/(double)sample)>MAX_PIXELS) {
             sample*=2;
             if(sample>16)throw new IOException("Image exceeds supported dimensions");
@@ -166,10 +241,12 @@ final class RivoPerfectClean {
                 float a=bg[y0][x0]*(1-fx)+bg[y0][x1]*fx;
                 float b=bg[y1][x0]*(1-fx)+bg[y1][x1]*fx;
                 float paper=a*(1-fy)+b*fy;
+                // Stronger low-frequency shadow relief before selective whitening.
+                // Fine gray writing, saturated stamps and dark signatures stay intact.
                 float diff=paper-lum;
-                if(diff>=19)continue; // real gray ink or fine pencil line
-                float strength=diff<8?1f:Math.max(0f,(19f-diff)/11f);
-                float lift=Math.min(69f,Math.max(0f,247f-paper))*strength;
+                if(diff>=22)continue;
+                float strength=diff<7?1f:Math.max(0f,(22f-diff)/15f);
+                float lift=Math.min(108f,Math.max(0f,251f-paper)*1.17f)*strength;
                 if(lift<.4)continue;
                 row[x]=Color.rgb(Math.min(255,Math.round(red+lift)),
                     Math.min(255,Math.round(green+lift)),

@@ -233,6 +233,10 @@ public class RivoDocumentsPlugin extends Plugin {
      * No JPEG re-encoding or base64 transfer through the WebView. */
     @PluginMethod
     public void importScannedPdf(PluginCall call) {
+        // Avoid blocking WebView/UI during multi-page native cleaning.
+        new Thread(()->importScannedPdfWorker(call),"RivoScan-PDF-Import").start();
+    }
+    private void importScannedPdfWorker(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
         String input = call.getString("uri", "");
         Uri source = Uri.parse(input);
@@ -257,11 +261,15 @@ public class RivoDocumentsPlugin extends Plugin {
         boolean perfectCleanApplied=false;
         // Google FULL handles camera/cropping. This optional local finishing
         // pass only whitens uneven paper; source PDF is the safe fallback.
-        if(Boolean.TRUE.equals(call.getBoolean("perfectClean",false))){
+        JSArray reviewEdits=call.getArray("reviewEdits");
+        boolean changedCorners=false;
+        if(reviewEdits!=null)for(int i=0;i<reviewEdits.length();i++)
+            if(!reviewEdits.isNull(i)){changedCorners=true;break;}
+        if(Boolean.TRUE.equals(call.getBoolean("perfectClean",false))||changedCorners){
             try {
                 JSArray scanned=call.getArray("scannedImages");
                 if(scanned!=null&&scanned.length()>0){
-                    perfectCleanPdf=RivoPerfectClean.createPdf(getContext(),scanned);
+                    perfectCleanPdf=RivoPerfectClean.createPdf(getContext(),scanned,reviewEdits,call.getString("cleanMode","clean"));
                     source=Uri.fromFile(perfectCleanPdf);
                     perfectCleanApplied=true;
                 }
@@ -319,6 +327,37 @@ public class RivoDocumentsPlugin extends Plugin {
         }
     }
 
+    /** Preview is processed using the same native algorithm as the final PDF. */
+    @PluginMethod
+    public void previewCleanScan(PluginCall call){
+        Uri uri=Uri.parse(call.getString("uri",""));
+        String scheme=uri.getScheme();
+        if(!"content".equals(scheme)&&!"file".equals(scheme)){
+            call.reject("Invalid scan preview URI.");return;
+        }
+        if("file".equals(scheme)){
+            try{
+                File file=new File(uri.getPath()).getCanonicalFile();
+                File cache=getContext().getCacheDir().getCanonicalFile();
+                if(!file.getPath().startsWith(cache.getPath()+File.separator)){
+                    call.reject("Preview outside scanner cache.");return;
+                }
+            }catch(Exception e){call.reject("Invalid preview path.",e);return;}
+        }
+        final Uri input=uri;
+        final String mode=call.getString("cleanMode","clean");
+        final JSArray quad=call.getArray("quad");
+        new Thread(()->{
+            try{
+                byte[] jpg=RivoPerfectClean.preview(getContext(),input,quad,mode);
+                JSObject out=new JSObject();
+                out.put("base64",Base64.encodeToString(jpg,Base64.NO_WRAP));
+                getActivity().runOnUiThread(()->call.resolve(out));
+            }catch(Exception e){
+                getActivity().runOnUiThread(()->call.reject("Scan preview failed.",e));
+            }
+        },"RivoScan-Clean-Preview").start();
+    }
     @PluginMethod
     public void saveFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }

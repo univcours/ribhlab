@@ -6,7 +6,7 @@ export function mlkitFullOptions(mode='Document',pageLimit=null){
 }
 /** Native importer uses JPEGs only for an optional offline PerfectClean pass.
  * Only one PDF becomes public. If cleanup fails, Google PDF stays intact. */
-export async function persistMlKitPdf(result,{importPdf,now=()=>Date.now(),perfectClean=false}={}){
+export async function persistMlKitPdf(result,{importPdf,now=()=>Date.now(),perfectClean=false,cleanMode='clean',reviewEdits=[]}={}){
   const uri=result?.pdf?.uri;
   if(typeof uri!=='string'||!(/^(content:\/\/|file:\/\/)/i.test(uri)))
     throw new Error('Google scanner did not return a usable PDF URI.');
@@ -14,8 +14,13 @@ export async function persistMlKitPdf(result,{importPdf,now=()=>Date.now(),perfe
   const name='RivoScan_Scan_'+now()+'.pdf';
   const request={uri,name};
   const scannedImages=result?.scannedImages;
-  if(perfectClean&&Array.isArray(scannedImages)&&scannedImages.length>0){
-    request.perfectClean=true;
+  const mode=['clean','bw','original'].includes(cleanMode)?cleanMode:'clean';
+  const edits=Array.isArray(reviewEdits)&&reviewEdits.length===scannedImages?.length?reviewEdits:[];
+  const touched=edits.some(x=>Array.isArray(x)&&x.length===8);
+  if((perfectClean||touched)&&Array.isArray(scannedImages)&&scannedImages.length>0){
+    request.perfectClean=Boolean(perfectClean);
+    request.cleanMode=mode;
+    request.reviewEdits=edits;
     request.scannedImages=scannedImages;
   }
   const saved=await importPdf(request);
