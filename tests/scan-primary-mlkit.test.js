@@ -26,8 +26,8 @@ test('Google cancellation never saves; no automatic CameraX fallback',()=>{
 test('PerfectScan Pro remains in saved-document tools, not as camera fallback',()=>{
  const main=get('src/main.js'),ui=get('src/perfect-scan-ui.js');
  assert.ok(main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
- assert.ok(main.includes('onUVDoc:Capacitor.isNativePlatform()'));
- assert.ok(main.includes('onSurface3D:Capacitor.isNativePlatform()'));
+ assert.ok(main.includes("onUVDoc:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
+ assert.ok(main.includes("onSurface3D:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
  assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
  assert.ok(ui.includes("title:'PerfectScan Pro'"));
  assert.ok(!ui.includes('data-perfect-review'));
