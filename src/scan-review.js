@@ -55,7 +55,7 @@ export function openMlKitReview({images,readImage,bridge,language='en',initialMo
   const compare=overlay.querySelector('[data-review-compare]');
   const quads=images.map(()=>defaultCorners()),adjusted=images.map(()=>false);
   let index=0,mode=['clean','bw','original'].includes(initialMode)?initialMode:'clean';
-  let before=false,closed=false,loading=false,objectUrl=null,loadId=0,previewId=0,dragging=-1;
+  let before=true,closed=false,loading=false,objectUrl=null,loadId=0,previewId=0,dragging=-1;
   const payload=()=>adjusted[index]?quads[index].flat():null;
   const release=()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null};
   const finish=value=>{
@@ -91,15 +91,15 @@ export function openMlKitReview({images,readImage,bridge,language='en',initialMo
   async function preview(){
    const generation=++previewId,uri=images[index];
    if(before||(mode==='original'&&!adjusted[index])){
-    original.hidden=false;enhanced.hidden=true;status.textContent='';return;
+    original.hidden=false;enhanced.hidden=true;frame.classList.remove('rivo-review-processed');status.textContent='';return;
    }
-   status.textContent=t[13];original.hidden=false;enhanced.hidden=true;
+   status.textContent=t[13];original.hidden=false;enhanced.hidden=true;frame.classList.remove('rivo-review-processed');
    try{
     const result=await bridge.previewCleanScan({uri,cleanMode:mode,quad:payload()});
     if(closed||generation!==previewId)return;
     if(!result?.base64||!(/^[A-Za-z0-9+/=]+$/.test(result.base64)))throw Error('Invalid preview');
     enhanced.src='data:image/jpeg;base64,'+result.base64;
-    enhanced.hidden=false;original.hidden=true;status.textContent='';
+    enhanced.hidden=false;original.hidden=true;frame.classList.add('rivo-review-processed');status.textContent='';
    }catch(error){
     if(closed||generation!==previewId)return;
     status.textContent=t[14];console.warn('PerfectClean preview:',error);
@@ -142,7 +142,7 @@ export function openMlKitReview({images,readImage,bridge,language='en',initialMo
     if(validateCorners(proposal)){quads[index]=proposal;adjusted[index]=true;placeCorners()}
    });
    const end=()=>{if(dragging===Number(button.dataset.reviewCorner)){
-    dragging=-1;before=false;showMode();void preview();
+    dragging=-1;before=true;showMode();void preview();
    }};
    button.addEventListener('pointerup',end);button.addEventListener('pointercancel',end);
   });

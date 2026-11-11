@@ -598,3 +598,10 @@ body.rivo-review-open .rivo-camera-fab,body.rivo-review-open .mobilebar{display:
 #app .rivo-dark-ui .rivo-top-controls select:focus-visible{
  outline:2px solid #1eddbd!important;outline-offset:2px!important;
 }
+
+/* Keep four editable corners visible over the original Google page; processed
+   preview is a geometrically different image and must not show stale handles. */
+.rivo-mlkit-review .rivo-review-frame.rivo-review-processed .rivo-review-svg,
+.rivo-mlkit-review .rivo-review-frame.rivo-review-processed .rivo-review-corner{
+ display:none!important;
+}

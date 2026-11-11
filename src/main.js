@@ -1188,7 +1188,7 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
       await loadLibrary(false);
       openLibrary();
       soundFeedback('saved');
-      toast(dl('savedNow')+' · '+saved.pageCount+' '+sl('pages'));
+      toast(dl('savedNow')+' · '+saved.pageCount+' '+sl('pages')+(review.mode!=='original'&&!saved.perfectCleanApplied?' · Google original (cleaning unavailable)':''));
     }catch(err){
       console.error('Google scan PDF import failed:',err);
       toast('PDF save failed: '+(err?.message||err)+'. The scan was not deleted.',true);
@@ -1533,6 +1533,10 @@ let backNavigationPending=false;
 function navigateRivoBack(){
  const now=Date.now();
  if(backNavigationPending||now-lastBackHandled<420)return true;
+ if(document.querySelector('.rivo-mlkit-review')){
+   document.querySelector('.rivo-mlkit-review [data-review-cancel]')?.click();
+   lastBackHandled=now;return true;
+ }
  if(document.querySelector('.rivo-live-overlay')){
    document.querySelector('.rivo-live-overlay [data-scan-overlay-close]')?.click();
    lastBackHandled=now;return true;
