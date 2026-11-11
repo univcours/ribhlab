@@ -430,3 +430,82 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
   #app .rivo-dark-ui .scan-action-primary,
   #app .rivo-dark-ui .scan-action-secondary { gap:9px; }
 }
+
+/* 0.45.5: Always-on selection. Preserve actual 48px touch target without
+   overlaying the thumbnail or causing long-press-only selection. */
+#app .rivo-dark-ui #home-recents .doc-select-box,
+#app .rivo-dark-ui #library-list .doc-select-box{
+ appearance:none!important;-webkit-appearance:none!important;display:block!important;
+ opacity:1!important;visibility:visible!important;position:static!important;
+ width:21px!important;height:21px!important;min-width:21px!important;min-height:21px!important;
+ flex:0 0 21px!important;margin:0 9px 0 2px!important;grid-area:auto!important;
+ border:2px solid #819da0!important;background:#fff!important;border-radius:6px!important;
+ z-index:2!important;
+}
+#app .rivo-dark-ui #home-recents .doc-select-box:checked,
+#app .rivo-dark-ui #library-list .doc-select-box:checked{
+ background:#079c92!important;border-color:#079c92!important;
+}
+#app .rivo-dark-ui #home-recents .rivo-recent-card,
+#app .rivo-dark-ui #library-list > .document-entry{
+ gap:10px!important;padding:8px 10px!important;min-height:91px!important;
+ height:auto!important;max-height:none!important;box-sizing:border-box!important;
+}
+#app .rivo-dark-ui #home-recents .rivo-file-thumb,
+#app .rivo-dark-ui #library-list .rivo-file-thumb{
+ display:flex!important;flex:0 0 58px!important;min-width:58px!important;width:58px!important;
+ height:76px!important;min-height:76px!important;max-height:76px!important;
+ border-radius:6px!important;overflow:hidden!important;
+}
+#app .rivo-dark-ui #home-recents .rivo-file-thumb img,
+#app .rivo-dark-ui #library-list .rivo-file-thumb img{
+ width:100%!important;height:100%!important;object-fit:contain!important;
+ background:#fff!important;filter:none!important;opacity:1!important;
+}
+#app .rivo-dark-ui #home-recents .rivo-recent-card{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+}
+#app .rivo-dark-ui .rivo-select-banner-slot:empty{display:none!important}
+#app .rivo-dark-ui .rivo-select-banner{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ min-height:42px;padding:5px 8px;margin:5px 0;background:#edf9f5;
+ border:1px solid #bbe9df;border-radius:10px;color:#07595a;
+}
+#app .rivo-dark-ui .rivo-select-banner strong{font-size:12px;font-weight:800}
+#app .rivo-dark-ui .rivo-select-all{
+ min-width:90px;min-height:36px;background:#fff;color:#067973;
+ border:1px solid #80cdc1;border-radius:9px;padding:6px 9px;
+ font-size:12px;font-weight:800;
+}
+#app .rivo-dark-ui .rivo-top-controls{
+ display:flex;align-items:center;gap:7px;flex:none;z-index:2;
+}
+#app .rivo-dark-ui .rivo-top-locale,
+#app .rivo-dark-ui .rivo-top-sound{
+ display:flex;align-items:center;justify-content:center;gap:3px;
+ height:36px;min-width:37px;border:1px solid #5bbeb2;background:#ecfff925;
+ color:#fff;border-radius:10px;padding:0 7px;box-sizing:border-box;
+}
+#app .rivo-dark-ui .rivo-top-locale select{
+ width:42px;min-width:42px;height:32px;border:0;background:transparent;
+ color:#fff;font-size:12px;font-weight:750;padding:0;outline:none;
+}
+#app .rivo-dark-ui .rivo-top-locale select option{color:#193434;background:#fff}
+#app .rivo-dark-ui .rivo-top-sound{cursor:pointer;padding:0 8px}
+#app .rivo-dark-ui .rivo-home-trust{
+ display:flex;align-items:center;border-radius:13px;
+ min-height:44px;padding:7px 11px;color:#e7fff8;
+ background:linear-gradient(110deg,#056264,#014950);margin-bottom:8px;
+}
+#app .rivo-dark-ui .rivo-home-trust span{
+ display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+}
+#app .rivo-dark-ui .rivo-home-trust svg{flex:none}
+@media(max-width:380px){
+ #app .rivo-dark-ui .topbar .crumb strong{font-size:13px!important}
+ #app .rivo-dark-ui .topbar .rivo-build-version{display:none!important}
+ #app .rivo-dark-ui .rivo-top-controls{gap:4px}
+ #app .rivo-dark-ui .rivo-top-locale{padding:0 4px}
+ #app .rivo-dark-ui #home-recents .rivo-file-thumb,
+ #app .rivo-dark-ui #library-list .rivo-file-thumb{flex-basis:51px!important;width:51px!important;min-width:51px!important}
+}

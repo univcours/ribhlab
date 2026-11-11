@@ -18,6 +18,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import {mlkitFullOptions,persistMlKitPdf} from './mlkit-scan-flow.js';
+import {initialLanguage} from './locale-auto.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
@@ -97,6 +98,10 @@ const icons = {
   lock:'<rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   folder:'<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
+  qr:'<path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/><path d="M6 6h2v2H6zm10 0h2v2h-2zM6 16h2v2H6zm6-4h2v2h-2zm4 4h2v2h-2z" fill="currentColor" stroke="none"/>',
+  volume:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM15 9c2 1.5 2 4.5 0 6M18 6c4 3.5 4 8.5 0 12"/>',
+  muted:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM16 9l6 6m0-6-6 6"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c-5 5-5 15 0 20 5-5 5-15 0-20"/>',
   idcard:'<rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M4 16c1-2 6-2 8 0m3-7h4m-4 4h4"/>',
   eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
   user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
@@ -133,7 +138,7 @@ const translations = {
   pt:{welcome:'Bem-vindo ao RivoScan',hero:'Documentos resolvidos.',desc:'Digitalize, edite, converta e assine PDFs com privacidade.',start:'Digitalização inteligente',all:'Todas as ferramentas',create:'Digitalizar e criar',organize:'Organizar',edit:'Editar e assinar',convert:'Converter',quick:'Ferramentas PDF',select:'Selecionar ficheiros',upload:'Escolher ficheiros',drop:'Escolha documentos',ready:'Pronto',run:'Processar e guardar',secure:'Privacidade',privacy:'Os documentos são processados no dispositivo.',home:'Início',files:'Atividade recente',soon:'Brevemente',settings:'Idiomas'},
   it:{welcome:'Benvenuto su RivoScan',hero:'Documenti, risolti.',desc:'Scansiona, modifica, converti e firma PDF in privato.',start:'Scansione intelligente',all:'Tutti gli strumenti',create:'Scansiona e crea',organize:'Organizza',edit:'Modifica e firma',convert:'Converti',quick:'Strumenti PDF',select:'Seleziona file',upload:'Scegli file',drop:'Seleziona documenti',ready:'Pronto',run:'Elabora e salva',secure:'Privacy',privacy:'I documenti vengono elaborati sul dispositivo.',home:'Home',files:'Attività recente',soon:'In arrivo',settings:'Lingue'}
 };
-let language = localStorage.getItem('rivo-language') || 'en';
+let language = initialLanguage(localStorage.getItem('rivo-language'),navigator.languages?.length?navigator.languages:[navigator.language]);
 if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
 }
@@ -326,6 +331,12 @@ function render(){
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
   const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
     <span class="crumb"><img class="topbar-brand-icon" src="/icon.svg?v=20261101" alt=""><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
+    <div class="rivo-top-controls" role="group" aria-label="Language and sound">
+      <label class="rivo-top-locale" aria-label="Language">${ico('globe',15)}
+        <select id="header-language" aria-label="Language">${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${language===code?'selected':''}>${label}</option>`).join('')}</select>
+      </label>
+      <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
+    </div>
     </header>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
@@ -344,7 +355,7 @@ let documentThumbObserver=null,documentThumbQueued=false;
 function hydrateDocumentThumbnails(){
  if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments'))return;
  const install=(uri,b64)=>{
-  if(!/^[A-Za-z0-9+/=]+$/.test(b64)||b64.length>180000)return;
+  if(!/^[A-Za-z0-9+/=]+$/.test(b64)||b64.length>320000)return;
   for(const el of document.querySelectorAll('[data-thumb-uri]')){
    if(el.dataset.thumbUri!==uri)continue;
    const img=document.createElement('img');img.src='data:image/jpeg;base64,'+b64;img.alt='';
@@ -359,7 +370,7 @@ function hydrateDocumentThumbnails(){
   if(documentThumbnailPending.has(uri))continue;
   if(documentThumbnailPending.size>=6)break;
   documentThumbnailPending.add(uri);
-  void RivoDocuments.getThumbnail({uri,width:56,height:74}).then(data=>{
+  void RivoDocuments.getThumbnail({uri,width:110,height:150}).then(data=>{
    if(!data?.base64)return;
    if(documentThumbnailCache.size>110)documentThumbnailCache.clear();
    documentThumbnailCache.set(uri,data.base64);install(uri,data.base64);
@@ -420,17 +431,15 @@ const RIVO_FEATURE_TEXT={
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
- {id:'scanCode',icon:'grid',label:'qr',detail:'qrSub'},
+ {id:'scanCode',icon:'qr',label:'qr',detail:'qrSub'},
  {id:'perfectScanQuality',icon:'sparkle',label:'perfect',detail:'perfectSub'},
  {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
 ];
 function home(){
  const copy=premiumCopy(language);
  return `<section class="app-home rivo-home rivo-compact-home">
-  <div class="rivo-home-identity" role="group" aria-label="RivoScan Smart Scanner">
-   <span class="rivo-home-logo">${ico('scan',25)}</span>
-   <span class="rivo-home-heading"><strong>RivoScan</strong><small>${escapeHTML(featureText('hero'))}</small></span>
-   <span class="rivo-home-secure" aria-label="${ut('privacy')}">${ico('shield',16)}</span>
+  <div class="rivo-home-trust" aria-label="${ut('privacy')}">
+   <span>${ico('shield',16)} ${escapeHTML(featureText('hero'))}</span>
   </div>
   <nav class="rivo-feature-rail" aria-label="${escapeHTML(featureText('short'))}">
    ${featureTiles.map(f=>`<button type="button" class="rivo-feature-tile" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
@@ -439,6 +448,7 @@ function home(){
   <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
   </div>
   <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
+  <div id="home-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
   <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
@@ -564,7 +574,8 @@ function libraryWorkspace(){
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
     </div>
-    <div id="library-selection-root">${bulkUI.toolbar()}</div><p class="bulk-longpress-hint">${bulkUI.t('hint')}</p>
+    <div id="library-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
+    <div id="library-selection-root">${bulkUI.toolbar()}</div>
     <div id="library-list" class="library-list">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
@@ -637,6 +648,7 @@ function refreshVisibleLibrary(){
   if(!list)return;
   list.innerHTML=renderLibraryRows(document.getElementById('library-search')?.value||'');
   const slot=document.getElementById('library-selection-root');if(slot)slot.innerHTML=bulkUI.toolbar();
+  bulkUI.sync();
   list.classList.remove('documents-grid');
 
 }
@@ -852,7 +864,11 @@ function wire(){
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
   document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
   document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
-  document.getElementById('language')?.addEventListener('change',e=>{language=e.target.value;localStorage.setItem('rivo-language',language);if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);render()});
+  document.querySelectorAll('#language,#header-language').forEach(control=>control.addEventListener('change',e=>{
+    language=e.target.value;localStorage.setItem('rivo-language',language);
+    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);
+    render();
+  }));
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
     if(!field)return;
@@ -861,15 +877,25 @@ function wire(){
     try{updateScanPref(localStorage,field.key,value);toast(scanPrefsText(language).settingsSaved)}
     catch(error){console.warn('Scanner settings:',error);render();toast(String(error.message),true)}
   }));
-  document.getElementById('sound-toggle')?.addEventListener('change',async e=>{
-    soundsEnabled=Boolean(e.target.checked);
-    localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
+  const setSounds=async enabled=>{
+    soundsEnabled=enabled;
+    localStorage.setItem('rivo-sounds',enabled?'on':'off');
+    document.getElementById('sound-toggle')?.setAttribute('aria-checked',String(enabled));
+    const top=document.getElementById('header-sound-toggle');
+    if(top){
+      top.setAttribute('aria-pressed',String(enabled));
+      top.setAttribute('aria-label',enabled?'Mute button sounds':'Unmute button sounds');
+      top.innerHTML=ico(enabled?'volume':'muted',18);
+    }
+    const setting=document.getElementById('sound-toggle');if(setting)setting.checked=enabled;
     if(Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoLiveScanner')){
-      try{await RivoLiveScanner.setSoundSettings({enabled:soundsEnabled})}
+      try{await RivoLiveScanner.setSoundSettings({enabled})}
       catch(error){console.warn('Native sound setting:',error)}
     }
-    if(soundsEnabled)soundFeedback('saved');
-  });
+    if(enabled)soundFeedback('saved');
+  };
+  document.getElementById('sound-toggle')?.addEventListener('change',e=>{void setSounds(Boolean(e.target.checked))});
+  document.getElementById('header-sound-toggle')?.addEventListener('click',()=>{void setSounds(!soundsEnabled)});
   document.getElementById('files')?.addEventListener('change',async e=>{const picked=[...e.target.files];e.target.value='';if(activeTool?.id==='scan'&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')await editUploadedScanPhotos(picked);else addSelectedFiles(picked);});
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
@@ -1582,6 +1608,8 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
       localStorage.setItem('rivo-sounds',soundsEnabled?'on':'off');
       const control=document.getElementById('sound-toggle');
       if(control)control.checked=soundsEnabled;
+      const top=document.getElementById('header-sound-toggle');
+      if(top){top.setAttribute('aria-pressed',String(soundsEnabled));top.setAttribute('aria-label',soundsEnabled?'Mute button sounds':'Unmute button sounds');top.innerHTML=ico(soundsEnabled?'volume':'muted',18)}
     }).catch(console.warn);
   };
   syncNativeSoundSetting();

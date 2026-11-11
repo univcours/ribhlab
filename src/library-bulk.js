@@ -44,6 +44,14 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+shapes[name]+'</svg>';
   };
   const compactAction=(action,label,shape)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'">'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
+  function selectBanner(){
+    if(!selected.size)return '';
+    const n=selected.size;
+    return '<div class="rivo-select-banner" role="group" aria-label="'+t('selected')+'">'+
+      '<strong>'+n+' '+t('selected')+'</strong>'+
+      '<button type="button" data-bulk="all" class="rivo-select-all" aria-label="'+t('all')+'">'+t('all')+'</button>'+
+      '</div>';
+  }
   function toolbar(){
     if(!mode||selected.size<2)return '';
     const items=selectedDocs();
@@ -61,8 +69,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   }
   const isImage=doc=>/^image\//i.test(doc?.mimeType||'')||/\.(png|jpe?g|webp)$/i.test(doc?.name||'');
   function checkbox(doc,index){
-    // Allow selection of saved photos without entering multi-select first.
-    if(!mode&&!isImage(doc))return '';
+    // Every saved document and image has a persistent selection checkbox.
     return `<input type="checkbox" class="doc-select-box" data-doc-select="${index}" aria-label="${t('select')}" ${chosen(doc)?'checked':''}>`;
   }
   function clear(){mode=false;selected.clear();document.body.classList.remove('rivo-multiselect');}
@@ -73,6 +80,10 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const slot=document.getElementById(slotId);
       if(slot)slot.innerHTML=toolbar();
     }
+    for(const slotId of ['library-select-banner','home-select-banner']){
+      const slot=document.getElementById(slotId);
+      if(slot)slot.innerHTML=selectBanner();
+    }
     for(const rootId of ['library-list','home-recents']){
     const root=document.getElementById(rootId);
     if(root){
@@ -81,12 +92,10 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         row.classList.toggle('doc-selected',!!doc&&chosen(doc));
         row.setAttribute('aria-selected',String(!!doc&&chosen(doc)));
         const existing=row.querySelector('.doc-select-box');
-        const alwaysVisible=rootId==='home-recents';
-        if(mode&&!existing){
-          const div=document.createElement('div');div.innerHTML=doc?checkbox(doc,Number(row.dataset.docOpen)):'';
+        if(!existing&&doc){
+          const div=document.createElement('div');div.innerHTML=checkbox(doc,Number(row.dataset.docOpen));
           if(div.firstElementChild)row.prepend(div.firstElementChild);
-        } else if(!mode&&existing&&!alwaysVisible&&!isImage(doc))existing.remove();
-        else if(existing)existing.checked=!!doc&&chosen(doc);
+        }else if(existing)existing.checked=!!doc&&chosen(doc);
       }
     }
     }
@@ -422,5 +431,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,checkbox,mode:()=>mode,chosen,count:()=>selected.size,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
+  return {t,toolbar,selectBanner,checkbox,mode:()=>mode,chosen,count:()=>selected.size,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
 }
