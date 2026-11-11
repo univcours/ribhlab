@@ -17,6 +17,7 @@ import { Share } from '@capacitor/share';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
+import {mlkitFullOptions,persistMlKitPdf} from './mlkit-scan-flow.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
@@ -1120,6 +1121,25 @@ async function readScannedImage(uri,index){
   throw new Error('Unsupported scanner image output.');
 }
 async function consumeSmartScan(result,{mlkitFull=false}={}){
+  // Google's FULL scanner owns capture, corner adjustments and cleaning.
+  // Save its finished PDF byte-for-byte, preserving text, ink and image quality.
+  if(mlkitFull&&result?.scanMode!=='ID Card'){
+    showBusy(dl('saving'));
+    try{
+      const saved=await persistMlKitPdf(result,{
+        importPdf:({uri,name})=>RivoDocuments.importScannedPdf({uri,name})
+      });
+      record('Google ML Kit FULL PDF');
+      await loadLibrary(false);
+      openLibrary();
+      soundFeedback('saved');
+      toast(dl('savedNow')+' · '+saved.pageCount+' '+sl('pages'));
+    }catch(err){
+      console.error('Google scan PDF import failed:',err);
+      toast('PDF save failed: '+(err?.message||err)+'. The scan was not deleted.',true);
+    }finally{clearBusy()}
+    return;
+  }
   if(!result?.scannedImages?.length){toast('No scanned pages were returned.',true);return;}
   if(activeTool?.id!=='scan')await openTool('scan');
   const picked=[];
@@ -1144,41 +1164,36 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
     toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
   }finally{clearBusy();}
 }
-/** One primary Scan button: Google ML Kit FULL; native CameraX is an explicit fallback only. */
-async function openSmartScanner({mode='Document',pageLimit=null,allowNativeFallback=true,autoCapture=null}={}){
-  // Native CameraX always previews the actual photo with draggable four-point outline.
-  // Official ML Kit FULL remains a compatibility fallback, never a silent auto-save path.
-  if(allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))return openLiveScanner({mode,autoCapture});
+/** One primary document camera: Google's FULL scanner includes crop review. */
+const MLKIT_MODE_KEY='rivo-active-mlkit-scan-mode';
+async function openSmartScanner({mode='Document',pageLimit=null}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
-    toast('AI Deep Clean needs Android with Google Play services. Use photo upload on the web.',true);return;
+    toast('Google Document Scanner requires Android with Google Play services.',true);return;
   }
-  const count=pageLimit||('ID Card'===mode?2:20);
   nativeCaptureDepth++;
+  localStorage.setItem(MLKIT_MODE_KEY,mode);
   try{
-    const result=await DocumentScanner.scanDocument({
-      galleryImportAllowed:true,pageLimit:count,resultFormats:'JPEG',scannerMode:'FULL'
-    });
-    if(!result?.scannedImages?.length)return;
+    const result=await DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit));
+    if(!result?.pdf?.uri && !result?.scannedImages?.length)return;
     await consumeSmartScan(mode==='ID Card'?{...result,scanMode:'ID Card'}:result,{mlkitFull:true});
   }catch(err){
     const message=String(err?.message||err);
     if(/cancel|user dismissed|aborted/i.test(message))return;
-    console.error('AI Deep Clean / Google ML Kit FULL:',err);
-    const incompatible=/not implemented|unavailable|not supported|play services|play-services|not installed|api[_ ]?not[_ ]?available|unsupported/i.test(message);
-    if(incompatible&&allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner')){
-      toast('Google ML Kit FULL is unavailable; using local CameraX backup.');
-      await openLiveScanner({mode});
-      return;
-    }
-    toast('AI Deep Clean could not scan: '+message,true);
-  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
+    console.error('Google ML Kit FULL scan:',err);
+    toast('Google scanner could not open: '+message,true);
+  }finally{
+    localStorage.removeItem(MLKIT_MODE_KEY);
+    nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);
+  }
 }
 CapacitorApp.addListener('appRestoredResult',async event=>{
   if(event?.pluginId!=='DocumentScanner'||event?.methodName!=='scanDocument')return;
+  const mode=localStorage.getItem(MLKIT_MODE_KEY)||'Document';
   try{
-    if(event.success)await consumeSmartScan(event.data,{mlkitFull:true});
+    if(event.success)await consumeSmartScan(mode==='ID Card'?{...event.data,scanMode:'ID Card'}:event.data,{mlkitFull:true});
     else if(event.error?.message)toast('Scanner was interrupted: '+event.error.message,true);
   }catch(err){toast('Could not recover scan: '+err.message,true)}
+  finally{localStorage.removeItem(MLKIT_MODE_KEY)}
 }).catch(console.warn);
 
 async function openCamera(){

@@ -228,6 +228,77 @@ public class RivoDocumentsPlugin extends Plugin {
         return name;
     }
 
+
+    /** Stream Google's verified scanner PDF to shared Documents/RivoScan.
+     * No JPEG re-encoding or base64 transfer through the WebView. */
+    @PluginMethod
+    public void importScannedPdf(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
+        String input = call.getString("uri", "");
+        Uri source = Uri.parse(input);
+        String scheme = source.getScheme();
+        if (!"content".equals(scheme) && !"file".equals(scheme)) {
+            call.reject("Invalid document scanner URI."); return;
+        }
+        if ("file".equals(scheme)) {
+            try {
+                File file = new File(source.getPath()).getCanonicalFile();
+                File cache = getContext().getCacheDir().getCanonicalFile();
+                if (!file.getPath().startsWith(cache.getPath() + File.separator)) {
+                    call.reject("Source file is outside private scanner cache."); return;
+                }
+            } catch (Exception e) { call.reject("Invalid scanner file path.",e); return; }
+        }
+        String name = safeName(call.getString("name"));
+        if (!name.toLowerCase(Locale.ROOT).endsWith(".pdf")) name += ".pdf";
+        ContentResolver resolver = getContext().getContentResolver();
+        Uri target = null;
+        try (InputStream raw = resolver.openInputStream(source)) {
+            if (raw == null) throw new IllegalStateException("Scanner returned no PDF data.");
+            java.io.BufferedInputStream scan = new java.io.BufferedInputStream(raw,32768);
+            scan.mark(8);
+            byte[] magic = new byte[5];
+            if (scan.read(magic) != 5 || magic[0]!='%' || magic[1]!='P' ||
+                magic[2]!='D' || magic[3]!='F' || magic[4]!='-')
+                throw new IllegalArgumentException("Scanner result is not a PDF.");
+            scan.reset();
+            ContentValues meta = new ContentValues();
+            meta.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
+            meta.put(MediaStore.MediaColumns.MIME_TYPE,"application/pdf");
+            meta.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER);
+            meta.put(MediaStore.MediaColumns.IS_PENDING,1);
+            target = resolver.insert(documentsCollection(),meta);
+            if (target == null) throw new IllegalStateException("Unable to create public PDF.");
+            long size=0;
+            try (OutputStream output = resolver.openOutputStream(target,"w")) {
+                if (output == null) throw new IllegalStateException("Unable to write PDF.");
+                byte[] buffer=new byte[32768];
+                int n;
+                while ((n=scan.read(buffer))!=-1) {
+                    size+=n;
+                    if (size > 200L*1024L*1024L)
+                        throw new IllegalStateException("Scanned PDF exceeds 200 MB.");
+                    output.write(buffer,0,n);
+                }
+                output.flush();
+            }
+            ContentValues visible=new ContentValues();
+            visible.put(MediaStore.MediaColumns.IS_PENDING,0);
+            if (resolver.update(target,visible,null,null)<1)
+                throw new IllegalStateException("PDF was not published in Documents.");
+            JSObject info=new JSObject();
+            info.put("uri",target.toString());
+            info.put("name",name);
+            info.put("mimeType","application/pdf");
+            info.put("size",size);
+            info.put("folder",FOLDER);
+            call.resolve(info);
+        } catch (Exception e) {
+            if (target!=null) try { resolver.delete(target,null,null); } catch (Exception ignored) {}
+            call.reject("Could not save Google document scan: "+e.getMessage(),e);
+        }
+    }
+
     @PluginMethod
     public void saveFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
