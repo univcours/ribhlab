@@ -253,6 +253,23 @@ public class RivoDocumentsPlugin extends Plugin {
         if (!name.toLowerCase(Locale.ROOT).endsWith(".pdf")) name += ".pdf";
         ContentResolver resolver = getContext().getContentResolver();
         Uri target = null;
+        File perfectCleanPdf=null;
+        boolean perfectCleanApplied=false;
+        // Google FULL handles camera/cropping. This optional local finishing
+        // pass only whitens uneven paper; source PDF is the safe fallback.
+        if(Boolean.TRUE.equals(call.getBoolean("perfectClean",false))){
+            try {
+                JSArray scanned=call.getArray("scannedImages");
+                if(scanned!=null&&scanned.length()>0){
+                    perfectCleanPdf=RivoPerfectClean.createPdf(getContext(),scanned);
+                    source=Uri.fromFile(perfectCleanPdf);
+                    perfectCleanApplied=true;
+                }
+            }catch(Exception processingError){
+                android.util.Log.w("RivoScan","PerfectClean failed; preserving original Google PDF",processingError);
+                if(perfectCleanPdf!=null){perfectCleanPdf.delete();perfectCleanPdf=null;}
+            }
+        }
         try (InputStream raw = resolver.openInputStream(source)) {
             if (raw == null) throw new IllegalStateException("Scanner returned no PDF data.");
             java.io.BufferedInputStream scan = new java.io.BufferedInputStream(raw,32768);
@@ -292,10 +309,13 @@ public class RivoDocumentsPlugin extends Plugin {
             info.put("mimeType","application/pdf");
             info.put("size",size);
             info.put("folder",FOLDER);
+            info.put("perfectCleanApplied",perfectCleanApplied);
             call.resolve(info);
         } catch (Exception e) {
             if (target!=null) try { resolver.delete(target,null,null); } catch (Exception ignored) {}
             call.reject("Could not save Google document scan: "+e.getMessage(),e);
+        } finally {
+            if(perfectCleanPdf!=null)perfectCleanPdf.delete();
         }
     }
 

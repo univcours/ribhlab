@@ -6,7 +6,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
 test('Google FULL crop/clean workflow returns one native PDF without published JPGs',()=>{
  assert.deepEqual(mlkitFullOptions(),{
-  galleryImportAllowed:true,pageLimit:20,resultFormats:'PDF',scannerMode:'FULL'
+  galleryImportAllowed:true,pageLimit:20,resultFormats:'JPEG_PDF',scannerMode:'FULL'
  });
  assert.deepEqual(mlkitFullOptions('ID Card',2),{
   galleryImportAllowed:true,pageLimit:2,resultFormats:'JPEG_PDF',scannerMode:'FULL'
@@ -51,4 +51,38 @@ test('ARM64 lightweight build only filters the APK test artifact',()=>{
  assert.ok(gradle.includes("project.findProperty('rivoArmOnly')"));
  assert.ok(gradle.includes("abiFilters 'arm64-v8a'"));
  assert.ok(ci.includes('-PrivoArmOnly=true'));
+});
+
+test('PerfectClean adds verified JPEG inputs to native PDF-only request, never publishes JPG',async()=>{
+ const result={pdf:{uri:'content://google/scanned.pdf',pageCount:2},
+   scannedImages:['content://google/1.jpg','content://google/2.jpg']};
+ let request;
+ const saved=await persistMlKitPdf(result,{perfectClean:true,importPdf:async r=>{
+   request=r;return {uri:'content://media/pdf',name:r.name,perfectCleanApplied:true};
+ }});
+ assert.deepEqual(request.scannedImages,result.scannedImages);
+ assert.equal(request.perfectClean,true);
+ assert.equal(saved.perfectCleanApplied,true);
+ let untouched;
+ await persistMlKitPdf(result,{perfectClean:false,importPdf:async r=>{
+   untouched=r;return {uri:'content://media/pdf'};
+ }});
+ assert.equal(untouched.scannedImages,undefined);
+ assert.equal(untouched.perfectClean,undefined);
+ const java=read('native/android/RivoDocumentsPlugin.java');
+ const processor=read('native/android/RivoPerfectClean.java');
+ const install=read('install-live-scanner.ps1');
+ const main=read('src/main.js');
+ assert.ok(java.includes('RivoPerfectClean.createPdf(getContext(),scanned)'));
+ assert.ok(java.includes('info.put("perfectCleanApplied",perfectCleanApplied)'));
+ assert.ok(java.includes('if(perfectCleanPdf!=null)perfectCleanPdf.delete()'));
+ assert.ok(java.includes('source=Uri.fromFile(perfectCleanPdf)'));
+ assert.ok(java.includes('preserving original Google PDF'));
+ assert.ok(processor.includes('class RivoPerfectClean'));
+ assert.ok(processor.includes('normalizePaper(Bitmap input)'));
+ assert.ok(processor.includes('if(hi-lo>30||lum<65)continue'));
+ assert.ok(processor.includes('if(diff>=19)continue'));
+ assert.ok(install.includes('RivoPerfectClean.java'));
+ assert.ok(main.includes('perfectClean:prefs.autoClean&&prefs.enhancement'));
+ assert.ok(!main.includes("await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg')"));
 });

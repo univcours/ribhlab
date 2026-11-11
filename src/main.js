@@ -1126,10 +1126,12 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   if(mlkitFull&&result?.scanMode!=='ID Card'){
     showBusy(dl('saving'));
     try{
+      const prefs=readScanPrefs(localStorage);
       const saved=await persistMlKitPdf(result,{
-        importPdf:({uri,name})=>RivoDocuments.importScannedPdf({uri,name})
+        perfectClean:prefs.autoClean&&prefs.enhancement!=='original',
+        importPdf:payload=>RivoDocuments.importScannedPdf(payload)
       });
-      record('Google ML Kit FULL PDF');
+      record(saved.perfectCleanApplied?'Google ML Kit FULL + PerfectClean Pro PDF':'Google ML Kit FULL PDF');
       await loadLibrary(false);
       openLibrary();
       soundFeedback('saved');
