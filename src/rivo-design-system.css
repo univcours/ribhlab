@@ -347,3 +347,43 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
  font-weight:800!important;font-size:10px!important;line-height:1.1!important;
  text-shadow:none!important;
 }
+
+
+/* User-approved selection bar: small black icons over labels, white background.
+   Cancel | All | Delete | Move | Merge | Share, each with full-width touch target. */
+#app .rivo-dark-ui .rivo-compact-selection{
+  background:#fff!important;color:#1b2829!important;
+  border:1px solid #e4e9e8!important;border-radius:7px!important;
+  box-shadow:0 2px 12px #1828291b!important;
+  height:59px!important;min-height:59px!important;max-height:59px!important;
+  padding:2px 3px!important;gap:0!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  width:100%!important;gap:0!important;justify-content:stretch!important;
+  overflow:visible!important;scroll-snap-type:none!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button{
+  display:flex!important;flex-direction:column!important;
+  justify-content:center!important;align-items:center!important;
+  gap:4px!important;min-width:0!important;width:100%!important;
+  min-height:53px!important;height:53px!important;max-height:53px!important;
+  padding:3px 0!important;flex:none!important;overflow:visible!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;color:#192526!important;
+  text-overflow:clip!important;white-space:normal!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button svg{
+  width:18px!important;height:18px!important;min-height:18px!important;
+  stroke:currentColor!important;stroke-width:1.8!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button .rivo-action-label{
+  display:block!important;font-size:9px!important;font-weight:600!important;
+  line-height:1.05!important;color:inherit!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button[data-bulk="delete"] svg{
+  color:#df333c!important;
+}
+#app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button:focus-visible{
+  outline:2px solid #087f79!important;outline-offset:-2px!important;border-radius:5px!important;
+}

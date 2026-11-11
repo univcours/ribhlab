@@ -48,14 +48,14 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     if(!mode||selected.size<2)return '';
     const items=selectedDocs();
     return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
-      <strong class="rivo-selected-count">${items.length}</strong>
+      <span class="sr-only">${items.length} ${t('selected')}</span>
       <div class="rivo-inline-bulk">
-        ${compactAction('share',t('share'),'share')}
-        ${compactAction('merge',t('merge'),'merge')}
-        ${compactAction('organize',t('move'),'move')}
-        ${compactAction('delete',t('delete'),'trash')}
-        ${compactAction('all',t('all'),'all')}
         ${compactAction('cancel',t('cancel'),'close')}
+        ${compactAction('all',t('all'),'all')}
+        ${compactAction('delete',t('delete'),'trash')}
+        ${compactAction('organize',t('move'),'move')}
+        ${compactAction('merge',t('merge'),'merge')}
+        ${compactAction('share',t('share'),'share')}
       </div>
     </div>`;
   }
