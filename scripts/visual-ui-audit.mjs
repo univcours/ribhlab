@@ -1,18 +1,19 @@
 // Real RivoScan UI rendering audit with clearly labeled TEST documents.
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-const report={title:'RivoScan 0.45.3 responsive UI regressions',checks:[],failures:[],screens:[]};
+const appVersion=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
+const report={title:`RivoScan ${appVersion} responsive UI regressions`,checks:[],failures:[],screens:[]};
 const check=(name,ok)=>{report.checks.push({name,ok:!!ok});if(!ok)report.failures.push(name)};
 try{
  for(const width of [320,360,393,412]){
   const height=width===320?640:width===360?800:width===393?873:915;
   const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true});
-  await ctx.addInitScript(()=>{localStorage.setItem('rivo-language','en');localStorage.setItem('rivo-release-notes-read','0.45.3')});
+  await ctx.addInitScript(version=>{localStorage.setItem('rivo-language','en');localStorage.setItem('rivo-release-notes-read',version)},appVersion);
   const page=await ctx.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'networkidle',timeout:35000});
@@ -57,6 +58,25 @@ try{
   check(width+': Documents one-column vertical list',library.display==='flex'&&library.direction==='column'&&library.sameX&&library.stacked);
   check(width+': Documents names readable, no grid toggle',library.nameWidth>65&&!library.gridToggle);
   await page.screenshot({path:out+'/'+width+'-documents-test-fixture.png'});
+
+  // Responsive TEST fixture: approved icon/label toolbar, not a camera result.
+  const selection=await page.evaluate(()=>{
+    const slot=document.getElementById('library-selection-root');
+    const names=['Cancel','All','Delete','Move','Merge','Share'];
+    slot.innerHTML='<div class="library-selection-toolbar rivo-compact-selection" role="toolbar"><div class="rivo-inline-bulk">'+
+      names.map(name=>'<button type="button" data-bulk="'+name.toLowerCase()+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/></svg><span class="rivo-action-label">'+name+'</span></button>').join('')+'</div></div>';
+    const bar=slot.querySelector('.rivo-compact-selection'),rail=bar.querySelector('.rivo-inline-bulk');
+    const buttons=[...rail.querySelectorAll('button')],box=bar.getBoundingClientRect();
+    return {order:buttons.map(b=>b.innerText.trim()),background:getComputedStyle(bar).backgroundColor,
+      columns:getComputedStyle(rail).gridTemplateColumns.split(' ').filter(Boolean).length,
+      fits:box.left>=-3&&box.right<=innerWidth+3,
+      labelsVisible:buttons.every(b=>getComputedStyle(b.querySelector('span')).display!=='none')};
+  });
+  check(width+': selection order',selection.order.join('|')==='Cancel|All|Delete|Move|Merge|Share');
+  check(width+': selection row fits',selection.background==='rgb(255, 255, 255)'&&selection.columns===6&&selection.fits&&selection.labelsVisible);
+  await page.screenshot({path:out+'/'+width+'-selection-test-fixture.png'});
+  await page.evaluate(()=>{document.getElementById('library-selection-root').innerHTML='';});
+
   await page.locator('.mobilebar [data-tab="tools"]').click();
   await page.locator('.rivo-tools-hub').waitFor({state:'visible'});
   const tools=await page.evaluate(()=>({
@@ -83,5 +103,5 @@ try{
  await writeFile(out+'/report.json',JSON.stringify(report,null,2));
 }
 console.log(JSON.stringify({checks:report.checks.length,failures:report.failures,
- screenshots:report.screens.length*4},null,2));
+ screenshots:report.screens.length*5},null,2));
 assert.equal(report.failures.length,0,'RivoScan UI responsive test failed');
