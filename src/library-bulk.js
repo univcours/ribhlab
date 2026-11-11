@@ -49,7 +49,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     const n=selected.size;
     return '<div class="rivo-select-banner" role="group" aria-label="'+t('selected')+'">'+
       '<strong>'+n+' '+t('selected')+'</strong>'+
-      '<button type="button" data-bulk="all" class="rivo-select-all" aria-label="'+t('all')+'">'+t('all')+'</button>'+
+      '<button type="button" data-bulk="all" class="rivo-select-all" aria-label="'+t('all')+'">'+t('all')+(getItems().length>30?' (30)':'')+'</button>'+
       '</div>';
   }
   function toolbar(){

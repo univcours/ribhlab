@@ -402,6 +402,14 @@ function visualFileType(doc){
  if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt'};
  return {code:'FILE',klass:'generic'};
 }
+function documentMeta(doc){
+ const fields=[formatSize(doc.size||0)];
+ if(Number.isFinite(doc.created)&&doc.created>0){
+  try{fields.push(new Intl.DateTimeFormat(language,{year:'numeric',month:'short',day:'numeric'}).format(new Date(doc.created)))}catch{}
+ }
+ if(Number.isInteger(doc.pageCount)&&doc.pageCount>0)fields.push(String(doc.pageCount)+' PDF pages');
+ return escapeHTML(fields.join(' · '));
+}
 function recentDocuments(limit=12,query=homeSearchQuery){
  const needle=String(query||'').trim().toLocaleLowerCase();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
@@ -413,7 +421,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
   return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
    <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
    <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span>${file.code}</span></span>
-   <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${formatSize(doc.size||0)}</small></div>
+   <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${documentMeta(doc)}</small></div>
    ${single?`<div class="rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
@@ -450,8 +458,8 @@ function home(){
   </div>
   <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
   <div id="home-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
-  <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
+  <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
  </section>`;
 }
@@ -556,7 +564,7 @@ function renderLibraryRows(needle=''){
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
    <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span>${file.code}</span></span>
-   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${formatSize(item.size||0)}</small></div>
+   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
@@ -778,6 +786,8 @@ function wire(){
   document.getElementById('library-sort')?.addEventListener('change',e=>{librarySort=e.target.value;refreshVisibleLibrary()});
   bulkUI.wireToolbar(document.getElementById('library-selection-root'));
   bulkUI.wireToolbar(document.getElementById('home-selection-root'));
+  bulkUI.wireToolbar(document.getElementById('library-select-banner'));
+  bulkUI.wireToolbar(document.getElementById('home-select-banner'));
   document.getElementById('home-quick-search')?.addEventListener('input',event=>{
     homeSearchQuery=event.target.value;
     const rows=document.getElementById('home-recents');

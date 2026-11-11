@@ -73,7 +73,7 @@ test('PerfectClean adds verified JPEG inputs to native PDF-only request, never p
  const processor=read('native/android/RivoPerfectClean.java');
  const install=read('install-live-scanner.ps1');
  const main=read('src/main.js');
- assert.ok(java.includes('RivoPerfectClean.createPdf(getContext(),scanned)'));
+ assert.ok(java.includes('RivoPerfectClean.createPdf(getContext(),scanned,reviewEdits'));
  assert.ok(java.includes('info.put("perfectCleanApplied",perfectCleanApplied)'));
  assert.ok(java.includes('if(perfectCleanPdf!=null)perfectCleanPdf.delete()'));
  assert.ok(java.includes('source=Uri.fromFile(perfectCleanPdf)'));
