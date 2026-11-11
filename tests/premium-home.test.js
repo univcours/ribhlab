@@ -22,8 +22,8 @@ test('File library uses a short icon row only when exactly one file is selected'
   assert.ok(main.includes(action));
  assert.ok(bulk.includes('rivo-compact-selection'));
  assert.ok(bulk.includes('rivo-inline-bulk'));
- assert.ok(bulk.includes('data-bulk="merge"'));
- assert.ok(bulk.includes('data-bulk="cancel"'));
+ assert.ok(bulk.includes("compactAction('merge'"));
+ assert.ok(bulk.includes("compactAction('cancel'"));
 });
 test('All extra features live in Tools including QR and plates',()=>{
  const main=file('src/main.js'),tools=file('src/tools-hub.js');
@@ -144,4 +144,16 @@ test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  assert.ok(ads.includes('export async function requestPremium(_id){return true;}'));
  assert.ok(ads.includes('shouldShowInterstitial'));
  assert.ok(main.includes('data-ad-privacy'),'consent-related privacy access remains available');
+});
+
+test('One-column My Files is enforced after historical grid styles, with readable names',()=>{
+ const main=file('src/main.js'),css=file('src/rivo-design-system.css');
+ assert.ok(css.includes('#home-recents.rivo-premium-recent'));
+ assert.ok(css.includes('display:flex!important;flex-direction:column!important;grid-template-columns:none!important'));
+ assert.ok(css.includes('#home-recents .recent-file-meta'));
+ assert.ok(css.includes('width:auto!important'));
+ assert.ok(css.includes('visibility:visible!important'));
+ assert.ok(css.includes('#library-list.library-list'));
+ assert.ok(!main.includes('id="library-layout"'),'grid control removed permanently');
+ assert.ok(main.includes('data-thumb-uri='));
 });

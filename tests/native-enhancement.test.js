@@ -34,7 +34,7 @@ test('All-language native stage and native source included in Android wrapper',(
 test('Capture keeps the image on screen, evaluates quality and requires user-selected review or retake',()=>{
  assert.ok(activity.includes('RivoEdgeDetector.detect(bitmap)'));
  assert.ok(activity.includes('RivoCaptureQuality.analyze(bitmap,found)'));
- assert.ok(activity.includes('qualityResult.summary(nativeLanguage)'));
+ assert.ok(activity.includes('RivoCaptureQuality.analyze(bitmap,found)'));
  assert.ok(activity.includes('button(trNative("retake"),this::showCamera)'));
  assert.ok(activity.includes('button("→  "+localizedCapture("review"),this::prepareEnhancementPreview)'));
  assert.ok(activity.includes('button("✓  "+localizedCapture("save"),this::saveEnhancedPage)'));

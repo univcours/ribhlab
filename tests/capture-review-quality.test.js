@@ -10,7 +10,7 @@ test('Native CameraX capture analyzes blur, lighting, glare and document boundar
  for(const marker of ['private void openEditor(Bitmap bitmap)','captureQualitySerial',
  'RivoCaptureQuality.analyze(bitmap,found)','this::prepareEnhancementPreview',
  'this::showCamera','this::saveEnhancedPage','private void commitEnhancedPage()',
- 'enhancementProgress','qualityResult.summary(nativeLanguage)'])
+ 'enhancementProgress','RivoCaptureQuality.analyze(bitmap,found)'])
   assert.ok(camera.includes(marker),marker);
  const start=camera.indexOf('private void openEditor(Bitmap bitmap)');
  const end=camera.indexOf('private void autoCleanAndSave()',start);
@@ -27,4 +27,19 @@ test('Native enhanced image maintains high-quality source resolution when HD sel
  assert.ok(camera.includes('3600.0/Math.max(input.getWidth()'));
  assert.ok(edge.includes('Math.min(3400,maxLongSide)'));
  assert.ok(edge.includes('RivoEdgeDetector')===false || edge.includes('warp(Bitmap bitmap,Point[] normalized,int maxLongSide)'));
+});
+
+test('Enhancement preview has Retake, Compare and ✓ Save but no Edges button or alarm banner',()=>{
+ const camera=src('native/android/RivoLiveScannerActivity.java');
+ const preview=camera.slice(camera.indexOf('private void showEnhancementPreview()'),
+                             camera.indexOf('private void renderEnhancementPreview('));
+ const save=camera.slice(camera.indexOf('private void saveEnhancedPage()'),
+                          camera.indexOf('private void commitEnhancedPage()'));
+ assert.ok(preview.includes('button(trNative("retake"),this::showCamera)'));
+ assert.ok(preview.includes('button(trNative("enhanceCompare")'));
+ assert.ok(!preview.includes('button(trNative("enhanceBack")'));
+ assert.ok(!preview.includes('captureQuality.summary(nativeLanguage)'));
+ assert.ok(!save.includes('AlertDialog.Builder'));
+ assert.ok(save.includes('commitEnhancedPage()'));
+ assert.ok(camera.includes('editor.setDocument(bitmap,found)'),'four-corner drag still available');
 });
