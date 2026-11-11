@@ -387,3 +387,46 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
 #app .rivo-dark-ui .rivo-compact-selection .rivo-inline-bulk > button:focus-visible{
   outline:2px solid #087f79!important;outline-offset:-2px!important;border-radius:5px!important;
 }
+
+
+/* RivoScan icon alignment: one optical grid across scan actions and feature buttons. */
+#app .rivo-dark-ui .scan-action-primary,
+#app .rivo-dark-ui .scan-action-secondary {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:start;
+}
+#app .rivo-dark-ui .scan-action-primary > svg,
+#app .rivo-dark-ui .scan-action-secondary > svg {
+  width:24px !important;
+  height:24px !important;
+  min-width:24px;
+  flex:0 0 24px;
+  stroke-width:1.8;
+  vertical-align:middle;
+}
+#app .rivo-dark-ui .scan-action-primary > span:not(.scan-action-arrow),
+#app .rivo-dark-ui .scan-action-secondary > span {
+  min-width:0;
+  flex:1;
+}
+#app .rivo-dark-ui .scan-action-primary .scan-action-arrow {
+  flex:0 0 auto;
+}
+#app .rivo-feature-icon svg {
+  display:block;
+  width:21px !important;
+  height:21px !important;
+  stroke-width:1.8;
+}
+#app .rivo-dark-ui .scan-documents-link svg {
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  vertical-align:middle;
+}
+@media (max-width:380px) {
+  #app .rivo-dark-ui .scan-action-primary,
+  #app .rivo-dark-ui .scan-action-secondary { gap:9px; }
+}
