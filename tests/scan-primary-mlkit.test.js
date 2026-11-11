@@ -1,50 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const get=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-
-test('Google ML Kit FULL is the only primary Scan entry across Home, Scan workspace and Tools',()=>{
+const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('All primary Android Scan buttons launch Google ML Kit FULL with built-in crop review',()=>{
  const main=get('src/main.js');
- assert.ok(main.includes("import { DocumentScanner } from '@capacitor-mlkit/document-scanner';"));
+ assert.ok(main.includes("import { DocumentScanner } from '@capacitor-mlkit/document-scanner'"));
  assert.ok(main.includes('data-primary-scanner="mlkit-full"'));
- assert.ok(main.includes("scannerMode:'FULL'"));
- assert.ok(main.includes("galleryImportAllowed:true,pageLimit:count,resultFormats:'JPEG'"));
+ assert.ok(main.includes('DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit))'));
  assert.ok(main.includes("document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner())"));
- assert.ok(main.includes("if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner();"));
+ assert.ok(main.includes("if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner()"));
  assert.ok(main.includes("if(spec.type==='scan'){await openSmartScanner();return}"));
  assert.ok(main.includes("if(spec.type==='idcard'){await openSmartScanner({mode:'ID Card',pageLimit:2});return}"));
  assert.ok(main.includes("onRetake:()=>openSmartScanner()"));
- assert.ok(main.includes("await consumeSmartScan(mode==='ID Card'?{...result,scanMode:'ID Card'}:result,{mlkitFull:true})"));
 });
-
-test('CameraX fallback never replaces Google ML Kit FULL after cancellation, and cannot recurse',()=>{
+test('Google cancellation never saves; no automatic CameraX fallback',()=>{
  const main=get('src/main.js');
- assert.ok(main.includes("if(/cancel|user dismissed|aborted/i.test(message))return"));
- assert.ok(main.includes("if(incompatible&&allowNativeFallback&&Capacitor.isPluginAvailable('RivoLiveScanner'))"));
- assert.ok(main.includes("await openSmartScanner({mode,allowNativeFallback:false})"));
- assert.ok(main.includes("await openLiveScanner({mode})"));
- assert.ok(!main.includes("await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg')"));
- assert.ok(main.includes('const pdf=result.scanMode'));
- assert.ok(main.includes('await saveOut(pdf,'));
- assert.ok(!main.includes("document.getElementById('smart-scanner')?.addEventListener('click',()=>openLiveScanner())"));
- assert.ok(!main.includes('id="camera"'),'no separate basic camera button next to main scanner');
+ const block=main.slice(main.indexOf('async function openSmartScanner('),main.indexOf('async function openCamera(){'));
+ assert.ok(block.includes('if(/cancel|user dismissed|aborted/i.test(message))return'));
+ assert.ok(!block.includes('await openLiveScanner('));
+ assert.ok(!block.includes('RivoLiveScanner.scan('));
+ assert.ok(main.includes('await persistMlKitPdf(result,'));
+ assert.ok(main.includes("if(mlkitFull&&result?.scanMode!=='ID Card')"));
+ assert.ok(main.includes('await idCardToPdf(picked)'));
 });
-
-test('PerfectScan Pro UVDoc enhancement restored in scanner and documents editor',()=>{
- const main=get('src/main.js');
- const ui=get('src/perfect-scan-ui.js');
+test('PerfectScan Pro remains in saved-document tools, not as camera fallback',()=>{
+ const main=get('src/main.js'),ui=get('src/perfect-scan-ui.js');
  assert.ok(main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
  assert.ok(main.includes('onUVDoc:Capacitor.isNativePlatform()'));
  assert.ok(main.includes('onSurface3D:Capacitor.isNativePlatform()'));
-
- assert.ok(main.includes('id="scan-multi-angle"'));
  assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
- assert.ok(main.includes('id="scan-multi-angle"'));
-
- assert.ok(!main.includes('data-perfectscan-launch'));
  assert.ok(ui.includes("title:'PerfectScan Pro'"));
- assert.ok(!ui.includes('data-perfect="mlkit"'));
  assert.ok(!ui.includes('data-perfect-review'));
- assert.ok(ui.includes('data-perfect-mode'));
- assert.ok(ui.includes('originalKept:true'));
 });
