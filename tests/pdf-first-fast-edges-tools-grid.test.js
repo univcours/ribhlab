@@ -32,7 +32,7 @@ test('Pressing native check saves directly, no extra alert, and publicly publish
 test('My Files shows small real thumbnail of first PDF page, safely validated',()=>{
  const main=read('src/main.js'),native=read('native/android/RivoDocumentsPlugin.java');
  assert.ok(main.includes('data-thumb-uri='));
- assert.ok(main.includes('RivoDocuments.getThumbnail({uri,width:56,height:74})'));
+ assert.ok(main.includes('RivoDocuments.getThumbnail({uri,width:110,height:150})'));
  assert.ok(main.includes('documentThumbnailCache'));
  assert.ok(native.includes('public void getThumbnail(PluginCall call)'));
  assert.ok(native.includes('new android.graphics.pdf.PdfRenderer(fd)'));

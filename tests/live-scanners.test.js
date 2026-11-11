@@ -161,7 +161,7 @@ test('QR and barcode share one button, auto-detect live, frame ONLY detected sym
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('../src/compact-turquoise.css',import.meta.url),'utf8');
  assert.equal((hub.match(/scanCode:\{icon:/g)||[]).length,1);
- assert.ok(hub.includes("scanCode:{icon:'scan',color:'green',type:'barcode'}"));
+ assert.ok(hub.includes("scanCode:{icon:'qr',color:'green',type:'barcode'}"));
  assert.ok(main.includes("spec.type==='barcode'"));
  assert.ok(source.includes('decodeFromVideoElement(video'));
  assert.ok(source.includes("recognizedCode(decoded)"));

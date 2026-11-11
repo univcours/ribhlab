@@ -19,6 +19,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import {mlkitFullOptions,persistMlKitPdf} from './mlkit-scan-flow.js';
 import {initialLanguage} from './locale-auto.js';
+import {openMlKitReview} from './scan-review.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
@@ -1151,11 +1152,26 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
   // Google's FULL scanner owns capture, corner adjustments and cleaning.
   // Save its finished PDF byte-for-byte, preserving text, ink and image quality.
   if(mlkitFull&&result?.scanMode!=='ID Card'){
-    showBusy(dl('saving'));
     try{
       const prefs=readScanPrefs(localStorage);
+      let review={mode:prefs.autoClean&&prefs.enhancement!=='original'?'clean':'original',edits:[]};
+      if(Array.isArray(result.scannedImages)&&result.scannedImages.length){
+        try{
+          review=await openMlKitReview({
+            images:result.scannedImages,readImage:readScannedImage,
+            bridge:RivoDocuments,language,initialMode:review.mode
+          });
+          if(!review)return; // Cancel after capture: do not save.
+        }catch(error){
+          console.warn('Review unavailable; importing untouched Google PDF',error);
+          review={mode:'original',edits:[]};
+        }
+      }
+      showBusy(dl('saving'));
       const saved=await persistMlKitPdf(result,{
-        perfectClean:prefs.autoClean&&prefs.enhancement!=='original',
+        perfectClean:review.mode!=='original',
+        cleanMode:review.mode,
+        reviewEdits:review.edits,
         importPdf:payload=>RivoDocuments.importScannedPdf(payload)
       });
       record(saved.perfectCleanApplied?'Google ML Kit FULL + PerfectClean Pro PDF':'Google ML Kit FULL PDF');
