@@ -1,0 +1,90 @@
+name: RivoScan Compact ARM64 debug APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'src/**'
+      - 'native/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'install-live-scanner.ps1'
+      - 'package.json'
+      - 'rivoscan-version.properties'
+      - '.github/workflows/rivoscan-compact-android.yml'
+      - '.github/workflows/rivoscan-standalone-android.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compact:
+    name: Compact document scanner APK (Google + PerfectClean)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      RIVO_COMPACT_BUILD: '1'
+      VITE_RIVO_COMPACT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install JavaScript dependencies and test all features
+        run: npm install --no-audit --no-fund
+      - name: Validate code and run tests
+        run: npm run check && npm test
+      - name: Bundle compact feature-aware assets
+        run: npm run build
+      - name: Generate Android project and native plugins
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Prepare compact native package
+        run: |
+          python3 scripts/prepare-rivoscan-compact.py
+          grep -Fq 'registerPlugin(RivoDocumentsPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          ! grep -q 'registerPlugin(RivoUVDocPlugin.class)' android/app/src/main/java/com/ribhlab/rivoscan/MainActivity.java
+          ! grep -q 'org.opencv:opencv' android/app/build.gradle
+          ! grep -q 'onnxruntime-android' android/app/build.gradle
+          test ! -e android/app/src/main/assets/uvdoc/inference.onnx
+      - name: Build ARM64 debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug -PrivoArmOnly=true --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle attempt $attempt failed"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+      - name: Verify identity, features and absence of dead-weight binaries
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='110' versionName='0.45.6'"
+          unzip -Z -1 "$APK" > /tmp/rivo-compact-contents.txt
+          if grep -Eq '(^assets/uvdoc/inference[.]onnx$|^lib/.*/lib(onnxruntime|onnxruntime4j_jni|opencv_java4)[.]so$)' /tmp/rivo-compact-contents.txt; then
+            echo "::error::Compact package still contains an unused ML/native engine";exit 1
+          fi
+          grep -F 'lib/arm64-v8a/libtranslate_jni.so' /tmp/rivo-compact-contents.txt
+          grep -F 'assets/public/index.html' /tmp/rivo-compact-contents.txt
+          BYTES=$(stat -c%s "$APK")
+          echo "Compact APK: $BYTES bytes" | tee -a "$GITHUB_STEP_SUMMARY"
+          test "$BYTES" -lt 50000000
+          echo 'Confirmed: Google ML Kit + PerfectClean kept; experimental UVDoc and OpenCV removed' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload compact installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Compact-0.45.6-arm64-debug-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

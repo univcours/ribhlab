@@ -51,6 +51,9 @@ import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+// The Compact APK keeps Google's document capture and PerfectClean, but
+// deliberately omits experimental 3D/ONNX and the legacy CameraX pipeline.
+const COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1';
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
 const scanLedger=createScanLedger({bridge:RivoDocuments,storage:localStorage});
@@ -527,7 +530,7 @@ function scannerOptionsMarkup(){
  return markup.replace(chosen,chosen+' selected');
 }
 function scannerWorkspace(){
-  const live=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
+  const live=!COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoLiveScanner');
   const aiScanLabel=({en:'Smart AutoCapture · Camera',ar:'كاميرا التصوير التلقائي',fr:'Capture automatique intelligente',es:'Captura automática inteligente',de:'Intelligente Auto-Aufnahme',pt:'Captura automática inteligente',it:'Scatto automatico intelligente'})[language]||'Smart AutoCapture · Camera';
   const aiScanHint=({en:'Detect paper · capture when sharp and stable',ar:'تصوير تلقائي ملي الورقة تكون واضحة وثابتة',fr:'Détection et photo quand nette et stable',es:'Foto automática cuando esté nítido y estable',de:'Auto-Foto bei stabiler und scharfer Seite',pt:'Fotografa quando estiver nítida e estável',it:'Scatta quando stabile e nitido'})[language]||'Detect paper · capture when stable';
   return `<section class="workspace scan-workspace">
@@ -672,10 +675,10 @@ function launchPrivacyShield(doc=null){
 function launchPerfectScan(doc=null){
   return openPerfectScan({
     doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
-    onSurface3D:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
+    onSurface3D:!COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoSurface3D')?
       (reference,render,extraFrames,width,height)=>reconstructRelativeSurfaceAndroid({
         plugin:RivoSurface3D,reference,render,extraFrames,width,height}):null,
-    onUVDoc:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
+    onUVDoc:!COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoUVDoc')?
       (rgba,width,height)=>unwarpPixelsAndroid({plugin:RivoUVDoc,rgba,width,height}):null,
     // ML Kit FULL is now Scan itself, never an extra Deep Clean CTA.
     onRefresh:async()=>{
@@ -1097,6 +1100,11 @@ function addSelectedFiles(picked){
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
+  if(COMPACT_BUILD){
+    toast(language==='ar'?'النسخة الخفيفة كتستعمل Google Scanner: اختار الصورة من Gallery':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
+    await openSmartScanner({mode});
+    return;
+  }
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Live edge detection requires the Android app.',true);
     return;
@@ -1125,6 +1133,12 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
   }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 async function editUploadedScanPhotos(selected){
+  if(COMPACT_BUILD){
+    await openTool('scan');
+    addSelectedFiles(selected);
+    toast(language==='ar'?'الصور المستوردة جاهزة للحفظ PDF أو التنقية':language==='fr'?'Images importées, prêtes à traiter et exporter en PDF':'Imported images are ready for PDF export and enhancement.');
+    return;
+  }
   if(!Capacitor.isPluginAvailable('RivoLiveScanner')){
     toast('Live corner editor is not installed. Open Smart Scan and choose the photo from your gallery.');
     await openSmartScanner();
@@ -1252,6 +1266,9 @@ CapacitorApp.addListener('appRestoredResult',async event=>{
 }).catch(console.warn);
 
 async function openCamera(){
+  if(COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+    await openSmartScanner();return;
+  }
   if(Capacitor.isNativePlatform())nativeCaptureDepth++;
   try{
     if(Capacitor.isNativePlatform()){

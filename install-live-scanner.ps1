@@ -97,6 +97,7 @@ if($gradleText -notmatch 'com\.microsoft\.onnxruntime:onnxruntime-android:') {
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
 
+if($env:RIVO_COMPACT_BUILD -ne '1') {
 # Bundle UVDoc ONNX model into Android assets after verifying the official
 # PaddlePaddle Apache-2.0 model bytes. No user document is transmitted.
 # Model is ~31.7 MB, and is kept intact across incremental local builds.
@@ -121,6 +122,9 @@ if(-not $uvdocCorrect) {
   }
 }
 Write-Host 'UVDoc official ONNX model SHA-256 verified and bundled into Android assets.' -ForegroundColor Green
+} else {
+  Write-Host 'Compact build: skipping optional 30 MB UVDoc model.' -ForegroundColor Yellow
+}
 
 
 

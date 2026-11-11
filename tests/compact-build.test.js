@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('compact excludes costly optional engines and keeps Google scan + PerfectClean + photo translation',()=>{
+ const src=read('scripts/prepare-rivoscan-compact.py');
+ const flow=read('.github/workflows/rivoscan-compact-android.yml');
+ const main=read('src/main.js');
+ assert.ok(src.includes('RivoUVDocPlugin.java'));
+ assert.ok(src.includes('RivoSurface3DPlugin.java'));
+ assert.ok(src.includes('RivoLiveScannerActivity.java'));
+ assert.ok(src.includes('com.microsoft.onnxruntime:onnxruntime-android'));
+ assert.ok(src.includes('org.opencv:opencv'));
+ assert.ok(src.includes('RivoPerfectClean.java'));
+ assert.ok(flow.includes("RIVO_COMPACT_BUILD: '1'"));
+ assert.ok(flow.includes("VITE_RIVO_COMPACT: '1'"));
+ assert.ok(flow.includes('libtranslate_jni.so'));
+ assert.ok(main.includes("COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1'"));
+ assert.ok(main.includes("Capacitor.isPluginAvailable('RivoUVDoc')"));
+ assert.ok(main.includes("Capacitor.isPluginAvailable('RivoSurface3D')"));
+ assert.ok(main.includes('await openSmartScanner({mode})'));
+ const scanner=read('src/mlkit-scan-flow.js');
+ assert.ok(scanner.includes("scannerMode:'FULL'"));
+});
