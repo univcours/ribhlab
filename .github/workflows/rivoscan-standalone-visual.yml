@@ -1,0 +1,48 @@
+name: RivoScan standalone responsive screenshot audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'src/**'
+      - 'scripts/visual-ui-audit.mjs'
+      - 'package.json'
+      - '.github/workflows/rivoscan-standalone-visual.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  responsive-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and build app
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Verify four Android screen sizes
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-ui-server.log 2>&1 &
+          for n in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/visual-ui-audit.mjs
+      - name: Preserve screenshots and CSS assertions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0453-UI-Screenshot-Audit
+          path: |
+            /tmp/rivoscan-visual-ui/
+            /tmp/rivoscan-ui-server.log
+          retention-days: 14
+          if-no-files-found: warn

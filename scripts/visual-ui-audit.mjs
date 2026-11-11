@@ -1,94 +1,87 @@
-// Browser-level visual & interaction regression checks for the real RivoScan WebView.
+// Real RivoScan UI rendering audit with clearly labeled TEST documents.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
-const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
+const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-const report={name:'RivoScan visual WebView audit',screens:[],failures:[],checks:[]};
-const sizes=[{width:320,height:640},{width:360,height:800},{width:393,height:873},{width:412,height:915}];
-const check=(ok,name)=>{report.checks.push({name,ok:!!ok});if(!ok)report.failures.push(name)};
+const report={title:'RivoScan 0.45.3 responsive UI regressions',checks:[],failures:[],screens:[]};
+const check=(name,ok)=>{report.checks.push({name,ok:!!ok});if(!ok)report.failures.push(name)};
 try{
- for(const {width,height} of sizes){
-  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true});
-  await context.addInitScript(()=>{
-   localStorage.setItem('rivo-language','en');
-   localStorage.setItem('rivo-release-notes-read','0.45.0');
-  });
-  const page=await context.newPage();
-  const errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+ for(const width of [320,360,393,412]){
+  const height=width===320?640:width===360?800:width===393?873:915;
+  const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  await ctx.addInitScript(()=>{localStorage.setItem('rivo-language','en');localStorage.setItem('rivo-release-notes-read','0.45.3')});
+  const page=await ctx.newPage(),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'networkidle',timeout:35000});
   await page.locator('.rivo-compact-home').waitFor({timeout:20000});
-  await page.screenshot({path:out+'/'+width+'-home.png',fullPage:false});
-  const navigate=async(tab,visible)=>{
-   // Only the real, visible Android footer, never a hidden desktop sidebar.
-   const selector=tab==='library'?'.mobilebar [data-open-library]':tab==='home'?'.mobilebar [data-go="home"]':'.mobilebar [data-tab="'+tab+'"]';
-   await page.locator(selector).click({timeout:15000});
-   await page.locator(visible).waitFor({state:'visible',timeout:10000});
-  };
-  await navigate('library','.library-workspace');
-  await page.screenshot({path:out+'/'+width+'-documents.png',fullPage:false});
+  // Test fixtures provide metadata/thumbnail slots without accessing private user files.
+  const home=await page.evaluate(()=>{
+    const doc=name=>'<article class="recent-entry rivo-recent-card" role="button">'+
+     '<input type="checkbox" class="doc-select-box rivo-recent-check" aria-label="Select"/>'+
+     '<span class="recent-file-icon rivo-file-thumb rivo-file-pdf"><span>PDF</span></span>'+
+     '<div class="recent-file-meta"><strong>'+name+'</strong><small>1.2 MB</small></div></article>';
+    const list=document.getElementById('home-recents');
+    list.innerHTML=['Invoice_2026.pdf','Contract_2026.pdf','Receipt_2026.pdf'].map(doc).join('');
+    const items=[...list.querySelectorAll('.rivo-recent-card')],name=items[0].querySelector('strong');
+    return {display:getComputedStyle(list).display,direction:getComputedStyle(list).flexDirection,
+     firstRow:getComputedStyle(items[0]).display,
+     width:items[0].getBoundingClientRect().width,
+     sameX:Math.abs(items[0].getBoundingClientRect().x-items[1].getBoundingClientRect().x)<2,
+     stacked:items[1].getBoundingClientRect().y>=items[0].getBoundingClientRect().bottom,
+     nameWidth:name.getBoundingClientRect().width,
+     visible:getComputedStyle(name).visibility==='visible'};
+  });
+  check(width+': Home is vertical list',home.display==='flex'&&home.direction==='column');
+  check(width+': each row is full-width horizontal',home.firstRow==='flex'&&home.width>width*.7);
+  check(width+': rows stack below each other',home.sameX&&home.stacked);
+  check(width+': filenames are visible and not width zero',home.nameWidth>65&&home.visible);
+  await page.screenshot({path:out+'/'+width+'-home-test-fixture.png'});
+  await page.locator('.mobilebar [data-open-library]').click();
+  await page.locator('.library-workspace').waitFor({state:'visible'});
   const library=await page.evaluate(()=>{
-   const rails=['.library-heading-actions','.rivo-library-chips','.storage-actions'];
-   return rails.map(selector=>{
-    const el=document.querySelector(selector),style=el&&getComputedStyle(el);
-    return {selector,display:style?.display,wrap:style?.flexWrap,direction:style?.flexDirection,overflowX:style?.overflowX};
-   });
+   const root=document.getElementById('library-list');
+   const doc=name=>'<article class="document-entry">'+
+    '<span class="document-icon rivo-file-thumb"><span>PDF</span></span>'+
+    '<div class="document-description"><strong>'+name+'</strong><small>1.1 MB</small></div></article>';
+   root.innerHTML=['Legal_Document_2026.pdf','Second_Document.pdf'].map(doc).join('');
+   const rows=[...root.querySelectorAll('.document-entry')];
+   return {display:getComputedStyle(root).display,direction:getComputedStyle(root).flexDirection,
+    sameX:Math.abs(rows[0].getBoundingClientRect().x-rows[1].getBoundingClientRect().x)<2,
+    stacked:rows[1].getBoundingClientRect().y>=rows[0].getBoundingClientRect().bottom,
+    nameWidth:rows[0].querySelector('strong').getBoundingClientRect().width,
+    gridToggle:!!document.getElementById('library-layout')};
   });
-  for(const rail of library){
-   check(rail.display==='flex'&&rail.wrap==='nowrap'&&rail.direction==='row',
-    width+': '+rail.selector+' is one horizontal row');
-  }
-  await navigate('tools','.rivo-tools-hub');
-  const tools=await page.evaluate(()=>{
-   const tiles=[...document.querySelectorAll('.rivo-hub-tile')];
-   const rows=[...document.querySelectorAll('.rivo-hub-grid')].map(el=>{
-    const style=getComputedStyle(el);
-    const children=[...el.querySelectorAll(':scope > .rivo-hub-tile')];
-    const ys=children.map(x=>Math.round(x.getBoundingClientRect().top));
-    return {display:style.display,wrap:style.flexWrap,
-      scroll:style.overflowX,sameLine:new Set(ys).size<=1,count:children.length,
-      width:Math.round(el.getBoundingClientRect().width)};
-   });
-   return {total:tiles.length,rows};
-  });
-  check(tools.total===20,width+': 20 non-duplicated tool cards visible');
-  for(const [i,row] of tools.rows.entries()){
-   check(row.display==='flex'&&row.wrap==='nowrap'&&row.sameLine,
-    width+': Tools category '+i+' is one horizontal line');
-   check(row.width<=width+2,width+': Tools category '+i+' fits screen');
-  }
-  await page.screenshot({path:out+'/'+width+'-tools.png',fullPage:false});
-  await page.locator('[data-hub-action="convertDocument"]').click();
-  await page.locator('.rivo-merged-overlay').waitFor({state:'visible'});
-  check(await page.locator('.rivo-merged-dialog select option').count()===10,
-   width+': merged converter preserves 10 formats');
-  await page.locator('[data-merged-close]').click();
-  await navigate('me','.app-settings');
-  const settings=await page.evaluate(()=>{
-   const e=document.querySelector('.rivo-settings-actions');
-   const s=e&&getComputedStyle(e);
-   return {display:s?.display,wrap:s?.flexWrap,items:e?.querySelectorAll('button').length};
-  });
-  check(settings.display==='flex'&&settings.wrap==='nowrap'&&settings.items===2,
-   width+': settings actions one compact horizontal row');
-  await page.screenshot({path:out+'/'+width+'-settings.png',fullPage:false});
-  const overflow=await page.evaluate(()=>({
-   scrollWidth:document.documentElement.scrollWidth,
-   innerWidth:window.innerWidth
+  check(width+': Documents one-column vertical list',library.display==='flex'&&library.direction==='column'&&library.sameX&&library.stacked);
+  check(width+': Documents names readable, no grid toggle',library.nameWidth>65&&!library.gridToggle);
+  await page.screenshot({path:out+'/'+width+'-documents-test-fixture.png'});
+  await page.locator('.mobilebar [data-tab="tools"]').click();
+  await page.locator('.rivo-tools-hub').waitFor({state:'visible'});
+  const tools=await page.evaluate(()=>({
+   categoryTabs:document.querySelectorAll('.rivo-tool-pills').length,
+   grids:[...document.querySelectorAll('.rivo-hub-grid')].map(g=>({
+    display:getComputedStyle(g).display,
+    columns:getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length,
+    count:g.querySelectorAll(':scope > .rivo-hub-tile').length}))
   }));
-  check(overflow.scrollWidth<=overflow.innerWidth+3,
-   width+': no page-level horizontal overflow');
-  check(errors.length===0,width+': no uncaught WebView exceptions ('+errors.slice(0,2).join('; ')+')');
-  report.screens.push({width,height,tools,library,settings,overflow,errors});
-  await context.close();
+  check(width+': no obsolete category tabs',tools.categoryTabs===0);
+  check(width+': Tools grid is exactly 3 columns',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
+  await page.screenshot({path:out+'/'+width+'-tools.png'});
+  await page.locator('.mobilebar [data-tab="me"]').click();
+  await page.locator('.app-settings').waitFor({state:'visible'});
+  await page.screenshot({path:out+'/'+width+'-settings.png'});
+  const overflow=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,ww:window.innerWidth}));
+  check(width+': no horizontal page-level overflow',overflow.sw<=overflow.ww+3);
+  check(width+': no uncaught JS errors',errors.length===0);
+  report.screens.push({width,height,home,library,tools,overflow,errors});
+  await ctx.close();
  }
 }finally{
  await browser.close();
  await writeFile(out+'/report.json',JSON.stringify(report,null,2));
 }
-console.log(JSON.stringify({checks:report.checks.length,failed:report.failures.length,
- screenshots:report.screens.length*4,failures:report.failures},null,2));
-assert.equal(report.failures.length,0,'RivoScan UI visual audit must be clean');
+console.log(JSON.stringify({checks:report.checks.length,failures:report.failures,
+ screenshots:report.screens.length*4},null,2));
+assert.equal(report.failures.length,0,'RivoScan UI responsive test failed');
