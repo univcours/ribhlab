@@ -53,13 +53,13 @@ jobs:
       - name: Configure release signing without committing the private key
         env:
           RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: python3 scripts/prepare-rivoscan-signing.py
       - name: Require Google Play registered original upload certificate SHA1
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           set -euo pipefail
@@ -77,8 +77,8 @@ jobs:
           echo "Matched existing Google Play upload certificate SHA-1." >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble signed release app bundle
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           cd android
