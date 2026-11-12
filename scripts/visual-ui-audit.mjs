@@ -118,6 +118,10 @@ try{
      await overlay.locator('details.rivo-book-advanced:not([open])').count()===1);
     check(width+': Book Save disabled without photo',
      await overlay.locator('.rivo-code-actions button').last().isDisabled());
+    if(width===320){
+     const saveRect=await overlay.locator('.rivo-code-actions button').last().evaluate(button=>button.getBoundingClientRect().toJSON());
+     check(width+': Book Save fits short screen',saveRect.bottom<=height+2);
+    }
    }
    await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
    await overlay.locator('[data-rivo-modal-close]').click();
