@@ -113,6 +113,12 @@ try{
    check(width+': '+tag+' visible close',info.close);
    check(width+': '+tag+' fits viewport',info.fits);
    check(width+': '+tag+' buttons not clipped',!info.clipped);
+   if(id==='bookScan'){
+    check(width+': book advanced corrections collapsed',
+     await overlay.locator('details.rivo-book-advanced:not([open])').count()===1);
+    check(width+': Book Save disabled without photo',
+     await overlay.locator('.rivo-code-actions button').last().isDisabled());
+   }
    await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
    await overlay.locator('[data-rivo-modal-close]').click();
    await overlay.waitFor({state:'detached',timeout:8000});
