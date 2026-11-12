@@ -1,37 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {defaultCorners,validateCorners} from '../src/scan-review.js';
-import {persistMlKitPdf} from '../src/mlkit-scan-flow.js';
+import {existsSync,readFileSync} from 'node:fs';
+import {mlkitAutoCleanMode,persistMlKitPdf} from '../src/mlkit-scan-flow.js';
 const file=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('crimson corner editor accepts valid convex geometry only',()=>{
- assert.equal(validateCorners(defaultCorners()),true);
- assert.equal(validateCorners([[0,0],[1,0],[0,1],[1,1]]),false);
- assert.equal(validateCorners([[-1,0],[1,0],[1,1],[0,1]]),false);
- assert.equal(validateCorners([[.1,.1],[.3,.1],[.3,.2],[.1,.2]]),false);
+
+test('Remove RivoScan post-Google review screen from sources, not just hide it',()=>{
+ const main=file('src/main.js'), css=file('src/rivo-design-system.css');
+ assert.equal(existsSync(new URL('../src/scan-review.js',import.meta.url)),false);
+ assert.ok(!main.includes('openMlKitReview'));
+ assert.ok(!main.includes("from './scan-review.js'"));
+ assert.ok(!css.includes('rivo-mlkit-review'));
+ assert.ok(!css.includes('rivo-review-open'));
+ assert.ok(main.includes('const cleanMode=mlkitAutoCleanMode(prefs);'));
+ assert.ok(main.includes("perfectClean:cleanMode!=='original'"));
+ assert.ok(main.includes('await loadLibrary(false)'));
+ assert.ok(main.includes('openLibrary();'));
 });
-test('Google camera flows into real editable review, preview and native crop',()=>{
- const main=file('src/main.js'), review=file('src/scan-review.js');
- const native=file('native/android/RivoDocumentsPlugin.java'),clean=file('native/android/RivoPerfectClean.java');
- assert.ok(main.includes('review=await openMlKitReview('));
- assert.ok(main.includes('if(!review)return;'));
- assert.ok(review.includes('data-review-corner'));
- assert.ok(review.includes('data-review-compare'));
- assert.ok(review.includes('data-review-save'));
- assert.ok(native.includes('RivoPerfectClean.preview(getContext(),input,quad,mode)'));
- assert.ok(native.includes('RivoPerfectClean.createPdf(getContext(),scanned,reviewEdits'));
- assert.ok(clean.includes('transform.setPolyToPoly(source,0,target,0,4)'));
- assert.ok(clean.includes('if(diff>=22)continue'));
+
+test('Automatic background PerfectClean honors user scanner settings',()=>{
+ assert.equal(mlkitAutoCleanMode({autoClean:true,enhancement:'proscan'}),'clean');
+ assert.equal(mlkitAutoCleanMode({autoClean:true,enhancement:'bw'}),'bw');
+ assert.equal(mlkitAutoCleanMode({autoClean:true,enhancement:'original'}),'original');
+ assert.equal(mlkitAutoCleanMode({autoClean:false,enhancement:'proscan'}),'original');
+ assert.equal(mlkitAutoCleanMode({}),'clean');
 });
-test('native PDF handoff saves cleaned, B&W or edited original; unedited originals stay Google PDF',async()=>{
+
+test('Native PDF handoff preserves cleanup and original-PDF fallback with no manual edits',async()=>{
  const result={pdf:{uri:'content://google/final.pdf',pageCount:1},scannedImages:['content://google/1.jpg']};
- let payload;
- await persistMlKitPdf(result,{perfectClean:true,cleanMode:'bw',reviewEdits:[null],importPdf:async x=>{payload=x;return {uri:'content://media/123',perfectCleanApplied:true}}});
- assert.equal(payload.cleanMode,'bw');
- assert.equal(payload.scannedImages.length,1);
- await persistMlKitPdf(result,{perfectClean:false,cleanMode:'original',reviewEdits:[[.02,.02,.98,.02,.98,.98,.02,.98]],importPdf:async x=>{payload=x;return {uri:'content://media/124'}}});
- assert.equal(payload.reviewEdits[0].length,8);
- await persistMlKitPdf(result,{perfectClean:false,cleanMode:'original',reviewEdits:[null],importPdf:async x=>{payload=x;return {uri:'content://media/125'}}});
- assert.equal(payload.scannedImages,undefined);
- assert.ok(file('native/android/RivoDocumentsPlugin.java').includes('preserving original Google PDF'));
+ let request;
+ await persistMlKitPdf(result,{perfectClean:true,cleanMode:'bw',importPdf:async x=>{
+   request=x;return {uri:'content://media/123',perfectCleanApplied:true};
+ }});
+ assert.equal(request.cleanMode,'bw');
+ assert.equal(request.scannedImages.length,1);
+ assert.equal(request.reviewEdits.length,0);
+ await persistMlKitPdf(result,{perfectClean:false,cleanMode:'original',importPdf:async x=>{
+   request=x;return {uri:'content://media/125'};
+ }});
+ assert.equal(request.scannedImages,undefined);
+ const native=file('native/android/RivoDocumentsPlugin.java');
+ assert.ok(native.includes('preserving original Google PDF'));
+ assert.ok(native.includes('RivoPerfectClean.createPdf(getContext(),scanned,reviewEdits'));
 });

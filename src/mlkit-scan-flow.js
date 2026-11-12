@@ -1,4 +1,10 @@
 /** Google-managed camera, editable crop review, cleaning, native PDF creation. */
+/** Auto-save uses the selected scanner preference, without a second review screen. */
+export function mlkitAutoCleanMode(prefs={}){
+  if(prefs?.autoClean===false || prefs?.enhancement==='original')return 'original';
+  return prefs?.enhancement==='bw'?'bw':'clean';
+}
+
 export function mlkitFullOptions(mode='Document',pageLimit=null){
   const idCard=mode==='ID Card';
   const count=Number.isSafeInteger(pageLimit)&&pageLimit>=1?Math.min(50,pageLimit):(idCard?2:20);

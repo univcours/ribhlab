@@ -83,6 +83,6 @@ test('PerfectClean adds verified JPEG inputs to native PDF-only request, never p
  assert.ok(processor.includes('if(hi-lo>30||lum<65)continue'));
  assert.ok(processor.includes('if(diff>=22)continue'));
  assert.ok(install.includes('RivoPerfectClean.java'));
- assert.ok(main.includes("perfectClean:review.mode!=='original'"));
+ assert.ok(main.includes("perfectClean:cleanMode!=='original'"));
  assert.ok(!main.includes("await saveOut(new Uint8Array(await page.arrayBuffer()),page.name,'image/jpeg')"));
 });
