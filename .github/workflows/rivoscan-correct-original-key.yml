@@ -63,9 +63,14 @@ jobs:
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           set -euo pipefail
-          keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}" |
-            grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E' >/dev/null ||
-            { echo "::error::RivoScan keystore certificate does NOT match the existing Google Play upload key. No AAB will be built."; exit 1; }
+          CERT_INFO="$(keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}")"
+          ACTUAL_SHA1="$(printf '%s\\n' "$CERT_INFO" | sed -n 's/^[[:space:]]*SHA1: //p' | head -1)"
+          test -n "$ACTUAL_SHA1" || { echo "::error::Unable to read signing certificate SHA1"; exit 1; }
+          echo "Actual keystore certificate SHA1: $ACTUAL_SHA1" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$ACTUAL_SHA1" != "E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E" ]; then
+            echo "::error::WRONG RivoScan upload certificate SHA1: $ACTUAL_SHA1. Expected E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E. No AAB will be built."
+            exit 1
+          fi
           echo "Matched existing Google Play upload certificate SHA-1." >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble signed release app bundle
         env:
