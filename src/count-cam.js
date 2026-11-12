@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 /**
  * Image-based object counting with a locally executed COCO-SSD model.
  * The model weights download on first use; photos stay on the phone.
@@ -120,5 +121,6 @@ export function openCountCam({language='en',capture}={}){
   if(objectURL)URL.revokeObjectURL(objectURL);objectURL=URL.createObjectURL(file);
   try{await load(objectURL)}catch{status.textContent=L[9]}
  });
+ mountDialogControls({overlay,panel,close,language});
  overlay.append(panel);document.body.append(overlay);return close;
 }

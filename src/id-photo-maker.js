@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 /** Optional on-device portrait cutout for printable ID sheets. */
 import {segmentPortrait} from './photo-background.js';
 export const MM_TO_PX_300=300/25.4;
@@ -139,6 +140,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   }catch{status.textContent=L[9]}
  };
  input.addEventListener('change',load);select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
+ mountDialogControls({overlay,panel,close,language});
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
  return close;
 }

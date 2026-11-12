@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 import Tesseract from 'tesseract.js';
 const {recognize}=Tesseract;
 import {Translation} from '@capacitor-mlkit/translation';
@@ -113,6 +114,7 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
   finally{busy=false}
  });
  button(resultActions,L[10],close);
+ mountDialogControls({overlay,panel,close,language});
  overlay.append(panel);document.body.append(overlay);
  return close;
 }

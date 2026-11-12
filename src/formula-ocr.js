@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 import Tesseract from 'tesseract.js';
 import {buildAIRequest,requestUserAI} from './ai-provider.js';
 import {findFormulaRegions,formulaRegionLayout} from './formula-regions.js';
@@ -171,5 +172,6 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
   finally{busy=false}
  });
  action(buttons,L[7],close);
+ mountDialogControls({overlay,panel,close,language});
  overlay.append(panel);document.body.append(overlay);return close;
 }

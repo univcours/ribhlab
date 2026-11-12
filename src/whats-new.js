@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 // Version-aware release notes: describe verified code without promising semantic or generative AI.
 export const changesForVersion=(language='en')=>{
  const data={
@@ -173,6 +174,7 @@ export function openWhatsNew({language='en',version='0.0.0',storage=localStorage
  const close=()=>{overlay.remove();try{storage.setItem('rivo-release-notes-read',version)}catch{}};
  ok.addEventListener('click',close);
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
+ mountDialogControls({overlay,panel,close,language});
  overlay.append(panel);document.body.append(overlay);
  ok.focus();
  return close;

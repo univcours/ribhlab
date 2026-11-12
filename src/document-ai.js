@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 import Tesseract from 'tesseract.js';
 import {AI_DEFAULT_MODEL,buildAIRequest,requestUserAI} from './ai-provider.js';
 const {recognize}=Tesseract;
@@ -145,5 +146,6 @@ export function openDocumentAI({mode='chat',language='en',capture=null}={}){
   finally{busy=false;submit.disabled=false}
  });
  action(L[9],clear);
+ mountDialogControls({overlay:cover,panel,close:clear,language});
  cover.append(panel);document.body.append(cover);return clear;
 }

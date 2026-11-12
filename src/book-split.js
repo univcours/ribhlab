@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 import {PDFDocument} from 'pdf-lib';
 import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
 import {estimateBookSpine} from './book-spine.js';
@@ -291,6 +292,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   }catch(error){status.textContent=error?.message||String(error)}
   finally{busy=false}
  });
+ mountDialogControls({overlay,panel,close:cleanup,language});
  overlay.append(panel);document.body.append(overlay);
  return cleanup;
 }

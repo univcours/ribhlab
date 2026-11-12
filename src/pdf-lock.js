@@ -1,3 +1,4 @@
+import {mountDialogControls} from './modal-shell.js';
 import {encryptPDF} from '@pdfsmaller/pdf-encrypt';
 
 const ui={
@@ -74,6 +75,7 @@ export function openPDFLock({language='en',save,notify=()=>{}}={}){
   finally{encrypt.disabled=false}
  });
  makeButton(L[9],close);
+ mountDialogControls({overlay:cover,panel,close,language});
  cover.append(panel);document.body.append(cover);
  cover.addEventListener('click',e=>{if(e.target===cover)close()});
  return close;
