@@ -79,10 +79,14 @@ test('No redundant Home/All Tools link inside Documents; native topbar handles B
 test('Right-edge Android Back closes page manager, editor and every supported full-screen tool first',()=>{
  const main=file('src/main.js');
  for(const tag of ['rivo-pages-overlay','rivo-editor-overlay','rivo-perfectscan-overlay',
- 'rivo-code-overlay','rivo-id-overlay','data-page-action="close"',
- 'data-edit="cancel"','data-perfect="close"']){
+  'data-page-action="close"','data-edit="cancel"','data-perfect="close"',
+  'data-rivo-managed-modal','data-rivo-modal-close']){
   assert.ok(main.includes(tag),tag);
  }
+ const modal=file('src/modal-shell.js'),modalCSS=file('src/modal-shell.css');
+ for(const tag of ['rivo-code-overlay','rivo-id-overlay'])assert.ok(modalCSS.includes(tag),tag);
+ assert.ok(modal.includes('mountDialogControls'));
+ assert.ok(!main.includes("last?.querySelector('button:last-of-type')"));
  assert.ok(main.includes("start.side==='right'&&dx<=-84"));
  assert.ok(main.includes("document.querySelector('.busy')"));
 });
