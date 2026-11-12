@@ -16,8 +16,8 @@ jobs:
       VITE_RIVO_COMPACT: '1'
       VITE_RIVO_ADMOB_MODE: live
       VITE_RIVO_ADMOB_APP_ID: ${{ secrets.RIVO_ADMOB_APP_ID }}
-      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ${{ secrets.RIVO_ADMOB_INTERSTITIAL_ID }}
-      VITE_RIVO_ADMOB_APP_OPEN_ID: ${{ secrets.RIVO_ADMOB_APP_OPEN_ID }}
+      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
+      VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,20 +50,20 @@ jobs:
       - name: Configure release signing without committing the private key
         env:
           RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_UPLOAD_KEYSTORE_BASE64 }}
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_UPLOAD_STORE_PASSWORD }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_UPLOAD_KEY_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: python3 scripts/prepare-rivoscan-signing.py
       - name: Verify uploaded keystore and alias without exposing the password
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_UPLOAD_STORE_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           keytool -list -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "$(test -n "$RIVO_UPLOAD_KEY_ALIAS" && echo "$RIVO_UPLOAD_KEY_ALIAS" || echo key0)" >/dev/null
       - name: Assemble signed release app bundle
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_UPLOAD_STORE_PASSWORD }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_UPLOAD_KEY_PASSWORD }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           cd android

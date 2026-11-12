@@ -17,3 +17,16 @@ test('signed Play release needs secret-keystore and real AdMob identifiers',()=>
  assert.ok(signing.includes("RIVO_SIGNING_KEYSTORE_PATH"));
  assert.ok(!ci.includes('keynovagrid'));
 });
+
+test('verified RivoScan AdMob public units and existing PASSEKEY signing secret are wired',()=>{
+ const ci=read('.github/workflows/rivoscan-play-signed-release.yml');
+ assert.ok(ci.includes('VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752'));
+ assert.ok(ci.includes('VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707'));
+ assert.ok(ci.includes('secrets.RIVO_ADMOB_APP_ID'));
+ assert.ok(ci.includes('RIVO_UPLOAD_STORE_PASSWORD: ') && ci.includes('secrets.PASSEKEY'));
+ assert.ok(ci.includes('RIVO_UPLOAD_KEY_PASSWORD: ') && ci.includes('secrets.PASSEKEY'));
+ assert.ok(!ci.includes('secrets.RIVO_UPLOAD_STORE_PASSWORD'));
+ assert.ok(!ci.includes('secrets.RIVO_UPLOAD_KEY_PASSWORD'));
+ assert.ok(!ci.includes('7945572016731367~1688423435'));
+ assert.ok(!ci.includes('keynovagrid'));
+});

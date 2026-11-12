@@ -9,7 +9,7 @@ const demoPublisher='ca-app-pub-3940256099942544';
 export const AD_CONFIG=Object.freeze({
  testMode:!liveAds,
  androidAppId:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_ID||''):demoPublisher+'~3347511713',
- rewarded:liveAds?'':demoPublisher+'/5224354917',
+ rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
  appOpen:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_OPEN_ID||''):demoPublisher+'/9257395921',
  bannerEnabled:false
