@@ -63,9 +63,12 @@ jobs:
           RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           set -euo pipefail
-          CERT_INFO="$(keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}")"
-          ACTUAL_SHA1="$(printf '%s\\n' "$CERT_INFO" | sed -n 's/^[[:space:]]*SHA1: //p' | head -1)"
-          test -n "$ACTUAL_SHA1" || { echo "::error::Unable to read signing certificate SHA1"; exit 1; }
+          if ! CERT_INFO="$(keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}" 2>&1)"; then
+            echo "::error::Cannot open the supplied RivoScan keystore using the configured password and alias key0. Verify RIVO_CORRECT_KEY_PASSWORD matches the key file; no bundle built."
+            exit 1
+          fi
+          ACTUAL_SHA1="$(echo "$CERT_INFO" | awk '$1 == "SHA1:" {print $2; exit}')"
+          test -n "$ACTUAL_SHA1" || { echo "::error::Valid keystore, but signing certificate SHA1 could not be parsed"; exit 1; }
           echo "Actual keystore certificate SHA1: $ACTUAL_SHA1" >> "$GITHUB_STEP_SUMMARY"
           if [ "$ACTUAL_SHA1" != "E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E" ]; then
             echo "::error::WRONG RivoScan upload certificate SHA1: $ACTUAL_SHA1. Expected E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E. No AAB will be built."
