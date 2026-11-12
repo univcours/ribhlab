@@ -18,6 +18,7 @@ jobs:
       VITE_RIVO_ADMOB_APP_ID: ${{ secrets.RIVO_ADMOB_APP_ID }}
       VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
       VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707
+      VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

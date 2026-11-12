@@ -22,6 +22,7 @@ test('verified RivoScan AdMob public units and existing PASSEKEY signing secret 
  const ci=read('.github/workflows/rivoscan-play-signed-release.yml');
  assert.ok(ci.includes('VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752'));
  assert.ok(ci.includes('VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707'));
+ assert.ok(ci.includes('VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879'));
  assert.ok(ci.includes('secrets.RIVO_ADMOB_APP_ID'));
  assert.ok(ci.includes('RIVO_UPLOAD_STORE_PASSWORD: ') && ci.includes('secrets.PASSEKEY'));
  assert.ok(ci.includes('RIVO_UPLOAD_KEY_PASSWORD: ') && ci.includes('secrets.PASSEKEY'));
