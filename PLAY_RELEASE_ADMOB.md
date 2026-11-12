@@ -4,7 +4,7 @@ The production workflow is .github/workflows/rivoscan-play-signed-release.yml. I
 
 ## GitHub Actions repository secrets
 Open Settings > Secrets and variables > Actions > New repository secret and create:
-- RIVO_ADMOB_APP_ID — true RivoScan Android AdMob App ID, format ca-app-pub-...~...
+- AdMob Android app ID is public and configured: ca-app-pub-7945572016731367~1509328607. No RIVO_ADMOB_APP_ID GitHub Secret is required.
 - Interstitial unit is public and already set to ca-app-pub-7945572016731367/5608742752.
 - App Open unit is public and already set to ca-app-pub-7945572016731367/6270875707.
 - RIVO_UPLOAD_KEYSTORE_BASE64 — base64 of the original PKCS12 upload keystore, kept PRIVATE.
@@ -23,5 +23,5 @@ Publish a verified public privacy-policy URL and complete Play Data Safety plus 
 
 The workflow intentionally fails if genuine AdMob identifiers or key passwords are missing.
 
-The RivoScan-specific AdMob App ID is still needed (ca-app-pub-7945572016731367~[APP-SPECIFIC-ID]). Never reuse NovaGrid's AdMob App ID for this app. GitHub needs the uploaded keystore's base64 bytes in RIVO_UPLOAD_KEYSTORE_BASE64 before signing; password alone is insufficient.
+The RivoScan-specific AdMob App ID has been verified from the supplied AdMob App Settings screenshot: ca-app-pub-7945572016731367~1509328607. Never reuse NovaGrid's AdMob App ID for this app. GitHub needs the uploaded keystore's base64 bytes in RIVO_UPLOAD_KEYSTORE_BASE64 before signing; password alone is insufficient.
 Rewarded ad unit ca-app-pub-7945572016731367/4148993879 is known but will not be displayed until an opt-in rewarded feature is implemented.
