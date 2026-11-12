@@ -160,6 +160,15 @@ export const changesForVersion=(language='en')=>{
  return {...note,items:(latest[language]||latest.en),
   limits:note.limits+' '+(plateWarnings[language]||plateWarnings.en)};
 };
+const latestModalRelease={
+ en:['Mobile tool windows now fit the screen, with readable buttons and a visible Close button.','Swipe from the right edge to dismiss tool windows; Android Back closes the correct window without saving.','Book Scan has a clear empty state, optional Advanced correction, and Save activates only after a photo.','Ad diagnostics in Settings shows consent, loading status and errors. Ads still depend on Google AdMob availability.'],
+ ar:['نوافذ الأدوات ولات مناسبة للهاتف، بأزرار واضحة وزر إغلاق ظاهر.','السحب من اليمين لليسار وزر الرجوع كيسدو النافذة بلا ما يحفظو بالغلط.','Book Scan فيه معاينة واضحة وتصحيح متقدم اختياري، والحفظ كيتفعّل من بعد إضافة صورة.','تشخيص الإعلانات فالإعدادات كيبين الموافقة وحالة التحميل والأخطاء؛ ظهور الإعلان كيبقى تابع لـAdMob.'],
+ fr:['Fenêtres adaptées aux téléphones, avec commandes lisibles et fermeture visible.','Glisser depuis le bord droit pour fermer, sans enregistrer par erreur.','Book Scan offre un état vide explicite, une correction avancée facultative et un enregistrement après photo.','Diagnostic des annonces et du consentement dans les réglages ; la diffusion dépend aussi d’AdMob.'],
+ es:['Ventanas adaptadas al móvil, con botones legibles y cierre visible.','Desliza desde el borde derecho para cerrar sin guardar por error.','Escáner de libros con vista vacía clara, ajustes avanzados opcionales y guardado tras añadir una foto.','Diagnóstico de anuncios y consentimiento en Ajustes; la disponibilidad depende de AdMob.'],
+ de:['Werkzeugfenster passen auf das Handy, mit lesbaren Tasten und Schließen-Knopf.','Wischen vom rechten Rand schließt ohne versehentliches Speichern.','Buchscan zeigt leere Vorschau und optionale Korrekturen; Speichern erst nach einem Foto.','Werbediagnose und Einwilligungsstatus in Einstellungen; Anzeigen hängen von AdMob ab.'],
+ pt:['Janelas adaptadas ao telemóvel, com botões legíveis e Fechar visível.','Deslize da direita para fechar sem guardar por engano.','Digitalização de livros com estado vazio, correções opcionais e guardar só após foto.','Diagnóstico de anúncios e consentimento nas definições; a entrega depende do AdMob.'],
+ it:['Finestre adattate ai telefoni, pulsanti leggibili e chiusura visibile.','Scorri dal bordo destro per chiudere senza salvare per errore.','Scanner libri con anteprima vuota chiara, correzioni avanzate facoltative e salvataggio dopo una foto.','Diagnostica annunci e consenso nelle impostazioni; la disponibilità dipende anche da AdMob.']
+};
 export const shouldShowReleaseNotes=(storage,version)=>storage.getItem('rivo-release-notes-read')!==version;
 export function openWhatsNew({language='en',version='0.0.0',storage=localStorage}={}){
  const copy=changesForVersion(language);
