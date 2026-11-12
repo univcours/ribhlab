@@ -7,23 +7,57 @@ jobs:
   show-certificate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check supplied RivoScan signing key certificate
+      - name: Identify usable signing keystore and password without revealing any secret
         env:
-          RIVO_CERT_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
-          RIVO_CERT_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_NEW_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_OLD_B64: ${{ secrets.RIVO_UPLOAD_KEYSTORE_BASE64 }}
+          RIVO_NEW_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_OLD_PASS: ${{ secrets.PASSEKEY }}
         run: |
           set -euo pipefail
-          test -n "$RIVO_CERT_KEY_B64" && test -n "$RIVO_CERT_KEY_PASSWORD"
-          printf '%s' "$RIVO_CERT_KEY_B64" | base64 --decode > "$RUNNER_TEMP/rivo-key.p12"
-          chmod 600 "$RUNNER_TEMP/rivo-key.p12"
-          keytool -list -v -storetype PKCS12 -keystore "$RUNNER_TEMP/rivo-key.p12" -storepass:env RIVO_CERT_KEY_PASSWORD -alias key0 > "$RUNNER_TEMP/public-certificate.txt"
-          observed=$(sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+)[[:space:]]*$/\1/p' "$RUNNER_TEMP/public-certificate.txt" | head -n 1)
-          test -n "$observed" || { echo '::error::Could not retrieve certificate SHA1'; exit 1; }
-          echo "Supplied RivoScan public certificate SHA1: $observed"
-          echo "Supplied RivoScan public certificate SHA1: $observed" >> "$GITHUB_STEP_SUMMARY"
-          expected='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
-          if [ "$observed" != "$expected" ]; then
-            echo "::error::Wrong upload key. Expected Google Play SHA1: $expected"
-            exit 1
+          EXPECTED='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          found=0
+          for source in new old; do
+            if [ "$source" = new ]; then
+              base64key="$RIVO_NEW_B64"
+            else
+              base64key="$RIVO_OLD_B64"
+            fi
+            if [ -z "$base64key" ]; then
+              echo "Missing $source keystore"; continue
+            fi
+            if ! printf '%s' "$base64key" | base64 -d > "$RUNNER_TEMP/$source.p12"; then
+              echo "::error::$source secret is not valid Base64"; continue
+            fi
+            chmod 600 "$RUNNER_TEMP/$source.p12"
+            for password_source in new old; do
+              if [ "$password_source" = new ]; then
+                KEY_PASS="$RIVO_NEW_PASS"
+              else
+                KEY_PASS="$RIVO_OLD_PASS"
+              fi
+              export KEY_PASS
+              if [ -z "$KEY_PASS" ]; then
+                echo "Password $password_source not configured"; continue
+              fi
+              if keytool -list -v -storetype PKCS12 -keystore "$RUNNER_TEMP/$source.p12" -storepass:env KEY_PASS > "$RUNNER_TEMP/certificate.txt" 2>&1; then
+                sha=$(sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+)[[:space:]]*$/\1/p' "$RUNNER_TEMP/certificate.txt" | head -n1)
+                echo "Readable certificate: key=$source, password source=$password_source, SHA1=$sha"
+                echo "Readable certificate: key=$source, password source=$password_source, SHA1=$sha" >> "$GITHUB_STEP_SUMMARY"
+                found=1
+                if [ "$sha" = "$EXPECTED" ]; then
+                  echo "MATCH: Correct registered Google Play upload certificate found in $source key using $password_source password reference."
+                  echo "MATCH: correct registered Google Play upload key found." >> "$GITHUB_STEP_SUMMARY"
+                  exit 0
+                fi
+              else
+                echo "Not readable: key=$source with password source=$password_source"
+              fi
+            done
+          done
+          if [ "$found" = 0 ]; then
+            echo "::error::No key could be read using either configured password. Check correct keystore file, keystore password and alias."
+          else
+            echo "::error::Readable key(s) found, but none have the original Google Play upload certificate $EXPECTED"
           fi
-          echo 'RivoScan key correctly matches existing Google Play certificate.'
+          exit 1
