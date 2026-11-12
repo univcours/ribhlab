@@ -89,6 +89,36 @@ try{
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
   check(width+': Tools grid is exactly 3 columns',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
   await page.screenshot({path:out+'/'+width+'-tools.png'});
+
+  // Real utility dialogs (not mocked modals): detect clipping and missing Close.
+  for(const [id,tag] of [['bookScan','book-scan'],['pdfLock','pdf-lock'],
+    ['photoTranslation','photo-translation'],['idPhotoMaker','id-photo']]){
+   const tile=page.locator('[data-hub-action="'+id+'"]').first();
+   check(width+': '+tag+' tool exists',await tile.count()>0);
+   if(!(await tile.count()))continue;
+   await tile.click();
+   const overlay=page.locator('[data-rivo-managed-modal="true"]').last();
+   await overlay.waitFor({state:'visible',timeout:10000});
+   const info=await overlay.evaluate(root=>{
+    const panel=root.querySelector('[role="dialog"]'),close=root.querySelector('[data-rivo-modal-close]');
+    const buttons=[...root.querySelectorAll('.rivo-code-actions > button')];
+    const bounds=panel.getBoundingClientRect();
+    return {close:!!close&&close.getBoundingClientRect().width>=40,
+     fits:bounds.left>=-2&&bounds.right<=innerWidth+2,
+     clipped:buttons.some(button=>{
+      const r=button.getBoundingClientRect();
+      return r.right>bounds.right+2||r.left<bounds.left-2||button.scrollWidth>button.clientWidth+5;
+     })};
+   });
+   check(width+': '+tag+' visible close',info.close);
+   check(width+': '+tag+' fits viewport',info.fits);
+   check(width+': '+tag+' buttons not clipped',!info.clipped);
+   await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
+   await overlay.locator('[data-rivo-modal-close]').click();
+   await overlay.waitFor({state:'detached',timeout:8000});
+   check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
+  }
+
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
   await page.screenshot({path:out+'/'+width+'-settings.png'});
