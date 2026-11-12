@@ -1,0 +1,29 @@
+name: RivoScan keystore fingerprint diagnosis
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  show-certificate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check supplied RivoScan signing key certificate
+        env:
+          RIVO_CERT_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_CERT_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_CERT_KEY_B64" && test -n "$RIVO_CERT_KEY_PASSWORD"
+          printf '%s' "$RIVO_CERT_KEY_B64" | base64 --decode > "$RUNNER_TEMP/rivo-key.p12"
+          chmod 600 "$RUNNER_TEMP/rivo-key.p12"
+          keytool -list -v -storetype PKCS12 -keystore "$RUNNER_TEMP/rivo-key.p12" -storepass:env RIVO_CERT_KEY_PASSWORD -alias key0 > "$RUNNER_TEMP/public-certificate.txt"
+          observed=$(sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+)[[:space:]]*$/\1/p' "$RUNNER_TEMP/public-certificate.txt" | head -n 1)
+          test -n "$observed" || { echo '::error::Could not retrieve certificate SHA1'; exit 1; }
+          echo "Supplied RivoScan public certificate SHA1: $observed"
+          echo "Supplied RivoScan public certificate SHA1: $observed" >> "$GITHUB_STEP_SUMMARY"
+          expected='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          if [ "$observed" != "$expected" ]; then
+            echo "::error::Wrong upload key. Expected Google Play SHA1: $expected"
+            exit 1
+          fi
+          echo 'RivoScan key correctly matches existing Google Play certificate.'
