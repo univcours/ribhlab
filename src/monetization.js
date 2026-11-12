@@ -68,7 +68,7 @@ export function configureAds({getLanguage,notify,onChange}={}){
  if(typeof onChange==='function')state.onChange=onChange;
 }
 export function getPremiumStatus(){
- return {native:isAndroid,ready:state.ready,consent:state.consent,status:state.status,
+ return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,
  shownCount:state.shownCount};
@@ -92,7 +92,7 @@ async function loadAppOpen(){
 export async function initializeAds({retry=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
  if(liveAds&&!productionAdsConfigured()){status('Real AdMob publisher IDs missing; ads disabled');return false;}
- if(state.ready)return true;
+ if(state.ready){if(retry){void loadInterstitial();void loadAppOpen();}return true;}
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
   try{

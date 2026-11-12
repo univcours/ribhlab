@@ -36,6 +36,7 @@ import {createScanLedger} from './scan-ledger.js';
 import './compact-turquoise.css';
 import './privacy-shield.css';
 import './rivo-design-system.css';
+import './modal-shell.css';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
@@ -491,6 +492,9 @@ function scannerPreferenceRows(){
  }).join('');
 }
 function settingsWorkspace(){
+ const ad=getPremiumStatus();
+ const adTitle=({ar:'تشخيص الإعلانات',fr:'Diagnostic des annonces',en:'Ad diagnostics'})[language]||'Ad diagnostics';
+ const adText=ad.native?(ad.ready?(ad.consent?'AdMob initialized · consent ready':'Consent not ready'):'AdMob not ready'):'AdMob works in the installed Android app only';
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>
@@ -501,6 +505,14 @@ function settingsWorkspace(){
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
+ <div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
+  <h2>${escapeHTML(adTitle)}</h2>
+  <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
+  <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: disabled</p>
+  ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
+  <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
+  <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner disabled; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
+ </div>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
@@ -1565,15 +1577,9 @@ function navigateRivoBack(){
   lastBackHandled=now;
   return true;
  }
- for(const selector of ['.rivo-code-overlay','.rivo-id-overlay']){
-  const modal=document.querySelector(selector);
-  if(!modal)continue;
-  const bars=modal.querySelectorAll('.rivo-code-actions');
-  const last=bars[bars.length-1];
-  last?.querySelector('button:last-of-type')?.click();
-  lastBackHandled=now;
-  return true;
- }
+ // Never call Save as a surrogate Close.
+ const managed=[...document.querySelectorAll('[data-rivo-managed-modal="true"]')];
+ if(managed.length){managed.at(-1).querySelector('[data-rivo-modal-close]')?.click();lastBackHandled=now;return true;}
  if(document.querySelector('.rivo-reward-overlay')){
   document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
  }
@@ -1629,7 +1635,7 @@ document.addEventListener('touchend',event=>{
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
 render();
-// Google demo ads, GDPR/UMP privacy flow; no app-open interruption.
+// Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
 void initializeAds();
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))
