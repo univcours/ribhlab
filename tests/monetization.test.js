@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AD_CONFIG,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
+import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
  FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS} from '../src/monetization.js';
 test('banner removed; only official Google sample rewarded, interstitial and app-open units',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,false);assert.equal('banner' in AD_CONFIG,false);
@@ -46,4 +46,13 @@ test('app open only on foreground return after >=60 seconds background and 20-mi
  for(const change of [{backgroundMs:0},{working:true},{consent:false},{native:false},
    {ready:false},{premiumUntil:now+1},{lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowAppOpen({...base,...change}),false);
+});
+
+test('production cannot use Google test IDs or mismatched publishers',()=>{
+ const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:''};
+ assert.equal(productionAdsConfigured(),false);
+ assert.equal(productionAdsConfigured(real),true);
+ assert.equal(productionAdsConfigured({...real,interstitial:'ca-app-pub-3940256099942544/1033173712'}),false);
+ assert.equal(productionAdsConfigured({...real,appOpen:'ca-app-pub-3940256099942544/9257395921'}),false);
+ assert.equal(productionAdsConfigured({...real,androidAppId:'ca-app-pub-3940256099942544~3347511713'}),false);
 });
