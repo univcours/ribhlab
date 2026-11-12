@@ -40,3 +40,25 @@
  .rivo-modal-top{margin-inline:-12px!important;padding-inline:12px!important}
  .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions>button,.rivo-id-overlay .rivo-code-actions>button{min-height:48px!important;font-size:12px!important}}
 @media(max-width:340px){.rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions,.rivo-id-overlay .rivo-code-actions{grid-template-columns:minmax(0,1fr)!important}}
+
+/* Book Scan empty state and corrected Beta tools. */
+.rivo-id-dialog .rivo-book-preview{position:relative;display:grid;place-items:center;width:100%;min-height:190px;
+ margin:12px 0;border:1px solid #b8dbd8;border-radius:14px;overflow:hidden;background:#eff9f7}
+.rivo-id-dialog .rivo-book-preview .rivo-id-preview{margin:0!important;border:0!important;max-height:36dvh!important;max-width:100%!important}
+.rivo-id-dialog .rivo-book-preview-empty .rivo-id-preview{display:none!important}
+.rivo-id-dialog .rivo-book-empty{max-width:275px;padding:24px 12px;margin:0;text-align:center;
+ color:#39656b;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.rivo-id-dialog .rivo-book-empty[hidden]{display:none!important}
+.rivo-id-overlay .rivo-id-dialog > button:not(.rivo-modal-dismiss){
+ display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+ min-height:44px!important;margin:7px 0!important;padding:9px 12px!important;
+ text-align:start!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ font-size:13px!important;line-height:1.4!important;border:1px solid #9ecfcb!important;
+ border-radius:11px!important;color:#075c61!important;background:#e6f7f4!important}
+.rivo-id-overlay .rivo-id-dialog > button:disabled{opacity:.55!important;cursor:not-allowed!important}
+.rivo-id-overlay .rivo-id-dialog > .rivo-code-actions:last-of-type{
+ position:sticky!important;bottom:0!important;z-index:5!important;background:#f6fcfc!important;
+ padding:10px 0!important;margin-bottom:0!important;border-top:1px solid #d3e8e6!important}
+@media(max-width:340px){
+ .rivo-id-overlay .rivo-code-actions,.rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important}}

@@ -43,7 +43,11 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';fileInput.multiple=!singlePage;fileInput.hidden=true;panel.append(fileInput);
  const spreadCount=document.createElement('p');spreadCount.className='rivo-id-hint';
  if(!singlePage)panel.append(spreadCount);
- const preview=document.createElement('canvas');preview.className='rivo-id-preview';panel.append(preview);
+ const preview=document.createElement('canvas');preview.className='rivo-id-preview';
+ const previewBox=document.createElement('div');previewBox.className='rivo-book-preview rivo-book-preview-empty';
+ const emptyNote=document.createElement('p');emptyNote.className='rivo-book-empty';
+ emptyNote.textContent=({ar:'صوّر أو استورد صفحة كتاب باش تبان هنا.',en:'Take or import a book photo to preview its pages.',fr:'Photographiez ou importez une page pour la prévisualiser.'})[language]||'Add a book photo';
+ previewBox.append(preview,emptyNote);panel.append(previewBox);
  const location=document.createElement('label');location.className='rivo-id-row';location.textContent=L[3];
  const slider=document.createElement('input');slider.type='range';slider.min='25';slider.max='75';slider.value='50';location.append(slider);panel.append(location);
  const autoSpine=document.createElement('button');autoSpine.type='button';autoSpine.className='rivo-auto-spine';
@@ -95,7 +99,9 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    image,spine:+slider.value,curvature:+warpSlider.value,
    autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
-  image=img;currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
+  image=img;previewBox.classList.remove('rivo-book-preview-empty');emptyNote.hidden=true;
+  for(const button of [autoSpine,autoButton,lineButton,autoAll,compare,saveButton])button.disabled=false;
+  currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix(true);countSpreads();
   location.hidden=singlePage||currentIsSinglePage;
   autoSpine.hidden=singlePage||currentIsSinglePage;
@@ -259,7 +265,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  });
  slider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
  warpSlider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
- makeButton(saveAction,singlePage?
+ const saveButton=makeButton(saveAction,singlePage?
   (({en:'Save flattened PDF copy',ar:'حفظ PDF مصحح',fr:'Enregistrer PDF aplati',es:'Guardar PDF corregido',de:'Korrigiertes PDF speichern',pt:'Guardar PDF corrigido',it:'Salva PDF corretto'})[language]||'Save flattened PDF'):
   L[4],async()=>{
   if(!image||busy)return;busy=true;
@@ -292,6 +298,8 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   }catch(error){status.textContent=error?.message||String(error)}
   finally{busy=false}
  });
+ saveButton.disabled=true;
+ for(const button of [autoSpine,autoButton,lineButton,autoAll,compare])button.disabled=true;
  mountDialogControls({overlay,panel,close:cleanup,language});
  overlay.append(panel);document.body.append(overlay);
  return cleanup;

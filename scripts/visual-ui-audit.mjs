@@ -91,7 +91,7 @@ try{
   await page.screenshot({path:out+'/'+width+'-tools.png'});
 
   // Real utility dialogs (not mocked modals): detect clipping and missing Close.
-  for(const [id,tag] of [['bookScan','book-scan'],['pdfLock','pdf-lock'],
+  for(const [id,tag] of [['bookScan','book-scan'],['formulaOcr','formula-ocr'],
     ['photoTranslation','photo-translation'],['idPhotoMaker','id-photo']]){
    const tile=page.locator('[data-hub-action="'+id+'"]').first();
    check(width+': '+tag+' tool exists',await tile.count()>0);
