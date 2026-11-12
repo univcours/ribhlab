@@ -82,8 +82,11 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
  let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false,currentIsSinglePage=false;
  const previousSpreads=[],maxSpreads=6;
+ let undoButton=null;
  const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
-  (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads};
+  (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads;
+  if(undoButton)undoButton.disabled=previousSpreads.length===0;
+ };
  countSpreads();
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async (src,{alreadySingle=false}={})=>{
@@ -191,7 +194,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    finally{busy=false}
   });
  }
- if(!singlePage)makeButton(actions,
+ if(!singlePage)undoButton=makeButton(actions,
   (({en:'Undo last spread',ar:'رجّع الصفحة السابقة',fr:'Revenir à la double page précédente',es:'Volver a página anterior',de:'Letzte Doppelseite zurück',pt:'Voltar à página anterior',it:'Torna alla pagina precedente'})[language]||'Previous spread'),()=>{
    if(busy||!previousSpreads.length)return;
    const old=previousSpreads.pop();
@@ -200,7 +203,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    draw();countSpreads();
    location.hidden=singlePage||currentIsSinglePage;autoSpine.hidden=singlePage||currentIsSinglePage;
   });
- makeButton(actions,L[5],cleanup);
+ if(undoButton)undoButton.disabled=true;
  fileInput.addEventListener('change',async()=>{
   const files=[...(fileInput.files||[])];fileInput.value='';
   for(const file of files){
