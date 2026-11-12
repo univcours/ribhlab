@@ -16,6 +16,7 @@ concurrency:
 jobs:
   responsive-layout:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +28,7 @@ jobs:
           npm install --no-audit --no-fund
           npm run build
           npm install --no-save --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps --only-shell chromium
+          # Chromium is already installed in the pinned Playwright Ubuntu 24.04 container.
       - name: Verify four Android screen sizes
         run: |
           npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-ui-server.log 2>&1 &
