@@ -71,8 +71,13 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const compare=document.createElement('button');compare.type='button';compare.className='rivo-compare';
  compare.textContent=({en:'Compare original / corrected',ar:'قارن الأصلية مع المصححة',fr:'Comparer original et corrigé',es:'Comparar original y corrección',de:'Original / Korrektur vergleichen',pt:'Comparar original / corrigido',it:'Confronta originale / corretto'})[language]||'Compare';
  panel.append(compare);
+ const advanced=document.createElement('details');advanced.className='rivo-book-advanced';
+ const advancedTitle=document.createElement('summary');
+ advancedTitle.textContent=({ar:'تصحيح متقدم للصفحات',en:'Advanced page correction',fr:'Correction avancée',es:'Corrección avanzada',de:'Erweiterte Seitenkorrektur',pt:'Correção avançada',it:'Correzione avanzata'})[language]||'Advanced correction';
+ advanced.append(advancedTitle,location,autoSpine,warpLabel,autoButton,lineButton,autoAll,compare);
+ panel.append(advanced);
  const info=document.createElement('p');info.textContent=singlePage?
-  ({en:'Straighten one document using detected text-line curvature; adjust manually if detection is uncertain. Not 3D fold reconstruction.',ar:'كيقوّم صفحة وحدة بتحليل سطور النص، وإذا النتيجة ما واضحةش يمكن تصحيحها يدوياً. ماشي إعادة بناء 3D كاملة.',fr:'Redressement par lignes de texte, à vérifier. Ce n’est pas une reconstruction 3D.'})[language]||'Guided flattening':L[6];info.className='rivo-id-hint';panel.append(info);
+  ({en:'Straighten one document using detected text-line curvature; adjust manually if detection is uncertain. Not 3D fold reconstruction.',ar:'كيقوّم صفحة وحدة بتحليل سطور النص، وإذا النتيجة ما واضحةش يمكن تصحيحها يدوياً. ماشي إعادة بناء 3D كاملة.',fr:'Redressement par lignes de texte, à vérifier. Ce n’est pas une reconstruction 3D.'})[language]||'Guided flattening':L[6];info.className='rivo-id-hint';advanced.append(info);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const saveAction=document.createElement('div');saveAction.className='rivo-code-actions';panel.append(saveAction);
  let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false,currentIsSinglePage=false;
