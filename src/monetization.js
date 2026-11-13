@@ -250,6 +250,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  if(state.ready){if(retry){void loadInterstitial();void loadAppOpen();if(!deferBanner)void loadBanner();}return true;}
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
+  let sdkInitializationStarted=false;
   try{
    status('Checking ad consent');
    // Google UMP must run BEFORE AdMob.initialize; do not treat an optional form
@@ -259,6 +260,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
     consent=await AdMob.showConsentForm();
    state.consent=consent.canRequestAds===true;
    if(!state.consent){status('Ads unavailable: privacy choice / consent not ready');return false;}
+   sdkInitializationStarted=true;
    await AdMob.initialize();
    state.ready=true;
    void trackNativeAdEvents();
@@ -270,8 +272,9 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    return true;
   }catch(error){
    state.ready=false;
-   status('AdMob initialization failed',String(error?.message||error));
-   console.warn('AdMob initialization failed:',String(error?.message||error));
+   const stage=sdkInitializationStarted?'AdMob initialization failed':'Ad consent configuration unavailable';
+   status(stage,String(error?.message||error));
+   console.warn(stage+':',String(error?.message||error));
    return false;
   }finally{state.initializing=null;}
  })();
@@ -378,7 +381,9 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
- if(isAndroid&&state.ready&&!working)void initializeAds({retry:true});
+ // A consent/network error may be transient. Recheck on a genuine foreground
+ // session without ever requesting ads unless the UMP SDK allows it.
+ if(isAndroid&&!working)void initializeAds({retry:true});
  if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
   try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
  }
