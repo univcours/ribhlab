@@ -1,6 +1,7 @@
 // Actual RivoScan responsive UI screenshots for Google Play tablet listings.
 // No fake feature screens, invented scanning results or advertising creative.
 // WebView previews are not equivalent to physical Android tablet verification.
+// Use responsive CSS viewport widths (720dp and 768dp) to avoid a narrow desktop sidebar on portrait tablets.
 import {chromium} from 'playwright';
 import {mkdir,writeFile,stat,readFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -10,7 +11,7 @@ const out=process.env.RIVO_TABLET_OUTPUT||'/tmp/rivoscan-tablet-publishing';
 const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 const tablets=[
  {label:'7-inch',viewport:{width:720,height:1280},deviceScaleFactor:1.5,expected:[1080,1920]},
- {label:'10-inch',viewport:{width:900,height:1600},deviceScaleFactor:1.6,expected:[1440,2560]}
+ {label:'10-inch',viewport:{width:768,height:1280},deviceScaleFactor:2,expected:[1536,2560]}
 ];
 const views=[
  ['01_Home','home'],
