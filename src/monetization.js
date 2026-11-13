@@ -128,9 +128,9 @@ function scheduleAdRetry(type){
  },delay);
 }
 const strings={
- en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad not ready. Open Me → Ad diagnostics to retry.',success:'Advanced tools unlocked for 10 minutes.'},
- ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات ديالك كيبقاو متاحين.',watch:'شاهد الفيديو · 10 دقائق',cancel:'رجوع',unavailable:'الإعلان مازال ما وجدش. دخل للإعدادات > تشخيص الإشهارات وعاود المحاولة.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
- fr:{title:'Débloquer les outils avancés',body:'Regardez volontairement une publicité pour accéder aux outils avancés pendant 10 minutes. Documents et scan simple restent disponibles.',watch:'Voir une vidéo · 10 min',cancel:'Retour',unavailable:'Publicité indisponible. Réessayez dans Diagnostics publicitaires.',success:'Outils avancés débloqués pour 10 minutes.'}
+ en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad currently unavailable. Please try again later.',success:'Advanced tools unlocked for 10 minutes.'},
+ ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات ديالك كيبقاو متاحين.',watch:'شاهد الفيديو · 10 دقائق',cancel:'رجوع',unavailable:'الإعلان مازال ما متوفرش دابا. عاود المحاولة من بعد.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
+ fr:{title:'Débloquer les outils avancés',body:'Regardez volontairement une publicité pour accéder aux outils avancés pendant 10 minutes. Documents et scan simple restent disponibles.',watch:'Voir une vidéo · 10 min',cancel:'Retour',unavailable:'Publicité indisponible. Veuillez réessayer plus tard.',success:'Outils avancés débloqués pour 10 minutes.'}
 };
 const tr=()=>strings[state.getLanguage()]||strings.en;
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
