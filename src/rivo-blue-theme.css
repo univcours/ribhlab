@@ -246,3 +246,23 @@ body[dir=rtl] .rivo-id-dialog{
   transition:none!important;animation-duration:.01ms!important;
  }
 }
+
+/* Low-vision safeguards: searchable inputs, captions and disabled controls.
+   Muted blue is never used on a similarly pale blue surface. */
+#app .rivo-dark-ui input::placeholder,
+#app .rivo-dark-ui textarea::placeholder,
+.rivo-id-dialog input::placeholder,.rivo-code-dialog input::placeholder{
+ color:var(--rivo-royal)!important;opacity:.86!important;
+}
+#app .rivo-dark-ui :is(.rivo-search-key,.rivo-build-version,
+.rivo-section-subtitle,.rivo-hub-section-label,.rivo-documents-subtitle){
+ color:var(--rivo-royal)!important;
+}
+#app .rivo-dark-ui :is(button,[role="button"]):disabled,
+.rivo-id-dialog button:disabled,.rivo-code-dialog button:disabled{
+ opacity:.6!important;cursor:not-allowed!important;
+}
+/* Avoid cyan-letter-on-ice combinations. Cyan stays in outlines and focus rings. */
+#app .rivo-dark-ui :is(.rivo-active-label,.rivo-selected-label){
+ color:var(--rivo-primary)!important;
+}
