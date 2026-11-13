@@ -343,13 +343,15 @@ function render(){
       <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
     </div>
     </header>`;
+  // Native Google banner appears in this non-interactive turquoise band.
+  const bannerSlot = `<div class="rivo-ad-banner-slot" role="complementary" aria-label="Advertisement"><div class="rivo-ad-banner-frame" aria-hidden="true"></div></div>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
     <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
   observeDocumentThumbnails();
@@ -509,10 +511,10 @@ function settingsWorkspace(){
  <div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
-  <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: disabled</p>
+  <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: ${ad.bannerReady?'loaded':ad.bannerEnabled?'pending':'not configured'}</p>
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
-  <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner disabled; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
+  <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
  </div>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;

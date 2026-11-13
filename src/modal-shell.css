@@ -113,3 +113,26 @@
 .rivo-update-dialog button.rivo-update-close{background:#d9e8e7;color:#164751}
 .rivo-update-dialog button:disabled{opacity:.6}
 .rivo-update-error{color:#a92339}
+
+/* Safe top-centered AdMob row, separate from all clickable navigation.
+   Creative remains Google's standard 320x50dp and is never recolored. */
+#app .rivo-dark-ui .rivo-ad-banner-slot{
+ display:none;position:sticky;top:54px;z-index:39;
+ box-sizing:border-box;width:100%;
+ height:calc(var(--rivo-banner-height,50px) + 18px);
+ padding:9px 10px;align-items:center;justify-content:center;
+ background:#e8f9f6;border-bottom:1px solid #c0e4de;
+ pointer-events:none;overscroll-behavior:contain;
+}
+body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex}
+#app .rivo-dark-ui .rivo-ad-banner-frame{
+ box-sizing:border-box;width:min(320px,100%);
+ height:var(--rivo-banner-height,50px);
+ background:#effaf8;border-radius:8px;border:1px solid #cfeae5;
+}
+body.rivo-has-ad-banner #app .rivo-compact-home{
+ height:calc(100dvh - 244px)!important;
+}
+@media(max-width:319px){
+ #app .rivo-dark-ui .rivo-ad-banner-slot{display:none!important}
+}

@@ -22,5 +22,9 @@ test('Ad diagnostics shows real loaded status, banner disabled and a retry butto
  assert.match(main,/rivo-ad-diagnostics/);
  assert.match(main,/data-ad-retry/);
  assert.match(ad,/bannerEnabled:AD_CONFIG.bannerEnabled/);
+ assert.match(ad,/BannerAdSize.BANNER/);
+ assert.match(ad,/BannerAdPosition.TOP_CENTER/);
+ assert.match(read('src/main.js'),/rivo-ad-banner-slot/);
+ assert.match(read('src/modal-shell.css'),/body.rivo-has-ad-banner/);
  assert.match(ad,/if\(retry\)\{void loadInterstitial\(\);void loadAppOpen\(\);\}/);
 });
