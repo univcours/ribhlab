@@ -28,3 +28,10 @@ test('System typography supports Arabic and Latin without shipped font files',()
  assert.match(theme,/line-height:1\.55/);
  assert.match(theme,/min-height:44px/);
 });
+
+test('Settings secondary captions stay readable on Ice Blue',()=>{
+ assert.match(theme,/\.app-settings \.page-heading p/);
+ assert.match(theme,/\.rivo-pref-section-subtitle/);
+ assert.match(theme,/settings-identity small/);
+ assert.match(theme,/color:#11407F!important;opacity:1!important/);
+});
