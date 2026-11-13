@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
- FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS,registerLaunch,launchEligible,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
+ FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
  assert.equal(AD_CONFIG.testMode,true);
@@ -94,4 +94,11 @@ test('native banner stays hidden while any full-screen ad is active',async()=>{
  assert.match(source,/return state\.busy\|\|\(typeof document/);
  assert.match(source,/pauseBannerForFullscreen\(\)/);
  assert.match(source,/restoreBannerAfterFullscreen\(\)/);
+});
+
+test('returning to an app kept alive counts as a new usage after a real background break',()=>{
+ assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS}),true);
+ assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS-1}),false);
+ assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,working:true}),false);
+ assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,fullScreenAd:true}),false);
 });

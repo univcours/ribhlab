@@ -41,6 +41,11 @@ export function registerLaunch(storage){
  }catch{return 0}
 }
 export function launchEligible(count){return Number(count)>=FULLSCREEN_START_LAUNCH}
+export function shouldCountWarmSession({backgroundMs=0,working=false,fullScreenAd=false}={}){
+ // A real return after at least one minute counts as a new usage session,
+ // even when Android kept the process in memory after Home / Back.
+ return backgroundMs>=MIN_BACKGROUND_MS&&!working&&!fullScreenAd;
+}
 function storedTime(key){
  try{return Math.max(0,Number(localStorage.getItem(key))||0)}catch{return 0}
 }
@@ -332,6 +337,9 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
+ if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
+  try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
+ }
  if(!state.appOpenReady||state.busy)return false;
  const now=Date.now();
  if(!shouldShowAppOpen({native:isAndroid,consent:state.consent,ready:state.ready,
