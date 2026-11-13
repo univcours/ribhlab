@@ -105,7 +105,9 @@ try{
     count:g.querySelectorAll(':scope > .rivo-hub-tile').length}))
   }));
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
-  check(width+': Tools grid is exactly 3 columns',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
+  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===(width<380?2:3)));
+  const navInfo=await page.evaluate(()=>{const bar=document.querySelector('.mobilebar'),scan=bar.querySelector('.rivo-nav-scan'),selected=bar.querySelector('button.active'),buttons=[...bar.querySelectorAll(':scope > button')];const b=bar.getBoundingClientRect(),s=scan.getBoundingClientRect(),style=getComputedStyle(bar);return {count:buttons.length,columns:style.gridTemplateColumns.split(' ').filter(Boolean).length,center:Math.abs((b.left+b.width/2)-(s.left+s.width/2))<3,dark:style.backgroundImage.includes('gradient')||style.backgroundColor==='rgb(8, 39, 82)',selected:!!selected&&getComputedStyle(selected).color==='rgb(0, 216, 255)',icons:buttons.every(x=>x.querySelector('svg')),bottom:b.bottom<=innerHeight+2,uncovered:document.querySelector('.floating-scan')?getComputedStyle(document.querySelector('.floating-scan')).display==='none':true};});
+  check(width+': blue navbar five aligned positions; scanner center; active cyan',navInfo.count===5&&navInfo.columns===5&&navInfo.center&&navInfo.dark&&navInfo.selected&&navInfo.icons&&navInfo.bottom&&navInfo.uncovered);
   await page.screenshot({path:out+'/'+width+'-tools.png'});
 
   // Real utility dialogs (not mocked modals): detect clipping and missing Close.

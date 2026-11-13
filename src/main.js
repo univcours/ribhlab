@@ -65,7 +65,7 @@ if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#061427'}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#E9F5FB'}))
     .then(()=>StatusBar.setStyle({style:Style.Dark}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
@@ -349,6 +349,7 @@ function render(){
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
+    <button type="button" class="rivo-nav-scan" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}"><span class="rivo-nav-scan-ring">${ico('scan',27)}</span><span class="rivo-nav-scan-label">${ut('scan')}</span></button>
     <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);

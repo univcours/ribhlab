@@ -34,10 +34,10 @@ public class MainActivity extends BridgeActivity {
         // Keep Android's real clock, network and battery bar visible.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
             WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        getWindow().setStatusBarColor(Color.rgb(6,20,39));
+        getWindow().setStatusBarColor(Color.rgb(233,245,251));
         getWindow().setNavigationBarColor(Color.rgb(8,39,82));
         new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
-            .setAppearanceLightStatusBars(false);
+            .setAppearanceLightStatusBars(true);
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
         registerPlugin(RivoUVDocPlugin.class);
@@ -52,7 +52,7 @@ public class MainActivity extends BridgeActivity {
         // overlaysWebView=false alone cannot keep the app below the system bar.
         if (Build.VERSION.SDK_INT >= 35) {
             // Keep the Android system status bar entirely outside the WebView.
-            // Its native light strip remains visible while HTML scrolls below it.
+            // Its Ice Blue native strip remains visible while HTML scrolls below it.
             View content = findViewById(android.R.id.content);
             View web = getBridge().getWebView();
             content.setBackgroundColor(Color.rgb(233,245,251));
@@ -147,9 +147,9 @@ $themeXml=@'
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
     <item name="android:windowBackground">#E9F5FB</item>
-    <item name="android:statusBarColor">#061427</item>
+    <item name="android:statusBarColor">#E9F5FB</item>
     <item name="android:navigationBarColor">#082752</item>
-    <item name="android:windowLightStatusBar">false</item>
+    <item name="android:windowLightStatusBar">true</item>
   </style>
 </resources>
 '@
