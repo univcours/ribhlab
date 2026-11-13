@@ -52,9 +52,9 @@ test('Camera FAB remains outside four bottom navigation buttons',()=>{
  assert.ok(main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
  assert.ok(css.includes('safe-area-inset-bottom'));
 });
-test('Turquoise density, accessible controls and no overflowing action rows',()=>{
+test('Blue density, accessible controls and no overflowing action rows',()=>{
  const css=file('src/compact-turquoise.css');
- for(const token of ['#079b97','minmax(min(100%,155px),1fr)','rivo-compact-selection',
+ for(const token of ['#0E61C2','minmax(min(100%,155px),1fr)','rivo-compact-selection',
    'flex-wrap:nowrap','rivo-live-overlay','prefers-reduced-motion:reduce',
    'grid-template-columns:repeat(auto-fit','overflow-y:auto']) assert.ok(css.includes(token),token);
  for(const lang of ['ar','en','fr','es','de','pt','it']){

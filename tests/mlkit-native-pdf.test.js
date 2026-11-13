@@ -42,7 +42,7 @@ test('Approved selection bar has six icons and labels, in requested order',()=>{
  const actions=[...bar.matchAll(/compactAction\('([^']+)'/g)].map(x=>x[1]);
  assert.deepEqual(actions,['cancel','all','delete','organize','merge','share']);
  const css=read('src/rivo-design-system.css');
- for(const s of ['#fff!important','repeat(6,minmax(0,1fr))','button[data-bulk="delete"] svg','.rivo-action-label'])
+ for(const s of ['#FFFFFF!important','repeat(6,minmax(0,1fr))','button[data-bulk="delete"] svg','.rivo-action-label'])
   assert.ok(css.includes(s),s);
 });
 

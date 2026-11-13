@@ -124,3 +124,125 @@ html,body,#app,body.rivo-native-android{background:var(--rivo-ice)!important;col
 .rivo-live-overlay :is(button.primary,.rivo-live-primary){
  background:var(--rivo-button-gradient)!important;color:var(--rivo-white)!important;
 }
+
+/* Visual comfort: standard Android/system fonts, consistent type ramp and rhythm.
+   Normal text meets WCAG AA on ice/white; cyan is an accent, not pale text.
+   No downloaded font or oversized assets; supports Latin and Arabic automatically. */
+:root{
+ --rivo-font-sans:system-ui,-apple-system,Roboto,"Segoe UI","Noto Sans Arabic",Arial,sans-serif;
+ --rivo-type-body:14px;--rivo-type-secondary:12.5px;
+ --rivo-type-caption:11.5px;--rivo-type-title:20px;
+ --rivo-type-section:17px;--rivo-type-button:13.5px;
+ --rivo-leading-body:1.55;
+ --rivo-text-main:var(--rivo-midnight);--rivo-text-secondary:var(--rivo-royal);
+ --rivo-text-on-dark:var(--rivo-white);
+ --rivo-line:var(--rivo-light-border);
+ --rivo-space-1:4px;--rivo-space-2:8px;--rivo-space-3:12px;--rivo-space-4:16px;
+ --rivo-radius-md:12px;--rivo-radius-lg:16px;
+ --rivo-button-contrast-gradient:linear-gradient(135deg,
+   rgba(6,20,39,0) 0%,
+   rgba(6,20,39,.3) 45%,
+   rgba(6,20,39,.52) 75%,
+   rgba(6,20,39,.72) 100%),
+   var(--rivo-button-gradient);
+}
+html,body,#app,.rivo-dark-ui,
+.rivo-code-overlay,.rivo-id-overlay,.rivo-live-overlay,.rivo-shield-overlay{
+ font-family:var(--rivo-font-sans)!important;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility;
+}
+body,#app,.rivo-dark-ui{font-size:var(--rivo-type-body);line-height:var(--rivo-leading-body)}
+#app .rivo-dark-ui :is(.rivo-home-intro h1,.rivo-tools-hub h1,.library-workspace h1),
+.rivo-modal-top h2{font-size:clamp(18px,4.6vw,22px)!important;
+ line-height:1.25!important;letter-spacing:-.015em!important;font-weight:750!important}
+#app .rivo-dark-ui :is(.rivo-section-title,.section-head h2,.rivo-tool-group h2),
+.rivo-book-advanced>summary{font-size:var(--rivo-type-section)!important;line-height:1.35!important}
+#app .rivo-dark-ui :is(.recent-file-meta strong,.document-description strong,
+.rivo-hub-tile strong){color:var(--rivo-midnight)!important;font-weight:700!important;line-height:1.35!important}
+#app .rivo-dark-ui :is(.recent-file-meta small,.document-description small,
+.rivo-home-intro small,.rivo-header-secondary,.rivo-library-hint){
+ color:var(--rivo-royal)!important;line-height:1.45!important;
+}
+#app .rivo-dark-ui :is(.rivo-recent-card,.document-entry,.rivo-tool-card,
+.rivo-hub-tile,.rivo-home-card,.rivo-service-card){
+ color:var(--rivo-midnight)!important;
+}
+#app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{
+ min-height:94px!important;height:auto!important;max-height:none!important;
+ padding:9px 4px!important;gap:4px!important;
+}
+#app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile strong{
+ font-size:11.5px!important;line-height:1.3!important;font-weight:700!important;
+ letter-spacing:0!important;overflow-wrap:break-word!important;
+}
+#app .rivo-dark-ui :is(.recent-file-meta strong,.document-description strong){
+ font-size:13px!important;line-height:1.4!important;
+}
+#app .rivo-dark-ui .mobilebar button{
+ font-size:11.5px!important;line-height:1.25!important;font-weight:650!important;
+ letter-spacing:0!important;min-height:48px!important;
+}
+#app .rivo-dark-ui .mobilebar button.active{
+ color:var(--rivo-primary)!important;
+}
+#app .rivo-dark-ui :is(.rivo-header-action,.rivo-header-back){
+ min-width:40px!important;min-height:40px!important;
+}
+#app .rivo-dark-ui :is(.rivo-hub-tile,.rivo-recent-card,.document-entry,
+.rivo-tool-card){border-color:var(--rivo-light-border)!important}
+#app .rivo-dark-ui :is(.rivo-primary-btn,.rivo-main-cta,.rivo-home-scan-button,
+.rivo-scan-fab,.btn-primary,.rivo-scan-cta){
+ background:var(--rivo-button-contrast-gradient)!important;color:var(--rivo-white)!important;
+ text-shadow:0 1px 1px rgba(6,20,39,.35)!important;
+}
+.rivo-id-overlay .rivo-id-dialog .rivo-code-actions>button,
+.rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions>button,
+.rivo-update-dialog>button:not(.rivo-update-close),.rivo-shield-save{
+ background:var(--rivo-button-contrast-gradient)!important;color:var(--rivo-white)!important;
+ text-shadow:0 1px 1px rgba(6,20,39,.35)!important;
+ font-size:var(--rivo-type-button)!important;line-height:1.4!important;
+}
+.rivo-code-dialog,.rivo-id-dialog,.rivo-shield-dialog,.rivo-update-dialog,
+.rivo-release-dialog{
+ font-size:var(--rivo-type-body)!important;line-height:var(--rivo-leading-body)!important;
+}
+.rivo-code-dialog :is(p,label,small),.rivo-id-dialog :is(p,label,small),
+.rivo-shield-dialog :is(p,label,small){
+ color:var(--rivo-midnight)!important;
+}
+.rivo-code-dialog :is(input,select,textarea),.rivo-id-dialog :is(input,select,textarea),
+.rivo-update-dialog :is(input,select,textarea){
+ font-size:16px!important;line-height:1.45!important;min-height:44px!important;
+ color:var(--rivo-midnight)!important;background:var(--rivo-white)!important;
+ border:1px solid var(--rivo-light-border)!important;
+ border-radius:var(--rivo-radius-md)!important;
+}
+.rivo-id-dialog :is(button,.rivo-book-advanced>summary),
+.rivo-code-dialog button,.rivo-shield-dialog button,.rivo-update-dialog button{
+ min-height:44px;touch-action:manipulation;
+}
+.rivo-book-empty,.rivo-book-advanced>summary{
+ color:var(--rivo-midnight)!important;line-height:1.5!important;
+}
+.rivo-update-dialog p,.rivo-ad-diagnostics p{color:var(--rivo-royal)!important;line-height:1.55!important}
+:where(button,a,[role="button"]):focus-visible{
+ outline:3px solid var(--rivo-primary)!important;outline-offset:2px!important;
+}
+body[dir=rtl] #app .rivo-dark-ui,
+body[dir=rtl] .rivo-code-dialog,
+body[dir=rtl] .rivo-id-dialog{
+ letter-spacing:normal!important;text-align:start;
+}
+@media(max-width:360px){
+ #app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{
+  min-height:88px!important;padding:8px 3px!important;
+ }
+ #app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile strong{font-size:11px!important}
+ .rivo-code-dialog,.rivo-id-dialog{line-height:1.5!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-dark-ui *, .rivo-code-dialog *, .rivo-id-dialog *{
+  transition:none!important;animation-duration:.01ms!important;
+ }
+}

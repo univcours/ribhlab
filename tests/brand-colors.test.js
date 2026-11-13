@@ -1,27 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const icon=readFileSync(new URL('../public/icon.svg',import.meta.url),'utf8').toLowerCase();
-const theme=readFileSync(new URL('../src/theme-brand.css',import.meta.url),'utf8').toLowerCase();
-const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
-const brand=readFileSync(new URL('../apply-rivoscan-branding.ps1',import.meta.url),'utf8');
-const build=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
-test('Full turquoise theme and icon use matching palette in all major surfaces',()=>{
- for(const color of ['#13d9cd','#079a9a','#06565f','#e0faf4'])assert.ok(icon.includes(color),'icon missing '+color);
- for(const color of ['#0cb6aa','#089b99','#056f72'])assert.ok(theme.includes(color),'theme missing '+color);
- for(const part of ['.rivo-dark-ui .topbar','.rivo-home .rivo-tile','.rivo-dark-ui .mobilebar',
-  '.rivo-perfectscan-modal','.rivo-editor-window','.library-selection-toolbar'])
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const icon=read('public/icon.svg');
+const theme=read('src/rivo-blue-theme.css');
+const oldTheme=read('src/theme-brand.css');
+const main=read('src/main.js');
+const brand=read('apply-rivoscan-branding.ps1');
+const build=JSON.parse(read('package.json'));
+const palette=['#061427','#082752','#11407F','#0E61C2','#0878E8','#26A6F5','#00D8FF','#E9F5FB','#F5FAFF','#FFFFFF','#B8D9F2'];
+test('Premium Blue palette is the only design palette of major surfaces and scanner logo',()=>{
+ for(const color of ['#061427','#0E61C2','#00D8FF','#E9F5FB']){
+  assert.ok(icon.includes(color),'logo missing '+color);
+  assert.ok(theme.includes(color),'design tokens missing '+color);
+ }
+ assert.match(theme,/--rivo-main-gradient:linear-gradient\(135deg/);
+ assert.match(theme,/--rivo-button-gradient:linear-gradient\(135deg/);
+ assert.match(theme,/--rivo-paper-gradient:linear-gradient\(180deg/);
+ for(const part of ['.rivo-dark-ui .topbar','.rivo-dark-ui .mobilebar',
+  '.rivo-code-dialog','.rivo-id-dialog','.rivo-live-overlay','.rivo-ad-banner-slot'])
   assert.ok(theme.includes(part),'theme area missing '+part);
+ assert.ok(oldTheme.includes('.rivo-perfectscan-modal'));
  assert.ok(brand.includes('scripts/create-turquoise-icon.mjs'));
- assert.ok(brand.toLowerCase().includes('#0aa59d'));
  assert.ok(build.scripts.prebuild.includes('create-turquoise-icon.mjs'));
- const generator=readFileSync(new URL('../scripts/create-turquoise-icon.mjs',import.meta.url),'utf8');
+ const generator=read('scripts/create-turquoise-icon.mjs');
  assert.ok(generator.includes('node_modules/.cache/rivoscan/icon.png.b64'));
- assert.ok(!generator.includes("['public/rivoscan-icon.png',png]"));
+ assert.ok(generator.includes("['public/rivoscan-icon.png',png]"));
  assert.ok(brand.includes('node_modules/.cache/rivoscan/icon.png.b64'));
+ for(const source of ['src/style.css','src/theme-brand.css','src/premium-home.css',
+  'src/compact-turquoise.css','src/privacy-shield.css','src/rivo-design-system.css',
+  'src/modal-shell.css','public/icon.svg']){
+   const raw=read(source);
+   const bad=['#079b97','#079d99','#0acbbd','#13d9cd','#079a9a','#04bcf7'];
+   for(const c of bad)assert.ok(!raw.toLowerCase().includes(c),'obsolete color '+c+' in '+source);
+ }
 });
-test('Native system bar remains white and readable',()=>{
- assert.ok(main.includes("import './theme-brand.css'"));
- assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#FFFFFF'})"));
- assert.ok(main.includes('StatusBar.setStyle({style:Style.Light})'));
+test('Navy Android status bar has readable light icons',()=>{
+ assert.ok(main.includes("import './rivo-blue-theme.css'"));
+ assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#061427'})"));
+ assert.ok(main.includes('StatusBar.setStyle({style:Style.Dark})'));
+ assert.ok(read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor(Color.rgb(6,20,39));'));
 });

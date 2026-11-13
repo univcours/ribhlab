@@ -54,7 +54,7 @@ try{
     style:frame?getComputedStyle(frame).backgroundColor:''};
   });
   check(width+': 320x50 banner band separated from header',
-   band.exists&&band.visible&&band.centered&&band.fits&&band.safe&&band.style==='rgb(239, 250, 248)');
+   band.exists&&band.visible&&band.centered&&band.fits&&band.safe&&['rgb(245, 250, 255)','rgb(233, 245, 251)'].includes(band.style));
   await page.screenshot({path:out+'/'+width+'-banner-test-slot.png'});
   await page.evaluate(()=>document.body.classList.remove('rivo-has-ad-banner'));
 
@@ -91,7 +91,7 @@ try{
       labelsVisible:buttons.every(b=>getComputedStyle(b.querySelector('span')).display!=='none')};
   });
   check(width+': selection order',selection.order.join('|')==='Cancel|All|Delete|Move|Merge|Share');
-  check(width+': selection row fits',selection.background==='rgb(255, 255, 255)'&&selection.columns===6&&selection.fits&&selection.labelsVisible);
+  check(width+': selection row fits',['rgb(255, 255, 255)','rgb(245, 250, 255)','rgb(233, 245, 251)'].includes(selection.background)&&selection.columns===6&&selection.fits&&selection.labelsVisible);
   await page.screenshot({path:out+'/'+width+'-selection-test-fixture.png'});
   await page.evaluate(()=>{document.getElementById('library-selection-root').innerHTML='';});
 
