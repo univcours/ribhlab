@@ -1,0 +1,43 @@
+name: RivoScan authentic tablet Play screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'scripts/tablet-screenshots.mjs'
+      - '.github/workflows/rivoscan-tablet-screenshots.yml'
+permissions:
+  contents: read
+jobs:
+  tablet-screenshots:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build real RivoScan web assets
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Render 7 and 10 inch tablet UI screenshots
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-tablet-server.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/tablet-screenshots.mjs
+      - name: Save tablet screenshots and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Tablet-7in-10in-Authentic-Screenshots
+          path: |
+            /tmp/rivoscan-tablet-publishing/
+            /tmp/rivoscan-tablet-server.log
+          retention-days: 14
+          if-no-files-found: warn
