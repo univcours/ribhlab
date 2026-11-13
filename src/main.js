@@ -63,10 +63,10 @@ const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
-  // Keep the real Android status bar on screen; do not draw the app under it.
+  // Keep the separate pale Android status bar with DARK, high-contrast clock/network/battery glyphs.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
     .then(()=>StatusBar.setBackgroundColor({color:'#E9F5FB'}))
-    .then(()=>StatusBar.setStyle({style:Style.Dark}))
+    .then(()=>StatusBar.setStyle({style:Style.Light}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
 
@@ -606,7 +606,7 @@ function libraryWorkspace(){
   return `<section class="workspace library-workspace">
     <div class="library-heading"><div><div class="work-title"><div class="tool-icon sky">${ico('file',26)}</div><div><h1>${dl('documents')}</h1><p>${dl('saved')} · ${dl('folder')}</p><small class="rivo-library-version">RivoScan v${appVersion} · Documents/RivoScan</small></div></div></div>
     <div class="library-heading-actions"><button class="btn btn-outline" data-import="image">${ico('image',18)} ${ut('import')}</button><button class="btn btn-outline" data-import="file">${ico('upload',18)} ${ut('myFiles')}</button></div></div>
-    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
+    <div class="panel library-panel"><div class="rivo-library-chips" role="group" aria-label="${ut('allFiles')}">${['all','pdf','images'].map((key,i)=>`<button type="button" data-library-chip="${key}" class="${libraryFilter===key?'active':''}" aria-pressed="${libraryFilter===key}">${escapeHTML(premiumCopy(language).tabs[i])}</button>`).join('')}</div><div class="library-top"><strong>${libraryItems.length} ${libraryItems.length===1?({en:'File',fr:'fichier',ar:'ملف',es:'archivo',de:'Datei',pt:'ficheiro',it:'file'}[language]||dl('files')):dl('files')}</strong><div class="storage-actions"><button id="open-storage-folder" type="button" class="scan-upload-link">${ico('file',17)} ${vivoFolderLabel()}</button><button id="refresh-documents" class="scan-upload-link">${ico('rotate',17)} ${lt('refresh')}</button></div></div>
     <label class="library-search">${ico('search',19)}<input id="library-search" type="search" placeholder="${dl('search')}"></label>
     <div class="library-controls"><label><span class="sr-only">${ut('allFiles')}</span><select id="library-filter"><option value="all" ${libraryFilter==='all'?'selected':''}>${ut('allFiles')}</option><option value="pdf" ${libraryFilter==='pdf'?'selected':''}>${ut('pdfFiles')}</option><option value="images" ${libraryFilter==='images'?'selected':''}>${ut('images')}</option></select></label>
     <label><span class="sr-only">${ut('sort')}</span><select id="library-sort"><option value="newest" ${librarySort==='newest'?'selected':''}>${ut('newest')}</option><option value="oldest" ${librarySort==='oldest'?'selected':''}>${ut('oldest')}</option><option value="name" ${librarySort==='name'?'selected':''}>${ut('name')}</option><option value="size" ${librarySort==='size'?'selected':''}>${ut('size')}</option></select></label>
