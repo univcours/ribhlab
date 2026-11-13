@@ -2,9 +2,10 @@
 // No fake feature screens, invented scanning results or advertising creative.
 // WebView previews are not equivalent to physical Android tablet verification.
 import {chromium} from 'playwright';
-import {mkdir,writeFile,stat} from 'node:fs/promises';
+import {mkdir,writeFile,stat,readFile} from 'node:fs/promises';
 import path from 'node:path';
 
+const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 const out=process.env.RIVO_TABLET_OUTPUT||'/tmp/rivoscan-tablet-publishing';
 const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 const tablets=[
@@ -33,10 +34,10 @@ try{
     locale:'en-US',colorScheme:'light',reducedMotion:'reduce'
   });
   // Suppress version upgrade dialog, which is not part of the ordinary Play screenshots.
-  await ctx.addInitScript(()=>{
+  await ctx.addInitScript(appVersion=>{
    localStorage.setItem('rivo-language','en');
-   localStorage.setItem('rivo-release-notes-read','0.45.10');
-  });
+   localStorage.setItem('rivo-release-notes-read',appVersion);
+  },version);
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push(t.label+': '+e.message));
   await page.goto(base,{waitUntil:'networkidle',timeout:45000});
@@ -87,7 +88,7 @@ try{
 }finally{
  await browser.close();
  await writeFile(path.join(out,'audit.json'),JSON.stringify({
-  source:'Actual RivoScan 0.45.10 web UI rendered at tablet viewport sizes',
+  source:`Actual RivoScan ${version} web UI rendered at tablet viewport sizes`,
   notes:'Screenshots show WebView layout with no camera, OCR or AdMob native SDK outcomes simulated; device-specific Android testing still recommended.',
   tablets,views,records,errors
  },null,2));
