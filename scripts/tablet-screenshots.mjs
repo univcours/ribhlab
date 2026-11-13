@@ -58,10 +58,10 @@ try{
    records.push({tablet:t.label,view,filename:path.relative(out,filepath),width:w,height:h,bytes:st.size, ...state});
   }
   await shot('01_Home');
-  await page.locator('.mobilebar [data-open-library]').click();
+  await page.locator('[data-open-library]').first().evaluate(el=>el.click());
   await page.locator('.library-workspace').waitFor({state:'visible',timeout:12000});
   await shot('02_Documents');
-  await page.locator('.mobilebar [data-tab=tools]').click();
+  await page.locator('[data-tab=tools]').first().evaluate(el=>el.click());
   await page.locator('.rivo-tools-hub').waitFor({state:'visible',timeout:12000});
   await shot('03_Tools');
   for(const [view,id] of [
@@ -79,7 +79,7 @@ try{
     await overlay.locator('[data-rivo-modal-close]').click();
     await overlay.waitFor({state:'detached',timeout:10000});
   }
-  await page.locator('.mobilebar [data-tab=me]').click();
+  await page.locator('[data-tab=me]').first().evaluate(el=>el.click());
   await page.locator('.app-settings').waitFor({state:'visible',timeout:12000});
   await shot('08_Settings');
   await ctx.close();
