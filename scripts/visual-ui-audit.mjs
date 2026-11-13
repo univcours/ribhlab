@@ -165,6 +165,17 @@ try{
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
   await page.screenshot({path:out+'/'+width+'-settings.png'});
+  // Regression for the live-reported screen: no debug internals at the bottom
+  // of consumer settings, but keep a visible privacy-choices entry point.
+  const publicSettings=await page.evaluate(()=>{
+   const settings=document.querySelector('.app-settings');
+   return {diagnostics:!!settings?.querySelector('.rivo-ad-diagnostics'),
+     privacy:!!settings?.querySelector('[data-ad-privacy]')};
+  });
+  check(width+': no developer AdMob diagnostics in consumer settings',!publicSettings.diagnostics);
+  check(width+': privacy choices remain available',publicSettings.privacy);
+  await page.locator('.settings-about').scrollIntoViewIfNeeded();
+  await page.screenshot({path:out+'/'+width+'-settings-bottom.png'});
   const overflow=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,ww:window.innerWidth}));
   check(width+': no horizontal page-level overflow',overflow.sw<=overflow.ww+3);
   check(width+': no uncaught JS errors',errors.length===0);
