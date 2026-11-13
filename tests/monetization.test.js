@@ -23,7 +23,7 @@ test('interstitial requires consent, saved work, natural break, cooldown, sessio
   now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0,launchCount:5};
  assert.equal(shouldShowInterstitial(state),true);
  for(const override of [{native:false},{consent:false},{ready:false},{savedCount:1},
-  {launchCount:4},{shownCount:5},{premiumUntil:1000000},{now:100000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
+  {launchCount:4},{shownCount:5},{premiumUntil:1000000},{now:80000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowInterstitial({...state,...override}),false);
 });
 test('Back ads only after completed work or two tool-to-Home transitions, never app-exit or overlays',()=>{
@@ -35,7 +35,7 @@ test('Back ads only after completed work or two tool-to-Home transitions, never 
  assert.equal(shouldShowInterstitial({...base,savedCount:1,trigger:'regular'}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,shownCount:5}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,premiumUntil:1000000}),false);
- assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:100000}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:80000}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,lastShownAt:899000}),false);
 });
 test('app open only on foreground return after >=60 seconds background and 10-minute cooldown',()=>{
