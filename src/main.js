@@ -37,6 +37,7 @@ import './compact-turquoise.css';
 import './privacy-shield.css';
 import './rivo-design-system.css';
 import './modal-shell.css';
+import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
 import {openCountCam} from './count-cam.js';
@@ -1637,6 +1638,7 @@ document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true}
 render();
 // Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
 void initializeAds();
+void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))
   requestAnimationFrame(()=>openWhatsNew({language,version:appVersion}));
@@ -1669,6 +1671,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     if(isActive){
       loadLibrary(activeTool?.id==='library');
       syncNativeSoundSetting();
+      void checkPlayUpdate({language,working:busy||nativeCaptureDepth>0,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
       const secondsAway=backgroundStartedAt?Date.now()-backgroundStartedAt:0;
       backgroundStartedAt=0;
       // App-open ad only on a genuine foreground return and only if preloaded.
