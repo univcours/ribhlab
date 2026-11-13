@@ -56,7 +56,7 @@ export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFul
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
- interstitialReady:false,appOpenReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,
+ interstitialReady:false,appOpenReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 const strings={
@@ -79,6 +79,32 @@ export function getPremiumStatus(){
 }
 // Google's native 320x50dp banner is centered in a dedicated row below
 // the sticky topbar. Avoid all navigation/scan buttons and never alter ad art.
+// Native banners draw OVER the WebView, so hide them during cameras,
+// modal dialogs, document previews and in-progress saves, then resume.
+let bannerObserver=null;
+function bannerObstructed(){
+ return typeof document!=='undefined'&&!!document.querySelector(
+  '.rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-perfectscan-overlay,'+
+  '.rivo-editor-overlay,.rivo-pages-overlay,.rivo-update-gate,.doc-detail-overlay,'+
+  '.bulk-overlay,.rivo-reward-overlay,.busy'
+ );
+}
+function observeBannerOverlays(){
+ if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;
+ bannerObserver=new MutationObserver(()=>{
+  if(!state.bannerReady)return;
+  const obstructed=bannerObstructed();
+  if(state.bannerHidden===obstructed)return;
+  state.bannerHidden=obstructed;
+  if(obstructed){
+   setBannerSpace(false);
+   void AdMob.hideBanner().catch(error=>console.warn('Hide banner:',error));
+  }else{
+   void AdMob.resumeBanner().then(()=>setBannerSpace(true)).catch(error=>console.warn('Resume banner:',error));
+  }
+ });
+ bannerObserver.observe(document.body,{childList:true,subtree:true});
+}
 function setBannerSpace(visible,height=50){
  if(typeof document==='undefined')return;
  document.body.classList.toggle('rivo-has-ad-banner',visible);
@@ -97,10 +123,13 @@ async function loadBanner(){
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
-    state.bannerReady=true;state.bannerError='';setBannerSpace(true);state.onChange();
+    state.bannerReady=true;state.bannerError='';observeBannerOverlays();
+    if(bannerObstructed()){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
+    else setBannerSpace(true);
+    state.onChange();
    });
    await AdMob.addListener(BannerAdPluginEvents.SizeChanged,dim=>{
-    if(dim?.height>0)setBannerSpace(true,dim.height);
+    if(dim?.height>0&&!state.bannerHidden)setBannerSpace(true,dim.height);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
     state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');
