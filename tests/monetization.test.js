@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
  FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS} from '../src/monetization.js';
-test('banner removed; only official Google sample rewarded, interstitial and app-open units',()=>{
- assert.equal(AD_CONFIG.bannerEnabled,false);assert.equal('banner' in AD_CONFIG,false);
+test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
+ assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
  assert.equal(AD_CONFIG.testMode,true);
- for(const id of ['rewarded','interstitial','appOpen'])
+ for(const id of ['rewarded','interstitial','appOpen','banner'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -49,9 +49,11 @@ test('app open only on foreground return after >=60 seconds background and 20-mi
 });
 
 test('production cannot use Google test IDs or mismatched publishers',()=>{
- const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:''};
+ const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:'',banner:'ca-app-pub-1234567890123456/1234567890'};
  assert.equal(productionAdsConfigured(),false);
  assert.equal(productionAdsConfigured(real),true);
+ assert.equal(productionAdsConfigured({...real,banner:''}),false);
+ assert.equal(productionAdsConfigured({...real,banner:'ca-app-pub-3940256099942544/6300978111'}),false);
  assert.equal(productionAdsConfigured({...real,interstitial:'ca-app-pub-3940256099942544/1033173712'}),false);
  assert.equal(productionAdsConfigured({...real,appOpen:'ca-app-pub-3940256099942544/9257395921'}),false);
  assert.equal(productionAdsConfigured({...real,androidAppId:'ca-app-pub-3940256099942544~3347511713'}),false);

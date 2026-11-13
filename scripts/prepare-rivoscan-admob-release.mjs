@@ -2,11 +2,13 @@
 // Production only. Validate true AdMob IDs and patch AndroidManifest after Capacitor sync.
 import {readFileSync,writeFileSync} from 'node:fs';
 const e=process.env,app=e.VITE_RIVO_ADMOB_APP_ID||'',inter=e.VITE_RIVO_ADMOB_INTERSTITIAL_ID||'',open=e.VITE_RIVO_ADMOB_APP_OPEN_ID||'';
+const banner=e.VITE_RIVO_ADMOB_BANNER_ID||'';
 const owner=id=>id.split(/[~/]/)[0],demo='ca-app-pub-3940256099942544';
 if(e.VITE_RIVO_ADMOB_MODE!=='live')throw Error('Must explicitly enable live AdMob for release');
 if(!/^ca-app-pub-\d{16}~\d+$/.test(app)||!/^ca-app-pub-\d{16}\/\d+$/.test(inter))throw Error('Real AdMob app ID and interstitial unit ID required');
 if(open&&!/^ca-app-pub-\d{16}\/\d+$/.test(open))throw Error('Invalid App Open unit ID');
-if(owner(app)===demo||owner(inter)!==owner(app)||(open&&owner(open)!==owner(app)))throw Error('Demo or mismatched AdMob publisher ID');
+if(!/^ca-app-pub-\d{16}\/\d+$/.test(banner))throw Error('Real AdMob Banner unit ID required: configure VITE_RIVO_ADMOB_BANNER_ID');
+if(owner(app)===demo||owner(inter)!==owner(app)||(open&&owner(open)!==owner(app))||owner(banner)!==owner(app))throw Error('Demo or mismatched AdMob publisher ID');
 if(!process.argv.includes('--check-only')){
  const f='android/app/src/main/AndroidManifest.xml';
  let xml=readFileSync(f,'utf8');
@@ -16,4 +18,4 @@ if(!process.argv.includes('--check-only')){
  if(!xml.includes('android:value="'+app+'"'))throw Error('AdMob manifest patch verification failed');
  writeFileSync(f,xml);
 }
-console.log('PASS: production AdMob IDs verified (no Google demo identifiers)');
+console.log('PASS: production Banner + Interstitial + App Open IDs verified (no Google demo identifiers)');

@@ -1,7 +1,7 @@
 // RivoScan AdMob: QA builds use demo inventory; production needs real app-specific IDs.
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -9,19 +9,22 @@ const demoPublisher='ca-app-pub-3940256099942544';
 export const AD_CONFIG=Object.freeze({
  testMode:!liveAds,
  androidAppId:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_ID||''):demoPublisher+'~3347511713',
+ banner:liveAds?(adEnv.VITE_RIVO_ADMOB_BANNER_ID||''):demoPublisher+'/6300978111',
  rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
  appOpen:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_OPEN_ID||''):demoPublisher+'/9257395921',
- bannerEnabled:false
+ bannerEnabled:!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(adEnv.VITE_RIVO_ADMOB_BANNER_ID||'')
 });
 export function productionAdsConfigured(config=AD_CONFIG){
  const appOk=/^ca-app-pub-\d{16}~\d+$/.test(config.androidAppId||'');
  const interOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.interstitial||'');
  const openOk=!config.appOpen||/^ca-app-pub-\d{16}\/\d+$/.test(config.appOpen);
+ const bannerOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.banner||'');
  const owner=id=>String(id||'').split(/[~/]/)[0];
- return appOk&&interOk&&openOk&&owner(config.androidAppId)!==demoPublisher&&
+ return appOk&&interOk&&openOk&&bannerOk&&owner(config.androidAppId)!==demoPublisher&&
     owner(config.androidAppId)===owner(config.interstitial)&&
-    (!config.appOpen||owner(config.appOpen)===owner(config.androidAppId));
+    (!config.appOpen||owner(config.appOpen)===owner(config.androidAppId))&&
+    owner(config.banner)===owner(config.androidAppId);
 }
 export const PREMIUM_MINUTES=10;
 export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
@@ -53,7 +56,8 @@ export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFul
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:0,busy:false,
- interstitialReady:false,appOpenReady:false,status:'Not initialized',lastError:'',
+ interstitialReady:false,appOpenReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,
+ bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 const strings={
  en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad not ready. Open Me → Ad diagnostics to retry.',success:'Advanced tools unlocked for 10 minutes.'},
@@ -70,9 +74,53 @@ export function configureAds({getLanguage,notify,onChange}={}){
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
- interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,
+ interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,bannerReady:state.bannerReady,bannerError:state.bannerError,
  shownCount:state.shownCount};
 }
+// Google's native 320x50dp banner is centered in a dedicated row below
+// the sticky topbar. Avoid all navigation/scan buttons and never alter ad art.
+function setBannerSpace(visible,height=50){
+ if(typeof document==='undefined')return;
+ document.body.classList.toggle('rivo-has-ad-banner',visible);
+ document.documentElement.style.setProperty('--rivo-banner-height',Math.max(50,Number(height)||50)+'px');
+}
+function bannerMargin(){
+ const topbar=document.querySelector('.topbar');
+ return Math.round((topbar?.getBoundingClientRect().bottom||54)+9);
+}
+async function loadBanner(){
+ if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading)return false;
+ if(typeof window==='undefined'||window.innerWidth<320){
+  state.bannerError='Screen too narrow for 320x50 banner';return false;
+ }
+ state.bannerLoading=true;setBannerSpace(true);
+ try{
+  if(!state.bannerListenersAttached){
+   await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
+    state.bannerReady=true;state.bannerError='';setBannerSpace(true);state.onChange();
+   });
+   await AdMob.addListener(BannerAdPluginEvents.SizeChanged,dim=>{
+    if(dim?.height>0)setBannerSpace(true,dim.height);
+   });
+   await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
+    state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');
+    setBannerSpace(false);state.onChange();
+   });
+   state.bannerListenersAttached=true;
+  }
+  await AdMob.showBanner({
+   adId:AD_CONFIG.banner,adSize:BannerAdSize.BANNER,
+   position:BannerAdPosition.TOP_CENTER,margin:bannerMargin(),
+   isTesting:AD_CONFIG.testMode
+  });
+  return true;
+ }catch(error){
+  state.bannerReady=false;state.bannerError=String(error?.message||error);
+  setBannerSpace(false);status('Banner unavailable',state.bannerError);
+  return false;
+ }finally{state.bannerLoading=false}
+}
+
 async function loadInterstitial(){
  if(!state.ready||state.interstitialReady||state.busy)return false;
  try{
@@ -92,7 +140,7 @@ async function loadAppOpen(){
 export async function initializeAds({retry=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
  if(liveAds&&!productionAdsConfigured()){status('Real AdMob publisher IDs missing; ads disabled');return false;}
- if(state.ready){if(retry){void loadInterstitial();void loadAppOpen();}return true;}
+ if(state.ready){if(retry){void loadInterstitial();void loadAppOpen();void loadBanner();}return true;}
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
   try{
@@ -105,14 +153,12 @@ export async function initializeAds({retry=false}={}){
    state.consent=consent.canRequestAds===true;
    if(!state.consent){status('Ads unavailable: privacy choice / consent not ready');return false;}
    await AdMob.initialize();
-   // Explicitly clear an obsolete banner if the old app previously showed one.
-   await AdMob.removeBanner().catch(()=>{});
-   document.body.classList.remove('rivo-has-ad-banner');
    state.ready=true;
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
    void loadAppOpen();
+   void loadBanner();
    return true;
   }catch(error){
    state.ready=false;
