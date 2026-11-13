@@ -3,7 +3,8 @@
   "version": "0.45.10",
   "private": true,
   "type": "module",
-  "scripts": {\n    "postbuild": "node scripts/verify-rivoscan-release-ui.mjs",
+  "scripts": {
+    "postbuild": "node scripts/verify-rivoscan-release-ui.mjs",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
