@@ -56,12 +56,10 @@ jobs:
           RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
           RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
           RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: python3 scripts/prepare-rivoscan-signing.py
       - name: Require Google Play registered original upload certificate SHA1
         env:
           RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           set -euo pipefail
           if ! CERT_INFO="$(keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}" 2>&1)"; then
@@ -80,7 +78,6 @@ jobs:
         env:
           RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
           RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
         run: |
           cd android
           chmod +x gradlew
