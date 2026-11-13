@@ -40,6 +40,24 @@ try{
   check(width+': rows stack below each other',home.sameX&&home.stacked);
   check(width+': filenames are visible and not width zero',home.nameWidth>65&&home.visible);
   await page.screenshot({path:out+'/'+width+'-home-test-fixture.png'});
+  // Visual fixture only: native ad rendering requires an Android phone.
+  const band=await page.evaluate(()=>{
+   document.body.classList.add('rivo-has-ad-banner');
+   const el=document.querySelector('.rivo-ad-banner-slot');
+   const box=el?.getBoundingClientRect(),header=document.querySelector('.topbar')?.getBoundingClientRect();
+   const frame=el?.querySelector('.rivo-ad-banner-frame'),rect=frame?.getBoundingClientRect();
+   if(frame)frame.textContent='320 × 50 TEST SLOT';
+   return {exists:!!el,visible:!!box&&box.height>=68,
+    centered:!!rect&&Math.abs(rect.left+rect.width/2-innerWidth/2)<4,
+    fits:!!rect&&rect.width<=320&&rect.left>=-2&&rect.right<=innerWidth+2,
+    safe:!!box&&!!header&&box.top>=header.bottom-2,
+    style:frame?getComputedStyle(frame).backgroundColor:''};
+  });
+  check(width+': 320x50 banner band separated from header',
+   band.exists&&band.visible&&band.centered&&band.fits&&band.safe&&band.style==='rgb(239, 250, 248)');
+  await page.screenshot({path:out+'/'+width+'-banner-test-slot.png'});
+  await page.evaluate(()=>document.body.classList.remove('rivo-has-ad-banner'));
+
   await page.locator('.mobilebar [data-open-library]').click();
   await page.locator('.library-workspace').waitFor({state:'visible'});
   const library=await page.evaluate(()=>{
