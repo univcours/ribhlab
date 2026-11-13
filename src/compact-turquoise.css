@@ -725,21 +725,46 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  color:#E9F5FB!important;border-color:#0878E8!important;background:#11407F!important;
 }
 
-/* RivoScan final Tools: no category tab window. Visible compact three-column cards. */
+/* Restore classic responsive Tools cards: never cut titles to a fixed 80px.
+   Preserve familiar square/rounded tile, icon top, centered caption; recolor
+   exclusively using RivoScan's current navy/blue/ice palette. */
 #app .rivo-dark-ui .rivo-tool-pills{display:none!important}
 #app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid,
 #app .rivo-dark-ui .rivo-hub-grid{
- display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
- gap:6px!important;overflow:visible!important;max-width:100%!important;scroll-snap-type:none!important;
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:10px!important;align-items:stretch!important;
+ max-width:100%!important;min-width:0!important;
+ overflow:visible!important;scroll-snap-type:none!important;
 }
 #app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid .rivo-hub-tile,
 #app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
  width:100%!important;min-width:0!important;max-width:100%!important;
- height:80px!important;min-height:80px!important;max-height:88px!important;
- flex:initial!important;padding:6px 3px!important;border-radius:12px!important;
+ height:auto!important;min-height:132px!important;max-height:none!important;
+ flex:initial!important;padding:12px 8px!important;gap:8px!important;
+ border-radius:15px!important;box-sizing:border-box!important;
+ background:#FFFFFF!important;border:1px solid #B8D9F2!important;
+ color:#082752!important;
 }
 #app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile strong{
- font-size:10px!important;line-height:1.17!important;overflow-wrap:anywhere!important;
+ display:block!important;-webkit-line-clamp:unset!important;
+ -webkit-box-orient:initial!important;overflow:visible!important;
+ white-space:normal!important;text-overflow:clip!important;
+ font-size:clamp(11px,3vw,13px)!important;line-height:1.35!important;
+ font-weight:700!important;text-align:center!important;
+ overflow-wrap:break-word!important;word-break:normal!important;
+ color:#082752!important;
+}
+#app .rivo-dark-ui .rivo-hub-grid .rivo-hub-tile .tool-icon{
+ flex-shrink:0!important;background:#E9F5FB!important;color:#0E61C2!important;
+}
+@media(max-width:390px){
+ #app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid,
+ #app .rivo-dark-ui .rivo-hub-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
 }
 /* Compact file list in My Files and Home with real first-page thumbnails. */
 #app .rivo-dark-ui .library-list,#app .rivo-dark-ui #library-list{display:flex!important;flex-direction:column!important;gap:5px!important}
