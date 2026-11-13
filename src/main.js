@@ -46,7 +46,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
+import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -1639,7 +1639,7 @@ document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true}
 
 render();
 // Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
-void initializeAds();
+void startAdsAtLaunch();
 void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))

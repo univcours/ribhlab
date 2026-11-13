@@ -136,3 +136,14 @@ body.rivo-has-ad-banner #app .rivo-compact-home{
 @media(max-width:319px){
  #app .rivo-dark-ui .rivo-ad-banner-slot{display:none!important}
 }
+
+/* App-open ads are shown only while the loading cover is present. */
+.rivo-ad-launch-loading{position:fixed;inset:0;z-index:2147482988;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+ background:#f5fbfa;color:#087f82;font-family:inherit;pointer-events:auto;}
+.rivo-ad-launch-name{font-size:25px;font-weight:850;letter-spacing:-.3px}
+.rivo-ad-launch-spinner{width:32px;height:32px;border-radius:50%;
+ border:3px solid #bce9e2;border-top-color:#087f82;
+ animation:rivo-ad-loader .7s linear infinite}
+@keyframes rivo-ad-loader{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.rivo-ad-launch-spinner{animation:none}}
