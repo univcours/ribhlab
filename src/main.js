@@ -901,8 +901,11 @@ function wire(){
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
-  document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
-  document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
+  // Diagnostic controls must never be wired in a store/release build.
+  if(import.meta.env.DEV){
+    document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
+    document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
+  }
   document.querySelectorAll('#language,#header-language').forEach(control=>control.addEventListener('change',e=>{
     language=e.target.value;localStorage.setItem('rivo-language',language);
     if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);
