@@ -1,14 +1,14 @@
-name: RivoScan signed Play AAB with live AdMob
+name: RivoScan signed Play AAB - current original Google Play key
 on:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: rivoscan-play-signed-${{ github.ref }}
+  group: rivoscan-original-key-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   play-aab:
-    name: Production signed AAB, compact scanner + AdMob
+    name: Original-key signed AAB, requires Google Play SHA1 match
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
@@ -22,6 +22,8 @@ jobs:
       VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: rivoscan-standalone-ready
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -51,22 +53,31 @@ jobs:
         run: node scripts/prepare-rivoscan-admob-release.mjs
       - name: Configure release signing without committing the private key
         env:
-          RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_UPLOAD_KEYSTORE_BASE64 }}
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
+          RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
         run: python3 scripts/prepare-rivoscan-signing.py
-      - name: Verify uploaded keystore and alias without exposing the password
+      - name: Require Google Play registered original upload certificate SHA1
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
         run: |
-          keytool -list -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "$(test -n "$RIVO_UPLOAD_KEY_ALIAS" && echo "$RIVO_UPLOAD_KEY_ALIAS" || echo key0)" >/dev/null
+          set -euo pipefail
+          if ! CERT_INFO="$(keytool -list -v -keystore "$RIVO_SIGNING_KEYSTORE_PATH" -storetype PKCS12 -storepass:env RIVO_UPLOAD_STORE_PASSWORD -alias "${RIVO_UPLOAD_KEY_ALIAS:-key0}" 2>&1)"; then
+            echo "::error::Cannot open the supplied RivoScan keystore using the configured password and alias key0. Verify RIVO_CORRECT_KEY_PASSWORD matches the key file; no bundle built."
+            exit 1
+          fi
+          ACTUAL_SHA1="$(echo "$CERT_INFO" | awk '$1 == "SHA1:" {print $2; exit}')"
+          test -n "$ACTUAL_SHA1" || { echo "::error::Valid keystore, but signing certificate SHA1 could not be parsed"; exit 1; }
+          echo "Actual keystore certificate SHA1: $ACTUAL_SHA1" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$ACTUAL_SHA1" != "E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E" ]; then
+            echo "::error::WRONG RivoScan upload certificate SHA1: $ACTUAL_SHA1. Expected E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E. No AAB will be built."
+            exit 1
+          fi
+          echo "Matched existing Google Play upload certificate SHA-1." >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble signed release app bundle
         env:
-          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.PASSEKEY }}
-          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.PASSEKEY }}
-          RIVO_UPLOAD_KEY_ALIAS: ${{ secrets.RIVO_UPLOAD_KEY_ALIAS }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
         run: |
           cd android
           chmod +x gradlew
@@ -79,13 +90,13 @@ jobs:
           test -s "$AAB"
           unzip -Z -1 "$AAB" | grep -Fx 'base/manifest/AndroidManifest.xml'
           jarsigner -verify "$AAB" > /tmp/rivo-verify.txt 2>&1
-          keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E' >/dev/null
           grep -q 'jar verified' /tmp/rivo-verify.txt
-          echo "RivoScan 0.45.10 / versionCode 114: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
+          keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E' >/dev/null
+          echo "RivoScan 0.45.11 / versionCode 115: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
           echo "AAB size: $(stat -c%s "$AAB") bytes" >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve Play upload bundle
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.10-signed-Play-AAB
+          name: RivoScan-0.45.11-signed-ORIGINAL-GooglePlay-Key-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
