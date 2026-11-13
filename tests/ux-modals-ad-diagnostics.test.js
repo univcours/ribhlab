@@ -28,5 +28,6 @@ test('Ad diagnostics exposes native banner load status and retries',()=>{
  assert.match(ad,/AdMob.resumeBanner\(\)/);
  assert.match(read('src/main.js'),/rivo-ad-banner-slot/);
  assert.match(read('src/modal-shell.css'),/body.rivo-has-ad-banner/);
- assert.match(ad,/if\(retry\)\{void loadInterstitial\(\);void loadAppOpen\(\);void loadBanner\(\);\}/);
+ assert.match(ad,/if\(!deferBanner\)void loadBanner\(\)/);
+ assert.match(ad,/void loadInterstitial\(\);void loadAppOpen\(\)/);
 });
