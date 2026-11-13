@@ -11,7 +11,7 @@ if(-not (Test-Path -LiteralPath $manifest)) {
 }
 
 # Create the same blue icon for Web and Android before packaging.
-$generator=Join-Path $root 'scripts/create-blue-icon.mjs'
+$generator=Join-Path $root 'scripts/create-turquoise-icon.mjs'
 if(-not (Test-Path -LiteralPath $generator)){throw 'Premium Blue launcher icon generator missing.'}
 & node $generator
 if($LASTEXITCODE -ne 0){throw 'Premium Blue icon generation failed.'}
