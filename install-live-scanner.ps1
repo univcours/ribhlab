@@ -34,10 +34,10 @@ public class MainActivity extends BridgeActivity {
         // Keep Android's real clock, network and battery bar visible.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
             WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        getWindow().setStatusBarColor(Color.WHITE);
-        getWindow().setNavigationBarColor(Color.rgb(237, 249, 246));
+        getWindow().setStatusBarColor(Color.rgb(6,20,39));
+        getWindow().setNavigationBarColor(Color.rgb(8,39,82));
         new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
-            .setAppearanceLightStatusBars(true);
+            .setAppearanceLightStatusBars(false);
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
         registerPlugin(RivoUVDocPlugin.class);
@@ -55,8 +55,8 @@ public class MainActivity extends BridgeActivity {
             // Its native light strip remains visible while HTML scrolls below it.
             View content = findViewById(android.R.id.content);
             View web = getBridge().getWebView();
-            content.setBackgroundColor(Color.rgb(241, 250, 248));
-            web.setBackgroundColor(Color.rgb(241, 250, 248));
+            content.setBackgroundColor(Color.rgb(233,245,251));
+            web.setBackgroundColor(Color.rgb(233,245,251));
             ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
                 Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars() |
                     WindowInsetsCompat.Type.displayCutout());
@@ -146,10 +146,10 @@ $themeXml=@'
     <item name="windowNoTitle">true</item>
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
-    <item name="android:windowBackground">#F4F9FF</item>
-    <item name="android:statusBarColor">#FFFFFF</item>
-    <item name="android:navigationBarColor">#F3F8FF</item>
-    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowBackground">#E9F5FB</item>
+    <item name="android:statusBarColor">#061427</item>
+    <item name="android:navigationBarColor">#082752</item>
+    <item name="android:windowLightStatusBar">false</item>
   </style>
 </resources>
 '@

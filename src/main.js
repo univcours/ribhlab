@@ -37,6 +37,7 @@ import './compact-turquoise.css';
 import './privacy-shield.css';
 import './rivo-design-system.css';
 import './modal-shell.css';
+import './rivo-blue-theme.css';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -64,8 +65,8 @@ if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#FFFFFF'}))
-    .then(()=>StatusBar.setStyle({style:Style.Light}))
+    .then(()=>StatusBar.setBackgroundColor({color:'#061427'}))
+    .then(()=>StatusBar.setStyle({style:Style.Dark}))
     .catch(error=>console.warn('Android status bar configuration:',error));
 }
 
@@ -343,7 +344,7 @@ function render(){
       <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
     </div>
     </header>`;
-  // Native Google banner appears in this non-interactive turquoise band.
+  // Native Google banner appears in this non-interactive blue band.
   const bannerSlot = `<div class="rivo-ad-banner-slot" role="complementary" aria-label="Advertisement"><div class="rivo-ad-banner-frame" aria-hidden="true"></div></div>`;
   const mobile = `<nav class="mobilebar" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>

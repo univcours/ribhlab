@@ -1,6 +1,6 @@
 /**
  * Build-safe, dependency-free RivoScan launcher icon generator.
- * The SVG and generated Android PNG use the same turquoise visual language.
+ * The SVG and generated Android PNG preserve the same scanner shapes with navy, electric blue and cyan.
  * PNG encoded locally with Node zlib; no fonts, networks or remote image APIs.
  */
 import {writeFileSync,mkdirSync} from 'node:fs';
@@ -36,23 +36,25 @@ for(let y=0;y<N;y++)for(let x=0;x<N;x++){
  const d=rounded(x+.5,y+.5,0,0,512,512,108);
  if(d<=.5){
   const t=clamp((x+y)/900),glow=clamp(1-Math.hypot(x-100,y-70)/600);
-  const rgb=[12+7*glow-7*t,186+23*glow-100*t,173+10*glow-82*t];
+  const stops=[[6,20,39],[8,39,82],[14,97,194],[38,166,245]];
+  const k=Math.min(2,Math.floor(t*3)),u=clamp(t*3-k);
+  const rgb=stops[k].map((v,i)=>v*(1-u)+stops[k+1][i]*u+glow*[0,4,9][i]);
   blend(x,y,...rgb,clamp(.5-d));
  }
 }
-paint((x,y)=>rounded(x,y,164,128,359,403,19),[2,65,71],.3);
-paint((x,y)=>rounded(x,y,161,125,356,400,18),[236,255,251]);
-paint((x,y)=>Math.max(x-356,293-x,125-y,y-197),[178,241,231],.94);
+paint((x,y)=>rounded(x,y,164,128,359,403,19),[6,20,39],.3);
+paint((x,y)=>rounded(x,y,161,125,356,400,18),[245,250,255]);
+paint((x,y)=>Math.max(x-356,293-x,125-y,y-197),[184,217,242],.94);
 for(const [x1,y1,x2,y2] of [[203,232,303,232],[203,273,319,273],[203,315,312,315],[203,353,279,353]])
- paint((x,y)=>capsule(x,y,x1,y1,x2,y2,8),[14,144,150],.85);
+ paint((x,y)=>capsule(x,y,x1,y1,x2,y2,8),[14,97,194],.85);
 for(const [x1,y1,x2,y2] of [
  [96,177,96,128],[96,128,128,97],[128,97,176,97],
  [335,97,384,97],[384,97,416,128],[416,128,416,177],
  [96,335,96,384],[96,384,128,415],[128,415,176,415],
  [335,415,384,415],[384,415,416,384],[416,384,416,335]
- ])paint((x,y)=>capsule(x,y,x1,y1,x2,y2,10),[227,255,248]);
-paint((x,y)=>capsule(x,y,118,311,394,311,12),[74,253,229],.34);
-paint((x,y)=>capsule(x,y,112,311,400,311,3.7),[228,255,254]);
+ ])paint((x,y)=>capsule(x,y,x1,y1,x2,y2,10),[255,255,255]);
+paint((x,y)=>capsule(x,y,118,311,394,311,12),[0,216,255],.34);
+paint((x,y)=>capsule(x,y,112,311,400,311,3.7),[0,216,255]);
 function crc32(buf){
  let crc=0xffffffff;
  for(const byte of buf){crc^=byte;for(let k=0;k<8;k++)crc=(crc>>>1)^(0xedb88320&-(crc&1));}
@@ -70,7 +72,10 @@ const header=Buffer.alloc(13);header.writeUInt32BE(N,0);header.writeUInt32BE(N,4
 const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',header),chunk('IDAT',deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
 // Generated assets live under already-ignored node_modules: never dirty Git
 // and never block the next safe git pull on a user's Windows PC.
-for(const [p,data] of [['node_modules/.cache/rivoscan/icon.png.b64',png.toString('base64')+'\n']]){
+for(const [p,data] of [
+ ['node_modules/.cache/rivoscan/icon.png.b64',png.toString('base64')+'\n'],
+ ['public/rivoscan-icon.png',png]
+]){
  const abs=join(root,p);mkdirSync(dirname(abs),{recursive:true});writeFileSync(abs,data);
 }
-console.log('[RivoScan] Turquoise icon generated: '+png.length+' bytes; web and Android assets aligned.');
+console.log('[RivoScan] Premium Blue icon generated: '+png.length+' bytes; web and Android assets aligned.');

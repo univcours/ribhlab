@@ -1,0 +1,126 @@
+/*
+ RivoScan Premium Blue — single authoritative palette.
+ All semantic colors are tokens; legacy aliases intentionally resolve to BLUE.
+ Loaded last, after old module CSS. Never changes document pixels or ads' content.
+*/
+:root{
+ --rivo-navy:#061427;--rivo-midnight:#082752;--rivo-royal:#11407F;
+ --rivo-primary:#0E61C2;--rivo-electric:#0878E8;--rivo-bright:#26A6F5;
+ --rivo-cyan:#00D8FF;--rivo-ice:#E9F5FB;--rivo-soft-white:#F5FAFF;
+ --rivo-white:#FFFFFF;--rivo-dark-text:#082752;--rivo-light-border:#B8D9F2;
+ --rivo-main-gradient:linear-gradient(135deg,#061427 0%,#082752 35%,#0E61C2 75%,#26A6F5 100%);
+ --rivo-button-gradient:linear-gradient(135deg,#0E61C2 0%,#0878E8 65%,#00D8FF 100%);
+ --rivo-paper-gradient:linear-gradient(180deg,#FFFFFF 0%,#E9F5FB 100%);
+ --rivo-cyan-glow:0 0 18px rgba(0,216,255,.25);
+ --rivo-turquoise:var(--rivo-primary);--rivo-turquoise-dark:var(--rivo-royal);
+ --rivo-turquoise-soft:var(--rivo-ice);--rivo-focus:var(--rivo-cyan);
+ --rivo-ink:var(--rivo-dark-text);--rivo-brand:var(--rivo-primary);
+ --rivo-brand-deep:var(--rivo-navy);--rivo-brand-bright:var(--rivo-bright);
+ --rivo-mint:var(--rivo-ice);--rivo-border:var(--rivo-light-border);
+ --primary:var(--rivo-primary);--accent:var(--rivo-cyan);
+ --premium-ink:var(--rivo-midnight);--premium-dark:var(--rivo-navy);
+ --premium-main:var(--rivo-electric);--premium-teal:var(--rivo-cyan);
+ --premium-paper:var(--rivo-soft-white);--premium-edge:var(--rivo-light-border);
+ color-scheme:light;accent-color:var(--rivo-electric);
+}
+html,body,#app,body.rivo-native-android{background:var(--rivo-ice)!important;color:var(--rivo-dark-text)!important}
+#app .rivo-dark-ui,#app .rivo-dark-ui .main,
+#app .rivo-dark-ui .content{background:var(--rivo-ice)!important;color:var(--rivo-dark-text)!important}
+#app .rivo-dark-ui .topbar,body.rivo-native-android .rivo-dark-ui .topbar{
+ background:var(--rivo-main-gradient)!important;
+ border-bottom:1px solid var(--rivo-royal)!important;
+ box-shadow:0 2px 14px rgba(6,20,39,.18)!important;
+ color:var(--rivo-white)!important;
+}
+#app .rivo-dark-ui .topbar :is(.crumb strong,.crumb small,.rivo-build-version,.topright,.rivo-header-back),
+#app .rivo-dark-ui .topbar .crumb strong{
+ color:var(--rivo-white)!important;
+ -webkit-text-fill-color:var(--rivo-white)!important;
+}
+#app .rivo-dark-ui .topbar .crumb strong{background:none!important}
+#app .rivo-dark-ui .rivo-header-action,#app .rivo-dark-ui .rivo-header-back{
+ background:rgba(8,39,82,.92)!important;color:var(--rivo-white)!important;
+ border:1px solid var(--rivo-royal)!important;box-shadow:none!important;
+}
+#app .rivo-dark-ui :is(.rivo-recent-card,.rivo-tool-card,.rivo-service-card,.rivo-document-card,
+.rivo-home-card,.rivo-tile,.rivo-action-card,.rivo-feature-card){
+ background:var(--rivo-paper-gradient)!important;
+ border-color:var(--rivo-light-border)!important;
+ color:var(--rivo-dark-text)!important;
+ border-radius:15px!important;box-shadow:0 4px 14px rgba(8,39,82,.08)!important;
+}
+#app .rivo-dark-ui :is(.rivo-primary-btn,.rivo-main-cta,.rivo-home-scan-button,
+.rivo-scan-fab,.btn-primary,.rivo-scan-cta){
+ background:var(--rivo-button-gradient)!important;
+ color:var(--rivo-white)!important;border-color:var(--rivo-primary)!important;
+ box-shadow:var(--rivo-cyan-glow)!important;
+}
+#app .rivo-dark-ui :is(.rivo-tool-pills button.active,.rivo-library-chips button.active,
+.rivo-tool-tab.active,.rivo-tab.active,.nav-button.active){
+ background:var(--rivo-primary)!important;color:var(--rivo-white)!important;
+ border-color:var(--rivo-electric)!important;
+}
+#app .rivo-dark-ui .mobilebar{
+ background:var(--rivo-paper-gradient)!important;
+ color:var(--rivo-midnight)!important;border-color:var(--rivo-light-border)!important;
+ box-shadow:0 -4px 18px rgba(8,39,82,.08)!important;
+}
+#app .rivo-dark-ui .mobilebar button{color:var(--rivo-midnight)!important}
+#app .rivo-dark-ui .mobilebar button.active{
+ color:var(--rivo-electric)!important;border-color:var(--rivo-cyan)!important;
+ background:var(--rivo-ice)!important;
+}
+#app .rivo-dark-ui :is(input,select,textarea):focus-visible,
+.rivo-modal-dismiss:focus-visible,.rivo-id-overlay button:focus-visible,
+.rivo-code-overlay button:focus-visible{
+ outline:2px solid var(--rivo-cyan)!important;outline-offset:2px!important;
+}
+#app .rivo-dark-ui :is(input,textarea,select),.rivo-code-dialog input,.rivo-id-dialog input{
+ color:var(--rivo-midnight)!important;border-color:var(--rivo-light-border)!important;
+}
+#app .rivo-dark-ui .rivo-premium-search,#app .rivo-dark-ui .rivo-tools-search,
+#app .rivo-dark-ui .rivo-home-search{
+ background:var(--rivo-soft-white)!important;border:1px solid var(--rivo-light-border)!important;
+}
+.rivo-id-dialog,.rivo-code-dialog,.rivo-release-dialog,.rivo-update-dialog,.rivo-shield-dialog,
+.rivo-page-manager-dialog,.rivo-editor-dialog,.rivo-perfectscan-dialog{
+ background:var(--rivo-soft-white)!important;color:var(--rivo-dark-text)!important;
+ border-color:var(--rivo-light-border)!important;
+}
+.rivo-modal-top{background:var(--rivo-soft-white)!important;border-bottom-color:var(--rivo-light-border)!important}
+.rivo-modal-top h2{color:var(--rivo-midnight)!important}
+.rivo-modal-top .rivo-modal-dismiss{
+ background:var(--rivo-ice)!important;border-color:var(--rivo-light-border)!important;
+ color:var(--rivo-midnight)!important;
+}
+.rivo-id-overlay .rivo-id-dialog button,.rivo-code-overlay .rivo-code-dialog button,
+.rivo-id-overlay .rivo-id-dialog .rivo-book-advanced > button{
+ border-color:var(--rivo-light-border)!important;background:var(--rivo-ice)!important;
+ color:var(--rivo-midnight)!important;
+}
+.rivo-id-overlay .rivo-id-dialog .rivo-code-actions > button,
+.rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions > button,
+.rivo-update-dialog > button:not(.rivo-update-close),.rivo-shield-save{
+ background:var(--rivo-button-gradient)!important;
+ color:var(--rivo-white)!important;border-color:var(--rivo-electric)!important;
+}
+.rivo-book-advanced{background:var(--rivo-ice)!important;border-color:var(--rivo-light-border)!important}
+.rivo-book-advanced > summary{color:var(--rivo-midnight)!important}
+.rivo-book-preview{background:var(--rivo-ice)!important;border-color:var(--rivo-light-border)!important}
+.rivo-ad-launch-loading{background:var(--rivo-main-gradient)!important;color:var(--rivo-white)!important}
+.rivo-ad-launch-spinner{border-color:var(--rivo-royal)!important;border-top-color:var(--rivo-cyan)!important}
+.rivo-update-gate{background:rgba(6,20,39,.88)!important}
+.rivo-update-dialog .rivo-update-close{background:var(--rivo-ice)!important;color:var(--rivo-midnight)!important}
+#app .rivo-dark-ui .rivo-ad-banner-slot{
+ background:var(--rivo-ice)!important;border-color:var(--rivo-light-border)!important
+}
+#app .rivo-dark-ui .rivo-ad-banner-frame{
+ background:var(--rivo-soft-white)!important;border-color:var(--rivo-light-border)!important
+}
+/* Camera and native image preview pixels are never recolored; only control chrome is themed. */
+.rivo-live-overlay :is(button,.rivo-live-action,.rivo-live-toolbar){
+ border-color:var(--rivo-electric)!important;
+}
+.rivo-live-overlay :is(button.primary,.rivo-live-primary){
+ background:var(--rivo-button-gradient)!important;color:var(--rivo-white)!important;
+}
