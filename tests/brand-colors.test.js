@@ -35,9 +35,9 @@ test('Premium Blue palette is the only design palette of major surfaces and scan
    for(const c of bad)assert.ok(!raw.toLowerCase().includes(c),'obsolete color '+c+' in '+source);
  }
 });
-test('Navy Android status bar has readable light icons',()=>{
+test('Ice Blue independent Android status bar has dark readable system icons',()=>{
  assert.ok(main.includes("import './rivo-blue-theme.css'"));
- assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#061427'})"));
+ assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#E9F5FB'})"));
  assert.ok(main.includes('StatusBar.setStyle({style:Style.Dark})'));
- assert.ok(read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor(Color.rgb(6,20,39));'));
+ assert.ok(read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor(Color.rgb(233,245,251));'));
 });

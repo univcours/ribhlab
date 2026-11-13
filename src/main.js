@@ -346,7 +346,7 @@ function render(){
     </header>`;
   // Native Google banner appears in this non-interactive blue band.
   const bannerSlot = `<div class="rivo-ad-banner-slot" role="complementary" aria-label="Advertisement"><div class="rivo-ad-banner-frame" aria-hidden="true"></div></div>`;
-  const mobile = `<nav class="mobilebar" aria-label="Main navigation">
+  const mobile = `<nav class="mobilebar rivo-nav-five" style="display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
     <button type="button" class="rivo-nav-scan" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}"><span class="rivo-nav-scan-ring">${ico('scan',27)}</span><span class="rivo-nav-scan-label">${ut('scan')}</span></button>

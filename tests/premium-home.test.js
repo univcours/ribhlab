@@ -44,12 +44,14 @@ test('Home feature rail routes to shared tools, no second duplicated scanner or 
  assert.ok(main.includes("spec.type==='smartAutoCapture'"));
  assert.ok(main.includes("autoCapture:true"));
 });
-test('Camera FAB remains outside four bottom navigation buttons',()=>{
- const main=file('src/main.js'),css=file('src/premium-home.css');
+test('Scanner uses the fifth centered nav slot on phone, while desktop FAB remains',()=>{
+ const main=file('src/main.js'),css=file('src/rivo-blue-theme.css');
  const nav=main.slice(main.indexOf('const mobile = '),main.indexOf('const showFab='));
- assert.equal((nav.match(/<button\b/g)||[]).length,4);
- assert.ok(!nav.includes('data-live-camera'));
+ assert.equal((nav.match(/<button\b/g)||[]).length,5);
+ assert.ok(nav.includes('class="rivo-nav-scan" data-live-camera'));
  assert.ok(main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
+ assert.ok(nav.includes('repeat(5,minmax(0,1fr))'));
+ assert.ok(css.includes('.floating-scan.rivo-camera-fab{display:none!important}'));
  assert.ok(css.includes('safe-area-inset-bottom'));
 });
 test('Blue density, accessible controls and no overflowing action rows',()=>{

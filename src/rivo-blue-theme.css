@@ -388,3 +388,16 @@ body[dir=rtl] .rivo-id-dialog{
 @media(min-width:380px) and (max-width:780px){
  #app .rivo-dark-ui .rivo-hub-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+
+/* Force the final five-slot mobile navbar even over legacy 4-column selectors.
+   The explicit inline grid on nav protects Android WebView builds with historical CSS. */
+@media(max-width:780px){
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
+  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;grid-auto-rows:56px!important;
+  justify-items:stretch!important;align-content:start!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button{
+  min-width:0!important;max-width:100%!important;grid-column:auto!important;
+ }
+}
