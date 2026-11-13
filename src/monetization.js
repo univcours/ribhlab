@@ -404,6 +404,19 @@ export async function showTestInterstitial(){
 }
 export async function openAdPrivacyOptions(){
  if(!isAndroid)return false;
- try{await AdMob.showPrivacyOptionsForm();return true;}
- catch(error){status('Privacy options unavailable',String(error?.message||error));return false;}
+ try{
+  await AdMob.showPrivacyOptionsForm();
+  return true;
+ }catch(error){
+  // A missing/unpublished publisher message is an account issue. Keep its
+  // details in developer logs only; give consumers a useful, localised notice.
+  status('Privacy options unavailable',String(error?.message||error));
+  const notice={
+   en:'Privacy options are temporarily unavailable. Please try again later.',
+   fr:'Les options de confidentialité sont momentanément indisponibles. Veuillez réessayer plus tard.',
+   ar:'خيارات الخصوصية ما متوفراش دابا. عاود المحاولة من بعد.'
+  };
+  state.notify(notice[state.getLanguage()]||notice.en,true);
+  return false;
+ }
 }
