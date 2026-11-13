@@ -111,6 +111,22 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  interstitialReady:false,appOpenReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
+// AdMob can return NO_FILL even when configured correctly. Retry with bounded
+// backoff while the app is foregrounded; never hammer the network or UMP.
+const retryCounts={banner:0,interstitial:0,appOpen:0};
+const retryTimers={banner:null,interstitial:null,appOpen:null};
+function scheduleAdRetry(type){
+ if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
+ if(retryCounts[type]>=3)return;
+ const delay=[60000,120000,240000][retryCounts[type]++];
+ retryTimers[type]=setTimeout(()=>{
+  retryTimers[type]=null;
+  if(document.visibilityState==='hidden')return;
+  if(type==='banner')void loadBanner();
+  else if(type==='interstitial')void loadInterstitial();
+  else void loadAppOpen();
+ },delay);
+}
 const strings={
  en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad not ready. Open Me → Ad diagnostics to retry.',success:'Advanced tools unlocked for 10 minutes.'},
  ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. السكان الأساسي والملفات ديالك كيبقاو متاحين.',watch:'شاهد الفيديو · 10 دقائق',cancel:'رجوع',unavailable:'الإعلان مازال ما وجدش. دخل للإعدادات > تشخيص الإشهارات وعاود المحاولة.',success:'تفتحات الميزات المتقدمة لمدة 10 دقائق.'},
@@ -176,7 +192,7 @@ async function loadBanner(){
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
-    state.bannerReady=true;adStats.bannerLoads++;state.bannerError='';observeBannerOverlays();
+    state.bannerReady=true;retryCounts.banner=0;adStats.bannerLoads++;state.bannerError='';observeBannerOverlays();
     if(bannerObstructed()){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
     else setBannerSpace(true);
     state.onChange();
@@ -185,7 +201,7 @@ async function loadBanner(){
     if(dim?.height>0&&!state.bannerHidden)setBannerSpace(true,dim.height);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
-    state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');
+    state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');scheduleAdRetry('banner');
     setBannerSpace(false);state.onChange();
    });
    state.bannerListenersAttached=true;
@@ -198,7 +214,7 @@ async function loadBanner(){
   return true;
  }catch(error){
   state.bannerReady=false;state.bannerError=String(error?.message||error);
-  setBannerSpace(false);status('Banner unavailable',state.bannerError);
+  setBannerSpace(false);status('Banner unavailable',state.bannerError);scheduleAdRetry('banner');
   return false;
  }finally{state.bannerLoading=false}
 }
@@ -208,8 +224,8 @@ async function loadInterstitial(){
  try{
   adStats.interstitialRequests++;
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
-  adStats.interstitialLoads++;state.interstitialReady=true;status('Interstitial ready');return true;
- }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
+  adStats.interstitialLoads++;retryCounts.interstitial=0;state.interstitialReady=true;status('Interstitial ready');return true;
+ }catch(error){status('Interstitial unavailable',String(error?.message||error));scheduleAdRetry('interstitial');return false;}
 }
 async function loadAppOpen(){
  if(!AD_CONFIG.appOpen||!state.ready||state.busy)return false;
@@ -221,9 +237,9 @@ async function loadAppOpen(){
    await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
    const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
    state.appOpenReady=check?.value===true;
-   if(state.appOpenReady)adStats.appOpenLoads++;
+   if(state.appOpenReady){adStats.appOpenLoads++;retryCounts.appOpen=0;}
    state.onChange();return state.appOpenReady;
-  }catch(error){status('App open unavailable',String(error?.message||error));return false;}
+  }catch(error){status('App open unavailable',String(error?.message||error));scheduleAdRetry('appOpen');return false;}
  })();
  try{return await state.appOpenLoading}
  finally{state.appOpenLoading=null}
@@ -362,6 +378,7 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
+ if(isAndroid&&state.ready&&!working)void initializeAds({retry:true});
  if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
   try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
  }

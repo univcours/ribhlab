@@ -105,3 +105,14 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
  assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,working:true}),false);
  assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,fullScreenAd:true}),false);
 });
+
+test('Native ad no-fill conditions retry with bounded 1/2/4 minute backoff',async()=>{
+ const fs=await import('node:fs');
+ const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
+ assert.match(code,/const retryCounts=\{banner:0,interstitial:0,appOpen:0\}/);
+ assert.match(code,/if\(retryCounts\[type\]>=3\)return/);
+ assert.match(code,/\[60000,120000,240000\]/);
+ assert.match(code,/scheduleAdRetry\('banner'\)/);
+ assert.match(code,/scheduleAdRetry\('interstitial'\)/);
+ assert.match(code,/scheduleAdRetry\('appOpen'\)/);
+});
