@@ -1,6 +1,10 @@
 name: RivoScan 0.45.11 correct original upload key
 on:
   workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/rivoscan-correct-original-key.yml'
 permissions:
   contents: read
 concurrency:
