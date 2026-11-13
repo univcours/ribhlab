@@ -18,6 +18,18 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'networkidle',timeout:35000});
   await page.locator('.rivo-compact-home').waitFor({timeout:20000});
+  // Actual computed style must keep the version badge readable, not merely
+  // set a foreground color that -webkit-text-fill-color later overrides.
+  const versionBadge=await page.evaluate(()=>{
+    const element=document.querySelector('.topbar .rivo-build-version');
+    if(!element)return {visible:false,ink:''};
+    const style=getComputedStyle(element),box=element.getBoundingClientRect();
+    return {visible:box.width>0&&style.display!=='none'&&style.visibility!=='hidden',
+      ink:style.webkitTextFillColor||style.color};
+  });
+  check(width+': build version badge uses readable navy ink',
+    !versionBadge.visible||versionBadge.ink==='rgb(8, 39, 82)');
+
   // Test fixtures provide metadata/thumbnail slots without accessing private user files.
   const home=await page.evaluate(()=>{
     const doc=name=>'<article class="recent-entry rivo-recent-card" role="button">'+

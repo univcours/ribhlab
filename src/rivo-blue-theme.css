@@ -421,3 +421,13 @@ body[dir=rtl] .rivo-id-dialog{
 #app .rivo-dark-ui .rivo-feature-tile{
  min-height:74px!important;height:auto!important;
 }
+
+/* The build-version chip has an ICE background. Never put white text over it:
+   this was unreadable on actual 393px screenshots. */
+#app .rivo-dark-ui .topbar .crumb .rivo-build-version{
+ color:#082752!important;
+ -webkit-text-fill-color:#082752!important;
+ background:#E9F5FB!important;
+ border:1px solid #B8D9F2!important;
+ border-radius:999px!important;
+}
