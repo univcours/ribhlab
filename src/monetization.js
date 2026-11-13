@@ -146,8 +146,9 @@ export function getPremiumStatus(){
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
   adStats:{...adStats},liveAds};
 }
-// Google's native 320x50dp banner is centered in a dedicated row below
-// the sticky topbar. Avoid all navigation/scan buttons and never alter ad art.
+// Google's native banner lives in its own bottom-most row, BELOW the blue
+// bottom navigation. The WebView cannot move a native ad; CSS reserves the
+// ad height and raises the navigation/content above the native ad's bounds.
 // Native banners draw OVER the WebView, so hide them during cameras,
 // modal dialogs, document previews and in-progress saves, then resume.
 let bannerObserver=null;
@@ -179,10 +180,6 @@ function setBannerSpace(visible,height=50){
  document.body.classList.toggle('rivo-has-ad-banner',visible);
  document.documentElement.style.setProperty('--rivo-banner-height',Math.max(50,Number(height)||50)+'px');
 }
-function bannerMargin(){
- const topbar=document.querySelector('.topbar');
- return Math.round((topbar?.getBoundingClientRect().bottom||54)+9);
-}
 async function loadBanner(){
  if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading)return false;
  if(typeof window==='undefined'||window.innerWidth<320){
@@ -198,7 +195,7 @@ async function loadBanner(){
     state.onChange();
    });
    await AdMob.addListener(BannerAdPluginEvents.SizeChanged,dim=>{
-    if(dim?.height>0&&!state.bannerHidden)setBannerSpace(true,dim.height);
+    if(!state.bannerHidden)setBannerSpace(Number(dim?.height)>0,dim?.height||50);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
     state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');scheduleAdRetry('banner');
@@ -208,7 +205,7 @@ async function loadBanner(){
   }
   await AdMob.showBanner({
    adId:AD_CONFIG.banner,adSize:BannerAdSize.BANNER,
-   position:BannerAdPosition.TOP_CENTER,margin:bannerMargin(),
+   position:BannerAdPosition.BOTTOM_CENTER,margin:0,
    isTesting:AD_CONFIG.testMode
   });
   return true;
