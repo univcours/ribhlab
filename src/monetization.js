@@ -110,11 +110,11 @@ export function getPremiumStatus(){
 // modal dialogs, document previews and in-progress saves, then resume.
 let bannerObserver=null;
 function bannerObstructed(){
- return typeof document!=='undefined'&&!!document.querySelector(
+ return state.busy||(typeof document!=='undefined'&&!!document.querySelector(
   '.rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-perfectscan-overlay,'+
   '.rivo-editor-overlay,.rivo-pages-overlay,.rivo-update-gate,.doc-detail-overlay,'+
   '.bulk-overlay,.rivo-reward-overlay,.busy'
- );
+ ));
 }
 function observeBannerOverlays(){
  if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;

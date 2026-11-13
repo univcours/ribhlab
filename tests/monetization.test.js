@@ -87,3 +87,11 @@ test('RivoScan cold start uses a bounded loading gate and keeps interstitial off
  assert.match(main,/void startAdsAtLaunch\(\)/);
  assert.doesNotMatch(main,/atNaturalNavigation\(\{[^}]*trigger:'exit'/);
 });
+
+test('native banner stays hidden while any full-screen ad is active',async()=>{
+ const fs=await import('node:fs');
+ const source=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
+ assert.match(source,/return state\.busy\|\|\(typeof document/);
+ assert.match(source,/pauseBannerForFullscreen\(\)/);
+ assert.match(source,/restoreBannerAfterFullscreen\(\)/);
+});
