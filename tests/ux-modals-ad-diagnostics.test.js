@@ -17,7 +17,7 @@ test('Button grids fit mobile viewport and right-to-left swipe never triggers fo
  assert.match(h,/dx>-90/);
  assert.match(h,/input,select,textarea,label,canvas/);
 });
-test('Ad diagnostics shows real loaded status, banner disabled and a retry button',()=>{
+test('Ad diagnostics exposes native banner load status and retries',()=>{
  const main=read('src/main.js'),ad=read('src/monetization.js');
  assert.match(main,/rivo-ad-diagnostics/);
  assert.match(main,/data-ad-retry/);
@@ -26,5 +26,5 @@ test('Ad diagnostics shows real loaded status, banner disabled and a retry butto
  assert.match(ad,/BannerAdPosition.TOP_CENTER/);
  assert.match(read('src/main.js'),/rivo-ad-banner-slot/);
  assert.match(read('src/modal-shell.css'),/body.rivo-has-ad-banner/);
- assert.match(ad,/if\(retry\)\{void loadInterstitial\(\);void loadAppOpen\(\);\}/);
+ assert.match(ad,/if\(retry\)\{void loadInterstitial\(\);void loadAppOpen\(\);void loadBanner\(\);\}/);
 });
