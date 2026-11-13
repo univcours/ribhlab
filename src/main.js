@@ -510,7 +510,7 @@ function settingsWorkspace(){
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
- <div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
+ ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
   <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: ${ad.bannerReady?'loaded':ad.bannerEnabled?'pending':'not configured'}</p>
@@ -526,7 +526,7 @@ function settingsWorkspace(){
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
   <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
- </div>
+ </div>` : ''}
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </section>`;
 }
