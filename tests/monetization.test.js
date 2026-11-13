@@ -52,7 +52,7 @@ test('production cannot use Google test IDs or mismatched publishers',()=>{
  const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:'',banner:'ca-app-pub-1234567890123456/1234567890'};
  assert.equal(productionAdsConfigured(),false);
  assert.equal(productionAdsConfigured(real),true);
- assert.equal(productionAdsConfigured({...real,banner:''}),false);
+ assert.equal(productionAdsConfigured({...real,banner:''}),true); // missing Banner never blocks Interstitial/App Open
  assert.equal(productionAdsConfigured({...real,banner:'ca-app-pub-3940256099942544/6300978111'}),false);
  assert.equal(productionAdsConfigured({...real,interstitial:'ca-app-pub-3940256099942544/1033173712'}),false);
  assert.equal(productionAdsConfigured({...real,appOpen:'ca-app-pub-3940256099942544/9257395921'}),false);

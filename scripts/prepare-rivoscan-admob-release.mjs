@@ -7,8 +7,9 @@ const owner=id=>id.split(/[~/]/)[0],demo='ca-app-pub-3940256099942544';
 if(e.VITE_RIVO_ADMOB_MODE!=='live')throw Error('Must explicitly enable live AdMob for release');
 if(!/^ca-app-pub-\d{16}~\d+$/.test(app)||!/^ca-app-pub-\d{16}\/\d+$/.test(inter))throw Error('Real AdMob app ID and interstitial unit ID required');
 if(open&&!/^ca-app-pub-\d{16}\/\d+$/.test(open))throw Error('Invalid App Open unit ID');
-if(!/^ca-app-pub-\d{16}\/\d+$/.test(banner))throw Error('Real AdMob Banner unit ID required: configure VITE_RIVO_ADMOB_BANNER_ID');
-if(owner(app)===demo||owner(inter)!==owner(app)||(open&&owner(open)!==owner(app))||owner(banner)!==owner(app))throw Error('Demo or mismatched AdMob publisher ID');
+if(banner&&!/^ca-app-pub-\d{16}\/\d+$/.test(banner))throw Error('Invalid AdMob Banner ID');
+if(!banner)console.warn('WARNING: Banner ID not configured, only the Banner placement will be disabled.');
+if(owner(app)===demo||owner(inter)!==owner(app)||(open&&owner(open)!==owner(app))||(banner&&owner(banner)!==owner(app)))throw Error('Demo or mismatched AdMob publisher ID');
 if(!process.argv.includes('--check-only')){
  const f='android/app/src/main/AndroidManifest.xml';
  let xml=readFileSync(f,'utf8');

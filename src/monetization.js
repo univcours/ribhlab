@@ -19,12 +19,12 @@ export function productionAdsConfigured(config=AD_CONFIG){
  const appOk=/^ca-app-pub-\d{16}~\d+$/.test(config.androidAppId||'');
  const interOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.interstitial||'');
  const openOk=!config.appOpen||/^ca-app-pub-\d{16}\/\d+$/.test(config.appOpen);
- const bannerOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.banner||'');
+ const bannerOk=!config.banner||/^ca-app-pub-\d{16}\/\d+$/.test(config.banner);
  const owner=id=>String(id||'').split(/[~/]/)[0];
  return appOk&&interOk&&openOk&&bannerOk&&owner(config.androidAppId)!==demoPublisher&&
     owner(config.androidAppId)===owner(config.interstitial)&&
     (!config.appOpen||owner(config.appOpen)===owner(config.androidAppId))&&
-    owner(config.banner)===owner(config.androidAppId);
+    (!config.banner||owner(config.banner)===owner(config.androidAppId));
 }
 // Onboarding protects first-time users from full-screen ads. One use = one
 // process/cold launch, not button taps or foreground resume events.

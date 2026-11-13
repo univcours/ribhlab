@@ -512,6 +512,7 @@ function settingsWorkspace(){
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
   <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: ${ad.bannerReady?'loaded':ad.bannerEnabled?'pending':'not configured'}</p>
+    <p>${({ar:'عدد مرات فتح التطبيق',fr:'Ouvertures de l’application',en:'App launches'})[language]||'App launches'}: ${ad.launchCount} · ${({ar:'الإعلانات الكاملة ابتداءً من',fr:'Annonces plein écran à partir de',en:'Full-screen ads from launch'})[language]||'Full-screen ads from launch'} ${ad.startLaunch}</p>
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
   <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
