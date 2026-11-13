@@ -1,4 +1,4 @@
-name: RivoScan 0.45.9 correct original upload key
+name: RivoScan 0.45.10 correct original upload key
 on:
   workflow_dispatch:
 permissions:
@@ -16,7 +16,7 @@ jobs:
       VITE_RIVO_COMPACT: '1'
       VITE_RIVO_ADMOB_MODE: live
       VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
-      VITE_RIVO_ADMOB_BANNER_ID: ${{ secrets.RIVO_ADMOB_BANNER_ID }}
+      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809190
       VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
       VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707
       VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879
@@ -95,11 +95,11 @@ jobs:
           jarsigner -verify "$AAB" > /tmp/rivo-verify.txt 2>&1
           grep -q 'jar verified' /tmp/rivo-verify.txt
           keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E' >/dev/null
-          echo "RivoScan 0.45.9 / versionCode 113: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "RivoScan 0.45.10 / versionCode 114: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
           echo "AAB size: $(stat -c%s "$AAB") bytes" >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve Play upload bundle
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.9-signed-ORIGINAL-GooglePlay-Key-AAB
+          name: RivoScan-0.45.10-signed-ORIGINAL-GooglePlay-Key-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
