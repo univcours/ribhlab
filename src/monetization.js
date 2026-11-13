@@ -1,7 +1,7 @@
 // RivoScan AdMob: QA builds use demo inventory; production needs real app-specific IDs.
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -54,8 +54,8 @@ function recordFullscreenTime(now=Date.now()){
  try{localStorage.setItem(FULLSCREEN_LAST_SHOWN_KEY,String(now))}catch{}
 }
 export const PREMIUM_MINUTES=10;
-export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
-export const APP_OPEN_COOLDOWN_MS=20*60*1000;
+export const FULLSCREEN_COOLDOWN_MS=4*60*1000;
+export const APP_OPEN_COOLDOWN_MS=10*60*1000;
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
  'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
@@ -72,8 +72,8 @@ export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt
  const meaningfulBreak=trigger==='back'
   ?(savedCount>=1||backTransitions>=2)
   :savedCount>=2;
- return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<3&&
-  now-startedAt>=120000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
+ return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<5&&
+  now-startedAt>=90000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
 export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFullscreenAt=0,
@@ -84,6 +84,26 @@ export function shouldShowAppOpen({native,consent,ready,backgroundMs,now,lastFul
   now>=premiumUntil&&(!lastFullscreenAt||now-lastFullscreenAt>=APP_OPEN_COOLDOWN_MS));
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
+// SDK-measured diagnostic counters, not estimates of money earned.
+const adStats={bannerRequests:0,bannerLoads:0,bannerImpressions:0,
+ interstitialRequests:0,interstitialLoads:0,interstitialImpressions:0,
+ appOpenRequests:0,appOpenLoads:0,appOpenImpressions:0,
+ lastBannerError:'',lastInterstitialError:'',lastAppOpenError:''};
+let impressionListenersAttached=false;
+async function trackNativeAdEvents(){
+ if(impressionListenersAttached)return;
+ try{
+  for(const [event,handle] of [
+   [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;state.onChange()}],
+   [InterstitialAdPluginEvents.AdImpression,()=>{adStats.interstitialImpressions++;state.onChange()}],
+   [AppOpenAdPluginEvents.AdImpression,()=>{adStats.appOpenImpressions++;state.onChange()}],
+   [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=String(e?.message||e||'No fill');state.onChange()}],
+   [InterstitialAdPluginEvents.FailedToLoad,e=>{adStats.lastInterstitialError=String(e?.message||e||'No fill');state.onChange()}],
+   [AppOpenAdPluginEvents.FailedToLoad,e=>{adStats.lastAppOpenError=String(e?.message||e||'No fill');state.onChange()}]
+  ]) await AdMob.addListener(event,handle);
+  impressionListenersAttached=true;
+ }catch(e){console.warn('AdMob native diagnostics listener',e)}
+}
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  appOpenLoading:null,
@@ -107,7 +127,8 @@ export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,appOpenReady:state.appOpenReady,bannerReady:state.bannerReady,bannerError:state.bannerError,
- shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH};
+ shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
+  adStats:{...adStats},liveAds};
 }
 // Google's native 320x50dp banner is centered in a dedicated row below
 // the sticky topbar. Avoid all navigation/scan buttons and never alter ad art.
@@ -151,11 +172,11 @@ async function loadBanner(){
  if(typeof window==='undefined'||window.innerWidth<320){
   state.bannerError='Screen too narrow for 320x50 banner';return false;
  }
- state.bannerLoading=true;setBannerSpace(true);
+ state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(true);
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
-    state.bannerReady=true;state.bannerError='';observeBannerOverlays();
+    state.bannerReady=true;adStats.bannerLoads++;state.bannerError='';observeBannerOverlays();
     if(bannerObstructed()){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
     else setBannerSpace(true);
     state.onChange();
@@ -185,8 +206,9 @@ async function loadBanner(){
 async function loadInterstitial(){
  if(!state.ready||state.interstitialReady||state.busy)return false;
  try{
+  adStats.interstitialRequests++;
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
-  state.interstitialReady=true;status('Interstitial ready');return true;
+  adStats.interstitialLoads++;state.interstitialReady=true;status('Interstitial ready');return true;
  }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
 }
 async function loadAppOpen(){
@@ -195,9 +217,11 @@ async function loadAppOpen(){
  if(state.appOpenLoading)return state.appOpenLoading;
  state.appOpenLoading=(async()=>{
   try{
+   adStats.appOpenRequests++;
    await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
    const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
    state.appOpenReady=check?.value===true;
+   if(state.appOpenReady)adStats.appOpenLoads++;
    state.onChange();return state.appOpenReady;
   }catch(error){status('App open unavailable',String(error?.message||error));return false;}
  })();
@@ -221,6 +245,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    if(!state.consent){status('Ads unavailable: privacy choice / consent not ready');return false;}
    await AdMob.initialize();
    state.ready=true;
+   void trackNativeAdEvents();
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
