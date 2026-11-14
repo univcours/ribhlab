@@ -58,3 +58,10 @@ test('PDF page manager uses explicit PDF.js canvas and readable preview fallback
  assert.match(css,/rivo-pages-modal \.rivo-page-preview-loading/);
  assert.match(css,/color:#24476a!important/);
 });
+
+test('Manage Pages uses browser-compatible PDF.js legacy worker for older Android WebViews',()=>{
+ const pages=source('src/page-manager.js');
+ assert.match(pages,/pdfjs-dist\/legacy\/build\/pdf\.mjs/);
+ assert.match(pages,/pdfjs-dist\/legacy\/build\/pdf\.worker\.min\.mjs\?url/);
+ assert.match(pages,/pdfjs\.GlobalWorkerOptions\.workerSrc = legacyWorkerUrl/);
+});

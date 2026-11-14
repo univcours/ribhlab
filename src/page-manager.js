@@ -1,5 +1,9 @@
 import {PDFDocument,degrees} from 'pdf-lib';
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
+// The legacy build includes browser compatibility polyfills (Map.getOrInsertComputed),
+// which are absent from Chromium 141 and several Android WebView versions.
+pdfjs.GlobalWorkerOptions.workerSrc = legacyWorkerUrl;
 
 export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
  const lang=getLanguage();
