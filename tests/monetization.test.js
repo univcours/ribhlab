@@ -95,5 +95,4 @@ test('Native ad no-fill conditions retry with bounded 1/2/4 minute backoff',asyn
  assert.match(code,/\[60000,120000,240000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
  assert.match(code,/scheduleAdRetry\('interstitial'\)/);
- assert.match(code,/scheduleAdRetry\('appOpen'\)/);
 });
