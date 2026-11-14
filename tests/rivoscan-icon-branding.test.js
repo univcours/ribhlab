@@ -13,10 +13,10 @@ test('approved user-supplied R+scan brand icons are valid 512px PNG resources',(
   assert.equal(png.readUInt32BE(16),512);
   assert.equal(png.readUInt32BE(20),512);
  }
- assert.equal(createHash('sha256').update(logo).digest('hex'),'87d17709595d8bef594532b5c0c08994c59f2f04c333035ee7f3ebe774d359a3');
- assert.equal(createHash('sha256').update(foreground).digest('hex'),'4901ac6546af419fedda177b5a5a990a9eb3a730ba862f00bc34d371534f08ba');
+ assert.equal(createHash('sha256').update(logo).digest('hex'),'e2e1626a748593fd71e39c00bb3826a6de16b365ecfc344e8807549ab1b4dc8f');
+ assert.equal(createHash('sha256').update(foreground).digest('hex'),'f5c47d04492612a704d025b7da2d8b32eaa13a210616c19557aba42b1f439de7');
  assert.equal(fullLogo.readUInt32BE(16),1254);
- assert.equal(createHash('sha256').update(fullLogo).digest('hex'),'b22131994543c51ba2adbf5b278a76163547a3749162959687b2f7b35828e803');
+ assert.equal(createHash('sha256').update(fullLogo).digest('hex'),'06e9925f914dc19c25e43a2d80e3befa0533c308d6b0ccd6bcfb09a082888b24');
 });
 test('build uses exact approved icon, never regenerates the old colored drawing',()=>{
  const gen=text('scripts/create-turquoise-icon.mjs');
@@ -32,6 +32,7 @@ test('build uses exact approved icon, never regenerates the old colored drawing'
 test('Android legacy and adaptive launchers use the approved brand image',()=>{
  const ps=text('apply-rivoscan-branding.ps1');
  assert.ok(ps.includes('rivoscan_launcher_adaptive.png'));
+ assert.ok(ps.includes('<solid android:color="#FFFFFF"/>'),'use white launcher background to match exact supplied logo');
  assert.ok(ps.includes('<foreground android:drawable="@drawable/rivoscan_launcher_adaptive"/>'));
  assert.ok(ps.includes('mipmap-anydpi-v26/ic_launcher.xml'));
  const main=text('src/main.js'),html=text('index.html');
