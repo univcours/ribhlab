@@ -62,21 +62,31 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const lang=getLanguage(),t=dict[lang]||dict.en;
  // Advanced correction is part of the single Scan workspace, not a second scanner.
  const modeTitle=t.title;
+ const onboarding=({
+  en:{camera:'Take photo',hint:'Choose a document photo or take one to start. Then select a correction method.'},
+  ar:{camera:'صوّر الوثيقة',hint:'اختار صورة الوثيقة أو صوّرها أولاً، ومن بعد اختار طريقة التصحيح.'},
+  fr:{camera:'Prendre une photo',hint:'Choisissez une photo ou photographiez le document, puis choisissez la correction.'},
+  es:{camera:'Tomar foto',hint:'Selecciona o toma una foto del documento, luego elige cómo corregirla.'},
+  de:{camera:'Foto aufnehmen',hint:'Wählen oder fotografieren Sie zuerst das Dokument und dann die Korrektur.'},
+  pt:{camera:'Tirar foto',hint:'Escolha ou fotografe o documento primeiro e depois selecione a correção.'},
+  it:{camera:'Scatta foto',hint:'Scegli o scatta una foto del documento, poi seleziona la correzione.'}
+ })[lang]||{camera:'Take photo',hint:'Choose or take a document photo to start.'};
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
  root.innerHTML='<section class="rivo-perfectscan-modal" role="dialog" aria-modal="true" aria-label="'+modeTitle+'">'+
  '<header><div><strong>'+modeTitle+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-perfect="close" aria-label="'+t.cancel+'">✕</button></header>'+
  '<div class="rivo-perfectscan-toolbar">'+
  '<button type="button" data-perfect="base">'+t.choosing+'</button>'+
- '<button type="button" data-perfect="add">'+t.add+'</button>'+
- '<button type="button" data-perfect="camera">'+t.capture+'</button>'+
+ '<button type="button" data-perfect="add" hidden disabled>'+t.add+'</button>'+
+ '<button type="button" data-perfect="camera">'+onboarding.camera+'</button>'+
 '</div>'+
  '<input class="rivo-perfect-file" type="file" accept="image/*" hidden>'+
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
- '<p class="rivo-perfectscan-tip">'+t.tip+'</p>'+
+ '<p class="rivo-perfectscan-tip" hidden>'+t.tip+'</p>'+
+ '<div class="rivo-perfectscan-empty" role="status"><span aria-hidden="true" class="rivo-perfectscan-empty-icon">▣</span><p>'+onboarding.hint+'</p></div>'+
  '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span>'+'<input type="range" class="rivo-perfect-compare-range" min="0" max="100" value="52" hidden aria-label="Before/after comparison"></div>'+
- '<div class="rivo-perfectscan-control">'+
+ '<div class="rivo-perfectscan-control" hidden>'+
  '<label class="rivo-scan-method"><span>'+({en:'Correction method',ar:'طريقة التصحيح',fr:'Méthode de correction',
  es:'Método de corrección',de:'Korrekturmethode',pt:'Método de correção',
  it:'Metodo di correzione'})[lang]+'</span><select data-perfect-mode aria-label="Correction method">'+
@@ -85,8 +95,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  (onSurface3D?'<option value="surface3d">'+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</option>':'')+
  '</select></label>'+
  '<button data-perfect="compare" hidden disabled>'+t.compare+'</button></div>'+
- '<p class="rivo-perfectscan-status" role="status">'+t.none+'</p>'+
- '<p class="rivo-perfectscan-warning">'+t.quality+'</p>'+
+ '<p class="rivo-perfectscan-status" role="status" hidden>'+t.none+'</p>'+
+ '<p class="rivo-perfectscan-warning" hidden>'+t.quality+'</p>'+
  '<footer class="rivo-perfectscan-actions" hidden><button data-perfect="process" disabled>'+t.process+'</button>'+
  '<button data-perfect="save" hidden disabled>'+t.save+'</button></footer>'+
  '<p class="rivo-perfectscan-privacy">'+t.privacy+'</p></section>';
@@ -101,7 +111,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const preview=root.querySelector('.rivo-perfectscan-preview');
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
  let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
- const setStatus=(message,alert=false)=>{status.textContent=message;status.classList.toggle('rivo-warning',alert)};
+ const setStatus=(message,alert=false)=>{status.hidden=false;status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
   if(closed)return;
@@ -141,6 +151,14 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   const c=await imageCanvas(blob),image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
   base={data:image.data,width:c.width,height:c.height,bytes:bytes||new Uint8Array(await blob.arrayBuffer()),
    name,mime,fromLibrary};extra=[];resetOutput();process.disabled=false;
+  root.querySelector('.rivo-perfectscan-modal').classList.add('rivo-perfectscan-has-source');
+  root.querySelector('.rivo-perfectscan-empty').hidden=true;
+  root.querySelector('.rivo-perfectscan-tip').hidden=false;
+  root.querySelector('.rivo-perfectscan-warning').hidden=false;
+  root.querySelector('.rivo-perfectscan-control').hidden=false;
+  root.querySelector('[data-perfect="add"]').hidden=false;
+  root.querySelector('[data-perfect="add"]').disabled=false;
+  root.querySelector('[data-perfect="camera"]').textContent=t.capture;
   previewPixels(base.data,base.width,base.height,t.original);
   const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
   setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
@@ -319,7 +337,13 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   try{await setBase(file,file.name,null,file.type||'image/jpeg')}catch(e){setStatus(e.message,true)}
  });
  extrasInput.addEventListener('change',async()=>{const files=[...extrasInput.files];extrasInput.value='';await addShots(files)});
- cameraInput.addEventListener('change',async()=>{const files=[...cameraInput.files];cameraInput.value='';await addShots(files)});
+ cameraInput.addEventListener('change',async()=>{
+  const files=[...cameraInput.files];cameraInput.value='';if(!files.length)return;
+  try{
+   if(!base)await setBase(files[0],files[0].name,null,files[0].type||'image/jpeg');
+   else await addShots(files);
+  }catch(error){setStatus(error.message,true)}
+ });
  // One select ensures mutually exclusive AI/2D/3D corrections.
  root.querySelector('[data-perfect-mode]').addEventListener('change',()=>{
   resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
