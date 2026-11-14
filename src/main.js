@@ -39,6 +39,7 @@ import './rivo-design-system.css';
 import './modal-shell.css';
 import './rivo-blue-theme.css';
 import './rivo-accessibility-ads.css';
+import './rivo-release-ux.css';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -424,7 +425,13 @@ function recentDocuments(limit=12,query=homeSearchQuery){
  const matched=libraryItems.map((doc,index)=>({doc,index}))
   .filter(({doc})=>!needle||doc.name.toLocaleLowerCase().includes(needle))
   .slice(0,needle?35:limit);
- if(!matched.length)return `<div class="recent-empty">${ico('folder',21)} <span>${needle?hv('noResults'):ut('noRecent')}</span></div>`;
+ if(!matched.length){
+  const message=needle?hv('noResults'):ut('noRecent');
+  if(needle||libraryItems.length)return `<div class="recent-empty">${ico('folder',21)} <span>${message}</span></div>`;
+  const scanLabel=({en:'Scan your first document',fr:'Scanner votre premier document',ar:'صور أول وثيقة',es:'Escanear primer documento',de:'Erstes Dokument scannen',pt:'Digitalizar primeiro documento',it:'Scansiona il primo documento'})[language]||'Scan your first document';
+  return `<div class="recent-empty rivo-onboarding">${ico('folder',28)} <span>${message}</span>
+   <button type="button" class="rivo-empty-scan" data-empty-scan>${ico('scan',19)} ${escapeHTML(scanLabel)}</button></div>`;
+ }
  return matched.map(({doc,index})=>{
   const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
   return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
@@ -481,7 +488,7 @@ function toolsWorkspace(){
     const label=hubLabel(language,id,item?tn(item):id);
     return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
- <p class="rivo-tools-no-results" id="tools-no-results" hidden>0</p></section>`;
+ <p class="rivo-tools-no-results" id="tools-no-results" hidden>${escapeHTML(({en:'No matching tools',fr:'Aucun outil correspondant',ar:'ما لقيت حتى أداة بهاد الاسم',es:'No se encontraron herramientas',de:'Keine passenden Werkzeuge',pt:'Nenhuma ferramenta encontrada',it:'Nessuno strumento trovato'})[language]||'No matching tools')}</p></section>`;
 }
 function scannerPreferenceRows(){
  const prefs=readScanPrefs(localStorage),labels=scanPrefsText(language);
@@ -815,6 +822,13 @@ function wire(){
   bulkUI.wireToolbar(document.getElementById('home-selection-root'));
   bulkUI.wireToolbar(document.getElementById('library-select-banner'));
   bulkUI.wireToolbar(document.getElementById('home-select-banner'));
+  document.getElementById('home-recents')?.addEventListener('click',event=>{
+    const action=event.target.closest('[data-empty-scan]');
+    if(!action)return;
+    event.preventDefault();
+    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')void openSmartScanner();
+    else void openTool('scan');
+  });
   document.getElementById('home-quick-search')?.addEventListener('input',event=>{
     homeSearchQuery=event.target.value;
     const rows=document.getElementById('home-recents');
