@@ -23,7 +23,7 @@ test('Ad diagnostics exposes native banner load status and retries',()=>{
  assert.match(main,/data-ad-retry/);
  assert.match(ad,/bannerEnabled:AD_CONFIG.bannerEnabled/);
  assert.match(ad,/BannerAdSize.BANNER/);
- assert.match(ad,/BannerAdPosition.TOP_CENTER/);
+ assert.match(ad,/BannerAdPosition.BOTTOM_CENTER/);
  assert.match(ad,/AdMob.hideBanner\(\)/);
  assert.match(ad,/AdMob.resumeBanner\(\)/);
  assert.match(read('src/main.js'),/rivo-ad-banner-slot/);
