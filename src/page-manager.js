@@ -76,7 +76,7 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
    const v=page.getViewport({scale}),canvas=document.createElement('canvas');
    canvas.width=Math.max(1,Math.round(v.width));canvas.height=Math.max(1,Math.round(v.height));
    const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
-   await page.render({canvasContext:ctx,viewport:v}).promise;
+   await page.render({canvasContext:ctx,viewport:v,canvas}).promise; // PDF.js 5 explicit output canvas
    pages[i].preview=canvas.toDataURL('image/jpeg',.65);page.cleanup();
    const tile=overlay.querySelector('.rivo-page-item[data-id="'+i+'"] .rivo-page-tile');
    const existing=tile?.querySelector('img');

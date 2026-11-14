@@ -298,10 +298,22 @@
 .rivo-page-preview-loading{
  display:grid!important;place-items:center!important;text-align:center!important;
  min-width:0!important;width:100%!important;min-height:72px!important;
- padding:10px!important;color:#d8ecfc!important;-webkit-text-fill-color:#d8ecfc!important;
+ padding:10px!important;color:#24476a!important;-webkit-text-fill-color:#24476a!important;
  font-size:12px!important;line-height:1.45!important;font-weight:700!important;
  overflow-wrap:anywhere!important;
 }
 .rivo-shield-stage canvas[hidden],.rivo-shield-stage .rivo-shield-empty[hidden]{
  display:none!important;
+}
+
+/* Page Manager toolbar remains readable on its dark-blue background. */
+.rivo-pages-modal .rivo-pages-top strong,
+.rivo-pages-modal .rivo-pages-count strong,
+.rivo-pages-modal .rivo-pages-count button,
+.rivo-pages-modal .rivo-pages-tip,
+.rivo-pages-modal .rivo-pages-bottom small{
+ color:#eff8ff!important;-webkit-text-fill-color:#eff8ff!important;opacity:1!important;
+}
+.rivo-pages-modal .rivo-page-preview-loading{
+ color:#24476a!important;-webkit-text-fill-color:#24476a!important;
 }

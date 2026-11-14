@@ -51,3 +51,10 @@ test('closing tool information cannot accidentally close its parent modal',()=>{
  assert.match(js,/e\.stopImmediatePropagation\(\)/);
  assert.match(js,/e\.preventDefault\(\)/);
 });
+
+test('PDF page manager uses explicit PDF.js canvas and readable preview fallback',()=>{
+ const pages=source('src/page-manager.js'),css=source('src/rivo-tools-compact-ux.css');
+ assert.match(pages,/page\.render\(\{canvasContext:ctx,viewport:v,canvas\}\)/);
+ assert.match(css,/rivo-pages-modal \.rivo-page-preview-loading/);
+ assert.match(css,/color:#24476a!important/);
+});
