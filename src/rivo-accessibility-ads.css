@@ -139,3 +139,18 @@
   padding-bottom:calc(110px + var(--rivo-banner-height,50px) + 18px + env(safe-area-inset-bottom,0px))!important;
  }
 }
+
+/* Before a source photo exists, show a compact centered dialog rather than
+   a full-screen blank pane. Once a photo is loaded, retain the editor canvas. */
+@media(max-width:620px){
+ .rivo-perfectscan-overlay:has(.rivo-perfectscan-modal:not(.rivo-perfectscan-has-source)){
+  padding:12px!important;align-items:center!important;justify-content:center!important;
+  background:rgba(6,20,39,.65)!important;backdrop-filter:blur(3px)!important;
+ }
+ .rivo-perfectscan-overlay .rivo-perfectscan-modal:not(.rivo-perfectscan-has-source){
+  width:100%!important;max-width:430px!important;
+  max-height:calc(100dvh - 24px)!important;border-radius:20px!important;
+  border:1px solid #B8D9F2!important;
+  box-shadow:0 18px 50px rgba(6,20,39,.25)!important;
+ }
+}
