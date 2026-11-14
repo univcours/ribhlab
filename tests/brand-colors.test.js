@@ -25,7 +25,9 @@ test('Premium Blue palette is the only design palette of major surfaces and scan
  assert.ok(build.scripts.prebuild.includes('create-turquoise-icon.mjs'));
  const generator=read('scripts/create-turquoise-icon.mjs');
  assert.ok(generator.includes('node_modules/.cache/rivoscan/icon.png.b64'));
- assert.ok(generator.includes("['public/rivoscan-icon.png',png]"));
+ assert.ok(generator.includes('assets/branding/rivoscan-icon-source.png'));
+ assert.ok(generator.includes('public/rivoscan-icon.png'));
+ assert.ok(brand.includes('rivoscan_launcher_adaptive.png'));
  assert.ok(brand.includes('node_modules/.cache/rivoscan/icon.png.b64'));
  for(const source of ['src/style.css','src/theme-brand.css','src/premium-home.css',
   'src/compact-turquoise.css','src/privacy-shield.css','src/rivo-design-system.css',
