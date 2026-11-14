@@ -590,3 +590,11 @@ body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex!imp
 .rivo-code-dialog .rivo-formula-ai-options .rivo-id-row{
  display:block;width:100%;box-sizing:border-box;margin:5px 0;
 }
+
+
+/* Empty fields should not consume screen space. All results reappear after
+   a real user capture/import/processing; mobile accessibility scroll stays intact. */
+.rivo-id-overlay .rivo-id-dialog canvas.rivo-id-preview[hidden],
+.rivo-code-overlay .rivo-code-dialog .rivo-id-row[hidden]{
+ display:none!important;
+}
