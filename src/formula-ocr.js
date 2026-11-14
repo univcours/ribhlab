@@ -43,9 +43,9 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  const file=document.createElement('input');file.type='file';file.accept='image/*';file.hidden=true;panel.append(file);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const preview=document.createElement('canvas');preview.className='rivo-id-preview';
- preview.style.maxWidth='100%';panel.append(preview);
- const original=document.createElement('textarea');original.rows=5;original.placeholder=L[4];
- const latex=document.createElement('textarea');latex.rows=5;latex.placeholder='LaTeX';latex.dir='ltr';
+ preview.style.maxWidth='100%';preview.hidden=true;panel.append(preview);
+ const original=document.createElement('textarea');original.rows=3;original.placeholder=L[4];
+ const latex=document.createElement('textarea');latex.rows=3;latex.placeholder='LaTeX';latex.dir='ltr';
  for(const [name,control] of [[L[4],original],['LaTeX (editable)',latex]]){
   const label=document.createElement('label');label.className='rivo-id-row';label.textContent=name;label.append(control);panel.append(label);
  }
@@ -64,6 +64,7 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
   try{
    const img=await new Promise((ok,bad)=>{const picture=new Image();picture.onload=()=>ok(picture);picture.onerror=()=>bad(Error('Invalid formula image'));picture.src=url});
    const factor=Math.min(1,850/Math.max(img.naturalWidth,img.naturalHeight));
+   preview.hidden=false;
    preview.width=Math.max(1,Math.round(img.naturalWidth*factor));
    preview.height=Math.max(1,Math.round(img.naturalHeight*factor));
    const ctx=preview.getContext('2d');
