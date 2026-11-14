@@ -30,6 +30,32 @@ try{
   check(width+': build version badge uses readable navy ink',
     !versionBadge.visible||versionBadge.ink==='rgb(8, 39, 82)');
 
+  // Verify the actual four Home actions fit: the legacy 320px row was
+  // horizontally clipped with ~9px labels despite previous green tests.
+  const shortcuts=await page.evaluate(()=>{
+    const rail=document.querySelector('.rivo-feature-rail');
+    const tiles=[...rail.querySelectorAll('.rivo-feature-tile')];
+    const railRect=rail.getBoundingClientRect();
+    const rects=tiles.map(tile=>{
+      const box=tile.getBoundingClientRect();
+      const label=tile.querySelector('strong');
+      const text=label?.getBoundingClientRect();
+      return {left:box.left,right:box.right,top:box.top,bottom:box.bottom,
+        labelHeight:text?.height||0,fontSize:parseFloat(getComputedStyle(label).fontSize),
+        scrollHeight:label?.scrollHeight||0,clientHeight:label?.clientHeight||0};
+    });
+    return {count:rects.length,columns:getComputedStyle(rail).gridTemplateColumns.split(' ').filter(Boolean).length,
+      fit:rects.every(x=>x.left>=railRect.left-2&&x.right<=railRect.right+2&&x.fontSize>=11&&
+        x.labelHeight>12&&x.scrollHeight<=x.clientHeight+2),
+      rows:new Set(rects.map(x=>Math.round(x.top))).size,
+      horizontalOverflow:document.documentElement.scrollWidth>innerWidth+2};
+  });
+  check(width+': all Home shortcuts readable and completely visible',
+    shortcuts.count===4&&shortcuts.fit&&!shortcuts.horizontalOverflow&&
+    shortcuts.columns===(width<=390?2:4)&&shortcuts.rows===(width<=390?2:1));
+  const onboarding=await page.locator('.rivo-onboarding .rivo-empty-scan').count();
+  check(width+': first-run screen offers a functional primary scan action',onboarding===1);
+  await page.screenshot({path:out+'/'+width+'-home-empty.png'});
   // Test fixtures provide metadata/thumbnail slots without accessing private user files.
   const home=await page.evaluate(()=>{
     const doc=name=>'<article class="recent-entry rivo-recent-card" role="button">'+
