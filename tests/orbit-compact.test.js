@@ -29,7 +29,7 @@ test('cyan orbit runs on compact cards and scanner button, not on whole card tra
  assert.match(css,/\.rivo-nav-scan-ring::before/);
  assert.match(css,/animation:rivo-orbit-border 3\.8s linear infinite/);
  assert.match(css,/animation:rivo-orbit-border 14s linear infinite/);
- assert.match(css,/\.rivo-hub-tile:is\(:hover,:focus-visible,:active\)::before/);
+ assert.match(css,/\.rivo-hub-tile:is\(:hover,:focus,:focus-visible,:active\)::before/);
  assert.match(css,/pointer-events:none/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.ok(!css.includes('animation:rivo-orbit-border 1s'),'glow should be subtle');
