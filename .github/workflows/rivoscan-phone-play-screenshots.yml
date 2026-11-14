@@ -7,6 +7,9 @@ on:
     paths:
       - 'scripts/phone-play-screenshots.mjs'
       - '.github/workflows/rivoscan-phone-play-screenshots.yml'
+      - 'assets/branding/**'
+      - 'src/main.js'
+      - 'rivoscan-version.properties'
 permissions:
   contents: read
 jobs:
