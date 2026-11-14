@@ -187,6 +187,29 @@ try{
    check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
   }
 
+  // Real PerfectScan initial state: no pale text, fake previews or empty advanced controls.
+  await page.locator('.mobilebar [data-go="home"]').click();
+  await page.locator('[data-rivo-feature="perfectScanQuality"]').click();
+  const perfect=page.locator('.rivo-perfectscan-overlay');
+  await perfect.waitFor({state:'visible',timeout:8000});
+  const perfectInfo=await perfect.evaluate(root=>{
+   const modal=root.querySelector('.rivo-perfectscan-modal');
+   const small=modal.querySelector('header small');
+   const bounds=modal.getBoundingClientRect();
+   return {empty:!root.querySelector('.rivo-perfectscan-empty').hidden,
+    addHidden:root.querySelector('[data-perfect="add"]').hidden,
+    methodHidden:root.querySelector('.rivo-perfectscan-control').hidden,
+    previewHidden:root.querySelector('.rivo-perfectscan-preview').hidden,
+    cameraEnabled:!root.querySelector('[data-perfect="camera"]').disabled,
+    hintReadable:getComputedStyle(small).color!=='rgb(184, 217, 242)'&&getComputedStyle(small).opacity==='1',
+    fits:bounds.height<innerHeight*.93&&bounds.left>=-2&&bounds.right<=innerWidth+2};
+  });
+  check(width+': PerfectScan starts with readable source-photo choices',
+   perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&perfectInfo.fits);
+  await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
+  await perfect.locator('[data-perfect="close"]').click();
+  await perfect.waitFor({state:'detached'});
+
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
   await page.screenshot({path:out+'/'+width+'-settings.png'});
