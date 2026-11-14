@@ -45,3 +45,9 @@ test('privacy first-run canvas and PDF thumbnail placeholders are initialized ac
  assert.match(pages,/placeholder\.replaceWith\(img\)/);
  assert.match(pages,/Preview unavailable/);
 });
+
+test('closing tool information cannot accidentally close its parent modal',()=>{
+ const js=source('src/tool-help.js');
+ assert.match(js,/e\.stopImmediatePropagation\(\)/);
+ assert.match(js,/e\.preventDefault\(\)/);
+});

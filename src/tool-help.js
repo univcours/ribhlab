@@ -95,7 +95,7 @@ export function installToolHelp(){
   if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('rivo-tool-help-popover'))))refreshToolHelp();
  });
  observer.observe(document.body,{childList:true,subtree:true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&active){closeInfo();e.stopPropagation();}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&active){e.preventDefault();closeInfo();e.stopImmediatePropagation();}});
  document.addEventListener('pointerdown',e=>{
   if(active&&!dialog?.contains(e.target)&&!e.target.closest?.('.rivo-tool-help-trigger'))closeInfo();
  },true);

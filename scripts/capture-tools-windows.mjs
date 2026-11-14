@@ -82,6 +82,21 @@ for(let i=0;i<specs.length;i++){
    info.editorActions=editor;
    console.log('EDITOR ACTION GEOMETRY',JSON.stringify(editor));
   }
+  // Open the real contextual ⓘ popover, verify it is readable, then close it.
+  const infoTrigger=page.locator('.rivo-tool-help-trigger:visible').first();
+  if(await infoTrigger.count()){
+   const before=await page.locator('[role="dialog"]').count();
+   await infoTrigger.click({timeout:5000});
+   const popover=page.locator('.rivo-tool-help-popover');
+   const readable=await popover.isVisible()&&(await popover.innerText()).trim().length>15;
+   info.helpInteraction={readable,open:await infoTrigger.getAttribute('aria-expanded')};
+   if(!readable)errors.push('Info popover content is not readable');
+   const shot=prefix+'-info.png';await page.screenshot({path:join(root,shot),animations:'disabled'});files.push(shot);
+   await page.keyboard.press('Escape');
+   if(await popover.count())errors.push('Info popover did not dismiss with Escape');
+   const after=await page.locator('[role="dialog"]').count();
+   if(after!==before)errors.push('Underlying dialog closed when dismissing info');
+  }
   // For long normal pages include a bottom shot. Popups keep their own scroll area.
   if(info.scrollHeight>info.innerHeight+160){
    await page.evaluate(()=>{window.scrollTo(0,document.documentElement.scrollHeight);const x=document.querySelector('.content');if(x)x.scrollTop=x.scrollHeight;});
