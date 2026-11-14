@@ -54,8 +54,8 @@ function recordFullscreenTime(now=Date.now()){
  try{localStorage.setItem(FULLSCREEN_LAST_SHOWN_KEY,String(now))}catch{}
 }
 export const PREMIUM_MINUTES=10;
-export const FULLSCREEN_COOLDOWN_MS=4*60*1000;
-export const APP_OPEN_COOLDOWN_MS=10*60*1000;
+export const FULLSCREEN_COOLDOWN_MS=2*60*1000; // 2+ actual actions and a completed-task break still required
+export const APP_OPEN_COOLDOWN_MS=5*60*1000; // never on app close or when content already visible
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
  'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
@@ -66,13 +66,15 @@ const PREMIUM_IDS=new Set([
 export function isPremiumFeature(id){return PREMIUM_IDS.has(String(id||''));}
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
 export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0,launchCount=0}){
+ // The fifth and later launches can monetize natural transitions, never exit.
+ // Even with higher inventory, do not show after each tap (at least 2 real actions).
  // A Back press is a natural page transition only when returning from an
  // actual tool to Home, after either a completed save or two tool returns.
  // Never treat dismissing an overlay or exiting the app as an ad opportunity.
  const meaningfulBreak=trigger==='back'
   ?(savedCount>=1||backTransitions>=2)
   :savedCount>=2;
- return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<5&&
+ return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<8&&
   now-startedAt>=90000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
