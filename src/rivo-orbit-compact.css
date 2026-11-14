@@ -108,7 +108,7 @@
  #app .shell.rivo-dark-ui .rivo-feature-icon svg{width:17px!important;height:17px!important;}
  #app .shell.rivo-dark-ui .rivo-feature-tile strong{
   display:block!important;white-space:normal!important;
-  font-size:clamp(10.5px,2.85vw,11.5px)!important;
+  font-size:clamp(11px,3vw,11.5px)!important;
   line-height:1.12!important;font-weight:800!important;
   overflow:visible!important;overflow-wrap:anywhere!important;
   text-overflow:clip!important;-webkit-line-clamp:unset!important;
@@ -193,7 +193,7 @@
 @media(max-width:340px){
  #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail{gap:4px!important;}
  #app .shell.rivo-dark-ui .rivo-feature-tile{padding:4px 1px!important;}
- #app .shell.rivo-dark-ui .rivo-feature-tile strong{font-size:10.5px!important;}
+ #app .shell.rivo-dark-ui .rivo-feature-tile strong{font-size:11px!important;}
 }
 @media(prefers-reduced-motion:reduce){
  #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-hub-tile)::before,
