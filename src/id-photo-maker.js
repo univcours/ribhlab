@@ -70,7 +70,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label',L[1]);
  const x=document.createElement('input');x.type='range';x.min='-100';x.max='100';x.value='0';
  const y=document.createElement('input');y.type='range';y.min='-100';y.max='100';y.value='0';
- const canvas=document.createElement('canvas');canvas.className='rivo-id-preview';
+ const canvas=document.createElement('canvas');canvas.className='rivo-id-preview';canvas.hidden=true;
  const hint=document.createElement('p');hint.textContent=L[8];hint.className='rivo-id-hint';
  const status=document.createElement('p');status.setAttribute('role','status');
  const actions=document.createElement('div');actions.className='rivo-code-actions';
@@ -86,6 +86,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  let image=null,cutout=null,blobURL=null,closed=false,processing=false;
  const update=()=>{
   if(!image)return;
+  canvas.hidden=false;
   const dims=layoutIDPhotoSheet(select.value);
   canvas.width=dims.sheetW;canvas.height=dims.sheetH;
   const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
