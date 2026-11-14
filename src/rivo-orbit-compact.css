@@ -44,7 +44,7 @@
 #app .shell.rivo-dark-ui .rivo-feature-tile::before{
  animation:rivo-orbit-border 14s linear infinite;opacity:.56;
 }
-#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-tile:is(:hover,:focus-visible,:active)::before{
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-tile:is(:hover,:focus,:focus-visible,:active)::before{
  animation:rivo-orbit-border 7s linear infinite;opacity:.9;
 }
 #app .shell.rivo-dark-ui .rivo-feature-tile:nth-child(2)::before,
