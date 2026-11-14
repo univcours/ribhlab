@@ -44,8 +44,8 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
  const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;panel.append(input);
  const source=labeledControl(panel,L[3],selectLang('en'));
  const target=labeledControl(panel,L[4],selectLang(language==='en'?'fr':language));
- const original=labeledControl(panel,L[7],document.createElement('textarea'));original.rows=5;original.placeholder=L[7];
- const translation=labeledControl(panel,L[8],document.createElement('textarea'));translation.rows=5;translation.readOnly=true;
+ const original=labeledControl(panel,L[7],document.createElement('textarea'));original.rows=3;original.placeholder=L[7];
+ const translation=labeledControl(panel,L[8],document.createElement('textarea'));translation.rows=3;translation.readOnly=true;
  const notice=document.createElement('p');notice.className='rivo-code-help';notice.textContent=L[11];panel.append(notice);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const resultActions=document.createElement('div');resultActions.className='rivo-code-actions';panel.append(resultActions);
