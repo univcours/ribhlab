@@ -1,0 +1,141 @@
+/* RivoScan release UI fixes: readable text, safe native banner, accessible PerfectScan.
+   Do not style or obscure the Google-rendered ad creative. */
+
+/* All ordinary text on the light settings, document and tool surfaces needs
+   the same high contrast as the primary body text, not Ice Blue on Ice Blue. */
+#app .rivo-dark-ui :is(
+ .app-settings .page-heading p,
+ .app-settings .rivo-pref-section-subtitle,
+ .app-settings .settings-identity small,
+ .app-settings .settings-row small,
+ .app-settings .settings-row p,
+ .app-settings .settings-section > p,
+ .library-workspace .page-heading p,
+ .library-workspace .document-description small,
+ .library-workspace .library-heading p,
+ .rivo-tools-hub .rivo-tools-section p,
+ .rivo-tools-hub .rivo-hub-tile small,
+ .rivo-compact-home .recent-file-meta small,
+ .rivo-compact-home .rivo-home-heading small
+){
+ color:#11407F!important;opacity:1!important;text-shadow:none!important;
+}
+#app .rivo-dark-ui :is(.app-settings,.library-workspace,.rivo-tools-hub,.rivo-compact-home)
+ :is(input,textarea,select):not([type="checkbox"]){
+ color:#082752!important;opacity:1!important;
+}
+#app .rivo-dark-ui :is(.app-settings,.library-workspace,.rivo-tools-hub,.rivo-compact-home)
+ :is(input,textarea)::placeholder{color:#395C80!important;opacity:1!important;}
+
+/* PerfectScan is a portal on document.body (outside #app). */
+.rivo-perfectscan-overlay .rivo-perfectscan-modal{
+ color:#082752!important;
+ background:#F5FAFF!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-modal header strong{
+ color:#082752!important;font-size:clamp(19px,4.6vw,23px)!important;line-height:1.25!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-modal :is(
+ header small,.rivo-perfectscan-tip,.rivo-perfectscan-warning,
+ .rivo-perfectscan-privacy,.rivo-perfectscan-status,
+ .rivo-perfectscan-control label,.rivo-scan-method span
+){
+ color:#23486E!important;opacity:1!important;
+ font-size:clamp(12px,3.3vw,14px)!important;line-height:1.5!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-modal header small{
+ color:#395C80!important;font-size:12px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-toolbar{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important;overflow:visible!important;
+ padding:14px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-toolbar button{
+ flex:auto!important;min-width:0!important;min-height:50px!important;
+ background:#FFFFFF!important;color:#11407F!important;
+ border:1.5px solid #B8D9F2!important;border-radius:13px!important;
+ font-size:clamp(12px,3.4vw,14px)!important;line-height:1.35!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+ padding:10px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-toolbar button[data-perfect="base"]{
+ background:#0E61C2!important;color:#FFFFFF!important;border-color:#0E61C2!important;
+}
+.rivo-perfectscan-overlay :is(
+ .rivo-perfectscan-toolbar [hidden],.rivo-perfectscan-empty[hidden],
+ .rivo-perfectscan-tip[hidden],.rivo-perfectscan-control[hidden],
+ .rivo-perfectscan-status[hidden],.rivo-perfectscan-warning[hidden],
+ .rivo-perfectscan-preview[hidden],.rivo-perfectscan-actions[hidden]
+){display:none!important;}
+.rivo-perfectscan-overlay .rivo-perfectscan-empty{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:10px;min-height:145px;margin:4px 14px 18px;padding:20px;
+ border-radius:18px;border:1.5px dashed #B8D9F2;
+ background:#FFFFFF;text-align:center;color:#11407F;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-empty-icon{
+ display:grid;place-items:center;width:52px;height:52px;border-radius:16px;
+ background:#E9F5FB;color:#0E61C2;font-size:28px;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-empty p{
+ color:#11407F!important;font-size:14px!important;line-height:1.5!important;
+ font-weight:600!important;opacity:1!important;margin:0!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-modal:not(.rivo-perfectscan-has-source){
+ height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - 18px)!important;overflow-y:auto!important;
+ align-self:flex-start!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-control{
+ display:block!important;padding:8px 14px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-control[hidden]{display:none!important;}
+.rivo-perfectscan-overlay .rivo-scan-method{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ gap:7px!important;min-width:0!important;
+}
+.rivo-perfectscan-overlay .rivo-scan-method select{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-height:48px!important;appearance:auto!important;
+ color:#082752!important;background:#FFFFFF!important;
+ border:1.5px solid #B8D9F2!important;border-radius:12px!important;
+ padding:9px 11px!important;font-size:14px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-status{
+ color:#11407F!important;border-color:#B8D9F2!important;
+ font-size:14px!important;
+}
+.rivo-perfectscan-overlay .rivo-perfectscan-actions button{
+ min-height:48px!important;font-size:14px!important;
+}
+@media(max-width:620px){
+ .rivo-perfectscan-overlay{
+  align-items:flex-start!important;background:#F5FAFF!important;
+ }
+ .rivo-perfectscan-overlay .rivo-perfectscan-modal{
+  width:100%!important;height:100dvh!important;max-height:100dvh!important;
+ }
+ .rivo-perfectscan-overlay .rivo-perfectscan-modal:not(.rivo-perfectscan-has-source){
+  height:auto!important;max-height:calc(100dvh - 12px)!important;
+  border-radius:0 0 18px 18px!important;
+ }
+}
+
+/* Native SDK Banner sits immediately ABOVE the 5-button blue nav.
+   The SDK margin is measured from the same nav element in monetization.js. */
+#app .rivo-dark-ui .rivo-ad-banner-slot{
+ bottom:var(--rivo-banner-bottom,0px)!important;
+ background:#E9F5FB!important;
+ border-top:1px solid #B8D9F2!important;
+ border-bottom:1px solid #B8D9F2!important;
+ box-shadow:0 -3px 10px rgba(8,39,82,.06)!important;
+}
+@media(max-width:780px){
+ html body.rivo-has-ad-banner #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
+  bottom:0!important;
+ }
+ html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .content{
+  padding-bottom:calc(110px + var(--rivo-banner-height,50px) + 18px + env(safe-area-inset-bottom,0px))!important;
+ }
+}
