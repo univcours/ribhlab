@@ -6,19 +6,27 @@ const file=path=>readFileSync(new URL('../'+path,import.meta.url));
 const text=path=>file(path).toString('utf8');
 const logo=file('assets/branding/rivoscan-icon-source.png');
 const foreground=file('assets/branding/rivoscan-icon-adaptive-foreground.png');
+const fullLogo=file('assets/branding/rivoscan-logo-original.png');
 test('approved user-supplied R+scan brand icons are valid 512px PNG resources',()=>{
  for(const png of [logo,foreground]){
   assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
   assert.equal(png.readUInt32BE(16),512);
   assert.equal(png.readUInt32BE(20),512);
  }
- assert.equal(createHash('sha256').update(logo).digest('hex'),'7c32313929793c62d85eae85a33d5da26e0f9c4343f829a44fd59c3f800f867f');
+ assert.equal(createHash('sha256').update(logo).digest('hex'),'87d17709595d8bef594532b5c0c08994c59f2f04c333035ee7f3ebe774d359a3');
+ assert.equal(createHash('sha256').update(foreground).digest('hex'),'4901ac6546af419fedda177b5a5a990a9eb3a730ba862f00bc34d371534f08ba');
+ assert.equal(fullLogo.readUInt32BE(16),1254);
+ assert.equal(createHash('sha256').update(fullLogo).digest('hex'),'b22131994543c51ba2adbf5b278a76163547a3749162959687b2f7b35828e803');
 });
 test('build uses exact approved icon, never regenerates the old colored drawing',()=>{
  const gen=text('scripts/create-turquoise-icon.mjs');
  assert.ok(gen.includes('assets/branding/rivoscan-icon-source.png'));
  assert.ok(gen.includes('assets/branding/rivoscan-icon-adaptive-foreground.png'));
  assert.ok(gen.includes('public/rivoscan-icon.png'));
+ assert.ok(gen.includes('assets/branding/rivoscan-logo-original.png'));
+ assert.ok(gen.includes('public/rivoscan-logo.png'));
+ assert.ok(!gen.includes('pngquant'));
+ assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));
 });
 test('Android legacy and adaptive launchers use the approved brand image',()=>{
