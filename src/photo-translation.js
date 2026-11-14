@@ -45,7 +45,7 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
  const source=labeledControl(panel,L[3],selectLang('en'));
  const target=labeledControl(panel,L[4],selectLang(language==='en'?'fr':language));
  const original=labeledControl(panel,L[7],document.createElement('textarea'));original.rows=3;original.placeholder=L[7];
- const translation=labeledControl(panel,L[8],document.createElement('textarea'));translation.rows=3;translation.readOnly=true;
+ const translation=labeledControl(panel,L[8],document.createElement('textarea'));translation.rows=3;translation.readOnly=true;translation.parentElement.hidden=true;
  const notice=document.createElement('p');notice.className='rivo-code-help';notice.textContent=L[11];panel.append(notice);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const resultActions=document.createElement('div');resultActions.className='rivo-code-actions';panel.append(resultActions);
@@ -55,7 +55,7 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
   const b=document.createElement('button');b.type='button';b.textContent=label;
   b.addEventListener('click',fn);parent.append(b);return b;
  };
- const setFile=next=>{file=next;original.value='';translation.value='';hasRecognition=false;status.textContent=file?.name||'';};
+ const setFile=next=>{file=next;original.value='';translation.value='';translation.parentElement.hidden=true;hasRecognition=false;status.textContent=file?.name||'';};
  button(actionRow,L[1],async()=>{
   if(busy||!capture)return;
   try{
@@ -97,6 +97,7 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
    });
    if(closed)return;
    translation.value=String(result.text||'');
+   translation.parentElement.hidden=!translation.value;
    status.textContent=translation.value?L[8]:L[13];
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{busy=false}
