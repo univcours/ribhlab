@@ -1,4 +1,5 @@
 name: RivoScan authentic tablet Play screenshots
+# Publishing screenshots regenerate from the current audited 0.45.12 source.
 on:
   workflow_dispatch:
   push:
