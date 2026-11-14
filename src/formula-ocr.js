@@ -57,7 +57,12 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  secret.placeholder=({en:'Personal OpenAI API key (session only)',ar:'مفتاح API الشخصي لهاد الجلسة',fr:'Clé API personnelle',es:'Clave API personal',de:'Persönlicher API-Schlüssel',pt:'Chave API pessoal',it:'Chiave API personale'})[language]||'Personal API key';
  const keyLabel=document.createElement('label');keyLabel.className='rivo-id-row';
  keyLabel.textContent=({en:'Optional AI to recognize complex formulas',ar:'قراءة المعادلات المعقدة بالذكاء الاصطناعي (اختيارية)',fr:'IA pour les formules complexes (optionnel)',es:'IA para fórmulas complejas (opcional)',de:'KI für komplexe Formeln (optional)',pt:'IA para fórmulas complexas (opcional)',it:'IA per formule complesse (opzionale)'})[language]||'Optional AI';
- keyLabel.append(secret);panel.append(keyLabel);
+ keyLabel.append(secret);
+ const aiOptions=document.createElement('details');
+ aiOptions.className='rivo-formula-ai-options';
+ const aiToggle=document.createElement('summary');
+ aiToggle.textContent=({en:'Optional AI settings',fr:'Options IA facultatives',ar:'إعدادات الذكاء الاصطناعي الاختيارية'})[language]||'Optional AI settings';
+ aiOptions.append(aiToggle,keyLabel);panel.append(aiOptions);
  const drawRegions=async()=>{
   if(!selected)return;
   const url=URL.createObjectURL(selected);
