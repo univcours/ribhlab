@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,shouldShowAppOpen,
- FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,APP_OPEN_COOLDOWN_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
+import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,
+ FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
  assert.equal(AD_CONFIG.testMode,true);
- for(const id of ['rewarded','interstitial','appOpen','banner'])
+ for(const id of ['rewarded','interstitial','banner'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -38,16 +38,6 @@ test('Back ads only after completed work or two tool-to-Home transitions, never 
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:80000}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,lastShownAt:899000}),false);
 });
-test('app open only on foreground return after >=60 seconds background and 5-minute cooldown',()=>{
- const now=3600000;
- const base={native:true,consent:true,ready:true,backgroundMs:MIN_BACKGROUND_MS,
-  now,lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS,premiumUntil:0,working:false,launchCount:5};
- assert.equal(shouldShowAppOpen(base),true);
- for(const change of [{backgroundMs:0},{launchCount:4},{working:true},{consent:false},{native:false},
-   {ready:false},{premiumUntil:now+1},{lastFullscreenAt:now-APP_OPEN_COOLDOWN_MS+1}])
-  assert.equal(shouldShowAppOpen({...base,...change}),false);
-});
-
 test('production cannot use Google test IDs or mismatched publishers',()=>{
  const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:'',banner:'ca-app-pub-1234567890123456/1234567890'};
  assert.equal(productionAdsConfigured(),false);
@@ -55,7 +45,7 @@ test('production cannot use Google test IDs or mismatched publishers',()=>{
  assert.equal(productionAdsConfigured({...real,banner:''}),true); // missing Banner never blocks Interstitial/App Open
  assert.equal(productionAdsConfigured({...real,banner:'ca-app-pub-3940256099942544/6300978111'}),false);
  assert.equal(productionAdsConfigured({...real,interstitial:'ca-app-pub-3940256099942544/1033173712'}),false);
- assert.equal(productionAdsConfigured({...real,appOpen:'ca-app-pub-3940256099942544/9257395921'}),false);
+ 
  assert.equal(productionAdsConfigured({...real,androidAppId:'ca-app-pub-3940256099942544~3347511713'}),false);
 });
 
@@ -69,25 +59,17 @@ test('first 4 launches are free from full-screen ads; fifth and later eligible',
  assert.equal(launchEligible(0),false);
  assert.equal(registerLaunch({getItem:()=>{throw Error('private storage')},setItem(){}}),0);
 });
-test('cold-start app open requires loading screen and first 5 launches',()=>{
- const base={native:true,consent:true,ready:true,launchCount:5,source:'cold',
-  loadingScreen:true,backgroundMs:0,now:10000000,lastFullscreenAt:0,premiumUntil:0,working:false};
- assert.equal(shouldShowAppOpen(base),true);
- assert.equal(shouldShowAppOpen({...base,launchCount:4}),false);
- assert.equal(shouldShowAppOpen({...base,loadingScreen:false}),false);
- assert.equal(shouldShowAppOpen({...base,source:'resume'}),false);
-});
-test('RivoScan cold start uses a bounded loading gate and keeps interstitial off app exit',async()=>{
- const fs=await import('node:fs');
- const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- const main=fs.readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.match(code,/setTimeout\(reveal,2800\)/);
- assert.match(code,/if\(!gateOpen\|\|!state.appOpenReady/);
- assert.match(code,/pauseBannerForFullscreen/);
+test('App Open is entirely disabled; startup only initializes inventory',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen|isAppOpenLoaded)/);
+ assert.doesNotMatch(code,/AppOpenAdPluginEvents|shouldShowAppOpen/);
+ assert.match(code,/export async function startAdsAtLaunch/);
+ assert.match(code,/await initializeAds\(\)/);
  assert.match(main,/void startAdsAtLaunch\(\)/);
  assert.doesNotMatch(main,/atNaturalNavigation\(\{[^}]*trigger:'exit'/);
 });
-
 test('native banner stays hidden while any full-screen ad is active',async()=>{
  const fs=await import('node:fs');
  const source=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
@@ -96,7 +78,6 @@ test('native banner stays hidden while any full-screen ad is active',async()=>{
  assert.match(source,/restoreBannerAfterFullscreen\(\)/);
  assert.match(source,/BannerAdPluginEvents.AdImpression/);
  assert.match(source,/InterstitialAdPluginEvents.AdImpression/);
- assert.match(source,/AppOpenAdPluginEvents.AdImpression/);
 });
 
 test('returning to an app kept alive counts as a new usage after a real background break',()=>{
@@ -109,7 +90,7 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
 test('Native ad no-fill conditions retry with bounded 1/2/4 minute backoff',async()=>{
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- assert.match(code,/const retryCounts=\{banner:0,interstitial:0,appOpen:0\}/);
+ assert.match(code,/const retryCounts=\{banner:0,interstitial:0\}/);
  assert.match(code,/if\(retryCounts\[type\]>=3\)return/);
  assert.match(code,/\[60000,120000,240000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
