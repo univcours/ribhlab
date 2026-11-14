@@ -118,6 +118,31 @@ try{
   }));
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
   check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===(width<380?2:3)));
+  const toolLabelFit=await page.evaluate(()=>{
+    const tiles=[...document.querySelectorAll('.rivo-hub-tile')];
+    const ids=tiles.map(tile=>tile.dataset.hubAction);
+    const clipped=tiles.filter(tile=>{
+      const label=tile.querySelector('strong');
+      if(!label)return true;
+      const bounds=tile.getBoundingClientRect();
+      const text=label.getBoundingClientRect();
+      const style=getComputedStyle(label);
+      return text.height<=1||text.bottom>bounds.bottom+2||
+        style.webkitLineClamp==='2'||style.textOverflow==='ellipsis';
+    }).map(tile=>tile.dataset.hubAction);
+    return {tileCount:tiles.length,distinct:new Set(ids).size,clipped};
+  });
+  check(width+': all Tools card titles visible and not clipped',
+   toolLabelFit.tileCount===19&&toolLabelFit.distinct===19&&toolLabelFit.clipped.length===0);
+  // Every tool tile is documented using its actual UI, without fake camera captures.
+  if(width===393){
+    for(const tile of await page.locator('.rivo-hub-tile').all()){
+      const id=await tile.getAttribute('data-hub-action');
+      await tile.scrollIntoViewIfNeeded();
+      await page.screenshot({path:out+'/'+width+'-tool-'+id+'.png'});
+    }
+  }
+
   const navInfo=await page.evaluate(()=>{const bar=document.querySelector('.mobilebar'),scan=bar.querySelector('.rivo-nav-scan'),selected=bar.querySelector('button.active'),buttons=[...bar.querySelectorAll(':scope > button')];const b=bar.getBoundingClientRect(),s=scan.getBoundingClientRect(),style=getComputedStyle(bar);return {count:buttons.length,columns:style.gridTemplateColumns.split(' ').filter(Boolean).length,center:Math.abs((b.left+b.width/2)-(s.left+s.width/2))<3,dark:style.backgroundImage.includes('gradient')||style.backgroundColor==='rgb(8, 39, 82)',selected:!!selected&&getComputedStyle(selected).color==='rgb(0, 216, 255)',icons:buttons.every(x=>x.querySelector('svg')),bottom:b.bottom<=innerHeight+2,uncovered:document.querySelector('.floating-scan')?getComputedStyle(document.querySelector('.floating-scan')).display==='none':true};});
   check(width+': blue navbar five aligned positions; scanner center; active cyan',navInfo.count===5&&navInfo.columns===5&&navInfo.center&&navInfo.dark&&navInfo.selected&&navInfo.icons&&navInfo.bottom&&navInfo.uncovered);
   if(navInfo.count!==5||navInfo.columns!==5||!navInfo.center||!navInfo.dark||!navInfo.selected||!navInfo.icons||!navInfo.bottom||!navInfo.uncovered) console.warn('RivoScan navbar QA',width,JSON.stringify(navInfo));
