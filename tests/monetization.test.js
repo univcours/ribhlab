@@ -73,7 +73,7 @@ test('App Open is entirely disabled; startup only initializes inventory',async()
 test('native banner stays hidden while any full-screen ad is active',async()=>{
  const fs=await import('node:fs');
  const source=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- assert.match(source,/return state\.busy\|\|\(typeof document/);
+ assert.match(source,/return state\.busy\|\|keyboard\|\|\(typeof document/);
  assert.match(source,/pauseBannerForFullscreen\(\)/);
  assert.match(source,/restoreBannerAfterFullscreen\(\)/);
  assert.match(source,/BannerAdPluginEvents.AdImpression/);
