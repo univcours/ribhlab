@@ -1,4 +1,4 @@
-name: RivoScan 0.45.15 correct original upload key
+name: RivoScan 0.45.16 correct original upload key
 # Final release job: signed artifacts built from the branch after 161/161 responsive checks.
 on:
   workflow_dispatch:
@@ -80,13 +80,13 @@ jobs:
             exit 1
           fi
           echo "Matched existing Google Play upload certificate SHA-1." >> "$GITHUB_STEP_SUMMARY"
-      - name: Set Google Play versionCode 119 and versionName 0.45.15
+      - name: Set Google Play versionCode 120 and versionName 0.45.16
         run: |
           set -euo pipefail
-          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode 119/' android/app/build.gradle
-          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "0.45.15"/' android/app/build.gradle
-          grep -Eq 'versionCode[[:space:]]+119' android/app/build.gradle
-          grep -Eq 'versionName[[:space:]]+"0[.]45[.]15"' android/app/build.gradle
+          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode 120/' android/app/build.gradle
+          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "0.45.16"/' android/app/build.gradle
+          grep -Eq 'versionCode[[:space:]]+120' android/app/build.gradle
+          grep -Eq 'versionName[[:space:]]+"0[.]45[.]16"' android/app/build.gradle
       - name: Assemble signed release app bundle
         env:
           RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
@@ -105,7 +105,7 @@ jobs:
           jarsigner -verify "$AAB" > /tmp/rivo-verify.txt 2>&1
           grep -q 'jar verified' /tmp/rivo-verify.txt
           keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E' >/dev/null
-          echo "RivoScan 0.45.15 / versionCode 119: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "RivoScan 0.45.16 / versionCode 120: signed release AAB verified" >> "$GITHUB_STEP_SUMMARY"
           echo "AAB size: $(stat -c%s "$AAB") bytes" >> "$GITHUB_STEP_SUMMARY"
       - name: Verify installable release APK signature and version
         run: |
@@ -118,18 +118,18 @@ jobs:
           grep -iq 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' /tmp/rivoscan-apk-certs.txt
           AAPT="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='119' versionName='0.45.15'"
-          echo "RivoScan 0.45.15 APK: original Google Play upload key verified" >> "$GITHUB_STEP_SUMMARY"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='120' versionName='0.45.16'"
+          echo "RivoScan 0.45.16 APK: original Google Play upload key verified" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Preserve Play upload bundle
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.15-signed-ORIGINAL-GooglePlay-Key-AAB
+          name: RivoScan-0.45.16-signed-ORIGINAL-GooglePlay-Key-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
       - name: Preserve installable APK signed by original key
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.15-ORIGINAL-Key-signed-installable-APK
+          name: RivoScan-0.45.16-ORIGINAL-Key-signed-installable-APK
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
