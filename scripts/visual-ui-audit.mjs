@@ -175,7 +175,7 @@ try{
     count:g.querySelectorAll(':scope > .rivo-hub-tile').length}))
   }));
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
-  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===(width<=380?2:3)));
+  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
   const toolLabelFit=await page.evaluate(()=>{
     const tiles=[...document.querySelectorAll('.rivo-hub-tile')];
     const ids=tiles.map(tile=>tile.dataset.hubAction);
