@@ -1,90 +1,73 @@
-/* Final device-safe overrides: loaded after all legacy themes and orbit CSS.
-   Native AdMob is rendered ABOVE the WebView; this band is a transparent
-   visual reservation. No HTML overlay may intercept native ad interactions. */
-:root{--rivo-banner-height:50px;--rivo-banner-width:320px;--rivo-banner-bottom:88px;}
-html,body,#app{max-width:100%;overflow-x:clip;}
-#app .shell.rivo-dark-ui,#app .shell.rivo-dark-ui .main,
-#app .shell.rivo-dark-ui .content{min-width:0;max-width:100%;}
-#app .shell.rivo-dark-ui .topbar{max-width:100%;min-width:0;gap:clamp(4px,1.5vw,10px);}
-#app .shell.rivo-dark-ui .topbar .crumb{
- display:flex;align-items:center;min-width:0;flex:1 1 auto;
- gap:clamp(4px,1.4vw,9px);overflow:visible;
-}
+/* RivoScan 0.45.21 – one exact clickable NATIVE Google AdMob 320×50.
+ * HTML is a passive reservation; it cannot clip the native Android AdView. */
+:root{--rivo-banner-width:320px;--rivo-banner-height:50px;--rivo-banner-bottom:98px}
+html,body,#app{max-width:100%;overflow-x:clip}
+#app .shell.rivo-dark-ui,#app .shell.rivo-dark-ui .main,#app .shell.rivo-dark-ui .content{min-width:0;max-width:100%;box-sizing:border-box}
+#app .shell.rivo-dark-ui .topbar{max-width:100%;min-width:0;gap:clamp(4px,1.5vw,10px)}
+#app .shell.rivo-dark-ui .topbar .crumb{display:flex;align-items:center;min-width:0;flex:1 1 auto;gap:clamp(4px,1.4vw,9px);overflow:visible}
 #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{
- display:block;flex:0 0 auto;width:clamp(29px,8vw,40px)!important;
- height:clamp(29px,8vw,40px)!important;object-fit:contain!important;
- object-position:center!important;overflow:visible!important;border-radius:0!important;
+ display:block;flex:0 0 auto;width:clamp(33px,9vw,43px)!important;height:clamp(33px,9vw,43px)!important;
+ object-fit:contain!important;object-position:center!important;overflow:visible!important;border-radius:9px!important;
+ background:#fff!important;box-shadow:0 2px 7px rgba(0,216,255,.18)!important
 }
 #app .shell.rivo-dark-ui .topbar .crumb strong{
  display:block;white-space:nowrap;font-size:clamp(13px,4vw,19px)!important;
- overflow:visible!important;text-overflow:clip!important;min-width:0;
+ overflow:visible!important;text-overflow:clip!important;min-width:0
 }
-#app .shell.rivo-dark-ui .topbar .rivo-build-version{
- display:block;white-space:nowrap;flex:none;font-size:clamp(9px,2.4vw,12px)!important;
-}
-#app .shell.rivo-dark-ui .rivo-top-controls{flex:0 0 auto;gap:5px;min-width:0;}
-#app .shell.rivo-dark-ui .rivo-top-locale{min-width:0;}
-#app .shell.rivo-dark-ui :is(.rivo-tools-hub,.rivo-compact-home,.app-settings,.library-workspace){
- box-sizing:border-box;min-width:0;max-width:100%;
-}
-#app .shell.rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{min-width:0;max-width:100%;}
-#app .shell.rivo-dark-ui .rivo-hub-grid .rivo-hub-tile strong{
- white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important;
-}
+#app .shell.rivo-dark-ui .topbar .rivo-build-version{display:block;white-space:nowrap;flex:none;font-size:clamp(9px,2.4vw,12px)!important}
+#app .shell.rivo-dark-ui .rivo-top-controls{flex:0 0 auto;gap:5px;min-width:0}
+#app .shell.rivo-dark-ui .rivo-top-locale{min-width:0}
+#app .shell.rivo-dark-ui :is(.rivo-tools-hub,.rivo-compact-home,.app-settings,.library-workspace){box-sizing:border-box;min-width:0;max-width:100%}
+#app .shell.rivo-dark-ui .rivo-hub-grid .rivo-hub-tile{min-width:0;max-width:100%}
+#app .shell.rivo-dark-ui .rivo-hub-grid .rivo-hub-tile strong{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important}
 #app .shell.rivo-dark-ui .rivo-ad-banner-slot{
- position:fixed!important;top:auto!important;
- left:0!important;right:0!important;
- bottom:var(--rivo-banner-bottom)!important;
+ position:fixed!important;top:auto!important;left:50%!important;right:auto!important;
+ transform:translateX(-50%)!important;bottom:var(--rivo-banner-bottom)!important;
  display:none!important;align-items:center!important;justify-content:center!important;
- height:var(--rivo-banner-height)!important;width:100%!important;
+ height:50px!important;width:320px!important;max-width:100vw!important;
  padding:0!important;margin:0!important;border:0!important;
- background:#e9f5fb!important;overflow:hidden!important;
- pointer-events:none!important;z-index:44!important;box-sizing:border-box!important;
+ background:transparent!important;overflow:hidden!important;pointer-events:none!important;
+ z-index:44!important;box-sizing:border-box!important
 }
-html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .rivo-ad-banner-slot{display:flex!important;}
+html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .rivo-ad-banner-slot{display:flex!important}
 #app .shell.rivo-dark-ui .rivo-ad-banner-frame{
- flex:0 0 auto!important;display:block!important;
- width:min(var(--rivo-banner-width),100%)!important;
- max-width:100%!important;height:100%!important;
- padding:0!important;border:0!important;border-radius:0!important;
- pointer-events:none!important;background:transparent!important;
+ flex:0 0 auto!important;display:block!important;width:320px!important;max-width:100%!important;
+ height:50px!important;padding:0!important;border:0!important;border-radius:5px!important;
+ pointer-events:none!important;background:#fff!important
 }
 @media(max-width:780px){
  html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five,
  html body.rivo-has-ad-banner #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
-  bottom:0!important;left:0!important;right:0!important;
-  max-width:100%!important;
+  bottom:0!important;left:0!important;right:0!important;max-width:100%!important
  }
  html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .content{
-  padding-bottom:calc(110px + var(--rivo-banner-height) + var(--rivo-banner-bottom) - 88px + env(safe-area-inset-bottom,0px))!important;
+  padding-bottom:calc(var(--rivo-banner-bottom) + 62px + env(safe-area-inset-bottom,0px))!important
  }
  #app .shell.rivo-dark-ui .rivo-compact-home:has(#home-recents>.rivo-onboarding){
-  min-height:0!important;height:auto!important;max-height:none!important;
+  min-height:0!important;height:auto!important;max-height:none!important
  }
- #app .shell.rivo-dark-ui #home-recents:has(>.rivo-onboarding){
-  flex:0 0 auto!important;min-height:200px!important;height:auto!important;
-  max-height:280px!important;overflow:visible!important;align-content:center!important;
+ #app .shell.rivo-dark-ui .rivo-compact-home #home-recents.rivo-premium-recent:has(>.rivo-onboarding){
+  flex:0 0 auto!important;min-height:0!important;height:auto!important;max-height:none!important;
+  overflow:visible!important;padding:0!important
  }
- #app .shell.rivo-dark-ui #home-recents>.rivo-onboarding{
-  flex:0 0 auto!important;min-height:194px!important;height:auto!important;
-  max-height:none!important;justify-content:center!important;
+ #app .shell.rivo-dark-ui #home-recents .recent-empty.rivo-onboarding{
+  flex:0 0 auto!important;min-height:150px!important;height:auto!important;max-height:192px!important;
+  margin:3px 0 0!important;padding:13px 12px!important;gap:9px!important;
+  justify-content:center!important;border-radius:15px!important
  }
+ #app .shell.rivo-dark-ui #home-recents .rivo-onboarding .rivo-empty-scan{min-height:44px!important;padding:7px 13px!important}
 }
 @media(max-width:380px){
- #app .shell.rivo-dark-ui .topbar{padding-inline:8px!important;gap:4px!important;}
- #app .shell.rivo-dark-ui .topbar .crumb{gap:4px!important;}
- #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:13px!important;}
- #app .shell.rivo-dark-ui .topbar .rivo-build-version{display:none!important;}
- #app .shell.rivo-dark-ui .rivo-top-controls{gap:3px!important;}
- #app .shell.rivo-dark-ui .rivo-top-locale{padding-inline:3px!important;}
- #app .shell.rivo-dark-ui .rivo-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+ #app .shell.rivo-dark-ui .topbar{padding-inline:8px!important;gap:4px!important}
+ #app .shell.rivo-dark-ui .topbar .crumb{gap:4px!important}
+ #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:13px!important}
+ #app .shell.rivo-dark-ui .topbar .rivo-build-version{display:none!important}
+ #app .shell.rivo-dark-ui .rivo-top-controls{gap:3px!important}
+ #app .shell.rivo-dark-ui .rivo-top-locale{padding-inline:3px!important}
+ #app .shell.rivo-dark-ui .rivo-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
 @media(max-width:320px){
- #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{width:28px!important;height:28px!important;}
- #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:12px!important;}
- #app .shell.rivo-dark-ui .rivo-top-sound{width:35px!important;min-width:35px!important;}
+ #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{width:30px!important;height:30px!important}
+ #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:12px!important}
 }
-/* During native keyboard resize the banner is temporarily hidden in JS. */
-@media(max-width:319px){
- #app .shell.rivo-dark-ui .rivo-ad-banner-slot{display:none!important;}
-}
+@media(max-width:319px){#app .shell.rivo-dark-ui .rivo-ad-banner-slot{display:none!important}}

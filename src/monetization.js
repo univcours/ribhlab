@@ -137,7 +137,7 @@ export function getPremiumStatus(){
 // Native banners draw OVER the WebView, so hide them during cameras,
 // modal dialogs, document previews and in-progress saves, then resume.
 let bannerObserver=null;
-let bannerLastMargin=0,bannerRelayoutTimer=null,bannerLayoutObserved=false;
+let bannerLastMargin=0,bannerRelayoutTimer=null,bannerLayoutObserved=false,bannerWrongSize=false;
 function bannerObstructed(){
  const focus=typeof document!=='undefined'?document.activeElement:null;
  const keyboard=!!(focus&&/^(INPUT|TEXTAREA)$/.test(focus.tagName));
@@ -164,20 +164,26 @@ function observeBannerOverlays(){
  bannerObserver.observe(document.body,{childList:true,subtree:true});
 }
 function setBannerSpace(visible,height=50){
+ const layout=currentBannerLayout();
+ visible=!!(visible&&layout.valid&&!bannerWrongSize);
  if(typeof document==='undefined')return;
  document.body.classList.toggle('rivo-has-ad-banner',visible);
- document.documentElement.style.setProperty('--rivo-banner-height',Math.max(50,Number(height)||50)+'px');
+ document.documentElement.style.setProperty('--rivo-banner-height','50px');
  document.documentElement.style.setProperty('--rivo-banner-bottom',bannerBottomMargin()+'px');
 }
-function bannerBottomMargin(){
- if(typeof document==='undefined'||typeof window==='undefined')return 0;
+function currentBannerLayout(){
+ if(typeof document==='undefined'||typeof window==='undefined')return {valid:false};
+ const width=document.documentElement.clientWidth,height=window.innerHeight;
+ if(width<320||height<180)return {valid:false};
  const nav=document.querySelector('#app nav.mobilebar.rivo-nav-five');
- if(!nav||getComputedStyle(nav).display==='none')return 0;
- const box=nav.getBoundingClientRect();
- if(box.height<40||box.top<0||box.top>=window.innerHeight)return 0;
- // Same logical-pixel bottom margin controls both native AdMob and HTML slot.
- // 8px gap keeps the clickable native creative clear of navigation buttons.
- return Math.max(0,Math.ceil(window.innerHeight-box.top)+8);
+ const fixed=!!(nav&&getComputedStyle(nav).display!=='none'&&getComputedStyle(nav).position==='fixed');
+ const box=fixed?nav.getBoundingClientRect():null;
+ const margin=box?Math.ceil(window.innerHeight-box.top)+8:8;
+ if(height-margin-50<62)return {valid:false};
+ return {valid:true,margin,width:320,height:50};
+}
+function bannerBottomMargin(){
+ const p=currentBannerLayout();return p.valid?p.margin:0;
 }
 function scheduleBannerRelayout(){
  if(!state.ready||typeof window==='undefined')return;
@@ -200,12 +206,16 @@ function scheduleBannerRelayout(){
   }else if(state.bannerReady&&!state.bannerHidden)setBannerSpace(true);
  },180);
 }
+export function refreshBannerPosition(){
+ if(isAndroid&&typeof requestAnimationFrame==='function')requestAnimationFrame(scheduleBannerRelayout);
+}
 async function loadBanner(){
- if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading)return false;
- if(typeof window==='undefined'||document.documentElement.clientWidth<320){
+ if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading||bannerWrongSize)return false;
+ if(typeof window==='undefined'||!currentBannerLayout().valid){
   state.bannerError='Screen too narrow for 320x50 banner';return false;
  }
- state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(true);
+ if(bannerObstructed()){setBannerSpace(false);return false;}
+ state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(false);
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
@@ -215,7 +225,14 @@ async function loadBanner(){
     state.onChange();
    });
    await AdMob.addListener(BannerAdPluginEvents.SizeChanged,dim=>{
-    if(!state.bannerHidden)setBannerSpace(Number(dim?.height)>0,dim?.height||50);
+    const w=Number(dim?.width||0),h=Number(dim?.height||0);
+    if(w>322||h>52||w<0||h<0){
+     bannerWrongSize=true;state.bannerReady=false;state.bannerHidden=true;
+     state.bannerError='Native ad exceeds reserved 320x50 area';setBannerSpace(false);
+     void AdMob.hideBanner().then(()=>AdMob.removeBanner()).catch(()=>{});
+     state.onChange();return;
+    }
+    if(!state.bannerHidden&&state.bannerReady)setBannerSpace(true);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
     state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');scheduleAdRetry('banner');

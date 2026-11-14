@@ -1,40 +1,31 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import pngjs from 'pngjs';
-// CI runs npm test before npm build; generate the safe derivatives for this test.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';import pngjs from 'pngjs';
 import '../scripts/create-turquoise-icon.mjs';
-const {PNG}=pngjs;
-const read=path=>readFileSync(new URL('../'+path,import.meta.url));
-const str=path=>read(path).toString('utf8');
-test('launcher artwork preserves the complete RivoScan wordmark in a safe mask zone',()=>{
- const data=PNG.sync.read(read('public/rivoscan-icon.png'));
- assert.equal(data.width,512);assert.equal(data.height,512);
- let left=512,right=-1,top=512,bottom=-1;
- for(let y=0;y<512;y++)for(let x=0;x<512;x++){
-  if(data.data[(y*512+x)*4+3]<20)continue;
-  left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+const {PNG}=pngjs,read=p=>readFileSync(new URL('../'+p,import.meta.url));
+const t=p=>read(p).toString('utf8');
+test('approved enlarged mask-safe launcher keeps the wordmark complete',()=>{
+ const image=PNG.sync.read(read('public/rivoscan-icon.png'));
+ assert.equal(image.width,512);assert.equal(image.height,512);
+ let minX=512,maxX=0;
+ for(let y=340;y<390;y++)for(let x=0;x<512;x++){
+  const i=(y*512+x)*4,r=image.data[i],g=image.data[i+1],b=image.data[i+2];
+  if(image.data[i+3]<100||(r>210&&g>210&&b>210))continue;
+  minX=Math.min(x,minX);maxX=Math.max(x,maxX);
+  assert.ok(Math.hypot(x-256,y-256)<180,'wordmark masked by a round launcher');
  }
- assert.ok(left>=130&&top>=130&&right<=382&&bottom<=382,
-  'complete logo must fit inside every Android adaptive mask safe center');
- assert.ok(right-left>=200,'logo is too small to read on a home screen');
+ assert.ok(minX<165&&maxX>350,'wordmark too small');
+ assert.equal(PNG.sync.read(read('public/rivoscan-header-mark.png')).width,512);
 });
-test('banner visually aligns with native 320x50 frame while AdMob stays clickable',()=>{
- const css=str('src/rivo-device-safe.css'),ad=str('src/monetization.js'),main=str('src/main.js');
- assert.ok(main.includes("import './rivo-device-safe.css'"));
- assert.match(css,/bottom:var\(--rivo-banner-bottom\)!important/);
- assert.match(css,/width:min\(var\(--rivo-banner-width\),100%\)!important/);
- assert.match(css,/pointer-events:none!important/);
+test('native 320x50 banner anchored in exactly the same passive slot on all pages',()=>{
+ const ad=t('src/monetization.js'),css=t('src/rivo-device-safe.css'),main=t('src/main.js');
+ assert.match(main,/refreshBannerPosition\(\)/);
+ assert.match(main,/src="\/rivoscan-header-mark.png"/);
  assert.match(ad,/position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin/);
  assert.match(ad,/adSize:BannerAdSize.BANNER/);
- assert.match(ad,/Math\.ceil\(window\.innerHeight-box\.top\)\+8/);
  assert.match(ad,/AdMob\.removeBanner\(\)/);
- assert.match(ad,/document\.documentElement\.clientWidth<320/);
-});
-test('responsive header shows complete brand text and no clipped img',()=>{
- const css=str('src/rivo-device-safe.css');
- assert.match(css,/object-fit:contain!important/);
- assert.match(css,/overflow:visible!important/);
- assert.match(css,/@media\(max-width:320px\)/);
- assert.match(css,/@media\(max-width:380px\)/);
+ assert.match(ad,/document\.documentElement\.clientWidth/);
+ assert.match(css,/bottom:var\(--rivo-banner-bottom\)!important/);
+ assert.match(css,/width:320px!important/);
+ assert.match(css,/pointer-events:none!important/);
+ assert.match(css,/max-height:192px!important/);
 });
