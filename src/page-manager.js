@@ -13,6 +13,8 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
  it:['Gestisci pagine','selezionate','Seleziona tutto','Deseleziona','Trascina o usa ↑ e ↓','Sinistra','Destra','Elimina','Ripristina','Salva','Annulla','Nessuna pagina','Originale invariato','Annulla']
  };
  const t=i=>(L[lang]||L.en)[i];
+ const loading=({en:'Preparing preview…',ar:'تحضير المعاينة…',fr:'Préparation de l’aperçu…',es:'Preparando vista previa…',de:'Vorschau wird geladen…',pt:'Preparando pré-visualização…',it:'Anteprima in preparazione…'})[lang]||'Preparing preview…';
+ const unavailable=({en:'Preview unavailable',ar:'المعاينة غير متاحة',fr:'Aperçu indisponible',es:'Vista previa no disponible',de:'Vorschau nicht verfügbar',pt:'Pré-visualização indisponível',it:'Anteprima non disponibile'})[lang]||'Preview unavailable';
  if(!file||(!/\.pdf$/i.test(file.name)&&file.type!=='application/pdf'))throw Error('Select a PDF file');
  if(file.size>30*1024*1024)throw Error('PDF must be smaller than 30 MB');
  const raw=new Uint8Array(await file.arrayBuffer()),src=await PDFDocument.load(raw);
@@ -31,7 +33,7 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
   panel.innerHTML=`<header class="rivo-pages-top"><button data-page-action="close">✕</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">✓ ${t(9)}</button></header>
   <div class="rivo-pages-count"><strong>${selected().length} ${t(1)}</strong><button data-page-action="all">${t(2)}</button><button data-page-action="none">${t(3)}</button></div>
   <p class="rivo-pages-tip">${t(4)}</p><div class="rivo-pages-grid">${pages.map((p,i)=>`<div class="rivo-page-item ${p.selected?'selected':''} ${p.removed?'removed':''}" draggable="true" data-id="${p.id}">
-    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}"><img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)"><span class="rivo-page-check">${p.selected?'✓':p.removed?'×':''}</span></button>
+    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}">${p.preview?`<img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)">`:`<span class="rivo-page-preview-loading" role="status">${loading}</span>`}<span class="rivo-page-check">${p.selected?'✓':p.removed?'×':''}</span></button>
     <div class="rivo-page-row"><button data-page-action="up" data-id="${p.id}">↑</button><b>${i+1}</b><button data-page-action="down" data-id="${p.id}">↓</button></div>
   </div>`).join('')}</div>
   <footer class="rivo-pages-bottom"><div class="rivo-page-operations"><button data-page-action="left" ${selected().length?'':'disabled'}>↶ ${t(5)}</button>
@@ -76,8 +78,19 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
    const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
    await page.render({canvasContext:ctx,viewport:v}).promise;
    pages[i].preview=canvas.toDataURL('image/jpeg',.65);page.cleanup();
-   const img=overlay.querySelector('.rivo-page-item[data-id="'+i+'"] img');if(img)img.src=pages[i].preview;
+   const tile=overlay.querySelector('.rivo-page-item[data-id="'+i+'"] .rivo-page-tile');
+   const existing=tile?.querySelector('img');
+   if(existing)existing.src=pages[i].preview;
+   else if(tile){
+    const placeholder=tile.querySelector('.rivo-page-preview-loading');
+    const img=document.createElement('img');
+    img.src=pages[i].preview;img.alt='Page '+(i+1);
+    if(placeholder)placeholder.replaceWith(img);
+    else tile.prepend(img);
+   }
   }
- }catch(error){onError?.(error?.message||String(error))}
+ }catch(error){onError?.(error?.message||String(error));
+  overlay.querySelectorAll('.rivo-page-preview-loading').forEach(el=>{el.textContent=unavailable;});
+ }
  return close;
 }

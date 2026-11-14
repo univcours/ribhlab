@@ -293,3 +293,15 @@
   min-height:33px!important;font-size:9px!important;
  }
 }
+
+/* Keep a clear translated status until the PDF thumbnail is ready. */
+.rivo-page-preview-loading{
+ display:grid!important;place-items:center!important;text-align:center!important;
+ min-width:0!important;width:100%!important;min-height:72px!important;
+ padding:10px!important;color:#d8ecfc!important;-webkit-text-fill-color:#d8ecfc!important;
+ font-size:12px!important;line-height:1.45!important;font-weight:700!important;
+ overflow-wrap:anywhere!important;
+}
+.rivo-shield-stage canvas[hidden],.rivo-shield-stage .rivo-shield-empty[hidden]{
+ display:none!important;
+}

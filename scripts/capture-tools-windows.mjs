@@ -40,6 +40,18 @@ for(let i=0;i<specs.length;i++){
   const tile=page.locator('[data-hub-action="'+id+'"]');
   await tile.scrollIntoViewIfNeeded(); await tile.click({timeout:9000});
   await page.waitForTimeout(850);
+  if(id==='managePages'){
+   // The PDF renderer runs asynchronously: never mislabel an in-progress thumbnail
+   // as a broken image. Capture actual result (or a localized fallback).
+   await page.waitForFunction(()=>{
+    const entries=[...document.querySelectorAll('.rivo-page-tile')];
+    return !entries.length||entries.every(tile=>{
+     const image=tile.querySelector('img');
+     return image?.complete&&image.naturalWidth>0||
+      !!tile.querySelector('.rivo-page-preview-loading');
+    });
+   },{timeout:4000}).catch(()=>{});
+  }
   const file=prefix+'-window.png';
   await page.screenshot({path:join(root,file),animations:'disabled'});files.push(file);
   const info=await page.evaluate(()=>{

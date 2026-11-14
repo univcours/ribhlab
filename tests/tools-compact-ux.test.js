@@ -37,3 +37,11 @@ test('grouped i buttons collect multiple descriptions without additional rows',(
  assert.match(css,/rivo-shield-stage :is\(canvas,\.rivo-shield-empty\)\[hidden\]/);
  assert.match(css,/body \.rivo-editor-overlay \.rivo-editor-window \.rivo-editor-actions>/);
 });
+
+test('privacy first-run canvas and PDF thumbnail placeholders are initialized accessibly',()=>{
+ const shield=source('src/privacy-shield.js'),pages=source('src/page-manager.js');
+ assert.match(shield,/update\(\); \/\/ Initialize first-run empty state/);
+ assert.match(pages,/rivo-page-preview-loading/);
+ assert.match(pages,/placeholder\.replaceWith\(img\)/);
+ assert.match(pages,/Preview unavailable/);
+});

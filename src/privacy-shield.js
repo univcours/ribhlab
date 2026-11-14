@@ -193,6 +193,7 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
  input.addEventListener('change',()=>{const selected=input.files?.[0];input.value='';if(selected)void pick(selected)});
  backHandler=e=>{if(e.key==='Escape'&&!busy){e.preventDefault();close()}};
  document.addEventListener('keydown',backHandler);
+ update(); // Initialize first-run empty state: the canvas is hidden until a file is loaded.
  if(doc){
   try{
    const source=await bridge.readFile({uri:doc.uri});
