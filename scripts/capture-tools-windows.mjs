@@ -26,7 +26,7 @@ for(let i=0;i<specs.length;i++){
  page.on('pageerror',e=>errors.push(String(e)));
  page.on('filechooser',async chooser=>{
   try{
-   const accept=await chooser.element.getAttribute('accept')||'';
+   const accept=await (await chooser.element()).getAttribute('accept')||'';
    const target=/image\//.test(accept)&&!/pdf/.test(accept)?samplePNG:fixture;
    fixtures.push(target===samplePNG?'TEST_IMAGE.png':'TEST_SAMPLE.pdf');
    await chooser.setFiles(target);
