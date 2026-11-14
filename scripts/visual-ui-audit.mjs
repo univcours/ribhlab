@@ -56,17 +56,17 @@ try{
   const band=await page.evaluate(()=>{
    document.body.classList.add('rivo-has-ad-banner');
    const el=document.querySelector('.rivo-ad-banner-slot');
-   const box=el?.getBoundingClientRect(),header=document.querySelector('.topbar')?.getBoundingClientRect();
+   const box=el?.getBoundingClientRect(),nav=document.querySelector('.mobilebar')?.getBoundingClientRect();
    const frame=el?.querySelector('.rivo-ad-banner-frame'),rect=frame?.getBoundingClientRect();
    if(frame)frame.textContent='320 × 50 TEST SLOT';
-   return {exists:!!el,visible:!!box&&box.height>=68,
+   return {exists:!!el,visible:!!box&&box.height>=50,
     centered:!!rect&&Math.abs(rect.left+rect.width/2-innerWidth/2)<4,
     fits:!!rect&&rect.width<=320&&rect.left>=-2&&rect.right<=innerWidth+2,
-    safe:!!box&&!!header&&box.top>=header.bottom-2,
-    style:frame?getComputedStyle(frame).backgroundColor:''};
+    belowNav:!!box&&!!nav&&box.top>=nav.bottom-2,
+    atBottom:!!box&&Math.abs(box.bottom-innerHeight)<3};
   });
-  check(width+': 320x50 banner band separated from header',
-   band.exists&&band.visible&&band.centered&&band.fits&&band.safe&&['rgb(245, 250, 255)','rgb(233, 245, 251)'].includes(band.style));
+  check(width+': 320x50 native banner sits below and outside blue navigation',
+   band.exists&&band.visible&&band.centered&&band.fits&&band.belowNav&&band.atBottom);
   await page.screenshot({path:out+'/'+width+'-banner-test-slot.png'});
   await page.evaluate(()=>document.body.classList.remove('rivo-has-ad-banner'));
 
