@@ -97,7 +97,7 @@ jobs:
           sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode 124/' android/app/build.gradle
           sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "0.45.20"/' android/app/build.gradle
           grep -Eq 'versionCode[[:space:]]+124' android/app/build.gradle
-          grep -Eq 'versionName[[:space:]]+"0[.]45[.]19"' android/app/build.gradle
+          grep -Eq 'versionName[[:space:]]+"0[.]45[.]20"' android/app/build.gradle
       - name: Assemble signed release app bundle
         env:
           RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
