@@ -100,6 +100,34 @@ try{
   await page.screenshot({path:out+'/'+width+'-banner-test-slot.png'});
   await page.evaluate(()=>document.body.classList.remove('rivo-has-ad-banner'));
 
+  // Every app page must use ONE 320x50 native reservation above the fixed nav.
+  // This verifies only geometry; an actual AdMob tap needs Android hardware.
+  for(const [name,selector] of [
+   ['home','.mobilebar [data-go="home"]'],
+   ['documents','.mobilebar [data-open-library]'],
+   ['tools','.mobilebar [data-tab="tools"]'],
+   ['me','.mobilebar [data-tab="me"]']
+  ]){
+   await page.locator(selector).click();
+   const fit=await page.evaluate(()=>{
+    document.body.classList.add('rivo-has-ad-banner');
+    const nav=document.querySelector('.mobilebar').getBoundingClientRect();
+    const margin=Math.ceil(innerHeight-nav.top)+8;
+    document.documentElement.style.setProperty('--rivo-banner-bottom',margin+'px');
+    const el=document.querySelector('.rivo-ad-banner-slot');
+    const box=el.getBoundingClientRect(),inner=el.querySelector('.rivo-ad-banner-frame').getBoundingClientRect();
+    const okay=box.width===320&&box.height===50&&inner.width===320&&
+     box.left>=-1&&box.right<=innerWidth+1&&
+     Math.abs(box.left+box.width/2-innerWidth/2)<2&&
+     Math.abs(box.bottom-(innerHeight-margin))<2&&
+     box.bottom<=nav.top-7&&getComputedStyle(el).pointerEvents==='none';
+    document.body.classList.remove('rivo-has-ad-banner');
+    return okay;
+   });
+   check(width+': '+name+' 320x50 ad slot centered, nav unobstructed, native tap possible',fit);
+  }
+  await page.locator('.mobilebar [data-go="home"]').click();
+
   await page.locator('.mobilebar [data-open-library]').click();
   await page.locator('.library-workspace').waitFor({state:'visible'});
   const library=await page.evaluate(()=>{
@@ -147,7 +175,7 @@ try{
     count:g.querySelectorAll(':scope > .rivo-hub-tile').length}))
   }));
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
-  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
+  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===(width<=380?2:3)));
   const toolLabelFit=await page.evaluate(()=>{
     const tiles=[...document.querySelectorAll('.rivo-hub-tile')];
     const ids=tiles.map(tile=>tile.dataset.hubAction);
