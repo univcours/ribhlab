@@ -27,3 +27,13 @@ test('compact editor avoids horizontal filters scroll and limits modal heights',
  assert.match(css,/rivo-shield-stage/);
  assert.match(css,/color:#24476a!important/);
 });
+
+test('grouped i buttons collect multiple descriptions without additional rows',()=>{
+ const js=source('src/tool-help.js'),css=source('src/rivo-tools-compact-ux.css');
+ assert.match(js,/const groups=new WeakMap\(\)/);
+ assert.match(js,/section\.sources\.push\(node\)/);
+ assert.match(js,/section\.sources\.map/);
+ assert.match(css,/rivo-peer-workspace \.page-heading p/);
+ assert.match(css,/rivo-shield-stage :is\(canvas,\.rivo-shield-empty\)\[hidden\]/);
+ assert.match(css,/body \.rivo-editor-overlay \.rivo-editor-window \.rivo-editor-actions>/);
+});

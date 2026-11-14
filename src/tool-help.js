@@ -1,9 +1,9 @@
-/* Accessible RivoScan tool explanations – informative text only.
- * Preserve all original text; it is shown through a conventional (i) button.
- * The data owner can still read essential processing/format warnings on demand.
+/* One conventional (i) per Tool section / modal, with ALL original help
+ * copy still available. Grouping avoids clutter from repeated help circles.
  */
 const HELP_SELECTOR=[
  '#app .workspace:not(.library-workspace) .work-title p',
+ '#app .workspace .page-heading p',
  '#app .workspace .hint',
  '#app .workspace .dropzone > span',
  '#app .workspace .privacy',
@@ -16,91 +16,88 @@ const HELP_SELECTOR=[
  '.rivo-id-dialog p.rivo-id-hint',
  '.rivo-editor-tip'
 ].join(',');
-const WORDS={
- en:'Information',ar:'معلومات',fr:'Informations',es:'Información',
- de:'Informationen',pt:'Informações',it:'Informazioni'
-};
-let initialized=false,observer=null,scheduled=false,active=null,dialog=null,sequence=0;
-function words(){return WORDS[document.documentElement.lang]||WORDS.en;}
+const WORDS={en:'Information',ar:'معلومات',fr:'Informations',
+ es:'Información',de:'Informationen',pt:'Informações',it:'Informazioni'};
+let initialized=false,observer,scheduled=false,active=null,dialog=null,sequence=0;
+const groups=new WeakMap();
+function word(){return WORDS[document.documentElement.lang]||WORDS.en;}
+function groupFor(node){
+ return node.closest('.rivo-shield-dialog,.rivo-perfectscan-modal,.rivo-id-dialog,.rivo-code-dialog,.rivo-merged-dialog,.rivo-editor-window')
+ ||node.closest('.rivo-peer-workspace')
+ ||node.closest('#app .workspace .panel')
+ ||node.closest('#app .workspace .work-title')
+ ||node.parentElement;
+}
 function closeInfo(){
  if(active)active.setAttribute('aria-expanded','false');
- active=null;
- dialog?.remove();dialog=null;
+ active=null;dialog?.remove();dialog=null;
 }
 function placeInfo(trigger){
  if(!dialog)return;
- const rect=trigger.getBoundingClientRect();
- const viewW=document.documentElement.clientWidth,viewH=window.innerHeight;
- const w=Math.min(310,Math.max(220,viewW-24));
- const x=Math.max(12,Math.min(viewW-w-12,rect.left-8));
- dialog.style.width=w+'px';
- dialog.style.left=x+'px';
- const desired=Math.max(12,rect.bottom+6),spaceDown=viewH-desired;
- const y=spaceDown>=125?desired:Math.max(12,rect.top-Math.min(180,viewH*.4)-7);
- dialog.style.top=y+'px';
- dialog.style.maxHeight=Math.max(90,Math.min(220,viewH-y-16))+'px';
+ const r=trigger.getBoundingClientRect(),vw=document.documentElement.clientWidth,vh=innerHeight;
+ const width=Math.min(315,Math.max(220,vw-24));
+ const left=Math.max(12,Math.min(vw-width-12,r.left-8));
+ const down=r.bottom+6,top=vh-down>=132?down:Math.max(12,r.top-Math.min(205,vh*.42)-8);
+ Object.assign(dialog.style,{left:left+'px',top:top+'px',width:width+'px',maxHeight:Math.max(94,Math.min(260,vh-top-16))+'px'});
 }
-function openInfo(trigger,source){
- if(active===trigger){closeInfo();return;}
- closeInfo();active=trigger;
- trigger.setAttribute('aria-expanded','true');
+function openInfo(button,section){
+ if(active===button){closeInfo();return;}
+ closeInfo();active=button;button.setAttribute('aria-expanded','true');
  dialog=document.createElement('aside');
- dialog.id=trigger.getAttribute('aria-controls');
+ dialog.id=button.getAttribute('aria-controls');
  dialog.className='rivo-tool-help-popover';
  dialog.setAttribute('role','note');
- dialog.setAttribute('aria-label',words());
- dialog.textContent=source.textContent.trim();
- document.body.append(dialog);
- placeInfo(trigger);
+ dialog.setAttribute('aria-label',word());
+ dialog.textContent=section.sources.map(x=>x.textContent.trim()).filter(Boolean).join('\n\n');
+ document.body.append(dialog);placeInfo(button);
+}
+function addTrigger(group){
+ const button=document.createElement('button');
+ button.className='rivo-tool-help-trigger';button.type='button';button.textContent='ⓘ';button.title=word();
+ const id='rivo-help-'+(++sequence);
+ button.setAttribute('aria-label',word());button.setAttribute('aria-controls',id);button.setAttribute('aria-expanded','false');
+ let close=group.querySelector(':scope > header [data-merged-close],.rivo-shield-head [data-shield="close"],.rivo-editor-header [data-edit="retake"],.rivo-modal-top .rivo-modal-dismiss,.rivo-perfectscan-modal header [data-perfect="close"]');
+ let title=group.querySelector('.page-heading h1,.work-title h1,.panel h3,.rivo-modal-top h2,.rivo-merged-dialog header strong,.rivo-perfectscan-modal header strong');
+ if(close)close.before(button);
+ else if(title)title.append(button);
+ else group.prepend(button);
+ return button;
 }
 function enhance(){
  for(const node of document.querySelectorAll(HELP_SELECTOR)){
   if(node.dataset.rivoHelpApplied)continue;
   if(node.closest('.rivo-tool-help-popover,.rivo-tool-help-trigger'))continue;
-  if(node.querySelector('button,a,input,textarea,select,canvas,video'))continue;
-  const message=node.textContent.trim();
-  if(message.length<21)continue;
-  // Dynamic status messages need to stay visible and must never be collapsed.
-  if(node.matches('[role="status"],[role="alert"],[aria-live]'))continue;
-  node.dataset.rivoHelpApplied='yes';
-  node.classList.add('rivo-tool-help-source');
-  node.hidden=true;
-  const button=document.createElement('button');
-  button.type='button';
-  button.className='rivo-tool-help-trigger';
-  button.textContent='ⓘ';
-  const id='rivo-help-'+(++sequence);
-  button.title=words();
-  button.setAttribute('aria-label',words()+': '+message.slice(0,90));
-  button.setAttribute('aria-expanded','false');
-  button.setAttribute('aria-controls',id);
-  node.after(button);
-  button.addEventListener('click',()=>openInfo(button,node));
+  if(node.querySelector('button,a,input,select,textarea,canvas,video'))continue;
+  const text=node.textContent.trim();
+  if(text.length<21||node.matches('[role="status"],[role="alert"],[aria-live]'))continue;
+  const group=groupFor(node);if(!group)continue;
+  node.dataset.rivoHelpApplied='yes';node.classList.add('rivo-tool-help-source');node.hidden=true;
+  let section=groups.get(group);
+  if(!section){
+   section={sources:[],button:addTrigger(group)};
+   groups.set(group,section);
+   section.button.addEventListener('click',()=>openInfo(section.button,section));
+  }
+  section.sources.push(node);
+  section.button.setAttribute('aria-label',word()+': '+section.sources.length+' '+(section.sources.length===1?'note':'notes'));
  }
  if(active&&!document.contains(active))closeInfo();
 }
 export function refreshToolHelp(){
  if(scheduled)return;
- scheduled=true;
- queueMicrotask(()=>{
-  scheduled=false;
-  if(document.body)enhance();
- });
+ scheduled=true;queueMicrotask(()=>{scheduled=false;if(document.body)enhance();});
 }
 export function installToolHelp(){
  if(initialized)return;
  if(!document.body){document.addEventListener('DOMContentLoaded',installToolHelp,{once:true});return;}
  initialized=true;
  observer=new MutationObserver(records=>{
-  if(records.some(record=>[...record.addedNodes].some(node=>node.nodeType===1&&!node.classList?.contains('rivo-tool-help-popover'))))
-   refreshToolHelp();
+  if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('rivo-tool-help-popover'))))refreshToolHelp();
  });
  observer.observe(document.body,{childList:true,subtree:true});
- document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&active){closeInfo();event.stopPropagation();}
- });
- document.addEventListener('pointerdown',event=>{
-  if(active&&!dialog?.contains(event.target)&&!event.target.closest?.('.rivo-tool-help-trigger'))closeInfo();
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&active){closeInfo();e.stopPropagation();}});
+ document.addEventListener('pointerdown',e=>{
+  if(active&&!dialog?.contains(e.target)&&!e.target.closest?.('.rivo-tool-help-trigger'))closeInfo();
  },true);
  window.addEventListener('resize',()=>{if(active)placeInfo(active)},{passive:true});
  refreshToolHelp();

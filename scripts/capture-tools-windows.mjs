@@ -57,6 +57,19 @@ for(let i=0;i<specs.length;i++){
     smallButtons:smallButtons.map(b=>Math.round(b.getBoundingClientRect().height)),
     visibleText:document.body.innerText.slice(0,1500),scrollHeight:document.documentElement.scrollHeight,innerHeight};
   });
+  if(id==='photoStudio'){
+   const editor=await page.evaluate(()=>{
+    const bar=document.querySelector('.rivo-editor-actions'),s=bar&&getComputedStyle(bar);
+    const buttons=[...bar.querySelectorAll(':scope > button')];
+    const box=bar.getBoundingClientRect();
+    const positions=buttons.map(btn=>btn.getBoundingClientRect());
+    return {display:s.display,columns:s.gridTemplateColumns,overflow:s.overflowX,
+     rows:new Set(positions.map(x=>Math.round(x.top))).size,
+     allInside:positions.every(x=>x.left>=box.left-2&&x.right<=box.right+2&&x.bottom<=innerHeight+2)};
+   });
+   info.editorActions=editor;
+   console.log('EDITOR ACTION GEOMETRY',JSON.stringify(editor));
+  }
   // For long normal pages include a bottom shot. Popups keep their own scroll area.
   if(info.scrollHeight>info.innerHeight+160){
    await page.evaluate(()=>{window.scrollTo(0,document.documentElement.scrollHeight);const x=document.querySelector('.content');if(x)x.scrollTop=x.scrollHeight;});
