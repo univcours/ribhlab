@@ -1,4 +1,5 @@
 name: RivoScan 0.45.12 correct original upload key
+# Final release job: signed artifacts built from the branch after 161/161 responsive checks.
 on:
   workflow_dispatch:
   push:
