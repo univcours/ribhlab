@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import pngjs from 'pngjs';
+// CI runs npm test before npm build; generate the safe derivatives for this test.
+import '../scripts/create-turquoise-icon.mjs';
 const {PNG}=pngjs;
 const read=path=>readFileSync(new URL('../'+path,import.meta.url));
 const str=path=>read(path).toString('utf8');
