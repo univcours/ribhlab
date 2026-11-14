@@ -522,10 +522,18 @@ function settingsWorkspace(){
  const adText=ad.native?(ad.ready?(ad.consent?'AdMob initialized · consent ready':'Consent not ready'):'AdMob not ready'):'AdMob works in the installed Android app only';
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
  <div class="settings-identity"><div class="settings-logo"><img src="/icon.svg" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
- <div class="settings-section rivo-scan-settings"><h2>${scanPrefsText(language).title}</h2><p class="rivo-pref-section-subtitle">${scanPrefsText(language).sub}</p>
-
- ${scannerPreferenceRows()}
- <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p></div>
+ <div class="settings-section rivo-scan-settings">
+  <details class="rivo-scan-pref-details">
+   <summary class="rivo-scan-pref-summary"><span class="rivo-pref-summary-icon">${ico('check',18)}</span>
+    <span class="rivo-pref-summary-copy"><strong>${scanPrefsText(language).title}</strong>
+     <small>${scanPrefsText(language).sub}</small></span>
+    <span class="rivo-pref-summary-chevron" aria-hidden="true">⌄</span></summary>
+   <div class="rivo-scan-pref-body">
+    ${scannerPreferenceRows()}
+    <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p>
+   </div>
+  </details>
+ </div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
@@ -581,7 +589,7 @@ function scannerWorkspace(){
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="mlkit-full">${ico('scan',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('edges',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
-   <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} PerfectScan Pro · UVDoc AI / 3D</button></div>
+   <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} ${escapeHTML(({en:'Advanced paper correction',ar:'تصحيح متقدم للوثائق',fr:'Correction avancée du papier',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione avanzata'})[language]||'Advanced paper correction')}</button></div>
   <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>

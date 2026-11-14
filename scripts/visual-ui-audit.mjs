@@ -170,12 +170,16 @@ try{
    const widths=cards.map(el=>el.getBoundingClientRect().width);
    return {count:cards.length,compact:heights.every(n=>n>=75&&n<150),
      widthsValid:widths.every(n=>n>40&&n<175),
-     orbit:cards.every(el=>getComputedStyle(el,'::before').animationName==='rivo-orbit-border'),
+     orbit:cards.every(el=>getComputedStyle(el,'::before').animationName==='none'),
      scanOrbit:getComputedStyle(document.querySelector('.rivo-nav-scan-ring'),'::before').animationName==='rivo-orbit-border'};
   });
-  check(width+': compact Tools tiles and rotating edge and Smart Scan rings are present',
+  check(width+': compact Tools tiles keep quiet edges and rotating Smart Scan ring',
     compactMetrics.count===19&&compactMetrics.compact&&compactMetrics.widthsValid&&
     compactMetrics.orbit&&compactMetrics.scanOrbit);
+  await page.locator('.rivo-hub-tile').first().focus();
+  const focusedOrbit=await page.locator('.rivo-hub-tile').first().evaluate(el=>
+    getComputedStyle(el,'::before').animationName==='rivo-orbit-border');
+  check(width+': focused tool gets a moving blue edge',focusedOrbit);
 
   // Every tool tile is documented using its actual UI, without fake camera captures.
   if(width===393){
@@ -256,6 +260,29 @@ try{
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
   await page.screenshot({path:out+'/'+width+'-settings.png'});
+  const settingsInitial=await page.evaluate(()=>{
+    const detail=document.querySelector('.rivo-scan-pref-details');
+    const general=document.querySelector('.settings-lang');
+    const heading=document.querySelector('.rivo-scan-pref-summary');
+    return {exists:!!detail,collapsed:!!detail&&!detail.open,fields:detail?.querySelectorAll('[data-scan-pref]').length,
+      generalVisible:!!general&&general.getBoundingClientRect().top<innerHeight-90,
+      summaryVisible:!!heading&&heading.getBoundingClientRect().width>=innerWidth*.75};
+  });
+  check(width+': scanner advanced choices start collapsed but remain available',
+    settingsInitial.exists&&settingsInitial.collapsed&&settingsInitial.fields===9&&
+    settingsInitial.generalVisible&&settingsInitial.summaryVisible);
+  await page.locator('.rivo-scan-pref-summary').click();
+  const settingsExpanded=await page.evaluate(()=>{
+    const root=document.querySelector('.rivo-scan-pref-details');
+    const controls=[...root.querySelectorAll('select[data-scan-pref]')];
+    return {open:root.open,number:controls.length,
+      fit:controls.every(el=>{const b=el.getBoundingClientRect(),c=el.closest('.rivo-scanner-pref').getBoundingClientRect();
+        return b.left>=c.left-2&&b.right<=c.right+2&&b.width>160&&getComputedStyle(el).fontSize==='14px';})};
+  });
+  check(width+': scanner preset choices have full-width legible selectors',
+    settingsExpanded.open&&settingsExpanded.number===5&&settingsExpanded.fit);
+  await page.screenshot({path:out+'/'+width+'-settings-advanced.png'});
+  await page.locator('.rivo-scan-pref-summary').click();
   // Regression for the live-reported screen: no debug internals at the bottom
   // of consumer settings, but keep a visible privacy-choices entry point.
   const publicSettings=await page.evaluate(()=>{
