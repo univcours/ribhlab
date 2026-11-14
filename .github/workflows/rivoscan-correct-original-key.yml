@@ -8,6 +8,10 @@ on:
       - '.github/workflows/rivoscan-correct-original-key.yml'
       - 'rivoscan-version.properties'
       - 'package.json'
+      - 'assets/branding/**'
+      - 'scripts/create-turquoise-icon.mjs'
+      - 'apply-rivoscan-branding.ps1'
+      - 'tests/brand-colors.test.js'
 permissions:
   contents: read
 concurrency:
@@ -49,6 +53,10 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+          test -s android/app/src/main/res/drawable-nodpi/rivoscan_launcher_adaptive.png
+          cmp assets/branding/rivoscan-icon-adaptive-foreground.png android/app/src/main/res/drawable-nodpi/rivoscan_launcher_adaptive.png
+          cmp assets/branding/rivoscan-icon-source.png public/rivoscan-icon.png
+          grep -F '@drawable/rivoscan_launcher_adaptive' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
       - name: Prepare compact native Google ML Kit + PerfectClean build
         run: |
           python3 scripts/prepare-rivoscan-compact.py
