@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/rivoscan-correct-original-key.yml'
       - 'rivoscan-version.properties'
+      - 'package.json'
 permissions:
   contents: read
 concurrency:
