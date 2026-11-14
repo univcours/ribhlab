@@ -87,7 +87,7 @@ jobs:
           grep -F 'android:icon="@mipmap/ic_launcher"' android/app/src/main/AndroidManifest.xml
           grep -F 'android:roundIcon="@mipmap/ic_launcher_round"' android/app/src/main/AndroidManifest.xml
           grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'rivoscan_launcher_adaptive' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           # Capacitor's generated versionCode may be stale; the LAST applied
           # RivoScan Gradle override is the actual source of truth in Android Studio.
@@ -153,7 +153,7 @@ jobs:
           test -x "$AAPT"
           "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='121' versionName='0.45.17'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
-          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
+          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(adaptive|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
           cat /tmp/rivoscan-launcher-resources.txt
           unzip -Z -1 "$APK" | grep -E '^classes[0-9]*[.]dex$' > /tmp/rivoscan-dex-list.txt
