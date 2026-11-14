@@ -38,6 +38,7 @@ import './privacy-shield.css';
 import './rivo-design-system.css';
 import './modal-shell.css';
 import './rivo-blue-theme.css';
+import './rivo-accessibility-ads.css';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -513,15 +514,13 @@ function settingsWorkspace(){
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
-  <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · App Open: ${ad.appOpenReady?'ready':'not loaded'} · Banner: ${ad.bannerReady?'loaded':ad.bannerEnabled?'pending':'not configured'}</p>
+  <p>Interstitial: ${ad.interstitialReady?'ready':'not loaded'} · Banner: ${ad.bannerReady?'loaded':ad.bannerEnabled?'pending':'not configured'}</p>
     <p>${({ar:'عدد مرات فتح التطبيق',fr:'Ouvertures de l’application',en:'App launches'})[language]||'App launches'}: ${ad.launchCount} · ${({ar:'الإعلانات الكاملة ابتداءً من',fr:'Annonces plein écran à partir de',en:'Full-screen ads from launch'})[language]||'Full-screen ads from launch'} ${ad.startLaunch}</p>
     <p>${({ar:'الطلبات / التحميل / مرات الظهور',fr:'Demandes / Chargements / Impressions',en:'Requests / Loaded / Impressions'})[language]||'Requests / Loaded / Impressions'}</p>
     <p>Banner: ${ad.adStats.bannerRequests} / ${ad.adStats.bannerLoads} / ${ad.adStats.bannerImpressions}</p>
     <p>Interstitial: ${ad.adStats.interstitialRequests} / ${ad.adStats.interstitialLoads} / ${ad.adStats.interstitialImpressions}</p>
-    <p>App Open: ${ad.adStats.appOpenRequests} / ${ad.adStats.appOpenLoads} / ${ad.adStats.appOpenImpressions}</p>
     ${ad.adStats.lastBannerError?'<p>'+escapeHTML(ad.adStats.lastBannerError)+'</p>':''}
     ${ad.adStats.lastInterstitialError?'<p>'+escapeHTML(ad.adStats.lastInterstitialError)+'</p>':''}
-    ${ad.adStats.lastAppOpenError?'<p>'+escapeHTML(ad.adStats.lastAppOpenError)+'</p>':''}
     <p>${ad.testMode?'TEST ads — no revenue':'LIVE AdMob inventory'}</p>
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
