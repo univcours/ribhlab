@@ -5,6 +5,7 @@ on:
     branches: [rivoscan-standalone-ready]
     paths:
       - '.github/workflows/rivoscan-correct-original-key.yml'
+      - 'rivoscan-version.properties'
 permissions:
   contents: read
 concurrency:
