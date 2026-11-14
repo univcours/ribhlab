@@ -40,6 +40,7 @@ import './modal-shell.css';
 import './rivo-blue-theme.css';
 import './rivo-accessibility-ads.css';
 import './rivo-release-ux.css';
+import './rivo-orbit-compact.css';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -454,6 +455,17 @@ const RIVO_FEATURE_TEXT={
  fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
 };
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
+// Visual labels stay short; full descriptive names remain accessible to assistive tech.
+const RIVO_COMPACT_FEATURE_LABELS={
+ en:{smartAutoCapture:'Auto Scan',scanCode:'QR / Barcode',perfectScanQuality:'PerfectScan',privacyShield:'Privacy'},
+ ar:{smartAutoCapture:'سكان تلقائي',scanCode:'QR / باركود',perfectScanQuality:'تحسين الوثائق',privacyShield:'الخصوصية'},
+ fr:{smartAutoCapture:'Scan auto',scanCode:'QR / Codes',perfectScanQuality:'PerfectScan',privacyShield:'Confidentialité'},
+ es:{smartAutoCapture:'Scan auto',scanCode:'QR / Código',perfectScanQuality:'PerfectScan',privacyShield:'Privacidad'},
+ de:{smartAutoCapture:'Auto-Scan',scanCode:'QR / Codes',perfectScanQuality:'PerfectScan',privacyShield:'Datenschutz'},
+ pt:{smartAutoCapture:'Scan auto',scanCode:'QR / Código',perfectScanQuality:'PerfectScan',privacyShield:'Privacidade'},
+ it:{smartAutoCapture:'Scan auto',scanCode:'QR / Codici',perfectScanQuality:'PerfectScan',privacyShield:'Privacy'}
+};
+const compactFeatureLabel=id=>(RIVO_COMPACT_FEATURE_LABELS[language]||RIVO_COMPACT_FEATURE_LABELS.en)[id]||id;
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
  {id:'scanCode',icon:'qr',label:'qr',detail:'qrSub'},
@@ -468,7 +480,7 @@ function home(){
   </div>
   <nav class="rivo-feature-rail" aria-label="${escapeHTML(featureText('short'))}">
    ${featureTiles.map(f=>`<button type="button" class="rivo-feature-tile" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
-    <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(featureText(f.label))}</strong></button>`).join('')}
+    <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(compactFeatureLabel(f.id))}</strong></button>`).join('')}
   </nav>
   <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
   </div>
