@@ -41,6 +41,7 @@ import './rivo-blue-theme.css';
 import './rivo-accessibility-ads.css';
 import './rivo-release-ux.css';
 import './rivo-orbit-compact.css';
+import './rivo-device-safe.css';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -339,7 +340,7 @@ function render(){
   const aside = `<aside class="sidebar"><div class="brand"><img src="/rivoscan-icon.png" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
   const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
-    <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-icon.png" alt=""><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
+    <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-icon.png" alt="RivoScan complete logo"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
     <div class="rivo-top-controls" role="group" aria-label="Language and sound">
       <label class="rivo-top-locale" aria-label="Language">${ico('globe',15)}
         <select id="header-language" aria-label="Language">${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${language===code?'selected':''}>${label}</option>`).join('')}</select>

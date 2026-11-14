@@ -1,6 +1,6 @@
 {
   "name": "rivoscan",
-  "version": "0.45.19",
+  "version": "0.45.20",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,6 +23,7 @@
     "pdfjs-dist": "^5.4.0",
     "tesseract.js": "^6.0.1",
     "jszip": "^3.10.1",
+    "pngjs": "^7.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor-mlkit/document-scanner": "8.2.1",
     "@capacitor/status-bar": "^8.0.0",

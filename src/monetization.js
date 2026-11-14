@@ -137,8 +137,11 @@ export function getPremiumStatus(){
 // Native banners draw OVER the WebView, so hide them during cameras,
 // modal dialogs, document previews and in-progress saves, then resume.
 let bannerObserver=null;
+let bannerLastMargin=0,bannerRelayoutTimer=null,bannerLayoutObserved=false;
 function bannerObstructed(){
- return state.busy||(typeof document!=='undefined'&&!!document.querySelector(
+ const focus=typeof document!=='undefined'?document.activeElement:null;
+ const keyboard=!!(focus&&/^(INPUT|TEXTAREA)$/.test(focus.tagName));
+ return state.busy||keyboard||(typeof document!=='undefined'&&!!document.querySelector(
   '.rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-perfectscan-overlay,'+
   '.rivo-editor-overlay,.rivo-pages-overlay,.rivo-update-gate,.doc-detail-overlay,'+
   '.bulk-overlay,.rivo-reward-overlay,.busy'
@@ -171,13 +174,35 @@ function bannerBottomMargin(){
  const nav=document.querySelector('#app nav.mobilebar.rivo-nav-five');
  if(!nav||getComputedStyle(nav).display==='none')return 0;
  const box=nav.getBoundingClientRect();
- if(box.height<40||box.top<0||box.bottom<window.innerHeight-6)return 0;
- // Keep a small gap between the native creative and the tap targets.
- return Math.ceil(window.innerHeight-box.top)+8;
+ if(box.height<40||box.top<0||box.top>=window.innerHeight)return 0;
+ // Same logical-pixel bottom margin controls both native AdMob and HTML slot.
+ // 8px gap keeps the clickable native creative clear of navigation buttons.
+ return Math.max(0,Math.ceil(window.innerHeight-box.top)+8);
+}
+function scheduleBannerRelayout(){
+ if(!state.ready||typeof window==='undefined')return;
+ if(bannerRelayoutTimer)clearTimeout(bannerRelayoutTimer);
+ bannerRelayoutTimer=setTimeout(async()=>{
+  bannerRelayoutTimer=null;
+  if(!state.ready)return;
+  const obstructed=bannerObstructed();
+  if(state.bannerReady&&obstructed&&!state.bannerHidden){
+   state.bannerHidden=true;setBannerSpace(false);await AdMob.hideBanner().catch(()=>{});
+  }else if(state.bannerReady&&!obstructed&&state.bannerHidden){
+   state.bannerHidden=false;await AdMob.resumeBanner().then(()=>setBannerSpace(true)).catch(()=>{});
+  }
+  const margin=bannerBottomMargin();
+  if(state.bannerReady&&Math.abs(margin-bannerLastMargin)>2){
+   // Native overlays cannot be moved with CSS. Re-create at the new anchor.
+   state.bannerReady=false;state.bannerHidden=false;setBannerSpace(false);
+   await AdMob.removeBanner().catch(()=>{});
+   void loadBanner();
+  }else if(state.bannerReady&&!state.bannerHidden)setBannerSpace(true);
+ },180);
 }
 async function loadBanner(){
  if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading)return false;
- if(typeof window==='undefined'||window.innerWidth<320){
+ if(typeof window==='undefined'||document.documentElement.clientWidth<320){
   state.bannerError='Screen too narrow for 320x50 banner';return false;
  }
  state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(true);
@@ -198,9 +223,10 @@ async function loadBanner(){
    });
    state.bannerListenersAttached=true;
   }
+  bannerLastMargin=bannerBottomMargin();
   await AdMob.showBanner({
    adId:AD_CONFIG.banner,adSize:BannerAdSize.BANNER,
-   position:BannerAdPosition.BOTTOM_CENTER,margin:bannerBottomMargin(),
+   position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin,
    isTesting:AD_CONFIG.testMode
   });
   return true;
