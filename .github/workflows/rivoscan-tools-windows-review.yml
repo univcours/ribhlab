@@ -1,0 +1,41 @@
+name: RivoScan - capture all 19 real Tools windows
+on:
+  push:
+    branches: [rivoscan-tools-window-review-20261114]
+    paths:
+      - 'scripts/capture-tools-windows.mjs'
+      - '.github/workflows/rivoscan-tools-windows-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  all-tools-windows:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install, compile and test exact RivoScan 0.45.21
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Capture each Tools interface with numbered names and contrast review
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-tools-preview.log 2>&1 &
+          for n in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep 1
+          done
+          node scripts/capture-tools-windows.mjs
+      - name: Publish all tool screenshots and text-contrast diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-04521-All-19-Tools-Real-Windows
+          path: /tmp/rivoscan-all-tools/
+          retention-days: 14
+          if-no-files-found: warn
