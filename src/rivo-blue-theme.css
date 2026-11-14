@@ -431,3 +431,74 @@ body[dir=rtl] .rivo-id-dialog{
  border:1px solid #B8D9F2!important;
  border-radius:999px!important;
 }
+
+
+/* RivoScan production QA: native banner lives BELOW all application controls.
+   Capacitor AdMob overlays WebView; this bottom reservation follows SizeChanged.
+   It is deliberately fixed and non-interactive so ad art is only Google's. */
+#app .rivo-dark-ui .rivo-ad-banner-slot{
+ display:none!important;position:fixed!important;top:auto!important;bottom:0!important;
+ left:0!important;right:0!important;width:100%!important;
+ height:var(--rivo-banner-height,50px)!important;
+ min-height:0!important;padding:0!important;margin:0!important;
+ z-index:42!important;box-sizing:border-box!important;
+ background:#F5FAFF!important;border:0!important;border-top:1px solid #B8D9F2!important;
+ align-items:center!important;justify-content:center!important;pointer-events:none!important;
+}
+body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex!important}
+#app .rivo-dark-ui .rivo-ad-banner-frame{
+ width:min(320px,100%)!important;height:100%!important;
+ background:transparent!important;border:0!important;border-radius:0!important;
+}
+@media(max-width:780px){
+ /* The blue navbar is completely above the independently rendered native ad. */
+ html body.rivo-has-ad-banner #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
+  bottom:var(--rivo-banner-height,50px)!important;
+ }
+ html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .content{
+  padding-bottom:calc(var(--rivo-nav-height,78px) + var(--rivo-banner-height,50px) + 32px + env(safe-area-inset-bottom,0px))!important;
+ }
+ /* Never shrink/crop the scan button. Keep icon and caption inside the blue nav. */
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
+  min-height:88px!important;height:calc(88px + env(safe-area-inset-bottom,0px))!important;
+  grid-auto-rows:76px!important;align-items:center!important;overflow:visible!important;
+  padding:4px 6px calc(6px + env(safe-area-inset-bottom,0px))!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button.rivo-nav-scan{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:3px!important;
+  height:76px!important;min-height:76px!important;max-height:none!important;
+  padding:0!important;overflow:visible!important;transform:none!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-ring{
+  display:grid!important;place-items:center!important;
+  width:53px!important;height:53px!important;flex:0 0 53px!important;
+  margin:0!important;top:auto!important;bottom:auto!important;transform:none!important;
+  box-sizing:border-box!important;overflow:visible!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-label{
+  display:block!important;min-height:15px!important;line-height:15px!important;
+  margin:0!important;white-space:nowrap!important;
+ }
+ html body #app .shell.rivo-dark-ui .content{
+  padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important;
+ }
+ /* No second camera button layered on the main navigation. */
+ html body #app .shell.rivo-dark-ui .floating-scan.rivo-camera-fab{display:none!important}
+}
+/* Classic tool tiles: auto-sized cards, original shape, blue recolor only. */
+#app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid .rivo-hub-tile{
+ height:auto!important;min-height:128px!important;max-height:none!important;
+ padding:11px 7px!important;gap:7px!important;
+}
+#app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid .rivo-hub-tile strong{
+ display:block!important;overflow:visible!important;
+ -webkit-line-clamp:unset!important;white-space:normal!important;
+ word-break:normal!important;overflow-wrap:break-word!important;
+ font-size:clamp(11px,3vw,13px)!important;line-height:1.35!important;
+}
+@media(max-width:390px){
+ #app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
