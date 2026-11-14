@@ -1,0 +1,44 @@
+name: RivoScan authentic phone Play screenshots
+# Google Play phone images: exact 1080x1920 without cropping or fake scan data.
+on:
+  workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'scripts/phone-play-screenshots.mjs'
+      - '.github/workflows/rivoscan-phone-play-screenshots.yml'
+permissions:
+  contents: read
+jobs:
+  phone-screenshots:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build real RivoScan web assets
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Render 1080x1920 actual phone UI screenshots
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-phone-server.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/phone-play-screenshots.mjs
+      - name: Save Play phone screenshots and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Phone-1080x1920-Authentic-Screenshots
+          path: |
+            /tmp/rivoscan-phone-publishing/
+            /tmp/rivoscan-phone-server.log
+          retention-days: 14
+          if-no-files-found: warn
