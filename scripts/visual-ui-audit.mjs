@@ -52,7 +52,9 @@ try{
   });
   check(width+': all Home shortcuts readable and completely visible',
     shortcuts.count===4&&shortcuts.fit&&!shortcuts.horizontalOverflow&&
-    shortcuts.columns===(width<=390?2:4)&&shortcuts.rows===(width<=390?2:1));
+    shortcuts.columns===4&&shortcuts.rows===1);
+  check(width+': compact quick-actions reserve more space for documents',
+    shortcuts.count===4&&shortcuts.fit&&shortcuts.rows===1);
   const onboarding=await page.locator('.rivo-onboarding .rivo-empty-scan').count();
   check(width+': first-run screen offers a functional primary scan action',onboarding===1);
   await page.screenshot({path:out+'/'+width+'-home-empty.png'});
@@ -145,7 +147,7 @@ try{
     count:g.querySelectorAll(':scope > .rivo-hub-tile').length}))
   }));
   check(width+': no obsolete category tabs',tools.categoryTabs===0);
-  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===(width<380?2:3)));
+  check(width+': Tools grid is readable at responsive breakpoint',tools.grids.length>=2&&tools.grids.every(g=>g.display==='grid'&&g.columns===3));
   const toolLabelFit=await page.evaluate(()=>{
     const tiles=[...document.querySelectorAll('.rivo-hub-tile')];
     const ids=tiles.map(tile=>tile.dataset.hubAction);
@@ -162,6 +164,19 @@ try{
   });
   check(width+': all Tools card titles visible and not clipped',
    toolLabelFit.tileCount===19&&toolLabelFit.distinct===19&&toolLabelFit.clipped.length===0);
+  const compactMetrics=await page.evaluate(()=>{
+   const cards=[...document.querySelectorAll('.rivo-hub-tile')];
+   const heights=cards.map(el=>el.getBoundingClientRect().height);
+   const widths=cards.map(el=>el.getBoundingClientRect().width);
+   return {count:cards.length,compact:heights.every(n=>n>=75&&n<150),
+     widthsValid:widths.every(n=>n>40&&n<175),
+     orbit:cards.every(el=>getComputedStyle(el,'::before').animationName==='rivo-orbit-border'),
+     scanOrbit:getComputedStyle(document.querySelector('.rivo-nav-scan-ring'),'::before').animationName==='rivo-orbit-border'};
+  });
+  check(width+': compact Tools tiles and rotating edge and Smart Scan rings are present',
+    compactMetrics.count===19&&compactMetrics.compact&&compactMetrics.widthsValid&&
+    compactMetrics.orbit&&compactMetrics.scanOrbit);
+
   // Every tool tile is documented using its actual UI, without fake camera captures.
   if(width===393){
     for(const tile of await page.locator('.rivo-hub-tile').all()){
