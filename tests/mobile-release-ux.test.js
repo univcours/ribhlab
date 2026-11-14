@@ -15,10 +15,12 @@ test('final responsive color layer is imported after earlier competing themes',(
   assert.ok(css.includes(color),'missing approved color '+color);
 });
 
-test('320-390px Home shortcuts use a non-clipping 2 by 2 grid with readable labels',()=>{
- assert.match(css,/@media\(max-width:390px\)/);
- assert.match(css,/\.rivo-compact-home \.rivo-feature-rail\{\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
- assert.match(css,/\.rivo-feature-tile strong\{font-size:13px!important/);
+test('new compact override keeps a four-action row visible at 320px without clipping labels',()=>{
+ const compact=readFileSync(new URL('../src/rivo-orbit-compact.css',import.meta.url),'utf8');
+ assert.ok(main.includes("import './rivo-orbit-compact.css';"));
+ assert.ok(compact.includes('grid-template-columns:repeat(4,minmax(0,1fr))!important'));
+ assert.ok(compact.includes('height:66px!important;min-height:66px!important'));
+ assert.ok(compact.includes('font-size:11px!important'));
  assert.match(audit,/all Home shortcuts readable and completely visible/);
  assert.match(audit,/scrollHeight<=x\.clientHeight\+2/);
 });
