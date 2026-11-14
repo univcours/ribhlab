@@ -28,7 +28,8 @@ test('PerfectScan Pro remains in saved-document tools, not as camera fallback',(
  assert.ok(main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
  assert.ok(main.includes("onUVDoc:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
  assert.ok(main.includes("onSurface3D:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
- assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
+ assert.ok(main.includes("id=\"scan-multi-angle\""),'advanced correction remains accessible');
+ assert.ok(main.includes('Advanced paper correction'),'label must describe the result, not implementation details');
  assert.ok(ui.includes("title:'PerfectScan Pro'"));
  assert.ok(!ui.includes('data-perfect-review'));
 });
