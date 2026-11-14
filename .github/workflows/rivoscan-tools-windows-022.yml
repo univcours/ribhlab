@@ -5,6 +5,8 @@ on:
     paths:
       - 'scripts/capture-tools-windows.mjs'
       - 'src/tool-help.js'
+      - 'src/page-manager.js'
+      - 'src/privacy-shield.js'
       - 'src/rivo-tools-compact-ux.css'
       - '.github/workflows/rivoscan-tools-windows-022.yml'
   workflow_dispatch:
