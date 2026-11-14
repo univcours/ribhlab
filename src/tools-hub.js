@@ -3,8 +3,10 @@
 // Curated high-value hub. Previous implementations remain in source so the
 // user can restore them, but duplicated/experimental controls do not clutter Tools.
 // Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
+// Smart AutoCapture already has the dedicated central camera and a Home quick action;
+// avoid showing the same camera tool again as a redundant Tools tile.
 export const toolGroups=[
- {id:'scan',entries:['smartAutoCapture','scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'scan',entries:['scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
  {id:'convert',entries:['convertDocument']},
  {id:'edit',entries:['privacyShield','photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
