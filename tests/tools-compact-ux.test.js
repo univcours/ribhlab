@@ -16,7 +16,7 @@ test('tool explanations are accessible via real i button without deleting any wa
  assert.match(js,/aria-controls/);
  assert.match(js,/role','note'/);
  assert.match(js,/node\.hidden=true/);
- assert.match(js,/dialog\.textContent=source\.textContent\.trim\(\)/);
+ assert.match(js,/dialog\.textContent=section\.sources\.map/);
  assert.match(js,/addEventListener\('keydown'/);
 });
 test('compact editor avoids horizontal filters scroll and limits modal heights',()=>{
