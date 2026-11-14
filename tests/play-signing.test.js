@@ -34,7 +34,7 @@ test('verified RivoScan AdMob public units and original Play upload key are wire
   assert.ok(ci.includes('RIVO_UPLOAD_STORE_PASSWORD: ')&&ci.includes('secrets.RIVO_CORRECT_KEY_PASSWORD'));
   assert.ok(ci.includes('RIVO_UPLOAD_KEY_PASSWORD: ')&&ci.includes('secrets.RIVO_CORRECT_KEY_PASSWORD'));
   assert.ok(ci.includes('SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'));
-  assert.ok(ci.includes('versionCode 117'));
+  assert.ok(ci.includes('versionCode 118'));
   assert.ok(!ci.includes('secrets.PASSEKEY'));
   assert.ok(!ci.includes('7945572016731367~1688423435'));
   assert.ok(!ci.includes('keynovagrid'));
