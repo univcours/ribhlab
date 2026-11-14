@@ -42,6 +42,8 @@ import './rivo-accessibility-ads.css';
 import './rivo-release-ux.css';
 import './rivo-orbit-compact.css';
 import './rivo-device-safe.css';
+import './rivo-tools-compact-ux.css';
+import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
 import {openBookSplitter} from './book-split.js';
@@ -57,6 +59,7 @@ import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+installToolHelp();
 // The Compact APK keeps Google's document capture and PerfectClean, but
 // deliberately omits experimental 3D/ONNX and the legacy CameraX pipeline.
 const COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1';
@@ -362,6 +365,7 @@ function render(){
   wire();
   observeDocumentThumbnails();
   refreshBannerPosition();
+  refreshToolHelp();
 }
 
 const documentThumbnailCache=new Map(),documentThumbnailPending=new Set();
