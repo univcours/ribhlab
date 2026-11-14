@@ -7,7 +7,8 @@ test('Exactly one user-facing scan entry with Advanced multi-angle inside Scan w
  const main=get('src/main.js'),hub=get('src/tools-hub.js'),editor=get('src/scan-editor.js');
  assert.ok(main.includes('id="smart-scanner"'),'native CameraX capture entry exists');
  assert.ok(main.includes('id="scan-multi-angle"'),'PerfectScan Pro directly accessible inside scanner');
- assert.ok(main.includes('PerfectScan Pro · UVDoc AI / 3D'));
+ assert.ok(main.includes("id=\"scan-multi-angle\""),'advanced correction remains accessible');
+ assert.ok(main.includes('Advanced paper correction'),'label must describe the result, not implementation details');
  assert.ok(get('src/compact-turquoise.css').includes('.scan-quick-toolbar .rivo-perfectscan-restore'));
 
  assert.ok(get('src/perfect-scan-ui.js').includes('PerfectScan Pro'));
