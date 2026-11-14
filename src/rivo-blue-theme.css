@@ -557,3 +557,18 @@ body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex!imp
   font-size:14px!important;min-height:36px!important;
  }
 }
+
+
+/* Formula OCR: no 300×150 blank canvas at launch. Actual input restores
+   the preview, while editable output fields stay accessible on small phones. */
+.rivo-code-overlay .rivo-code-dialog canvas.rivo-id-preview[hidden]{display:none!important}
+@media(max-width:780px){
+ .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-dialog .rivo-id-row textarea{
+  min-height:54px!important;height:auto!important;max-height:100px!important;
+  padding:7px 9px!important;font-size:13px!important;line-height:1.35!important;
+ }
+ .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-dialog .rivo-code-help{
+  font-size:11px!important;line-height:1.35!important;
+  margin:6px 0!important;
+ }
+}
