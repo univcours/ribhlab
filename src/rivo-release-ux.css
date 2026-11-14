@@ -1,0 +1,214 @@
+/* RivoScan mobile readability pass — loaded AFTER every legacy theme.
+   One stable navy/royal/cyan palette with legible content at 320-780px.
+   Do not style native Google ad creative or move its SDK-rendered surface. */
+:root{
+ --rivo-ui-ink:#082752;
+ --rivo-ui-muted:#31577c;
+ --rivo-ui-blue:#0e61c2;
+ --rivo-ui-cyan:#00d8ff;
+ --rivo-ui-surface:#ffffff;
+ --rivo-ui-canvas:#f5faff;
+ --rivo-ui-stroke:#b8d9f2;
+}
+#app .shell.rivo-dark-ui :is(.app-home,.app-tools,.app-settings,.library-workspace){
+ min-width:0;
+ color:var(--rivo-ui-ink);
+}
+#app .shell.rivo-dark-ui :is(.rivo-tools-search,.rivo-premium-search,.library-search){
+ border-color:var(--rivo-ui-stroke)!important;
+ background:var(--rivo-ui-surface)!important;
+}
+#app .shell.rivo-dark-ui :is(.rivo-tools-search,.rivo-premium-search,.library-search)
+ :is(input,select){
+ min-width:0!important;color:var(--rivo-ui-ink)!important;
+ font-size:16px!important;line-height:1.35!important;
+}
+#app .shell.rivo-dark-ui :is(.rivo-tools-search,.rivo-premium-search,.library-search)
+ input::placeholder{color:var(--rivo-ui-muted)!important;opacity:1!important;}
+#app .shell.rivo-dark-ui :is(.rivo-tools-search,.rivo-premium-search,.library-search):focus-within{
+ outline:2px solid var(--rivo-ui-blue)!important;outline-offset:2px!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-trust{
+ background:#11407f!important;color:#ffffff!important;
+ border:1px solid #0e61c2!important;border-radius:16px!important;
+}
+#app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-intro{
+ min-height:30px!important;max-height:none!important;
+}
+#app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-intro h1{
+ color:var(--rivo-ui-ink)!important;font-size:clamp(20px,5vw,24px)!important;
+ line-height:1.25!important;letter-spacing:-.02em!important;
+}
+#app .shell.rivo-dark-ui .rivo-feature-tile{
+ min-width:0!important;max-width:none!important;
+ height:auto!important;max-height:none!important;
+ border:1px solid var(--rivo-ui-stroke)!important;
+ border-radius:17px!important;background:linear-gradient(145deg,#fff,#f5faff)!important;
+ padding:10px 6px!important;box-shadow:0 4px 12px rgba(17,64,127,.09)!important;
+}
+#app .shell.rivo-dark-ui .rivo-feature-tile strong{
+ display:block!important;overflow:visible!important;
+ -webkit-line-clamp:unset!important;line-clamp:unset!important;
+ white-space:normal!important;text-overflow:clip!important;
+ overflow-wrap:anywhere!important;
+ color:var(--rivo-ui-ink)!important;opacity:1!important;
+ font-size:clamp(11px,3vw,13px)!important;line-height:1.3!important;
+}
+#app .shell.rivo-dark-ui .rivo-feature-icon{
+ background:#e9f5fb!important;color:var(--rivo-ui-blue)!important;
+ width:38px!important;height:38px!important;flex:0 0 38px!important;
+ border-radius:12px!important;
+}
+#app .shell.rivo-dark-ui .rivo-feature-icon svg{width:24px!important;height:24px!important;}
+#app .shell.rivo-dark-ui .rivo-compact-home .recent-empty.rivo-onboarding{
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+ gap:12px!important;min-height:170px!important;
+ margin-top:4px!important;padding:23px 18px!important;
+ border:1px solid #c8e0f1!important;border-radius:19px!important;
+ background:#ffffff!important;text-align:center!important;
+ color:var(--rivo-ui-muted)!important;
+}
+#app .shell.rivo-dark-ui .rivo-onboarding>svg{width:32px;height:32px;color:#0e61c2;}
+#app .shell.rivo-dark-ui .rivo-onboarding span{
+ font-size:14px!important;line-height:1.5!important;
+ color:var(--rivo-ui-muted)!important;
+}
+#app .shell.rivo-dark-ui .rivo-onboarding .rivo-empty-scan{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:8px!important;min-height:48px!important;border:0!important;
+ border-radius:14px!important;padding:11px 20px!important;
+ font-size:14px!important;font-weight:800!important;
+ background:linear-gradient(115deg,#0e61c2,#0878e8)!important;
+ color:white!important;box-shadow:0 5px 14px #11407f30!important;
+}
+#app .shell.rivo-dark-ui .rivo-onboarding .rivo-empty-scan svg{width:21px;height:21px;}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-section{
+ margin:15px 0 20px!important;min-width:0!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-section>h2{
+ font-size:17px!important;line-height:1.35!important;
+ color:var(--rivo-ui-ink)!important;letter-spacing:-.01em!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid{min-width:0!important;gap:10px!important;}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid .rivo-hub-tile{
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+ min-width:0!important;max-width:100%!important;height:auto!important;
+ min-height:116px!important;padding:12px 8px!important;gap:9px!important;
+ background:#fff!important;border:1px solid var(--rivo-ui-stroke)!important;
+ border-radius:16px!important;
+ box-shadow:0 3px 10px rgba(17,64,127,.07)!important;
+}
+#app .shell.rivo-dark-ui .rivo-hub-tile strong{
+ color:var(--rivo-ui-ink)!important;
+ font-size:clamp(12px,3.15vw,14px)!important;
+ line-height:1.4!important;overflow-wrap:anywhere!important;
+ text-align:center!important;white-space:normal!important;
+}
+#app .shell.rivo-dark-ui .rivo-hub-tile .tool-icon{
+ margin:0!important;flex:0 0 41px!important;
+ width:41px!important;height:41px!important;
+ background:#e9f5fb!important;color:#0e61c2!important;
+ border-radius:13px!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-no-results:not([hidden]){
+ display:block!important;padding:16px 12px!important;text-align:center!important;
+ color:var(--rivo-ui-muted)!important;background:white!important;
+ border:1px solid var(--rivo-ui-stroke)!important;border-radius:14px!important;
+}
+#app .shell.rivo-dark-ui .rivo-premium-recent .recent-file-meta small{
+ color:var(--rivo-ui-muted)!important;font-size:12px!important;
+ line-height:1.35!important;opacity:1!important;
+}
+#app .shell.rivo-dark-ui .settings-row :is(strong,small,p),
+#app .shell.rivo-dark-ui .app-settings .page-heading p{
+ color:var(--rivo-ui-ink)!important;opacity:1!important;line-height:1.45!important;
+}
+#app .shell.rivo-dark-ui .app-settings .settings-row small{font-size:13px!important;}
+#app .shell.rivo-dark-ui .rivo-feature-tile:focus-visible,
+#app .shell.rivo-dark-ui .rivo-hub-tile:focus-visible,
+#app .shell.rivo-dark-ui .rivo-empty-scan:focus-visible{
+ outline:3px solid var(--rivo-ui-cyan)!important;outline-offset:3px!important;
+}
+:is(.rivo-id-overlay,.rivo-code-overlay,.rivo-perfectscan-overlay,.rivo-release-overlay)
+ :is(button,input,select,textarea):focus-visible{
+ outline:3px solid #0e61c2!important;outline-offset:2px!important;
+}
+:is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-release-dialog)
+ :is(p,small,label,.rivo-code-help,.rivo-book-empty){
+ color:#23486e!important;opacity:1!important;
+ line-height:1.5!important;
+}
+:is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-release-dialog)
+ :is(input,select,textarea){
+ color:#082752!important;background:#fff!important;
+ border-color:#b8d9f2!important;
+ font-size:16px!important;min-height:44px!important;
+}
+:is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-release-dialog)
+ :is(button,.rivo-scan-method select){
+ min-height:44px!important;
+}
+@media(max-width:780px){
+ #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:8px!important;min-height:112px!important;max-height:none!important;
+  height:auto!important;flex:0 0 auto!important;
+  overflow:visible!important;padding:3px!important;
+  scroll-snap-type:none!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-feature-tile{
+  width:100%!important;flex:none!important;min-height:109px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-compact-home{
+  height:auto!important;min-height:calc(100dvh - 180px)!important;
+  max-height:none!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-compact-home .rivo-premium-recent{
+  min-height:0!important;overflow:visible!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-hub-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+ /* Keep the SDK banner above the fixed navigation; leave dedicated document scroll clearance. */
+ html body.rivo-has-ad-banner #app .shell.rivo-dark-ui .content{
+  padding-bottom:calc(122px + var(--rivo-banner-height,50px) + env(safe-area-inset-bottom,0px))!important;
+ }
+ .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-dialog,
+ .rivo-id-overlay .rivo-id-dialog{padding-bottom:max(16px,env(safe-area-inset-bottom,0px))!important;}
+ .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions>button,
+ .rivo-id-overlay .rivo-code-actions>button{
+  min-height:46px!important;font-size:14px!important;
+  line-height:1.4!important;padding:9px 8px!important;
+ }
+ .rivo-id-dialog .rivo-book-empty,.rivo-code-dialog .rivo-code-help{
+  font-size:14px!important;line-height:1.45!important;
+ }
+ .rivo-modal-top h2{font-size:clamp(18px,4.5vw,23px)!important;}
+ .rivo-modal-top .rivo-modal-dismiss{
+  width:44px!important;height:44px!important;min-height:44px!important;flex-basis:44px!important;
+ }
+}
+@media(max-width:390px){
+ #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-feature-tile{
+  min-height:99px!important;max-width:100%!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-feature-tile strong{font-size:13px!important;}
+ #app .shell.rivo-dark-ui .rivo-hub-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-intro h1{font-size:21px!important;}
+}
+@media(max-width:340px){
+ :is(.rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-actions,
+     .rivo-id-overlay .rivo-code-actions){
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-feature-tile strong{font-size:12.5px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-feature-tile,#app .rivo-hub-tile{transition:none!important;transform:none!important;}
+}
