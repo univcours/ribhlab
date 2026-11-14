@@ -55,18 +55,20 @@ try{
   // Visual fixture only: native ad rendering requires an Android phone.
   const band=await page.evaluate(()=>{
    document.body.classList.add('rivo-has-ad-banner');
+   const nav=document.querySelector('.mobilebar')?.getBoundingClientRect();
+   document.documentElement.style.setProperty('--rivo-banner-bottom',Math.ceil(innerHeight-nav.top+8)+'px');
    const el=document.querySelector('.rivo-ad-banner-slot');
-   const box=el?.getBoundingClientRect(),nav=document.querySelector('.mobilebar')?.getBoundingClientRect();
+   const box=el?.getBoundingClientRect();
    const frame=el?.querySelector('.rivo-ad-banner-frame'),rect=frame?.getBoundingClientRect();
    if(frame)frame.textContent='320 × 50 TEST SLOT';
    return {exists:!!el,visible:!!box&&box.height>=50,
     centered:!!rect&&Math.abs(rect.left+rect.width/2-innerWidth/2)<4,
     fits:!!rect&&rect.width<=320&&rect.left>=-2&&rect.right<=innerWidth+2,
-    belowNav:!!box&&!!nav&&box.top>=nav.bottom-2,
-    atBottom:!!box&&Math.abs(box.bottom-innerHeight)<3};
+    aboveNav:!!box&&!!nav&&box.bottom<=nav.top-2,
+    navAtBottom:!!nav&&Math.abs(nav.bottom-innerHeight)<3};
   });
-  check(width+': 320x50 native banner sits below and outside blue navigation',
-   band.exists&&band.visible&&band.centered&&band.fits&&band.belowNav&&band.atBottom);
+  check(width+': 320x50 native banner sits above and clear of blue navigation',
+   band.exists&&band.visible&&band.centered&&band.fits&&band.aboveNav&&band.navAtBottom);
   await page.screenshot({path:out+'/'+width+'-banner-test-slot.png'});
   await page.evaluate(()=>document.body.classList.remove('rivo-has-ad-banner'));
 
