@@ -572,3 +572,21 @@ body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex!imp
   margin:6px 0!important;
  }
 }
+
+
+/* Keep advanced Formula OCR consent/API controls accessible without forcing
+   a blank extra page on 320px devices. */
+.rivo-code-dialog .rivo-formula-ai-options{
+ border:1px solid #B8D9F2;border-radius:10px;background:#F5FAFF;
+ margin:6px 0;padding:0 9px;color:#11407F;
+}
+.rivo-code-dialog .rivo-formula-ai-options summary{
+ font-size:12px;font-weight:700;line-height:1.25;cursor:pointer;
+ min-height:36px;display:list-item;padding:9px 0;outline-offset:-2px;
+}
+.rivo-code-dialog .rivo-formula-ai-options[open]{
+ padding-bottom:8px;
+}
+.rivo-code-dialog .rivo-formula-ai-options .rivo-id-row{
+ display:block;width:100%;box-sizing:border-box;margin:5px 0;
+}
