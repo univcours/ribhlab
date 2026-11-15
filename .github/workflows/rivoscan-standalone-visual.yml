@@ -8,6 +8,14 @@ on:
       - 'scripts/visual-ui-audit.mjs'
       - 'package.json'
       - '.github/workflows/rivoscan-standalone-visual.yml'
+  pull_request:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'src/**'
+      - 'scripts/visual-ui-audit.mjs'
+      - 'scripts/edge-loupe-e2e.mjs'
+      - 'package.json'
+      - '.github/workflows/rivoscan-standalone-visual.yml'
 permissions:
   contents: read
 concurrency:
@@ -37,6 +45,7 @@ jobs:
             sleep 1
           done
           node scripts/visual-ui-audit.mjs
+          node scripts/edge-loupe-e2e.mjs
       - name: Preserve screenshots and CSS assertions
         if: always()
         uses: actions/upload-artifact@v4
