@@ -8,7 +8,7 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 function memory(){
  const m=new Map();return {getItem:key=>m.get(key)||null,setItem:(key,value)=>m.set(key,value)};
 }
-test('same QR on the same day is saved once across consecutive and reopened scans',async()=>{
+test('same QR across all dates is saved once across sessions',async()=>{
  const storage=memory(),writes=[];
  const bridge={appendScannerText:async data=>{writes.push(data);return{saved:true}}};
  let date=new Date(2026,10,15,16,10,0);
@@ -28,8 +28,9 @@ test('same QR on the same day is saved once across consecutive and reopened scan
  assert.equal(writes[0].name,scannerDailyFile('QR','2026-11-15'));
  date=new Date(2026,10,16,8,30);
  const tomorrow=await reopened.append('codes',{format:'QR',value:'https://example.com/document'});
- assert.equal(tomorrow.saved,true);
- assert.equal(writes.length,2,'a different calendar day has its own daily log');
+ assert.equal(tomorrow.duplicate,true);
+ assert.equal(tomorrow.saved,false);
+ assert.equal(writes.length,1,'lifetime uniqueness across dates');
 });
 test('other barcode formats or different values still save independently',async()=>{
  const calls=[],storage=memory();
