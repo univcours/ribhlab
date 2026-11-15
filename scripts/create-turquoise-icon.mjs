@@ -16,7 +16,7 @@ let bytes;
 if(existsSync(sourcePath))bytes=readFileSync(sourcePath);
 else{
  const response=await fetch(remote,{signal:AbortSignal.timeout(40000)});
- if(!response.ok)throw Error('Image host HTTP '+response.status+' while downloading approved RivoScan icon');
+ if(!response.ok)throw Error('RivoScan approved icon fetch failed: Image host HTTP '+response.status);
  bytes=Buffer.from(await response.arrayBuffer());
  if(bytes.length>8_000_000)throw Error('Icon file too large');
  mkdirSync(dirname(sourcePath),{recursive:true});writeFileSync(sourcePath,bytes);
