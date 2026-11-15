@@ -1189,7 +1189,7 @@ function addSelectedFiles(picked){
 let nativeCaptureDepth=0;
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
   if(COMPACT_BUILD){
-    toast(language==='ar'?'النسخة الخفيفة كتستعمل Google Scanner: اختار الصورة من Gallery':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
+    toast(language==='ar'?'يستخدم الإصدار الخفيف Google Scanner: اختر الصورة من المعرض':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
     await openSmartScanner({mode});
     return;
   }
