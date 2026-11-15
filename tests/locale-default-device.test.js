@@ -22,7 +22,7 @@ test('English is the safe default when primary device language is unsupported or
  assert.equal(deviceLanguage(['zh-CN']),'en');
  assert.equal(initialLanguage(null,['xx-XX']),'en');
 });
-test('first supported phone locale determines language, including region variants',()=>{
+test('first supported phone preference determines language, including region variants',()=>{
  for(const [locale,expected] of [
   ['ar-MA','ar'],['en-US','en'],['fr-MA','fr'],['es-ES','es'],
   ['de-DE','de'],['pt-BR','pt'],['it-IT','it']
