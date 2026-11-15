@@ -1,5 +1,7 @@
 import {perfectScanRGBA,assessDocumentQualityRGBA,inspectInkChanges} from './perfect-scan-core.js';
 import {PDFDocument} from 'pdf-lib';
+import {openPerfectScanCornerReview} from './perfect-scan-corners.js';
+import {perspectiveCropImageData} from './edge-adjustment.js';
 
 const dict={
  en:{title:'PerfectScan Pro',subtitle:'Improve paper clarity, straighten folds and reduce shadows on your device.',base:'Source photo',add:'Add shots',capture:'Capture another angle',process:'Apply correction',compare:'Hold to compare original',original:'Original photo',processed:'Enhanced copy',save:'Save scan + integrity report',cancel:'Close',privacy:'Never uploads your document. Original pixels and file are preserved.',tip:'Use 2–4 photos of the SAME document, with matching framing. Slightly change lighting or angle. Unmatched photos are rejected.',none:'Choose a source photo first.',choosing:'Choose document photo',ready:'Ready to enhance',working:'Checking alignment and correcting paper...',review:'Please review ALL text, stamps and signatures before saving.',saved:'Scan and integrity report saved. The original was kept.',failed:'Unable to process this document.',geometry:'Correct curved printed lines (2D)',quality:'Contrast safe; strongly folded/missing text cannot be recovered.',frames:'Additional photos',rejected:'Photos rejected (misalignment)',manual:'Manual review required',clean:'Safety checks passed; review still recommended'},
@@ -47,6 +49,16 @@ const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b)
 const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
 const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
+const cornerText={
+ en:{edit:'Adjust edges',await:'Review and confirm four corners before processing or saving.'},
+ ar:{edit:'تعديل الحواف',await:'راجع الزوايا الأربع وأكّدها قبل المعالجة أو الحفظ.'},
+ fr:{edit:'Ajuster les bords',await:'Vérifiez les quatre coins avant de traiter ou sauvegarder.'},
+ es:{edit:'Ajustar bordes',await:'Confirme las cuatro esquinas antes de procesar o guardar.'},
+ de:{edit:'Kanten anpassen',await:'Vier Ecken vor dem Verarbeiten oder Speichern bestätigen.'},
+ pt:{edit:'Ajustar limites',await:'Confirme os quatro cantos antes de processar ou guardar.'},
+ it:{edit:'Regola i bordi',await:'Conferma i quattro angoli prima di elaborare o salvare.'}
+};
+
 const nativeModeLabels={
  en:{uvdoc:'Straighten curved paper · offline',surface:'Combine 2–4 camera angles (experimental)'},
  ar:{uvdoc:'تقويم الورق المنحني بلا إنترنت',surface:'دمج 2–4 صور من زوايا مختلفة (تجريبي)'},
@@ -78,7 +90,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<div class="rivo-perfectscan-toolbar">'+
  '<button type="button" data-perfect="base">'+t.choosing+'</button>'+
  '<button type="button" data-perfect="add" hidden disabled>'+t.add+'</button>'+
- '<button type="button" data-perfect="camera">'+onboarding.camera+'</button>'+
+ '<button type="button" data-perfect="camera">'+onboarding.camera+'</button>'+ 
+ '<button type="button" data-perfect="edges" hidden disabled>'+(cornerText[lang]||cornerText.en).edit+'</button>'+
 '</div>'+
  '<input class="rivo-perfect-file" type="file" accept="image/*" hidden>'+
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
@@ -110,9 +123,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const actions=root.querySelector('.rivo-perfectscan-actions');
  const preview=root.querySelector('.rivo-perfectscan-preview');
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
- let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
+ let base=null,pending=null,cornerReview=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
  const setStatus=(message,alert=false)=>{status.hidden=false;status.textContent=message;status.classList.toggle('rivo-warning',alert)};
- const close=()=>{if(closed)return;closed=true;root.remove()};
+ const close=()=>{if(closed)return;closed=true;const editor=cornerReview;cornerReview=null;editor?.close?.();root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
   if(closed)return;
   preview.hidden=false;
@@ -146,31 +159,67 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   compare.disabled=true;compare.hidden=true;
   process.hidden=!base;process.disabled=!base;actions.hidden=!base;
  };
+ function openPendingCorners(){
+  if(!pending||closed||working||cornerReview?.isOpen?.())return;
+  cornerReview=openPerfectScanCornerReview({
+   imageData:pending,language:lang,
+   onApply:async corrected=>{
+    if(closed)return;
+    // Original pixels+bytes stay in pending for re-edit and source export.
+    base={...pending,data:corrected.data,width:corrected.width,height:corrected.height,
+     cornerPoints:corrected.corners.map(p=>p.slice()),cornerReviewConfirmed:true};
+    extra=[];resetOutput();process.disabled=false;
+    root.querySelector('.rivo-perfectscan-control').hidden=false;
+    root.querySelector('[data-perfect="add"]').hidden=false;
+    root.querySelector('[data-perfect="add"]').disabled=false;
+    previewPixels(base.data,base.width,base.height,t.original);
+    const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
+    setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
+   },
+   onCancel:()=>{
+    cornerReview=null;
+    if(closed||base||!pending)return;
+    previewPixels(pending.data,pending.width,pending.height,t.original);
+    setStatus((cornerText[lang]||cornerText.en).await);
+   }
+  });
+ }
  async function setBase(blob,name,bytes=null,mime='image/jpeg',fromLibrary=false){
   if(!blob||blob.size>20*1024*1024)throw Error('Maximum source photo: 20 MB');
+  // First captured image remains in memory, without any premature storage
+  // write. User must approve the four editable corners before processing.
   const c=await imageCanvas(blob),image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
-  base={data:image.data,width:c.width,height:c.height,bytes:bytes||new Uint8Array(await blob.arrayBuffer()),
-   name,mime,fromLibrary};extra=[];resetOutput();process.disabled=false;
+  const originalBytes=bytes||new Uint8Array(await blob.arrayBuffer());
+  if(cornerReview?.isOpen?.())cornerReview.close();
+  pending={data:image.data,width:c.width,height:c.height,bytes:originalBytes,name,mime,fromLibrary};
+  base=null;extra=[];resetOutput();process.disabled=true;actions.hidden=true;
   root.querySelector('.rivo-perfectscan-modal').classList.add('rivo-perfectscan-has-source');
   root.querySelector('.rivo-perfectscan-empty').hidden=true;
   root.querySelector('.rivo-perfectscan-tip').hidden=false;
   root.querySelector('.rivo-perfectscan-warning').hidden=false;
-  root.querySelector('.rivo-perfectscan-control').hidden=false;
-  root.querySelector('[data-perfect="add"]').hidden=false;
-  root.querySelector('[data-perfect="add"]').disabled=false;
+  root.querySelector('.rivo-perfectscan-control').hidden=true;
+  root.querySelector('[data-perfect="add"]').hidden=true;
+  root.querySelector('[data-perfect="add"]').disabled=true;
+  const edit=root.querySelector('[data-perfect="edges"]');
+  edit.hidden=false;edit.disabled=false;
   root.querySelector('[data-perfect="camera"]').textContent=t.capture;
-  previewPixels(base.data,base.width,base.height,t.original);
-  const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
-  setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
+  previewPixels(pending.data,pending.width,pending.height,t.original);
+  setStatus((cornerText[lang]||cornerText.en).await);
+  openPendingCorners();
  }
  async function addShots(files){
-  if(!base){setStatus(t.none,true);return}
+  if(!base?.cornerReviewConfirmed){setStatus((cornerText[lang]||cornerText.en).await,true);return}
   for(const file of Array.from(files).slice(0,3-extra.length)){
    if(file.size>20*1024*1024){setStatus('Photo over 20 MB',true);continue}
    try{
-    const c=await imageCanvas(file,{width:base.width,height:base.height});
-    const a=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height).data;
-    extra.push({data:a,name:file.name,sha256:await sha256(new Uint8Array(await file.arrayBuffer()))});
+    // Additional matching shots use the SAME confirmed four-corner crop as
+    // the primary photo, preserving existing multi-frame fusion dimensions.
+    const c=await imageCanvas(file,{width:pending.width,height:pending.height});
+    const raw=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
+    const corrected=perspectiveCropImageData(raw,base.cornerPoints);
+    if(corrected.width!==base.width||corrected.height!==base.height)
+      throw Error('Extra photo crop dimensions differ from the primary scan.');
+    extra.push({data:corrected.data,name:file.name,sha256:await sha256(new Uint8Array(await file.arrayBuffer()))});
    }catch(error){setStatus(error.message,true)}
   }
   resetOutput();setStatus(t.frames+': '+extra.length+' / 3');
@@ -186,7 +235,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   }
  }
  async function run(){
-  if(!base||working)return;
+  if(!base?.cornerReviewConfirmed||working)return;
   disableDuring(true);setStatus(t.working);
   // Yield to paint progress before the CPU-bound local pixel pipeline.
   await new Promise(done=>setTimeout(done,40));
@@ -257,7 +306,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   finally{disableDuring(false)}
  }
  async function writeResult(){
-  if(!base||!result||working)return;
+  if(!base?.cornerReviewConfirmed||!result||working)return;
   disableDuring(true);
   try{
    const temp=document.createElement('canvas');temp.width=base.width;temp.height=base.height;
@@ -308,6 +357,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     uvdocRuntime:result.neuralRuntime||null,
     uvdocInferenceMs:result.neuralInferenceMs||null,
     originalName:base.name,originalSha256:baseHash,processedName:name,processedSha256:outHash,
+    cornerReviewConfirmed:true,cornersNormalized:base.cornerPoints,
+    correctedPageSize:[base.width,base.height],
     processedPdfName:pdfName,processedPdfSha256:pdfSha256,
     SHA256Available:!!baseHash&&!!outHash,
     extraFramesSelected:result.extraCount,extraFramesAligned:result.usedFrames,
@@ -329,6 +380,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   if(action==='base')sourceInput.click();
   else if(action==='add')extrasInput.click();
   else if(action==='camera')cameraInput.click();
+  else if(action==='edges')openPendingCorners();
   else if(action==='process')run();
   else if(action==='save')writeResult();
  });
