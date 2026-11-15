@@ -396,3 +396,145 @@ html body.rivo-native-android #app .shell.rivo-dark-ui :is(
   width:34px!important;min-width:34px!important;min-height:34px!important;height:34px!important;
  }
 }
+
+
+/* Common fixed-row search header for every primary search screen.
+   Home: My Files + Search, Tools: Tools + Search.
+   Documents: My Files + Search remains in its existing compact command row. */
+#app .shell.rivo-dark-ui .rivo-search-title-row{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:space-between!important;
+ flex:0 0 auto!important;min-width:0!important;width:100%!important;
+ gap:6px!important;margin:0!important;padding:0!important;
+ overflow:visible!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-home-intro,
+#app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-heading{
+ display:flex!important;flex:0 0 auto!important;align-items:center!important;
+ justify-content:flex-start!important;min-width:0!important;
+ max-width:44%!important;width:auto!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ gap:0!important;margin:0!important;padding:0!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-home-intro h1,
+#app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-heading h1{
+ font-size:clamp(13px,3.9vw,18px)!important;line-height:1.2!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ min-width:0!important;margin:0!important;padding:0!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-premium-search,
+#app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-search{
+ box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;
+ width:auto!important;min-width:0!important;max-width:none!important;
+ align-items:center!important;gap:7px!important;
+ min-height:36px!important;height:36px!important;max-height:36px!important;
+ margin:0!important;padding:0 9px!important;border-radius:9px!important;
+ overflow:hidden!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-premium-search svg,
+#app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-search svg{
+ flex:0 0 16px!important;width:16px!important;height:16px!important;
+}
+#app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-premium-search input,
+#app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-search input{
+ display:block!important;flex:1 1 0!important;
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ height:31px!important;min-height:31px!important;
+ font-size:12px!important;line-height:1.2!important;
+ padding:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-search-title-row,
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-search-title-row{
+ flex-shrink:0!important;margin-bottom:3px!important;
+}
+@media(max-width:359px){
+ #app .shell.rivo-dark-ui .rivo-search-title-row{gap:4px!important;}
+ #app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-home-intro,
+ #app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-heading{
+  max-width:41%!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-home-intro h1,
+ #app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-heading h1{
+  font-size:13px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-premium-search,
+ #app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-search{
+  padding-inline:6px!important;gap:4px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-home-search-title-row .rivo-premium-search input,
+ #app .shell.rivo-dark-ui .rivo-tools-search-title-row .rivo-tools-search input{
+  font-size:11px!important;
+ }
+}
+
+
+/* Documents: order is My Files | Search | Refresh; maintain a one-row search. */
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row.rivo-search-title-row{
+ justify-content:stretch!important;gap:5px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents{
+ display:inline-flex!important;flex:0 0 36px!important;
+ align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:36px!important;min-width:36px!important;
+ min-height:36px!important;height:36px!important;max-width:36px!important;
+ padding:0!important;margin:0!important;white-space:nowrap!important;border-radius:9px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents svg{
+ width:16px!important;height:16px!important;flex:none!important;
+}
+@media(max-width:359px){
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row.rivo-search-title-row{
+  gap:3px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents{
+  flex-basis:34px!important;width:34px!important;min-width:34px!important;
+  max-width:34px!important;min-height:34px!important;height:34px!important;
+ }
+}
+
+
+/* Live Plate Scanner is a modal (outside #app), but follows the same rule:
+   Title | searchable target + Watch button | Close, all on one row. */
+body .rivo-plate-overlay .rivo-live-dialog .rivo-live-head{
+ box-sizing:border-box!important;display:flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:space-between!important;
+ flex-wrap:nowrap!important;gap:5px!important;
+ min-width:0!important;width:100%!important;
+}
+body .rivo-plate-overlay .rivo-live-head > strong{
+ box-sizing:border-box!important;display:block!important;flex:0 1 30%!important;
+ width:auto!important;min-width:0!important;max-width:30%!important;
+ font-size:clamp(11px,2.9vw,14px)!important;line-height:1.15!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+body .rivo-plate-overlay .rivo-live-head > .rivo-plate-search-row{
+ box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;
+ flex-direction:row!important;align-items:center!important;
+ width:auto!important;min-width:0!important;max-width:none!important;
+ gap:3px!important;padding:0!important;margin:0!important;
+}
+body .rivo-plate-overlay .rivo-live-head .rivo-plate-search{
+ box-sizing:border-box!important;display:block!important;flex:1 1 0!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ min-height:36px!important;height:36px!important;padding:4px 6px!important;
+ font-size:12px!important;line-height:1.2!important;
+ text-overflow:ellipsis!important;border-radius:8px!important;
+}
+body .rivo-plate-overlay .rivo-live-head .rivo-plate-search-row > button,
+body .rivo-plate-overlay .rivo-live-head > button{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ flex:0 0 34px!important;width:34px!important;min-width:34px!important;
+ min-height:36px!important;height:36px!important;
+ margin:0!important;padding:0!important;
+}
+@media(max-width:359px){
+ body .rivo-plate-overlay .rivo-live-dialog .rivo-live-head{gap:3px!important;}
+ body .rivo-plate-overlay .rivo-live-head > strong{
+  flex-basis:27%!important;max-width:27%!important;font-size:11px!important;
+ }
+ body .rivo-plate-overlay .rivo-live-head .rivo-plate-search-row > button,
+ body .rivo-plate-overlay .rivo-live-head > button{
+  flex-basis:32px!important;width:32px!important;min-width:32px!important;
+ }
+}

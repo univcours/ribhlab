@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/rivo-stable-scroll-layout.css',import.meta.url),'utf8');
 const banner=readFileSync(new URL('../src/rivo-native-banner-layout.css',import.meta.url),'utf8');
+const plate=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
 
 test('stable viewport rules are imported after native ad layout and legacy CSS',()=>{
  const native=main.indexOf("import './rivo-native-banner-layout.css'");
@@ -52,8 +53,8 @@ test('Documents title and its two actions share a single compact header row',()=
 
 test('Documents filters and file count share one row, file import and search share another',()=>{
  const markup=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary('));
- const filter=markup.slice(markup.indexOf('class="rivo-library-filter-row"'),markup.indexOf('class="rivo-library-command-row"'));
- const commands=markup.slice(markup.indexOf('class="rivo-library-command-row"'),markup.indexOf('class="library-controls"'));
+ const filter=markup.slice(markup.indexOf('class="rivo-library-filter-row"'),markup.indexOf('class="rivo-library-command-row rivo-search-title-row"'));
+ const commands=markup.slice(markup.indexOf('class="rivo-library-command-row rivo-search-title-row"'),markup.indexOf('class="library-controls"'));
  assert.match(filter,/class="rivo-library-chips"/);
  assert.match(filter,/class="library-top"/);
  assert.match(commands,/data-import="file"/);
@@ -64,4 +65,34 @@ test('Documents filters and file count share one row, file import and search sha
  }
  assert.equal((markup.match(/id="library-search"/g)||[]).length,1);
  assert.equal((markup.match(/id="refresh-documents"/g)||[]).length,1);
+});
+
+test('every top-level search is inline with its page label on phones and tablets',()=>{
+ const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
+ const tools=main.slice(main.indexOf('function toolsWorkspace(){'),main.indexOf('function scannerPreferenceRows(){'));
+ const library=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary('));
+ assert.match(home,/class="rivo-search-title-row rivo-home-search-title-row"/);
+ assert.match(home,/class="rivo-home-intro"><h1>[^\n]*<\/h1><\/div>\s*<label class="rivo-premium-search">/);
+ assert.match(home,/id="home-quick-search"/);
+ assert.match(tools,/class="rivo-search-title-row rivo-tools-search-title-row"/);
+ assert.match(tools,/class="rivo-tools-heading"><h1>[^\n]*<\/h1><\/div>\s*<label class="rivo-tools-search">/);
+ assert.match(tools,/id="tools-query"/);
+ const command=library.slice(library.indexOf('class="rivo-library-command-row rivo-search-title-row"'),library.indexOf('class="library-controls"'));
+ const positions=['data-import="file"','id="library-search"','id="refresh-documents"'].map(token=>command.indexOf(token));
+ assert.ok(positions.every(pos=>pos>0)&&positions[0]<positions[1]&&positions[1]<positions[2],
+  'Documents must show My Files, then Search, then Refresh in one horizontal row');
+ for(const selector of ['.rivo-home-search-title-row','.rivo-tools-search-title-row','.rivo-library-command-row']){
+  assert.ok(css.includes(selector),'No shared inline layout CSS for '+selector);
+ }
+ for(const id of ['home-quick-search','tools-query','library-search']){
+  assert.equal((main.match(new RegExp('id="'+id+'"','g'))||[]).length,1,'duplicate search input '+id);
+ }
+});
+
+test('live license-plate search shares the modal title and close row',()=>{
+ assert.match(plate,/header\.append\(title,searchRow,close\)/);
+ assert.match(plate,/panel\.append\(header,pinned,view,status,last,foot,hint\)/);
+ assert.doesNotMatch(plate,/panel\.append\(header,searchRow,/);
+ assert.match(css,/body \.rivo-plate-overlay \.rivo-live-dialog \.rivo-live-head/);
+ assert.match(css,/body \.rivo-plate-overlay \.rivo-live-head > \.rivo-plate-search-row/);
 });
