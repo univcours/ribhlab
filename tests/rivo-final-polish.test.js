@@ -29,7 +29,7 @@ test('all info controls have fixed circular dimensions and simple i glyph',()=>{
 test('launcher has truly 1px white side rim and retains round-mask wordmark',()=>{
  const code=read('scripts/create-turquoise-icon.mjs');
  assert.match(code,/card\(icon,137,101,238,293,37\)/);
- assert.match(code,/composite\(icon,118,84,269,266,138,102,236,236\)/);
- assert.match(code,/composite\(icon,90,359,335,72,140,345,232,48\)/);
+ assert.match(code,/composite\(icon,123,84,260,266,138,102,236,236\)/);
+ assert.match(code,/composite\(icon,94,359,327,72,138,345,235,48\)/);
  assert.match(code,/Math\.hypot\(x-256,y-256\)>178/);
 });

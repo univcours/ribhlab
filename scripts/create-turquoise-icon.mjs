@@ -36,8 +36,10 @@ const icon=blank(),header=blank();
 // The new approved foreground has ONE WHITE PIXEL along the straight sides.
 // Adaptive icon masks still impose their separate circular safety zone.
 card(icon,137,101,238,293,37);
-composite(icon,118,84,269,266,138,102,236,236);
-composite(icon,90,359,335,72,140,345,232,48);
+// Crop the embedded white padding INSIDE the approved source image, too.
+// The previous image showed 5px on the left even though our white card was 1px.
+composite(icon,123,84,260,266,138,102,236,236);
+composite(icon,94,359,327,72,138,345,235,48);
 // The circular launcher mask must not cut the lower wordmark on any device.
 for(let y=0;y<512;y++)for(let x=0;x<512;x++){
  if(Math.hypot(x-256,y-256)>178)icon.data[(y*512+x)*4+3]=0;
