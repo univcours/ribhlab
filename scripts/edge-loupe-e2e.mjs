@@ -6,7 +6,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 const read=async p=>readFile(new URL('../'+p,import.meta.url),'utf8');
 const source=(await read('src/edge-adjustment.js')).replace(/^export /gm,'')
- +'\nwindow.__rivoOpenEdgeAdjustment=openEdgeAdjustment;\nwindow.__rivoCornerLoupe=cornerLoupeLayout;\n';
+ +'\nwindow.__rivoOpenEdgeAdjustment=openEdgeAdjustment;\nwindow.__rivoCornerLoupe=cornerLoupeLayout;\nwindow.__rivoPaddedEdgeCanvas=paddedEdgeCanvas;\n';
 const css=await read('src/rivo-edge-adjustment.css');
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 await mkdir(out,{recursive:true});
@@ -60,10 +60,22 @@ try{
   await canvas.waitFor({state:'visible'});
   const bbox=await canvas.boundingBox();
   assert.ok(bbox&&bbox.width>150&&bbox.height>150,'editor canvas must be visible');
-  const cursorX=bbox.x+bbox.width*.055,cursorY=bbox.y+bbox.height*.055;
+  const frame=await page.evaluate(()=>{
+   const canvas=document.querySelector('.rivo-edge-canvas');
+   const f=window.__rivoPaddedEdgeCanvas(460,640);
+   if(canvas.width!==f.canvasWidth||canvas.height!==f.canvasHeight)throw Error('Canvas gutters not rendered');
+   return f;
+  });
+  assert.ok(frame.x>=36&&frame.y>=36,'the source image has real free margin all around');
+  assert.equal(frame.canvasWidth,Math.round(frame.width+frame.x*2));
+  assert.equal(frame.canvasHeight,Math.round(frame.height+frame.y*2));
+  const cursorX=bbox.x+bbox.width*(frame.x+.055*frame.width)/frame.canvasWidth;
+  const cursorY=bbox.y+bbox.height*(frame.y+.055*frame.height)/frame.canvasHeight;
   const pixelSample=async()=>page.evaluate(()=>{
    const c=document.querySelector('.rivo-edge-canvas');
-   const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,[.055,.055]);
+   const f=window.__rivoPaddedEdgeCanvas(460,640);
+   const touch=[(f.x+.055*f.width)/c.width,(f.y+.055*f.height)/c.height];
+   const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,touch);
    const ctx=c.getContext('2d');
    return Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data);
   });
