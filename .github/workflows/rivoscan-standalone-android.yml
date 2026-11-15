@@ -110,8 +110,11 @@ jobs:
           grep -Fq 'registerPlugin(RivoLiveScannerPlugin.class)' "$JAVA/MainActivity.java"
           grep -Fq 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
           grep -Fq 'upsertScannerLog' "$JAVA/RivoDocumentsPlugin.java"
-          grep -Fq 'RivoScan_Plates.xlsx' "$JAVA/RivoDocumentsPlugin.java"
-          grep -Fq 'RivoScan_Scans.xlsx' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'appendScannerText' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'RivoScan_(QR|Barcode)_' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'RivoScan_Plates.txt' "$JAVA/RivoDocumentsPlugin.java"
+          ! grep -Fq 'RivoScan_Scans.xlsx' "$JAVA/RivoDocumentsPlugin.java"
+          ! grep -Fq 'RivoScan_Plates.xlsx' "$JAVA/RivoDocumentsPlugin.java"
           grep -Fq 'editor.setDocument(bitmap,found)' "$JAVA/RivoLiveScannerActivity.java"
           grep -Fq 'new RivoCropEditor(this)' "$JAVA/RivoLiveScannerActivity.java"
           grep -Fq 'createScanLedger' src/main.js
