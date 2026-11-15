@@ -18,6 +18,22 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'networkidle',timeout:35000});
   await page.locator('.rivo-compact-home').waitFor({timeout:20000});
+  // A search field must stay directly beside its page title, not below it.
+  const searchSameRow=async(titleSelector,searchSelector)=>{
+    return page.evaluate(([titleSelector,searchSelector])=>{
+      const heading=document.querySelector(titleSelector),search=document.querySelector(searchSelector);
+      if(!heading||!search)return {ok:false,reason:'missing heading/search'};
+      const a=heading.getBoundingClientRect(),b=search.getBoundingClientRect();
+      const center=r=>(r.top+r.bottom)/2;
+      return {ok:a.width>30&&b.width>75&&
+        Math.abs(center(a)-center(b))<8&&a.right<=b.left+4&&
+        b.right<=innerWidth+2&&a.left>=-2&&
+        getComputedStyle(search).display!=='none',
+        title:{x:a.x,y:a.y,w:a.width},search:{x:b.x,y:b.y,w:b.width}};
+    },[titleSelector,searchSelector]);
+  };
+  const homeSearch=await searchSameRow('.rivo-home-search-title-row .rivo-home-intro h1','.rivo-home-search-title-row .rivo-premium-search');
+  check(width+': My Files heading and Search documents in the same row',homeSearch.ok);
   // Actual computed style must keep the version badge readable, not merely
   // set a foreground color that -webkit-text-fill-color later overrides.
   const versionBadge=await page.evaluate(()=>{
@@ -147,6 +163,16 @@ try{
   check(width+': Documents names readable, no grid toggle',library.nameWidth>65&&!library.gridToggle);
   await page.screenshot({path:out+'/'+width+'-documents-test-fixture.png'});
 
+  const docsInline=await page.evaluate(()=>{
+    const row=document.querySelector('.rivo-library-command-row');
+    const file=row?.querySelector('[data-import="file"]'),search=row?.querySelector('.library-search'),refresh=row?.querySelector('#refresh-documents');
+    if(!file||!search||!refresh)return false;
+    const a=file.getBoundingClientRect(),b=search.getBoundingClientRect(),c=refresh.getBoundingClientRect();
+    return a.right<=b.left+5&&b.right<=c.left+5&&
+      Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<8&&
+      Math.abs((b.top+b.bottom)/2-(c.top+c.bottom)/2)<8&&b.width>60&&c.right<=innerWidth+2;
+  });
+  check(width+': Documents My Files, Search, Refresh stay in one row',docsInline);
   // Responsive TEST fixture: approved icon/label toolbar, not a camera result.
   const selection=await page.evaluate(()=>{
     const slot=document.getElementById('library-selection-root');
@@ -167,6 +193,8 @@ try{
 
   await page.locator('.mobilebar [data-tab="tools"]').click();
   await page.locator('.rivo-tools-hub').waitFor({state:'visible'});
+  const toolsInline=await searchSameRow('.rivo-tools-search-title-row .rivo-tools-heading h1','.rivo-tools-search-title-row .rivo-tools-search');
+  check(width+': Tools heading and Search tools in the same row',toolsInline.ok);
   const tools=await page.evaluate(()=>({
    categoryTabs:document.querySelectorAll('.rivo-tool-pills').length,
    grids:[...document.querySelectorAll('.rivo-hub-grid')].map(g=>({
