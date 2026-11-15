@@ -1,0 +1,55 @@
+/* In-memory PerfectScan corner review sits above the main PerfectScan sheet.
+   A photo has NOT been saved while this overlay is displayed. */
+body .rivo-perfect-corners-overlay{
+ position:fixed;inset:0;z-index:200200;
+ display:flex;align-items:center;justify-content:center;
+ padding:calc(env(safe-area-inset-top,0px) + 8px) 8px calc(env(safe-area-inset-bottom,0px) + 8px);
+ background:rgba(0,16,32,.91);box-sizing:border-box;
+}
+body .rivo-perfect-corners-panel{
+ box-sizing:border-box;display:flex;flex-direction:column;gap:7px;
+ width:min(100%,680px);max-height:100%;overflow-y:auto;min-height:0;
+ border:1px solid #2c6da2;border-radius:15px;
+ background:#083354;color:#fff;padding:11px;
+}
+body .rivo-perfect-corners-panel h2{
+ margin:0;font-size:16px;font-weight:750;line-height:1.22;color:#f6fcff;
+}
+body .rivo-perfect-corners-panel :is(p,.rivo-perfect-corners-detection){
+ margin:0;line-height:1.35;font-size:11px;color:#dcebf5;
+}
+body .rivo-perfect-corners-detection{color:#9beed6!important;font-size:10px!important;}
+body .rivo-perfect-corners-frame{
+ display:flex;flex:1 1 auto;align-items:center;justify-content:center;
+ min-height:170px;max-height:min(60dvh,630px);
+ padding:4px;border:1px solid #2b6c99;border-radius:10px;
+ background:#001726;overflow:hidden;touch-action:none;
+}
+body .rivo-perfect-corners-canvas{
+ display:block;max-width:100%;max-height:min(58dvh,615px);
+ width:auto;height:auto;object-fit:contain;touch-action:none;
+ cursor:crosshair;user-select:none;-webkit-user-select:none;
+}
+body .rivo-perfect-corners-panel .rivo-perfect-corners-status{
+ min-height:14px;color:#ffd39c;font-size:11px;
+}
+body .rivo-perfect-corners-panel footer{display:flex;align-items:center;gap:6px;}
+body .rivo-perfect-corners-panel footer button{
+ flex:1 1 0;min-width:0;min-height:43px;
+ box-sizing:border-box;padding:6px;border:1px solid #5185af;border-radius:9px;
+ color:#fff;background:#13507a;font:650 11px/1.2 system-ui,sans-serif;
+}
+body .rivo-perfect-corners-panel footer [data-perfect-corner="apply"]{
+ background:#146cc5;border-color:#4d9ae2;
+}
+body .rivo-perfect-corners-panel button:disabled{opacity:.50;}
+body .rivo-perfect-corners-panel button:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+body .rivo-perfectscan-toolbar [data-perfect="edges"]{
+ border:1px solid #3a9ea9;color:#efffff;background:#176b7d;
+}
+body .rivo-perfectscan-toolbar [data-perfect="edges"][hidden]{display:none!important;}
+@media(max-height:670px){
+ body .rivo-perfect-corners-panel{padding:7px;gap:4px;}
+ body .rivo-perfect-corners-frame{max-height:48dvh;}
+ body .rivo-perfect-corners-canvas{max-height:46dvh;}
+}
