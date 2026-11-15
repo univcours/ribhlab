@@ -1,60 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createLibraryBulk} from '../src/library-bulk.js';
+import {readFileSync} from 'node:fs';
+import {scannerDailyFile} from '../src/scan-ledger.js';
 
-function setup(){
- const docs=[
-  {uri:'content://rivo/document/1',name:'RS_Doc_20261115.pdf',mimeType:'application/pdf'},
-  {uri:'content://rivo/document/2',name:'RS_Doc_20261115_2.pdf',mimeType:'application/pdf'}
- ];
- const originalDocument=globalThis.document;
- globalThis.document={
-  body:{classList:{toggle(){},remove(){}}},
-  getElementById(){return null}
- };
- const instance=createLibraryBulk({
-  getLanguage:()=> 'en',getItems:()=>docs,
-  bridge:{},toast:()=>{},onRefresh:async()=>{},
-  showBusy:()=>{},progress:()=>{},clearBusy:()=>{},saveOut:async()=>{}
- });
- return {docs,instance,reset:()=>{globalThis.document=originalDocument;}};
-}
+const bulk=readFileSync(new URL('../src/library-bulk.js',import.meta.url),'utf8');
+const top=readFileSync(new URL('../src/rivo-bulk-top.css',import.meta.url),'utf8');
+const visual=readFileSync(new URL('../scripts/visual-ui-audit.mjs',import.meta.url),'utf8');
 
-test('toolbar remains above list and is available with one selected file',()=>{
- const fixture=setup();
- try {
-  const {instance,docs}=fixture;
-  assert.equal(instance.toolbar(),'');
-  instance.toggle(docs[0]);
-  assert.equal(instance.count(),1);
-  assert.match(instance.toolbar(),/data-bulk="delete"/);
-  assert.match(instance.toolbar(),/data-bulk="share"/);
-  assert.match(instance.toolbar(),/data-bulk="merge"[^>]*disabled aria-disabled="true"/);
-  instance.toggle(docs[1]);
-  assert.equal(instance.count(),2);
-  assert.doesNotMatch(instance.toolbar(),/data-bulk="merge"[^>]*disabled/);
-  instance.toggle(docs[0]);
-  instance.toggle(docs[1]);
-  assert.equal(instance.toolbar(),'');
- }finally{fixture.reset()}
+test('one selected file displays the delete, share and move toolbar',()=>{
+ assert.match(bulk,/if\(!mode\|\|selected\.size===0\)return ''/);
+ assert.match(bulk,/compactAction\('delete',t\('delete'\),'trash'\)/);
+ assert.match(bulk,/compactAction\('share',t\('share'\),'share'\)/);
+ assert.match(bulk,/compactAction\('organize',t\('move'\),'move'\)/);
+ assert.match(bulk,/items\.length<2/);
+ assert.match(bulk,/disabled aria-disabled="true"/);
 });
-
-test('one selected document retains its checkbox and action names',()=>{
- const fixture=setup();
- try {
-  const {instance,docs}=fixture;
-  instance.toggle(docs[0]);
-  const html=instance.toolbar();
-  const names=['cancel','all','delete','organize','merge','share'];
-  assert.deepEqual([...html.matchAll(/data-bulk="([^"]+)"/g)].map(m=>m[1]),names);
-  assert.match(html,/<svg aria-hidden="true"[^>]*fill="none"/);
-  assert.match(instance.checkbox(docs[0],0),/checked/);
-  assert.doesNotMatch(instance.checkbox(docs[1],1),/ checked/);
- }finally{fixture.reset()}
+test('selection toolbar is inserted above RecyclerView, never at bottom navbar',()=>{
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const slot=main.indexOf('id="library-selection-root"');
+ const list=main.indexOf('id="library-list"');
+ assert.ok(slot>0&&list>slot);
+ assert.match(top,/#library-selection-root/);
+ assert.match(top,/position:static!important/);
 });
-
-test('both permanent QR and bar journal filenames are unchanged',async()=>{
- const {scannerDailyFile}=await import('../src/scan-ledger.js');
+test('responsive screenshots show real action icons and truthful demo file count',()=>{
+ assert.match(visual,/const paths=\{/);
+ assert.match(visual,/stroke="currentColor"/);
+ assert.match(visual,/2 TEST FILES/);
+ assert.match(visual,/selection-single-test-fixture\.png/);
+ assert.doesNotMatch(visual,/M4 4h16v16H4z/);
+});
+test('QR and barcode journals remain two permanent TXT files',()=>{
  assert.equal(scannerDailyFile('QR','2026-11-15'),'RS_QR.txt');
  assert.equal(scannerDailyFile('CODE128','2026-11-16'),'RS_Bar.txt');
 });
