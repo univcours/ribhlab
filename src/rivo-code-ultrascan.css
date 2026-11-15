@@ -38,3 +38,101 @@
  }
  .rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-label{flex-basis:42px}
 }
+/* Compact UltraScan camera: preserve room for auto-search controls and
+   results. Unlike the old full-height preview, the camera is constrained
+   to around half of the phone's usable viewport. */
+body .rivo-code-overlay.rivo-live-overlay{
+ box-sizing:border-box!important;align-items:flex-start!important;
+ padding:calc(env(safe-area-inset-top,0px) + 6px) 8px
+         calc(env(safe-area-inset-bottom,0px) + 8px)!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-dialog{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+ width:100%!important;max-width:650px!important;
+ height:auto!important;max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 16px)!important;
+ min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+ gap:5px!important;padding:5px 7px!important;margin:0 auto!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-head{
+ flex:0 0 auto!important;min-height:36px!important;gap:6px!important;
+ align-items:center!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-head strong{
+ font-size:14px!important;line-height:1.2!important;
+ min-width:0!important;flex:1 1 auto!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-head .rivo-code-count{
+ display:grid;place-items:center;flex:0 0 35px!important;
+ width:35px!important;height:28px!important;border-radius:9px!important;
+ background:#0E61C2!important;color:#FFFFFF!important;font-size:12px!important;font-weight:800!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-head > button{
+ flex:0 0 36px!important;width:36px!important;min-width:36px!important;
+ height:36px!important;min-height:36px!important;padding:0!important;
+}
+body .rivo-code-overlay.rivo-live-overlay :is(.rivo-live-help,.rivo-live-status){
+ flex:0 0 auto!important;min-height:0!important;margin:0!important;
+ line-height:1.25!important;font-size:11px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-help{
+ overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-preview{
+ display:block!important;flex:0 0 auto!important;
+ width:100%!important;height:min(53dvh,490px)!important;
+ min-height:210px!important;max-height:min(53dvh,490px)!important;
+ margin:2px 0!important;border-radius:13px!important;
+ overflow:hidden!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-preview video{
+ transform-origin:50% 50%!important;will-change:transform;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-target-guide{
+ position:absolute;pointer-events:none;z-index:1;
+ inset:23% 18%;border:1.5px dashed #B8D9F266;border-radius:14px;
+ box-shadow:0 0 0 9999px #0614270c;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-detection-outline{
+ z-index:2!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-controls{
+ flex:0 0 auto!important;margin:1px 0!important;gap:5px!important;
+ min-height:37px!important;height:37px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-controls > button{
+ min-height:35px!important;height:35px!important;
+ min-width:39px!important;padding:3px 8px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-controls > button:last-child{
+ max-width:110px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-label{
+ flex-basis:85px!important;font-size:11px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-result{
+ max-height:74px!important;min-height:0!important;
+ margin:1px 0!important;padding:6px 8px!important;
+ font-size:11px!important;line-height:1.25!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-result[hidden]{
+ display:none!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-actions{
+ flex:0 0 auto!important;min-height:40px!important;margin:1px 0!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-live-actions > button{
+ min-height:39px!important;height:39px!important;
+}
+@media(max-height:650px){
+ body .rivo-code-overlay.rivo-live-overlay .rivo-live-preview{
+  height:min(46dvh,330px)!important;max-height:min(46dvh,330px)!important;
+ }
+ body .rivo-code-overlay.rivo-live-overlay .rivo-code-target-guide{
+  inset:18% 18%;
+ }
+}
+@media(max-width:360px){
+ body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-label{
+  flex-basis:76px!important;font-size:10px!important;
+ }
+}
