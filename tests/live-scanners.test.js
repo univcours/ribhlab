@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import JSZip from 'jszip';
-import {createScanLedger,scannerLogNames} from '../src/scan-ledger.js';
+import {createScanLedger,scannerDailyFile,scannerCodeType,scannerLocalDay} from '../src/scan-ledger.js';
 import {normalizePlate,plateCandidates,matchesPlate,matchingPlateTargets,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
 import {newScanDeduplicator,safeScannedUrl,decodeFormat} from '../src/barcode-scanner.js';
 import {readFileSync} from 'node:fs';
@@ -10,49 +9,57 @@ function memory(){
  const values=new Map();
  return {getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};
 }
-test('Each successful QR/barcode scan appends to ONE persistent TXT and XLSX, never formulas',async()=>{
- const files=new Map(),bridge={upsertScannerLog:async({name,mimeType,base64})=>{files.set(name,{mimeType,bytes:Buffer.from(base64,'base64')});return {name};}};
+test('QR and barcode go to separate daily append-only TXT files, never Excel',async()=>{
+ const files=new Map(),writes=[];
+ const bridge={appendScannerText:async({name,mimeType,line})=>{
+  assert.equal(mimeType,'text/plain');assert.equal(name.endsWith('.txt'),true);
+  const lines=files.get(name)||[];
+  if(!lines.includes(line))lines.push(line);
+  files.set(name,lines);writes.push({name,line});return {saved:true};
+ }};
  let time=0;
- const ledger=createScanLedger({storage:memory(),bridge,clock:()=>new Date(1730000000000+time++*1000)});
+ const ledger=createScanLedger({storage:memory(),bridge,clock:()=>new Date(Date.UTC(2026,10,9,10,0,time++))});
  await Promise.all([
   ledger.append('codes',{format:'QR',value:'https://example.org'}),
   ledger.append('codes',{format:'EAN13',value:'6111234567890'}),
   ledger.append('codes',{format:'CODE128',value:'=HYPERLINK("malicious")'})
  ]);
- assert.deepEqual([...files.keys()].sort(),Object.values(scannerLogNames.codes).sort());
- const txt=files.get(scannerLogNames.codes.text).bytes.toString('utf8');
- assert.match(txt,/Date & Time\tType\tValue/);
- assert.match(txt,/6111234567890/);
- assert.equal(txt.split('\n').filter(Boolean).length,4);
- const zip=await JSZip.loadAsync(files.get(scannerLogNames.codes.excel).bytes);
- const xml=await zip.file('xl/worksheets/sheet1.xml').async('string');
- assert.match(xml,/t="inlineStr"/);
- assert.match(xml,/6111234567890/);
- assert.match(xml,/=HYPERLINK/);
- assert.doesNotMatch(xml,/<f>/);
+ assert.deepEqual([...files.keys()].sort(),[
+  'RivoScan_QR_2026-11-09.txt','RivoScan_Barcode_2026-11-09.txt'
+ ].sort());
+ assert.equal(files.get('RivoScan_QR_2026-11-09.txt').length,1);
+ assert.equal(files.get('RivoScan_Barcode_2026-11-09.txt').length,2);
+ assert.equal(files.get('RivoScan_Barcode_2026-11-09.txt')[1].includes('=HYPERLINK'),true);
+ assert.ok(writes.every(w=>w.name.endsWith('.txt')&&!w.name.endsWith('.xlsx')));
  assert.equal(ledger.read('codes').length,3);
+ assert.equal(ledger.read('codes').every(row=>row.exported===true),true);
+ assert.equal(scannerCodeType('QR'),'QR');
+ assert.equal(scannerCodeType('DATA_MATRIX'),'Barcode');
+ assert.equal(scannerDailyFile('QR','2026-11-09'),'RivoScan_QR_2026-11-09.txt');
+ assert.match(scannerLocalDay(new Date('2026-11-09T10:00:00Z')),/^2026-11-09$/);
 });
-test('Startup log recovery cannot overwrite a concurrently appended barcode',async()=>{
- const bridgeWrites=[], storage=memory();
+test('Concurrent scan and recovery never duplicate or overwrite existing QR lines',async()=>{
+ const files=new Map(),storage=memory();
  let release;
  const gate=new Promise(resolve=>{release=resolve;});
  let stalled=false;
- const bridge={upsertScannerLog:async data=>{
+ const bridge={appendScannerText:async({name,line})=>{
   if(!stalled){stalled=true;await gate;}
-  bridgeWrites.push({name:data.name,text:Buffer.from(data.base64,'base64').toString('utf8')});
+  const rows=files.get(name)||[];
+  if(!rows.includes(line))rows.push(line);
+  files.set(name,rows);
  }};
  const db=createScanLedger({bridge,storage,clock:()=>new Date('2026-11-09T10:00:00Z')});
  const first=db.append('codes',{value:'111111',format:'QR'});
- // Recovery enqueued while a file upsert is in flight, then another scan.
  const recovery=db.resync('codes');
  const second=db.append('codes',{value:'222222',format:'QR'});
- release();
- await Promise.all([first,recovery,second]);
+ release();await Promise.all([first,recovery,second]);
+ const rows=files.get('RivoScan_QR_2026-11-09.txt');
+ assert.equal(rows.length,2);
+ assert.ok(rows.some(s=>s.includes('111111'))&&rows.some(s=>s.includes('222222')));
  assert.equal(db.read('codes').length,2);
- const finalTxt=bridgeWrites.filter(entry=>entry.name==='RivoScan_Scans.txt').at(-1).text;
- assert.ok(finalTxt.includes('111111')&&finalTxt.includes('222222'));
 });
-test('Plate log always records unmatched plates; a match records linked photo',async()=>{
+test('Plate log stores matches in TXT only without generating Excel',async()=>{
  const storage=memory(),calls=[];
  const bridge={upsertScannerLog:async value=>{calls.push(value);return {}}};
  const db=createScanLedger({storage,bridge,clock:()=>new Date('2026-11-09T10:35:00Z')});
@@ -61,20 +68,23 @@ test('Plate log always records unmatched plates; a match records linked photo',a
  assert.equal(db.read('plates').length,2);
  assert.equal(db.read('plates')[0].match,false);
  assert.equal(db.read('plates')[1].photo,'PlateMatch_56789B2_01.jpg');
- assert.equal(calls.length,4);
- assert.ok(calls.some(c=>c.name==='RivoScan_Plates.xlsx'));
- assert.ok(calls.some(c=>c.name==='RivoScan_Plates.txt'));
+ assert.equal(calls.length,2);
+ assert.ok(calls.every(c=>c.name==='RivoScan_Plates.txt'&&c.mimeType==='text/plain'));
 });
-test('A failed native write remains in journal and can be resynchronized',async()=>{
- const storage=memory(),uploaded=[];
+test('Failed Android write stays pending, and recovery appends TXT exactly once',async()=>{
+ const storage=memory(),writes=[];
  let fail=true;
- const bridge={upsertScannerLog:async data=>{if(fail)throw Error('Storage not ready');uploaded.push(data.name);}};
- const db=createScanLedger({storage,bridge});
- await assert.rejects(db.append('codes',{value:'12345',format:'QR'}),/Storage not ready/);
- assert.equal(db.read('codes').length,1);
+ const bridge={appendScannerText:async data=>{if(fail)throw Error('Storage not ready');writes.push(data);}};
+ const db=createScanLedger({storage,bridge,clock:()=>new Date('2026-11-09T10:00:00Z')});
+ const first=await db.append('codes',{value:'12345',format:'QR'});
+ assert.equal(first.saved,false);
+ assert.match(first.reason,/Storage not ready/);
+ assert.equal(db.read('codes')[0].exported,false);
  fail=false;
  await db.resync('codes');
- assert.deepEqual(uploaded,['RivoScan_Scans.txt','RivoScan_Scans.xlsx']);
+ await db.resync('codes');
+ assert.deepEqual(writes.map(x=>x.name),['RivoScan_QR_2026-11-09.txt']);
+ assert.equal(db.read('codes')[0].exported,true);
 });
 test('Plate formatting handles Arabic digits; matching works on full or partial number',()=>{
  assert.equal(normalizePlate('١٢٣٤٥ - أ - ٦'),'12345أ6');
@@ -132,13 +142,22 @@ test('Plate match alert is backed by Android ToneGenerator rather than WebAudio 
  assert.ok(camera.includes('onMatchAlert(plate)'));
  assert.ok(java.includes('"plateMatch".equals(event)'));
 });
-test('Native scanner log storage only permits four reserved filenames',()=>{
+test('Native scanner accepts only dated TXT appends and never creates scanner XLSX',()=>{
  const java=readFileSync(new URL('../native/android/RivoDocumentsPlugin.java',import.meta.url),'utf8');
- for(const name of ['RivoScan_Scans.txt','RivoScan_Scans.xlsx','RivoScan_Plates.txt','RivoScan_Plates.xlsx'])
-  assert.ok(java.includes(name));
- assert.ok(java.includes('upsertScannerLog'));
- assert.ok(java.includes('Not an approved scanner log.'));
+ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+ const sounds=readFileSync(new URL('../native/android/RivoSounds.java',import.meta.url),'utf8');
+ assert.ok(java.includes('appendScannerText'));
+ assert.ok(java.includes('RivoScan_(QR|Barcode)_'));
+ assert.ok(java.includes('RivoScan_Plates.txt'));
+ assert.ok(java.includes('openOutputStream(target,empty?"wt":"wa")'));
  assert.ok(java.includes('MediaStore.MediaColumns.RELATIVE_PATH'));
+ assert.ok(!java.includes('RivoScan_Scans.xlsx'));
+ assert.ok(!java.includes('RivoScan_Plates.xlsx'));
+ assert.ok(main.includes("onSuccess:()=>soundFeedback('codeSuccess')"));
+ assert.ok(sounds.includes('"codeSuccess".equals(event)'));
+ assert.ok(main.includes("onPreview:doc=>RivoDocuments.openFile({uri:doc.uri})"));
+ assert.ok(main.includes("onEdit:doc=>RivoDocuments.openFile({uri:doc.uri})"));
+ assert.ok(main.includes("} else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});"));
 });
 test('Tools are wired and camera overlays stop streaming on close or Android Back',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
