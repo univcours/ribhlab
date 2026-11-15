@@ -2,9 +2,13 @@ import {BrowserMultiFormatReader} from '@zxing/browser';
 import {scanMultipleCanvas,scanMultipleCanvasAsync,verifiedUniqueCodes} from './code-multi-scan.js';
 
 const I18N={
- en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to daily TXT','Could not save: ','Close','No code found — nothing captured'],
- ar:['QR / Barcode UltraScan','الكاميرا كتتعرف تلقائياً على QR والباركود','وجّه الكاميرا نحو QR أو الباركود…','تم التعرف على','نسخ','اختيار صورة','ضوء','الكاميرا غير متاحة. اختار صورة.','تحفظ فملف TXT حسب التاريخ والنوع','تعذر الحفظ: ','إغلاق','ما تلقا حتى كود — ما تصور وما تحفظ والو'],
- fr:['QR / Barcode UltraScan','Reconnaissance automatique QR et code-barres','Cadrez un QR ou code-barres…','Détecté','Copier','Choisir photo','Torche','Caméra indisponible. Choisissez une photo.','Enregistré dans le TXT du jour','Enregistrement impossible : ','Fermer','Aucun code détecté — rien capturé']
+ en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera unavailable. Choose a photo.','Saved to the daily TXT file','Could not save: ','Close','No code detected','Already scanned and saved. No duplicate was created.','Code copied','Could not copy code','Open link','Could not open the link','Saved codes','codes found on page','codes detected'],
+ ar:['مسح رموز QR والباركود','الكاميرا تتعرف تلقائيًا على رموز QR والباركود','وجّه الكاميرا نحو رمز QR أو باركود…','تم التعرف على','نسخ','اختيار صورة','المصباح','الكاميرا غير متاحة. اختر صورة.','تم الحفظ في الملف النصي اليومي','تعذر حفظ الرمز: ','إغلاق','لم يتم العثور على أي رمز','تم مسح هذا الرمز وحفظه مسبقًا، ولن يُحفظ مرة أخرى.','تم نسخ الرمز','تعذر نسخ الرمز','فتح الرابط','تعذر فتح الرابط','الرموز المحفوظة','رموز مكتشفة في الصورة','رموز مكتشفة'],
+ fr:['QR / Code-barres UltraScan','Détection automatique par la caméra','Cadrez un QR ou un code-barres…','Détecté','Copier','Choisir une photo','Lampe','Caméra indisponible. Choisissez une photo.','Enregistré dans le TXT du jour','Enregistrement impossible : ','Fermer','Aucun code détecté','Code déjà scanné et enregistré. Aucun doublon.','Code copié','Copie impossible','Ouvrir le lien','Impossible d’ouvrir le lien','Codes enregistrés','codes trouvés sur la photo','codes détectés'],
+ es:['Lector QR y códigos de barras','Detección automática con la cámara','Apunte a un código QR o de barras…','Detectado','Copiar','Elegir imagen','Linterna','Cámara no disponible. Elija una imagen.','Guardado en el TXT diario','Error al guardar: ','Cerrar','No se encontró ningún código','Este código ya se escaneó y guardó. No se duplicó.','Código copiado','No se pudo copiar','Abrir enlace','No se pudo abrir el enlace','Códigos guardados','códigos en la imagen','códigos detectados'],
+ de:['QR-/Barcode-Scanner','Automatische QR- und Barcode-Erkennung','Kamera auf einen Code richten…','Erkannt','Kopieren','Bild wählen','Licht','Kamera nicht verfügbar. Bild wählen.','In täglicher TXT-Datei gespeichert','Speichern fehlgeschlagen: ','Schließen','Kein Code gefunden','Code bereits gescannt und gespeichert. Kein Duplikat.','Code kopiert','Kopieren fehlgeschlagen','Link öffnen','Link konnte nicht geöffnet werden','Gespeicherte Codes','Codes im Bild','Codes erkannt'],
+ pt:['Leitor QR e códigos de barras','Deteção automática pela câmara','Aponte para um código QR ou de barras…','Detetado','Copiar','Escolher fotografia','Lanterna','Câmara indisponível. Escolha uma fotografia.','Guardado no TXT diário','Erro ao guardar: ','Fechar','Nenhum código encontrado','Este código já foi lido e guardado. Sem duplicação.','Código copiado','Não foi possível copiar','Abrir ligação','Não foi possível abrir a ligação','Códigos guardados','códigos na imagem','códigos detetados'],
+ it:['Lettore QR e codici a barre','Rilevamento automatico con fotocamera','Inquadra un QR o codice a barre…','Rilevato','Copia','Scegli foto','Torcia','Fotocamera non disponibile. Scegli una foto.','Salvato nel TXT giornaliero','Salvataggio non riuscito: ','Chiudi','Nessun codice trovato','Codice già acquisito e salvato. Nessun duplicato.','Codice copiato','Impossibile copiare','Apri link','Impossibile aprire il link','Codici salvati','codici nell’immagine','codici rilevati']
 };
 const FORMATS=['AZTEC','CODABAR','CODE39','CODE93','CODE128','DATA_MATRIX','EAN8','EAN13','ITF','MAXICODE','PDF417','QR','RSS14','RSS_EXPANDED','UPCA','UPCE','UPC_EXTENSION'];
 export const safeScannedUrl=value=>{
@@ -109,7 +113,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',L[0]);
  const head=document.createElement('header');head.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
- const counter=document.createElement('span');counter.className='rivo-code-count';counter.textContent='0';counter.setAttribute('aria-label','Saved codes');
+ const counter=document.createElement('span');counter.className='rivo-code-count';counter.textContent='0';counter.setAttribute('aria-label',L[17]);
  const close=iconButton('✕',()=>stop());close.dataset.scanOverlayClose='true';
  head.append(title,counter,close);
  const camera=document.createElement('div');camera.className='rivo-live-preview';
@@ -119,10 +123,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  camera.append(video,guide,outline);
  const help=document.createElement('p');help.className='rivo-live-help';help.textContent=L[1];
  const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
- const result=document.createElement('pre');result.className='rivo-live-result';result.hidden=true;
+ const result=document.createElement('div');result.className='rivo-live-result rivo-code-results';
+ result.setAttribute('role','list');result.setAttribute('aria-label',L[3]);result.hidden=true;
  const actions=document.createElement('div');actions.className='rivo-live-actions';
- const copy=iconButton(L[4],()=>navigator.clipboard?.writeText(result.textContent||'').catch(()=>notify('Copy unavailable',true)));
- copy.hidden=true;
  const torch=iconButton('⚡ '+L[6],()=>toggleTorch());
  const file=iconButton(L[5],()=>picker.click());
  const zoomMinus=iconButton('−',()=>manualZoom(-1)),zoomPlus=iconButton('+',()=>manualZoom(1));
@@ -132,7 +135,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  zoomMinus.setAttribute('aria-label','Zoom out');zoomPlus.setAttribute('aria-label','Zoom in');
  autoZoom.setAttribute('aria-label','Automatic camera zoom');
  zoomActions.append(zoomMinus,zoomLabel,zoomPlus,autoZoom);
- actions.append(torch,file,copy);
+ actions.append(torch,file);
  const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
  box.append(head,help,camera,status,result,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
@@ -141,8 +144,61 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  let multiTimer=null,multiActive=false,multiFrameCount=0;
  let successful=0;
  const multiCanvas=document.createElement('canvas');
- const codeHistory=new Map();
- const updateCount=()=>{counter.textContent=String(successful);counter.title=successful+' codes saved';};
+ const codeHistory=new Map(),duplicateNotices=new Map();
+ const updateCount=()=>{counter.textContent=String(successful);counter.title=successful+' '+L[17];};
+ const writeClipboard=async value=>{
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);return;}
+  const field=document.createElement('textarea');
+  field.value=value;field.readOnly=true;field.style.position='fixed';field.style.opacity='0';
+  document.body.appendChild(field);field.focus();field.select();
+  try{if(!document.execCommand?.('copy'))throw Error('Clipboard unavailable');}
+  finally{field.remove();}
+ };
+ const openScannedLink=async raw=>{
+  const url=safeScannedUrl(raw);
+  if(!url)return;
+  try{
+   if(typeof window.RivoOpenWebLink==='function'){await window.RivoOpenWebLink(url);return;}
+   if(window.Capacitor?.isNativePlatform?.()&&window.Capacitor?.getPlatform?.()==='android'){
+    // Native Android opens the default browser outside the app.
+    const {registerPlugin}=await import('@capacitor/core');
+    await registerPlugin('RivoDocuments').openWebLink({url});
+   }else{
+    const opened=window.open(url,'_blank','noopener,noreferrer');
+    if(!opened)throw Error('No browser window was opened');
+   }
+  }catch(error){status.textContent=L[16];console.warn('Open verified barcode link:',error);}
+ };
+ const renderCodeResults=()=>{
+  const fragment=document.createDocumentFragment();
+  for(const item of [...codeHistory.values()].slice(-35).reverse()){
+   const row=document.createElement('div');row.className='rivo-code-result-row';
+   row.setAttribute('role','listitem');
+   const info=document.createElement('div');info.className='rivo-code-result-info';
+   const format=document.createElement('strong');format.textContent=item.format;
+   const value=document.createElement('span');value.className='rivo-code-result-value';value.textContent=item.value;
+   value.dir='auto';info.append(format,value);
+   const buttons=document.createElement('div');buttons.className='rivo-code-result-buttons';
+   const copyButton=iconButton(L[4],async()=>{
+    try{await writeClipboard(item.value);status.textContent=L[13];}
+    catch(error){status.textContent=L[14];console.warn('Copy code:',error);}
+   });
+   copyButton.className='rivo-code-copy';buttons.append(copyButton);
+   if(safeScannedUrl(item.value)){
+    const linkButton=iconButton(L[15],()=>{void openScannedLink(item.value);});
+    linkButton.className='rivo-code-open-link';buttons.append(linkButton);
+   }
+   row.append(info,buttons);fragment.append(row);
+  }
+  result.replaceChildren(fragment);
+  result.hidden=codeHistory.size===0;
+ };
+ const duplicateMessage=identity=>{
+  const now=Date.now();
+  if(now-(duplicateNotices.get(identity)||0)<4500)return;
+  duplicateNotices.set(identity,now);
+  if(!closed)status.textContent=L[12];
+ };
 
  const zoom={track:null,min:1,max:2.6,current:1,hardware:false,auto:true,pending:false};
  let lastCodeAt=Date.now(),lastZoomAt=0,zoomTimer=null;
@@ -220,33 +276,40 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   if(closed)return;
   const entry=recognizedCode(decoded);
   if(entry)lastCodeAt=Date.now();
-  // No verified symbol = no photo, no outline, no capture, no log.
   if(!entry)return;
-  // Scanner sees both QR and ordinary barcode without changing any modes.
-  if(!dedup.accept(entry.format+'\u0000'+entry.value))return;
-  if(fromPhoto){
-   // Photo result points belong to the imported image, NOT to the live
-   // camera preview: drawing those there would be a misleading overlay.
-   lastDetectionAt=0;clearDetectionOutline();
-  }else{
-   lastDetectionAt=Date.now();
-   if(drawOutline(outline,video,decoded.getResultPoints?.()||[]))
-    playDetectedAnimation();
+  const identity=entry.format+'\u0000'+entry.value;
+  // Both fast and multi-frame decoders run concurrently: block the duplicate
+  // synchronously, before any awaited disk write or status notification.
+  if(!dedup.accept(identity)){
+   duplicateMessage(identity);return;
   }
-  codeHistory.set(entry.format+'\u0000'+entry.value,entry);
-  result.textContent=[...codeHistory.values()].slice(-8).map(v=>v.format+' · '+v.value).join('\n');
-  result.hidden=false;copy.hidden=false;
+  if(fromPhoto){lastDetectionAt=0;clearDetectionOutline();}
+  else{
+   lastDetectionAt=Date.now();
+   if(drawOutline(outline,video,decoded.getResultPoints?.()||[]))playDetectedAnimation();
+  }
+  codeHistory.set(identity,entry);
+  renderCodeResults();
   status.textContent=L[3]+' · '+entry.format;
   try{
-   // Auto-save decoded TEXT only. Never take a still photo from empty frames.
    const saved=await onScan(entry);
+   if(closed)return;
+   if(saved?.duplicate||saved?.alreadySaved){
+    status.textContent=L[12];
+    duplicateNotices.set(identity,Date.now());
+    return;
+   }
    if(saved?.saved){
     successful++;updateCount();
     try{onSuccess(entry);}catch(error){console.warn('Scan success feedback:',error);}
     try{navigator.vibrate?.(55);}catch{}
+    status.textContent=L[8]+' · '+entry.format;
+   }else{
+    status.textContent=L[9]+(saved?.reason||'');
    }
-   if(!closed)status.textContent=(saved?.saved?L[8]:L[9]+(saved?.reason||'Local export unavailable'))+' · '+entry.format;
-  }catch(error){if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}}
+  }catch(error){
+   if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}
+  }
  }
  // Decode an entire uploaded page, rather than just its first barcode.
  picker.addEventListener('change',async()=>{
@@ -261,7 +324,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const found=verifiedUniqueCodes(scanMultipleCanvas(canvas,{fine:true,maxResults:28}),recognizedCode);
    if(found.length){
     for(const {result:decoded} of found){if(closed)break;await deliver(decoded,{fromPhoto:true});}
-    if(!closed)status.textContent=found.length+' code(s) found on page · '+successful+' saved';
+    if(!closed)status.textContent=found.length+' '+L[18]+' · '+successful+' '+L[17];
    }else{
     const found=reader.decodeFromCanvas(canvas);await deliver(found,{fromPhoto:true});
    }
@@ -301,7 +364,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     for(const {result:found} of codes){if(closed)break;await deliver(found);}
     if(!closed&&codes.length>1){
      drawMultipleOutlines(outline,video,codes.map(item=>item.result));
-     status.textContent=codes.length+' code(s) detected · '+successful+' saved';
+     if(successful>0)status.textContent=codes.length+' '+L[19]+' · '+successful+' '+L[17];
     }
    }
   }catch(error){console.debug('Multi-code frame unavailable:',error);}
