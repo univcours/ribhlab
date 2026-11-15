@@ -169,7 +169,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   draw();
   status.textContent=reliable?
     (({en:'Auto beta: review the result and compare with the original before saving.',ar:'تقويم تجريبي: راجع النتيجة وقارنها مع الأصل قبل الحفظ.',fr:'Correction bêta : vérifiez le résultat et comparez avec l’original.'})[language]||'Review auto correction'):
-    (({en:'No reliable text lines found. Original preserved; use manual correction.',ar:'ما لقيناش سطور واضحة باش نصححو تلقائياً. الأصلية محفوظة؛ استعمل التقويم اليدوي.',fr:'Aucune ligne fiable ; utilisez le réglage manuel.'})[language]||'Manual correction required');
+    (({en:'No reliable text lines found. Original preserved; use manual correction.',ar:'لم يتم العثور على سطور واضحة تتيح التصحيح التلقائي. حُفظت الصورة الأصلية، ويمكنك استخدام التقويم اليدوي.',fr:'Aucune ligne fiable ; utilisez le réglage manuel.'})[language]||'Manual correction required');
  };
  autoAll.addEventListener('click',()=>autoFix());
  compare.addEventListener('click',()=>{showOriginal=!showOriginal;draw()});
