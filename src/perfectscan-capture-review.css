@@ -1,7 +1,7 @@
 /* PerfectScan Pro: capture review appears AFTER camera photo returns, BEFORE any Save.
    This dialog is completely separate from the My Documents edge-adjustment editor. */
 body .rivo-perfect-capture-overlay{
- position:fixed;inset:0;z-index:100120;
+ position:fixed;inset:0;z-index:2147483200; /* above PerfectScan Pro's 2147483000 overlay */
  display:flex;align-items:center;justify-content:center;
  box-sizing:border-box;overflow:hidden;
  padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(10px + env(safe-area-inset-bottom,0px));
