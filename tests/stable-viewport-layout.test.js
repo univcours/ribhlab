@@ -60,7 +60,7 @@ test('Documents filters and file count share one row, file import and search sha
  assert.match(commands,/id="refresh-documents"/);
  assert.match(commands,/id="library-search"/);
  for(const cls of ['rivo-library-filter-row','rivo-library-command-row']){
-  assert.match(css,new RegExp('\\\\.'+cls),'missing responsive horizontal layout for '+cls);
+  assert.ok(css.includes('.'+cls),'missing responsive horizontal layout for '+cls);
  }
  assert.equal((markup.match(/id="library-search"/g)||[]).length,1);
  assert.equal((markup.match(/id="refresh-documents"/g)||[]).length,1);
