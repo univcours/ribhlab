@@ -49,3 +49,19 @@ test('Documents title and its two actions share a single compact header row',()=
  assert.match(css,/\.library-heading-actions > button\.btn/);
  assert.match(layout,/data-import="file"/,'File import still available in library controls');
 });
+
+test('Documents filters and file count share one row, file import and search share another',()=>{
+ const markup=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary('));
+ const filter=markup.slice(markup.indexOf('class="rivo-library-filter-row"'),markup.indexOf('class="rivo-library-command-row"'));
+ const commands=markup.slice(markup.indexOf('class="rivo-library-command-row"'),markup.indexOf('class="library-controls"'));
+ assert.match(filter,/class="rivo-library-chips"/);
+ assert.match(filter,/class="library-top"/);
+ assert.match(commands,/data-import="file"/);
+ assert.match(commands,/id="refresh-documents"/);
+ assert.match(commands,/id="library-search"/);
+ for(const cls of ['rivo-library-filter-row','rivo-library-command-row']){
+  assert.match(css,new RegExp('\\\\.'+cls),'missing responsive horizontal layout for '+cls);
+ }
+ assert.equal((markup.match(/id="library-search"/g)||[]).length,1);
+ assert.equal((markup.match(/id="refresh-documents"/g)||[]).length,1);
+});
