@@ -1,0 +1,39 @@
+name: RivoScan 0.45.23 native banner viewport proof
+on:
+  push:
+    branches: [rivoscan-04523-native-banner-qaproof]
+    paths:
+      - 'scripts/native-ad-viewport-proof.mjs'
+      - '.github/workflows/rivoscan-native-banner-proof.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  native-webview-proof:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build exact RivoScan 0.45.23
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Test separately scrollable viewport on 4 screen widths and 4 tabs
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-preview.log 2>&1 &
+          for n in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep 1
+          done
+          node scripts/native-ad-viewport-proof.mjs
+      - name: Upload proof screenshots and geometry report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.23-16-Screens-Native-Ad-Safe
+          path: /tmp/rivoscan-banner-qaproof/
+          if-no-files-found: warn
+          retention-days: 14
