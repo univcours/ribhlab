@@ -49,6 +49,7 @@ import './rivo-info-perfect-circle.css';
 import './rivo-stable-scroll-layout.css';
 import './rivo-code-ultrascan.css';
 import './rivo-file-icons.css';
+import './rivo-save-toast.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
