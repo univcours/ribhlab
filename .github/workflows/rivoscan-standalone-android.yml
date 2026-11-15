@@ -111,7 +111,7 @@ jobs:
           grep -Fq 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
           grep -Fq 'upsertScannerLog' "$JAVA/RivoDocumentsPlugin.java"
           grep -Fq 'appendScannerText' "$JAVA/RivoDocumentsPlugin.java"
-          grep -Fq 'RS_(QR|Bar)_' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'RS_QR.txt' "$JAVA/RivoDocumentsPlugin.java"
           grep -Fq 'RivoScan_Plates.txt' "$JAVA/RivoDocumentsPlugin.java"
           ! grep -Fq 'RivoScan_Scans.xlsx' "$JAVA/RivoDocumentsPlugin.java"
           ! grep -Fq 'RivoScan_Plates.xlsx' "$JAVA/RivoDocumentsPlugin.java"
