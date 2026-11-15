@@ -67,4 +67,4 @@ for(const [name,data] of [
 ]){
  const p=join(root,name);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,data);
 }
-console.log('[RivoScan] RivoScan icon without wordmark: full-bleed store square and safe adaptive Android foreground');
+console.log('[RivoScan] Symbol-only large R ready without wordmark: full-bleed Play icon and safe Android adaptive foreground');
