@@ -466,3 +466,28 @@ html body.rivo-native-android #app .shell.rivo-dark-ui :is(
   font-size:11px!important;
  }
 }
+
+
+/* Documents: order is My Files | Search | Refresh; maintain a one-row search. */
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row.rivo-search-title-row{
+ justify-content:stretch!important;gap:5px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents{
+ display:inline-flex!important;flex:0 0 36px!important;
+ align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:36px!important;min-width:36px!important;
+ min-height:36px!important;height:36px!important;max-width:36px!important;
+ padding:0!important;margin:0!important;white-space:nowrap!important;border-radius:9px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents svg{
+ width:16px!important;height:16px!important;flex:none!important;
+}
+@media(max-width:359px){
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row.rivo-search-title-row{
+  gap:3px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row > #refresh-documents{
+  flex-basis:34px!important;width:34px!important;min-width:34px!important;
+  max-width:34px!important;min-height:34px!important;height:34px!important;
+ }
+}
