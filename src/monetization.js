@@ -2,6 +2,7 @@
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -132,128 +133,154 @@ export function getPremiumStatus(){
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
   adStats:{...adStats},liveAds};
 }
-// The native banner is reserved in its own row ABOVE the bottom navigation.
-// Match the SDK bottom margin with a measured WebView nav height to avoid overlap.
-// Native banners draw OVER the WebView, so hide them during cameras,
-// modal dialogs, document previews and in-progress saves, then resume.
-let bannerObserver=null;
-let bannerLastMargin=0,bannerRelayoutTimer=null,bannerLayoutObserved=false,bannerWrongSize=false;
+// A real 320x50 native Google banner, with a SEPARATELY SCROLLABLE WebView.
+// The native view owns all taps. The WebView content ends ABOVE the ad on ALL
+// routes; CSS cannot clip the plugin's separate native View.
+let bannerObserver=null,bannerTimer=null,bannerObserved=false;
+let bannerLastMargin=-1,bannerWrongSize=false,bannerReconciling=false;
 function bannerObstructed(){
  const focus=typeof document!=='undefined'?document.activeElement:null;
- const keyboard=!!(focus&&/^(INPUT|TEXTAREA)$/.test(focus.tagName));
- return state.busy||keyboard||(typeof document!=='undefined'&&!!document.querySelector(
-  '.rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-perfectscan-overlay,'+
-  '.rivo-editor-overlay,.rivo-pages-overlay,.rivo-update-gate,.doc-detail-overlay,'+
-  '.bulk-overlay,.rivo-reward-overlay,.busy'
- ));
-}
-function observeBannerOverlays(){
- if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;
- bannerObserver=new MutationObserver(()=>{
-  if(!state.bannerReady)return;
-  const obstructed=bannerObstructed();
-  if(state.bannerHidden===obstructed)return;
-  state.bannerHidden=obstructed;
-  if(obstructed){
-   setBannerSpace(false);
-   void AdMob.hideBanner().catch(error=>console.warn('Hide banner:',error));
-  }else{
-   void AdMob.resumeBanner().then(()=>setBannerSpace(true)).catch(error=>console.warn('Resume banner:',error));
-  }
+ const keyboard=!!(focus&&(/^(INPUT|TEXTAREA|SELECT)$/.test(focus.tagName)||focus.isContentEditable));
+ if(state.busy||keyboard)return true;
+ if(typeof document==='undefined')return false;
+ const selector=[
+  '.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay',
+  '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-pages-modal','.rivo-page-manager-overlay',
+  '.rivo-shield-overlay','.rivo-merged-overlay','.rivo-update-gate',
+  '.doc-detail-overlay','.bulk-overlay','.rivo-reward-overlay','.busy',
+  'dialog[open]','[role="dialog"][aria-modal="true"]'
+ ].join(',');
+ return [...document.querySelectorAll(selector)].some(el=>{
+  const b=el.getBoundingClientRect(),style=getComputedStyle(el);
+  return b.width>0&&b.height>0&&style.visibility!=='hidden'&&style.display!=='none';
  });
- bannerObserver.observe(document.body,{childList:true,subtree:true});
-}
-function setBannerSpace(visible,height=50){
- const layout=currentBannerLayout();
- visible=!!(visible&&layout.valid&&!bannerWrongSize);
- if(typeof document==='undefined')return;
- document.body.classList.toggle('rivo-has-ad-banner',visible);
- document.documentElement.style.setProperty('--rivo-banner-height','50px');
- document.documentElement.style.setProperty('--rivo-banner-bottom',bannerBottomMargin()+'px');
 }
 function currentBannerLayout(){
  if(typeof document==='undefined'||typeof window==='undefined')return {valid:false};
- const width=document.documentElement.clientWidth,height=window.innerHeight;
- if(width<320||height<180)return {valid:false};
  const nav=document.querySelector('#app nav.mobilebar.rivo-nav-five');
- const fixed=!!(nav&&getComputedStyle(nav).display!=='none'&&getComputedStyle(nav).position==='fixed');
- const box=fixed?nav.getBoundingClientRect():null;
- const margin=box?Math.ceil(window.innerHeight-box.top)+8:8;
- if(height-margin-50<62)return {valid:false};
- return {valid:true,margin,width:320,height:50};
+ const shown=nav&&getComputedStyle(nav).display!=='none'&&getComputedStyle(nav).position==='fixed';
+ const rect=shown?nav.getBoundingClientRect():null;
+ const head=document.querySelector('#app .shell.rivo-dark-ui .topbar');
+ const headerBottom=head?.getBoundingClientRect().bottom||70;
+ return calculateAdLayout({
+  viewportWidth:document.documentElement.clientWidth,
+  viewportHeight:window.innerHeight,
+  navTop:rect?.top??null,navBottom:rect?.bottom??null,
+  headerBottom
+ });
 }
-function bannerBottomMargin(){
- const p=currentBannerLayout();return p.valid?p.margin:0;
+function setBannerSpace(visible){
+ if(typeof document==='undefined')return;
+ const layout=currentBannerLayout();
+ const show=!!(visible&&layout.valid&&!bannerWrongSize);
+ const root=document.documentElement;
+ root.style.setProperty('--rivo-banner-height','50px');
+ root.style.setProperty('--rivo-banner-width','320px');
+ root.style.setProperty('--rivo-content-top',(layout.valid?layout.contentTop:70)+'px');
+ root.style.setProperty('--rivo-content-bottom',layout.valid?(
+  show?layout.contentBottom:layout.bottomWithoutAd+8
+ ):98)+'px');
+ if(layout.valid)root.style.setProperty('--rivo-banner-bottom',layout.margin+'px');
+ document.body.classList.toggle('rivo-has-ad-banner',show);
+}
+function observeBannerOverlays(){
+ if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;
+ bannerObserver=new MutationObserver(()=>scheduleBannerRelayout());
+ bannerObserver.observe(document.body,{childList:true,subtree:true});
+ if(!bannerObserved){
+  bannerObserved=true;
+  window.addEventListener('resize',scheduleBannerRelayout,{passive:true});
+  window.visualViewport?.addEventListener('resize',scheduleBannerRelayout,{passive:true});
+  window.addEventListener('orientationchange',scheduleBannerRelayout,{passive:true});
+  document.addEventListener('focusin',scheduleBannerRelayout);
+  document.addEventListener('focusout',scheduleBannerRelayout);
+  document.addEventListener('visibilitychange',scheduleBannerRelayout);
+ }
 }
 function scheduleBannerRelayout(){
- if(!state.ready||typeof window==='undefined')return;
- if(bannerRelayoutTimer)clearTimeout(bannerRelayoutTimer);
- bannerRelayoutTimer=setTimeout(async()=>{
-  bannerRelayoutTimer=null;
-  if(!state.ready)return;
-  const obstructed=bannerObstructed();
-  if(state.bannerReady&&obstructed&&!state.bannerHidden){
-   state.bannerHidden=true;setBannerSpace(false);await AdMob.hideBanner().catch(()=>{});
-  }else if(state.bannerReady&&!obstructed&&state.bannerHidden){
-   state.bannerHidden=false;await AdMob.resumeBanner().then(()=>setBannerSpace(true)).catch(()=>{});
-  }
-  const margin=bannerBottomMargin();
-  if(state.bannerReady&&Math.abs(margin-bannerLastMargin)>2){
-   // Native overlays cannot be moved with CSS. Re-create at the new anchor.
-   state.bannerReady=false;state.bannerHidden=false;setBannerSpace(false);
-   await AdMob.removeBanner().catch(()=>{});
-   void loadBanner();
-  }else if(state.bannerReady&&!state.bannerHidden)setBannerSpace(true);
- },180);
+ if(typeof window==='undefined')return;
+ if(bannerTimer)clearTimeout(bannerTimer);
+ bannerTimer=setTimeout(()=>{bannerTimer=null;void reconcileNativeBanner();},165);
 }
 export function refreshBannerPosition(){
- if(isAndroid&&typeof requestAnimationFrame==='function')requestAnimationFrame(scheduleBannerRelayout);
+ // Layout must be recalculated after render(), not just upon ad events.
+ if(typeof window==='undefined')return;
+ requestAnimationFrame(()=>{setBannerSpace(state.bannerReady&&!state.bannerHidden&&!bannerObstructed());scheduleBannerRelayout();});
+}
+async function reconcileNativeBanner(){
+ if(!state.ready)return;
+ if(bannerReconciling){scheduleBannerRelayout();return;}
+ bannerReconciling=true;
+ try{
+  const layout=currentBannerLayout(),blocked=bannerObstructed()||document.visibilityState==='hidden';
+  if(!layout.valid||blocked){
+   setBannerSpace(false);
+   if(state.bannerReady&&!state.bannerHidden){
+    state.bannerHidden=true;await AdMob.hideBanner().catch(()=>{});
+   }
+   return;
+  }
+  if(state.bannerLoading){setBannerSpace(false);return;}
+  if(state.bannerReady&&Math.abs(layout.margin-bannerLastMargin)>1){
+   state.bannerReady=false;state.bannerHidden=true;setBannerSpace(false);
+   await AdMob.removeBanner().catch(()=>{});
+   bannerLastMargin=-1;
+   void loadBanner();
+   return;
+  }
+  if(state.bannerReady){
+   if(state.bannerHidden){
+    await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>setBannerSpace(false));
+   }else setBannerSpace(true);
+  }else if(!bannerWrongSize)void loadBanner();
+ }finally{bannerReconciling=false;}
 }
 async function loadBanner(){
  if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading||bannerWrongSize)return false;
- if(typeof window==='undefined'||!currentBannerLayout().valid){
-  state.bannerError='Screen too narrow for 320x50 banner';return false;
- }
- if(bannerObstructed()){setBannerSpace(false);return false;}
+ const layout=currentBannerLayout();
+ if(!layout.valid){state.bannerError=layout.reason||'No safe banner room';setBannerSpace(false);return false;}
+ if(bannerObstructed()||document.visibilityState==='hidden'){setBannerSpace(false);return false;}
  state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(false);
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
-    state.bannerReady=true;retryCounts.banner=0;adStats.bannerLoads++;state.bannerError='';observeBannerOverlays();
+    state.bannerReady=true;retryCounts.banner=0;adStats.bannerLoads++;state.bannerError='';
+    observeBannerOverlays();
     if(bannerObstructed()){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
-    else setBannerSpace(true);
+    else {state.bannerHidden=false;setBannerSpace(true);}
     state.onChange();
    });
-   await AdMob.addListener(BannerAdPluginEvents.SizeChanged,dim=>{
-    const w=Number(dim?.width||0),h=Number(dim?.height||0);
-    if(w>322||h>52||w<0||h<0){
+   await AdMob.addListener(BannerAdPluginEvents.SizeChanged,size=>{
+    if(!nativeAdFits(size)){
      bannerWrongSize=true;state.bannerReady=false;state.bannerHidden=true;
-     state.bannerError='Native ad exceeds reserved 320x50 area';setBannerSpace(false);
+     state.bannerError='Native ad is larger than its reserved 320x50 viewport';
+     setBannerSpace(false);
      void AdMob.hideBanner().then(()=>AdMob.removeBanner()).catch(()=>{});
      state.onChange();return;
     }
-    if(!state.bannerHidden&&state.bannerReady)setBannerSpace(true);
+    if(state.bannerReady&&!state.bannerHidden)setBannerSpace(true);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
-    state.bannerReady=false;state.bannerError=String(error?.message||error||'No fill');scheduleAdRetry('banner');
-    setBannerSpace(false);state.onChange();
+    state.bannerReady=false;state.bannerHidden=false;
+    state.bannerError=String(error?.message||error||'No fill');
+    setBannerSpace(false);scheduleAdRetry('banner');state.onChange();
    });
    state.bannerListenersAttached=true;
   }
-  bannerLastMargin=bannerBottomMargin();
+  bannerLastMargin=layout.margin;
   await AdMob.showBanner({
    adId:AD_CONFIG.banner,adSize:BannerAdSize.BANNER,
    position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin,
    isTesting:AD_CONFIG.testMode
   });
+  // The reserved viewport is activated ONLY by Loaded, not an empty placeholder.
   return true;
  }catch(error){
   state.bannerReady=false;state.bannerError=String(error?.message||error);
-  setBannerSpace(false);status('Banner unavailable',state.bannerError);scheduleAdRetry('banner');
-  return false;
- }finally{state.bannerLoading=false}
+  setBannerSpace(false);status('Banner unavailable',state.bannerError);
+  scheduleAdRetry('banner');return false;
+ }finally{state.bannerLoading=false;}
 }
-
 async function loadInterstitial(){
  if(!state.ready||state.interstitialReady||state.busy)return false;
  try{

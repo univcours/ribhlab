@@ -32,9 +32,16 @@ function composite(out,sx,sy,sw,sh,dx,dy,dw,dh){
  }
 }
 const icon=blank(),header=blank();
-card(icon,112,101,288,304,52);
-composite(icon,118,84,269,266,146,111,220,220);
-composite(icon,90,359,335,72,148,339,216,46);
+// The previous 288px white card left 30+px on either side of the blue mark.
+// The new approved foreground has ONE WHITE PIXEL along the straight sides.
+// Adaptive icon masks still impose their separate circular safety zone.
+card(icon,137,101,238,293,37);
+composite(icon,118,84,269,266,138,102,236,236);
+composite(icon,90,359,335,72,140,345,232,48);
+// The circular launcher mask must not cut the lower wordmark on any device.
+for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+ if(Math.hypot(x-256,y-256)>178)icon.data[(y*512+x)*4+3]=0;
+}
 composite(header,118,84,269,266,28,28,456,456);
 const png=PNG.sync.write(icon);
 for(const [name,b] of [

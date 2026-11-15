@@ -53,7 +53,7 @@ function openInfo(button,section){
 }
 function addTrigger(group){
  const button=document.createElement('button');
- button.className='rivo-tool-help-trigger';button.type='button';button.textContent='ⓘ';button.title=word();
+ button.className='rivo-tool-help-trigger';button.type='button';button.textContent='i';button.title=word();
  const id='rivo-help-'+(++sequence);
  button.setAttribute('aria-label',word());button.setAttribute('aria-controls',id);button.setAttribute('aria-expanded','false');
  let close=group.querySelector(':scope > header [data-merged-close],.rivo-shield-head [data-shield="close"],.rivo-editor-header [data-edit="retake"],.rivo-modal-top .rivo-modal-dismiss,.rivo-perfectscan-modal header [data-perfect="close"]');
