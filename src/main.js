@@ -54,6 +54,7 @@ import './rivo-file-icons.css';
 import './rivo-save-toast.css';
 import './rivo-bulk-top.css';
 import './rivo-edge-adjustment.css';
+import './perfectscan-capture-review.css';
 import './rivo-documents-heading-search.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -1772,6 +1773,7 @@ function navigateRivoBack(){
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
   ['.rivo-edge-adjust-overlay','[data-edge="close"]'],
   ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
+  ['.rivo-perfect-capture-overlay','[data-capture-action="cancel"]'],
   ['.rivo-shield-overlay','[data-shield="close"]']
  ];
  for(const [selector,closeSelector] of dialogs){

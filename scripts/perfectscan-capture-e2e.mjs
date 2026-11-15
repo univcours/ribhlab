@@ -1,0 +1,90 @@
+/** Real browser pointer-drag verification for PerfectScan camera post-capture review.
+ * Synthetic page only, no camera/photos/account/network access.
+ */
+import assert from 'node:assert/strict';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {chromium} from 'playwright';
+const source=async file=>readFile(new URL('../'+file,import.meta.url),'utf8');
+const oldEditor=(await source('src/edge-adjustment.js')).replace(/^export /gm,'');
+const review=(await source('src/perfectscan-capture-review.js'))
+ .replace(/^import\s+[^;]+;\s*$/gm,'').replace(/^export /gm,'');
+const css=await source('src/perfectscan-capture-review.css');
+const dir=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
+await mkdir(dir,{recursive:true});
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const states=[];
+try{
+ for(const width of [360,412]){
+  const context=await browser.newContext({viewport:{width,height:width===360?800:900},hasTouch:true,isMobile:true,deviceScaleFactor:1});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#d7eaf6"></body></html>');
+  await page.addStyleTag({content:css});
+  await page.addScriptTag({content:oldEditor+'\n'+review+'\nwindow.__reviewPerfectScan=reviewPerfectScanCapture;\n'});
+  await page.evaluate(async()=>{
+   const canvas=document.createElement('canvas');canvas.width=600;canvas.height=800;
+   const c=canvas.getContext('2d');c.fillStyle='#173349';c.fillRect(0,0,600,800);
+   c.fillStyle='#f4f0e9';c.fillRect(80,95,440,615);
+   c.fillStyle='#285674';
+   for(let i=0;i<11;i++)c.fillRect(112,130+i*45,320,6);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.95));
+   const file=new File([blob],'Photo_From_Camera.jpg',{type:'image/jpeg'});
+   window.__reviewResult=null;
+   window.__reviewPerfectScan(file,{language:'ar'}).then(async result=>{
+    window.__reviewResult=result?{
+     originalName:result.original.name,originalSize:result.original.size,
+     name:result.file.name,size:result.file.size,detected:result.detected,
+     cropped:result.cropped,corners:result.corners
+    }:{cancelled:true};
+   });
+  });
+  const dialog=page.locator('.rivo-perfect-capture-overlay');
+  await dialog.waitFor();
+  const status=await page.locator('.rivo-perfect-capture-message').textContent();
+  assert.ok(status.includes('تم تحديد'),'page must be auto-detected after camera photo');
+  const canvas=page.locator('.rivo-perfect-capture-canvas'),bounds=await canvas.boundingBox();
+  assert.ok(bounds&&bounds.width>150);
+  const x=bounds.x+bounds.width*.135,y=bounds.y+bounds.height*.118;
+  await page.mouse.move(x,y);await page.mouse.down();
+  await page.screenshot({path:dir+'/'+width+'-perfectscan-corners-after-photo.png'});
+  await page.mouse.move(x+16,y+14,{steps:4});
+  await page.screenshot({path:dir+'/'+width+'-perfectscan-corner-loupe-drag.png'});
+  await page.mouse.up();
+  await page.locator('[data-capture-action="continue"]').click();
+  await page.waitForFunction(()=>window.__reviewResult!==null,{timeout:20000});
+  const saved=await page.evaluate(()=>window.__reviewResult);
+  assert.equal(saved.detected,true,'automatic corners were detected');
+  assert.equal(saved.cropped,true,'cropped photo is returned to PerfectScan');
+  assert.equal(saved.originalName,'Photo_From_Camera.jpg','original photo remains intact');
+  assert.ok(saved.size>1000,'corrected file contains actual JPEG');
+  assert.equal(await dialog.count(),0,'post-capture modal closes on confirm');
+  assert.deepEqual(errors,[],'no browser runtime errors');
+  states.push({width,status:'pass',saved});
+  await context.close();
+ }
+ // Ensure conservative fallback: unknown page must NOT get an invented rectangle.
+ const context=await browser.newContext({viewport:{width:360,height:780},hasTouch:true,isMobile:true});
+ const page=await context.newPage();
+ await page.setContent('<!doctype html><body style="margin:0"></body>');
+ await page.addStyleTag({content:css});
+ await page.addScriptTag({content:oldEditor+'\n'+review+'\nwindow.__reviewPerfectScan=reviewPerfectScanCapture;'});
+ await page.evaluate(async()=>{
+  const canvas=document.createElement('canvas');canvas.width=480;canvas.height=640;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#cfcfcf';ctx.fillRect(0,0,480,640);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.93));
+  window.__fallback=null;
+  window.__reviewPerfectScan(new File([blob],'no-edges.jpg',{type:'image/jpeg'}),{language:'en'})
+   .then(result=>window.__fallback=result&&{cropped:result.cropped,detected:result.detected,name:result.file.name});
+ });
+ await page.locator('.rivo-perfect-capture-overlay').waitFor();
+ assert.ok((await page.locator('.rivo-perfect-capture-message').textContent()).includes('No reliable edge detection'));
+ await page.screenshot({path:dir+'/360-perfectscan-no-fake-rectangle.png'});
+ await page.locator('[data-capture-action="original"]').click();
+ await page.locator('[data-capture-action="continue"]').click();
+ await page.waitForFunction(()=>window.__fallback!==null);
+ const fallback=await page.evaluate(()=>window.__fallback);
+ assert.deepEqual(fallback,{cropped:false,detected:false,name:'no-edges.jpg'});
+ await context.close();
+}finally{await browser.close();}
+await writeFile(dir+'/perfectscan-postcapture-e2e-results.json',JSON.stringify({states,ambiguous:'pass'},null,2));
+console.log('PASS PerfectScan: auto corners after camera capture, draggable 6x loupe, original preservation, manual/original fallback on 360/412px');

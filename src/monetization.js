@@ -137,7 +137,7 @@ function bannerObstructed(){
  if(state.busy||keyboard)return true;
  if(typeof document==='undefined')return false;
  const selector=[
-  '.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay',
+  '.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay','.rivo-perfect-capture-overlay',
   '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-pages-modal','.rivo-page-manager-overlay',
   '.rivo-shield-overlay','.rivo-merged-overlay','.rivo-update-gate',
   '.doc-detail-overlay','.bulk-overlay','.rivo-edge-adjust-overlay','.busy',

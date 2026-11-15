@@ -1,0 +1,64 @@
+/* PerfectScan Pro: capture review appears AFTER camera photo returns, BEFORE any Save.
+   This dialog is completely separate from the My Documents edge-adjustment editor. */
+body .rivo-perfect-capture-overlay{
+ position:fixed;inset:0;z-index:100120;
+ display:flex;align-items:center;justify-content:center;
+ box-sizing:border-box;overflow:hidden;
+ padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(10px + env(safe-area-inset-bottom,0px));
+ background:rgba(2,22,41,.93);color:#f5fcff;
+}
+body .rivo-perfect-capture-panel{
+ box-sizing:border-box;width:min(100%,650px);max-height:100%;min-height:0;
+ padding:10px;border:1px solid #3574a2;border-radius:16px;
+ background:#062d4e;box-shadow:0 15px 40px #0008;
+ display:flex;flex-direction:column;gap:8px;overflow-y:auto;
+}
+body .rivo-perfect-capture-panel header{
+ flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+body .rivo-perfect-capture-panel header strong{font-size:16px;line-height:1.3}
+body .rivo-perfect-capture-panel header button{
+ width:40px;min-width:40px;height:40px;min-height:40px;
+ border:1px solid #5d91b4;border-radius:50%;background:#1b4b73;color:#fff;font-size:22px;
+}
+body .rivo-perfect-capture-panel p{
+ flex:0 0 auto;margin:0;color:#dcf0f8;font-size:12px;line-height:1.4;
+}
+body .rivo-perfect-capture-stage{
+ flex:1 1 auto;min-height:150px;max-height:min(59dvh,600px);
+ padding:4px;background:#001c33;border:1px solid #31618b;border-radius:10px;
+ display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;
+}
+body .rivo-perfect-capture-stage canvas{
+ display:block;width:auto;height:auto;max-width:100%;max-height:min(56dvh,580px);
+ object-fit:contain;touch-action:none;cursor:crosshair;
+}
+body .rivo-perfect-capture-panel .rivo-perfect-capture-message{
+ flex:0 0 auto;display:block;min-height:18px;font-size:11px;line-height:1.3;
+ color:#d7f5ff;
+}
+body .rivo-perfect-capture-panel :is(nav,footer){
+ flex:0 0 auto;display:flex;align-items:stretch;gap:6px;
+}
+body .rivo-perfect-capture-panel button{
+ touch-action:manipulation;cursor:pointer;
+}
+body .rivo-perfect-capture-panel :is(nav,footer)>button{
+ flex:1 1 0;min-width:0;padding:7px 6px;min-height:42px;
+ border:1px solid #6c9bbe;border-radius:9px;color:#fff;background:#12416b;
+ font-size:11px;line-height:1.22;font-weight:650;
+}
+body .rivo-perfect-capture-panel footer>button[data-capture-action="continue"]{
+ border-color:#1c9bde;background:#0765af;font-size:13px;
+}
+body .rivo-perfect-capture-panel button:disabled{opacity:.5;cursor:default}
+body .rivo-perfect-capture-panel button:focus-visible{
+ outline:2px solid #fff;outline-offset:2px;
+}
+@media(max-height:650px){
+ body .rivo-perfect-capture-panel{padding:6px;gap:4px}
+ body .rivo-perfect-capture-stage{max-height:46dvh}
+ body .rivo-perfect-capture-stage canvas{max-height:43dvh}
+ body .rivo-perfect-capture-panel p{font-size:11px}
+ body .rivo-perfect-capture-panel nav>button{min-height:36px;font-size:10px}
+}
