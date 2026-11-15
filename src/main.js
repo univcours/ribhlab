@@ -491,9 +491,10 @@ function home(){
    ${featureTiles.map(f=>`<button type="button" class="rivo-feature-tile" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
     <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(compactFeatureLabel(f.id))}</strong></button>`).join('')}
   </nav>
-  <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1>
+  <div class="rivo-search-title-row rivo-home-search-title-row">
+    <div class="rivo-home-intro"><h1>${escapeHTML(copy.files)}</h1></div>
+    <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
   </div>
-  <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
   <div id="home-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
   <div class="recent-panel rivo-premium-recent" id="home-recents" tabindex="0">${recentDocuments(14)}</div>
@@ -502,8 +503,10 @@ function home(){
 }
 function toolsWorkspace(){
  const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
- return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
- <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
+ return `<section class="app-tools rivo-tools-hub"><div class="rivo-search-title-row rivo-tools-search-title-row">
+  <div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
+  <label class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></label>
+ </div>
  <div class="rivo-tools-scroll" tabindex="0">${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
