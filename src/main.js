@@ -1772,8 +1772,10 @@ function navigateRivoBack(){
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
   ['.rivo-edge-adjust-overlay','[data-edge="close"]'],
-  ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
+  // The capture review is a sibling above PerfectScan. Android Back must
+  // dismiss this child FIRST, without closing or touching the parent.
   ['.rivo-perfect-capture-overlay','[data-capture-action="cancel"]'],
+  ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
   ['.rivo-shield-overlay','[data-shield="close"]']
  ];
  for(const [selector,closeSelector] of dialogs){

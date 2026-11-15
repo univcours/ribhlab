@@ -20,6 +20,13 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#d7eaf6"></body></html>');
   await page.addStyleTag({content:css});
+  // Reproduce the REAL parent overlay stack that obscured the corner editor.
+  await page.addStyleTag({content:'.rivo-perfectscan-overlay{position:fixed;inset:0;z-index:2147483000;background:#ffffff;display:flex;align-items:center;justify-content:center;} .rivo-perfectscan-overlay button{padding:25px}'});
+  await page.evaluate(()=>{
+   const parent=document.createElement('div');parent.className='rivo-perfectscan-overlay';
+   parent.innerHTML='<button type="button" id="blocked-perfectscan-parent">Parent PerfectScan</button>';
+   document.body.appendChild(parent);
+  });
   await page.addScriptTag({content:oldEditor+'\n'+review+'\nwindow.__reviewPerfectScan=reviewPerfectScanCapture;\n'});
   await page.evaluate(async()=>{
    const canvas=document.createElement('canvas');canvas.width=600;canvas.height=800;
@@ -40,6 +47,19 @@ try{
   });
   const dialog=page.locator('.rivo-perfect-capture-overlay');
   await dialog.waitFor();
+  const dialogStack=await page.evaluate(()=>{
+   const review=document.querySelector('.rivo-perfect-capture-overlay');
+   const parent=document.querySelector('.rivo-perfectscan-overlay');
+   const confirm=review.querySelector('[data-capture-action="continue"]');
+   const b=confirm.getBoundingClientRect();
+   const top=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+   return {reviewZ:Number(getComputedStyle(review).zIndex),parentZ:Number(getComputedStyle(parent).zIndex),
+    hit:top?.closest('.rivo-perfect-capture-overlay')===review,
+    parentButtonCovered:document.elementFromPoint(innerWidth/2,innerHeight/2)?.closest('.rivo-perfectscan-overlay')===parent};
+  });
+  assert.ok(dialogStack.reviewZ>dialogStack.parentZ,'review must stack ABOVE original PerfectScan modal');
+  assert.equal(dialogStack.hit,true,'the user can actually press Continue on the topmost review');
+  assert.equal(dialogStack.parentButtonCovered,false,'the original background is not interactive during review');
   const status=await page.locator('.rivo-perfect-capture-message').textContent();
   assert.ok(status.includes('تم تحديد'),'page must be auto-detected after camera photo');
   const canvas=page.locator('.rivo-perfect-capture-canvas'),bounds=await canvas.boundingBox();

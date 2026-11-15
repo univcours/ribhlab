@@ -350,6 +350,10 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     // This explicit review happens AFTER camera capture. Nothing is saved
     // until the user confirms the four corners, processes and presses Save.
     captureReviewPending=true;
+    // The camera returns to the existing PerfectScan modal. Its native
+    // z-index used to hide the review underneath; inert the parent while
+    // its independent post-shutter review is active.
+    root.inert=true;
     const reviewed=await reviewPerfectScanCapture(files[0],{language:lang});
     if(!reviewed)return;
     const originalBytes=new Uint8Array(await reviewed.original.arrayBuffer());
@@ -359,7 +363,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
       });
    }else await addShots(files);
   }catch(error){setStatus(error.message,true)}
-  finally{captureReviewPending=false}
+  finally{root.inert=false;captureReviewPending=false}
  });
  // One select ensures mutually exclusive AI/2D/3D corrections.
  root.querySelector('[data-perfect-mode]').addEventListener('change',()=>{

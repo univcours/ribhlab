@@ -43,6 +43,19 @@ try{
     onDone:async()=>{window.__rivoCompleted++}
    });
   });
+  const geometry=await page.evaluate(()=>{
+   const overlay=document.querySelector('.rivo-edge-adjust-overlay');
+   const panel=overlay.querySelector('.rivo-edge-adjust-panel');
+   const stage=overlay.querySelector('.rivo-edge-canvas-wrap');
+   const a=overlay.getBoundingClientRect(),b=panel.getBoundingClientRect(),c=stage.getBoundingClientRect();
+   return {viewport:[innerWidth,innerHeight],overlay:[a.width,a.height],panel:[b.width,b.height],stage:[c.width,c.height],
+    fullscreen:getComputedStyle(panel).borderRadius==='0px'};
+  });
+  assert.ok(geometry.overlay[0]>=width-2&&geometry.overlay[1]>=height-2,'overlay uses full viewport');
+  assert.ok(geometry.panel[0]>=width-2&&geometry.panel[1]>=height-2,'edge panel uses the whole phone screen');
+  assert.ok(geometry.stage[1]>height*.46,'image editing stage must receive most of the screen');
+  assert.equal(geometry.fullscreen,true,'no small centered popup or rounded corners');
+  await page.screenshot({path:out+'/'+width+'-edge-editor-fullscreen.png'});
   const canvas=page.locator('.rivo-edge-canvas');
   await canvas.waitFor({state:'visible'});
   const bbox=await canvas.boundingBox();

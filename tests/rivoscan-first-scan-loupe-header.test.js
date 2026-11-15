@@ -10,8 +10,12 @@ test('loupe appears at the opposite corner and 6x magnifies real source pixels',
  const tl=cornerLoupeLayout(w,h,[.05,.07]);
  const br=cornerLoupeLayout(w,h,[.95,.93]);
  assert.equal(tl.zoom,6);
- assert.ok(tl.centerX>w/2&&tl.centerY>h/2);
- assert.ok(br.centerX<w/2&&br.centerY<h/2);
+ assert.equal(tl.side,'right');
+ assert.equal(br.side,'left');
+ assert.ok(tl.centerX>tl.fingerX+tl.radius,'left edge finger has loupe immediately to its right');
+ assert.ok(br.centerX<br.fingerX-br.radius,'right edge finger has loupe immediately to its left');
+ assert.ok(tl.centerY<300,'top corner loupe stays near the touch instead of jumping to opposite bottom corner');
+ assert.ok(br.centerY>300,'bottom corner loupe stays near the touch instead of jumping to opposite top corner');
  assert.ok(tl.centerX+tl.radius<=w);
  assert.ok(tl.centerY+tl.radius<=h);
  assert.ok(br.centerX-br.radius>=0);
