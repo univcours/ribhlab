@@ -1,0 +1,53 @@
+name: RivoScan 0.45.36 - Publish Google Play screenshots ONLY
+on:
+  workflow_dispatch:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths: ['.github/workflows/rivoscan-screenshots-publish.yml']
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: rivoscan-google-play-screenshot-publisher
+  cancel-in-progress: false
+jobs:
+  publish-screenshots-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify screenshot artifacts belong to the audited RivoScan 0.45.36 commit
+        run: |
+          set -euo pipefail
+          EXPECTED=b2cf38de4289223701e2985bb60782acde46b08a
+          for RUN in 43765588844 43765588839; do
+            SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN" --jq .head_sha)
+            test "$SHA" = "$EXPECTED" || { echo "Unexpected screenshot source $SHA" >&2; exit 1; }
+          done
+          echo 'Verified RivoScan 0.45.36 screenshot artifacts'
+      - name: Download authentic phone and tablet screenshots from GitHub Actions
+        run: |
+          set -euo pipefail
+          mkdir -p google-play-assets/phone google-play-assets/tablet
+          gh run download 43765588844 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Phone-1080x1920-Authentic-Screenshots' --dir google-play-assets/phone
+          gh run download 43765588839 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Tablet-7in-10in-Authentic-Screenshots' --dir google-play-assets/tablet
+      - name: Verify Google Play Developer API publishing secret is configured
+        run: |
+          if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo 'No Google Play Developer API credentials in repository secrets; NOTHING published.' >&2
+            echo 'Configure GOOGLE_PLAY_SERVICE_ACCOUNT_JSON with Store presence permission and rerun.' >&2
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Google Play publishing SDK
+        run: python -m pip install --disable-pip-version-check google-api-python-client google-auth Pillow
+      - name: Publish only 8 phone, 8 seven-inch and 8 ten-inch screenshots
+        run: |
+          python scripts/publish-rivoscan-screenshots.py \
+            --package com.ribhlab.rivoscan --locale en-US --asset-dir google-play-assets
+      # Never upload, delete, overwrite or replace Feature Graphic, icon, texts or release.
