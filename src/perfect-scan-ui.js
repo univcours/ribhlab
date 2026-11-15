@@ -306,7 +306,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   finally{disableDuring(false)}
  }
  async function writeResult(){
-  if(!base?.cornerReviewConfirmed||!result||working)return;
+  if(!base||!result||working)return;
+  if(!base.cornerReviewConfirmed)return;
   disableDuring(true);
   try{
    const temp=document.createElement('canvas');temp.width=base.width;temp.height=base.height;
