@@ -18,7 +18,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import {mlkitFullOptions,persistMlKitPdf,mlkitAutoCleanMode} from './mlkit-scan-flow.js';
-import {initialLanguage} from './locale-auto.js';
+import {initialLanguage,deviceLanguage,savedLanguagePreference,isAutoLanguage} from './locale-auto.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
@@ -166,10 +166,28 @@ const translations = {
   pt:{welcome:'Bem-vindo ao RivoScan',hero:'Documentos resolvidos.',desc:'Digitalize, edite, converta e assine PDFs com privacidade.',start:'Digitalização inteligente',all:'Todas as ferramentas',create:'Digitalizar e criar',organize:'Organizar',edit:'Editar e assinar',convert:'Converter',quick:'Ferramentas PDF',select:'Selecionar ficheiros',upload:'Escolher ficheiros',drop:'Escolha documentos',ready:'Pronto',run:'Processar e guardar',secure:'Privacidade',privacy:'Os documentos são processados no dispositivo.',home:'Início',files:'Atividade recente',soon:'Brevemente',settings:'Idiomas'},
   it:{welcome:'Benvenuto su RivoScan',hero:'Documenti, risolti.',desc:'Scansiona, modifica, converti e firma PDF in privato.',start:'Scansione intelligente',all:'Tutti gli strumenti',create:'Scansiona e crea',organize:'Organizza',edit:'Modifica e firma',convert:'Converti',quick:'Strumenti PDF',select:'Seleziona file',upload:'Scegli file',drop:'Seleziona documenti',ready:'Pronto',run:'Elabora e salva',secure:'Privacy',privacy:'I documenti vengono elaborati sul dispositivo.',home:'Home',files:'Attività recente',soon:'In arrivo',settings:'Lingue'}
 };
-let language = initialLanguage(localStorage.getItem('rivo-language'),navigator.languages?.length?navigator.languages:[navigator.language]);
-if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
-  RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
+const browserLanguages=()=>navigator.languages?.length?navigator.languages:[navigator.language];
+let language=initialLanguage(savedLanguagePreference(localStorage),browserLanguages());
+const autoLanguageLabel={en:'Automatic (device language)',ar:'تلقائي (لغة الهاتف)',fr:'Automatique (langue du téléphone)',es:'Automático (idioma del teléfono)',de:'Automatisch (Gerätesprache)',pt:'Automático (idioma do telemóvel)',it:'Automatico (lingua del telefono)'};
+function publishNativeLanguage(){
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  void RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
+ }
 }
+async function refreshSystemLanguage(){
+ if(!isAutoLanguage(localStorage))return;
+ let next=deviceLanguage(browserLanguages());
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  try{
+   const native=await RivoDocuments.getDeviceLanguage();
+   next=deviceLanguage([native?.language]);
+  }catch(error){console.warn('Android locale fallback to WebView:',error);}
+ }
+ if(!isAutoLanguage(localStorage))return; // User selection wins even if native lookup was pending.
+ if(next!==language){language=next;render();}
+ publishNativeLanguage();
+}
+publishNativeLanguage();
 let activeTool = null;
 let soundsEnabled = localStorage.getItem('rivo-sounds') !== 'off';
 const soundWords={
@@ -361,7 +379,7 @@ function render(){
     <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-header-mark.png" alt="RivoScan blue scan icon"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
     <div class="rivo-top-controls" role="group" aria-label="Language and sound">
       <label class="rivo-top-locale" aria-label="Language">${ico('globe',15)}
-        <select id="header-language" aria-label="Language">${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${language===code?'selected':''}>${label}</option>`).join('')}</select>
+        <select id="header-language" aria-label="Language"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>${({en:'AUTO',ar:'تلقائي',fr:'AUTO',es:'AUTO',de:'AUTO',pt:'AUTO',it:'AUTO'})[language]||'AUTO'}</option>${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${!isAutoLanguage(localStorage)&&language===code?'selected':''}>${label}</option>`).join('')}</select>
       </label>
       <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
     </div>
@@ -560,7 +578,7 @@ function settingsWorkspace(){
    </div>
   </details>
  </div>
- <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
+ <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>${autoLanguageLabel[language]||autoLanguageLabel.en}</option>${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${!isAutoLanguage(localStorage)&&language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
@@ -968,9 +986,15 @@ function wire(){
     document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
   }
   document.querySelectorAll('#language,#header-language').forEach(control=>control.addEventListener('change',e=>{
-    language=e.target.value;localStorage.setItem('rivo-language',language);
-    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);
-    render();
+    const chosen=e.target.value;
+    if(chosen==='auto'){
+      localStorage.removeItem('rivo-language');
+      language=deviceLanguage(browserLanguages());
+      render();void refreshSystemLanguage();return;
+    }
+    if(!['en','ar','fr','es','de','pt','it'].includes(chosen))return;
+    language=chosen;localStorage.setItem('rivo-language',language);
+    publishNativeLanguage();render();
   }));
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
@@ -1736,6 +1760,7 @@ document.addEventListener('touchend',event=>{
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
 render();
+void refreshSystemLanguage();
 // Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
 void startAdsAtLaunch();
 void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
@@ -1769,6 +1794,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   let backgroundStartedAt=0;
   CapacitorApp.addListener('appStateChange',({isActive})=>{
     if(isActive){
+      void refreshSystemLanguage();
       loadLibrary(activeTool?.id==='library');
       syncNativeSoundSetting();
       void checkPlayUpdate({language,working:busy||nativeCaptureDepth>0,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
