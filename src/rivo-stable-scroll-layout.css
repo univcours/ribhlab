@@ -491,3 +491,50 @@ html body.rivo-native-android #app .shell.rivo-dark-ui :is(
   max-width:34px!important;min-height:34px!important;height:34px!important;
  }
 }
+
+
+/* Live Plate Scanner is a modal (outside #app), but follows the same rule:
+   Title | searchable target + Watch button | Close, all on one row. */
+body .rivo-plate-overlay .rivo-live-dialog .rivo-live-head{
+ box-sizing:border-box!important;display:flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:space-between!important;
+ flex-wrap:nowrap!important;gap:5px!important;
+ min-width:0!important;width:100%!important;
+}
+body .rivo-plate-overlay .rivo-live-head > strong{
+ box-sizing:border-box!important;display:block!important;flex:0 1 30%!important;
+ width:auto!important;min-width:0!important;max-width:30%!important;
+ font-size:clamp(11px,2.9vw,14px)!important;line-height:1.15!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+body .rivo-plate-overlay .rivo-live-head > .rivo-plate-search-row{
+ box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;
+ flex-direction:row!important;align-items:center!important;
+ width:auto!important;min-width:0!important;max-width:none!important;
+ gap:3px!important;padding:0!important;margin:0!important;
+}
+body .rivo-plate-overlay .rivo-live-head .rivo-plate-search{
+ box-sizing:border-box!important;display:block!important;flex:1 1 0!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ min-height:36px!important;height:36px!important;padding:4px 6px!important;
+ font-size:12px!important;line-height:1.2!important;
+ text-overflow:ellipsis!important;border-radius:8px!important;
+}
+body .rivo-plate-overlay .rivo-live-head .rivo-plate-search-row > button,
+body .rivo-plate-overlay .rivo-live-head > button{
+ box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ flex:0 0 34px!important;width:34px!important;min-width:34px!important;
+ min-height:36px!important;height:36px!important;
+ margin:0!important;padding:0!important;
+}
+@media(max-width:359px){
+ body .rivo-plate-overlay .rivo-live-dialog .rivo-live-head{gap:3px!important;}
+ body .rivo-plate-overlay .rivo-live-head > strong{
+  flex-basis:27%!important;max-width:27%!important;font-size:11px!important;
+ }
+ body .rivo-plate-overlay .rivo-live-head .rivo-plate-search-row > button,
+ body .rivo-plate-overlay .rivo-live-head > button{
+  flex-basis:32px!important;width:32px!important;min-width:32px!important;
+ }
+}
