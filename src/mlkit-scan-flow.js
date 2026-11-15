@@ -1,3 +1,4 @@
+import {createRsFileNamer} from './rs-file-names.js';
 /** Google-managed camera, editable crop review, cleaning, native PDF creation. */
 /** Auto-save uses the selected scanner preference, without a second review screen. */
 export function mlkitAutoCleanMode(prefs={}){
@@ -17,7 +18,7 @@ export async function persistMlKitPdf(result,{importPdf,now=()=>Date.now(),perfe
   if(typeof uri!=='string'||!(/^(content:\/\/|file:\/\/)/i.test(uri)))
     throw new Error('Google scanner did not return a usable PDF URI.');
   if(typeof importPdf!=='function')throw new Error('Native PDF storage is unavailable.');
-  const name='RivoScan_Scan_'+now()+'.pdf';
+  const name=createRsFileNamer({clock:()=>new Date(now())})('RivoScan_Scan.pdf','application/pdf');
   const request={uri,name};
   const scannedImages=result?.scannedImages;
   const mode=['clean','bw','original'].includes(cleanMode)?cleanMode:'clean';

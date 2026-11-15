@@ -7,7 +7,7 @@ const CONFIG=Object.freeze({
  plates:{storage:'rivo-scan-ledger-plates-v1',text:'RivoScan_Plates.txt',columns:['Date & Time','Plate Number','Match','Photo']}
 });
 export const scannerLogNames=Object.freeze({
- codes:{qr:'RivoScan_QR_',barcode:'RivoScan_Barcode_'},
+ codes:{qr:'RS_QR_',barcode:'RS_Bar_'},
  plates:{text:'RivoScan_Plates.txt'}
 });
 const MAX_RECORDS=12000,MAX_VALUE_LENGTH=2048;
@@ -27,7 +27,7 @@ export function scannerCodeType(format){
 }
 export function scannerDailyFile(format,day){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))throw Error('Invalid scanner log date');
- return 'RivoScan_'+scannerCodeType(format)+'_'+day+'.txt';
+ return 'RS_'+(scannerCodeType(format)==='QR'?'QR':'Bar')+'_'+String(day).replaceAll('-','')+'.txt';
 }
 const toBase64=bytes=>{
  let result='';

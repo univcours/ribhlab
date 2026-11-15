@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {mlkitFullOptions,persistMlKitPdf} from '../src/mlkit-scan-flow.js';
+import {rsTimestamp} from '../src/rs-file-names.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
 test('Google FULL crop/clean workflow returns one native PDF without published JPGs',()=>{
@@ -25,7 +26,7 @@ test('PDF handoff preserves original URI, page count, and native streaming',asyn
  const saved=await persistMlKitPdf(pdf,{now:()=>1762870000000,importPdf:async x=>{
    payload=x;return {uri:'content://media/external/file/51',name:x.name};
  }});
- assert.deepEqual(payload,{uri:'content://google/scanner/123',name:'RivoScan_Scan_1762870000000.pdf'});
+ assert.deepEqual(payload,{uri:'content://google/scanner/123',name:'RS_Doc_'+rsTimestamp(new Date(1762870000000))+'.pdf'});
  assert.equal(saved.pageCount,3);
  assert.equal(saved.uri,'content://media/external/file/51');
  await assert.rejects(persistMlKitPdf({scannedImages:['page1.jpg']},{importPdf:async()=>({uri:'anything'})}),/PDF URI/);
