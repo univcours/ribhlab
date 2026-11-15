@@ -243,3 +243,65 @@ html body.rivo-native-android #app .shell.rivo-dark-ui :is(
    max-width:72%!important;
  }
 }
+
+/* Documents heading: keep the two actual actions beside "My Documents".
+   Keep 36dp accessible hit targets and never move either button below the title. */
+#app .shell.rivo-dark-ui .library-workspace .library-heading{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:space-between!important;flex-wrap:nowrap!important;
+ padding:2px 0!important;gap:5px!important;margin:0 0 3px!important;min-width:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading > div:first-child{
+ display:flex!important;flex:0 1 auto!important;min-width:0!important;max-width:100%!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading .work-title{
+ flex:0 1 auto!important;min-width:0!important;gap:5px!important;margin:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading .work-title > div:last-child{
+ min-width:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading h1{
+ font-size:clamp(12px,3vw,16px)!important;line-height:1.16!important;
+ margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading-actions{
+ display:flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-end!important;
+ flex-direction:row!important;flex-wrap:nowrap!important;
+ width:auto!important;min-width:0!important;max-width:65%!important;
+ gap:4px!important;padding:0!important;margin:0!important;overflow:visible!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-heading-actions > button.btn{
+ display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:auto!important;max-width:none!important;
+ min-width:0!important;min-height:36px!important;height:36px!important;
+ gap:4px!important;padding:4px 7px!important;margin:0!important;
+ white-space:nowrap!important;line-height:1!important;font-size:11px!important;
+ border-radius:9px!important;overflow:visible!important;
+}
+#app .shell.rivo-dark-ui .library-heading-actions > button svg{
+ flex:0 0 16px!important;width:16px!important;height:16px!important;
+}
+#app .shell.rivo-dark-ui .library-heading-actions .rivo-action-compact{display:none!important}
+#app .shell.rivo-dark-ui .library-heading-actions .rivo-action-full{display:inline!important}
+@media (max-width:600px){
+ #app .shell.rivo-dark-ui .library-heading-actions .rivo-action-compact{display:inline!important}
+ #app .shell.rivo-dark-ui .library-heading-actions .rivo-action-full{display:none!important}
+ #app .shell.rivo-dark-ui .library-workspace .library-heading-actions{max-width:62%!important}
+ #app .shell.rivo-dark-ui .library-workspace .library-heading-actions > button.btn{
+  padding-inline:5px!important;font-size:10px!important;gap:3px!important;
+ }
+}
+@media (max-width:380px){
+ #app .shell.rivo-dark-ui .library-workspace .library-heading .work-title .tool-icon{
+  display:none!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .library-heading h1{
+  font-size:13px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .library-heading-actions{
+  max-width:66%!important;gap:3px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .library-heading-actions > button.btn{
+  padding-inline:4px!important;
+ }
+}

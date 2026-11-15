@@ -37,3 +37,15 @@ test('native Google banner remains outside scrollable content and is never faked
  assert.doesNotMatch(css,/\.rivo-ad-banner-slot\s*\{/);
  assert.doesNotMatch(css,/\.rivo-ad-banner-frame\s*\{/);
 });
+
+test('Documents title and its two actions share a single compact header row',()=>{
+ const layout=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary('));
+ const heading=layout.slice(layout.indexOf('<div class="library-heading">'),layout.indexOf('<div class="panel library-panel">'));
+ assert.match(heading,/My Documents|\$\{dl\('documents'\)\}/);
+ assert.match(heading,/data-import="image"/);
+ assert.match(heading,/id="open-storage-folder"/);
+ assert.equal((layout.match(/id="open-storage-folder"/g)||[]).length,1);
+ assert.match(css,/\.library-workspace \.library-heading\s*\{[\s\S]*?flex-direction:row!important/);
+ assert.match(css,/\.library-heading-actions > button\.btn/);
+ assert.match(layout,/data-import="file"/,'File import still available in library controls');
+});
