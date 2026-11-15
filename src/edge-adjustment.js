@@ -80,13 +80,25 @@ const LABELS={
  it:{title:'Regola i bordi del documento',info:'Trascina i quattro angoli sui bordi del documento.',page:'Pagina PDF',save:'Salva copia corretta',cancel:'Annulla',reset:'Ripristina angoli',busy:'Correzione prospettiva…',original:'L’originale resta invariato. Solo la pagina PDF selezionata viene sostituita nella copia.',bad:'Gli angoli non devono incrociarsi.',failed:'Impossibile regolare i bordi',pageSelect:'Seleziona pagina PDF'}
 };
 const initialCorners=()=>[[.055,.055],[.945,.055],[.945,.945],[.055,.945]];
-/** Place a true magnified preview away from the user's fingertip. */
+/** A 6x loupe beside the actual touch point: right or left by available space.
+ * Both PerfectScan after capture and saved-document editor share this geometry.
+ * Never cover the point being dragged when there is room on either side.
+ */
 export function cornerLoupeLayout(width,height,corner){
  const w=Math.max(1,Number(width)),h=Math.max(1,Number(height));
- const radius=Math.max(30,Math.min(75,Math.min(w,h)*.15));
- const margin=Math.max(9,radius*.22);
- return {radius,centerX:corner[0]<.5?w-radius-margin:radius+margin,
-  centerY:corner[1]<.5?h-radius-margin:radius+margin,zoom:6};
+ const fingerX=clamp(Number(corner?.[0]??0.5),0,1)*w;
+ const fingerY=clamp(Number(corner?.[1]??0.5),0,1)*h;
+ const radius=Math.max(16,Math.min(75,Math.min(w*.14,h*.16)));
+ const margin=Math.max(6,Math.min(14,radius*.25));
+ const gap=Math.max(12,Math.min(24,radius*.32));
+ const availableLeft=fingerX,availableRight=w-fingerX;
+ const side=availableRight>=2*radius+gap?'right'
+  :availableLeft>=2*radius+gap?'left'
+  :availableRight>=availableLeft?'right':'left';
+ const proposedX=fingerX+(side==='right'?radius+gap:-radius-gap);
+ const centerX=clamp(proposedX,radius+margin,w-radius-margin);
+ const centerY=clamp(fingerY,radius+margin,h-radius-margin);
+ return {radius,centerX,centerY,side,zoom:6,fingerX,fingerY};
 }
 function decodeBase64(value){
  const s=String(value||'').split(',').pop(),out=new Uint8Array(s.length*3/4+4);
