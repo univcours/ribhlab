@@ -91,3 +91,53 @@ test('Arabic QR interface never contains colloquial Darija messages',()=>{
  assert.ok(arabic.includes('فتح الرابط'));
  assert.doesNotMatch(arabic,/كتتعرف|فالهاتف|غادي|ديال|اختار صورة|ما تلقا|تحفظ فملف/);
 });
+
+test('old dated QR/barcode journal rows migrate into the two stable files once',async()=>{
+ const storage=memory(),files=new Map();
+ storage.setItem('rivo-scan-ledger-codes-v1',JSON.stringify([
+  {at:'2026-11-13T09:30:00Z',day:'2026-11-13',localAt:'2026-11-13 10:30:00.000',type:'QR',value:'https://one.example',exported:true},
+  {at:'2026-11-14T09:31:00Z',day:'2026-11-14',localAt:'2026-11-14 10:31:00.000',type:'QR',value:'https://one.example',exported:true},
+  {at:'2026-11-14T09:32:00Z',day:'2026-11-14',localAt:'2026-11-14 10:32:00.000',type:'CODE128',value:'983729',exported:true}
+ ]));
+ const bridge={appendScannerText:async({name,line})=>{
+  const rows=files.get(name)||[];
+  const key=line.split('\t').slice(1).join('\t');
+  if(rows.some(old=>old.split('\t').slice(1).join('\t')===key))return {alreadyPresent:true};
+  rows.push(line);files.set(name,rows);return {saved:true};
+ }};
+ const ledger=createScanLedger({storage,bridge,clock:()=>new Date('2026-11-15T10:00:00Z')});
+ const migrated=await ledger.resync('codes');
+ assert.equal(migrated.count,3);
+ assert.deepEqual([...files.keys()].sort(),['RS_Bar.txt','RS_QR.txt']);
+ assert.equal(files.get('RS_QR.txt').length,1);
+ assert.equal(files.get('RS_Bar.txt').length,1);
+ await ledger.resync('codes');
+ assert.equal(files.get('RS_QR.txt').length,1);
+ assert.equal(ledger.read('codes').filter(row=>row.centralized===true).length,3);
+ const again=await ledger.append('codes',{format:'QR',value:'https://one.example'});
+ assert.equal(again.duplicate,true);
+ assert.equal(files.get('RS_QR.txt').length,1);
+});
+test('native stable journal skips duplicate format/value regardless of scan time',()=>{
+ const java=read('native/android/RivoDocumentsPlugin.java');
+ assert.ok(java.includes('"RS_QR.txt".equals(name)'));
+ assert.ok(java.includes('"RS_Bar.txt".equals(name)'));
+ assert.ok(java.includes('previous[1].equals(parts[1])'));
+ assert.ok(java.includes('previous[2].equals(parts[2])'));
+ assert.ok(java.includes('alreadyPresent",true'));
+ assert.ok(!java.includes('RS_(QR|Bar)_\\\\d{8}'));
+});
+test('all save/delete messages are bottom toasts and bulk tools precede the file list',()=>{
+ const main=read('src/main.js');
+ const css=read('src/rivo-save-toast.css');
+ const bulk=read('src/rivo-bulk-top.css');
+ assert.ok(css.includes('bottom:calc(var(--rivo-content-bottom,100px) + 10px)'));
+ assert.ok(css.includes('body > .toast.rivo-save-toast'));
+ assert.ok(main.indexOf('id="library-selection-root"')<main.indexOf('id="library-list"'));
+ assert.ok(main.indexOf('id="home-selection-root"')<main.indexOf('id="home-recents"'));
+ assert.ok(main.includes("import './rivo-bulk-top.css'"));
+ assert.ok(bulk.includes('position:static!important'));
+ assert.ok(bulk.includes('#library-selection-root'));
+ assert.ok(bulk.includes('#home-selection-root'));
+ assert.ok(bulk.includes('mobilebar'));
+});
