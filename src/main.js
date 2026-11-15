@@ -34,6 +34,7 @@ import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
 import {openPlateScanner} from './plate-scanner.js';
 import {createScanLedger} from './scan-ledger.js';
+import {createRecentlySavedDocuments} from './recently-saved-documents.js';
 import {generatedRsName} from './rs-file-names.js';
 import './compact-turquoise.css';
 import './privacy-shield.css';
@@ -229,6 +230,7 @@ try { history = JSON.parse(localStorage.getItem('rivo-history') || '[]'); if (!A
 let previewURLs = [];
 let closeTransfer = null;
 let libraryItems = [], libraryLoading = false, libraryError = '';
+const recentPublishedDocuments=createRecentlySavedDocuments();
 const docViewerUI=createDocumentViewer({
   bridge:RivoDocuments,
   getLanguage:()=>language,
@@ -720,7 +722,7 @@ async function loadLibrary(show=true){
   libraryLoading=true;if(show&&activeTool?.id==='library')refreshVisibleLibrary();
   try{
     const result=await RivoDocuments.listFiles();
-    libraryItems=(Array.isArray(result.files)?result.files:[]).sort((a,b)=>(b.created||0)-(a.created||0));
+    libraryItems=recentPublishedDocuments.merge(result.files);
     bulkUI.prune();
     libraryError='';
   }catch(error){console.error('RivoDocuments library:',error);libraryError=error?.message||'Could not read documents';}
@@ -751,7 +753,8 @@ async function chooseLibraryFiles(kind='file'){
       for(const file of imported){
         if(file.size>60*1024*1024){toast('File over 60 MB: '+file.name,true);continue;}
         const bytes=new Uint8Array(await file.arrayBuffer());
-        await RivoDocuments.saveFile({name:file.name,mimeType:file.type||'application/octet-stream',base64:toBase64(bytes)});
+        const importedFile=await RivoDocuments.saveFile({name:file.name,mimeType:file.type||'application/octet-stream',base64:toBase64(bytes)});
+        if(!recentPublishedDocuments.remember(importedFile))throw Error('Imported file did not return a committed document.');
         success++;
       }
       await loadLibrary(false);
@@ -1156,6 +1159,7 @@ async function openHubAction(id){
    },onMatchPhoto:async ({plate,bytes})=>{
     const name=generatedRsName('PlateMatch_'+plate+'.jpg','image/jpeg');
     const saved=await RivoDocuments.saveFile({name,mimeType:'image/jpeg',base64:toBase64(bytes)});
+    recentPublishedDocuments.remember(saved);
     return saved.name||name;
    }});
    return;
@@ -1345,7 +1349,7 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
           cleanMode:cleanMode,
           importPdf:payload=>RivoDocuments.importScannedPdf(payload)
         });
-        if(!saved?.uri)throw Error('Scanned PDF was not saved.');
+        if(!recentPublishedDocuments.remember(saved))throw Error('Scanned PDF did not return a committed document.');
         record(saved.perfectCleanApplied?'Google ML Kit FULL + PerfectClean Pro PDF':'Google ML Kit FULL PDF');
         await loadLibrary(false);
         openLibrary();
@@ -1510,6 +1514,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
     if(Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
       // Genuine permanent public storage. MediaStore exposes Documents/RivoScan in Samsung My Files.
       const saved=await RivoDocuments.saveFile({name:safe,base64:toBase64(data),mimeType:mime});
+      if(!recentPublishedDocuments.remember(saved))throw Error('Saved document was not committed to public storage.');
       record(activeTool?.name||'Saved document');
       await loadLibrary(false);
       saveToast(shortSavedLabel());
