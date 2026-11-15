@@ -491,7 +491,7 @@ public class RivoDocumentsPlugin extends Plugin {
         final String name=call.getString("name","");
         final String mime=call.getString("mimeType","");
         final String line=call.getString("line","");
-        if(!name.matches("RivoScan_(QR|Barcode)_\\d{4}-\\d{2}-\\d{2}\\.txt")){
+        if(!name.matches("RS_(QR|Bar)_\\d{8}\\.txt")){
             call.reject("Invalid scanner TXT name.");return;
         }
         if(!"text/plain".equals(mime)){call.reject("Scanner text MIME mismatch.");return;}
