@@ -496,7 +496,7 @@ public class RivoDocumentsPlugin extends Plugin {
         }
         if(!"text/plain".equals(mime)){call.reject("Scanner text MIME mismatch.");return;}
         if(line.isEmpty()||line.length()>4096||line.indexOf('\n')>=0||
-           line.indexOf('\r')>=0||line.indexOf('\u0000')>=0||
+           line.indexOf('\r')>=0||line.indexOf((char)0)>=0||
            !line.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\t[^\\t]+\\t.+")){
             call.reject("Invalid scanner record.");return;
         }
