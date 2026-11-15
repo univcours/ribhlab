@@ -215,6 +215,24 @@ public class RivoDocumentsPlugin extends Plugin {
         return getContext().getSharedPreferences("rivoscan-preferences",Context.MODE_PRIVATE)
                 .getString("language","en");
     }
+    /** Android is the locale source of truth when WebView and device differ. */
+    @PluginMethod
+    public void getDeviceLanguage(PluginCall call){
+        try {
+            java.util.Locale device;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                device=getContext().getResources().getConfiguration().getLocales().get(0);
+            } else {
+                device=getContext().getResources().getConfiguration().locale;
+            }
+            if (device == null) device=java.util.Locale.ENGLISH;
+            JSObject result=new JSObject();
+            result.put("language",device.toLanguageTag());
+            call.resolve(result);
+        } catch(Exception error) {
+            call.reject("Device language unavailable: "+error.getMessage(),error);
+        }
+    }
     @PluginMethod
     public void setLanguage(PluginCall call){
         String chosen=call.getString("language","en");
