@@ -4,8 +4,8 @@ import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,sh
  FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
- assert.equal(AD_CONFIG.testMode,true);
- for(const id of ['rewarded','interstitial','banner'])
+ assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,false);
+ for(const id of ['interstitial','banner'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -14,7 +14,7 @@ test('basic scanning, reading and existing files never need reward ads',()=>{
  for(const name of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])
   assert.equal(isPremiumFeature(name),true);
 });
-test('reward unlock is limited to 10 minutes',()=>{
+test('legacy premium timer does not enable rewarded ads',()=>{
  assert.equal(remainingPremiumMs(600000,0),600000);
  assert.equal(remainingPremiumMs(600000,600001),0);
 });

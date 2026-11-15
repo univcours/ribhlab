@@ -191,7 +191,7 @@ try{
     const actions=names.map(name=>'<button type="button" data-bulk="'+name.toLowerCase()+'">'+
       '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg>'+
       '<span class="rivo-action-label">'+name+'</span></button>').join('');
-    slot.innerHTML='<div class="library-selection-toolbar rivo-compact-selection" role="toolbar"><div class="rivo-inline-bulk">'+actions+'</div></div>';
+    slot.innerHTML='<div class="library-selection-toolbar rivo-compact-selection" role="toolbar"><span class="rivo-selection-count">2 selected</span><div class="rivo-inline-bulk">'+actions+'</div></div>';
     document.querySelectorAll('#library-list .document-entry').forEach(row=>{
       const checkbox=document.createElement('input');
       checkbox.type='checkbox';checkbox.className='doc-select-box';checkbox.checked=true;
@@ -212,11 +212,20 @@ try{
   const singleSelection=await page.evaluate(()=>{
     const boxes=document.querySelectorAll('#library-list .doc-select-box');
     boxes[1].checked=false;
-    const merge=document.querySelector('[data-bulk="merge"]');
-    merge.disabled=true;merge.setAttribute('aria-disabled','true');
-    return !boxes[1].checked&&merge.disabled;
+    // With one selected document NO bulk bar appears. Its own correction
+    // button is next to individual actions, not in a group toolbar.
+    document.getElementById('library-selection-root').innerHTML='';
+    const row=boxes[0].closest('.document-entry');
+    const action=document.createElement('button');
+    action.type='button';action.dataset.docEdges='0';action.textContent='Readjust edges';
+    action.setAttribute('aria-label','Readjust edges');
+    const buttons=document.createElement('div');buttons.className='rivo-file-quick-actions';
+    buttons.append(action);row.append(buttons);
+    return boxes[0].checked&&!boxes[1].checked&&
+      !document.querySelector('#library-selection-root .rivo-compact-selection')&&
+      !!row.querySelector('[data-doc-edges]');
   });
-  check(width+': single selected document with merge disabled',singleSelection);
+  check(width+': single file has edge action and no bulk toolbar',singleSelection);
   await page.screenshot({path:out+'/'+width+'-selection-single-test-fixture.png'});
   await page.evaluate(()=>{
     document.getElementById('library-selection-root').innerHTML='';

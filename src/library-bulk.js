@@ -45,25 +45,21 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+shapes[name]+'</svg>';
   };
   const compactAction=(action,label,shape,disabled=false)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'"'+(disabled?' disabled aria-disabled="true"':'')+'>'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
-  function selectBanner(){
-    if(!selected.size)return '';
-    const n=selected.size;
-    return '<div class="rivo-select-banner" role="group" aria-label="'+t('selected')+'">'+
-      '<strong>'+n+' '+t('selected')+'</strong>'+
-      '<button type="button" data-bulk="all" class="rivo-select-all" aria-label="'+t('all')+'">'+t('all')+(getItems().length>30?' (30)':'')+'</button>'+
-      '</div>';
-  }
+  // Single selection uses the file's own actions, not the bulk toolbar.
+  // Only two or more selected items show one compact bar immediately above
+  // the file list; no duplicated Select all row.
+  function selectBanner(){return '';}
   function toolbar(){
-    if(!mode||selected.size===0)return '';
+    if(!mode||selected.size<2)return '';
     const items=selectedDocs();
     return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
-      <span class="sr-only">${items.length} ${t('selected')}</span>
+      <span class="rivo-selection-count">${items.length} ${t('selected')}</span>
       <div class="rivo-inline-bulk">
         ${compactAction('cancel',t('cancel'),'close')}
         ${compactAction('all',t('all'),'all')}
         ${compactAction('delete',t('delete'),'trash')}
         ${compactAction('organize',t('move'),'move')}
-        ${compactAction('merge',t('merge'),'merge',items.length<2)}
+        ${compactAction('merge',t('merge'),'merge')}
         ${compactAction('share',t('share'),'share')}
       </div>
     </div>`;

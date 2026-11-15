@@ -21,13 +21,13 @@ test('language and mute toggle always visible in the top bar',()=>{
  assert.ok(main.includes("void refreshSystemLanguage()"));
  assert.ok(main.includes("localStorage.removeItem('rivo-language')"));
 });
-test('every PDF has a visible checkbox and optional Select all above documents',()=>{
+test('every PDF has a visible checkbox and bulk toolbar requires two documents',()=>{
  const bulk=src('src/library-bulk.js'), main=src('src/main.js'),css=src('src/rivo-design-system.css');
  assert.ok(bulk.includes('Every saved document and image has a persistent selection checkbox'));
  assert.ok(!bulk.includes('if(!mode&&!isImage(doc))return'));
  assert.ok(!bulk.includes("else if(!mode&&existing&&!alwaysVisible"));
  assert.ok(bulk.includes('function selectBanner(){'));
- assert.ok(bulk.includes('if(!selected.size)return'));
+ assert.ok(bulk.includes("if(!mode||selected.size<2)return ''"));
  assert.ok(main.includes('id="library-select-banner"'));
  assert.ok(main.includes('id="home-select-banner"'));
  assert.ok(css.includes('visibility:visible!important'));

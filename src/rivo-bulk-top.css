@@ -46,3 +46,23 @@ html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-r
 html body.rivo-multiselect #app .shell.rivo-dark-ui .content{
  padding-bottom:0!important;
 }
+
+/* One and only one compact row when >= 2 documents are selected.
+   With just one selected file, the individual file-action icons are used. */
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root)
+ .library-selection-toolbar.rivo-compact-selection{
+ align-items:center!important;gap:4px!important;overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root)
+ .rivo-selection-count{
+ flex:0 0 49px!important;min-width:49px!important;max-width:49px!important;
+ font-size:10px!important;font-weight:700!important;line-height:1.15!important;
+ color:#135d99!important;text-align:center!important;white-space:normal!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root)
+ .rivo-inline-bulk{
+ flex:1 1 0!important;width:100%!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-select-banner,#home-select-banner){
+ display:none!important;
+}
