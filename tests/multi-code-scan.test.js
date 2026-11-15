@@ -51,7 +51,7 @@ test('blank image never produces invented QR/barcode detections',()=>{
 });
 test('UltraScan always shows zoom controls, multi image scanning, live multi counter and auto search',()=>{
  const s=read('src/barcode-scanner.js');
- assert.ok(s.includes('scanMultipleCanvas(multiCanvas'));
+ assert.ok(s.includes('scanMultipleCanvasAsync(multiCanvas'));
  assert.ok(s.includes('scanMultipleCanvas(canvas,{fine:true'));
  assert.ok(s.includes('for(const {result:found} of codes)'));
  assert.ok(s.includes('zoomActions.hidden=false'));
