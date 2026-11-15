@@ -515,7 +515,7 @@ function home(){
  </section>`;
 }
 function toolsWorkspace(){
- const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
+ const copy=({en:'Search tools',ar:'البحث عن الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
  return `<section class="app-tools rivo-tools-hub"><div class="rivo-search-title-row rivo-tools-search-title-row">
   <div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
   <label class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></label>
@@ -561,7 +561,7 @@ function settingsWorkspace(){
  </div>
  <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
- <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
+ <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
@@ -576,7 +576,7 @@ function settingsWorkspace(){
     <p>${ad.testMode?'TEST ads — no revenue':'LIVE AdMob inventory'}</p>
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
-  <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
+  <small>${({ar:'الإعلان الشريطي معطّل. تظهر الإعلانات بملء الشاشة بين العمليات وبعد الموافقة فقط.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
  </div>` : ''}
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </div></section>`;
@@ -781,7 +781,7 @@ async function handleLibraryAction(type,index){
     if(type==='delete'){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
-      toast(dl('remove')+' ✓');
+      toast((({ar:'تم حذف الملف',en:'File deleted',fr:'Fichier supprimé',es:'Archivo eliminado',de:'Datei gelöscht',pt:'Ficheiro eliminado',it:'File eliminato'})[language]||'File deleted')+' ✓');
     } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
@@ -1375,9 +1375,12 @@ async function openCamera(){
 }
 function toast(text,error=false,compact=false){
  document.querySelector('.toast')?.remove();
- const el=document.createElement('div');el.className='toast'+(error?' error':'')+(compact?' rivo-save-toast':'');
- el.setAttribute('role','status');el.textContent=translateStatus(language,text);
- document.body.appendChild(el);setTimeout(()=>el.remove(),compact?2200:5000);
+ const el=document.createElement('div');
+ el.className='toast rivo-save-toast'+(error?' error':'');
+ el.setAttribute('role',error?'alert':'status');
+ el.textContent=translateStatus(language,text);
+ document.body.appendChild(el);
+ setTimeout(()=>el.remove(),error?4200:2400);
 }
 function saveToast(text='Saved ✓'){
  const message=translateStatus(language,text);
