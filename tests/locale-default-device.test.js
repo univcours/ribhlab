@@ -27,6 +27,7 @@ test('first supported phone preference determines language, including region var
   ['ar-MA','ar'],['en-US','en'],['fr-MA','fr'],['es-ES','es'],
   ['de-DE','de'],['pt-BR','pt'],['it-IT','it']
  ])assert.equal(deviceLanguage([locale]),expected,locale);
+ assert.equal(deviceLanguage(['zh-CN','de-DE']),'de');
  assert.equal(new Set(supportedRivoLanguages).size,7);
 });
 test('explicit user choice overrides device locale until auto is selected again',()=>{
