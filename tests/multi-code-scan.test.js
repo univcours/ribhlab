@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {BarcodeFormat,QRCodeWriter} from '@zxing/library';
+import ZXingCore from '@zxing/library';
+const {BarcodeFormat,QRCodeWriter}=ZXingCore;
 import {multiScanRegions,scanMultiplePixels,verifiedUniqueCodes} from '../src/code-multi-scan.js';
 import {recognizedCode} from '../src/barcode-scanner.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
