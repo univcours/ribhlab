@@ -1,0 +1,40 @@
+/* QR / Barcode UltraScan — compact, real-camera zoom and text-only capture. */
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls{
+ display:flex;flex:0 0 auto;align-items:center;justify-content:center;
+ gap:6px;min-height:40px;width:100%;padding:2px 0;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls[hidden]{
+ display:none!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls > button{
+ flex:0 0 auto!important;min-width:42px!important;height:38px!important;
+ min-height:38px!important;padding:4px 10px!important;margin:0!important;
+ border-radius:10px!important;font-size:14px!important;line-height:1.2!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls > button:last-child{
+ flex:1 1 110px!important;max-width:155px!important;
+ font-size:11px!important;background:#0E61C2!important;color:#fff!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls > button[aria-pressed="true"]{
+ border-color:#26A6F5!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-label{
+ color:#E9F5FB;font-size:13px;font-weight:800;flex:0 0 48px;
+ text-align:center;white-space:nowrap;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-live-actions{
+ justify-content:space-between!important;overflow-x:auto!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-live-actions > button{
+ flex:1 1 0!important;min-width:0!important;
+}
+.rivo-live-overlay.rivo-code-overlay .rivo-live-actions > button[hidden]{
+ display:none!important;
+}
+@media (max-width:360px){
+ .rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls{gap:4px}
+ .rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-controls > button{
+  min-width:38px!important;padding:4px 6px!important;
+ }
+ .rivo-live-overlay.rivo-code-overlay .rivo-code-zoom-label{flex-basis:42px}
+}
