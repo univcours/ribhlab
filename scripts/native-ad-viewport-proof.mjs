@@ -10,6 +10,8 @@ for(const width of [320,360,393,412]){
  const page=await context.newPage();
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('.mobilebar [data-tab="tools"]').waitFor({state:'visible'});
+ await page.waitForTimeout(350);
+ await page.locator('.rivo-release-overlay button').filter({hasText:'Got it'}).first().click({timeout:1800}).catch(()=>{});
  for(const [name,selector] of [['home','.mobilebar [data-go="home"]'],['documents','.mobilebar [data-open-library]'],['tools','.mobilebar [data-tab="tools"]'],['me','.mobilebar [data-tab="me"]']]){
   await page.locator(selector).click();
   const proof=await page.evaluate(()=>{
