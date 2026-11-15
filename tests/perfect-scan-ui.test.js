@@ -13,7 +13,7 @@ test('PerfectScan compares REAL source and processed pixel buffers via one dragg
  assert.ok(src.includes('result.pixels'));
 });
 test('PerfectScan preserves user input in memory, warns on image quality, and exports only one final PDF',()=>{
- for(const marker of ['base.fromLibrary','inspectInkChanges','processed.requiresReview',
+ for(const marker of ['name,mime,fromLibrary,captureReview','inspectInkChanges','processed.requiresReview',
   'const pdf=await PDFDocument.create()', 'await pdf.embedJpg(', 'page.drawImage(documentImage',
   "await onSave(pdfBytes,'RivoScan_PerfectScan_'+stamp+'.pdf','application/pdf')"])
   assert.ok(src.includes(marker),marker);
