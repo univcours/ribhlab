@@ -17,7 +17,9 @@ test('language and mute toggle always visible in the top bar',()=>{
  assert.ok(main.includes('id="header-sound-toggle"'));
  assert.ok(main.includes("document.querySelectorAll('#language,#header-language')"));
  assert.ok(main.includes('localStorage.setItem(\'rivo-language\',language)'));
- assert.ok(main.includes('initialLanguage(localStorage.getItem'));
+ assert.ok(main.includes('initialLanguage(savedLanguagePreference(localStorage)'));
+ assert.ok(main.includes("void refreshSystemLanguage()"));
+ assert.ok(main.includes("localStorage.removeItem('rivo-language')"));
 });
 test('every PDF has a visible checkbox and optional Select all above documents',()=>{
  const bulk=src('src/library-bulk.js'), main=src('src/main.js'),css=src('src/rivo-design-system.css');
