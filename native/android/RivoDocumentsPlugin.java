@@ -268,6 +268,35 @@ public class RivoDocumentsPlugin extends Plugin {
         // Avoid blocking WebView/UI during multi-page native cleaning.
         new Thread(()->importScannedPdfWorker(call),"RivoScan-PDF-Import").start();
     }
+    /** Google Play Services may complete the very first PDF write just after
+     * returning the scan URI. Retry only the read-only source opening; this
+     * happens BEFORE inserting the final MediaStore file, so no duplicates. */
+    private static java.io.BufferedInputStream openScannerPdfWhenReady(ContentResolver resolver,Uri source) throws Exception{
+        Exception last=null;
+        for(int attempt=0;attempt<3;attempt++){
+            try{
+                InputStream raw=resolver.openInputStream(source);
+                if(raw==null)throw new java.io.FileNotFoundException("Scanner PDF source not yet available.");
+                java.io.BufferedInputStream stream=new java.io.BufferedInputStream(raw,32768);
+                stream.mark(8);
+                byte[] magic=new byte[5];
+                int length=stream.read(magic);
+                if(length==5&&magic[0]=='%'&&magic[1]=='P'&&magic[2]=='D'&&magic[3]=='F'&&magic[4]=='-'){
+                    stream.reset();return stream;
+                }
+                stream.close();
+                throw new java.io.IOException("Scanner PDF is not ready or has an invalid header.");
+            }catch(Exception error){
+                last=error;
+                if(attempt<2){
+                    try{Thread.sleep(attempt==0?180L:480L);}
+                    catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw interrupted;}
+                }
+            }
+        }
+        throw new java.io.IOException("Could not read the initial scanner PDF after retries.",last);
+    }
+
     private void importScannedPdfWorker(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
         String input = call.getString("uri", "");
@@ -310,15 +339,7 @@ public class RivoDocumentsPlugin extends Plugin {
                 if(perfectCleanPdf!=null){perfectCleanPdf.delete();perfectCleanPdf=null;}
             }
         }
-        try (InputStream raw = resolver.openInputStream(source)) {
-            if (raw == null) throw new IllegalStateException("Scanner returned no PDF data.");
-            java.io.BufferedInputStream scan = new java.io.BufferedInputStream(raw,32768);
-            scan.mark(8);
-            byte[] magic = new byte[5];
-            if (scan.read(magic) != 5 || magic[0]!='%' || magic[1]!='P' ||
-                magic[2]!='D' || magic[3]!='F' || magic[4]!='-')
-                throw new IllegalArgumentException("Scanner result is not a PDF.");
-            scan.reset();
+        try (java.io.BufferedInputStream scan = openScannerPdfWhenReady(resolver,source)) {
             ContentValues meta = new ContentValues();
             meta.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
             meta.put(MediaStore.MediaColumns.MIME_TYPE,"application/pdf");
@@ -422,7 +443,8 @@ public class RivoDocumentsPlugin extends Plugin {
             }
             ContentValues visible = new ContentValues();
             visible.put(MediaStore.MediaColumns.IS_PENDING, 0);
-            resolver.update(target, visible, null, null);
+            if(resolver.update(target, visible, null, null)<1)
+                throw new IllegalStateException("Saved document could not be published.");
             JSObject out = new JSObject();
             out.put("uri", target.toString());
             out.put("name", name);

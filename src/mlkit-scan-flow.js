@@ -30,7 +30,22 @@ export async function persistMlKitPdf(result,{importPdf,now=()=>Date.now(),perfe
     request.reviewEdits=edits;
     request.scannedImages=scannedImages;
   }
-  const saved=await importPdf(request);
+  // First-run Google Play Services / MediaStore may expose the source URI a
+  // fraction of a second after returning the scanner result. A failed native
+  // import deletes its incomplete target, so a bounded retry is safe. Never
+  // retry a successfully persisted URI (that would create a duplicate file).
+  let saved;
+  const retryable=error=>/(?:not found|no such file|ENOENT|temporar|not ready|open.*(?:pdf|file|document)|unable to read|could not read|unavailable|Scanner returned no PDF data)/i
+    .test(String(error?.message||error||''));
+  for(let attempt=0;attempt<3;attempt++){
+   try{
+    saved=await importPdf(request);
+    break;
+   }catch(error){
+    if(attempt===2||!retryable(error))throw error;
+    await new Promise(resolve=>setTimeout(resolve,attempt===0?180:480));
+   }
+  }
   if(!saved?.uri)throw new Error('Google scan PDF was not persisted.');
   return {uri:saved.uri,name:saved.name||name,pageCount:result.pdf.pageCount||1,
    perfectCleanApplied:!!saved.perfectCleanApplied};

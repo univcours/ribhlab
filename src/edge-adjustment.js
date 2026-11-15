@@ -80,6 +80,14 @@ const LABELS={
  it:{title:'Regola i bordi del documento',info:'Trascina i quattro angoli sui bordi del documento.',page:'Pagina PDF',save:'Salva copia corretta',cancel:'Annulla',reset:'Ripristina angoli',busy:'Correzione prospettiva…',original:'L’originale resta invariato. Solo la pagina PDF selezionata viene sostituita nella copia.',bad:'Gli angoli non devono incrociarsi.',failed:'Impossibile regolare i bordi',pageSelect:'Seleziona pagina PDF'}
 };
 const initialCorners=()=>[[.055,.055],[.945,.055],[.945,.945],[.055,.945]];
+/** Place a true magnified preview away from the user's fingertip. */
+export function cornerLoupeLayout(width,height,corner){
+ const w=Math.max(1,Number(width)),h=Math.max(1,Number(height));
+ const radius=Math.max(30,Math.min(75,Math.min(w,h)*.15));
+ const margin=Math.max(9,radius*.22);
+ return {radius,centerX:corner[0]<.5?w-radius-margin:radius+margin,
+  centerY:corner[1]<.5?h-radius-margin:radius+margin,zoom:6};
+}
 function decodeBase64(value){
  const s=String(value||'').split(',').pop(),out=new Uint8Array(s.length*3/4+4);
  let pos=0;for(let i=0;i<s.length;i+=32768){
@@ -121,8 +129,10 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  function draw(){
   if(!image||closed)return;
   const cap=Math.min(1,1250/Math.max(image.width,image.height));
-  canvas.width=Math.max(1,Math.round(image.width*cap));
-  canvas.height=Math.max(1,Math.round(image.height*cap));
+  const width=Math.max(1,Math.round(image.width*cap));
+  const height=Math.max(1,Math.round(image.height*cap));
+  if(canvas.width!==width)canvas.width=width;
+  if(canvas.height!==height)canvas.height=height;
   const ctx=canvas.getContext('2d');
   ctx.drawImage(image,0,0,canvas.width,canvas.height);
   ctx.beginPath();
@@ -136,8 +146,38 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
    ctx.fillStyle='#004563';ctx.font=Math.max(10,canvas.width/75)+'px sans-serif';
    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),x,y);
   });
+  if(drag>=0&&drag<4)drawMagnifyingLoupe(ctx,points[drag]);
   submit.disabled=!validEdgeQuadrilateral(points);
   setStatus(submit.disabled?tr.bad:'');
+ }
+ function drawMagnifyingLoupe(ctx,corner){
+  // Real source pixels (not a snapshot of the screen), enlarged by 6x.
+  const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,corner);
+  const ix=corner[0]*image.width,iy=corner[1]*image.height;
+  const srcRx=radius*(image.width/canvas.width)/zoom;
+  const srcRy=radius*(image.height/canvas.height)/zoom;
+  const sx0=Math.max(0,ix-srcRx),sy0=Math.max(0,iy-srcRy);
+  const sx1=Math.min(image.width,ix+srcRx),sy1=Math.min(image.height,iy+srcRy);
+  if(sx1<=sx0||sy1<=sy0)return;
+  const dx=cx+(sx0-ix)/srcRx*radius,dy=cy+(sy0-iy)/srcRy*radius;
+  const dw=(sx1-sx0)/srcRx*radius,dh=(sy1-sy0)/srcRy*radius;
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,radius+5,0,2*Math.PI);
+  ctx.fillStyle='#082a42';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,radius,0,2*Math.PI);ctx.clip();
+  ctx.fillStyle='#e8f5fa';ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(image,sx0,sy0,sx1-sx0,sy1-sy0,dx,dy,dw,dh);
+  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.97)';
+  ctx.beginPath();ctx.moveTo(cx-radius,cy);ctx.lineTo(cx+radius,cy);
+  ctx.moveTo(cx,cy-radius);ctx.lineTo(cx,cy+radius);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);
+  ctx.fillStyle='#0a78cb';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,radius+3,0,2*Math.PI);
+  ctx.strokeStyle='#06e1cb';ctx.lineWidth=4;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,radius+7,0,2*Math.PI);
+  ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2;ctx.stroke();
  }
  function eventPoint(e){
   const box=canvas.getBoundingClientRect();
@@ -149,13 +189,15 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
   const distances=points.map(q=>Math.hypot((q[0]-p[0])*rect.width,(q[1]-p[1])*rect.height));
   const min=Math.min(...distances);
   if(min>Math.max(42,rect.width*.13))return;
-  drag=distances.indexOf(min);canvas.setPointerCapture(e.pointerId);e.preventDefault();
+  drag=distances.indexOf(min);
+  try{canvas.setPointerCapture(e.pointerId)}catch{}
+  draw();e.preventDefault();
  });
  canvas.addEventListener('pointermove',e=>{
   if(drag<0||busy||!image)return;
   const p=eventPoint(e);points[drag]=[clamp(p[0],.005,.995),clamp(p[1],.005,.995)];draw();e.preventDefault();
  });
- for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{drag=-1});
+ for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{if(drag>=0){drag=-1;draw()}});
  async function loadImage(bytes,mime){
   const objectUrl=URL.createObjectURL(new Blob([bytes],{type:mime}));
   try{

@@ -166,15 +166,24 @@ try{
   await page.screenshot({path:out+'/'+width+'-documents-test-fixture.png'});
 
   const docsInline=await page.evaluate(()=>{
-    const row=document.querySelector('.rivo-library-command-row');
-    const file=row?.querySelector('[data-import="file"]'),search=row?.querySelector('.library-search'),refresh=row?.querySelector('#refresh-documents');
-    if(!file||!search||!refresh)return false;
-    const a=file.getBoundingClientRect(),b=search.getBoundingClientRect(),c=refresh.getBoundingClientRect();
-    return a.right<=b.left+5&&b.right<=c.left+5&&
-      Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<8&&
-      Math.abs((b.top+b.bottom)/2-(c.top+c.bottom)/2)<8&&b.width>60&&c.right<=innerWidth+2;
+    const row=document.querySelector('.library-workspace .rivo-library-title-search');
+    const heading=row?.querySelector('h1'),search=row?.querySelector('.library-search');
+    const actions=document.querySelector('.library-workspace .library-heading-actions');
+    const importButton=actions?.querySelector('[data-import="file"]');
+    const folder=actions?.querySelector('#open-storage-folder');
+    const refresh=actions?.querySelector('#refresh-documents');
+    if(!row||!heading||!search||!importButton||!folder||!refresh)return false;
+    const a=heading.getBoundingClientRect(),b=search.getBoundingClientRect();
+    const button=importButton.getBoundingClientRect();
+    return a.right<=b.left+6&&Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<9&&
+      b.width>80&&b.right<=innerWidth+2&&
+      button.width>44&&
+      document.querySelectorAll('.library-workspace [data-import]').length===1&&
+      !document.querySelector('.library-workspace .storage-actions')&&
+      !document.querySelector('.library-workspace .rivo-library-command-row');
   });
-  check(width+': Documents My Files, Search, Refresh stay in one row',docsInline);
+  check(width+': My Documents title and search share one row, single Import for all file types',docsInline);
+  await page.screenshot({path:out+'/'+width+'-documents-title-search.png'});
   // Responsive TEST fixture: six REAL SVG shapes from the file action toolbar,
   // not placeholder black squares. All labels and sample documents are test data.
   const selection=await page.evaluate(()=>{
