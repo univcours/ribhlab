@@ -19,5 +19,5 @@ test('Android build uses the original signature and strictly increasing version'
  assert.ok(workflow.includes('! cmp -s public/rivoscan-icon.png public/rivoscan-adaptive-foreground.png'));
  const versions=read('rivoscan-version.properties');
  assert.match(versions,/versionCode=136/);
- assert.match(versions,/versionName=0\.45\.31/);
+ assert.match(versions,/versionName=0\.45\.32/);
 });
