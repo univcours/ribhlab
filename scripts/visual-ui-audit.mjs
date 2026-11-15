@@ -25,7 +25,7 @@ try{
       if(!heading||!search)return {ok:false,reason:'missing heading/search'};
       const a=heading.getBoundingClientRect(),b=search.getBoundingClientRect();
       const center=r=>(r.top+r.bottom)/2;
-      return {ok:a.width>30&&b.width>75&&
+      return {ok:a.width>18&&b.width>75&&
         Math.abs(center(a)-center(b))<8&&a.right<=b.left+4&&
         b.right<=innerWidth+2&&a.left>=-2&&
         getComputedStyle(search).display!=='none',
