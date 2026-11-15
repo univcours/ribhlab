@@ -428,8 +428,8 @@ function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
  if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',symbol:'filelines'};
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',symbol:'image'};
- if(/^(rs|rivoscan)_qr_/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
- if(/^(rs_bar|rivoscan_barcode)_/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
+ if(/^(?:rs|rivoscan)_qr(?:_|\.)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
+ if(/^(?:rs_bar(?:_|\.)|rivoscan_barcode_)/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',symbol:'sheet'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',symbol:'filelines'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',symbol:'archive'};
