@@ -305,3 +305,94 @@ html body.rivo-native-android #app .shell.rivo-dark-ui :is(
   padding-inline:4px!important;
  }
 }
+
+/* Keep Documents filters and count in ONE row; My Files and search in ONE row.
+   All commands retain >= 34px tappable targets and the document list is elastic. */
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row,
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:space-between!important;flex-wrap:nowrap!important;
+ flex:0 0 auto!important;min-width:0!important;width:100%!important;
+ gap:4px!important;margin:0!important;padding:0!important;overflow:visible!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .rivo-library-chips{
+ display:flex!important;flex:0 1 auto!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;
+ width:auto!important;max-width:calc(100% - 57px)!important;min-width:0!important;
+ gap:3px!important;min-height:34px!important;margin:0!important;padding:0!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .rivo-library-chips button{
+ flex:0 0 auto!important;width:auto!important;min-width:42px!important;
+ min-height:34px!important;height:34px!important;margin:0!important;
+ padding:4px 7px!important;font-size:10px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .library-top{
+ display:flex!important;flex:0 0 auto!important;justify-content:flex-end!important;
+ align-items:center!important;white-space:nowrap!important;
+ width:auto!important;min-width:0!important;min-height:34px!important;
+ height:34px!important;margin:0!important;padding:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .library-top strong{
+ font-size:10px!important;white-space:nowrap!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row{
+ justify-content:flex-start!important;gap:5px!important;min-height:36px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions{
+ display:flex!important;flex:0 0 auto!important;flex-direction:row!important;
+ align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;
+ width:auto!important;max-width:none!important;min-width:0!important;
+ gap:4px!important;overflow:visible!important;padding:0!important;margin:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;box-sizing:border-box!important;width:auto!important;
+ max-width:none!important;min-width:0!important;min-height:36px!important;height:36px!important;
+ gap:4px!important;padding:3px 7px!important;margin:0!important;
+ font-size:10px!important;line-height:1!important;border-radius:9px!important;white-space:nowrap!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions #refresh-documents{
+ width:36px!important;min-width:36px!important;padding:0!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions svg{
+ flex:none!important;width:15px!important;height:15px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .library-search{
+ display:flex!important;flex:1 1 0!important;align-items:center!important;
+ width:auto!important;max-width:none!important;min-width:0!important;
+ min-height:36px!important;height:36px!important;
+ margin:0!important;padding:3px 6px!important;gap:4px!important;
+ border-radius:9px!important;box-sizing:border-box!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .library-search svg{
+ flex:0 0 16px!important;width:16px!important;height:16px!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .library-search input{
+ flex:1 1 0!important;width:100%!important;min-width:0!important;
+ min-height:29px!important;height:29px!important;font-size:12px!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;
+}
+#app .shell.rivo-dark-ui .library-workspace .library-controls{
+ min-height:30px!important;margin:0!important;
+}
+@media(max-width:359px){
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .rivo-library-chips{
+  gap:2px!important;max-width:calc(100% - 49px)!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-filter-row .rivo-library-chips button{
+  min-width:38px!important;padding-inline:5px!important;font-size:9px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row{
+  gap:3px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions{
+  gap:3px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions button{
+  padding-inline:5px!important;font-size:9px!important;
+ }
+ #app .shell.rivo-dark-ui .library-workspace .rivo-library-command-row .storage-actions #refresh-documents{
+  width:34px!important;min-width:34px!important;min-height:34px!important;height:34px!important;
+ }
+}
