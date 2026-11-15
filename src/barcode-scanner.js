@@ -69,13 +69,38 @@ function drawOutline(canvas,video,points){
  // Barcode and QR detections have real result points in their camera image.
  const valid=(points||[]).filter(p=>Number.isFinite(p?.getX?.())&&Number.isFinite(p?.getY?.()));
  if(!valid.length)return false;
- const xs=valid.map(x=>offX+x.getX()*scale),ys=valid.map(x=>offY+x.getY()*scale);
+ const z=Number(video.dataset.digitalZoom)||1;
+ const xs=valid.map(p=>(offX+p.getX()*scale-w/2)*z+w/2),ys=valid.map(p=>(offY+p.getY()*scale-h/2)*z+h/2);
  const minX=Math.max(4,Math.min(...xs)-14),maxX=Math.min(w-4,Math.max(...xs)+14);
  const minY=Math.max(4,Math.min(...ys)-14),maxY=Math.min(h-4,Math.max(...ys)+14);
  if(maxX<=minX||maxY<=minY)return false;
  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=3;ctx.shadowColor='#2CF2D5';ctx.shadowBlur=7;
  ctx.strokeRect(minX,minY,maxX-minX,maxY-minY);
  return true;
+}
+function drawMultipleOutlines(canvas,video,decoded){
+ const bounds=canvas.getBoundingClientRect();
+ if(!bounds.width||!bounds.height||!decoded.length)return false;
+ const dpr=Math.min(3,Number(globalThis.devicePixelRatio)||1);
+ const w=bounds.width,h=bounds.height,vw=video.videoWidth||w,vh=video.videoHeight||h;
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+ const scale=Math.max(w/vw,h/vh),xOffset=(w-vw*scale)/2,yOffset=(h-vh*scale)/2;
+ const digital=Number(video.dataset.digitalZoom)||1;
+ let count=0;
+ for(const result of decoded){
+  const valid=(result.getResultPoints?.()||[]).filter(p=>Number.isFinite(p.getX?.())&&Number.isFinite(p.getY?.()));
+  if(!valid.length)continue;
+  const xs=valid.map(p=>(xOffset+p.getX()*scale-w/2)*digital+w/2);
+  const ys=valid.map(p=>(yOffset+p.getY()*scale-h/2)*digital+h/2);
+  const left=Math.max(4,Math.min(...xs)-13),top=Math.max(4,Math.min(...ys)-13);
+  const right=Math.min(w-4,Math.max(...xs)+13),bottom=Math.min(h-4,Math.max(...ys)+13);
+  if(right<=left||bottom<=top)continue;
+  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=2.6;
+  ctx.strokeRect(left,top,right-left,bottom-top);
+  count++;
+ }
+ return count>0;
 }
 export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onSuccess=()=>{},onClose=()=>{}}={}){
  const L=I18N[language]||I18N.en;
@@ -111,7 +136,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
  box.append(head,help,camera,status,result,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
- const dedup=newScanDeduplicator(),streams=[],temporaryURLs=[];
+ const dedup=newScanDeduplicator({gapMs:4200}),streams=[],temporaryURLs=[];
  let control=null,closed=false,light=false,lastDetectionAt=0;
  let multiTimer=null,multiActive=false,multiFrameCount=0;
  let successful=0;
@@ -274,7 +299,10 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    if(codes.length){
     lastCodeAt=Date.now();
     for(const {result:found} of codes){if(closed)break;await deliver(found);}
-    if(!closed&&codes.length>1)status.textContent=codes.length+' code(s) detected · '+successful+' saved';
+    if(!closed&&codes.length>1){
+     drawMultipleOutlines(outline,video,codes.map(item=>item.result));
+     status.textContent=codes.length+' code(s) detected · '+successful+' saved';
+    }
    }
   }catch(error){console.debug('Multi-code frame unavailable:',error);}
   finally{multiActive=false;}
