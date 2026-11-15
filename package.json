@@ -1,6 +1,6 @@
 {
   "name": "rivoscan",
-  "version": "0.45.30",
+  "version": "0.45.31",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
     "@capacitor-mlkit/document-scanner": "8.2.1",
     "@capacitor/status-bar": "^8.0.0",
     "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@pdfsmaller/pdf-encrypt": "^1.2.0",
