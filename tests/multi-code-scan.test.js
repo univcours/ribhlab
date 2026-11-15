@@ -69,5 +69,5 @@ test('file success notifies via native Android Toast, not a wide in-app banner',
  assert.ok(main.includes("saveToast(shortSavedLabel())"));
  assert.ok(java.includes('Toast.LENGTH_SHORT'));
  assert.ok(java.includes('public void showSaveToast(PluginCall call)'));
- assert.ok(read('src/rivo-save-toast.css').includes('max-width:min(78vw,250px)'));
+ assert.ok(read('src/rivo-save-toast.css').includes('max-width:min(84vw,320px)'));
 });
