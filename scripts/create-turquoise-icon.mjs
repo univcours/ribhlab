@@ -1,59 +1,75 @@
-/** RivoScan approved blue R and wordmark enlarged with less white border. */
+/**
+ * RivoScan 0.45.26 launcher redesign. Owner-approved neon R WITHOUT A WORDMARK.
+ * Play icon and Android adaptive foreground are deliberately separate:
+ * Play is edge-to-edge opaque; Android's adaptive foreground has mask-safe art.
+ * The public original is integrity-pinned and never changed without review.
+ */
+import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import pngjs from 'pngjs';
 const {PNG}=pngjs,root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const original=readFileSync(join(root,'assets/branding/rivoscan-icon-adaptive-foreground.png'));
-const flat=readFileSync(join(root,'assets/branding/rivoscan-icon-source.png'));
-const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
-for(const [name,b,size] of [['flat',flat,512],['adaptive',original,512],['full wordmark',fullLogo,1254]]){
- if(b.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||b.readUInt32BE(16)!==size||b.readUInt32BE(20)!==size)throw Error('Bad approved '+name);
-}
-const input=PNG.sync.read(original,{checkCRC:true});
-function blank(){return new PNG({width:512,height:512});}
-function card(out,x,y,w,h,r){
- for(let py=y;py<y+h;py++)for(let px=x;px<x+w;px++){
-  const dx=Math.max(x+r-px-.5,0,px-(x+w-r)+.5),dy=Math.max(y+r-py-.5,0,py-(y+h-r)+.5);
-  if(dx*dx+dy*dy>r*r)continue;
-  const k=(py*512+px)*4;out.data[k]=out.data[k+1]=out.data[k+2]=out.data[k+3]=255;
+const SOURCE_URL='https://gcdn.picsart.com/picsart-mcp/021823ce-b0f5-43fb-af2b-aecf0242a442.png';
+const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7';
+const KEEP_COMPATIBILITY_REFERENCE='assets/branding/rivoscan-icon-source.png';
+// File is delivered by our media host. SHA256 protects from silent replacement.
+async function fetchImage(){
+ let err;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const response=await fetch(SOURCE_URL,{signal:AbortSignal.timeout(30000)});
+   if(!response.ok)throw Error('Image host HTTP '+response.status);
+   const data=Buffer.from(await response.arrayBuffer());
+   const hash=createHash('sha256').update(data).digest('hex');
+   if(hash!==SOURCE_SHA256)throw Error('Approved icon SHA256 changed');
+   return PNG.sync.read(data,{checkCRC:true});
+  }catch(e){err=e;await new Promise(resolve=>setTimeout(resolve,(attempt+1)*1000));}
  }
+ throw err;
 }
-function composite(out,sx,sy,sw,sh,dx,dy,dw,dh){
- for(let y=0;y<dh;y++)for(let x=0;x<dw;x++){
-  const ux=sx+(x+.5)*sw/dw-.5,uy=sy+(y+.5)*sh/dh-.5;
-  const x0=Math.max(0,Math.min(511,Math.floor(ux))),y0=Math.max(0,Math.min(511,Math.floor(uy)));
-  const x1=Math.min(511,x0+1),y1=Math.min(511,y0+1),fx=Math.max(0,Math.min(1,ux-x0)),fy=Math.max(0,Math.min(1,uy-y0));
-  const k=((dy+y)*512+dx+x)*4,v=[];
-  for(let c=0;c<4;c++)v[c]=input.data[(y0*512+x0)*4+c]*(1-fx)*(1-fy)+input.data[(y0*512+x1)*4+c]*fx*(1-fy)+input.data[(y1*512+x0)*4+c]*(1-fx)*fy+input.data[(y1*512+x1)*4+c]*fx*fy;
-  const sa=v[3]/255,da=out.data[k+3]/255,oa=sa+da*(1-sa);
-  for(let c=0;c<3;c++)out.data[k+c]=oa?Math.round((v[c]*sa+out.data[k+c]*da*(1-sa))/oa):0;
-  out.data[k+3]=Math.round(oa*255);
+const original=await fetchImage();
+if(original.width!==1254||original.height!==1254)throw Error('Wrong approved logo dimensions');
+// This is NOT the older full-wordmark icon. The word "RivoScan" is intentionally absent.
+const sizes={play:504,adaptive:360,header:456};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function bg(x,y){
+ const q=clamp((x+y*.28)/650,0,1);
+ return [Math.round(4+5*q),Math.round(41+100*q),Math.round(168+69*q)];
+}
+function logoPixel(x,y){
+ const crop=18,size=1218;
+ const px=clamp(Math.round(crop+x*size),0,1253),py=clamp(Math.round(crop+y*size),0,1253);
+ const k=(py*original.width+px)*4;
+ const r=original.data[k],g=original.data[k+1],b=original.data[k+2];
+ return {r,g,b,alpha:original.data[k+3]/255};
+}
+function output(scale,opaque=true){
+ const icon=new PNG({width:512,height:512});
+ for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+  const k=(y*512+x)*4;
+  const backdrop=bg(x,y);
+  icon.data[k]=backdrop[0];icon.data[k+1]=backdrop[1];icon.data[k+2]=backdrop[2];icon.data[k+3]=255;
+  const edge=(512-scale)/2;
+  if(x<edge||y<edge||x>=512-edge||y>=512-edge)continue;
+  const src=logoPixel((x-edge)/scale,(y-edge)/scale);
+  // Replace the former BLACK transparent-corner matte with full-bleed blue.
+  const luminance=Math.max(src.r,src.g,src.b);
+  const blend=clamp((luminance-23)/32,0,1)*src.alpha;
+  for(let c=0;c<3;c++)icon.data[k+c]=Math.round([src.r,src.g,src.b][c]*blend+backdrop[c]*(1-blend));
  }
+ return PNG.sync.write(icon);
 }
-const icon=blank(),header=blank();
-// The previous 288px white card left 30+px on either side of the blue mark.
-// The new approved foreground has ONE WHITE PIXEL along the straight sides.
-// Adaptive icon masks still impose their separate circular safety zone.
-card(icon,137,101,238,293,37);
-// Crop the embedded white padding INSIDE the approved source image, too.
-// The previous image showed 5px on the left even though our white card was 1px.
-composite(icon,123,84,260,266,138,102,236,236);
-composite(icon,94,359,327,72,138,345,235,48);
-// The circular launcher mask must not cut the lower wordmark on any device.
-for(let y=0;y<512;y++)for(let x=0;x<512;x++){
- if(Math.hypot(x-256,y-256)>178)icon.data[(y*512+x)*4+3]=0;
-}
-composite(header,118,84,269,266,28,28,456,456);
-const png=PNG.sync.write(icon);
-for(const [name,b] of [
- ['public/rivoscan-icon.png',png],
- ['public/rivoscan-adaptive-foreground.png',png],
- ['public/rivoscan-header-mark.png',PNG.sync.write(header)],
- ['public/rivoscan-logo.png',fullLogo],
- ['node_modules/.cache/rivoscan/icon.png.b64',Buffer.from(png.toString('base64')+'\n')],
- ['node_modules/.cache/rivoscan/adaptive.png.b64',Buffer.from(png.toString('base64')+'\n')]
+const play=output(sizes.play),adaptive=output(sizes.adaptive),header=output(sizes.header);
+for(const [name,buffer] of [
+ ['public/rivoscan-icon.png',play],
+ ['public/rivoscan-play-icon.png',play],
+ ['public/rivoscan-adaptive-foreground.png',adaptive],
+ ['public/rivoscan-header-mark.png',header],
+ // Keep former public logo source unmodified; screenshot texts draw "RivoScan" separately.
+ ['node_modules/.cache/rivoscan/icon.png.b64',Buffer.from(play.toString('base64')+'\n')],
+ ['node_modules/.cache/rivoscan/adaptive.png.b64',Buffer.from(adaptive.toString('base64')+'\n')]
 ]){
- const out=join(root,name);mkdirSync(dirname(out),{recursive:true});writeFileSync(out,b);
+ const p=join(root,name);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,buffer);
 }
-console.log('[RivoScan] Approved R and complete wordmark with minimal white margin.');
+console.log('[RivoScan] New blue R (without wordmark), mask-safe adaptive icon, edge-to-edge Google Play icon');
