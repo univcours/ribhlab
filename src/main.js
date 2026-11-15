@@ -55,6 +55,7 @@ import './rivo-save-toast.css';
 import './rivo-bulk-top.css';
 import './rivo-edge-adjustment.css';
 import './rivo-documents-heading-search.css';
+import './rivo-perfect-corners.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -1771,6 +1772,7 @@ function navigateRivoBack(){
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
   ['.rivo-edge-adjust-overlay','[data-edge="close"]'],
+  ['.rivo-perfect-corners-overlay','[data-perfect-corner="cancel"]'],
   ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
   ['.rivo-shield-overlay','[data-shield="close"]']
  ];
