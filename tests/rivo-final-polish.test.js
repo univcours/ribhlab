@@ -26,11 +26,11 @@ test('all info controls have fixed circular dimensions and simple i glyph',()=>{
  assert.match(style,/min-height:32px!important;max-height:32px!important/);
  assert.match(read('src/tool-help.js'),/button\.textContent='i'/);
 });
-test('launcher has truly 1px white side rim and retains round-mask wordmark',()=>{
+test('launcher is full-bleed with no internal wordmark and safe adaptive mask',()=>{
  const code=read('scripts/create-turquoise-icon.mjs');
  assert.match(code,/SOURCE_SHA256/);
  assert.match(code,/sizes=\{play:504,adaptive:360,header:456\}/);
  assert.match(code,/rivoscan-play-icon.png/);
  assert.match(code,/RivoScan.*without wordmark/);
- assert.match(code,/Math\.hypot\(x-256,y-256\)>178/);
+ assert.match(code,/rivoscan-adaptive-foreground.png/);
 });
