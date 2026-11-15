@@ -12,8 +12,12 @@ test('PerfectScan compares REAL source and processed pixel buffers via one dragg
  assert.ok(src.includes('previewPixels(processed.pixels'));
  assert.ok(src.includes('result.pixels'));
 });
-test('PerfectScan preserves original, warns on quality and never claims artificial reconstruction',()=>{
- for(const marker of ['base.fromLibrary','inspectInkChanges','processed.requiresReview',
- 'processedPdfName:pdfName','originalKept:true','noUploadByPerfectScan:true'])
+test('PerfectScan preserves user input in memory, warns on image quality, and exports only one final PDF',()=>{
+ for(const marker of ['name,mime,fromLibrary,captureReview','inspectInkChanges','processed.requiresReview',
+  'const pdf=await PDFDocument.create()', 'await pdf.embedJpg(', 'page.drawImage(documentImage',
+  "await onSave(pdfBytes,'RivoScan_PerfectScan_'+stamp+'.pdf','application/pdf')"])
   assert.ok(src.includes(marker),marker);
+ const save=src.slice(src.indexOf(' async function writeResult(){'),src.indexOf(" root.addEventListener('click',e=>{"));
+ assert.equal((save.match(/await onSave\(/g)||[]).length,1);
+ assert.doesNotMatch(save,/RivoScan_Original_|\.json|application\/json|onSave\(out,name/);
 });

@@ -80,6 +80,20 @@ const LABELS={
  it:{title:'Regola i bordi del documento',info:'Trascina i quattro angoli sui bordi del documento.',page:'Pagina PDF',save:'Salva copia corretta',cancel:'Annulla',reset:'Ripristina angoli',busy:'Correzione prospettiva…',original:'L’originale resta invariato. Solo la pagina PDF selezionata viene sostituita nella copia.',bad:'Gli angoli non devono incrociarsi.',failed:'Impossibile regolare i bordi',pageSelect:'Seleziona pagina PDF'}
 };
 const initialCorners=()=>[[.055,.055],[.945,.055],[.945,.945],[.055,.945]];
+/** Inner photograph rectangle surrounded by true, interactive padding.
+ * The corner coordinates remain normalized relative to the IMAGE, not the
+ * canvas, so exporting the crop never includes the visual margin.
+ */
+export function paddedEdgeCanvas(width,height){
+ const photoWidth=Math.max(1,Math.round(width)),photoHeight=Math.max(1,Math.round(height));
+ const padX=Math.max(36,Math.round(photoWidth*.16));
+ const padY=Math.max(36,Math.round(photoHeight*.12));
+ return {x:padX,y:padY,width:photoWidth,height:photoHeight,
+  canvasWidth:photoWidth+padX*2,canvasHeight:photoHeight+padY*2};
+}
+export function paddedEdgePoint(frame,point){
+ return [frame.x+point[0]*frame.width,frame.y+point[1]*frame.height];
+}
 /** A 6x loupe beside the actual touch point: right or left by available space.
  * Both PerfectScan after capture and saved-document editor share this geometry.
  * Never cover the point being dragged when there is room on either side.
@@ -116,7 +130,7 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  if(!edgeAdjustableDocument(doc))throw Error('Only images and PDF files support edge adjustment.');
  const tr=LABELS[language]||LABELS.en;
  let sourceBytes,sourcePdf=null,pdfPreview=null,pdfPage=1,image=null,closed=false,busy=false;
- let points=initialCorners(),drag=-1,previousFocus=document.activeElement;
+ let points=initialCorners(),drag=-1,frame=null,previousFocus=document.activeElement;
  const overlay=document.createElement('div');overlay.className='rivo-edge-adjust-overlay';
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',tr.title);
  overlay.innerHTML='<div class="rivo-edge-adjust-panel"><header><strong>'+tr.title+'</strong><button type="button" data-edge="close" aria-label="'+tr.cancel+'">✕</button></header>'+
@@ -143,16 +157,18 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
   const cap=Math.min(1,1250/Math.max(image.width,image.height));
   const width=Math.max(1,Math.round(image.width*cap));
   const height=Math.max(1,Math.round(image.height*cap));
-  if(canvas.width!==width)canvas.width=width;
-  if(canvas.height!==height)canvas.height=height;
+  frame=paddedEdgeCanvas(width,height);
+  if(canvas.width!==frame.canvasWidth)canvas.width=frame.canvasWidth;
+  if(canvas.height!==frame.canvasHeight)canvas.height=frame.canvasHeight;
   const ctx=canvas.getContext('2d');
-  ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#071f34';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(image,frame.x,frame.y,frame.width,frame.height);
   ctx.beginPath();
-  points.forEach((p,i)=>{const x=p[0]*canvas.width,y=p[1]*canvas.height;if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
+  points.forEach((p,i)=>{const [x,y]=paddedEdgePoint(frame,p);if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
   ctx.closePath();ctx.fillStyle='rgba(0,175,218,0.11)';ctx.fill();
   ctx.strokeStyle=validEdgeQuadrilateral(points)?'#06e1cb':'#f06565';ctx.lineWidth=Math.max(3,canvas.width/400);ctx.stroke();
   points.forEach((p,i)=>{
-   const x=p[0]*canvas.width,y=p[1]*canvas.height,r=Math.max(10,canvas.width/90);
+   const [x,y]=paddedEdgePoint(frame,p),r=Math.max(10,frame.width/80);
    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
    ctx.lineWidth=Math.max(2,canvas.width/550);ctx.strokeStyle='#00a5d9';ctx.stroke();
    ctx.fillStyle='#004563';ctx.font=Math.max(10,canvas.width/75)+'px sans-serif';
@@ -164,10 +180,12 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  }
  function drawMagnifyingLoupe(ctx,corner){
   // Real source pixels (not a snapshot of the screen), enlarged by 6x.
-  const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,corner);
+  const touch=paddedEdgePoint(frame,corner);
+  const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,
+    [touch[0]/canvas.width,touch[1]/canvas.height]);
   const ix=corner[0]*image.width,iy=corner[1]*image.height;
-  const srcRx=radius*(image.width/canvas.width)/zoom;
-  const srcRy=radius*(image.height/canvas.height)/zoom;
+  const srcRx=radius*(image.width/frame.width)/zoom;
+  const srcRy=radius*(image.height/frame.height)/zoom;
   const sx0=Math.max(0,ix-srcRx),sy0=Math.max(0,iy-srcRy);
   const sx1=Math.min(image.width,ix+srcRx),sy1=Math.min(image.height,iy+srcRy);
   if(sx1<=sx0||sy1<=sy0)return;
@@ -193,14 +211,17 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  }
  function eventPoint(e){
   const box=canvas.getBoundingClientRect();
-  return [clamp((e.clientX-box.left)/box.width,0,1),clamp((e.clientY-box.top)/box.height,0,1)];
+  const x=(e.clientX-box.left)*canvas.width/box.width;
+  const y=(e.clientY-box.top)*canvas.height/box.height;
+  return [clamp((x-frame.x)/frame.width,0,1),clamp((y-frame.y)/frame.height,0,1)];
  }
  canvas.addEventListener('pointerdown',e=>{
   if(busy||!image)return;
   const p=eventPoint(e),rect=canvas.getBoundingClientRect();
-  const distances=points.map(q=>Math.hypot((q[0]-p[0])*rect.width,(q[1]-p[1])*rect.height));
+  const scaleX=frame.width*rect.width/canvas.width,scaleY=frame.height*rect.height/canvas.height;
+  const distances=points.map(q=>Math.hypot((q[0]-p[0])*scaleX,(q[1]-p[1])*scaleY));
   const min=Math.min(...distances);
-  if(min>Math.max(42,rect.width*.13))return;
+  if(min>Math.max(32,scaleX*.12))return;
   drag=distances.indexOf(min);
   try{canvas.setPointerCapture(e.pointerId)}catch{}
   draw();e.preventDefault();

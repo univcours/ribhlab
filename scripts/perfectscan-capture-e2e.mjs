@@ -64,7 +64,14 @@ try{
   assert.ok(status.includes('تم تحديد'),'page must be auto-detected after camera photo');
   const canvas=page.locator('.rivo-perfect-capture-canvas'),bounds=await canvas.boundingBox();
   assert.ok(bounds&&bounds.width>150);
-  const x=bounds.x+bounds.width*.135,y=bounds.y+bounds.height*.118;
+  const frame=await page.evaluate(()=>{
+   const f=paddedEdgeCanvas(600,800),canvas=document.querySelector('.rivo-perfect-capture-canvas');
+   if(canvas.width!==f.canvasWidth||canvas.height!==f.canvasHeight)throw Error('Padded canvas dimensions mismatch');
+   return f;
+  });
+  assert.ok(frame.x>40&&frame.y>40,'PerfectScan photo is centered with all-sided safe margins');
+  const x=bounds.x+bounds.width*(frame.x+.135*frame.width)/frame.canvasWidth;
+  const y=bounds.y+bounds.height*(frame.y+.118*frame.height)/frame.canvasHeight;
   await page.mouse.move(x,y);await page.mouse.down();
   await page.screenshot({path:dir+'/'+width+'-perfectscan-corners-after-photo.png'});
   await page.mouse.move(x+16,y+14,{steps:4});

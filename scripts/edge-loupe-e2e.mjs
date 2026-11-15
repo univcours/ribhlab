@@ -6,7 +6,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 const read=async p=>readFile(new URL('../'+p,import.meta.url),'utf8');
 const source=(await read('src/edge-adjustment.js')).replace(/^export /gm,'')
- +'\nwindow.__rivoOpenEdgeAdjustment=openEdgeAdjustment;\nwindow.__rivoCornerLoupe=cornerLoupeLayout;\n';
+ +'\nwindow.__rivoOpenEdgeAdjustment=openEdgeAdjustment;\nwindow.__rivoCornerLoupe=cornerLoupeLayout;\nwindow.__rivoPaddedEdgeCanvas=paddedEdgeCanvas;\n';
 const css=await read('src/rivo-edge-adjustment.css');
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 await mkdir(out,{recursive:true});
@@ -60,25 +60,38 @@ try{
   await canvas.waitFor({state:'visible'});
   const bbox=await canvas.boundingBox();
   assert.ok(bbox&&bbox.width>150&&bbox.height>150,'editor canvas must be visible');
-  const cursorX=bbox.x+bbox.width*.055,cursorY=bbox.y+bbox.height*.055;
+  const frame=await page.evaluate(()=>{
+   const canvas=document.querySelector('.rivo-edge-canvas');
+   const f=window.__rivoPaddedEdgeCanvas(460,640);
+   if(canvas.width!==f.canvasWidth||canvas.height!==f.canvasHeight)throw Error('Canvas gutters not rendered');
+   return f;
+  });
+  assert.ok(frame.x>=36&&frame.y>=36,'the source image has real free margin all around');
+  assert.equal(frame.canvasWidth,Math.round(frame.width+frame.x*2));
+  assert.equal(frame.canvasHeight,Math.round(frame.height+frame.y*2));
+  const cursorX=bbox.x+bbox.width*(frame.x+.055*frame.width)/frame.canvasWidth;
+  const cursorY=bbox.y+bbox.height*(frame.y+.055*frame.height)/frame.canvasHeight;
   const pixelSample=async()=>page.evaluate(()=>{
    const c=document.querySelector('.rivo-edge-canvas');
-   const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,[.055,.055]);
+   const f=window.__rivoPaddedEdgeCanvas(460,640);
+   const touch=[(f.x+.055*f.width)/c.width,(f.y+.055*f.height)/c.height];
+   const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,touch);
    const ctx=c.getContext('2d');
-   return Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data);
+   return {center:Array.from(ctx.getImageData(Math.round(centerX),Math.round(centerY),1,1).data),
+     border:Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data)};
   });
   const before=await pixelSample();
   await page.mouse.move(cursorX,cursorY);
   await page.mouse.down();
   const pressed=await pixelSample();
   await page.screenshot({path:out+'/'+width+'-corner-loupe-pressed.png'});
-  assert.notDeepEqual(pressed,before,'magnifier border must render on finger down');
-  assert.ok(pressed[1]>120&&pressed[2]>110,'magnifier border must be teal and clearly visible');
+  assert.notDeepEqual(pressed.center,before.center,'6x magnifier target appears while dragging a real corner');
+  assert.ok(pressed.border[1]>=180&&pressed.border[2]>=150,'magnifier outline is teal and visible');
   await page.mouse.move(cursorX+22,cursorY+18,{steps:5});
   await page.screenshot({path:out+'/'+width+'-corner-loupe-drag.png'});
   await page.mouse.up();
   const after=await pixelSample();
-  assert.notDeepEqual(pressed,after,'magnifier must disappear when finger lifts');
+  assert.notDeepEqual(pressed.center,after.center,'magnifier must disappear when finger lifts');
   await page.locator('[data-edge="save"]').click();
   await page.waitForFunction(()=>window.__rivoSaved?.length===1&&window.__rivoCompleted===1,null,{timeout:15000});
   const saved=await page.evaluate(()=>({result:window.__rivoSaved[0],completed:window.__rivoCompleted,overlay:!!document.querySelector('.rivo-edge-adjust-overlay')}));

@@ -3,18 +3,13 @@ import {PDFDocument} from 'pdf-lib';
 import {reviewPerfectScanCapture} from './perfectscan-capture-review.js';
 
 const dict={
- en:{title:'PerfectScan Pro',subtitle:'Improve paper clarity, straighten folds and reduce shadows on your device.',base:'Source photo',add:'Add shots',capture:'Capture another angle',process:'Apply correction',compare:'Hold to compare original',original:'Original photo',processed:'Enhanced copy',save:'Save scan + integrity report',cancel:'Close',privacy:'Never uploads your document. Original pixels and file are preserved.',tip:'Use 2–4 photos of the SAME document, with matching framing. Slightly change lighting or angle. Unmatched photos are rejected.',none:'Choose a source photo first.',choosing:'Choose document photo',ready:'Ready to enhance',working:'Checking alignment and correcting paper...',review:'Please review ALL text, stamps and signatures before saving.',saved:'Scan and integrity report saved. The original was kept.',failed:'Unable to process this document.',geometry:'Correct curved printed lines (2D)',quality:'Contrast safe; strongly folded/missing text cannot be recovered.',frames:'Additional photos',rejected:'Photos rejected (misalignment)',manual:'Manual review required',clean:'Safety checks passed; review still recommended'},
- ar:{title:'PerfectScan Pro',subtitle:'حسّن وضوح الورقة، صحّح الانحناء وخفّف الظلال على هاتفك.',base:'الصورة الأصلية',add:'إضافة صور',capture:'التقط صورة من زاوية أخرى',process:'تطبيق التصحيح',compare:'اضغط مطولًا لعرض الأصل',original:'الصورة الأصلية',processed:'الصورة المحسنة',save:'حفظ الصورة وتقرير التحقق',cancel:'إغلاق',privacy:'لا تُرفع الوثيقة إلى الإنترنت. ويظل الملف الأصلي محفوظًا.',tip:'التقط من صورتين إلى أربع صور للمستند نفسه وبالتأطير ذاته مع اختلاف طفيف في الإضاءة أو الزاوية. لن تُستخدم الصور غير المتطابقة.',none:'اختر الصورة الأصلية أولًا.',choosing:'اختار صورة الوثيقة',ready:'الصور واجدة',working:'كنتحققو من التطابق وكنقوّمو الورقة…',review:'راجع النصوص والكاشيات والتواقيع كاملين قبل الحفظ.',saved:'تحفظ السكانير والتقرير وبقات الصورة الأصلية.',failed:'ما قدرناش نعالجو الوثيقة.',geometry:'تقويم انحناء السطور (2D)',quality:'التجاعيد العميقة والحروف المفقودة ماشي مضمون نصلحوها.',frames:'صور إضافية',rejected:'صور مرفوضة (ما متطابقاش)',manual:'خاص مراجعة',clean:'فحص الحبر جيد، والمراجعة لازمة'},
- fr:{title:'Advanced document correction',subtitle:'Améliorez la lisibilité et redressez les documents sur votre appareil.',base:'Photo source',add:'Ajouter des prises',capture:'Autre angle',process:'Appliquer la correction',compare:'Maintenir pour comparer',original:'Original',processed:'Copie améliorée',save:'Enregistrer et rapport',cancel:'Fermer',privacy:'Aucun transfert réseau. Original préservé.',tip:'2 à 4 photos du MÊME document avec cadrage similaire.',none:'Sélectionnez la photo source.',choosing:'Choisir photo',ready:'Prêt',working:'Alignement et nettoyage...',review:'Vérifiez le texte, les cachets et signatures.',saved:'Scan et rapport enregistrés.',failed:'Traitement impossible.',geometry:'Redresser lignes courbes (2D)',quality:'Plis profonds et texte manquant non récupérables.',frames:'Autres prises',rejected:'Prises rejetées',manual:'Vérification manuelle',clean:'Tests de couleur et encre réussis; vérifiez'},
- es:{title:'Advanced document correction',subtitle:'Mejora la legibilidad y endereza los documentos en tu dispositivo.',base:'Foto original',add:'Añadir fotos',capture:'Otra toma',process:'Aplicar corrección',compare:'Mantener para comparar',original:'Original',processed:'Mejorada',save:'Guardar imagen e informe',cancel:'Cerrar',privacy:'Sin subir imágenes. Original intacto.',tip:'Use 2–4 fotos del MISMO papel con encuadre similar.',none:'Elija una foto.',choosing:'Elegir foto',ready:'Lista',working:'Alineando y corrigiendo...',review:'Revise texto, sellos y firmas.',saved:'Imagen e informe guardados.',failed:'No se pudo procesar.',geometry:'Corregir líneas curvas (2D)',quality:'No recupera tinta perdida ni pliegues profundos.',frames:'Fotos añadidas',rejected:'Fotos rechazadas',manual:'Revisión requerida',clean:'Comprobación pasada; revise'},
- de:{title:'Advanced document correction',subtitle:'Dokumente auf dem Gerät begradigen und besser lesbar machen.',base:'Originalfoto',add:'Aufnahmen hinzufügen',capture:'Weiteren Winkel aufnehmen',process:'Apply correction',compare:'Halten zum Vergleich',original:'Original',processed:'Bearbeitet',save:'Bild und Bericht speichern',cancel:'Schließen',privacy:'Keine Übertragung. Original bleibt erhalten.',tip:'2–4 Aufnahmen desselben Dokuments bei ähnlicher Ausrichtung.',none:'Foto auswählen.',choosing:'Foto auswählen',ready:'Bereit',working:'Ausrichten und bereinigen...',review:'Text, Stempel und Unterschriften prüfen.',saved:'Bild und Bericht gespeichert.',failed:'Bearbeitung nicht möglich.',geometry:'Gekrümmte Zeilen korrigieren (2D)',quality:'Keine Wiederherstellung fehlender Schrift.',frames:'Weitere Fotos',rejected:'Abgewiesene Fotos',manual:'Bitte prüfen',clean:'Prüfung erfolgreich; bitte prüfen'},
- pt:{title:'Advanced document correction',subtitle:'Melhore a leitura e endireite documentos no dispositivo.',base:'Foto original',add:'Adicionar fotos',capture:'Capturar outro ângulo',process:'✦ PerfectScan',compare:'Manter para comparar',original:'Original',processed:'Melhorada',save:'Guardar digitalização e relatório',cancel:'Fechar',privacy:'Sem upload. Original intacto.',tip:'Use 2–4 fotos do MESMO documento com enquadramento semelhante.',none:'Escolha a foto.',choosing:'Escolher foto',ready:'Pronto',working:'A alinhar e limpar...',review:'Confira texto, carimbos e assinaturas.',saved:'Scan e relatório guardados.',failed:'Não foi possível processar.',geometry:'Corrigir linhas curvas (2D)',quality:'Não recupera texto perdido.',frames:'Fotos extras',rejected:'Fotos rejeitadas',manual:'Verificação necessária',clean:'Verificação aprovada; revise'},
- it:{title:'Advanced document correction',subtitle:'Migliora la leggibilità e raddrizza i documenti sul dispositivo.',base:'Foto originale',add:'Aggiungi foto',capture:'Altro angolo',process:'✦ PerfectScan',compare:'Tieni premuto per confrontare',original:'Originale',processed:'Migliorata',save:'Salva immagine e rapporto',cancel:'Chiudi',privacy:'Nessun upload. Originale preservato.',tip:'2–4 scatti dello STESSO documento con inquadratura simile.',none:'Scegli prima una foto.',choosing:'Scegli foto',ready:'Pronto',working:'Allineamento e pulizia...',review:'Controlla testo, timbri e firme.',saved:'Immagine e rapporto salvati.',failed:'Impossibile elaborare.',geometry:'Correggi righe curve (2D)',quality:'Non recupera testo mancante.',frames:'Scatti extra',rejected:'Foto rifiutate',manual:'Da controllare',clean:'Controlli superati; verificare'}
-};
-const pdfLabels={
- en:'Also save as PDF',ar:'حفظ PDF حتى هو',fr:'Enregistrer aussi en PDF',
- es:'Guardar también PDF',de:'Auch als PDF speichern',
- pt:'Guardar também PDF',it:'Salva anche PDF'
+ en:{title:'PerfectScan Pro',subtitle:'Improve paper clarity, straighten folds and reduce shadows on your device.',base:'Source photo',add:'Add shots',capture:'Capture another angle',process:'Apply correction',compare:'Hold to compare original',original:'Original photo',processed:'Enhanced copy',save:'Save PDF',cancel:'Close',privacy:'Processed locally. Only one PDF is saved; no image or JSON copies.',tip:'Use 2–4 photos of the SAME document, with matching framing. Slightly change lighting or angle. Unmatched photos are rejected.',none:'Choose a source photo first.',choosing:'Choose document photo',ready:'Ready to enhance',working:'Checking alignment and correcting paper...',review:'Please review ALL text, stamps and signatures before saving.',saved:'PerfectScan PDF saved.',failed:'Unable to process this document.',geometry:'Correct curved printed lines (2D)',quality:'Contrast safe; strongly folded/missing text cannot be recovered.',frames:'Additional photos',rejected:'Photos rejected (misalignment)',manual:'Manual review required',clean:'Safety checks passed; review still recommended'},
+ ar:{title:'PerfectScan Pro',subtitle:'حسّن وضوح الورقة، صحّح الانحناء وخفّف الظلال على هاتفك.',base:'الصورة الأصلية',add:'إضافة صور',capture:'التقط صورة من زاوية أخرى',process:'تطبيق التصحيح',compare:'اضغط مطولًا لعرض الأصل',original:'الصورة الأصلية',processed:'الصورة المحسنة',save:'حفظ PDF',cancel:'إغلاق',privacy:'المعالجة على هاتفك. يتحفظ PDF واحد فقط، بلا صور أو JSON إضافية.',tip:'التقط من صورتين إلى أربع صور للمستند نفسه وبالتأطير ذاته مع اختلاف طفيف في الإضاءة أو الزاوية. لن تُستخدم الصور غير المتطابقة.',none:'اختر الصورة الأصلية أولًا.',choosing:'اختار صورة الوثيقة',ready:'الصور واجدة',working:'كنتحققو من التطابق وكنقوّمو الورقة…',review:'راجع النصوص والكاشيات والتواقيع كاملين قبل الحفظ.',saved:'تحفظ ملف PDF واحد ديال الوثيقة المصححة.',failed:'ما قدرناش نعالجو الوثيقة.',geometry:'تقويم انحناء السطور (2D)',quality:'التجاعيد العميقة والحروف المفقودة ماشي مضمون نصلحوها.',frames:'صور إضافية',rejected:'صور مرفوضة (ما متطابقاش)',manual:'خاص مراجعة',clean:'فحص الحبر جيد، والمراجعة لازمة'},
+ fr:{title:'Advanced document correction',subtitle:'Améliorez la lisibilité et redressez les documents sur votre appareil.',base:'Photo source',add:'Ajouter des prises',capture:'Autre angle',process:'Appliquer la correction',compare:'Maintenir pour comparer',original:'Original',processed:'Copie améliorée',save:'Enregistrer PDF',cancel:'Fermer',privacy:'Traitement local. Un seul PDF, sans images ni JSON supplémentaires.',tip:'2 à 4 photos du MÊME document avec cadrage similaire.',none:'Sélectionnez la photo source.',choosing:'Choisir photo',ready:'Prêt',working:'Alignement et nettoyage...',review:'Vérifiez le texte, les cachets et signatures.',saved:'PDF PerfectScan enregistré.',failed:'Traitement impossible.',geometry:'Redresser lignes courbes (2D)',quality:'Plis profonds et texte manquant non récupérables.',frames:'Autres prises',rejected:'Prises rejetées',manual:'Vérification manuelle',clean:'Tests de couleur et encre réussis; vérifiez'},
+ es:{title:'Advanced document correction',subtitle:'Mejora la legibilidad y endereza los documentos en tu dispositivo.',base:'Foto original',add:'Añadir fotos',capture:'Otra toma',process:'Aplicar corrección',compare:'Mantener para comparar',original:'Original',processed:'Mejorada',save:'Guardar PDF',cancel:'Cerrar',privacy:'Procesamiento local. Solo se guarda un PDF, sin JPG ni JSON.',tip:'Use 2–4 fotos del MISMO papel con encuadre similar.',none:'Elija una foto.',choosing:'Elegir foto',ready:'Lista',working:'Alineando y corrigiendo...',review:'Revise texto, sellos y firmas.',saved:'PDF PerfectScan guardado.',failed:'No se pudo procesar.',geometry:'Corregir líneas curvas (2D)',quality:'No recupera tinta perdida ni pliegues profundos.',frames:'Fotos añadidas',rejected:'Fotos rechazadas',manual:'Revisión requerida',clean:'Comprobación pasada; revise'},
+ de:{title:'Advanced document correction',subtitle:'Dokumente auf dem Gerät begradigen und besser lesbar machen.',base:'Originalfoto',add:'Aufnahmen hinzufügen',capture:'Weiteren Winkel aufnehmen',process:'Apply correction',compare:'Halten zum Vergleich',original:'Original',processed:'Bearbeitet',save:'PDF speichern',cancel:'Schließen',privacy:'Lokale Verarbeitung. Nur eine PDF, keine JPG- oder JSON-Dateien.',tip:'2–4 Aufnahmen desselben Dokuments bei ähnlicher Ausrichtung.',none:'Foto auswählen.',choosing:'Foto auswählen',ready:'Bereit',working:'Ausrichten und bereinigen...',review:'Text, Stempel und Unterschriften prüfen.',saved:'PerfectScan PDF gespeichert.',failed:'Bearbeitung nicht möglich.',geometry:'Gekrümmte Zeilen korrigieren (2D)',quality:'Keine Wiederherstellung fehlender Schrift.',frames:'Weitere Fotos',rejected:'Abgewiesene Fotos',manual:'Bitte prüfen',clean:'Prüfung erfolgreich; bitte prüfen'},
+ pt:{title:'Advanced document correction',subtitle:'Melhore a leitura e endireite documentos no dispositivo.',base:'Foto original',add:'Adicionar fotos',capture:'Capturar outro ângulo',process:'✦ PerfectScan',compare:'Manter para comparar',original:'Original',processed:'Melhorada',save:'Guardar PDF',cancel:'Fechar',privacy:'Processamento local. Guarda apenas um PDF, sem JPG nem JSON.',tip:'Use 2–4 fotos do MESMO documento com enquadramento semelhante.',none:'Escolha a foto.',choosing:'Escolher foto',ready:'Pronto',working:'A alinhar e limpar...',review:'Confira texto, carimbos e assinaturas.',saved:'PDF PerfectScan guardado.',failed:'Não foi possível processar.',geometry:'Corrigir linhas curvas (2D)',quality:'Não recupera texto perdido.',frames:'Fotos extras',rejected:'Fotos rejeitadas',manual:'Verificação necessária',clean:'Verificação aprovada; revise'},
+ it:{title:'Advanced document correction',subtitle:'Migliora la leggibilità e raddrizza i documenti sul dispositivo.',base:'Foto originale',add:'Aggiungi foto',capture:'Altro angolo',process:'✦ PerfectScan',compare:'Tieni premuto per confrontare',original:'Originale',processed:'Migliorata',save:'Salva PDF',cancel:'Chiudi',privacy:'Elaborazione locale. Un solo PDF, senza JPG o JSON.',tip:'2–4 scatti dello STESSO documento con inquadratura simile.',none:'Scegli prima una foto.',choosing:'Scegli foto',ready:'Pronto',working:'Allineamento e pulizia...',review:'Controlla testo, timbri e firme.',saved:'PDF PerfectScan salvato.',failed:'Impossibile elaborare.',geometry:'Correggi righe curve (2D)',quality:'Non recupera testo mancante.',frames:'Scatti extra',rejected:'Foto rifiutate',manual:'Da controllare',clean:'Controlli superati; verificare'}
 };
 const qualityLabels={
  en:'Quality review',ar:'مراجعة جودة الصورة',fr:'Vérification qualité',
@@ -45,8 +40,6 @@ const imageCanvas=async(blob,size=null)=>{
  }finally{URL.revokeObjectURL(uri);}
 };
 const asJpeg=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('JPEG encoding failed')),'image/jpeg',.96));
-const fileExt=(mime,name)=>mime==='image/png'||/\.png$/i.test(name)?'png':mime==='image/webp'||/\.webp$/i.test(name)?'webp':'jpg';
-const safeName=name=>String(name||'source').replace(/[^a-z0-9._-]/gi,'_').slice(0,72);
 
 const nativeModeLabels={
  en:{uvdoc:'Straighten curved paper · offline',surface:'Combine 2–4 camera angles (experimental)'},
@@ -261,71 +254,36 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   if(!base||!result||working)return;
   disableDuring(true);
   try{
-   const temp=document.createElement('canvas');temp.width=base.width;temp.height=base.height;
+   // PerfectScan publishes EXACTLY ONE document: a one-page PDF containing
+   // the user's perspective-corrected and enhanced image. No JPG, backup
+   // original, audit JSON or intermediary scan is written to My Documents.
+   if(result.pixels?.length!==base.width*base.height*4)
+    throw Error('PerfectScan final image is incomplete.');
+   const temp=document.createElement('canvas');
+   temp.width=base.width;temp.height=base.height;
    const c=temp.getContext('2d',{willReadFrequently:true});
-   const image=c.createImageData(base.width,base.height);image.data.set(result.pixels);c.putImageData(image,0,0);
-   const blob=await asJpeg(temp),out=new Uint8Array(await blob.arrayBuffer()),time=new Date().toISOString();
-   const stamp=time.replace(/[-:.TZ]/g,'');
-   const name='RivoScan_Scan_'+stamp+'.jpg';
-   const baseHash=await sha256(base.bytes),outHash=await sha256(out);
-   if(!base.fromLibrary){
-    await onSave(base.bytes,'RivoScan_Original_'+stamp+'_'+safeName(base.name).replace(/\.[^.]*$/,'')+'.'+fileExt(base.mime,base.name),base.mime);
-   }
-   await onSave(out,name,'image/jpeg');
-   let pdfName=null,pdfSha256=null;
-   {
-    // PDF is produced automatically with the scan; no extra checkbox.
-    const pdf=await PDFDocument.create();
-    const image=await pdf.embedJpg(out);
-    // A document page stays proportional to the photograph, rather than
-    // stretching a signature, seal or printed text into a different shape.
-    const pageWidth=base.width>=base.height?842:595;
-    const pageHeight=pageWidth*base.height/base.width;
-    const sheet=pdf.addPage([pageWidth,pageHeight]);
-    sheet.drawImage(image,{x:0,y:0,width:pageWidth,height:pageHeight});
-    pdf.setTitle('RivoScan Document Scan');
-    pdf.setProducer('RivoScan');
-    const pdfBytes=await pdf.save();
-    pdfName='RivoScan_PerfectScan_'+stamp+'.pdf';
-    pdfSha256=await sha256(pdfBytes);
-    await onSave(pdfBytes,pdfName,'application/pdf');
-   }
-   const audit={
-    product:'RivoScan Document Scan',version:1,createdUTC:time,
-    processing:result.surface3DApplied?
-      'Native OpenCV multi-view relative 3D triangulation + neural UVDoc optional; approximate camera calibration, not metric certified depth':
-      'UVDoc neural 2D unwarp and/or 2D enhancement; no 3D reconstruction; not certified forensic authenticity',
-    surface3DAttempted:!!result.surface3DAttempted,
-    relativeSurface3DApplied:!!result.surface3DApplied,
-    relativeSurface3DConfidence:result.surface3DConfidence||null,
-    relativeSurface3DPoints:result.surface3DPointCount||0,
-    relativeDepthSpread:result.surface3DRelativeDepthSpread||null,
-    relativeSurface3DRejectedReason:result.surface3DRejectedReason||null,
-    surface3DCameraCalibrationApproximate:!!result.surface3DCameraCalibrationApproximate,
-    relativeSurface3DEffectiveResolution:result.surface3DEffectiveResolution||null,
-    uvdocAndroidInference:!!result.neuralUvdocApplied,
-    uvdocModelSha256:result.neuralModelSha256||null,
-    uvdocEffectiveModelResolution:result.neuralEffectiveResolution||null,
-    uvdocRuntime:result.neuralRuntime||null,
-    uvdocInferenceMs:result.neuralInferenceMs||null,
-    originalName:base.name,originalSha256:baseHash,processedName:name,processedSha256:outHash,
-    processedPdfName:pdfName,processedPdfSha256:pdfSha256,
-    SHA256Available:!!baseHash&&!!outHash,
-    extraFramesSelected:result.extraCount,extraFramesAligned:result.usedFrames,
-    additionalSources:extra.map(item=>({name:item.name,sha256:item.sha256})),
-    rejectedFrames:result.rejectedFrames,frameOffsets:result.alignment,
-    geometry2DApplied:result.geometryApplied,geometryConfidence:result.geometryConfidence,
-    inkFidelity:result.integrity,captureQuality:result.quality,
-    manualReviewRecommended:result.requiresReview,
-    preSaveCaptureReview:base.captureReview?{detected:!!base.captureReview.detected,
-      cornersConfirmed:!!base.captureReview.cropped,
-      cornerPositions:base.captureReview.corners||null,
-      originalPhotoPreserved:true}:null,
-    userSavedResult:true,originalKept:true,noUploadByPerfectScan:true
-   };
-   await onSave(new TextEncoder().encode(JSON.stringify(audit,null,2)),'RivoScan_PerfectScan_'+stamp+'_integrity.json','application/json');
-   await onRefresh();notify(t.saved);close();
-  }catch(error){setStatus(error.message,true);notify(error.message,true);disableDuring(false)}
+   const pixels=c.createImageData(base.width,base.height);
+   pixels.data.set(result.pixels);c.putImageData(pixels,0,0);
+   const jpg=await asJpeg(temp);
+   const pdf=await PDFDocument.create();
+   const documentImage=await pdf.embedJpg(await jpg.arrayBuffer());
+   const pageWidth=base.width>=base.height?842:595;
+   const pageHeight=pageWidth*base.height/base.width;
+   const page=pdf.addPage([pageWidth,pageHeight]);
+   page.drawImage(documentImage,{x:0,y:0,width:pageWidth,height:pageHeight});
+   pdf.setTitle('RivoScan PerfectScan');
+   pdf.setProducer('RivoScan');
+   const stamp=new Date().toISOString().replace(/[-:.TZ]/g,'');
+   const pdfBytes=await pdf.save();
+   await onSave(pdfBytes,'RivoScan_PerfectScan_'+stamp+'.pdf','application/pdf');
+   await onRefresh();
+   notify(t.saved);
+   close();
+  }catch(error){
+   setStatus(error?.message||String(error),true);
+   notify(error?.message||String(error),true);
+   disableDuring(false);
+  }
  }
  root.addEventListener('click',e=>{
   const action=e.target.closest('[data-perfect]')?.dataset.perfect;

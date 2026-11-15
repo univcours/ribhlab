@@ -17,7 +17,7 @@ test('Official UVDoc ONNX runs natively on Android with pinned weights and no cl
  assert.ok(web.includes('plugin.unwarp({imageBase64})'));
  assert.ok(web.includes('physical3D:false'));
  assert.ok(ui.includes('data-perfect-mode'));
- assert.ok(ui.includes('uvdocModelSha256:result.neuralModelSha256||null'));
+ assert.ok(ui.includes('processed.neuralModelSha256=neural.modelSha256'));
 });
 
 test('Relative 3D mode uses real epipolar pose + triangulation with rejection gates',()=>{
@@ -31,15 +31,15 @@ test('Relative 3D mode uses real epipolar pose + triangulation with rejection ga
  assert.ok(web.includes('result?.physical3DRelative'));
  assert.ok(ui.includes('value="surface3d"'));
  assert.ok(ui.includes('processed.surface3DRejectedReason'));
- assert.ok(ui.includes('relativeSurface3DApplied'));
- assert.ok(ui.includes('surface3DCameraCalibrationApproximate'));
+ assert.ok(ui.includes('processed.surface3DApplied=true'));
+ assert.ok(ui.includes('processed.surface3DCameraCalibrationApproximate=surface.calibrationAssumed'));
  assert.ok(install.includes('registerPlugin(RivoSurface3DPlugin.class)'));
 });
 
 test('Neural and 3D mode require manual review and never claim metric depth',()=>{
  const ui=src('src/perfect-scan-ui.js'),docs=src('PERFECTSCAN_IMPLEMENTATION.md');
  assert.ok(ui.includes('if(!base||!result||working)return'));
- assert.ok(ui.includes('userSavedResult:true,originalKept:true'));
+ assert.ok(ui.includes("await onSave(pdfBytes,'RivoScan_PerfectScan_'+stamp+'.pdf','application/pdf')"));
  assert.ok(ui.includes('relative 3D'));
  assert.ok(docs.includes('not metrically calibrated'));
  assert.ok(docs.includes('Severe folds, occluded text'));
@@ -54,7 +54,7 @@ test('Exclusive correction selection avoids double geometric warp and ticking co
  assert.ok(ui.includes('const surface3dRequested=!!onSurface3D&&method===\'surface3d\''));
  assert.ok(ui.includes("geometry:method==='geometry'"));
  assert.ok(!ui.includes('input type="checkbox"'));
- assert.ok(ui.includes('manualReviewRecommended:result.requiresReview'));
+ assert.ok(ui.includes('processed.requiresReview?t.manual:t.clean'));
  assert.ok(native.includes('AI_FLATTEN="uvdoc"'));
  assert.ok(native.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
  assert.ok(uvdoc.includes('static Bitmap unwarpBitmap('));
