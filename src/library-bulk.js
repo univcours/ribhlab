@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
+import {generatedRsName} from './rs-file-names.js';
 
 export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
@@ -263,7 +264,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         const bytes=new Uint8Array(await blob.arrayBuffer());
         if(bytes.length>60*1024*1024)throw Error('Image exceeds 60 MB');
         let binary='';for(let i=0;i<bytes.length;i+=16384)binary+=String.fromCharCode(...bytes.subarray(i,i+16384));
-        const saved=await bridge.saveFile({name:`RivoScan_Share_${Date.now()}_${count+1}.jpg`,mimeType:'image/jpeg',base64:btoa(binary)});
+        const saved=await bridge.saveFile({name:generatedRsName('ShareImage.jpg','image/jpeg'),mimeType:'image/jpeg',base64:btoa(binary)});
         uris.push(saved.uri);count++;
       };
       if(isPDF(doc))await rasterPdf(file,q,add);
