@@ -1,4 +1,5 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
+import {scanMultipleCanvas,scanMultipleCanvasAsync,verifiedUniqueCodes} from './code-multi-scan.js';
 
 const I18N={
  en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to daily TXT','Could not save: ','Close','No code found — nothing captured'],
@@ -68,13 +69,38 @@ function drawOutline(canvas,video,points){
  // Barcode and QR detections have real result points in their camera image.
  const valid=(points||[]).filter(p=>Number.isFinite(p?.getX?.())&&Number.isFinite(p?.getY?.()));
  if(!valid.length)return false;
- const xs=valid.map(x=>offX+x.getX()*scale),ys=valid.map(x=>offY+x.getY()*scale);
+ const z=Number(video.dataset.digitalZoom)||1;
+ const xs=valid.map(p=>(offX+p.getX()*scale-w/2)*z+w/2),ys=valid.map(p=>(offY+p.getY()*scale-h/2)*z+h/2);
  const minX=Math.max(4,Math.min(...xs)-14),maxX=Math.min(w-4,Math.max(...xs)+14);
  const minY=Math.max(4,Math.min(...ys)-14),maxY=Math.min(h-4,Math.max(...ys)+14);
  if(maxX<=minX||maxY<=minY)return false;
  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=3;ctx.shadowColor='#2CF2D5';ctx.shadowBlur=7;
  ctx.strokeRect(minX,minY,maxX-minX,maxY-minY);
  return true;
+}
+function drawMultipleOutlines(canvas,video,decoded){
+ const bounds=canvas.getBoundingClientRect();
+ if(!bounds.width||!bounds.height||!decoded.length)return false;
+ const dpr=Math.min(3,Number(globalThis.devicePixelRatio)||1);
+ const w=bounds.width,h=bounds.height,vw=video.videoWidth||w,vh=video.videoHeight||h;
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+ const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+ const scale=Math.max(w/vw,h/vh),xOffset=(w-vw*scale)/2,yOffset=(h-vh*scale)/2;
+ const digital=Number(video.dataset.digitalZoom)||1;
+ let count=0;
+ for(const result of decoded){
+  const valid=(result.getResultPoints?.()||[]).filter(p=>Number.isFinite(p.getX?.())&&Number.isFinite(p.getY?.()));
+  if(!valid.length)continue;
+  const xs=valid.map(p=>(xOffset+p.getX()*scale-w/2)*digital+w/2);
+  const ys=valid.map(p=>(yOffset+p.getY()*scale-h/2)*digital+h/2);
+  const left=Math.max(4,Math.min(...xs)-13),top=Math.max(4,Math.min(...ys)-13);
+  const right=Math.min(w-4,Math.max(...xs)+13),bottom=Math.min(h-4,Math.max(...ys)+13);
+  if(right<=left||bottom<=top)continue;
+  ctx.strokeStyle='#2CF2D5';ctx.lineWidth=2.6;
+  ctx.strokeRect(left,top,right-left,bottom-top);
+  count++;
+ }
+ return count>0;
 }
 export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onSuccess=()=>{},onClose=()=>{}}={}){
  const L=I18N[language]||I18N.en;
@@ -83,12 +109,14 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',L[0]);
  const head=document.createElement('header');head.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
+ const counter=document.createElement('span');counter.className='rivo-code-count';counter.textContent='0';counter.setAttribute('aria-label','Saved codes');
  const close=iconButton('✕',()=>stop());close.dataset.scanOverlayClose='true';
- head.append(title,close);
+ head.append(title,counter,close);
  const camera=document.createElement('div');camera.className='rivo-live-preview';
  const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;
  const outline=document.createElement('canvas');outline.className='rivo-detection-outline';outline.setAttribute('aria-hidden','true');
- camera.append(video,outline);
+ const guide=document.createElement('div');guide.className='rivo-code-target-guide';guide.setAttribute('aria-hidden','true');
+ camera.append(video,guide,outline);
  const help=document.createElement('p');help.className='rivo-live-help';help.textContent=L[1];
  const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
  const result=document.createElement('pre');result.className='rivo-live-result';result.hidden=true;
@@ -98,9 +126,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const torch=iconButton('⚡ '+L[6],()=>toggleTorch());
  const file=iconButton(L[5],()=>picker.click());
  const zoomMinus=iconButton('−',()=>manualZoom(-1)),zoomPlus=iconButton('+',()=>manualZoom(1));
- const autoZoom=iconButton('AUTO ZOOM',()=>{zoom.auto=!zoom.auto;updateZoomUI();});
+ const autoZoom=iconButton('AUTO',()=>{zoom.auto=!zoom.auto;lastCodeAt=Date.now()-2500;updateZoomUI();});
  const zoomLabel=document.createElement('span');zoomLabel.className='rivo-code-zoom-label';zoomLabel.setAttribute('aria-live','polite');
- const zoomActions=document.createElement('div');zoomActions.className='rivo-code-zoom-controls';zoomActions.hidden=true;
+ const zoomActions=document.createElement('div');zoomActions.className='rivo-code-zoom-controls';
  zoomMinus.setAttribute('aria-label','Zoom out');zoomPlus.setAttribute('aria-label','Zoom in');
  autoZoom.setAttribute('aria-label','Automatic camera zoom');
  zoomActions.append(zoomMinus,zoomLabel,zoomPlus,autoZoom);
@@ -108,33 +136,53 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
  box.append(head,help,camera,status,result,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
- const dedup=newScanDeduplicator(),streams=[],temporaryURLs=[];
+ const dedup=newScanDeduplicator({gapMs:4200}),streams=[],temporaryURLs=[];
  let control=null,closed=false,light=false,lastDetectionAt=0;
- const zoom={track:null,min:1,max:1,current:1,enabled:false,auto:true,pending:false};
+ let multiTimer=null,multiActive=false,multiFrameCount=0;
+ let successful=0;
+ const multiCanvas=document.createElement('canvas');
+ const codeHistory=new Map();
+ const updateCount=()=>{counter.textContent=String(successful);counter.title=successful+' codes saved';};
+
+ const zoom={track:null,min:1,max:2.6,current:1,hardware:false,auto:true,pending:false};
  let lastCodeAt=Date.now(),lastZoomAt=0,zoomTimer=null;
  const updateZoomUI=()=>{
-  zoomActions.hidden=!zoom.enabled;
-  zoomMinus.disabled=!zoom.enabled||zoom.pending||zoom.current<=zoom.min+0.01;
-  zoomPlus.disabled=!zoom.enabled||zoom.pending||zoom.current>=zoom.max-0.01;
-  autoZoom.disabled=!zoom.enabled;autoZoom.setAttribute('aria-pressed',String(zoom.auto));
-  autoZoom.textContent=zoom.auto?'AUTO ZOOM ✓':'AUTO ZOOM';
-  zoomLabel.textContent=zoom.enabled?zoom.current.toFixed(1)+'×':'1×';
+  zoomActions.hidden=false;
+  zoomMinus.disabled=zoom.pending||zoom.current<=zoom.min+0.01;
+  zoomPlus.disabled=zoom.pending||zoom.current>=zoom.max-0.01;
+  autoZoom.disabled=false;autoZoom.setAttribute('aria-pressed',String(zoom.auto));
+  autoZoom.textContent=zoom.auto?'AUTO ✓':'AUTO';
+  zoomLabel.textContent=zoom.current.toFixed(1)+'×'+(zoom.hardware?'':' DIG');
  };
  async function setZoom(value){
-  if(!zoom.enabled||zoom.pending||closed||!zoom.track)return;
+  if(zoom.pending||closed||!zoom.track)return;
   zoom.pending=true;updateZoomUI();
+  const target=Math.min(zoom.max,Math.max(zoom.min,Number(value)||1));
   try{
-   const caps=zoom.track.getCapabilities?.()||{};
-   const step=Number(caps.zoom?.step)||0.1;
-   const bounded=Math.max(zoom.min,Math.min(zoom.max,Number(value)));
-   const target=Math.max(zoom.min,Math.min(zoom.max,Math.round(bounded/step)*step));
-   await zoom.track.applyConstraints({advanced:[{zoom:target}]});
-   zoom.current=Number(zoom.track.getSettings?.().zoom)||target;
-  }catch(error){console.warn('Hardware camera zoom unavailable:',error);zoom.enabled=false;}
-  finally{zoom.pending=false;updateZoomUI();}
+   if(zoom.hardware){
+    const caps=zoom.track.getCapabilities?.()||{};
+    const step=Number(caps.zoom?.step)||0.1;
+    const rounded=Math.max(zoom.min,Math.min(zoom.max,zoom.min+Math.round((target-zoom.min)/step)*step));
+    await zoom.track.applyConstraints({advanced:[{zoom:rounded}]});
+    zoom.current=Number(zoom.track.getSettings?.().zoom)||rounded;
+    video.style.transform='';video.dataset.digitalZoom='1';
+   }else{
+    // WebView camera track does not expose hardware zoom. Crop the real
+    // decoded image in addition to magnifying its preview (not CSS-only).
+    zoom.current=target;
+    video.style.transform='scale('+zoom.current+')';
+    video.dataset.digitalZoom=String(zoom.current);
+   }
+  }catch(error){
+   console.warn('Hardware zoom rejected; using decoded-frame crop instead:',error);
+   zoom.hardware=false;zoom.min=1;zoom.max=2.6;zoom.current=Math.min(zoom.max,Math.max(zoom.min,target));
+   video.style.transform='scale('+zoom.current+')';
+   video.dataset.digitalZoom=String(zoom.current);
+  }finally{zoom.pending=false;updateZoomUI();}
  }
  function manualZoom(direction){
-  zoom.auto=false;lastCodeAt=Date.now();void setZoom(zoom.current+direction*0.5);updateZoomUI();
+  zoom.auto=false;lastCodeAt=Date.now();
+  void setZoom(zoom.current+direction*(zoom.hardware?0.5:0.35));updateZoomUI();
  }
  let feedbackTimer=null;
  const playDetectedAnimation=()=>{
@@ -154,6 +202,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   if(closed)return;closed=true;
   if(feedbackTimer!==null)clearTimeout(feedbackTimer);
   if(zoomTimer!==null){clearInterval(zoomTimer);zoomTimer=null;}
+  if(multiTimer!==null){clearInterval(multiTimer);multiTimer=null;}
   clearDetectionOutline();
   try{control?.stop();}catch{}
   for(const track of streams)try{track.stop();}catch{}
@@ -184,29 +233,80 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    if(drawOutline(outline,video,decoded.getResultPoints?.()||[]))
     playDetectedAnimation();
   }
-  result.textContent=entry.value;result.hidden=false;copy.hidden=false;
+  codeHistory.set(entry.format+'\u0000'+entry.value,entry);
+  result.textContent=[...codeHistory.values()].slice(-8).map(v=>v.format+' · '+v.value).join('\n');
+  result.hidden=false;copy.hidden=false;
   status.textContent=L[3]+' · '+entry.format;
   try{
    // Auto-save decoded TEXT only. Never take a still photo from empty frames.
    const saved=await onScan(entry);
    if(saved?.saved){
+    successful++;updateCount();
     try{onSuccess(entry);}catch(error){console.warn('Scan success feedback:',error);}
     try{navigator.vibrate?.(55);}catch{}
    }
    if(!closed)status.textContent=(saved?.saved?L[8]:L[9]+(saved?.reason||'Local export unavailable'))+' · '+entry.format;
   }catch(error){if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}}
  }
+ // Decode an entire uploaded page, rather than just its first barcode.
  picker.addEventListener('change',async()=>{
   const item=picker.files?.[0];picker.value='';if(!item)return;
   const url=URL.createObjectURL(item);temporaryURLs.push(url);
   try{
    const image=new Image();image.src=url;await image.decode();
-   const canvas=document.createElement('canvas'),s=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));
-   canvas.width=Math.max(1,Math.round(image.naturalWidth*s));canvas.height=Math.max(1,Math.round(image.naturalHeight*s));
-   canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
-   const found=reader.decodeFromCanvas(canvas);await deliver(found,{fromPhoto:true});
-  }catch{status.textContent=L[11];clearDetectionOutline();}
+   const canvas=document.createElement('canvas'),scale=Math.min(1,2400/Math.max(image.naturalWidth,image.naturalHeight));
+   canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+   canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+   canvas.getContext('2d',{willReadFrequently:true}).drawImage(image,0,0,canvas.width,canvas.height);
+   const found=verifiedUniqueCodes(scanMultipleCanvas(canvas,{fine:true,maxResults:28}),recognizedCode);
+   if(found.length){
+    for(const {result:decoded} of found){if(closed)break;await deliver(decoded,{fromPhoto:true});}
+    if(!closed)status.textContent=found.length+' code(s) found on page · '+successful+' saved';
+   }else{
+    const found=reader.decodeFromCanvas(canvas);await deliver(found,{fromPhoto:true});
+   }
+  }catch(error){
+   if(!closed)status.textContent=L[11];
+   clearDetectionOutline();
+  }
  });
+ // Supplement single-code fast scans with multi-code whole-frame searches.
+ // At every interval it searches all regions, even during hardware zoom.
+ // For software zoom it alternates full-frame and real cropped pixel scans.
+ async function scanMultiFrame(){
+  if(closed||multiActive||video.readyState<2||!video.videoWidth||!video.videoHeight||document.hidden)return;
+  multiActive=true;
+  try{
+   const vw=video.videoWidth,vh=video.videoHeight;
+   const ratio=Math.min(1,1280/Math.max(vw,vh));
+   const cw=Math.max(1,Math.round(vw*ratio)),ch=Math.max(1,Math.round(vh*ratio));
+   multiCanvas.width=cw;multiCanvas.height=ch;
+   const ctx=multiCanvas.getContext('2d',{willReadFrequently:true});
+   const cropped=!zoom.hardware&&zoom.current>1.08&&((multiFrameCount++%3)===2);
+   const z=cropped?zoom.current:1;
+   const sw=vw/z,sh=vh/z,sx=(vw-sw)/2,sy=(vh-sh)/2;
+   ctx.drawImage(video,sx,sy,sw,sh,0,0,cw,ch);
+   const decoded=await scanMultipleCanvasAsync(multiCanvas,{maxResults:22,shouldStop:()=>closed});
+   const mapped=decoded.map(found=>({
+    getText:()=>found.getText(),
+    getBarcodeFormat:()=>found.getBarcodeFormat(),
+    getResultPoints:()=>found.getResultPoints().map(p=>({
+     getX:()=>sx+p.getX()*sw/cw,
+     getY:()=>sy+p.getY()*sh/ch
+    }))
+   }));
+   const codes=verifiedUniqueCodes(mapped,recognizedCode);
+   if(codes.length){
+    lastCodeAt=Date.now();
+    for(const {result:found} of codes){if(closed)break;await deliver(found);}
+    if(!closed&&codes.length>1){
+     drawMultipleOutlines(outline,video,codes.map(item=>item.result));
+     status.textContent=codes.length+' code(s) detected · '+successful+' saved';
+    }
+   }
+  }catch(error){console.debug('Multi-code frame unavailable:',error);}
+  finally{multiActive=false;}
+ }
  async function start(){
   try{
    const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{
@@ -222,18 +322,22 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch{}
    }
    if(caps.zoom&&Number.isFinite(caps.zoom.min)&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>caps.zoom.min){
-    zoom.min=caps.zoom.min;zoom.max=Math.min(caps.zoom.max,Math.max(caps.zoom.min,6));
-    zoom.enabled=zoom.max>zoom.min;
+    zoom.hardware=true;zoom.min=caps.zoom.min;zoom.max=Math.min(caps.zoom.max,6);
     zoom.current=Math.max(zoom.min,Math.min(zoom.max,Number(track.getSettings?.().zoom)||zoom.min));
+   }else{
+    // Keep controls visible on WebView even when zoom capabilities are hidden.
+    zoom.hardware=false;zoom.min=1;zoom.max=2.6;zoom.current=1;
    }
    updateZoomUI();
    await video.play();
-   if(zoom.enabled)zoomTimer=setInterval(()=>{
-    if(closed||!zoom.auto||zoom.pending||Date.now()-lastCodeAt<2600||Date.now()-lastZoomAt<2300)return;
+   multiTimer=setInterval(()=>{void scanMultiFrame();},1350);
+   void scanMultiFrame();
+   zoomTimer=setInterval(()=>{
+    if(closed||!zoom.auto||zoom.pending||Date.now()-lastCodeAt<2600||Date.now()-lastZoomAt<1900)return;
     // Sweep the real camera zoom range, then start again to search another distance.
-    const next=zoom.current+0.45>zoom.max?zoom.min:zoom.current+0.45;
+    const next=zoom.current+(zoom.hardware?0.45:0.35)>zoom.max?zoom.min:zoom.current+(zoom.hardware?0.45:0.35);
     lastZoomAt=Date.now();void setZoom(next);
-   },650);
+   },800);
    control=await reader.decodeFromVideoElement(video,(decoded,error)=>{
     if(closed)return;
     if(decoded){void deliver(decoded);}

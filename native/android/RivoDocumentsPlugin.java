@@ -111,6 +111,20 @@ public class RivoDocumentsPlugin extends Plugin {
         }
     }
 
+    /** A short native Android toast for successful saves; never an in-app banner. */
+    @PluginMethod
+    public void showSaveToast(PluginCall call) {
+        final String message=call.getString("message","");
+        if(message==null||message.trim().isEmpty()){
+            call.reject("Save toast requires a message.");return;
+        }
+        final String label=message.trim().substring(0,Math.min(95,message.trim().length()));
+        if(getActivity()==null){call.reject("Android window is unavailable.");return;}
+        getActivity().runOnUiThread(()->Toast.makeText(
+            getContext().getApplicationContext(),label,Toast.LENGTH_SHORT).show());
+        call.resolve();
+    }
+
     /**
      * Real Android system PDF printing. The print adapter copies the verified
      * RivoScan PDF to Android's print spooler, which presents printer settings.
