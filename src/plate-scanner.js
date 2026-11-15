@@ -82,7 +82,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const header=document.createElement('header');header.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
- const close=btn('✕',()=>stop());close.dataset.scanOverlayClose='true';header.append(title,close);
+ const close=btn('✕',()=>stop());close.dataset.scanOverlayClose='true';
  const searchRow=document.createElement('div');searchRow.className='rivo-plate-search-row';
  const search=document.createElement('input');search.type='search';search.className='rivo-plate-search';
  search.placeholder=L[1];search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
@@ -111,7 +111,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  search.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();addTarget.click();}
  });
- searchRow.append(search,addTarget);renderWatch();
+ searchRow.append(search,addTarget);renderWatch();header.append(title,searchRow,close);
  const view=document.createElement('div');view.className='rivo-live-preview';
  const video=document.createElement('video');video.autoplay=true;video.playsInline=true;video.muted=true;
  const guide=document.createElement('div');guide.className='rivo-plate-guide';guide.textContent='▢';
@@ -125,7 +125,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
  const torch=btn('⚡',()=>toggleTorch());foot.append(count,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6];
- panel.append(header,searchRow,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
+ panel.append(header,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
  const key=e=>{if(e.key==='Escape'||e.key==='Backspace'&&e.target!==search){e.preventDefault();stop();}};
