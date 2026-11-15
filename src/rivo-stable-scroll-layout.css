@@ -1,0 +1,245 @@
+/* RivoScan stable viewport contract — Android WebView (phones and tablets).
+   AdMob is a separate native view. Never move/cover it with a WebView element:
+   monetization.js supplies --rivo-content-top/bottom for the clipped viewport.
+   Only the data/result collection scrolls; navigation and compact actions stay visible. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .content{
+  display:flex!important;flex-direction:column!important;
+  overflow:hidden!important;
+  padding:4px 8px 0!important;min-height:0!important;
+  scroll-padding-bottom:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .content > :is(
+  .rivo-compact-home,.library-workspace,.rivo-tools-hub,.app-settings,.workspace
+){
+  display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+  height:100%!important;min-height:0!important;max-height:100%!important;
+  min-width:0!important;overflow:hidden!important;
+  margin:0!important;padding:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui :is(
+  #library-list,#home-recents,.rivo-tools-scroll,.rivo-settings-scroll,
+  .rivo-scan-scroll,.workspace>.work-grid
+){
+  scrollbar-width:thin;overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;scroll-padding-bottom:8px;
+}
+
+/* Documents: single, truly elastic list immediately above the native ad region.
+   The heading, import, chips, folder, sorting and search never leave the screen. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .library-heading{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  flex:0 0 auto!important;gap:3px!important;margin:0 0 3px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading .work-title{
+  display:flex!important;gap:7px!important;align-items:center!important;
+  margin:0!important;min-width:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading .work-title .tool-icon{
+  width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;
+  border-radius:8px!important;padding:4px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading .work-title .tool-icon svg{
+  width:21px!important;height:21px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading h1{
+  font-size:16px!important;line-height:1.2!important;margin:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading :is(p,.rivo-library-version){
+  display:none!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading-actions{
+  display:flex!important;flex-wrap:nowrap!important;gap:5px!important;width:100%!important;
+  margin:0!important;padding:0!important;overflow:visible!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading-actions > .btn{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:1 1 0!important;width:auto!important;max-width:none!important;min-width:0!important;
+  min-height:38px!important;height:38px!important;
+  padding:4px 6px!important;margin:0!important;border-radius:9px!important;
+  font-size:11px!important;line-height:1.1!important;white-space:normal!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading-actions svg{
+  width:16px!important;height:16px!important;flex:none!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .library-panel{
+  display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+  min-height:0!important;max-height:none!important;
+  padding:4px 5px 0!important;margin:0!important;overflow:hidden!important;
+  gap:2px!important;border-radius:11px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-panel > :not(#library-list){
+  flex:0 0 auto!important;min-width:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .rivo-library-chips{
+  display:flex!important;gap:4px!important;min-height:34px!important;
+  margin:0!important;padding:0!important;align-items:center!important;overflow-x:auto!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .rivo-library-chips > button{
+  min-height:34px!important;height:34px!important;min-width:48px!important;
+  flex:0 0 auto!important;padding:4px 10px!important;
+  font-size:11px!important;border-radius:9px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .library-top{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:4px!important;min-height:36px!important;
+  margin:0!important;padding:0!important;flex-wrap:nowrap!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-top > strong{
+  font-size:11px!important;white-space:nowrap!important;flex:none!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-top .storage-actions{
+  display:flex!important;flex:0 1 auto!important;min-width:0!important;max-width:75%!important;
+  gap:4px!important;overflow:hidden!important;margin:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .storage-actions > button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-width:0!important;max-width:100%!important;min-height:35px!important;height:35px!important;
+  padding:4px 7px!important;margin:0!important;
+  font-size:10px!important;line-height:1.1!important;border-radius:8px!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .storage-actions > button svg{
+  flex:none!important;width:15px!important;height:15px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .library-search{
+  display:flex!important;align-items:center!important;flex:none!important;
+  min-height:36px!important;height:36px!important;
+  margin:0!important;padding:2px 8px!important;border-radius:9px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-search input{
+  flex:1 1 auto!important;width:100%!important;min-height:30px!important;height:30px!important;
+  font-size:12px!important;padding:2px 3px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace .library-controls{
+  display:flex!important;flex:none!important;align-items:center!important;
+  gap:4px!important;margin:0!important;min-height:32px!important;overflow:visible!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-controls select{
+  min-height:32px!important;height:32px!important;max-width:100%!important;
+  font-size:11px!important;padding:3px 6px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .library-workspace #library-list.library-list{
+  display:flex!important;flex-direction:column!important;flex:1 1 0!important;
+  min-height:0!important;height:auto!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:3px 1px 6px!important;margin:0!important;gap:5px!important;
+  align-content:initial!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui #library-list > .document-entry{
+  flex:0 0 auto!important;min-height:56px!important;max-height:none!important;
+  padding:5px 7px!important;gap:6px!important;margin:0!important;
+  border-radius:9px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui #library-list .rivo-file-thumb{
+  width:37px!important;height:42px!important;min-width:37px!important;
+  min-height:42px!important;flex:0 0 37px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui #library-list .document-description strong{
+  font-size:12px!important;line-height:1.2!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui #library-list .document-description small{
+  font-size:10px!important;line-height:1.2!important;
+}
+
+/* Home: feature actions are a small stable header; documents alone scroll. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-compact-home{
+  gap:3px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-compact-home > :not(#home-recents){
+  flex-shrink:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-intro h1{
+  font-size:16px!important;line-height:1.2!important;margin:2px 0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-compact-home #home-recents{
+  display:flex!important;flex-direction:column!important;
+  flex:1 1 0!important;min-height:0!important;height:auto!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:2px 2px 8px!important;margin:0!important;
+}
+
+/* Tools: heading/search stay visible, all categories scroll as one collection. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-heading,
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-search{
+  flex:0 0 auto!important;min-height:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-heading h1{
+  font-size:17px!important;line-height:1.3!important;margin:2px 0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-search{
+  min-height:38px!important;height:38px!important;margin:2px 0 5px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-scroll{
+  flex:1 1 0!important;min-height:0!important;max-height:none!important;
+  width:100%!important;overflow-y:auto!important;overflow-x:hidden!important;
+  padding:2px 2px 10px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-tools-scroll .rivo-tools-section{
+  margin:4px 0 8px!important;
+}
+
+/* Me/Settings: compact fixed title, long settings scroll independently. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-settings .page-heading{
+  flex:0 0 auto!important;margin:0 0 4px!important;padding:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-settings .page-heading h1{
+  font-size:17px!important;line-height:1.2!important;margin:1px 0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-settings .page-heading p{
+  font-size:10px!important;margin:0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-settings .rivo-settings-scroll{
+  display:block!important;flex:1 1 0!important;min-height:0!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:2px 2px 10px!important;
+}
+
+/* Scan: the primary camera/gallery action area stays within reach,
+   the pages, preview, export and secondary settings remain scrollable. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .work-title{
+  flex:0 0 auto!important;gap:7px!important;margin:2px 0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .work-title h1{
+  font-size:16px!important;line-height:1.2!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .scan-quick-actions{
+  flex:0 0 auto!important;gap:5px!important;margin:3px 0!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace :is(.scan-action-primary,.scan-action-secondary){
+  min-height:58px!important;padding:8px!important;border-radius:11px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .scan-quick-toolbar{
+  flex:0 0 auto!important;margin:3px 0!important;gap:4px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .scan-runtime{
+  flex:0 0 auto!important;font-size:10px!important;margin:3px 0!important;padding:5px 8px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .scan-workspace .rivo-scan-scroll{
+  flex:1 1 0!important;min-height:0!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:2px 1px 10px!important;
+}
+
+/* Other PDF tool workspaces: fixed compact title + scrollable form/results.
+   Do not trap modals or suppress their own internal scroll mechanisms. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .workspace:not(.library-workspace):not(.scan-workspace) > .work-title{
+  flex:0 0 auto!important;margin:2px 0 5px!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .workspace:not(.library-workspace):not(.scan-workspace) > .work-grid{
+  flex:1 1 0!important;min-height:0!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  padding:1px 1px 10px!important;
+}
+
+/* Give focused scrolling panels a visible keyboard focus indicator. */
+html body.rivo-native-android #app .shell.rivo-dark-ui :is(
+  #library-list,#home-recents,.rivo-tools-scroll,.rivo-settings-scroll,.rivo-scan-scroll
+):focus-visible{outline:2px solid #0E61C2!important;outline-offset:-2px!important;}
+@media(max-width:380px){
+ html body.rivo-native-android #app .shell.rivo-dark-ui .library-heading-actions > .btn{
+   font-size:10px!important;padding-inline:3px!important;
+ }
+ html body.rivo-native-android #app .shell.rivo-dark-ui .library-top .storage-actions{
+   max-width:72%!important;
+ }
+}
