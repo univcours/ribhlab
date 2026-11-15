@@ -35,7 +35,7 @@ for(const width of [320,360,393,412]){
    frame.textContent='AD SLOT TEST · 320×50';
    // Browser AdMob is unavailable; hold the same native-visible geometry across animation frames.
    const qa=document.createElement('style');qa.id='rivo-native-ad-qa-override';
-   qa.textContent='body.rivo-native-android #app .rivo-ad-banner-slot{display:flex!important;bottom:'+margin+'px!important}'+
+   qa.textContent='html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-ad-banner-slot{display:flex!important;bottom:'+margin+'px!important}'+
      'body.rivo-native-android #app .shell.rivo-dark-ui .content{top:'+Math.ceil(h.bottom)+'px!important;bottom:'+(margin+58)+'px!important}'+
      '.rivo-ad-banner-frame{display:flex!important;align-items:center!important;justify-content:center!important;color:#0e61c2!important;font-weight:700!important;font-size:14px!important}';
    document.head.append(qa);
