@@ -759,6 +759,26 @@ public class RivoDocumentsPlugin extends Plugin {
         }catch(Exception e){call.reject("Rename failed: "+e.getMessage(),e);}
     }
 
+    /** Open a verified web link in an external browser, never inside WebView. */
+    @PluginMethod
+    public void openWebLink(PluginCall call) {
+        final String raw=call.getString("url","");
+        try {
+            Uri uri=Uri.parse(raw.trim());
+            String scheme=uri.getScheme();
+            if(!("https".equalsIgnoreCase(scheme)||"http".equalsIgnoreCase(scheme))
+                ||uri.getHost()==null||uri.getHost().isEmpty()||raw.length()>2048) {
+                call.reject("Only valid HTTP/HTTPS links can be opened.");return;
+            }
+            Intent intent=new Intent(Intent.ACTION_VIEW,uri);
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(Intent.createChooser(intent,localized("openDocument"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            call.resolve();
+        } catch(Exception e) {call.reject("No compatible browser can open the link.",e);}
+    }
+
     @PluginMethod
     public void openFile(PluginCall call) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { requireModernAndroid(call); return; }
