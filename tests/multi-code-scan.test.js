@@ -30,7 +30,7 @@ test('recognizes two separate QR codes on one actual rendered image',()=>{
  rgba.fill(255);
  const writer=new QRCodeWriter();
  const put=(text,x,y)=>{
-  const bits=writer.encode(text,BarcodeFormat.QR_CODE,170,170);
+  const bits=writer.encode(text,BarcodeFormat.QR_CODE,170,170,new Map());
   for(let yy=0;yy<bits.getHeight();yy++)for(let xx=0;xx<bits.getWidth();xx++){
    if(!bits.get(xx,yy))continue;
    const p=((y+yy)*width+x+xx)*4;
