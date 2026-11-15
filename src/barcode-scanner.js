@@ -1,4 +1,6 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
+import {Capacitor,registerPlugin} from '@capacitor/core';
+const RivoDocuments=registerPlugin('RivoDocuments');
 import {scanMultipleCanvas,scanMultipleCanvasAsync,verifiedUniqueCodes} from './code-multi-scan.js';
 
 const I18N={
@@ -158,11 +160,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   const url=safeScannedUrl(raw);
   if(!url)return;
   try{
-   if(typeof window.RivoOpenWebLink==='function'){await window.RivoOpenWebLink(url);return;}
-   if(window.Capacitor?.isNativePlatform?.()&&window.Capacitor?.getPlatform?.()==='android'){
-    // Native Android opens the default browser outside the app.
-    const {registerPlugin}=await import('@capacitor/core');
-    await registerPlugin('RivoDocuments').openWebLink({url});
+   if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+    // Native Android opens the system browser outside this WebView.
+    await RivoDocuments.openWebLink({url});
    }else{
     const opened=window.open(url,'_blank','noopener,noreferrer');
     if(!opened)throw Error('No browser window was opened');
