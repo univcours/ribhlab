@@ -20,7 +20,7 @@ test('approved user-supplied R+scan brand icons are valid 512px PNG resources',(
 });
 test('build uses the owner-approved new blue R icon, not the older wordmark',()=>{
  const gen=text('scripts/create-turquoise-icon.mjs');
- assert.ok(gen.includes('assets/branding/rivoscan-icon-source.png'));
+ assert.ok(gen.includes('assets/branding/rivoscan-ai-icon-source.png'));
  assert.ok(gen.includes('public/rivoscan-adaptive-foreground.png'));
  assert.ok(gen.includes('public/rivoscan-icon.png'));
  assert.ok(gen.includes('SOURCE_SHA256'));
@@ -32,7 +32,7 @@ test('build uses the owner-approved new blue R icon, not the older wordmark',()=
 test('Android legacy and adaptive launchers use the approved brand image',()=>{
  const ps=text('apply-rivoscan-branding.ps1');
  assert.ok(ps.includes('rivoscan_launcher_adaptive.png'));
- assert.ok(ps.includes('<solid android:color="#FFFFFF"/>'),'use white launcher background to match exact supplied logo');
+ assert.ok(ps.includes('<solid android:color="#0B54C4"/>'),'use blue launcher background to match new symbol-only icon');
  assert.ok(ps.includes('<foreground android:drawable="@drawable/rivoscan_launcher_adaptive"/>'));
  assert.ok(ps.includes('mipmap-anydpi-v26/ic_launcher.xml'));
  const main=text('src/main.js'),html=text('index.html');

@@ -1,9 +1,11 @@
-# RivoScan icon — approved full wordmark (0.45.19)
+# RivoScan 0.45.26 — symbol-only Android launcher
 
-The phone's **launcher icon includes the word RivoScan inside the image**, exactly as requested. The visible wordmark is part of the artwork, not Android's optional app-label caption below the icon.
+The user-approved AI artwork is a blue R, white document and cyan scan line, with **no wordmark**. The launcher image and Play Store listing use different exported crops.
 
-- `rivoscan-icon-source.png`: 512×512 original blue scanner symbol **plus** RivoScan text, cropped from the user-supplied full logo to remove only external white margins.
-- `rivoscan-icon-adaptive-foreground.png`: 512×512 RGBA image with the same logo scaled for circular and squircle Android launcher masks; transparent outside the central wordmark.
-- `rivoscan-logo-original.png`: exact, unedited 1254×1254 file supplied by the user (SHA-256 `06e9925f914dc19c25e43a2d80e3befa0533c308d6b0ccd6bcfb09a082888b24`).
+- `scripts/create-turquoise-icon.mjs` imports the user-approved source from Picsart and caches it at `assets/branding/rivoscan-ai-icon-source.png`.
+- `public/rivoscan-icon.png` is full-bleed for Web and legacy devices.
+- `public/rivoscan-store-icon.png` is 512×512 full-bleed store icon.
+- `public/rivoscan-adaptive-foreground.png` is a centred image with a transparent margin for Android adaptive masks.
+- The background of Android's adaptive launcher is blue (#0B54C4).
 
-Native adaptive launcher background is **white** to match the supplied logo image. Always run the build's prebuild icon sync. Never replace this full-wordmark icon with the symbol-only illustration.
+Previous full-logo source retained as provenance but never used as launcher.

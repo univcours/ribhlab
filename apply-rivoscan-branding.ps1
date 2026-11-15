@@ -66,7 +66,7 @@ $adaptive = @'
 '@
 $background = @'
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#FFFFFF"/>
+    <solid android:color="#0B54C4"/>
 </shape>
 '@
 Write-Xml (Join-Path $res 'drawable/rivoscan_launcher_background.xml') $background

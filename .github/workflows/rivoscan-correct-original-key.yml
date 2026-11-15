@@ -16,7 +16,7 @@ on:
       - 'apply-rivoscan-branding.ps1'
       - 'tests/brand-colors.test.js'
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: rivoscan-original-key-${{ github.ref }}
   cancel-in-progress: false
@@ -145,3 +145,19 @@ jobs:
           name: RivoScan-0.45.26-ORIGINAL-Key-signed-installable-APK
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
+
+      - name: Publish verified APK and AAB for Google Play publisher
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=rivoscan-0.45.26-original-key
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target rivoscan-standalone-ready \
+              --title 'RivoScan 0.45.26 — signed Android update' \
+              --notes 'VersionCode 130. Original Google Play upload key verified. Android icon only R, no wordmark. Includes APK and AAB.'
+          fi
+          cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.26-GooglePlay.aab
+          cp android/app/build/outputs/apk/release/app-release.apk /tmp/RivoScan-0.45.26-Signed.apk
+          gh release upload "$TAG" /tmp/RivoScan-0.45.26-GooglePlay.aab \
+            /tmp/RivoScan-0.45.26-Signed.apk --clobber --repo "$GITHUB_REPOSITORY"
