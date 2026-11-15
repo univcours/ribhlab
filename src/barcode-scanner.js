@@ -165,7 +165,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     await RivoDocuments.openWebLink({url});
    }else{
     const opened=window.open(url,'_blank','noopener,noreferrer');
-    if(!opened)throw Error('No browser window was opened');
+    // Browsers using noopener may return null even when navigation succeeds.
    }
   }catch(error){status.textContent=L[16];console.warn('Open verified barcode link:',error);}
  };
@@ -323,8 +323,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    canvas.getContext('2d',{willReadFrequently:true}).drawImage(image,0,0,canvas.width,canvas.height);
    const found=verifiedUniqueCodes(scanMultipleCanvas(canvas,{fine:true,maxResults:28}),recognizedCode);
    if(found.length){
+    const before=successful;
     for(const {result:decoded} of found){if(closed)break;await deliver(decoded,{fromPhoto:true});}
-    if(!closed)status.textContent=found.length+' '+L[18]+' · '+successful+' '+L[17];
+    if(!closed&&successful>before)status.textContent=found.length+' '+L[18]+' · '+successful+' '+L[17];
    }else{
     const found=reader.decodeFromCanvas(canvas);await deliver(found,{fromPhoto:true});
    }
@@ -361,10 +362,11 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const codes=verifiedUniqueCodes(mapped,recognizedCode);
    if(codes.length){
     lastCodeAt=Date.now();
+    const before=successful;
     for(const {result:found} of codes){if(closed)break;await deliver(found);}
     if(!closed&&codes.length>1){
      drawMultipleOutlines(outline,video,codes.map(item=>item.result));
-     if(successful>0)status.textContent=codes.length+' '+L[19]+' · '+successful+' '+L[17];
+     if(successful>before)status.textContent=codes.length+' '+L[19]+' · '+successful+' '+L[17];
     }
    }
   }catch(error){console.debug('Multi-code frame unavailable:',error);}
