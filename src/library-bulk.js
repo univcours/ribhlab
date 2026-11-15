@@ -44,7 +44,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     };
     return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+shapes[name]+'</svg>';
   };
-  const compactAction=(action,label,shape)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'">'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
+  const compactAction=(action,label,shape,disabled=false)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'"'+(disabled?' disabled aria-disabled="true"':'')+'>'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
   function selectBanner(){
     if(!selected.size)return '';
     const n=selected.size;
@@ -54,7 +54,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       '</div>';
   }
   function toolbar(){
-    if(!mode||selected.size<2)return '';
+    if(!mode||selected.size===0)return '';
     const items=selectedDocs();
     return `<div class="library-selection-toolbar rivo-compact-selection" role="toolbar" aria-label="${t('menuActions')}">
       <span class="sr-only">${items.length} ${t('selected')}</span>
@@ -63,7 +63,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
         ${compactAction('all',t('all'),'all')}
         ${compactAction('delete',t('delete'),'trash')}
         ${compactAction('organize',t('move'),'move')}
-        ${compactAction('merge',t('merge'),'merge')}
+        ${compactAction('merge',t('merge'),'merge',items.length<2)}
         ${compactAction('share',t('share'),'share')}
       </div>
     </div>`;
