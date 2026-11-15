@@ -7,13 +7,13 @@ const bulk=readFileSync(new URL('../src/library-bulk.js',import.meta.url),'utf8'
 const top=readFileSync(new URL('../src/rivo-bulk-top.css',import.meta.url),'utf8');
 const visual=readFileSync(new URL('../scripts/visual-ui-audit.mjs',import.meta.url),'utf8');
 
-test('one selected file displays the delete, share and move toolbar',()=>{
- assert.match(bulk,/if\(!mode\|\|selected\.size===0\)return ''/);
+test('bulk toolbar is reserved for two or more selected documents',()=>{
+ assert.match(bulk,/if\(!mode\|\|selected\.size<2\)return ''/);
  assert.match(bulk,/compactAction\('delete',t\('delete'\),'trash'\)/);
  assert.match(bulk,/compactAction\('share',t\('share'\),'share'\)/);
  assert.match(bulk,/compactAction\('organize',t\('move'\),'move'\)/);
- assert.match(bulk,/items\.length<2/);
- assert.match(bulk,/disabled aria-disabled="true"/);
+ assert.match(bulk,/function selectBanner\(\)\{return '';\}/);
+ assert.match(bulk,/rivo-selection-count/);
 });
 test('selection toolbar is inserted above RecyclerView, never at bottom navbar',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
