@@ -1,7 +1,7 @@
 // RivoScan AdMob: QA builds use demo inventory; production needs real app-specific IDs.
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
 
 const adEnv=import.meta.env||{};
@@ -11,7 +11,6 @@ export const AD_CONFIG=Object.freeze({
  testMode:!liveAds,
  androidAppId:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_ID||''):demoPublisher+'~3347511713',
  banner:liveAds?(adEnv.VITE_RIVO_ADMOB_BANNER_ID||''):demoPublisher+'/6300978111',
- rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
  bannerEnabled:!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(adEnv.VITE_RIVO_ADMOB_BANNER_ID||'')
 });
@@ -114,12 +113,6 @@ function scheduleAdRetry(type){
   else if(type==='interstitial')void loadInterstitial();
  },delay);
 }
-const strings={
- en:{title:'Unlock advanced tools',body:'Watch a rewarded ad by choice to unlock all advanced tools for 10 minutes. Your documents and basic scanner stay available without ads.',watch:'Watch video · 10 minutes',cancel:'Not now',unavailable:'Ad currently unavailable. Please try again later.',success:'Advanced tools unlocked for 10 minutes.'},
- ar:{title:'فتح الأدوات المتقدمة',body:'شاهد فيديو إعلاني باختيارك لفتح الأدوات المتقدمة لمدة 10 دقائق. يبقى الماسح الأساسي وملفاتك متاحين.',watch:'شاهد الفيديو · 10 دقائق',cancel:'رجوع',unavailable:'الإعلان غير متاح حاليًا. يُرجى المحاولة لاحقًا.',success:'تم فتح الميزات المتقدمة لمدة 10 دقائق.'},
- fr:{title:'Débloquer les outils avancés',body:'Regardez volontairement une publicité pour accéder aux outils avancés pendant 10 minutes. Documents et scan simple restent disponibles.',watch:'Voir une vidéo · 10 min',cancel:'Retour',unavailable:'Publicité indisponible. Veuillez réessayer plus tard.',success:'Outils avancés débloqués pour 10 minutes.'}
-};
-const tr=()=>strings[state.getLanguage()]||strings.en;
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
 export function configureAds({getLanguage,notify,onChange}={}){
  if(typeof getLanguage==='function')state.getLanguage=getLanguage;
@@ -147,7 +140,7 @@ function bannerObstructed(){
   '.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay',
   '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-pages-modal','.rivo-page-manager-overlay',
   '.rivo-shield-overlay','.rivo-merged-overlay','.rivo-update-gate',
-  '.doc-detail-overlay','.bulk-overlay','.rivo-reward-overlay','.busy',
+  '.doc-detail-overlay','.bulk-overlay','.rivo-edge-adjust-overlay','.busy',
   'dialog[open]','[role="dialog"][aria-modal="true"]'
  ].join(',');
  return [...document.querySelectorAll(selector)].some(el=>{
@@ -324,24 +317,8 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  })();
  return state.initializing;
 }
-function offerReward(){
- return new Promise(resolve=>{
-  if(typeof document==='undefined'){resolve(false);return;}
-  document.querySelector('.rivo-reward-overlay .rivo-reward-cancel')?.click();
-  const overlay=document.createElement('div');overlay.className='rivo-reward-overlay';
-  const dialog=document.createElement('div');dialog.className='rivo-reward-dialog';
-  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
-  const h=document.createElement('h2');h.textContent=tr().title;
-  const p=document.createElement('p');p.textContent=tr().body;
-  const watch=document.createElement('button');watch.className='rivo-reward-watch';watch.textContent=tr().watch;
-  const cancel=document.createElement('button');cancel.className='rivo-reward-cancel';cancel.textContent=tr().cancel;
-  const finish=v=>{overlay.remove();resolve(v);};
-  watch.addEventListener('click',()=>finish(true));cancel.addEventListener('click',()=>finish(false));
-  dialog.append(h,p,watch,cancel);overlay.append(dialog);document.body.append(overlay);cancel.focus();
- });
-}
-// All tools are available without explicit rewarded-ad buttons.
-// Interstitials remain consent-gated at natural breaks after completed work.
+// Rewarded videos and App Open ads are not used or requested.
+ // All tools remain available; only native Banner and Interstitial are loaded.
 export async function requestPremium(_id){return true;}
 // Hide a loaded banner while full-screen content is shown; never layer ads.
 async function pauseBannerForFullscreen(){
@@ -417,7 +394,7 @@ export async function openAdPrivacyOptions(){
   const notice={
    en:'Privacy options are temporarily unavailable. Please try again later.',
    fr:'Les options de confidentialité sont momentanément indisponibles. Veuillez réessayer plus tard.',
-   ar:'خيارات الخصوصية ما متوفراش دابا. عاود المحاولة من بعد.'
+   ar:'خيارات الخصوصية غير متاحة حاليًا. يُرجى المحاولة لاحقًا.'
   };
   state.notify(notice[state.getLanguage()]||notice.en,true);
   return false;
