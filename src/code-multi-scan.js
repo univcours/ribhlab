@@ -83,6 +83,33 @@ export function scanMultipleCanvas(canvas,options={}){
  const frame=ctx.getImageData(0,0,canvas.width,canvas.height);
  return scanMultiplePixels(frame.data,frame.width,frame.height,options);
 }
+/** Yield between camera decoding regions so the preview, Back and torch stay
+ * responsive even on mid-range phones. Each result is decoded from real pixels.
+ */
+export async function scanMultipleCanvasAsync(canvas,{maxResults=QUIET_LIMIT,shouldStop=()=>false}={}){
+ const ctx=canvas?.getContext?.('2d',{willReadFrequently:true});
+ if(!ctx||!canvas.width||!canvas.height)return [];
+ const {width,height}=canvas;
+ const pixels=ctx.getImageData(0,0,width,height).data;
+ const found=new Map(),decoder=new MultiFormatReader();
+ const hints=new Map([[DecodeHintType.TRY_HARDER,false]]);
+ const regions=multiScanRegions(width,height,{fine:false});
+ for(let i=0;i<regions.length;i++){
+  if(found.size>=maxResults||shouldStop())break;
+  if(i>0&&i%2===0)await new Promise(resolve=>setTimeout(resolve,0));
+  if(shouldStop())break;
+  const region=regions[i];
+  try{
+   const value=decoder.decode(bitmapForRegion(pixels,width,region),hints);
+   if(value?.getText?.()&&value.getBarcodeFormat?.()!==undefined){
+    const next=remapResult(value,region);
+    if(!found.has(KEY(next)))found.set(KEY(next),next);
+   }
+  }catch{ /* No supported code in this region. */ }
+ }
+ decoder.reset();
+ return [...found.values()];
+}
 export function verifiedUniqueCodes(results,recognize){
  const collected=[],seen=new Set();
  for(const result of results||[]){
