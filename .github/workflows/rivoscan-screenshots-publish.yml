@@ -1,4 +1,4 @@
-name: RivoScan 0.45.37 - Publish Google Play screenshots ONLY
+name: RivoScan 0.45.38 - Publish Google Play screenshots ONLY
 on:
   workflow_dispatch:
   push:
@@ -19,21 +19,21 @@ jobs:
       GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - name: Verify screenshot artifacts belong to the audited RivoScan 0.45.37 commit
+      - name: Verify screenshot artifacts belong to the audited RivoScan 0.45.38 commit
         run: |
           set -euo pipefail
-          EXPECTED=a6377fe2d5087f26dee95b39b5578907e3f8436d
-          for RUN in 43770221919 43770221986; do
+          EXPECTED=45f8af374142f2b0f6d1ba1e1ad280720a0ff1f0
+          for RUN in 43773469979 43773470001; do
             SHA=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN" --jq .head_sha)
             test "$SHA" = "$EXPECTED" || { echo "Unexpected screenshot source $SHA" >&2; exit 1; }
           done
-          echo 'Verified RivoScan 0.45.37 screenshot artifacts'
+          echo 'Verified RivoScan 0.45.38 screenshot artifacts'
       - name: Download authentic phone and tablet screenshots from GitHub Actions
         run: |
           set -euo pipefail
           mkdir -p google-play-assets/phone google-play-assets/tablet
-          gh run download 43770221919 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Phone-1080x1920-Authentic-Screenshots' --dir google-play-assets/phone
-          gh run download 43770221986 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Tablet-7in-10in-Authentic-Screenshots' --dir google-play-assets/tablet
+          gh run download 43773469979 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Phone-1080x1920-Authentic-Screenshots' --dir google-play-assets/phone
+          gh run download 43773470001 --repo "$GITHUB_REPOSITORY" --name 'RivoScan-Tablet-7in-10in-Authentic-Screenshots' --dir google-play-assets/tablet
       - name: Verify Google Play Developer API publishing secret is configured
         run: |
           if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
@@ -52,4 +52,4 @@ jobs:
             --package com.ribhlab.rivoscan --locale en-US --asset-dir google-play-assets
       # Publish edits only phoneScreenshots/sevenInchScreenshots/tenInchScreenshots.
       # NEVER upload, delete, overwrite or replace Feature Graphic, icon, texts or releases.
-      # Verified screenshot artifacts are from a6377fe2d5087f26dee95b39b5578907e3f8436d.
+      # Verified screenshot artifacts are from 45f8af374142f2b0f6d1ba1e1ad280720a0ff1f0.
