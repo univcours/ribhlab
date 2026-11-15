@@ -30,6 +30,7 @@ final class RivoSounds {
             if ("plateMatch".equals(event)) {tone=ToneGenerator.TONE_PROP_BEEP2;ms=240;}
             else if ("capture".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=90;}
             else if ("saved".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=120;}
+            else if ("codeSuccess".equals(event)) {tone=ToneGenerator.TONE_PROP_ACK;ms=190;}
             else if ("error".equals(event)) {tone=ToneGenerator.TONE_PROP_NACK;ms=150;}
             else if ("camera".equals(event)) {tone=ToneGenerator.TONE_PROP_BEEP2;ms=70;}
             else if ("switch".equals(event)) {tone=ToneGenerator.TONE_PROP_BEEP;ms=45;}
