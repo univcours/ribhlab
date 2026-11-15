@@ -4,8 +4,8 @@
  * verified result and mapping actual detector points back to the image.
  * This never invents a barcode when no decoder has verified its contents.
  */
-import ZXingCore from '@zxing/library';
-const {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType}=ZXingCore;
+import * as ZXing from '@zxing/library';
+const {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType}=ZXing.default||ZXing;
 
 const KEY=result=>String(result.getBarcodeFormat())+'\u0000'+String(result.getText());
 const QUIET_LIMIT=24;
