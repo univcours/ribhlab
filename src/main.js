@@ -495,7 +495,7 @@ function home(){
   <label class="rivo-premium-search">${ico('search',17)}<input type="search" id="home-quick-search" placeholder="${escapeHTML(copy.search)}" aria-label="${escapeHTML(copy.search)}" value="${escapeHTML(homeSearchQuery)}" autocomplete="off"></label>
   <div id="home-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
   <div class="rivo-home-bulk" id="home-selection-root">${bulkUI.toolbar()}</div>
-  <div class="recent-panel rivo-premium-recent" id="home-recents">${recentDocuments(14)}</div>
+  <div class="recent-panel rivo-premium-recent" id="home-recents" tabindex="0">${recentDocuments(14)}</div>
   <h2 id="home-results-title" class="sr-only">${homeSearchQuery?hv('results'):ut('recent')}</h2>
  </section>`;
 }
@@ -503,12 +503,12 @@ function toolsWorkspace(){
  const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
  return `<section class="app-tools rivo-tools-hub"><div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
  <div class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></div>
- ${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
+ <div class="rivo-tools-scroll" tabindex="0">${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
     return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
- <p class="rivo-tools-no-results" id="tools-no-results" hidden>${escapeHTML(({en:'No matching tools',fr:'Aucun outil correspondant',ar:'ما لقيت حتى أداة بهاد الاسم',es:'No se encontraron herramientas',de:'Keine passenden Werkzeuge',pt:'Nenhuma ferramenta encontrada',it:'Nessuno strumento trovato'})[language]||'No matching tools')}</p></section>`;
+ <p class="rivo-tools-no-results" id="tools-no-results" hidden>${escapeHTML(({en:'No matching tools',fr:'Aucun outil correspondant',ar:'ما لقيت حتى أداة بهاد الاسم',es:'No se encontraron herramientas',de:'Keine passenden Werkzeuge',pt:'Nenhuma ferramenta encontrada',it:'Nessuno strumento trovato'})[language]||'No matching tools')}</p></div></section>`;
 }
 function scannerPreferenceRows(){
  const prefs=readScanPrefs(localStorage),labels=scanPrefsText(language);
@@ -529,7 +529,7 @@ function settingsWorkspace(){
  const adTitle=({ar:'تشخيص الإعلانات',fr:'Diagnostic des annonces',en:'Ad diagnostics'})[language]||'Ad diagnostics';
  const adText=ad.native?(ad.ready?(ad.consent?'AdMob initialized · consent ready':'Consent not ready'):'AdMob not ready'):'AdMob works in the installed Android app only';
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
- <div class="settings-identity"><div class="settings-logo"><img src="/rivoscan-icon.png" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
+ <div class="rivo-settings-scroll" tabindex="0"><div class="settings-identity"><div class="settings-logo"><img src="/rivoscan-icon.png" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section rivo-scan-settings">
   <details class="rivo-scan-pref-details">
    <summary class="rivo-scan-pref-summary"><span class="rivo-pref-summary-icon">${ico('check',18)}</span>
@@ -562,7 +562,7 @@ function settingsWorkspace(){
   <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
  </div>` : ''}
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
- </section>`;
+ </div></section>`;
 }
 function card(t){return `<button class="tool-card ${t.id==='scan'?'tool-card-featured':''}" data-tool="${t.id}"><span class="tool-card-header"><span class="tool-icon ${t.color}">${ico(t.icon,24)}</span><span class="tool-card-arrow">${ico('back',16)}</span></span><span class="tool-card-title">${escapeHTML(tn(t))}</span><small>${escapeHTML(td(t))}</small>${t.id==='scan'?'<span class="tool-feature-label">LIVE EDGE SCAN</span>':''}</button>`;}
 const opts = {
@@ -599,14 +599,14 @@ function scannerWorkspace(){
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
    <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} ${escapeHTML(({en:'Advanced paper correction',ar:'تصحيح متقدم للوثائق',fr:'Correction avancée du papier',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione avanzata'})[language]||'Advanced paper correction')}</button></div>
   <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
-  <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
+  <div class="rivo-scan-scroll" tabindex="0"><div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
   <div class="scan-import-row"><label for="files" class="scan-upload-link">${ico('upload',18)} ${sl('add')}<input id="files" type="file" accept="image/*" multiple></label>
   </div>
   </div><div class="panel scan-export-panel"><div id="options">${scannerOptionsMarkup()}</div>
   <button id="process" class="btn operation scan-save-pdf">${ico('download',20)} ${sl('save')}</button>
   <p class="hint">${sl('hint')} ${dl('folder')}</p></div>
-  </section>`;
+  </div></section>`;
 }
 function renderLibraryRows(needle=''){
  const q=String(needle||'').trim().toLocaleLowerCase();
@@ -647,7 +647,7 @@ function libraryWorkspace(){
     </div>
     <div id="library-select-banner" class="rivo-select-banner-slot">${bulkUI.selectBanner()}</div>
     <div id="library-selection-root">${bulkUI.toolbar()}</div>
-    <div id="library-list" class="library-list">${renderLibraryRows()}</div></div></section>`;
+    <div id="library-list" class="library-list" tabindex="0">${renderLibraryRows()}</div></div></section>`;
 }
 async function loadLibrary(show=true){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
