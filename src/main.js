@@ -46,6 +46,7 @@ import './rivo-tools-compact-ux.css';
 import './rivo-native-banner-layout.css';
 import './rivo-info-perfect-circle.css';
 import './rivo-stable-scroll-layout.css';
+import './rivo-code-ultrascan.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
