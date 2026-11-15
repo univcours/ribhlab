@@ -1330,54 +1330,83 @@ async function readScannedImage(uri,index){
   throw new Error('Unsupported scanner image output.');
 }
 async function consumeSmartScan(result,{mlkitFull=false}={}){
-  // Google's FULL scanner owns capture, corner adjustments and cleaning.
-  // Save its finished PDF byte-for-byte, preserving text, ink and image quality.
+  // The FIRST Google scanner session can return JPEG pages before its PDF URI
+  // becomes available. Preserve every captured page instead of silently
+  // discarding the initial scan or claiming success without a stored file.
+  const imageUris=Array.isArray(result?.scannedImages)?result.scannedImages.filter(Boolean):[];
   if(mlkitFull&&result?.scanMode!=='ID Card'){
-    try{
-      // Google already owns capture and crop; there is no second RivoScan review.
-      // Apply the user's scanner preset in the background and save one PDF.
-      const prefs=readScanPrefs(localStorage);
-      const cleanMode=mlkitAutoCleanMode(prefs);
-      showBusy(dl('saving'));
-      const saved=await persistMlKitPdf(result,{
-        perfectClean:cleanMode!=='original',
-        cleanMode:cleanMode,
-        importPdf:payload=>RivoDocuments.importScannedPdf(payload)
-      });
-      record(saved.perfectCleanApplied?'Google ML Kit FULL + PerfectClean Pro PDF':'Google ML Kit FULL PDF');
-      await loadLibrary(false);
-      openLibrary();
-      soundFeedback('saved');
-      saveToast(shortSavedLabel());
-      if(cleanMode!=='original'&&!saved.perfectCleanApplied)console.warn('Scan saved with Google original; advanced cleaning unavailable.');
-    }catch(err){
-      console.error('Google scan PDF import failed:',err);
-      toast('PDF save failed: '+(err?.message||err)+'. The scan was not deleted.',true);
-    }finally{clearBusy()}
-    return;
+    if(typeof result?.pdf?.uri==='string'&&result.pdf.uri){
+      try{
+        const prefs=readScanPrefs(localStorage);
+        const cleanMode=mlkitAutoCleanMode(prefs);
+        showBusy(dl('saving'));
+        const saved=await persistMlKitPdf(result,{
+          perfectClean:cleanMode!=='original',
+          cleanMode:cleanMode,
+          importPdf:payload=>RivoDocuments.importScannedPdf(payload)
+        });
+        if(!saved?.uri)throw Error('Scanned PDF was not saved.');
+        record(saved.perfectCleanApplied?'Google ML Kit FULL + PerfectClean Pro PDF':'Google ML Kit FULL PDF');
+        await loadLibrary(false);
+        openLibrary();
+        soundFeedback('saved');
+        saveToast(shortSavedLabel());
+        if(cleanMode!=='original'&&!saved.perfectCleanApplied)console.warn('Scan saved with Google original; advanced cleaning unavailable.');
+        return true;
+      }catch(err){
+        console.error('Google native PDF import failed:',err);
+        if(!imageUris.length){
+          toast('PDF save failed: '+(err?.message||err)+'. Original scan was not deleted.',true);
+          return false;
+        }
+        console.warn('Recovering first scan from returned JPEG pages instead of discarding them.');
+      }finally{clearBusy()}
+    }else if(imageUris.length){
+      console.warn('Google scanner returned JPEG pages without PDF on first capture; saving pages as PDF.');
+    }
   }
-  if(!result?.scannedImages?.length){toast('No scanned pages were returned.',true);return;}
-  if(activeTool?.id!=='scan')await openTool('scan');
-  const picked=[];
-  for(let i=0;i<result.scannedImages.length;i++)picked.push(await readScannedImage(result.scannedImages[i],i));
-  addSelectedFiles(picked);
-  if(!picked.length)return;
+  if(!imageUris.length){
+    toast(({
+      en:'Scanner returned no saved image. Please check the capture before closing.',
+      ar:'لم يُرجع الماسح أي صورة قابلة للحفظ. يُرجى التحقق من التصوير قبل الإغلاق.',
+      fr:'Le scanner n’a retourné aucune image enregistrable. Vérifiez la capture.',
+      es:'El escáner no devolvió imágenes guardables. Compruebe la captura.',
+      de:'Der Scanner lieferte kein speicherbares Bild. Prüfen Sie die Aufnahme.',
+      pt:'O scanner não devolveu nenhuma imagem guardável. Verifique a captura.',
+      it:'Lo scanner non ha restituito immagini salvabili. Verifica la scansione.'
+    })[language]||'Scanner returned no saved image.',true);
+    return false;
+  }
   showBusy(dl('saving'));
   try{
-    // Both CameraX and ML Kit pages are private JPEG intermediates.
-    // A checked ✓ ALWAYS creates one finished PDF. Do not expose a toggle
-    // that could leave the user with photographs but no document.
-    // Both native CameraX and ML Kit FULL return cleaned images. Double filters
-    // can remove faint seals, handwriting and pale table lines, so do not reapply.
+    if(activeTool?.id!=='scan')await openTool('scan');
+    const picked=[];
+    for(let i=0;i<imageUris.length;i++){
+      // On a fresh installation Android's ML Kit content URI can take a
+      // moment to become accessible to the Filesystem plugin.
+      let page,lastError;
+      for(let attempt=0;attempt<3;attempt++){
+        try{page=await readScannedImage(imageUris[i],i);break;}
+        catch(error){
+          lastError=error;
+          if(attempt<2)await new Promise(resolve=>setTimeout(resolve,attempt===0?180:450));
+        }
+      }
+      if(!page)throw lastError||Error('First scanned page could not be read.');
+      picked.push(page);
+    }
+    addSelectedFiles(picked);
     const pdf=result.scanMode==='ID Card'
       ?await idCardToPdf(picked)
       :await imagesToPdf('color',picked);
-    await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
+    const stored=await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
+    if(Capacitor.isNativePlatform()&&!stored?.uri)throw Error('PDF was not committed to the document store.');
     openLibrary();
-    // saveOut already shows one short Android system toast; no duplicate message.
+    return true;
   }catch(err){
     console.error('Scan auto-save failed:',err);
     toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
+    return false;
   }finally{clearBusy();}
 }
 /** One primary document camera: Google's FULL scanner includes crop review. */
@@ -1390,7 +1419,7 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
   localStorage.setItem(MLKIT_MODE_KEY,mode);
   try{
     const result=await DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit));
-    if(!result?.pdf?.uri && !result?.scannedImages?.length)return;
+    if(!result?.pdf?.uri && !result?.scannedImages?.length){await consumeSmartScan(result,{mlkitFull:true});return;}
     await consumeSmartScan(mode==='ID Card'?{...result,scanMode:'ID Card'}:result,{mlkitFull:true});
   }catch(err){
     const message=String(err?.message||err);
