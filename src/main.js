@@ -24,6 +24,7 @@ import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
+import {openEdgeAdjustment,edgeAdjustableDocument} from './edge-adjustment.js';
 import { openPerfectScan } from './perfect-scan-ui.js';
 import {openPrivacyShield} from './privacy-shield.js';
 import { unwarpPixelsAndroid } from './uvdoc-android.js';
@@ -51,6 +52,7 @@ import './rivo-code-ultrascan.css';
 import './rivo-file-icons.css';
 import './rivo-save-toast.css';
 import './rivo-bulk-top.css';
+import './rivo-edge-adjustment.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -462,6 +464,11 @@ function documentMeta(doc){
  if(Number.isInteger(doc.pageCount)&&doc.pageCount>0)fields.push(String(doc.pageCount)+' PDF pages');
  return escapeHTML(fields.join(' · '));
 }
+function edgeAdjustLabel(){
+ return ({en:'Readjust edges',ar:'إعادة ضبط الحواف',fr:'Réajuster les bords',
+ es:'Ajustar bordes',de:'Kanten korrigieren',pt:'Ajustar limites',
+ it:'Regola bordi'})[language]||'Readjust edges';
+}
 function recentDocuments(limit=12,query=homeSearchQuery){
  const needle=String(query||'').trim().toLocaleLowerCase();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
@@ -483,6 +490,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
    ${single?`<div class="rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
+    ${edgeAdjustableDocument(doc)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
@@ -666,6 +674,7 @@ function renderLibraryRows(needle=''){
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
+    ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
@@ -794,6 +803,26 @@ function openLibrary(){
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];bulkUI.clear();
   window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
 }
+async function launchReadjustEdges(doc){
+ if(!edgeAdjustableDocument(doc))return;
+ if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
+  toast('Document edge adjustment requires the installed Android app.',true);return;
+ }
+ try{
+  await openEdgeAdjustment({
+   doc,bridge:RivoDocuments,language,pdfjs,PDFDocument,onSave:saveOut,notify:toast,
+   onDone:async()=>{
+    bulkUI.clear();
+    await loadLibrary(false);
+    if(activeTool?.id==='library')refreshVisibleLibrary();
+    else{
+     const home=document.getElementById('home-recents');
+     if(home)home.innerHTML=recentDocuments(14);
+    }
+   }
+  });
+ }catch(error){console.error('Readjust document edges:',error);toast(error?.message||'Could not adjust document edges',true)}
+}
 async function handleLibraryAction(type,index){
   const selected=libraryItems[index];if(!selected)return;
   try{
@@ -911,7 +940,7 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-delete],[data-doc-print],[data-doc-rename]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -941,6 +970,11 @@ function wire(){
       if(target.hasAttribute('data-doc-shield')){
         const item=libraryItems[Number(target.dataset.docShield)];
         if(item)void launchPrivacyShield(item);
+        return;
+      }
+      if(target.hasAttribute('data-doc-edges')){
+        const item=libraryItems[Number(target.dataset.docEdges)];
+        if(item&&edgeAdjustableDocument(item))void launchReadjustEdges(item);
         return;
       }
       if(target.hasAttribute('data-doc-rename')){void bulkUI.action('rename');return;}
@@ -1692,6 +1726,7 @@ function navigateRivoBack(){
  const dialogs=[
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
+  ['.rivo-edge-adjust-overlay','[data-edge="close"]'],
   ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
   ['.rivo-shield-overlay','[data-shield="close"]']
  ];
@@ -1705,9 +1740,6 @@ function navigateRivoBack(){
  // Never call Save as a surrogate Close.
  const managed=[...document.querySelectorAll('[data-rivo-managed-modal="true"]')];
  if(managed.length){managed.at(-1).querySelector('[data-rivo-modal-close]')?.click();lastBackHandled=now;return true;}
- if(document.querySelector('.rivo-reward-overlay')){
-  document.querySelector('.rivo-reward-cancel')?.click();lastBackHandled=now;return true;
- }
  const sheet=document.querySelector('.bulk-overlay');
  if(sheet){sheet.querySelector('[data-close-sheet]')?.click();lastBackHandled=now;return true;}
  if(document.querySelector('.doc-detail-overlay')){
