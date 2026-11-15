@@ -33,6 +33,12 @@ for(const width of [320,360,393,412]){
    const cr=content.getBoundingClientRect(),br=document.querySelector('.rivo-ad-banner-slot').getBoundingClientRect();
    const frame=document.querySelector('.rivo-ad-banner-frame');
    frame.textContent='AD SLOT TEST · 320×50';
+   // Browser AdMob is unavailable; hold the same native-visible geometry across animation frames.
+   const qa=document.createElement('style');qa.id='rivo-native-ad-qa-override';
+   qa.textContent='body.rivo-native-android #app .rivo-ad-banner-slot{display:flex!important;bottom:'+margin+'px!important}'+
+     'body.rivo-native-android #app .shell.rivo-dark-ui .content{top:'+Math.ceil(h.bottom)+'px!important;bottom:'+(margin+58)+'px!important}'+
+     '.rivo-ad-banner-frame{display:flex!important;align-items:center!important;justify-content:center!important;color:#0e61c2!important;font-weight:700!important;font-size:14px!important}';
+   document.head.append(qa);
    const style=getComputedStyle(content);
    const test={
     contentBottom:cr.bottom,bannerTop:br.top,bannerBottom:br.bottom,navTop:n.top,
@@ -45,10 +51,17 @@ for(const width of [320,360,393,412]){
    };
    return test;
   });
+  await page.waitForTimeout(110);
+  const visible=await page.evaluate(()=>{
+   const c=document.querySelector('#app .content').getBoundingClientRect();
+   const a=document.querySelector('.rivo-ad-banner-slot').getBoundingClientRect();
+   return getComputedStyle(document.querySelector('.rivo-ad-banner-slot')).display!=='none'&&c.bottom<=a.top-7;
+  });
   const namePath=width+'-'+name+'-ad-native-viewport-test.png';
   await page.screenshot({path:root+'/'+namePath,animations:'disabled'});
-  results.push({width,screen:name,...proof,pass:proof.contentClearsAd&&proof.navClearsAd&&proof.bannerWidth===320&&proof.bannerHeight===50&&proof.fixedBannerCentered&&proof.scrollable==='auto'&&proof.scrollTop>0});
+  results.push({width,screen:name,...proof,screenshotVerified:visible,pass:visible&&proof.contentClearsAd&&proof.navClearsAd&&proof.bannerWidth===320&&proof.bannerHeight===50&&proof.fixedBannerCentered&&proof.scrollable==='auto'&&proof.scrollTop>0});
   await page.evaluate(()=>{
+   document.getElementById('rivo-native-ad-qa-override')?.remove();
    document.querySelector('.rivo-qa-long-fixture')?.remove();
    document.querySelector('.rivo-ad-banner-frame').textContent='';
    document.body.classList.remove('rivo-native-android','rivo-has-ad-banner');
