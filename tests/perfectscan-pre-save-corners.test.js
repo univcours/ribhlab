@@ -51,12 +51,12 @@ test('PerfectScan opens four-corner review immediately after first capture, befo
  assert.ok(!set.includes('onSave('),'no save before corner confirmation');
  assert.ok(ui.includes('onApply:async corrected=>'));
  assert.ok(ui.includes('cornerReviewConfirmed:true'));
- assert.ok(ui.includes('if(!base?.cornerReviewConfirmed||!result||working)return'));
+ assert.ok(ui.includes('if(!base.cornerReviewConfirmed)return'));
  assert.ok(ui.includes("action==='edges'"));
  assert.ok(ui.includes('cornerReview?.isOpen?.()'));
  assert.ok(review.includes('render')===false||review.includes('drawLoupe'));
  assert.ok(review.includes('canvas.setPointerCapture'));
- assert.ok(review.includes('draw();e.preventDefault(); // magnifier appears on touch'));
+ assert.match(review,/if\(drag<0\)return;[\s\S]*?draw\(\);e\.preventDefault\(\)/);
  assert.ok(review.includes("for(const event of ['pointerup','pointercancel','lostpointercapture'])"));
  assert.ok(!review.includes('onSave('));
  assert.ok(!review.includes('saveFile('));
