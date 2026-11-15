@@ -1,5 +1,5 @@
 import {BrowserMultiFormatReader} from '@zxing/browser';
-import {scanMultipleCanvas,verifiedUniqueCodes} from './code-multi-scan.js';
+import {scanMultipleCanvas,scanMultipleCanvasAsync,verifiedUniqueCodes} from './code-multi-scan.js';
 
 const I18N={
  en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point the camera at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera not available. Choose a photo.','Saved to daily TXT','Could not save: ','Close','No code found — nothing captured'],
@@ -286,7 +286,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const z=cropped?zoom.current:1;
    const sw=vw/z,sh=vh/z,sx=(vw-sw)/2,sy=(vh-sh)/2;
    ctx.drawImage(video,sx,sy,sw,sh,0,0,cw,ch);
-   const decoded=scanMultipleCanvas(multiCanvas,{maxResults:22,fine:false});
+   const decoded=await scanMultipleCanvasAsync(multiCanvas,{maxResults:22,shouldStop:()=>closed});
    const mapped=decoded.map(found=>({
     getText:()=>found.getText(),
     getBarcodeFormat:()=>found.getBarcodeFormat(),
