@@ -1,0 +1,48 @@
+/* The multi-file toolbar belongs ABOVE the scrolling list, never fixed
+   above Android navigation, AdMob or a floating scan button. */
+html body #app .shell.rivo-dark-ui .library-workspace #library-selection-root,
+html body #app .shell.rivo-dark-ui .rivo-compact-home #home-selection-root{
+ position:static!important;inset:auto!important;top:auto!important;
+ left:auto!important;right:auto!important;bottom:auto!important;
+ display:block!important;flex:0 0 auto!important;
+ width:100%!important;max-width:none!important;min-height:0!important;
+ padding:0!important;margin:0!important;pointer-events:auto!important;
+ transform:none!important;z-index:auto!important;
+}
+html body #app .shell.rivo-dark-ui .library-workspace #library-selection-root:empty,
+html body #app .shell.rivo-dark-ui .rivo-compact-home #home-selection-root:empty,
+html body #app .shell.rivo-dark-ui :is(#library-select-banner,#home-select-banner):empty{
+ display:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-select-banner,#home-select-banner){
+ flex:0 0 auto!important;padding:0!important;margin:0 0 3px!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root) .library-selection-toolbar.rivo-compact-selection{
+ position:static!important;inset:auto!important;top:auto!important;bottom:auto!important;
+ display:flex!important;flex-direction:row!important;
+ width:100%!important;max-width:none!important;max-height:none!important;
+ height:55px!important;min-height:55px!important;
+ padding:3px 4px!important;margin:0 0 5px!important;
+ border-radius:9px!important;z-index:auto!important;
+ box-shadow:0 2px 9px #0827521A!important;pointer-events:auto!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root) .rivo-inline-bulk{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+ align-items:stretch!important;gap:0!important;min-width:0!important;
+ overflow-x:visible!important;overflow-y:hidden!important;
+}
+html body #app .shell.rivo-dark-ui :is(#library-selection-root,#home-selection-root) .rivo-inline-bulk > button{
+ min-width:0!important;max-width:none!important;width:100%!important;
+ height:49px!important;min-height:49px!important;max-height:49px!important;
+ padding:3px 1px!important;
+}
+/* Retain the bottom navigation while files are selected. The selection
+   toolbar is no longer in that navigation area. */
+@media(max-width:760px){
+ html body.rivo-multiselect #app .shell.rivo-dark-ui .mobilebar{
+  display:grid!important;
+ }
+}
+html body.rivo-multiselect #app .shell.rivo-dark-ui .content{
+ padding-bottom:0!important;
+}
