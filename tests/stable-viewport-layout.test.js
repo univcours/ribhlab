@@ -53,8 +53,8 @@ test('Documents title and its two actions share a single compact header row',()=
 
 test('Documents filters and file count share one row, file import and search share another',()=>{
  const markup=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary('));
- const filter=markup.slice(markup.indexOf('class="rivo-library-filter-row"'),markup.indexOf('class="rivo-library-command-row"'));
- const commands=markup.slice(markup.indexOf('class="rivo-library-command-row"'),markup.indexOf('class="library-controls"'));
+ const filter=markup.slice(markup.indexOf('class="rivo-library-filter-row"'),markup.indexOf('class="rivo-library-command-row rivo-search-title-row"'));
+ const commands=markup.slice(markup.indexOf('class="rivo-library-command-row rivo-search-title-row"'),markup.indexOf('class="library-controls"'));
  assert.match(filter,/class="rivo-library-chips"/);
  assert.match(filter,/class="library-top"/);
  assert.match(commands,/data-import="file"/);
