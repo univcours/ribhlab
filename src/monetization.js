@@ -177,7 +177,7 @@ function setBannerSpace(visible){
  root.style.setProperty('--rivo-banner-height','50px');
  root.style.setProperty('--rivo-banner-width','320px');
  root.style.setProperty('--rivo-content-top',(layout.valid?layout.contentTop:70)+'px');
- root.style.setProperty('--rivo-content-bottom',layout.valid?(
+ root.style.setProperty('--rivo-content-bottom',(layout.valid?(
   show?layout.contentBottom:layout.bottomWithoutAd+8
  ):98)+'px');
  if(layout.valid)root.style.setProperty('--rivo-banner-bottom',layout.margin+'px');
