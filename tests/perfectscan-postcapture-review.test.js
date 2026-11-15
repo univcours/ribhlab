@@ -50,6 +50,12 @@ test('PerfectScan review is an independent after-shutter step, before processing
  assert.match(main,/import '.\/perfectscan-capture-review.css'/);
  assert.match(main,/await DocumentScanner.scanDocument\(mlkitFullOptions\(mode,pageLimit\)\)/);
  assert.match(ads,/\.rivo-perfect-capture-overlay/);
+ const captureCSS=readFileSync(new URL('../src/perfectscan-capture-review.css',import.meta.url),'utf8');
+ const parentCSS=readFileSync(new URL('../src/theme-brand.css',import.meta.url),'utf8');
+ const captureZ=Number(captureCSS.match(/z-index:(\d+)/)?.[1]);
+ const parentZ=Number(parentCSS.match(/\.rivo-perfectscan-overlay\{[^}]*z-index:(\d+)/s)?.[1]);
+ assert.ok(captureZ>parentZ,'post-capture review must be ABOVE PerfectScan original layer');
+ assert.ok(ui.includes('root.inert=true')&&ui.includes('root.inert=false'),'background cannot consume taps');
 });
 test('PerfectScan review includes touch loupe and no live-camera frame marker',()=>{
  const capture=readFileSync(new URL('../src/perfectscan-capture-review.js',import.meta.url),'utf8');
