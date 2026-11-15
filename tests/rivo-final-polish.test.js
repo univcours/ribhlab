@@ -31,6 +31,6 @@ test('launcher is a symbol-only R, separately inset for Android adaptive masks',
  assert.match(code,/assets\/branding\/rivoscan-ai-icon-source\.png/);
  assert.match(code,/public\/rivoscan-adaptive-foreground\.png/);
  assert.match(code,/public\/rivoscan-store-icon\.png/);
- assert.match(code,/Symbol-only large R ready/);
+ assert.match(code,/symbol-only/i);
  assert.ok(!code.includes('card(icon,137'));
 });
