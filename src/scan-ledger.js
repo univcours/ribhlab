@@ -72,8 +72,22 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   const value=clean(fields.value);
   if(!value||value.length>MAX_VALUE_LENGTH)throw Error('Invalid scan value');
   const rows=read(kind);
-  if(rows.length>=MAX_RECORDS)throw Error('Scanner log is full. Archive the records before scanning more.');
   const date=new Date(clock());
+  // One entry per format+value per local day. A continuous camera view,
+  // reopened scanner, and a resumed application must not duplicate a code.
+  // Preserve the original timestamp and never overwrite previous TXT rows.
+  if(kind==='codes'){
+   const day=scannerLocalDay(date),format=clean(fields.format||'QR');
+   const prior=rows.find(row=>row.day===day&&clean(row.type)===format&&clean(row.value)===value);
+   if(prior){
+    if(prior.exported!==true){
+     try{await sendCode(prior);prior.exported=true;persist(kind,rows);}
+     catch(error){return {saved:false,alreadySaved:true,duplicate:true,record:prior,reason:String(error?.message||error)};}
+    }
+    return {saved:false,alreadySaved:true,duplicate:true,record:prior,name:scannerDailyFile(prior.type,prior.day)};
+   }
+  }
+  if(rows.length>=MAX_RECORDS)throw Error('Scanner log is full. Archive the records before scanning more.');
   const record=kind==='codes'
    ?{at:date.toISOString(),day:scannerLocalDay(date),localAt:scannerLocalTimestamp(date),
      type:clean(fields.format||'QR'),value,exported:false}
