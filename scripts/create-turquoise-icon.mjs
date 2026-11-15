@@ -3,21 +3,26 @@
  */
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pngjs from 'pngjs';
 const {PNG}=pngjs,root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const remote='https://gcdn.picsart.com/picsart-mcp/ce5d87c2-dc15-45ff-8b58-16e8d5ac8fd7.png';
+const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7';
+const sizes={play:504,adaptive:360,header:456};
 const sourcePath=join(root,'assets/branding/rivoscan-ai-icon-source.png');
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
 let bytes;
 if(existsSync(sourcePath))bytes=readFileSync(sourcePath);
 else{
  const response=await fetch(remote,{signal:AbortSignal.timeout(40000)});
- if(!response.ok)throw Error('RivoScan approved icon fetch failed: '+response.status);
+ if(!response.ok)throw Error('Image host HTTP '+response.status+' while downloading approved RivoScan icon');
  bytes=Buffer.from(await response.arrayBuffer());
  if(bytes.length>8_000_000)throw Error('Icon file too large');
  mkdirSync(dirname(sourcePath),{recursive:true});writeFileSync(sourcePath,bytes);
 }
+if(createHash('sha256').update(bytes).digest('hex')!==SOURCE_SHA256)
+ throw Error('Approved icon SHA256 mismatch: wrong or re-encoded artwork (refuse silent replacement)');
 if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw Error('Invalid approved icon PNG');
 const input=PNG.sync.read(bytes,{checkCRC:true});
 if(input.width!==1254||input.height!==1254)throw Error('Expected 1254x1254 icon artwork');
@@ -42,7 +47,8 @@ for(let y=0;y<512;y++)for(let x=0;x<512;x++){
  const i=(y*512+x)*4;
  for(let c=0;c<4;c++)header.data[i+c]=flat.data[i+c];
  // Keep the R/symbol inside Android adaptive masks instead of shrinking Play art.
- const sx=Math.floor((x-80)*512/352),sy=Math.floor((y-80)*512/352);
+ const inset=Math.floor((512-sizes.adaptive)/2);
+ const sx=Math.floor((x-inset)*512/sizes.adaptive),sy=Math.floor((y-inset)*512/sizes.adaptive);
  if(sx>=0&&sx<512&&sy>=0&&sy<512){
   const k=(sy*512+sx)*4;
   for(let c=0;c<4;c++)adaptive.data[i+c]=flat.data[k+c];
@@ -52,6 +58,7 @@ const store=PNG.sync.write(flat),adapt=PNG.sync.write(adaptive);
 for(const [name,data] of [
  ['public/rivoscan-icon.png',store],
  ['public/rivoscan-store-icon.png',store],
+ ['public/rivoscan-play-icon.png',store],
  ['public/rivoscan-adaptive-foreground.png',adapt],
  ['public/rivoscan-header-mark.png',PNG.sync.write(header)],
  ['public/rivoscan-logo.png',fullLogo],
@@ -60,4 +67,4 @@ for(const [name,data] of [
 ]){
  const p=join(root,name);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,data);
 }
-console.log('[RivoScan] Symbol-only large R ready (no RivoScan wordmark).');
+console.log('[RivoScan] RivoScan icon without wordmark: full-bleed store square and safe adaptive Android foreground');
