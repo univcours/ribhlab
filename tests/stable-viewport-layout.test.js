@@ -15,7 +15,7 @@ test('stable viewport rules are imported after native ad layout and legacy CSS',
 test('all primary Android screens have independently scrolling data sections',()=>{
  for(const cls of ['rivo-tools-scroll','rivo-settings-scroll','rivo-scan-scroll']){
   assert.match(main,new RegExp('class="'+cls+'" tabindex="0"'),'missing scroll region '+cls);
-  assert.match(css,new RegExp('\\.'+cls.replaceAll('-','-')),'missing CSS layout '+cls);
+  assert.match(css,new RegExp('\\.'+cls),'missing CSS layout '+cls);
  }
  assert.match(main,/id="library-list" class="library-list" tabindex="0"/);
  assert.match(main,/id="home-recents" tabindex="0"/);
