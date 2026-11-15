@@ -43,8 +43,12 @@ test('PerfectScan review is an independent after-shutter step, before processing
  assert.match(ui,/const reviewed=await reviewPerfectScanCapture\(files\[0\],\{language:lang\}\)/);
  assert.match(ui,/if\(!reviewed\)return/);
  assert.match(ui,/await setBase\(reviewed.file,reviewed.original.name,originalBytes/);
- assert.match(ui,/originalPhotoPreserved:true/);
- assert.match(ui,/await onSave\(base.bytes/);
+ // One final processed PDF is published. Sources/JPG/JSON stay in memory only.
+ const saveBlock=ui.slice(ui.indexOf(' async function writeResult(){'),ui.indexOf(" root.addEventListener('click',e=>{"));
+ assert.ok(saveBlock.includes("await onSave(pdfBytes,'RivoScan_PerfectScan_'+stamp+'.pdf','application/pdf')"));
+ assert.equal((saveBlock.match(/await onSave\(/g)||[]).length,1);
+ assert.doesNotMatch(saveBlock,/integrity\.json|RivoScan_Original_|\.jpg','image\/jpeg'|application\/json/);
+ assert.match(saveBlock,/page\.drawImage\(documentImage/);
  assert.match(capture,/if\(!corners\)\{finish\(\{file,original:file,detected:Boolean\(detected\),cropped:false/);
  assert.match(capture,/perspectiveCropImageData\(pixels,corners\)/);
  assert.match(main,/import '.\/perfectscan-capture-review.css'/);
@@ -60,7 +64,9 @@ test('PerfectScan review is an independent after-shutter step, before processing
 test('PerfectScan review includes touch loupe and no live-camera frame marker',()=>{
  const capture=readFileSync(new URL('../src/perfectscan-capture-review.js',import.meta.url),'utf8');
  assert.match(capture,/if\(selected>=0&&corners\)drawLoupe\(corners\[selected\]\)/);
- assert.match(capture,/cornerLoupeLayout\(canvas.width,canvas.height,p\)/);
+ assert.match(capture,/cornerLoupeLayout\(canvas.width,canvas.height,/);
+ assert.match(capture,/paddedEdgeCanvas\(/);
+ assert.match(capture,/paddedEdgePoint\(frame,p\)/);
  assert.match(capture,/canvas.addEventListener\('pointerdown'/);
  assert.match(capture,/canvas.addEventListener\('pointermove'/);
  assert.match(capture,/for\(const action of \['pointerup','pointercancel','lostpointercapture'\]/);
