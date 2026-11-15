@@ -360,6 +360,55 @@ try{
   check(width+': PerfectScan starts with readable source-photo choices',
    perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&perfectInfo.fits);
   await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
+  // Test-fixture photo, NOT a native camera capture: verify the actual
+  // PerfectScan event sequence and four-corner review before saving.
+  const fixture=await page.evaluate(()=>{
+   const c=document.createElement('canvas');c.width=320;c.height=450;
+   const g=c.getContext('2d');g.fillStyle='#172637';g.fillRect(0,0,320,450);
+   g.fillStyle='#f7f7f4';g.fillRect(40,48,246,351);
+   g.fillStyle='#344b61';g.fillRect(66,94,170,4);g.fillRect(66,118,190,3);
+   return c.toDataURL('image/png').split(',')[1];
+  });
+  await perfect.locator('.rivo-perfect-file').setInputFiles({
+   name:'perfectscan-fixture.png',mimeType:'image/png',buffer:Buffer.from(fixture,'base64')
+  });
+  const corners=page.locator('.rivo-perfect-corners-overlay');
+  await corners.waitFor({state:'visible',timeout:15000});
+  const preSave=await page.evaluate(()=>{
+   const review=document.querySelector('.rivo-perfect-corners-overlay');
+   const editor=review?.querySelector('.rivo-perfect-corners-panel');
+   const rect=editor?.getBoundingClientRect();
+   const process=document.querySelector('.rivo-perfectscan-actions [data-perfect="process"]');
+   const save=document.querySelector('.rivo-perfectscan-actions [data-perfect="save"]');
+   return {corners:!!review,cornerCanvas:!!review?.querySelector('canvas'),
+     count:review?.querySelectorAll('[data-perfect-corner]').length,
+     processDisabled:process?.disabled,saveHidden:save?.hidden,
+     fits:!!rect&&rect.left>=-2&&rect.right<=innerWidth+2};
+  });
+  check(width+': PerfectScan automatically opens 4-corner review before saving',
+   preSave.corners&&preSave.cornerCanvas&&preSave.count===3&&
+   preSave.processDisabled&&preSave.saveHidden&&preSave.fits);
+  if(width===393)await page.screenshot({path:out+'/'+width+'-perfectscan-pre-save-test-fixture.png'});
+  await corners.locator('[data-perfect-corner="cancel"]').click();
+  await corners.waitFor({state:'detached'});
+  check(width+': cancelling corner review keeps photo and disables processing',
+   await perfect.locator('[data-perfect="process"]').isDisabled()&&
+   await perfect.locator('[data-perfect="edges"]').isVisible());
+  await perfect.locator('[data-perfect="edges"]').click();
+  await corners.waitFor({state:'visible'});
+  const cornerCanvas=corners.locator('canvas'),rect=await cornerCanvas.boundingBox();
+  // The test paper begins at roughly x=40/320, y=48/450.
+  await page.mouse.move(rect.x+rect.width*.125,rect.y+rect.height*.106);
+  await page.mouse.down();
+  if(width===393)await page.screenshot({path:out+'/'+width+'-perfectscan-touch-loupe-test-fixture.png'});
+  await page.mouse.move(rect.x+rect.width*.15,rect.y+rect.height*.13,{steps:4});
+  await page.mouse.up();
+  await corners.locator('[data-perfect-corner="apply"]').click();
+  await corners.waitFor({state:'detached',timeout:15000});
+  check(width+': confirmed corners enable processing without premature Save',
+   await perfect.locator('[data-perfect="process"]').isEnabled()&&
+   await perfect.locator('[data-perfect="save"]').isHidden());
+  if(width===393)await page.screenshot({path:out+'/'+width+'-perfectscan-confirmed-test-fixture.png'});
   await perfect.locator('[data-perfect="close"]').click();
   await perfect.waitFor({state:'detached'});
 
