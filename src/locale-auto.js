@@ -3,6 +3,8 @@
  */
 export const supportedRivoLanguages=Object.freeze(['en','ar','fr','es','de','pt','it']);
 export function deviceLanguage(languages=[]){
+ // Respect the phone's ordered language preferences, choosing the first
+ // supported one. If none are available, the application defaults to English.
  const list=Array.isArray(languages)?languages:[languages];
  for(const value of list){
   const first=String(value||'').toLowerCase().split(/[-_]/)[0];
