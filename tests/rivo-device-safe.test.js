@@ -3,17 +3,21 @@ import {readFileSync} from 'node:fs';import pngjs from 'pngjs';
 import '../scripts/create-turquoise-icon.mjs';
 const {PNG}=pngjs,read=p=>readFileSync(new URL('../'+p,import.meta.url));
 const t=p=>read(p).toString('utf8');
-test('approved enlarged mask-safe launcher keeps the wordmark complete',()=>{
+test('0.45.26 launcher is full-bleed with blue R and safe adaptive foreground, no wordmark',()=>{
  const image=PNG.sync.read(read('public/rivoscan-icon.png'));
  assert.equal(image.width,512);assert.equal(image.height,512);
- let minX=512,maxX=0;
- for(let y=340;y<390;y++)for(let x=0;x<512;x++){
-  const i=(y*512+x)*4,r=image.data[i],g=image.data[i+1],b=image.data[i+2];
-  if(image.data[i+3]<100||(r>210&&g>210&&b>210))continue;
-  minX=Math.min(x,minX);maxX=Math.max(x,maxX);
-  assert.ok(Math.hypot(x-256,y-256)<180,'wordmark masked by a round launcher');
+
+ // Full-bleed Play store icon has no transparent black border.
+ for(const [x,y] of [[0,0],[511,0],[0,511],[511,511],[255,255]]){
+  const i=(y*512+x)*4;
+  assert.equal(image.data[i+3],255,'opaque Play logo required');
  }
- assert.ok(minX<165&&maxX>350,'wordmark too small');
+ const adaptive=PNG.sync.read(read('public/rivoscan-adaptive-foreground.png'));
+ assert.equal(adaptive.width,512);
+ assert.equal(adaptive.height,512);
+ const center=(255*512+255)*4;
+ assert.ok(adaptive.data[center+2]>70,'blue brand logo must be visible in the adaptive center');
+ assert.notDeepEqual(Buffer.from(adaptive.data),Buffer.from(image.data),'safe-mask and store icon must differ');
  assert.equal(PNG.sync.read(read('public/rivoscan-header-mark.png')).width,512);
 });
 test('native 320x50 banner anchored in exactly the same passive slot on all pages',()=>{
