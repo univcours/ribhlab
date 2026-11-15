@@ -716,7 +716,7 @@ async function chooseLibraryFiles(kind='file'){
         success++;
       }
       await loadLibrary(false);
-      toast(success+' file(s) saved to Documents/RivoScan.');
+      saveToast(shortSavedLabel());
       if(success)openLibrary();
     }catch(error){console.error('Import to library:',error);toast(error?.message||'Import failed',true);}
     finally{clearBusy();}
@@ -1278,7 +1278,8 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
       await loadLibrary(false);
       openLibrary();
       soundFeedback('saved');
-      toast(dl('savedNow')+' · '+saved.pageCount+' '+sl('pages')+(cleanMode!=='original'&&!saved.perfectCleanApplied?' · Google original (cleaning unavailable)':''));
+      saveToast(shortSavedLabel());
+      if(cleanMode!=='original'&&!saved.perfectCleanApplied)console.warn('Scan saved with Google original; advanced cleaning unavailable.');
     }catch(err){
       console.error('Google scan PDF import failed:',err);
       toast('PDF save failed: '+(err?.message||err)+'. The scan was not deleted.',true);
@@ -1303,7 +1304,7 @@ async function consumeSmartScan(result,{mlkitFull=false}={}){
       :await imagesToPdf('color',picked);
     await saveOut(pdf,`RivoScan_Scan_${Date.now()}.pdf`);
     openLibrary();
-    toast(dl('savedNow')+' · '+picked.length+' '+sl('pages'));
+    // saveOut already shows one short Android system toast; no duplicate message.
   }catch(err){
     console.error('Scan auto-save failed:',err);
     toast('Scan captured but PDF save failed: '+(err?.message||err)+'. Use Save PDF to retry.',true);
@@ -1371,7 +1372,26 @@ async function openCamera(){
   }catch(err){if(!/cancel|SCAN_CANCELLED/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
   finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
-function toast(text,error=false){document.querySelector('.toast')?.remove();const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=translateStatus(language,text);document.body.appendChild(el);setTimeout(()=>el.remove(),5000)}
+function toast(text,error=false,compact=false){
+ document.querySelector('.toast')?.remove();
+ const el=document.createElement('div');el.className='toast'+(error?' error':'')+(compact?' rivo-save-toast':'');
+ el.setAttribute('role','status');el.textContent=translateStatus(language,text);
+ document.body.appendChild(el);setTimeout(()=>el.remove(),compact?2200:5000);
+}
+function saveToast(text='Saved ✓'){
+ const message=translateStatus(language,text);
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
+  void RivoDocuments.showSaveToast({message}).catch(error=>{
+   console.warn('Native save toast unavailable:',error);
+   toast(message,false,true);
+  });
+  return;
+ }
+ toast(message,false,true);
+}
+function shortSavedLabel(){
+ return ({ar:'تم حفظ الملف ✓',fr:'Enregistré ✓',es:'Guardado ✓',de:'Gespeichert ✓',pt:'Guardado ✓',it:'Salvato ✓'})[language]||'Saved ✓';
+}
 function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
 function progress(message){const el=document.getElementById('busytext');if(el)el.textContent=translateStatus(language,message)}
 function clearBusy(){busy=false;document.querySelector('.busy')?.remove()}
@@ -1390,7 +1410,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
       const saved=await RivoDocuments.saveFile({name:safe,base64:toBase64(data),mimeType:mime});
       record(activeTool?.name||'Saved document');
       await loadLibrary(false);
-      toast(dl('savedNow')+' ✓');
+      saveToast(shortSavedLabel());
       soundFeedback('saved');
       return saved;
     }
@@ -1406,7 +1426,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
   const anchor=document.createElement('a');anchor.href=url;anchor.download=safe;document.body.appendChild(anchor);anchor.click();anchor.remove();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
   record(activeTool?.name||'Download');
-  toast('File downloaded successfully.');
+  saveToast(shortSavedLabel());
 }
 function canvasBlob(canvas,type='image/jpeg',quality=.85){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image conversion failed')),type,quality))}
 async function imageCanvas(file,filter='color',rotation=0,max=2100){
