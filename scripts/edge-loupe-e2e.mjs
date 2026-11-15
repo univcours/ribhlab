@@ -77,20 +77,21 @@ try{
    const touch=[(f.x+.055*f.width)/c.width,(f.y+.055*f.height)/c.height];
    const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,touch);
    const ctx=c.getContext('2d');
-   return Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data);
+   return {center:Array.from(ctx.getImageData(Math.round(centerX),Math.round(centerY),1,1).data),
+     border:Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data)};
   });
   const before=await pixelSample();
   await page.mouse.move(cursorX,cursorY);
   await page.mouse.down();
   const pressed=await pixelSample();
   await page.screenshot({path:out+'/'+width+'-corner-loupe-pressed.png'});
-  assert.notDeepEqual(pressed,before,'magnifier border must render on finger down');
-  assert.ok(pressed[1]>120&&pressed[2]>110,'magnifier border must be teal and clearly visible');
+  assert.notDeepEqual(pressed.center,before.center,'6x magnifier target appears while dragging a real corner');
+  assert.ok(pressed.border[1]>=180&&pressed.border[2]>=150,'magnifier outline is teal and visible');
   await page.mouse.move(cursorX+22,cursorY+18,{steps:5});
   await page.screenshot({path:out+'/'+width+'-corner-loupe-drag.png'});
   await page.mouse.up();
   const after=await pixelSample();
-  assert.notDeepEqual(pressed,after,'magnifier must disappear when finger lifts');
+  assert.notDeepEqual(pressed.center,after.center,'magnifier must disappear when finger lifts');
   await page.locator('[data-edge="save"]').click();
   await page.waitForFunction(()=>window.__rivoSaved?.length===1&&window.__rivoCompleted===1,null,{timeout:15000});
   const saved=await page.evaluate(()=>({result:window.__rivoSaved[0],completed:window.__rivoCompleted,overlay:!!document.querySelector('.rivo-edge-adjust-overlay')}));
