@@ -19,7 +19,7 @@ await writeFile(samplePNG,await readFile(new URL('../public/rivoscan-icon.png',i
 const specs=toolGroups.flatMap(g=>g.entries.map(id=>({id,name:hubLabel('en',id,id),group:g.id})));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const context=await browser.newContext({viewport:{width:393,height:873},isMobile:true,hasTouch:true,deviceScaleFactor:1,acceptDownloads:true});
-const manifest={version,total:specs.length,source:'RivoScan 0.45.22 rebuilt web UI after final tool accessibility fixes',limitations:'Native Android camera and native AdMob do not render in a browser; fixture inputs are marked TEST.',tools:[]};
+const manifest={version,total:specs.length,source:'RivoScan 0.45.25 compiled UI, real modal screenshot and SVG info-circle geometry',limitations:'Native Android camera and native AdMob do not render in a browser; fixture inputs are marked TEST.',tools:[]};
 for(let i=0;i<specs.length;i++){
  const {id,name,group}=specs[i],prefix=String(i+1).padStart(2,'0')+'-'+id;
  const page=await context.newPage(),errors=[],files=[],fixtures=[];
@@ -63,12 +63,28 @@ for(let i=0;i<specs.length;i++){
     .map(e=>({text:e.textContent.trim().slice(0,90),color:getComputedStyle(e).color,opacity:getComputedStyle(e).opacity,font:getComputedStyle(e).fontSize}))
     .filter(o=>{const m=o.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);return m&&Number(m[1])>150&&Number(m[2])>175&&Number(m[3])>175}).slice(0,20);
    const helpButtons=[...document.querySelectorAll('.rivo-tool-help-trigger')].filter(isVisible);
+   const helpGeometry=helpButtons.map(btn=>{
+    const b=btn.getBoundingClientRect(),icon=btn.querySelector('.rivo-help-circle-svg');
+    const r=icon?.getBoundingClientRect();
+    const c=icon?.querySelector('circle');
+    const ringRadius=c?.getAttribute('r');
+    return {
+     w:+b.width.toFixed(2),h:+b.height.toFixed(2),
+     svgW:+(r?.width||0).toFixed(2),svgH:+(r?.height||0).toFixed(2),
+     ringRadius,hasSvg:!!icon,
+     square:Math.abs(b.width-b.height)<0.55,
+     vectorCircle:!!(icon&&r&&Math.abs(r.width-r.height)<0.35&&ringRadius==='15.5'),
+     hitTarget:!!(b.width>=35&&b.height>=35)
+    };
+   });
    const helpSources=[...document.querySelectorAll('.rivo-tool-help-source')];
    const smallButtons=[...document.querySelectorAll('.rivo-code-actions button,.rivo-merged-dialog button,.rivo-shield-toolbar button')].filter(isVisible);
-   return {shown,contrastCandidates:suspects,helpButtons:helpButtons.length,helpSources:helpSources.length,
+   return {shown,contrastCandidates:suspects,helpButtons:helpButtons.length,helpGeometry,helpSources:helpSources.length,
     smallButtons:smallButtons.map(b=>Math.round(b.getBoundingClientRect().height)),
     visibleText:document.body.innerText.slice(0,1500),scrollHeight:document.documentElement.scrollHeight,innerHeight};
   });
+  if(info.helpGeometry.some(b=>!b.square||!b.vectorCircle||!b.hitTarget))
+   errors.push('Non-circular (i) control or vector in '+id+': '+JSON.stringify(info.helpGeometry));
   if(id==='photoStudio'){
    const editor=await page.evaluate(()=>{
     const bar=document.querySelector('.rivo-editor-actions'),s=bar&&getComputedStyle(bar);
@@ -114,4 +130,6 @@ for(let i=0;i<specs.length;i++){
 }
 await context.close();await browser.close();
 await writeFile(join(root,'manifest.json'),JSON.stringify(manifest,null,2));
-console.log('ALL TOOLS REVIEW',JSON.stringify({total:specs.length,captured:manifest.tools.filter(x=>x.files.length>0).length,errors:manifest.tools.filter(x=>x.status==='error').map(x=>x.id)}));
+const failures=manifest.tools.flatMap(x=>x.errors.map(error=>({id:x.id,error})));
+console.log('ALL TOOLS REVIEW',JSON.stringify({total:specs.length,captured:manifest.tools.filter(x=>x.files.length>0).length,errors:failures,helpCircles:manifest.tools.flatMap(x=>x.info?.helpGeometry||[]).length}));
+if(failures.some(x=>/Non-circular/.test(x.error)))process.exitCode=1;

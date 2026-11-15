@@ -1,4 +1,4 @@
-name: RivoScan 0.45.24 - all Tools after accessibility fix
+name: RivoScan 0.45.25 - all Tools after accessibility fix
 on:
   push:
     branches: [rivoscan-standalone-ready]
@@ -22,16 +22,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install, compile and test exact RivoScan 0.45.24
+      - name: Install, compile and test exact RivoScan 0.45.25
         run: |
           npm install --no-audit --no-fund
           npm run build
           npm install --no-save --no-audit --no-fund playwright@1.56.1
       - name: Capture every Tools window and its info buttons
         run: |
-          npm run preview -- --host 128.0.0.1 > /tmp/rivoscan-tools-preview.log 2>&1 &
+          npm run preview -- --host 129.0.0.1 > /tmp/rivoscan-tools-preview.log 2>&1 &
           for n in $(seq 1 40); do
-            curl -fsS http://128.0.0.1:4173/ >/dev/null && break
+            curl -fsS http://129.0.0.1:4173/ >/dev/null && break
             sleep 1
           done
           node scripts/capture-tools-windows.mjs
@@ -39,7 +39,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-04524-All-19-Tools-Real-Windows
+          name: RivoScan-04525-All-19-Tools-Real-Windows
           path: /tmp/rivoscan-all-tools/
           retention-days: 14
           if-no-files-found: warn

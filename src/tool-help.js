@@ -54,6 +54,34 @@ function openInfo(button,section){
 function addTrigger(group){
  const button=document.createElement('button');
  button.className='rivo-tool-help-trigger';button.type='button';button.textContent='i';button.title=word();
+ // SVG itself paints a geometrically perfect circle even if an older modal
+ // button rule stretches the outer hit target on Android WebView.
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('viewBox','0 0 36 36');
+ svg.setAttribute('width','32');svg.setAttribute('height','32');
+ svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+ svg.setAttribute('focusable','false');svg.setAttribute('aria-hidden','true');
+ svg.classList.add('rivo-help-circle-svg');
+ const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+ for(const [key,value] of Object.entries({cx:'18',cy:'18',r:'15.5',fill:'#e7f4ff',stroke:'#1170c6','stroke-width':'1.8'}))
+  ring.setAttribute(key,value);
+ const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+ for(const [key,value] of Object.entries({cx:'18',cy:'11.3',r:'2.1',fill:'#1170c6'}))
+  dot.setAttribute(key,value);
+ const stem=document.createElementNS('http://www.w3.org/2000/svg','path');
+ for(const [key,value] of Object.entries({d:'M18 17.3v9.1',stroke:'#1170c6','stroke-width':'3.1','stroke-linecap':'round'}))
+  stem.setAttribute(key,value);
+ svg.append(ring,dot,stem);
+ button.replaceChildren(svg);
+ // Same logical pixel hit area in EVERY modal; inline !important beats
+ // legacy high-specificity button styles and prevents oval flex stretching.
+ for(const property of ['width','min-width','max-width','height','min-height','max-height','inline-size','block-size'])
+  button.style.setProperty(property,'36px','important');
+ button.style.setProperty('flex','0 0 36px','important');
+ button.style.setProperty('aspect-ratio','1 / 1','important');
+ button.style.setProperty('padding','0','important');
+ button.style.setProperty('border-radius','50%','important');
+ button.dataset.rivoTrueCircle='yes';
  const id='rivo-help-'+(++sequence);
  button.setAttribute('aria-label',word());button.setAttribute('aria-controls',id);button.setAttribute('aria-expanded','false');
  let close=group.querySelector(':scope > header [data-merged-close],.rivo-shield-head [data-shield="close"],.rivo-editor-header [data-edit="retake"],.rivo-modal-top .rivo-modal-dismiss,.rivo-perfectscan-modal header [data-perfect="close"]');
