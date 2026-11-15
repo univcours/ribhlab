@@ -97,7 +97,7 @@ jobs:
           set -euo pipefail
           sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode 130/' android/app/build.gradle
           sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "0.45.26"/' android/app/build.gradle
-          grep -Eq 'versionCode[[:space:]]+129' android/app/build.gradle
+          grep -Eq 'versionCode[[:space:]]+130' android/app/build.gradle
           grep -Eq 'versionName[[:space:]]+"0[.]45[.]26"' android/app/build.gradle
       - name: Assemble signed release app bundle
         env:
