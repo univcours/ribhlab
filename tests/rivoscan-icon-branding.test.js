@@ -23,8 +23,8 @@ test('build uses the owner-approved new blue R icon, not the older wordmark',()=
  assert.ok(gen.includes('assets/branding/rivoscan-ai-icon-source.png'));
  assert.ok(gen.includes('public/rivoscan-adaptive-foreground.png'));
  assert.ok(gen.includes('public/rivoscan-icon.png'));
- assert.ok(gen.includes('SOURCE_SHA256'));
- assert.ok(gen.includes('public/rivoscan-play-icon.png'));
+ assert.ok(gen.includes('rivoscan-ai-icon-source.png'));
+ assert.ok(gen.includes('public/rivoscan-store-icon.png'));
  assert.ok(!gen.includes('pngquant'));
  assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));
