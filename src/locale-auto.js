@@ -1,4 +1,6 @@
-/** Use Android/WebView device locale at first launch; manual choice always wins. */
+/** Device-language is automatic unless a user explicitly overrides it.
+ * English is the safe fallback for unsupported and unavailable locales.
+ */
 export const supportedRivoLanguages=Object.freeze(['en','ar','fr','es','de','pt','it']);
 export function deviceLanguage(languages=[]){
  const list=Array.isArray(languages)?languages:[languages];
@@ -8,6 +10,18 @@ export function deviceLanguage(languages=[]){
  }
  return 'en';
 }
+export function savedLanguagePreference(storage){
+ const code=storage?.getItem?.('rivo-language');
+ return supportedRivoLanguages.includes(code)?code:null;
+}
 export function initialLanguage(saved,deviceLanguages){
  return supportedRivoLanguages.includes(saved)?saved:deviceLanguage(deviceLanguages);
+}
+export function effectiveLanguage({saved=null,browserLanguages=[],androidLanguage=null}={}){
+ if(supportedRivoLanguages.includes(saved))return saved;
+ if(androidLanguage)return deviceLanguage([androidLanguage]);
+ return deviceLanguage(browserLanguages);
+}
+export function isAutoLanguage(storage){
+ return savedLanguagePreference(storage)===null;
 }
