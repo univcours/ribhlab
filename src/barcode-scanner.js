@@ -100,17 +100,20 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const zoomMinus=iconButton('−',()=>manualZoom(-1)),zoomPlus=iconButton('+',()=>manualZoom(1));
  const autoZoom=iconButton('AUTO ZOOM',()=>{zoom.auto=!zoom.auto;updateZoomUI();});
  const zoomLabel=document.createElement('span');zoomLabel.className='rivo-code-zoom-label';zoomLabel.setAttribute('aria-live','polite');
+ const zoomActions=document.createElement('div');zoomActions.className='rivo-code-zoom-controls';zoomActions.hidden=true;
  zoomMinus.setAttribute('aria-label','Zoom out');zoomPlus.setAttribute('aria-label','Zoom in');
  autoZoom.setAttribute('aria-label','Automatic camera zoom');
- actions.append(torch,zoomMinus,zoomLabel,zoomPlus,autoZoom,file,copy);
+ zoomActions.append(zoomMinus,zoomLabel,zoomPlus,autoZoom);
+ actions.append(torch,file,copy);
  const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
- box.append(head,help,camera,status,result,actions,picker);overlay.append(box);document.body.append(overlay);
+ box.append(head,help,camera,status,result,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
  const dedup=newScanDeduplicator(),streams=[],temporaryURLs=[];
  let control=null,closed=false,light=false,lastDetectionAt=0;
  const zoom={track:null,min:1,max:1,current:1,enabled:false,auto:true,pending:false};
  let lastCodeAt=Date.now(),lastZoomAt=0,zoomTimer=null;
  const updateZoomUI=()=>{
+  zoomActions.hidden=!zoom.enabled;
   zoomMinus.disabled=!zoom.enabled||zoom.pending||zoom.current<=zoom.min+0.01;
   zoomPlus.disabled=!zoom.enabled||zoom.pending||zoom.current>=zoom.max-0.01;
   autoZoom.disabled=!zoom.enabled;autoZoom.setAttribute('aria-pressed',String(zoom.auto));
@@ -219,7 +222,8 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch{}
    }
    if(caps.zoom&&Number.isFinite(caps.zoom.min)&&Number.isFinite(caps.zoom.max)&&caps.zoom.max>caps.zoom.min){
-    zoom.enabled=true;zoom.min=caps.zoom.min;zoom.max=Math.min(caps.zoom.max,6);
+    zoom.min=caps.zoom.min;zoom.max=Math.min(caps.zoom.max,Math.max(caps.zoom.min,6));
+    zoom.enabled=zoom.max>zoom.min;
     zoom.current=Math.max(zoom.min,Math.min(zoom.max,Number(track.getSettings?.().zoom)||zoom.min));
    }
    updateZoomUI();
