@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/rivo-stable-scroll-layout.css',import.meta.url),'utf8');
 const banner=readFileSync(new URL('../src/rivo-native-banner-layout.css',import.meta.url),'utf8');
+const plate=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
 
 test('stable viewport rules are imported after native ad layout and legacy CSS',()=>{
  const native=main.indexOf("import './rivo-native-banner-layout.css'");
@@ -86,4 +87,12 @@ test('every top-level search is inline with its page label on phones and tablets
  for(const id of ['home-quick-search','tools-query','library-search']){
   assert.equal((main.match(new RegExp('id="'+id+'"','g'))||[]).length,1,'duplicate search input '+id);
  }
+});
+
+test('live license-plate search shares the modal title and close row',()=>{
+ assert.match(plate,/header\.append\(title,searchRow,close\)/);
+ assert.match(plate,/panel\.append\(header,pinned,view,status,last,foot,hint\)/);
+ assert.doesNotMatch(plate,/panel\.append\(header,searchRow,/);
+ assert.match(css,/body \.rivo-plate-overlay \.rivo-live-dialog \.rivo-live-head/);
+ assert.match(css,/body \.rivo-plate-overlay \.rivo-live-head > \.rivo-plate-search-row/);
 });
