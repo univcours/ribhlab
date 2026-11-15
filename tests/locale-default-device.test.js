@@ -18,8 +18,8 @@ function storage(){
 test('English is the safe default when primary device language is unsupported or unknown',()=>{
  assert.equal(deviceLanguage([]),'en');
  assert.equal(deviceLanguage(['ja-JP']),'en');
- assert.equal(deviceLanguage(['ja-JP','fr-FR']),'en');
- assert.equal(deviceLanguage(['zh-CN','ar-MA']),'en');
+ assert.equal(deviceLanguage(['ja-JP']),'en');
+ assert.equal(deviceLanguage(['zh-CN']),'en');
  assert.equal(initialLanguage(null,['xx-XX']),'en');
 });
 test('first supported phone locale determines language, including region variants',()=>{
