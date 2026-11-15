@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish only actual RivoScan 0.45.37 screenshots to Google Play.
+"""Publish only actual RivoScan 0.45.38 screenshots to Google Play.
 Only phoneScreenshots, sevenInchScreenshots and tenInchScreenshots are touched.
 Never update Feature Graphic, icons, store text, or release tracks.
 """
@@ -65,7 +65,7 @@ def main():
         for path in files:
             check_png(path, expected)
         groups.append((typ, files))
-    print('Validated 24 unchanged, real RivoScan 0.45.37 WebView screenshots (8 phone, 8 seven-inch and 8 ten-inch).', flush=True)
+    print('Validated 24 unchanged, real RivoScan 0.45.38 WebView screenshots (8 phone, 8 seven-inch and 8 ten-inch).', flush=True)
 
     credential_json = load_credential()
     from google.oauth2.service_account import Credentials
