@@ -27,7 +27,7 @@ test('verified RivoScan AdMob public units and original Play upload key are wire
   const ci=read(flow);
   assert.ok(ci.includes('VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752'));
   assert.ok(!ci.includes('VITE_RIVO_ADMOB_APP_OPEN_ID'));
-  assert.ok(ci.includes('VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879'));
+  assert.ok(!ci.includes('VITE_RIVO_ADMOB_REWARDED_ID'));
   assert.ok(ci.includes('VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809190'));
   assert.ok(ci.includes('VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607'));
   assert.ok(ci.includes('secrets.RIVO_CORRECT_KEYSTORE_BASE64'));
