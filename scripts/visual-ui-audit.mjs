@@ -152,6 +152,8 @@ try{
     '<span class="document-icon rivo-file-thumb"><span>PDF</span></span>'+
     '<div class="document-description"><strong>'+name+'</strong><small>1.1 MB</small></div></article>';
    root.innerHTML=['Legal_Document_2026.pdf','Second_Document.pdf'].map(doc).join('');
+   const counter=document.querySelector('.library-top strong');
+   if(counter)counter.textContent='2 TEST FILES';
    const rows=[...root.querySelectorAll('.document-entry')];
    return {display:getComputedStyle(root).display,direction:getComputedStyle(root).flexDirection,
     sameX:Math.abs(rows[0].getBoundingClientRect().x-rows[1].getBoundingClientRect().x)<2,
@@ -173,23 +175,53 @@ try{
       Math.abs((b.top+b.bottom)/2-(c.top+c.bottom)/2)<8&&b.width>60&&c.right<=innerWidth+2;
   });
   check(width+': Documents My Files, Search, Refresh stay in one row',docsInline);
-  // Responsive TEST fixture: approved icon/label toolbar, not a camera result.
+  // Responsive TEST fixture: six REAL SVG shapes from the file action toolbar,
+  // not placeholder black squares. All labels and sample documents are test data.
   const selection=await page.evaluate(()=>{
     const slot=document.getElementById('library-selection-root');
     const names=['Cancel','All','Delete','Move','Merge','Share'];
-    slot.innerHTML='<div class="library-selection-toolbar rivo-compact-selection" role="toolbar"><div class="rivo-inline-bulk">'+
-      names.map(name=>'<button type="button" data-bulk="'+name.toLowerCase()+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/></svg><span class="rivo-action-label">'+name+'</span></button>').join('')+'</div></div>';
+    const paths={
+      Cancel:'<path d="M5 5l14 14M19 5 5 19"/>',
+      All:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3.5 3.5L17 9"/>',
+      Delete:'<path d="M3 6h18M8 6V4h8v2m-11 0 1 15h12l1-15M10 10v7m4-7v7"/>',
+      Move:'<path d="M3 7h6l2 2h10v11H3z"/><path d="m12 12 3 3-3 3m-4-3h7"/>',
+      Merge:'<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M9 9h11v11H9z"/>',
+      Share:'<path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/>'
+    };
+    const actions=names.map(name=>'<button type="button" data-bulk="'+name.toLowerCase()+'">'+
+      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg>'+
+      '<span class="rivo-action-label">'+name+'</span></button>').join('');
+    slot.innerHTML='<div class="library-selection-toolbar rivo-compact-selection" role="toolbar"><div class="rivo-inline-bulk">'+actions+'</div></div>';
+    document.querySelectorAll('#library-list .document-entry').forEach(row=>{
+      const checkbox=document.createElement('input');
+      checkbox.type='checkbox';checkbox.className='doc-select-box';checkbox.checked=true;
+      checkbox.setAttribute('aria-label','Test document selected');
+      row.prepend(checkbox);
+    });
     const bar=slot.querySelector('.rivo-compact-selection'),rail=bar.querySelector('.rivo-inline-bulk');
     const buttons=[...rail.querySelectorAll('button')],box=bar.getBoundingClientRect();
     return {order:buttons.map(b=>b.innerText.trim()),background:getComputedStyle(bar).backgroundColor,
       columns:getComputedStyle(rail).gridTemplateColumns.split(' ').filter(Boolean).length,
       fits:box.left>=-3&&box.right<=innerWidth+3,
-      labelsVisible:buttons.every(b=>getComputedStyle(b.querySelector('span')).display!=='none')};
+      labelsVisible:buttons.every(b=>getComputedStyle(b.querySelector('span')).display!=='none'),
+      realIcons:buttons.every(b=>b.querySelector('svg path')&&b.querySelector('svg').getAttribute('fill')==='none')};
   });
   check(width+': selection order',selection.order.join('|')==='Cancel|All|Delete|Move|Merge|Share');
-  check(width+': selection row fits',['rgb(255, 255, 255)','rgb(245, 250, 255)','rgb(233, 245, 251)'].includes(selection.background)&&selection.columns===6&&selection.fits&&selection.labelsVisible);
+  check(width+': selection row fits',['rgb(255, 255, 255)','rgb(245, 250, 255)','rgb(233, 245, 251)'].includes(selection.background)&&selection.columns===6&&selection.fits&&selection.labelsVisible&&selection.realIcons);
   await page.screenshot({path:out+'/'+width+'-selection-test-fixture.png'});
-  await page.evaluate(()=>{document.getElementById('library-selection-root').innerHTML='';});
+  const singleSelection=await page.evaluate(()=>{
+    const boxes=document.querySelectorAll('#library-list .doc-select-box');
+    boxes[1].checked=false;
+    const merge=document.querySelector('[data-bulk="merge"]');
+    merge.disabled=true;merge.setAttribute('aria-disabled','true');
+    return !boxes[1].checked&&merge.disabled;
+  });
+  check(width+': single selected document with merge disabled',singleSelection);
+  await page.screenshot({path:out+'/'+width+'-selection-single-test-fixture.png'});
+  await page.evaluate(()=>{
+    document.getElementById('library-selection-root').innerHTML='';
+    document.querySelectorAll('#library-list .doc-select-box').forEach(x=>x.remove());
+  });
 
   await page.locator('.mobilebar [data-tab="tools"]').click();
   await page.locator('.rivo-tools-hub').waitFor({state:'visible'});
