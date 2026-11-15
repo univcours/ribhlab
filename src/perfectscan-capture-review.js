@@ -3,7 +3,7 @@
  * This runs only AFTER a photo has been taken, BEFORE PerfectScan processing or saving.
  * It does not change the independent "Readjust edges" button on saved documents.
  */
-import {perspectiveCropImageData,validEdgeQuadrilateral,cornerLoupeLayout} from './edge-adjustment.js';
+import {perspectiveCropImageData,validEdgeQuadrilateral,cornerLoupeLayout,paddedEdgeCanvas,paddedEdgePoint} from './edge-adjustment.js';
 const clip=(v,a,b)=>Math.min(b,Math.max(a,v));
 const defaultCorners=()=>[[.07,.07],[.93,.07],[.93,.93],[.07,.93]];
 const textByLang={
@@ -111,20 +111,24 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
   const canvas=overlay.querySelector('.rivo-perfect-capture-canvas'),status=overlay.querySelector('.rivo-perfect-capture-message');
   const submit=overlay.querySelector('[data-capture-action="continue"]');
   const init=Math.min(1,1250/Math.max(source.width,source.height));
-  canvas.width=Math.max(1,Math.round(source.width*init));canvas.height=Math.max(1,Math.round(source.height*init));
+  const frame=paddedEdgeCanvas(Math.max(1,Math.round(source.width*init)),
+    Math.max(1,Math.round(source.height*init)));
+  canvas.width=frame.canvasWidth;canvas.height=frame.canvasHeight;
   const context=canvas.getContext('2d');
   function paint(){
-   context.drawImage(source,0,0,canvas.width,canvas.height);
+   context.fillStyle='#071f34';context.fillRect(0,0,canvas.width,canvas.height);
+   context.drawImage(source,frame.x,frame.y,frame.width,frame.height);
    if(corners){
     context.save();
     context.strokeStyle=validEdgeQuadrilateral(corners)?'#00ead8':'#ee7777';
     context.fillStyle='rgba(9,173,200,.13)';
     context.lineWidth=Math.max(2,canvas.width/360);
     context.beginPath();
-    corners.forEach((p,i)=>{if(!i)context.moveTo(p[0]*canvas.width,p[1]*canvas.height);else context.lineTo(p[0]*canvas.width,p[1]*canvas.height)});
+    corners.forEach((p,i)=>{const [x,y]=paddedEdgePoint(frame,p);
+     if(!i)context.moveTo(x,y);else context.lineTo(x,y)});
     context.closePath();context.fill();context.stroke();
     corners.forEach((p,i)=>{
-     const x=p[0]*canvas.width,y=p[1]*canvas.height;
+     const [x,y]=paddedEdgePoint(frame,p);
      context.beginPath();context.arc(x,y,Math.max(9,canvas.width/100),0,Math.PI*2);
      context.fillStyle='#fff';context.fill();context.strokeStyle='#0086c9';context.lineWidth=2;context.stroke();
     });
@@ -136,9 +140,11 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
    status.textContent=!valid?tr.invalid:(detected?tr.found:tr.missing);
   }
   function drawLoupe(p){
-   const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,p);
+   const touch=paddedEdgePoint(frame,p);
+   const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,
+     [touch[0]/canvas.width,touch[1]/canvas.height]);
    const x=p[0]*source.width,y=p[1]*source.height;
-   const rx=radius*source.width/canvas.width/zoom,ry=radius*source.height/canvas.height/zoom;
+   const rx=radius*source.width/frame.width/zoom,ry=radius*source.height/frame.height/zoom;
    const sx0=clip(x-rx,0,source.width),sy0=clip(y-ry,0,source.height);
    const sx1=clip(x+rx,0,source.width),sy1=clip(y+ry,0,source.height);
    if(sx1<=sx0||sy1<=sy0)return;
@@ -156,13 +162,18 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
    context.beginPath();context.arc(cx,cy,radius+7,0,2*Math.PI);
    context.lineWidth=2;context.strokeStyle='#fff';context.stroke();
   }
-  function point(e){const b=canvas.getBoundingClientRect();return [clip((e.clientX-b.left)/b.width,0,1),clip((e.clientY-b.top)/b.height,0,1)]}
+  function point(e){
+   const b=canvas.getBoundingClientRect();
+   const x=(e.clientX-b.left)*canvas.width/b.width,y=(e.clientY-b.top)*canvas.height/b.height;
+   return [clip((x-frame.x)/frame.width,0,1),clip((y-frame.y)/frame.height,0,1)];
+  }
   canvas.addEventListener('pointerdown',e=>{
    if(!corners||busy)return;
    const p=point(e),box=canvas.getBoundingClientRect();
-   const distances=corners.map(q=>Math.hypot((p[0]-q[0])*box.width,(p[1]-q[1])*box.height));
+   const scaleX=frame.width*box.width/canvas.width,scaleY=frame.height*box.height/canvas.height;
+   const distances=corners.map(q=>Math.hypot((p[0]-q[0])*scaleX,(p[1]-q[1])*scaleY));
    const min=Math.min(...distances);
-   if(min>Math.max(40,box.width*.13))return;
+   if(min>Math.max(32,scaleX*.12))return;
    selected=distances.indexOf(min);
    try{canvas.setPointerCapture(e.pointerId)}catch{}
    paint();e.preventDefault();
