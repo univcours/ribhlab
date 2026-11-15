@@ -24,8 +24,8 @@ export function projectiveSquareToQuad(points){
  let g=0,h=0;
  if(Math.abs(dx3)+Math.abs(dy3)>1e-8){
   if(Math.abs(determin)<1e-9)throw Error('Invalid perspective geometry.');
-  g=(dx3*dy2-dx2*dy3)/determin;
-  h=(dx1*dy3-dx3*dy1)/determin;
+  g=(dx3*dy2-dx2*dy3)/determinant;
+  h=(dx1*dy3-dx3*dy1)/determinant;
  }
  const a=p1[0]-p0[0]+g*p1[0],b=p3[0]-p0[0]+h*p3[0],c=p0[0];
  const d=p1[1]-p0[1]+g*p1[1],e=p3[1]-p0[1]+h*p3[1],f=p0[1];
