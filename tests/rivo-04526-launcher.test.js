@@ -6,7 +6,7 @@ test('the new launcher has no RivoScan wordmark and Play uses a full-bleed asset
  const script=read('scripts/create-turquoise-icon.mjs');
  assert.match(script,/rivoscan-ai-icon-source\.png/);
  assert.match(script,/new PNG\(\{width:512,height:512\}\)/);
- assert.match(script,/no RivoScan wordmark/);
+ assert.match(script,/symbol-only/i);
  assert.match(script,/public\/rivoscan-store-icon\.png/);
  assert.match(script,/public\/rivoscan-adaptive-foreground\.png/);
  assert.match(script,/RivoScan approved icon fetch failed/);
