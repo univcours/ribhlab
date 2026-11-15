@@ -1,5 +1,6 @@
 import {perfectScanRGBA,assessDocumentQualityRGBA,inspectInkChanges} from './perfect-scan-core.js';
 import {PDFDocument} from 'pdf-lib';
+import {reviewPerfectScanCapture} from './perfectscan-capture-review.js';
 
 const dict={
  en:{title:'PerfectScan Pro',subtitle:'Improve paper clarity, straighten folds and reduce shadows on your device.',base:'Source photo',add:'Add shots',capture:'Capture another angle',process:'Apply correction',compare:'Hold to compare original',original:'Original photo',processed:'Enhanced copy',save:'Save scan + integrity report',cancel:'Close',privacy:'Never uploads your document. Original pixels and file are preserved.',tip:'Use 2–4 photos of the SAME document, with matching framing. Slightly change lighting or angle. Unmatched photos are rejected.',none:'Choose a source photo first.',choosing:'Choose document photo',ready:'Ready to enhance',working:'Checking alignment and correcting paper...',review:'Please review ALL text, stamps and signatures before saving.',saved:'Scan and integrity report saved. The original was kept.',failed:'Unable to process this document.',geometry:'Correct curved printed lines (2D)',quality:'Contrast safe; strongly folded/missing text cannot be recovered.',frames:'Additional photos',rejected:'Photos rejected (misalignment)',manual:'Manual review required',clean:'Safety checks passed; review still recommended'},
@@ -110,9 +111,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const actions=root.querySelector('.rivo-perfectscan-actions');
  const preview=root.querySelector('.rivo-perfectscan-preview');
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
- let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
+ let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null,captureReviewPending=false;
  const setStatus=(message,alert=false)=>{status.hidden=false;status.textContent=message;status.classList.toggle('rivo-warning',alert)};
- const close=()=>{if(closed)return;closed=true;root.remove()};
+ const close=()=>{if(closed||captureReviewPending)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
   if(closed)return;
   preview.hidden=false;
@@ -146,11 +147,11 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   compare.disabled=true;compare.hidden=true;
   process.hidden=!base;process.disabled=!base;actions.hidden=!base;
  };
- async function setBase(blob,name,bytes=null,mime='image/jpeg',fromLibrary=false){
+ async function setBase(blob,name,bytes=null,mime='image/jpeg',fromLibrary=false,captureReview=null){
   if(!blob||blob.size>20*1024*1024)throw Error('Maximum source photo: 20 MB');
   const c=await imageCanvas(blob),image=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height);
   base={data:image.data,width:c.width,height:c.height,bytes:bytes||new Uint8Array(await blob.arrayBuffer()),
-   name,mime,fromLibrary};extra=[];resetOutput();process.disabled=false;
+   name,mime,fromLibrary,captureReview};extra=[];resetOutput();process.disabled=false;
   root.querySelector('.rivo-perfectscan-modal').classList.add('rivo-perfectscan-has-source');
   root.querySelector('.rivo-perfectscan-empty').hidden=true;
   root.querySelector('.rivo-perfectscan-tip').hidden=false;
@@ -316,6 +317,10 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
     geometry2DApplied:result.geometryApplied,geometryConfidence:result.geometryConfidence,
     inkFidelity:result.integrity,captureQuality:result.quality,
     manualReviewRecommended:result.requiresReview,
+    preSaveCaptureReview:base.captureReview?{detected:!!base.captureReview.detected,
+      cornersConfirmed:!!base.captureReview.cropped,
+      cornerPositions:base.captureReview.corners||null,
+      originalPhotoPreserved:true}:null,
     userSavedResult:true,originalKept:true,noUploadByPerfectScan:true
    };
    await onSave(new TextEncoder().encode(JSON.stringify(audit,null,2)),'RivoScan_PerfectScan_'+stamp+'_integrity.json','application/json');
@@ -339,10 +344,22 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  extrasInput.addEventListener('change',async()=>{const files=[...extrasInput.files];extrasInput.value='';await addShots(files)});
  cameraInput.addEventListener('change',async()=>{
   const files=[...cameraInput.files];cameraInput.value='';if(!files.length)return;
+  if(captureReviewPending||working)return;
   try{
-   if(!base)await setBase(files[0],files[0].name,null,files[0].type||'image/jpeg');
-   else await addShots(files);
+   if(!base){
+    // This explicit review happens AFTER camera capture. Nothing is saved
+    // until the user confirms the four corners, processes and presses Save.
+    captureReviewPending=true;
+    const reviewed=await reviewPerfectScanCapture(files[0],{language:lang});
+    if(!reviewed)return;
+    const originalBytes=new Uint8Array(await reviewed.original.arrayBuffer());
+    await setBase(reviewed.file,reviewed.original.name,originalBytes,
+      reviewed.original.type||'image/jpeg',false,{
+        detected:reviewed.detected,cropped:reviewed.cropped,corners:reviewed.corners
+      });
+   }else await addShots(files);
   }catch(error){setStatus(error.message,true)}
+  finally{captureReviewPending=false}
  });
  // One select ensures mutually exclusive AI/2D/3D corrections.
  root.querySelector('[data-perfect-mode]').addEventListener('change',()=>{
