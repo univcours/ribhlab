@@ -136,3 +136,48 @@ body .rivo-code-overlay.rivo-live-overlay .rivo-live-actions > button{
   flex-basis:76px!important;font-size:10px!important;
  }
 }
+
+/* Independent, accessible actions for every decoded QR / barcode.
+ * Never concatenate multiple codes into one clipboard payload.
+ * Scroll only results, keeping camera controls visible. */
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-results{
+ display:flex!important;flex-direction:column!important;flex:0 1 auto!important;
+ width:100%!important;min-height:0!important;max-height:min(26dvh,205px)!important;
+ gap:5px!important;padding:4px!important;overflow-y:auto!important;overflow-x:hidden!important;
+ white-space:normal!important;scrollbar-width:thin!important;
+ background:#0c335b!important;border-radius:11px!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-results[hidden]{display:none!important}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-row{
+ display:flex;flex:0 0 auto;gap:6px;align-items:center;justify-content:space-between;
+ min-width:0;padding:5px 6px;border:1px solid #4773a0;border-radius:9px;
+ background:#123f6d;color:#f5faff;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-info{
+ display:flex;flex:1 1 0;min-width:0;flex-direction:column;gap:2px;
+ line-height:1.2;font-size:11px;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-info strong{
+ color:#80d3ff;font-size:10px;letter-spacing:.2px;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-value{
+ display:block;max-width:100%;min-width:0;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ user-select:text;font-size:11px;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-buttons{
+ display:flex;flex:0 0 auto;align-items:center;gap:4px;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-buttons button{
+ box-sizing:border-box;min-width:42px!important;min-height:36px!important;
+ padding:6px 9px!important;border:1px solid #6da9e3!important;
+ border-radius:8px!important;background:#136bb7!important;color:#fff!important;
+ font:600 11px/1.2 system-ui,sans-serif!important;
+ white-space:nowrap!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-buttons .rivo-code-open-link{
+ background:#156c57!important;border-color:#39a58a!important;
+}
+body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-buttons button:focus-visible{
+ outline:2px solid #fff!important;outline-offset:1px!important;
+}
