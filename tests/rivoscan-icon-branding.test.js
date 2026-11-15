@@ -18,13 +18,13 @@ test('approved user-supplied R+scan brand icons are valid 512px PNG resources',(
  assert.equal(fullLogo.readUInt32BE(16),1254);
  assert.equal(createHash('sha256').update(fullLogo).digest('hex'),'06e9925f914dc19c25e43a2d80e3befa0533c308d6b0ccd6bcfb09a082888b24');
 });
-test('build uses exact approved icon, never regenerates the old colored drawing',()=>{
+test('build uses the owner-approved new blue R icon, not the older wordmark',()=>{
  const gen=text('scripts/create-turquoise-icon.mjs');
  assert.ok(gen.includes('assets/branding/rivoscan-icon-source.png'));
- assert.ok(gen.includes('assets/branding/rivoscan-icon-adaptive-foreground.png'));
+ assert.ok(gen.includes('public/rivoscan-adaptive-foreground.png'));
  assert.ok(gen.includes('public/rivoscan-icon.png'));
- assert.ok(gen.includes('assets/branding/rivoscan-logo-original.png'));
- assert.ok(gen.includes('public/rivoscan-logo.png'));
+ assert.ok(gen.includes('SOURCE_SHA256'));
+ assert.ok(gen.includes('public/rivoscan-play-icon.png'));
  assert.ok(!gen.includes('pngquant'));
  assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));
