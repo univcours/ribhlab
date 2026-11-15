@@ -3,12 +3,12 @@
  */
 export const supportedRivoLanguages=Object.freeze(['en','ar','fr','es','de','pt','it']);
 export function deviceLanguage(languages=[]){
- const list=Array.isArray(languages)?languages:[languages];
- for(const value of list){
-  const first=String(value||'').toLowerCase().split(/[-_]/)[0];
-  if(supportedRivoLanguages.includes(first))return first;
- }
- return 'en';
+ // Follow only the primary phone language. If that locale is unavailable,
+ // English is the fallback; a secondary browser preference must not silently
+ // replace the selected device language.
+ const primary=Array.isArray(languages)?languages[0]:languages;
+ const first=String(primary||'').toLowerCase().split(/[-_]/)[0];
+ return supportedRivoLanguages.includes(first)?first:'en';
 }
 export function savedLanguagePreference(storage){
  const code=storage?.getItem?.('rivo-language');
