@@ -6,12 +6,12 @@ export const mergedToolDefinitions=Object.freeze({
  convertDocument:{
   choices:['toWord','toWordTables','toExcel','toCSV','toPptEditable','toPpt','images','pdftoimages','pdfLong','extractText'],
   title:{en:'Convert document',ar:'تحويل الوثائق',fr:'Convertir le document',es:'Convertir documento',de:'Dokument konvertieren',pt:'Converter documento',it:'Converti documento'},
-  help:{en:'Choose an output format, then select your file.',ar:'اختار الصيغة، ومن بعد اختار الملف.',fr:'Choisissez le format, puis le fichier.',es:'Elige un formato y luego selecciona el archivo.',de:'Wählen Sie ein Format und dann Ihre Datei.',pt:'Escolha o formato e depois o ficheiro.',it:'Scegli il formato e poi il file.'}
+  help:{en:'Choose an output format, then select your file.',ar:'اختر الصيغة، ثم اختر الملف.',fr:'Choisissez le format, puis le fichier.',es:'Elige un formato y luego selecciona el archivo.',de:'Wählen Sie ein Format und dann Ihre Datei.',pt:'Escolha o formato e depois o ficheiro.',it:'Scegli il formato e poi il file.'}
  },
  annotatePdf:{
   choices:['sign','watermark','text','numbers'],
   title:{en:'Write & sign PDF',ar:'الكتابة والتوقيع على PDF',fr:'Écrire et signer PDF',es:'Anotar PDF',de:'PDF beschriften',pt:'Anotar PDF',it:'Annota PDF'},
-  help:{en:'Signature, watermark, page numbering and text in one place.',ar:'التوقيع والعلامة المائية وترقيم الصفحات والكتابة فبلاصة وحدة.',fr:'Signature, filigrane, numérotation et texte au même endroit.',es:'Firma, marca de agua, numeración y texto en un solo lugar.',de:'Signatur, Wasserzeichen, Seitennummern und Text an einem Ort.',pt:'Assinatura, marca de água, paginação e texto no mesmo lugar.',it:'Firma, filigrana, numerazione e testo in un unico posto.'}
+  help:{en:'Signature, watermark, page numbering and text in one place.',ar:'التوقيع والعلامة المائية وترقيم الصفحات وإضافة النص في مكان واحد.',fr:'Signature, filigrane, numérotation et texte au même endroit.',es:'Firma, marca de agua, numeración y texto en un solo lugar.',de:'Signatur, Wasserzeichen, Seitennummern und Text an einem Ort.',pt:'Assinatura, marca de água, paginação e texto no mesmo lugar.',it:'Firma, filigrana, numerazione e testo in un unico posto.'}
  },
  pdfPrivacy:{
   choices:['lockPdf','metadata'],
@@ -72,7 +72,7 @@ export function openMergedToolDialog({id,language='en',onChoose,onError=console.
  header.append(title,close);
  const info=document.createElement('p');info.textContent=fallback(def.help,language);
  const form=document.createElement('form');
- const label=document.createElement('label');label.textContent=fallback({ar:'اختار العملية',fr:'Choisir une opération',en:'Choose action',es:'Elegir acción',de:'Aktion wählen',pt:'Escolher ação',it:'Scegli azione'},language);
+ const label=document.createElement('label');label.textContent=fallback({ar:'اختر العملية',fr:'Choisir une opération',en:'Choose action',es:'Elegir acción',de:'Aktion wählen',pt:'Escolher ação',it:'Scegli azione'},language);
  const select=document.createElement('select');select.setAttribute('aria-label',label.textContent);
  for(const choice of mergedToolOptions(id,language)){
   const option=document.createElement('option');option.value=choice.action;option.textContent=choice.label;

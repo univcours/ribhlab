@@ -1,25 +1,29 @@
-/* Lightweight save toast fallback for Web/PWA and older Android shells.
- * On modern Android the native RivoDocuments.showSaveToast displays the OS toast.
- * Do not introduce a full-width banner or cover My Documents / AdMob.
- */
+/* Lightweight messages anchored just above bottom navigation / AdMob.
+   Save uses the native Android Toast whenever available. Deletion and every
+   in-app fallback use the same small non-blocking bottom toast. */
+body > .toast,
 body > .toast.rivo-save-toast{
  position:fixed!important;z-index:99998!important;
- top:calc(8px + env(safe-area-inset-top,0px))!important;bottom:auto!important;
- left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+ top:auto!important;bottom:calc(var(--rivo-content-bottom,100px) + 10px)!important;
+ left:50%!important;right:auto!important;
+ transform:translateX(-50%)!important;
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
- width:max-content!important;min-width:0!important;max-width:min(78vw,250px)!important;
- min-height:30px!important;max-height:64px!important;
- padding:7px 12px!important;margin:0!important;
- border-radius:999px!important;background:#153b60!important;color:white!important;
+ width:max-content!important;min-width:0!important;max-width:min(84vw,320px)!important;
+ min-height:30px!important;max-height:76px!important;
+ padding:8px 13px!important;margin:0!important;
+ border-radius:999px!important;background:#153b60!important;color:#fff!important;
  border:1px solid #326796!important;box-shadow:0 4px 14px #06142744!important;
- font-size:12px!important;font-weight:650!important;line-height:1.2!important;
- text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;
- pointer-events:none!important;animation:rivo-save-toast-in .16s ease-out both!important;
+ font:650 12px/1.25 system-ui,sans-serif!important;text-align:center!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+ pointer-events:none!important;animation:rivo-save-toast-in .17s ease-out both!important;
+}
+body > .toast.error{
+ background:#63303c!important;border-color:#b65b67!important;
 }
 @keyframes rivo-save-toast-in{
- from{opacity:0;transform:translate(-50%,-6px)}
+ from{opacity:0;transform:translate(-50%,7px)}
  to{opacity:1;transform:translate(-50%,0)}
 }
 @media(prefers-reduced-motion:reduce){
- body > .toast.rivo-save-toast{animation:none!important}
+ body > .toast{animation:none!important}
 }

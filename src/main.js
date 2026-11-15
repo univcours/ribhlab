@@ -18,7 +18,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import {mlkitFullOptions,persistMlKitPdf,mlkitAutoCleanMode} from './mlkit-scan-flow.js';
-import {initialLanguage} from './locale-auto.js';
+import {initialLanguage,deviceLanguage,savedLanguagePreference,isAutoLanguage} from './locale-auto.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
@@ -50,6 +50,7 @@ import './rivo-stable-scroll-layout.css';
 import './rivo-code-ultrascan.css';
 import './rivo-file-icons.css';
 import './rivo-save-toast.css';
+import './rivo-bulk-top.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -165,10 +166,28 @@ const translations = {
   pt:{welcome:'Bem-vindo ao RivoScan',hero:'Documentos resolvidos.',desc:'Digitalize, edite, converta e assine PDFs com privacidade.',start:'Digitalização inteligente',all:'Todas as ferramentas',create:'Digitalizar e criar',organize:'Organizar',edit:'Editar e assinar',convert:'Converter',quick:'Ferramentas PDF',select:'Selecionar ficheiros',upload:'Escolher ficheiros',drop:'Escolha documentos',ready:'Pronto',run:'Processar e guardar',secure:'Privacidade',privacy:'Os documentos são processados no dispositivo.',home:'Início',files:'Atividade recente',soon:'Brevemente',settings:'Idiomas'},
   it:{welcome:'Benvenuto su RivoScan',hero:'Documenti, risolti.',desc:'Scansiona, modifica, converti e firma PDF in privato.',start:'Scansione intelligente',all:'Tutti gli strumenti',create:'Scansiona e crea',organize:'Organizza',edit:'Modifica e firma',convert:'Converti',quick:'Strumenti PDF',select:'Seleziona file',upload:'Scegli file',drop:'Seleziona documenti',ready:'Pronto',run:'Elabora e salva',secure:'Privacy',privacy:'I documenti vengono elaborati sul dispositivo.',home:'Home',files:'Attività recente',soon:'In arrivo',settings:'Lingue'}
 };
-let language = initialLanguage(localStorage.getItem('rivo-language'),navigator.languages?.length?navigator.languages:[navigator.language]);
-if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
-  RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
+const browserLanguages=()=>navigator.languages?.length?navigator.languages:[navigator.language];
+let language=initialLanguage(savedLanguagePreference(localStorage),browserLanguages());
+const autoLanguageLabel={en:'Automatic (device language)',ar:'تلقائي (لغة الهاتف)',fr:'Automatique (langue du téléphone)',es:'Automático (idioma del teléfono)',de:'Automatisch (Gerätesprache)',pt:'Automático (idioma do telemóvel)',it:'Automatico (lingua del telefono)'};
+function publishNativeLanguage(){
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  void RivoDocuments.setLanguage({language}).catch(error=>console.warn('Rivo document locale:',error));
+ }
 }
+async function refreshSystemLanguage(){
+ if(!isAutoLanguage(localStorage))return;
+ let next=deviceLanguage(browserLanguages());
+ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+  try{
+   const native=await RivoDocuments.getDeviceLanguage();
+   next=deviceLanguage([native?.language]);
+  }catch(error){console.warn('Android locale fallback to WebView:',error);}
+ }
+ if(!isAutoLanguage(localStorage))return; // User selection wins even if native lookup was pending.
+ if(next!==language){language=next;render();}
+ publishNativeLanguage();
+}
+publishNativeLanguage();
 let activeTool = null;
 let soundsEnabled = localStorage.getItem('rivo-sounds') !== 'off';
 const soundWords={
@@ -296,7 +315,7 @@ const bulkUI=createLibraryBulk({
       if(activeTool?.id==='library')refreshVisibleLibrary();
       else document.getElementById('home-recents')?.replaceChildren();
       const home=document.getElementById('home-recents');if(home)home.innerHTML=recentDocuments(14);
-      toast(language==='ar'?'تبدل اسم الملف':'File renamed');
+      toast(language==='ar'?'تم تغيير اسم الملف':'File renamed');
     }catch(error){toast(error?.message||'Could not rename file',true);}
   },
   showBusy,progress,clearBusy,saveOut,toast
@@ -304,7 +323,7 @@ const bulkUI=createLibraryBulk({
 let libraryFilter = 'all', librarySort = 'newest';
 const uiText={
  en:{home:'Home',documents:'Documents',tools:'Tools',me:'Me',search:'Search your saved documents',recent:'Recent documents',seeAll:'See all',quick:'Quick tools',safe:'Private, saved on your phone',scan:'Smart Scan',pdf:'PDF Tools',import:'Import images',merge:'Merge documents',welcome:'Scan it. Find it. Share it.',myFiles:'My files',settings:'Settings',device:'Saved in Documents/RivoScan',privacy:'Your documents stay on your phone',noAccount:'No account needed',general:'General',language:'App language',about:'About RivoScan',help:'Help & support',storage:'Storage',openDocuments:'Open My Documents',allFiles:'All files',pdfFiles:'PDF',images:'Images',sort:'Sort',newest:'Newest first',oldest:'Oldest first',name:'Name',size:'Size',list:'List',grid:'Grid',noRecent:'Your saved documents appear here after your first scan.'},
- ar:{home:'الرئيسية',documents:'وثائقي',tools:'الأدوات',me:'حسابي',search:'قلب على الوثائق ديالك',recent:'آخر الوثائق',seeAll:'عرض الكل',quick:'أدوات سريعة',safe:'الوثائق محفوظة فالهاتف',scan:'سكانير ذكي',pdf:'أدوات PDF',import:'استيراد صور',merge:'جمع الوثائق',welcome:'صوّر، حفظ، وشارك بسهولة',myFiles:'ملفاتي',settings:'الإعدادات',device:'محفوظة في Documents/RivoScan',privacy:'وثائقك كتبقى فالهاتف',noAccount:'ما محتاجش حساب',general:'الإعدادات العامة',language:'لغة التطبيق',about:'حول RivoScan',help:'المساعدة',storage:'التخزين',openDocuments:'فتح وثائقي',allFiles:'جميع الملفات',pdfFiles:'PDF',images:'الصور',sort:'الترتيب',newest:'الأحدث',oldest:'الأقدم',name:'الاسم',size:'الحجم',list:'قائمة',grid:'شبكة',noRecent:'الوثائق ديالك غادي تبان هنا من بعد أول سكان.'},
+ ar:{home:'الرئيسية',documents:'وثائقي',tools:'الأدوات',me:'حسابي',search:'ابحث في مستنداتك',recent:'آخر الوثائق',seeAll:'عرض الكل',quick:'أدوات سريعة',safe:'المستندات محفوظة على الهاتف',scan:'مسح ضوئي ذكي',pdf:'أدوات PDF',import:'استيراد صور',merge:'جمع الوثائق',welcome:'صوّر واحفظ وشارك بسهولة',myFiles:'ملفاتي',settings:'الإعدادات',device:'محفوظة في Documents/RivoScan',privacy:'تبقى مستنداتك محفوظة على الهاتف',noAccount:'لا يلزم إنشاء حساب',general:'الإعدادات العامة',language:'لغة التطبيق',about:'حول RivoScan',help:'المساعدة',storage:'التخزين',openDocuments:'فتح وثائقي',allFiles:'جميع الملفات',pdfFiles:'PDF',images:'الصور',sort:'الترتيب',newest:'الأحدث',oldest:'الأقدم',name:'الاسم',size:'الحجم',list:'قائمة',grid:'شبكة',noRecent:'ستظهر مستنداتك هنا بعد أول مسح ضوئي.'},
  fr:{home:'Accueil',documents:'Documents',tools:'Outils',me:'Mon espace',search:'Chercher un document',recent:'Documents récents',seeAll:'Tout voir',quick:'Outils rapides',safe:'Fichiers enregistrés sur le téléphone',scan:'Scanner',pdf:'Outils PDF',import:'Importer images',merge:'Fusionner documents',welcome:'Scannez. Retrouvez. Partagez.',myFiles:'Mes fichiers',settings:'Paramètres',device:'Enregistrés dans Documents/RivoScan',privacy:'Vos documents restent sur votre téléphone',noAccount:'Aucun compte nécessaire',general:'Général',language:'Langue',about:'À propos de RivoScan',help:'Aide',storage:'Stockage',openDocuments:'Ouvrir les documents',allFiles:'Tous',pdfFiles:'PDF',images:'Images',sort:'Trier',newest:'Plus récents',oldest:'Plus anciens',name:'Nom',size:'Taille',list:'Liste',grid:'Grille',noRecent:'Vos documents apparaîtront ici après le premier scan.'},
  es:{home:'Inicio',documents:'Documentos',tools:'Herramientas',me:'Mi espacio',search:'Buscar documentos',recent:'Documentos recientes',seeAll:'Ver todo',quick:'Accesos rápidos',safe:'Guardado en tu teléfono',scan:'Escanear',pdf:'Herramientas PDF',import:'Importar imágenes',merge:'Combinar documentos',welcome:'Escanea. Guarda. Comparte.',myFiles:'Mis archivos',settings:'Configuración',device:'Guardados en Documents/RivoScan',privacy:'Tus documentos quedan en tu teléfono',noAccount:'No necesitas cuenta',general:'General',language:'Idioma',about:'Acerca de RivoScan',help:'Ayuda',storage:'Almacenamiento',openDocuments:'Abrir documentos',allFiles:'Todos',pdfFiles:'PDF',images:'Imágenes',sort:'Ordenar',newest:'Recientes',oldest:'Antiguos',name:'Nombre',size:'Tamaño',list:'Lista',grid:'Cuadrícula',noRecent:'Los documentos aparecerán aquí al escanear.'},
  de:{home:'Start',documents:'Dokumente',tools:'Werkzeuge',me:'Profil',search:'Dokumente suchen',recent:'Letzte Dokumente',seeAll:'Alle',quick:'Schnellzugriff',safe:'Auf dem Telefon gespeichert',scan:'Scannen',pdf:'PDF-Werkzeuge',import:'Bilder importieren',merge:'Dokumente kombinieren',welcome:'Scannen. Finden. Teilen.',myFiles:'Meine Dateien',settings:'Einstellungen',device:'Documents/RivoScan',privacy:'Dateien bleiben auf deinem Telefon',noAccount:'Kein Konto nötig',general:'Allgemein',language:'Sprache',about:'Über RivoScan',help:'Hilfe',storage:'Speicher',openDocuments:'Dokumente öffnen',allFiles:'Alle',pdfFiles:'PDF',images:'Bilder',sort:'Sortieren',newest:'Neueste',oldest:'Älteste',name:'Name',size:'Größe',list:'Liste',grid:'Raster',noRecent:'Deine Scans erscheinen hier.'},
@@ -315,10 +334,10 @@ const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
 const tn=t=>toolText(language,t.id,'name');
 const td=t=>toolText(language,t.id,'desc');
 const lt=key=>L(language,key);
-const vivoFolderLabel=()=>({en:'Open phone folder',ar:'فتح المجلد فالهاتف',fr:'Ouvrir le dossier',es:'Abrir carpeta',de:'Ordner öffnen',pt:'Abrir pasta',it:'Apri cartella'})[language]||'Open phone folder';
+const vivoFolderLabel=()=>({en:'Open phone folder',ar:'فتح المجلد على الهاتف',fr:'Ouvrir le dossier',es:'Abrir carpeta',de:'Ordner öffnen',pt:'Abrir pasta',it:'Apri cartella'})[language]||'Open phone folder';
 
 const localizeOptionMarkup=markup=>localizeOptions(language,markup);
-const homeVisualText={"en":{"search":"Search documents","id":"ID Cards","sign":"Sign PDF","all":"All","pdf":"PDF Tools","extract":"Extract Text","share":"Share","savePdf":"Save as PDF","view":"View","open":"Open","recentSubtitle":"Your recent scans and files, ready when you need them","hold":"Long press a document to select several","results":"Search results","noResults":"No matching documents yet","toolsTip":"Browse the tools","openFolder":"Open my documents","quickTools":"Quick actions","scan":"Smart Scan","importPhotos":"Import Images","importFiles":"Import Files","back":"Back","typePdf":"PDF","select":"Select","more":"More actions","size":"Size","edited":"Latest"},"ar":{"search":"قلب على الوثائق","id":"البطاقة الوطنية","sign":"توقيع PDF","all":"الكل","pdf":"أدوات PDF","extract":"استخراج النص","share":"مشاركة","savePdf":"حفظ PDF","view":"معاينة","open":"فتح","recentSubtitle":"آخر الوثائق ديالك جاهزة للفتح والمشاركة","hold":"ضغط مطوّل على الوثيقة باش تحدد عدة ملفات","results":"نتائج البحث","noResults":"ما لقينا حتى وثيقة بهاد الاسم","toolsTip":"شوف جميع الأدوات","openFolder":"فتح وثائقي","quickTools":"أدوات سريعة","scan":"سكانير ذكي","importPhotos":"استيراد الصور","importFiles":"استيراد الملفات","back":"رجوع","typePdf":"PDF","select":"تحديد","more":"المزيد","size":"الحجم","edited":"الأخير"},"fr":{"search":"Rechercher des documents","id":"Cartes d’identité","sign":"Signer PDF","all":"Tout","pdf":"Outils PDF","extract":"Extraire texte","share":"Partager","savePdf":"Enregistrer PDF","view":"Voir","open":"Ouvrir","recentSubtitle":"Vos documents récents à portée de main","hold":"Appui long pour sélectionner plusieurs documents","results":"Résultats","noResults":"Aucun document trouvé","toolsTip":"Voir tous les outils","openFolder":"Mes documents","quickTools":"Accès rapide","scan":"Scan intelligent","importPhotos":"Importer images","importFiles":"Importer fichiers","back":"Retour","typePdf":"PDF","select":"Sélectionner","more":"Plus d’actions","size":"Taille","edited":"Récent"},"es":{"search":"Buscar documentos","id":"Tarjetas de identidad","sign":"Firmar PDF","all":"Todo","pdf":"Herramientas PDF","extract":"Extraer texto","share":"Compartir","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Tus documentos recientes, a mano","hold":"Mantén pulsado para seleccionar varios archivos","results":"Resultados","noResults":"No se encontraron archivos","toolsTip":"Todas las herramientas","openFolder":"Mis documentos","quickTools":"Accesos rápidos","scan":"Escaneo inteligente","importPhotos":"Importar imágenes","importFiles":"Importar archivos","back":"Volver","typePdf":"PDF","select":"Seleccionar","more":"Más acciones","size":"Tamaño","edited":"Reciente"},"de":{"search":"Dokumente suchen","id":"Ausweise","sign":"PDF signieren","all":"Alle","pdf":"PDF-Werkzeuge","extract":"Text erkennen","share":"Teilen","savePdf":"PDF speichern","view":"Ansehen","open":"Öffnen","recentSubtitle":"Letzte Dokumente direkt verfügbar","hold":"Lange drücken, um mehrere Dateien auszuwählen","results":"Ergebnisse","noResults":"Keine passenden Dokumente","toolsTip":"Alle Werkzeuge","openFolder":"Meine Dokumente","quickTools":"Schnellaktionen","scan":"Smart-Scan","importPhotos":"Bilder importieren","importFiles":"Dateien importieren","back":"Zurück","typePdf":"PDF","select":"Auswählen","more":"Mehr Aktionen","size":"Größe","edited":"Neu"},"pt":{"search":"Pesquisar documentos","id":"Cartões de identidade","sign":"Assinar PDF","all":"Todos","pdf":"Ferramentas PDF","extract":"Extrair texto","share":"Partilhar","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Documentos recentes sempre disponíveis","hold":"Toque longo para selecionar vários ficheiros","results":"Resultados","noResults":"Nenhum documento encontrado","toolsTip":"Todas as ferramentas","openFolder":"Os meus documentos","quickTools":"Acesso rápido","scan":"Scanner inteligente","importPhotos":"Importar imagens","importFiles":"Importar ficheiros","back":"Voltar","typePdf":"PDF","select":"Selecionar","more":"Mais ações","size":"Tamanho","edited":"Recente"},"it":{"search":"Cerca documenti","id":"Carte d’identità","sign":"Firma PDF","all":"Tutti","pdf":"Strumenti PDF","extract":"Estrai testo","share":"Condividi","savePdf":"Salva PDF","view":"Apri","open":"Apri","recentSubtitle":"I tuoi documenti recenti a portata di mano","hold":"Tieni premuto per selezionare più file","results":"Risultati","noResults":"Nessun documento trovato","toolsTip":"Tutti gli strumenti","openFolder":"I miei documenti","quickTools":"Azioni rapide","scan":"Scansione intelligente","importPhotos":"Importa immagini","importFiles":"Importa file","back":"Indietro","typePdf":"PDF","select":"Seleziona","more":"Altre azioni","size":"Dimensione","edited":"Recente"}};
+const homeVisualText={"en":{"search":"Search documents","id":"ID Cards","sign":"Sign PDF","all":"All","pdf":"PDF Tools","extract":"Extract Text","share":"Share","savePdf":"Save as PDF","view":"View","open":"Open","recentSubtitle":"Your recent scans and files, ready when you need them","hold":"Long press a document to select several","results":"Search results","noResults":"No matching documents yet","toolsTip":"Browse the tools","openFolder":"Open my documents","quickTools":"Quick actions","scan":"Smart Scan","importPhotos":"Import Images","importFiles":"Import Files","back":"Back","typePdf":"PDF","select":"Select","more":"More actions","size":"Size","edited":"Latest"},"ar":{"search":"ابحث عن المستندات","id":"البطاقة الوطنية","sign":"توقيع PDF","all":"الكل","pdf":"أدوات PDF","extract":"استخراج النص","share":"مشاركة","savePdf":"حفظ PDF","view":"معاينة","open":"فتح","recentSubtitle":"مستنداتك الأخيرة جاهزة للفتح والمشاركة","hold":"اضغط مطولًا على المستند لتحديد عدة ملفات","results":"نتائج البحث","noResults":"لم يتم العثور على مستند بهذا الاسم","toolsTip":"عرض جميع الأدوات","openFolder":"فتح وثائقي","quickTools":"أدوات سريعة","scan":"مسح ضوئي ذكي","importPhotos":"استيراد الصور","importFiles":"استيراد الملفات","back":"رجوع","typePdf":"PDF","select":"تحديد","more":"المزيد","size":"الحجم","edited":"الأخير"},"fr":{"search":"Rechercher des documents","id":"Cartes d’identité","sign":"Signer PDF","all":"Tout","pdf":"Outils PDF","extract":"Extraire texte","share":"Partager","savePdf":"Enregistrer PDF","view":"Voir","open":"Ouvrir","recentSubtitle":"Vos documents récents à portée de main","hold":"Appui long pour sélectionner plusieurs documents","results":"Résultats","noResults":"Aucun document trouvé","toolsTip":"Voir tous les outils","openFolder":"Mes documents","quickTools":"Accès rapide","scan":"Scan intelligent","importPhotos":"Importer images","importFiles":"Importer fichiers","back":"Retour","typePdf":"PDF","select":"Sélectionner","more":"Plus d’actions","size":"Taille","edited":"Récent"},"es":{"search":"Buscar documentos","id":"Tarjetas de identidad","sign":"Firmar PDF","all":"Todo","pdf":"Herramientas PDF","extract":"Extraer texto","share":"Compartir","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Tus documentos recientes, a mano","hold":"Mantén pulsado para seleccionar varios archivos","results":"Resultados","noResults":"No se encontraron archivos","toolsTip":"Todas las herramientas","openFolder":"Mis documentos","quickTools":"Accesos rápidos","scan":"Escaneo inteligente","importPhotos":"Importar imágenes","importFiles":"Importar archivos","back":"Volver","typePdf":"PDF","select":"Seleccionar","more":"Más acciones","size":"Tamaño","edited":"Reciente"},"de":{"search":"Dokumente suchen","id":"Ausweise","sign":"PDF signieren","all":"Alle","pdf":"PDF-Werkzeuge","extract":"Text erkennen","share":"Teilen","savePdf":"PDF speichern","view":"Ansehen","open":"Öffnen","recentSubtitle":"Letzte Dokumente direkt verfügbar","hold":"Lange drücken, um mehrere Dateien auszuwählen","results":"Ergebnisse","noResults":"Keine passenden Dokumente","toolsTip":"Alle Werkzeuge","openFolder":"Meine Dokumente","quickTools":"Schnellaktionen","scan":"Smart-Scan","importPhotos":"Bilder importieren","importFiles":"Dateien importieren","back":"Zurück","typePdf":"PDF","select":"Auswählen","more":"Mehr Aktionen","size":"Größe","edited":"Neu"},"pt":{"search":"Pesquisar documentos","id":"Cartões de identidade","sign":"Assinar PDF","all":"Todos","pdf":"Ferramentas PDF","extract":"Extrair texto","share":"Partilhar","savePdf":"Guardar PDF","view":"Ver","open":"Abrir","recentSubtitle":"Documentos recentes sempre disponíveis","hold":"Toque longo para selecionar vários ficheiros","results":"Resultados","noResults":"Nenhum documento encontrado","toolsTip":"Todas as ferramentas","openFolder":"Os meus documentos","quickTools":"Acesso rápido","scan":"Scanner inteligente","importPhotos":"Importar imagens","importFiles":"Importar ficheiros","back":"Voltar","typePdf":"PDF","select":"Selecionar","more":"Mais ações","size":"Tamanho","edited":"Recente"},"it":{"search":"Cerca documenti","id":"Carte d’identità","sign":"Firma PDF","all":"Tutti","pdf":"Strumenti PDF","extract":"Estrai testo","share":"Condividi","savePdf":"Salva PDF","view":"Apri","open":"Apri","recentSubtitle":"I tuoi documenti recenti a portata di mano","hold":"Tieni premuto per selezionare più file","results":"Risultati","noResults":"Nessun documento trovato","toolsTip":"Tutti gli strumenti","openFolder":"I miei documenti","quickTools":"Azioni rapide","scan":"Scansione intelligente","importPhotos":"Importa immagini","importFiles":"Importa file","back":"Indietro","typePdf":"PDF","select":"Seleziona","more":"Altre azioni","size":"Dimensione","edited":"Recente"}};
 const hv=key=>(homeVisualText[language]||homeVisualText.en)[key]||key;
 let homeSearchQuery='';
 let homeExpandedUri=null;
@@ -330,7 +349,7 @@ const formatSize = (n)=>n<1024*1024?`${(n/1024).toFixed(1)} KB`:`${(n/1024/1024)
 const libraryLabels={
  en:{documents:'My Documents',saved:'Saved on your phone',open:'Open',share:'Share',remove:'Delete',empty:'Your saved scans and PDFs will appear here.',search:'Search documents',confirm:'Delete this file from Documents/RivoScan? This cannot be undone.',folder:'Documents / RivoScan',saving:'Saving PDF to your phone…',savedNow:'Saved to Documents/RivoScan',scan:'Scan a document',files:'Files',all:'All tools'},
  fr:{documents:'Mes documents',saved:'Enregistrés sur le téléphone',open:'Ouvrir',share:'Partager',remove:'Supprimer',empty:'Vos scans et PDF sauvegardés apparaîtront ici.',search:'Rechercher',confirm:'Supprimer ce fichier de Documents/RivoScan ?',folder:'Documents / RivoScan',saving:'Enregistrement du PDF…',savedNow:'Enregistré dans Documents/RivoScan',scan:'Scanner un document',files:'Fichiers',all:'Tous les outils'},
- ar:{documents:'وثائقي',saved:'محفوظة في ذاكرة الهاتف',open:'فتح',share:'مشاركة',remove:'حذف',empty:'الوثائق وملفات PDF اللي حفظتي غادي تلقاها هنا.',search:'قلب على وثيقة',confirm:'واش تحذف هاد الملف نهائياً من Documents/RivoScan؟',folder:'الوثائق / RivoScan',saving:'جاري حفظ PDF في الهاتف…',savedNow:'تحفظ الملف في Documents/RivoScan',scan:'سكانير جديد',files:'ملفات',all:'جميع الأدوات'},
+ ar:{documents:'وثائقي',saved:'محفوظة في ذاكرة الهاتف',open:'فتح',share:'مشاركة',remove:'حذف',empty:'ستظهر هنا المستندات وملفات PDF التي حفظتها.',search:'ابحث عن مستند',confirm:'هل تريد حذف هذا الملف نهائيًا من Documents/RivoScan؟',folder:'الوثائق / RivoScan',saving:'جاري حفظ PDF في الهاتف…',savedNow:'تم حفظ الملف في Documents/RivoScan',scan:'مسح ضوئي جديد',files:'ملفات',all:'جميع الأدوات'},
  es:{documents:'Mis documentos',saved:'Guardados en el teléfono',open:'Abrir',share:'Compartir',remove:'Eliminar',empty:'Tus escaneos y PDF aparecerán aquí.',search:'Buscar documentos',confirm:'¿Eliminar este archivo de Documents/RivoScan?',folder:'Documents / RivoScan',saving:'Guardando PDF…',savedNow:'Guardado en Documents/RivoScan',scan:'Escanear documento',files:'Archivos',all:'Todas las herramientas'},
  de:{documents:'Meine Dokumente',saved:'Auf dem Smartphone gespeichert',open:'Öffnen',share:'Teilen',remove:'Löschen',empty:'Gespeicherte Scans und PDFs erscheinen hier.',search:'Dokumente suchen',confirm:'Datei aus Documents/RivoScan löschen?',folder:'Documents / RivoScan',saving:'PDF wird gespeichert…',savedNow:'Gespeichert in Documents/RivoScan',scan:'Dokument scannen',files:'Dateien',all:'Alle Werkzeuge'},
  pt:{documents:'Meus documentos',saved:'Guardados no telefone',open:'Abrir',share:'Compartilhar',remove:'Excluir',empty:'Digitalizações e PDFs guardados aparecem aqui.',search:'Procurar documentos',confirm:'Excluir de Documents/RivoScan?',folder:'Documents / RivoScan',saving:'A guardar PDF…',savedNow:'Guardado em Documents/RivoScan',scan:'Digitalizar',files:'Ficheiros',all:'Todas as ferramentas'},
@@ -340,7 +359,7 @@ const dl=(key)=>libraryLabels[language]?.[key]||libraryLabels.en[key]||key;
 const scanLabels={
  en:{title:'Scan document',live:'Camera · Live edges · Auto crop',import:'Import a photo',corners:'Detect and adjust 4 corners',pages:'Your pages',auto:'Scans are saved automatically after capture',add:'Add photos',basic:'Basic camera',save:'Save pages as PDF',hint:'Saved documents stay on your phone.',crop:'Auto-crop with ML Kit',ready:'Live borders ready',fallback:'If live camera fails, use ML Kit',refresh:'Refresh'},
  fr:{title:'Scanner un document',live:'Caméra · Bords en direct · Recadrage',import:'Importer une photo',corners:'Détecter et ajuster les 4 coins',pages:'Vos pages',auto:'Les scans sont enregistrés automatiquement',add:'Ajouter des photos',basic:'Caméra simple',save:'Enregistrer en PDF',hint:'Les documents restent sur le téléphone.',crop:'Recadrage intelligent ML Kit',ready:'Détection des bords active',fallback:'Si la caméra échoue, utilisez ML Kit',refresh:'Actualiser'},
- ar:{title:'سكانير الوثائق',live:'كاميرا · تحديد الحواف · قص تلقائي',import:'استيراد صورة',corners:'تحديد وتعديل الزوايا الأربعة',pages:'الصفحات المصورة',auto:'الوثائق كتتحفظ تلقائياً من بعد السكان',add:'زيادة صور',basic:'الكاميرا العادية',save:'حفظ الصفحات PDF',hint:'وثائقك محفوظة فالهاتف وتقدر ترجع ليها أي وقت.',crop:'قص تلقائي ذكي ML Kit',ready:'تحديد الحواف المباشر خدام',fallback:'إلا ما خدمتش الكاميرا جرب القص الذكي ML Kit',refresh:'تحديث'},
+ ar:{title:'ماسح المستندات',live:'كاميرا · تحديد الحواف · قص تلقائي',import:'استيراد صورة',corners:'تحديد وتعديل الزوايا الأربعة',pages:'الصفحات المصورة',auto:'تُحفظ المستندات تلقائيًا بعد المسح الضوئي',add:'زيادة صور',basic:'الكاميرا العادية',save:'حفظ الصفحات PDF',hint:'مستنداتك محفوظة على الهاتف ويمكنك الوصول إليها في أي وقت.',crop:'قص تلقائي ذكي ML Kit',ready:'تحديد الحواف المباشر متاح',fallback:'إذا تعذّر تشغيل الكاميرا، جرّب القص الذكي ML Kit',refresh:'تحديث'},
  es:{title:'Escanear documento',live:'Cámara · Bordes · Recorte automático',import:'Importar foto',corners:'Detectar y ajustar 4 esquinas',pages:'Tus páginas',auto:'Los escaneos se guardan automáticamente',add:'Añadir fotos',basic:'Cámara básica',save:'Guardar PDF',hint:'Tus archivos se quedan en el teléfono.',crop:'Recorte ML Kit',ready:'Bordes detectados',fallback:'Si falla la cámara, usa ML Kit',refresh:'Actualizar'},
  de:{title:'Dokument scannen',live:'Kamera · Kanten · Automatisch zuschneiden',import:'Foto importieren',corners:'Vier Ecken erkennen und anpassen',pages:'Deine Seiten',auto:'Scans werden automatisch gespeichert',add:'Fotos hinzufügen',basic:'Einfache Kamera',save:'Seiten als PDF speichern',hint:'Dateien bleiben auf dem Smartphone.',crop:'ML Kit Auto-Zuschnitt',ready:'Live-Kanten bereit',fallback:'Falls Kamera nicht startet, ML Kit verwenden',refresh:'Aktualisieren'},
  pt:{title:'Digitalizar documento',live:'Câmara · Bordas · Recorte automático',import:'Importar foto',corners:'Detetar e ajustar 4 cantos',pages:'As suas páginas',auto:'As digitalizações são guardadas automaticamente',add:'Adicionar fotos',basic:'Câmara simples',save:'Guardar PDF',hint:'Os documentos ficam guardados no telemóvel.',crop:'Recorte ML Kit',ready:'Deteção ativa',fallback:'Se a câmara falhar, use ML Kit',refresh:'Atualizar'},
@@ -360,7 +379,7 @@ function render(){
     <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-header-mark.png" alt="RivoScan blue scan icon"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
     <div class="rivo-top-controls" role="group" aria-label="Language and sound">
       <label class="rivo-top-locale" aria-label="Language">${ico('globe',15)}
-        <select id="header-language" aria-label="Language">${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${language===code?'selected':''}>${label}</option>`).join('')}</select>
+        <select id="header-language" aria-label="Language"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>${({en:'AUTO',ar:'تلقائي',fr:'AUTO',es:'AUTO',de:'AUTO',pt:'AUTO',it:'AUTO'})[language]||'AUTO'}</option>${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${!isAutoLanguage(localStorage)&&language===code?'selected':''}>${label}</option>`).join('')}</select>
       </label>
       <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
     </div>
@@ -427,8 +446,8 @@ function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
  if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',symbol:'filelines'};
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',symbol:'image'};
- if(/^(rs|rivoscan)_qr_/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
- if(/^(rs_bar|rivoscan_barcode)_/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
+ if(/^(?:rs|rivoscan)_qr(?:_|\.)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
+ if(/^(?:rs_bar(?:_|\.)|rivoscan_barcode_)/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',symbol:'sheet'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',symbol:'filelines'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',symbol:'archive'};
@@ -473,7 +492,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
 }
 const RIVO_FEATURE_TEXT={
  en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · folds, curves and shadows',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
- ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · تقويم التجاعيد والانحناء',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
+ ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية في واجهة واحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي عند ثبات المستند',qr:'QR / Barcode UltraScan',qrSub:'كاميرا واحدة تتعرف على الرموز تلقائيًا',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · تقويم التجاعيد والانحناء',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
  fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
 };
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
@@ -515,7 +534,7 @@ function home(){
  </section>`;
 }
 function toolsWorkspace(){
- const copy=({en:'Search tools',ar:'قلب على الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
+ const copy=({en:'Search tools',ar:'البحث عن الأدوات',fr:'Rechercher un outil',es:'Buscar herramienta',de:'Werkzeug suchen',pt:'Pesquisar ferramentas',it:'Cerca strumenti'})[language]||'Search tools';
  return `<section class="app-tools rivo-tools-hub"><div class="rivo-search-title-row rivo-tools-search-title-row">
   <div class="rivo-tools-heading"><h1>${ut('tools')}</h1></div>
   <label class="rivo-tools-search">${ico('search',19)}<input id="tools-query" type="search" aria-label="${copy}" placeholder="${copy}" autocomplete="off"></label>
@@ -559,9 +578,9 @@ function settingsWorkspace(){
    </div>
   </details>
  </div>
- <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}">${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${language===id?'selected':''}>${l}</option>`).join('')}</select></label>
+ <div class="settings-section"><h2>${ut('general')}</h2><label class="settings-row settings-lang"><span class="settings-row-icon">${ico('info',22)}</span><span><strong>${ut('language')}</strong></span><select id="language" aria-label="${ut('language')}"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>${autoLanguageLabel[language]||autoLanguageLabel.en}</option>${[['en','English'],['fr','Français'],['ar','العربية'],['es','Español'],['de','Deutsch'],['pt','Português'],['it','Italiano']].map(([id,l])=>`<option value="${id}" ${!isAutoLanguage(localStorage)&&language===id?'selected':''}>${l}</option>`).join('')}</select></label>
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
- <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'شنو الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
+ <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
@@ -576,7 +595,7 @@ function settingsWorkspace(){
     <p>${ad.testMode?'TEST ads — no revenue':'LIVE AdMob inventory'}</p>
   ${ad.lastError?'<p class="rivo-ad-error">'+escapeHTML(ad.lastError)+'</p>':''}
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
-  <small>${({ar:'البانر معطّل. الإعلانات الكاملة كتبان غير بين العمليات وبعد الموافقة.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
+  <small>${({ar:'الإعلان الشريطي معطّل. تظهر الإعلانات بملء الشاشة بين العمليات وبعد الموافقة فقط.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
  </div>` : ''}
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </div></section>`;
@@ -781,7 +800,7 @@ async function handleLibraryAction(type,index){
     if(type==='delete'){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
-      toast(dl('remove')+' ✓');
+      toast((({ar:'تم حذف الملف',en:'File deleted',fr:'Fichier supprimé',es:'Archivo eliminado',de:'Datei gelöscht',pt:'Ficheiro eliminado',it:'File eliminato'})[language]||'File deleted')+' ✓');
     } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
@@ -967,9 +986,15 @@ function wire(){
     document.querySelectorAll('[data-ad-test]').forEach(el=>el.addEventListener('click',async()=>{const shown=await showTestInterstitial();if(!shown)toast(getPremiumStatus().lastError||getPremiumStatus().status,true);if(activeTool?.id==='me')render()}));
   }
   document.querySelectorAll('#language,#header-language').forEach(control=>control.addEventListener('change',e=>{
-    language=e.target.value;localStorage.setItem('rivo-language',language);
-    if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android')RivoDocuments.setLanguage({language}).catch(console.warn);
-    render();
+    const chosen=e.target.value;
+    if(chosen==='auto'){
+      localStorage.removeItem('rivo-language');
+      language=deviceLanguage(browserLanguages());
+      render();void refreshSystemLanguage();return;
+    }
+    if(!['en','ar','fr','es','de','pt','it'].includes(chosen))return;
+    language=chosen;localStorage.setItem('rivo-language',language);
+    publishNativeLanguage();render();
   }));
   document.querySelectorAll('[data-scan-pref]').forEach(el=>el.addEventListener('change',e=>{
     const field=SCAN_PREF_FIELDS.find(item=>item.key===e.target.dataset.scanPref);
@@ -1189,7 +1214,7 @@ function addSelectedFiles(picked){
 let nativeCaptureDepth=0;
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
   if(COMPACT_BUILD){
-    toast(language==='ar'?'النسخة الخفيفة كتستعمل Google Scanner: اختار الصورة من Gallery':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
+    toast(language==='ar'?'يستخدم الإصدار الخفيف Google Scanner: اختر الصورة من المعرض':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
     await openSmartScanner({mode});
     return;
   }
@@ -1375,9 +1400,12 @@ async function openCamera(){
 }
 function toast(text,error=false,compact=false){
  document.querySelector('.toast')?.remove();
- const el=document.createElement('div');el.className='toast'+(error?' error':'')+(compact?' rivo-save-toast':'');
- el.setAttribute('role','status');el.textContent=translateStatus(language,text);
- document.body.appendChild(el);setTimeout(()=>el.remove(),compact?2200:5000);
+ const el=document.createElement('div');
+ el.className='toast rivo-save-toast'+(error?' error':'');
+ el.setAttribute('role',error?'alert':'status');
+ el.textContent=translateStatus(language,text);
+ document.body.appendChild(el);
+ setTimeout(()=>el.remove(),error?4200:2400);
 }
 function saveToast(text='Saved ✓'){
  const message=translateStatus(language,text);
@@ -1481,7 +1509,7 @@ async function saveReceivedPeerFile(bytes,name,mime){
 function peerWorkspace(){
  const copy={
   en:['Direct device transfer','Share your files privately using a one-time pairing code. Both devices must be connected.','Create sender code','Accept sender code','Complete connection','My code','Code from the other device','Copy code','Choose documents','Send selected files','Connection not yet established','No cloud link is generated. Pairing is manual and some networks may block direct connections.'],
-  ar:['نقل مباشر بين الأجهزة','صيفط الوثائق مباشرة برمز ربط مؤقت. خاص الجهازين يكونو متصلين.','إنشاء رمز الإرسال','قبول رمز المرسل','إتمام الربط','الكود ديالي','كود الجهاز الآخر','نسخ الرمز','اختار الوثائق','صيفط الوثائق','مازال ما اتصلناش','ما كننشئوش رابط سحابي عام؛ الربط يدوي وبعض الشبكات تقدر تمنع الاتصال المباشر.'],
+  ar:['نقل مباشر بين الأجهزة','أرسل المستندات مباشرة باستخدام رمز اتصال مؤقت. يجب أن يكون الجهازان متصلين.','إنشاء رمز الإرسال','قبول رمز المرسل','إتمام الربط','رمز جهازي','كود الجهاز الآخر','نسخ الرمز','اختر المستندات','إرسال المستندات','لم يتم الاتصال بعد','لا يتم إنشاء رابط سحابي عام. يتم الاتصال يدويًا، وقد تمنع بعض الشبكات الاتصال المباشر.'],
   fr:['Transfert direct','Envoyez vos documents via un code temporaire entre deux appareils connectés.','Créer un code','Accepter le code','Terminer la connexion','Mon code','Code du correspondant','Copier le code','Choisir des fichiers','Envoyer','Non connecté','Aucun lien cloud. L’appairage est manuel et certains réseaux peuvent bloquer la connexion.'],
   es:['Transferencia directa','Comparte archivos usando un código temporal de vinculación.','Crear código','Aceptar código','Completar conexión','Mi código','Código remoto','Copiar código','Elegir documentos','Enviar','Sin conexión','No se crea enlace público. Puede fallar en ciertas redes.'],
   de:['Direkte Übertragung','Dateien per einmaligem Kopplungscode austauschen.','Code erstellen','Code annehmen','Verbinden','Mein Code','Code des Partners','Code kopieren','Dateien auswählen','Senden','Nicht verbunden','Kein öffentlicher Cloud-Link. Einige Netzwerke verhindern direkte Verbindungen.'],
@@ -1732,6 +1760,7 @@ document.addEventListener('touchend',event=>{
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
 render();
+void refreshSystemLanguage();
 // Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
 void startAdsAtLaunch();
 void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
@@ -1765,6 +1794,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
   let backgroundStartedAt=0;
   CapacitorApp.addListener('appStateChange',({isActive})=>{
     if(isActive){
+      void refreshSystemLanguage();
       loadLibrary(activeTool?.id==='library');
       syncNativeSoundSetting();
       void checkPlayUpdate({language,working:busy||nativeCaptureDepth>0,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});

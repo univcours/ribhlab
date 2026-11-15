@@ -215,6 +215,24 @@ public class RivoDocumentsPlugin extends Plugin {
         return getContext().getSharedPreferences("rivoscan-preferences",Context.MODE_PRIVATE)
                 .getString("language","en");
     }
+    /** Android is the locale source of truth when WebView and device differ. */
+    @PluginMethod
+    public void getDeviceLanguage(PluginCall call){
+        try {
+            java.util.Locale device;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                device=getContext().getResources().getConfiguration().getLocales().get(0);
+            } else {
+                device=getContext().getResources().getConfiguration().locale;
+            }
+            if (device == null) device=java.util.Locale.ENGLISH;
+            JSObject result=new JSObject();
+            result.put("language",device.toLanguageTag());
+            call.resolve(result);
+        } catch(Exception error) {
+            call.reject("Device language unavailable: "+error.getMessage(),error);
+        }
+    }
     @PluginMethod
     public void setLanguage(PluginCall call){
         String chosen=call.getString("language","en");
@@ -494,7 +512,7 @@ public class RivoDocumentsPlugin extends Plugin {
     }
 
     /**
-     * Append a verified QR/barcode result to a stable, date-scoped TXT in
+     * Append a verified QR/barcode result to one of two permanent TXT logs in
      * Documents/RivoScan. Existing content is never replaced. Retried exact
      * entries are detected before appending, protecting recovery after a
      * process interruption or a WebView restart.
@@ -505,7 +523,7 @@ public class RivoDocumentsPlugin extends Plugin {
         final String name=call.getString("name","");
         final String mime=call.getString("mimeType","");
         final String line=call.getString("line","");
-        if(!name.matches("RS_(QR|Bar)_\\d{8}\\.txt")){
+        if(!("RS_QR.txt".equals(name)||"RS_Bar.txt".equals(name))){
             call.reject("Invalid scanner TXT name.");return;
         }
         if(!"text/plain".equals(mime)){call.reject("Scanner text MIME mismatch.");return;}
@@ -513,6 +531,15 @@ public class RivoDocumentsPlugin extends Plugin {
            line.indexOf('\r')>=0||line.indexOf((char)0)>=0||
            !line.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\t[^\\t]+\\t.+")){
             call.reject("Invalid scanner record.");return;
+        }
+        // Validate journal type before writing; neither file may contain
+        // unrelated formats. Duplicate detection ignores scan time, so
+        // rescanning a previously saved code never adds a second row.
+        final String[] parts=line.split("\\t",3);
+        if(parts.length!=3||("RS_QR.txt".equals(name)
+             ?!("QR".equalsIgnoreCase(parts[1])||"QR_CODE".equalsIgnoreCase(parts[1]))
+             :("QR".equalsIgnoreCase(parts[1])||"QR_CODE".equalsIgnoreCase(parts[1])))){
+            call.reject("Barcode format does not match its permanent journal.");return;
         }
         final byte[] incoming=(line+"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
         final ContentResolver resolver=getContext().getContentResolver();
@@ -530,8 +557,8 @@ public class RivoDocumentsPlugin extends Plugin {
                     size=cursor.isNull(1)?0:cursor.getLong(1);
                 }
             }
-            if(size+incoming.length+80>12*1024*1024){
-                call.reject("Daily scan log reached the 12 MB limit.");return;
+            if(size+incoming.length+80>24*1024*1024){
+                call.reject("Scanner journal reached the 24 MB limit; archive it before adding more codes.");return;
             }
             if(target==null){
                 ContentValues values=new ContentValues();
@@ -544,12 +571,14 @@ public class RivoDocumentsPlugin extends Plugin {
                 created=true;
             } else if(size>0){
                 try(InputStream input=resolver.openInputStream(target)){
-                    if(input==null)throw new IllegalStateException("Cannot read daily scan log.");
+                    if(input==null)throw new IllegalStateException("Cannot read permanent scanner journal.");
                     try(java.io.BufferedReader reader=new java.io.BufferedReader(
                         new java.io.InputStreamReader(input,java.nio.charset.StandardCharsets.UTF_8))){
                         String existing;
                         while((existing=reader.readLine())!=null){
-                            if(existing.equals(line)){
+                            final String[] previous=existing.split("\\t",3);
+                            if(previous.length==3&&previous[1].equals(parts[1])&&
+                                    previous[2].equals(parts[2])){
                                 JSObject done=new JSObject();
                                 done.put("uri",target.toString());done.put("name",name);
                                 done.put("saved",true);done.put("alreadyPresent",true);
@@ -561,7 +590,7 @@ public class RivoDocumentsPlugin extends Plugin {
             }
             final boolean empty=created||size==0;
             try(OutputStream output=resolver.openOutputStream(target,empty?"wt":"wa")){
-                if(output==null)throw new IllegalStateException("Cannot append scanner record.");
+                if(output==null)throw new IllegalStateException("Cannot append permanent scanner journal.");
                 if(empty){
                     output.write("Date & Time\tFormat\tCode\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 }
@@ -581,7 +610,7 @@ public class RivoDocumentsPlugin extends Plugin {
             if(created&&target!=null){
                 try{resolver.delete(target,null,null);}catch(Exception ignored){}
             }
-            call.reject("Could not append scan to daily TXT: "+e.getMessage(),e);
+            call.reject("Could not append scan to permanent TXT: "+e.getMessage(),e);
         }
     }
 
@@ -757,6 +786,26 @@ public class RivoDocumentsPlugin extends Plugin {
             if(updated<1){call.reject("Could not rename document.");return;}
             JSObject response=new JSObject();response.put("name",newName);call.resolve(response);
         }catch(Exception e){call.reject("Rename failed: "+e.getMessage(),e);}
+    }
+
+    /** Open a verified web link in an external browser, never inside WebView. */
+    @PluginMethod
+    public void openWebLink(PluginCall call) {
+        final String raw=call.getString("url","");
+        try {
+            Uri uri=Uri.parse(raw.trim());
+            String scheme=uri.getScheme();
+            if(!("https".equalsIgnoreCase(scheme)||"http".equalsIgnoreCase(scheme))
+                ||uri.getHost()==null||uri.getHost().isEmpty()||raw.length()>2048) {
+                call.reject("Only valid HTTP/HTTPS links can be opened.");return;
+            }
+            Intent intent=new Intent(Intent.ACTION_VIEW,uri);
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(Intent.createChooser(intent,localized("openDocument"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            call.resolve();
+        } catch(Exception e) {call.reject("No compatible browser can open the link.",e);}
     }
 
     @PluginMethod

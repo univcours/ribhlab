@@ -9,7 +9,7 @@ function memory(){
  const values=new Map();
  return {getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};
 }
-test('QR and barcode go to separate daily append-only TXT files, never Excel',async()=>{
+test('QR and barcode go to two permanent append-only TXT files, never Excel',async()=>{
  const files=new Map(),writes=[];
  const bridge={appendScannerText:async({name,mimeType,line})=>{
   assert.equal(mimeType,'text/plain');assert.equal(name.endsWith('.txt'),true);
@@ -25,17 +25,17 @@ test('QR and barcode go to separate daily append-only TXT files, never Excel',as
   ledger.append('codes',{format:'CODE128',value:'=HYPERLINK("malicious")'})
  ]);
  assert.deepEqual([...files.keys()].sort(),[
-  'RS_QR_20261109.txt','RS_Bar_20261109.txt'
+  'RS_QR.txt','RS_Bar.txt'
  ].sort());
- assert.equal(files.get('RS_QR_20261109.txt').length,1);
- assert.equal(files.get('RS_Bar_20261109.txt').length,2);
- assert.equal(files.get('RS_Bar_20261109.txt')[1].includes('=HYPERLINK'),true);
+ assert.equal(files.get('RS_QR.txt').length,1);
+ assert.equal(files.get('RS_Bar.txt').length,2);
+ assert.equal(files.get('RS_Bar.txt')[1].includes('=HYPERLINK'),true);
  assert.ok(writes.every(w=>w.name.endsWith('.txt')&&!w.name.endsWith('.xlsx')));
  assert.equal(ledger.read('codes').length,3);
  assert.equal(ledger.read('codes').every(row=>row.exported===true),true);
  assert.equal(scannerCodeType('QR'),'QR');
  assert.equal(scannerCodeType('DATA_MATRIX'),'Barcode');
- assert.equal(scannerDailyFile('QR','2026-11-09'),'RS_QR_20261109.txt');
+ assert.equal(scannerDailyFile('QR','2026-11-09'),'RS_QR.txt');
  assert.match(scannerLocalDay(new Date('2026-11-09T10:00:00Z')),/^2026-11-09$/);
 });
 test('Concurrent scan and recovery never duplicate or overwrite existing QR lines',async()=>{
@@ -54,7 +54,7 @@ test('Concurrent scan and recovery never duplicate or overwrite existing QR line
  const recovery=db.resync('codes');
  const second=db.append('codes',{value:'222222',format:'QR'});
  release();await Promise.all([first,recovery,second]);
- const rows=files.get('RS_QR_20261109.txt');
+ const rows=files.get('RS_QR.txt');
  assert.equal(rows.length,2);
  assert.ok(rows.some(s=>s.includes('111111'))&&rows.some(s=>s.includes('222222')));
  assert.equal(db.read('codes').length,2);
@@ -83,7 +83,7 @@ test('Failed Android write stays pending, and recovery appends TXT exactly once'
  fail=false;
  await db.resync('codes');
  await db.resync('codes');
- assert.deepEqual(writes.map(x=>x.name),['RS_QR_20261109.txt']);
+ assert.deepEqual(writes.map(x=>x.name),['RS_QR.txt']);
  assert.equal(db.read('codes')[0].exported,true);
 });
 test('Plate formatting handles Arabic digits; matching works on full or partial number',()=>{
@@ -142,12 +142,12 @@ test('Plate match alert is backed by Android ToneGenerator rather than WebAudio 
  assert.ok(camera.includes('onMatchAlert(plate)'));
  assert.ok(java.includes('"plateMatch".equals(event)'));
 });
-test('Native scanner accepts only dated TXT appends and never creates scanner XLSX',()=>{
+test('Native scanner accepts only permanent TXT appends and never creates scanner XLSX',()=>{
  const java=readFileSync(new URL('../native/android/RivoDocumentsPlugin.java',import.meta.url),'utf8');
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
  const sounds=readFileSync(new URL('../native/android/RivoSounds.java',import.meta.url),'utf8');
  assert.ok(java.includes('appendScannerText'));
- assert.ok(java.includes('RS_(QR|Bar)_'));
+ assert.ok(java.includes('RS_QR.txt')&&java.includes('RS_Bar.txt'));
  assert.ok(java.includes('RivoScan_Plates.txt'));
  assert.ok(java.includes('openOutputStream(target,empty?"wt":"wa")'));
  assert.ok(java.includes('MediaStore.MediaColumns.RELATIVE_PATH'));

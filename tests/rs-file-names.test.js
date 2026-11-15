@@ -27,12 +27,12 @@ test('already formatted RS documents remain untouched and original imports are n
  assert.match(read('src/mlkit-scan-flow.js'),/createRsFileNamer/);
 });
 
-test('QR and barcodes append to one RS date-scoped TXT each',()=>{
- assert.equal(scannerDailyFile('QR','2026-11-15'),'RS_QR_20261115.txt');
- assert.equal(scannerDailyFile('EAN13','2026-11-15'),'RS_Bar_20261115.txt');
+test('QR and barcodes append to two permanent RS TXT journals',()=>{
+ assert.equal(scannerDailyFile('QR','2026-11-15'),'RS_QR.txt');
+ assert.equal(scannerDailyFile('EAN13','2026-11-15'),'RS_Bar.txt');
  const java=read('native/android/RivoDocumentsPlugin.java');
  assert.match(java,/appendScannerText/);
- assert.ok(java.includes('RS_(QR|Bar)_'));
+ assert.ok(java.includes('RS_QR.txt')&&java.includes('RS_Bar.txt'));
 });
 
 test('in-place actions are eye/share/pencil/trash, thumbnails stay enabled',()=>{

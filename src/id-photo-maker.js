@@ -43,7 +43,7 @@ export function setPNGResolution(bytes,dpi=300){
 }
 const strings={
  en:['ID Photo Maker','Choose portrait','Photo size','Headroom','Left / Right','Make sheet','Save PNG · 10×15 cm at 300 DPI','Close','Optional local portrait background replacement uses a model download. Review the cutout; acceptance is not guaranteed.','Image could not be loaded.'],
- ar:['صور شخصية للطباعة','اختار صورة شخصية','المقاس','الفوق والتحت','يمين ويسار','وجد الورقة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','تغيير الخلفية اختياري ومحلي بعد تحميل النموذج. راجع حواف الشخص؛ قبول الصورة ماشي مضمون.','تعذر فتح الصورة.'],
+ ar:['صور شخصية للطباعة','اختر صورة شخصية','المقاس','أعلى وأسفل','يمين ويسار','إعداد صفحة الطباعة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','تغيير الخلفية اختياري ومحلي بعد تحميل النموذج. راجع حواف الشخص؛ قبول الصورة غير مضمون.','تعذر فتح الصورة.'],
  fr:['Photos d’identité','Choisir portrait','Format','Hauteur','Gauche / Droite','Créer planche','Enregistrer PNG · 10×15 cm, 300 DPI','Fermer','Détourage local facultatif après téléchargement du modèle. Vérifiez le résultat; aucune garantie officielle.','Image illisible.'],
  es:['Fotos de carné','Elegir foto','Tamaño','Altura','Izquierda / derecha','Crear hoja','Guardar PNG · 10×15 cm, 300 DPI','Cerrar','Cambio de fondo local facultativo. Compruebe los bordes; aceptación no garantizada.','Imagen inválida.'],
  de:['Passfotos','Portrait wählen','Größe','Höhe','Links / Rechts','Blatt erstellen','PNG · 10×15 cm, 300 DPI','Schließen','Optionaler lokaler Hintergrundwechsel. Ränder prüfen; keine behördliche Garantie.','Bild ungültig.'],

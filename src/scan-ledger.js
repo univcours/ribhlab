@@ -1,5 +1,6 @@
-/* Persistent, text-only scanner journal. QR and linear/2D barcodes are
-   appended to separate DAILY TXT files. No XLSX is ever generated here.
+/* Persistent, text-only scanner journal. QR and barcodes share TWO fixed
+   append-only TXT files. Date/time belongs inside each entry, not the name.
+   No XLSX is ever generated here.
    Native appendScannerText() atomically appends to the public RivoScan folder
    and ignores identical retries, so we never overwrite previous scans. */
 const CONFIG=Object.freeze({
@@ -7,7 +8,7 @@ const CONFIG=Object.freeze({
  plates:{storage:'rivo-scan-ledger-plates-v1',text:'RivoScan_Plates.txt',columns:['Date & Time','Plate Number','Match','Photo']}
 });
 export const scannerLogNames=Object.freeze({
- codes:{qr:'RS_QR_',barcode:'RS_Bar_'},
+ codes:{qr:'RS_QR.txt',barcode:'RS_Bar.txt'},
  plates:{text:'RivoScan_Plates.txt'}
 });
 const MAX_RECORDS=12000,MAX_VALUE_LENGTH=2048;
@@ -25,9 +26,10 @@ export function scannerLocalTimestamp(date){
 export function scannerCodeType(format){
  return String(format||'').toUpperCase()==='QR'||String(format||'').toUpperCase()==='QR_CODE'?'QR':'Barcode';
 }
-export function scannerDailyFile(format,day){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))throw Error('Invalid scanner log date');
- return 'RS_'+(scannerCodeType(format)==='QR'?'QR':'Bar')+'_'+String(day).replaceAll('-','')+'.txt';
+// Legacy name kept for compatibility with callers that still supply a day.
+ // Daily filenames were retired: QR and barcodes each use a single journal.
+export function scannerDailyFile(format,_day){
+ return scannerCodeType(format)==='QR'?scannerLogNames.codes.qr:scannerLogNames.codes.barcode;
 }
 const toBase64=bytes=>{
  let result='';
@@ -50,9 +52,8 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
  }
  async function sendCode(row){
   if(!bridge?.appendScannerText)throw Error('Native QR/barcode TXT append unavailable. Update the Android app.');
-  const day=row.day||scannerLocalDay(new Date(row.at));
   return bridge.appendScannerText({
-   name:scannerDailyFile(row.type,day),
+   name:scannerDailyFile(row.type),
    mimeType:'text/plain',
    line:codeLine(row)
   });
@@ -72,8 +73,24 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   const value=clean(fields.value);
   if(!value||value.length>MAX_VALUE_LENGTH)throw Error('Invalid scan value');
   const rows=read(kind);
-  if(rows.length>=MAX_RECORDS)throw Error('Scanner log is full. Archive the records before scanning more.');
   const date=new Date(clock());
+  // Unique by barcode format + exact value across ALL dates and app sessions.
+  // Before this version, records were saved to dated files; on first recovery
+  // centralize the old records into the two stable TXT files, keeping originals.
+  if(kind==='codes'){
+   const format=clean(fields.format||'QR');
+   const prior=rows.find(row=>clean(row.type)===format&&clean(row.value)===value);
+   if(prior){
+    if(prior.centralized!==true){
+     try{
+      await sendCode(prior);
+      prior.centralized=true;prior.exported=true;persist(kind,rows);
+     }catch(error){return {saved:false,alreadySaved:true,duplicate:true,record:prior,reason:String(error?.message||error)};}
+    }
+    return {saved:false,alreadySaved:true,duplicate:true,record:prior,name:scannerDailyFile(prior.type)};
+   }
+  }
+  if(rows.length>=MAX_RECORDS)throw Error('Scanner log is full. Archive the records before scanning more.');
   const record=kind==='codes'
    ?{at:date.toISOString(),day:scannerLocalDay(date),localAt:scannerLocalTimestamp(date),
      type:clean(fields.format||'QR'),value,exported:false}
@@ -82,9 +99,12 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   rows.push(record);persist(kind,rows);
   if(kind==='codes'){
    try{
-    await sendCode(record);
-    record.exported=true;persist(kind,rows);
-    return {record,saved:true,name:scannerDailyFile(record.type,record.day)};
+    const output=await sendCode(record);
+    record.exported=true;record.centralized=true;persist(kind,rows);
+    if(output?.alreadyPresent===true){
+     return {record,saved:false,alreadySaved:true,duplicate:true,name:scannerDailyFile(record.type)};
+    }
+    return {record,saved:true,name:scannerDailyFile(record.type)};
    }catch(error){return {record,saved:false,reason:String(error?.message||error)};}
   }
   try{await syncPlates(rows);return {record,saved:true,name:config.text};}
@@ -99,9 +119,11 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   }
   let count=0;
   for(const row of rows){
-   if(row.exported===true)continue;
+   if(row.centralized===true)continue;
+   // Backfill legacy daily QR/Barcode TXT records into stable journals once;
+   // the native bridge checks duplicates, so retries do not lose data.
    await sendCode(row);
-   row.exported=true;
+   row.exported=true;row.centralized=true;
    persist(kind,rows);
    count++;
   }
