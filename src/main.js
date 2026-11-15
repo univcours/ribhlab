@@ -46,6 +46,7 @@ import './rivo-tools-compact-ux.css';
 import './rivo-native-banner-layout.css';
 import './rivo-info-perfect-circle.css';
 import './rivo-stable-scroll-layout.css';
+import './rivo-code-ultrascan.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -249,7 +250,7 @@ const bulkUI=createLibraryBulk({
     await loadLibrary(false);refreshVisibleLibrary();
     const recents=document.getElementById('home-recents');if(recents)recents.innerHTML=recentDocuments();
   },
-  onPreview:doc=>docViewerUI.open(doc),
+  onPreview:doc=>RivoDocuments.openFile({uri:doc.uri}),
   onOpenLibrary:()=>openLibrary(),
   onDirectTransfer:async docs=>{
     openTool('peerTransfer');
@@ -271,7 +272,7 @@ const bulkUI=createLibraryBulk({
     chooser.files=staged.files;
     if(staged.files.length)toast(staged.files.length+' '+dl('files')+' ✓');
   },
-  onEdit:async doc=>{await docViewerUI.open(doc);document.querySelector('.doc-action.doc-edit')?.click()},
+  onEdit:doc=>RivoDocuments.openFile({uri:doc.uri}),
   onRename:async doc=>{
     if(!Capacitor.isPluginAvailable('RivoDocuments')){toast('Renaming requires the Android app.',true);return;}
     const proposed=window.prompt(language==='ar'?'اسم الملف الجديد':language==='fr'?'Nouveau nom':'Rename file',doc.name);
@@ -769,7 +770,7 @@ async function handleLibraryAction(type,index){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
       toast(dl('remove')+' ✓');
-    } else if(type==='open')await docViewerUI.open(selected);
+    } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
@@ -1054,7 +1055,7 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='barcode'){
-   openBarcodeScanner({language,notify:toast,onClose:()=>void loadLibrary(false),onScan:async entry=>{
+   openBarcodeScanner({language,notify:toast,onSuccess:()=>soundFeedback('codeSuccess'),onClose:()=>void loadLibrary(false),onScan:async entry=>{
     const result=await scanLedger.append('codes',entry);
     return result;
    }});
@@ -1719,7 +1720,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     }).catch(console.warn);
   };
   syncNativeSoundSetting();
-  // Recover interrupted TXT/XLSX exports from the durable local scan journal.
+  // Recover only undelivered QR/barcode TXT scans and text-only plate logs.
   // Never delete saved scans when native storage is unavailable.
   void Promise.allSettled([scanLedger.resync('codes'),scanLedger.resync('plates')])
     .then(results=>results.forEach((result,i)=>{

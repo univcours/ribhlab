@@ -405,19 +405,17 @@ public class RivoDocumentsPlugin extends Plugin {
     }
 
     /**
-     * Overwrite ONLY our four reserved scanner logs in Documents/RivoScan.
-     * Unlike saveFile(), this keeps a single stable TXT/XLSX for each scanner.
-     * Source recovery journal lives in the app until the export succeeds.
+     * Text-only vehicle plate log. QR and barcodes are written by the
+     * append-only method below and are never rewritten with stale JS state.
      */
     @PluginMethod
     public synchronized void upsertScannerLog(PluginCall call) {
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
         final String name=call.getString("name","");
         final String mime=call.getString("mimeType","");
-        final boolean txt=name.equals("RivoScan_Scans.txt")||name.equals("RivoScan_Plates.txt");
-        final boolean xlsx=name.equals("RivoScan_Scans.xlsx")||name.equals("RivoScan_Plates.xlsx");
-        if(!txt&&!xlsx){call.reject("Not an approved scanner log.");return;}
-        if(!mime.equals(txt?"text/plain":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){
+        final boolean txt=name.equals("RivoScan_Plates.txt");
+        if(!txt){call.reject("Only the text-based plate log is approved.");return;}
+        if(!mime.equals("text/plain")){
             call.reject("Scanner log MIME type mismatch.");return;
         }
         final String encoded=call.getString("base64");
@@ -478,6 +476,98 @@ public class RivoDocumentsPlugin extends Plugin {
                 }catch(Exception ignored){}
             }
             call.reject("Scanner log could not be written: "+e.getMessage(),e);
+        }
+    }
+
+    /**
+     * Append a verified QR/barcode result to a stable, date-scoped TXT in
+     * Documents/RivoScan. Existing content is never replaced. Retried exact
+     * entries are detected before appending, protecting recovery after a
+     * process interruption or a WebView restart.
+     */
+    @PluginMethod
+    public synchronized void appendScannerText(PluginCall call) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.Q){requireModernAndroid(call);return;}
+        final String name=call.getString("name","");
+        final String mime=call.getString("mimeType","");
+        final String line=call.getString("line","");
+        if(!name.matches("RivoScan_(QR|Barcode)_\\d{4}-\\d{2}-\\d{2}\\.txt")){
+            call.reject("Invalid scanner TXT name.");return;
+        }
+        if(!"text/plain".equals(mime)){call.reject("Scanner text MIME mismatch.");return;}
+        if(line.isEmpty()||line.length()>4096||line.indexOf('\n')>=0||
+           line.indexOf('\r')>=0||line.indexOf((char)0)>=0||
+           !line.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\t[^\\t]+\\t.+")){
+            call.reject("Invalid scanner record.");return;
+        }
+        final byte[] incoming=(line+"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        final ContentResolver resolver=getContext().getContentResolver();
+        Uri target=null;
+        boolean created=false;
+        long size=0;
+        try{
+            try(Cursor cursor=resolver.query(documentsCollection(),
+                new String[]{MediaStore.MediaColumns._ID,MediaStore.MediaColumns.SIZE},
+                MediaStore.MediaColumns.DISPLAY_NAME+" = ? AND "+
+                    MediaStore.MediaColumns.RELATIVE_PATH+" = ?",
+                new String[]{name,FOLDER},null)){
+                if(cursor!=null&&cursor.moveToFirst()){
+                    target=ContentUris.withAppendedId(documentsCollection(),cursor.getLong(0));
+                    size=cursor.isNull(1)?0:cursor.getLong(1);
+                }
+            }
+            if(size+incoming.length+80>12*1024*1024){
+                call.reject("Daily scan log reached the 12 MB limit.");return;
+            }
+            if(target==null){
+                ContentValues values=new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME,name);
+                values.put(MediaStore.MediaColumns.MIME_TYPE,"text/plain");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH,FOLDER);
+                values.put(MediaStore.MediaColumns.IS_PENDING,1);
+                target=resolver.insert(documentsCollection(),values);
+                if(target==null)throw new IllegalStateException("Cannot create daily scan file.");
+                created=true;
+            } else if(size>0){
+                try(InputStream input=resolver.openInputStream(target)){
+                    if(input==null)throw new IllegalStateException("Cannot read daily scan log.");
+                    try(java.io.BufferedReader reader=new java.io.BufferedReader(
+                        new java.io.InputStreamReader(input,java.nio.charset.StandardCharsets.UTF_8))){
+                        String existing;
+                        while((existing=reader.readLine())!=null){
+                            if(existing.equals(line)){
+                                JSObject done=new JSObject();
+                                done.put("uri",target.toString());done.put("name",name);
+                                done.put("saved",true);done.put("alreadyPresent",true);
+                                call.resolve(done);return;
+                            }
+                        }
+                    }
+                }
+            }
+            final boolean empty=created||size==0;
+            try(OutputStream output=resolver.openOutputStream(target,empty?"wt":"wa")){
+                if(output==null)throw new IllegalStateException("Cannot append scanner record.");
+                if(empty){
+                    output.write("Date & Time\tFormat\tCode\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                output.write(incoming);
+                output.flush();
+            }
+            if(created){
+                ContentValues visible=new ContentValues();
+                visible.put(MediaStore.MediaColumns.IS_PENDING,0);
+                resolver.update(target,visible,null,null);
+            }
+            JSObject done=new JSObject();
+            done.put("uri",target.toString());done.put("name",name);
+            done.put("saved",true);done.put("alreadyPresent",false);
+            call.resolve(done);
+        }catch(Exception e){
+            if(created&&target!=null){
+                try{resolver.delete(target,null,null);}catch(Exception ignored){}
+            }
+            call.reject("Could not append scan to daily TXT: "+e.getMessage(),e);
         }
     }
 

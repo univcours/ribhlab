@@ -185,7 +185,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    if(closed)return;
    foundCount++;count.textContent=String(foundCount);
    last.hidden=false;last.textContent=plate;
-   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · Excel not available');
+   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · TXT not available');
    guide.classList.toggle('matched',match);
   }catch(error){if(!closed)status.textContent='Save failed: '+String(error?.message||error);}
  }
