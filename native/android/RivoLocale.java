@@ -18,9 +18,9 @@ final class RivoLocale {
          "Scanner help","Cancel","Capture","Adjust 4 corners","Default rear camera ready","Switching to","Choose camera",
          "Import photo","Choose from Files","Finish scanning","Scanner help","Camera unavailable","Could not open camera","Adjust the 4 corners","Flash unavailable"},
         {"الكاميرات","الخلفية الافتراضية","كاميرا خلفية","كاميرا أمامية","صفحة","عدة صفحات","وثيقة","بطاقة الهوية","سبورة",
-         "الصور","الملفات","إنهاء","تصوير وحفظ","رتايك","تحديد الحواف","حفظ الصفحة","تعديل الحواف",
-         "مساعدة السكانير","إلغاء","تصوير","عدّل الزوايا الأربع","الكاميرا الخلفية جاهزة","تبديل إلى","اختيار الكاميرا",
-         "استيراد صورة","اختيار ملف","إنهاء التصوير","مساعدة السكانير","الكاميرا غير متاحة","تعذر فتح الكاميرا","عدّل الزوايا الأربع","الفلاش غير متاح"},
+         "الصور","الملفات","إنهاء","تصوير وحفظ","إعادة التصوير","تحديد الحواف","حفظ الصفحة","تعديل الحواف",
+         "مساعدة الماسح الضوئي","إلغاء","تصوير","عدّل الزوايا الأربع","الكاميرا الخلفية جاهزة","تبديل إلى","اختيار الكاميرا",
+         "استيراد صورة","اختيار ملف","إنهاء التصوير","مساعدة الماسح الضوئي","الكاميرا غير متاحة","تعذر فتح الكاميرا","عدّل الزوايا الأربع","الفلاش غير متاح"},
         {"Caméras","Arrière par défaut","Caméra arrière","Caméra avant","Simple","Lot","Document","Carte d'identité","Tableau blanc",
          "Photos","Fichiers","Terminer","Scanner et enregistrer","Reprendre","Détecter","Enregistrer","Ajuster les bords",
          "Aide scanner","Annuler","Capturer","Ajuster les 4 coins","Caméra arrière prête","Passer à","Choisir caméra",
@@ -46,7 +46,7 @@ final class RivoLocale {
     private static final String[] EXTRA_KEYS = {"bestCamera","retryCamera","liveEdges","basicMode","align","basicHint","loupe","batchReady","singleReady","modeReady","flashOff","flashOn","noFlash","helpTitle","helpText","sounds","soundOn","soundOff","loadingCameras","camerasError","noRearTitle","noRearText","cameraPicker","usingAuto","switching","noWorking","noWorkingText","close","capturePage","imageError","captureError","importError","saveBasic","saveUncropped","saveError","adjustError","importPhoto","bestSelection"};
     private static final String[][] EXTRA_VALUES = {
         {"Auto · best camera","Trying another rear camera…"," · live edges"," · basic camera","Align your document inside the frame","Take a photo · stored in Documents/RivoScan","Drag a blue corner · magnifier shows the exact edge","Batch: capture as many pages as needed","Single: save one page and return"," mode ready","ϟ Off","ϟ On","Flash is not available on this camera.","RivoScan Smart Scanner","Point at a page. Drag its four corners with the magnifier for precision, then save. Batch scans multiple pages; HD favors image quality.","Button sounds ","on","off","Loading available cameras…","Cameras unavailable: ","No rear camera available","Android did not expose a usable rear camera. Import a photo to adjust its corners.","Choose camera · RivoScan","Automatically choosing best camera","Switching to ","No working rear camera found. Import a photo instead.","RivoScan cannot open the rear camera. You can import a photo, adjust its corners and save a PDF.","Close","Capturing page…","Image error: ","Capture failed: ","Unable to import image: ","Photo stored in Documents/RivoScan","Photo captured without auto-crop.","Could not save photo: ","Adjust the corners: ","Import photo","Best camera"},
-        {"تلقائي · أفضل كاميرا","نجرب كاميرا خلفية أخرى…"," · الحواف المباشرة"," · كاميرا عادية","حط الوثيقة داخل الإطار","صوّر · تحفظ في Documents/RivoScan","جرّ الزاوية الزرقاء · العدسة كتكبر الحافة بالضبط","عدة صفحات: صوّر الصفحات اللي بغيتي","صفحة واحدة: صور وحفظ"," جاهز","ϟ مطفأ","ϟ مشعل","الفلاش ما متاحش فهاد الكاميرا.","سكانير RivoScan الذكي","وجّه الكاميرا للورقة. جرّ الزوايا الأربعة بالعدسة المكبرة بدقة وحفظ. وضع عدة صفحات للتصوير المتتابع وHD للجودة.","أصوات الأزرار ","مفعلة","مطْفِيَة","كنحمّلو الكاميرات المتاحة…","الكاميرات غير متاحة: ","ما كايناش كاميرا خلفية متاحة","أندرويد ما عطاش كاميرا خلفية صالحة. تقدر تستورد صورة وتعدل الحواف.","اختار الكاميرا · RivoScan","كنختارو أحسن كاميرا تلقائياً","كنبدلو إلى ","ما لقيناش كاميرا خدامة. استورد صورة.","RivoScan ما قدرش يفتح الكاميرا. تقدر تستورد صورة وتعدل حوافها وتحفظ PDF.","إغلاق","كنصورو الصفحة…","خطأ فالصورة: ","فشل التصوير: ","تعذر استيراد الصورة: ","الصورة تحفظات في Documents/RivoScan","تصورت الصورة بلا قص تلقائي.","ما قدرناش نحفظو الصورة: ","راجع الزوايا: ","استيراد صورة","أحسن كاميرا"},
+        {"تلقائي · أفضل كاميرا","جارٍ تجربة كاميرا خلفية أخرى…"," · الحواف المباشرة"," · كاميرا عادية","ضع المستند داخل الإطار","التقط صورة · تُحفظ في Documents/RivoScan","اسحب الزاوية الزرقاء · تعرض العدسة الحافة مكبّرة","عدة صفحات: التقط الصفحات المطلوبة","صفحة واحدة: التقط صورة واحفظها"," جاهز","ϟ مطفأ","ϟ مفعّل","الفلاش غير متاح في هذه الكاميرا.","ماسح RivoScan الذكي","وجّه الكاميرا نحو المستند، واضبط الزوايا الأربع بالعدسة المكبّرة، ثم احفظ النتيجة. يتيح الوضع المتتابع تصوير عدة صفحات، وتوفّر HD جودة أعلى.","أصوات الأزرار ","مفعلة","مطْفِيَة","جارٍ تحميل الكاميرات المتاحة…","الكاميرات غير متاحة: ","لا توجد كاميرا خلفية متاحة","لم يوفّر Android كاميرا خلفية قابلة للاستخدام. يمكنك استيراد صورة وضبط حوافها.","اختر الكاميرا · RivoScan","جارٍ اختيار أفضل كاميرا تلقائيًا","جارٍ التبديل إلى ","لم يتم العثور على كاميرا خلفية تعمل. استورد صورة.","تعذّر على RivoScan فتح الكاميرا. يمكنك استيراد صورة وضبط حوافها وحفظها بصيغة PDF.","إغلاق","جارٍ التقاط الصفحة…","خطأ في الصورة: ","فشل التصوير: ","تعذر استيراد الصورة: ","تم حفظ الصورة في Documents/RivoScan","تم التقاط الصورة دون قص تلقائي.","تعذّر حفظ الصورة: ","راجع الزوايا: ","استيراد صورة","أفضل كاميرا"},
         {"Auto · meilleure caméra","Essai d’une autre caméra…"," · bords en direct"," · caméra simple","Alignez le document dans le cadre","Prenez une photo · sauvée dans Documents/RivoScan","Déplacez un coin bleu · la loupe montre le bord exact","Lot : capturez plusieurs pages","Simple : enregistrer une page"," prêt","ϟ Désactivé","ϟ Activé","Le flash est indisponible sur cette caméra.","Scanner intelligent RivoScan","Visez la page. Ajustez les quatre coins avec la loupe, puis enregistrez. Lot pour plusieurs pages ; HD privilégie la qualité.","Sons des boutons ","activés","désactivés","Chargement des caméras…","Caméras indisponibles : ","Aucune caméra arrière disponible","Android ne fournit pas de caméra arrière utilisable. Importez une photo.","Choisir la caméra · RivoScan","Choix automatique de la meilleure caméra","Passage à ","Aucune caméra ne fonctionne. Importez une photo.","RivoScan ne peut pas ouvrir la caméra. Importez une photo, recadrez et sauvez le PDF.","Fermer","Capture de la page…","Erreur image : ","Échec de capture : ","Importation impossible : ","Photo enregistrée dans Documents/RivoScan","Photo capturée sans recadrage.","Impossible d’enregistrer la photo : ","Ajustez les coins : ","Importer une photo","Meilleure caméra"},
         {"Auto · mejor cámara","Probando otra cámara…"," · bordes en directo"," · cámara básica","Alinea el documento en el marco","Haz una foto · se guarda en Documents/RivoScan","Arrastra un vértice azul · la lupa muestra el borde","Lote: captura todas las páginas","Única: guarda una página"," listo","ϟ Apagado","ϟ Encendido","El flash no está disponible.","Escáner inteligente RivoScan","Apunta a la hoja. Ajusta las cuatro esquinas con la lupa y guarda. Lote permite varias páginas y HD prioriza calidad.","Sonidos de botones ","activados","desactivados","Cargando cámaras…","Cámaras no disponibles: ","No hay cámara trasera disponible","Android no detecta una cámara trasera válida. Importa una foto.","Elegir cámara · RivoScan","Selección automática de la mejor cámara","Cambiando a ","No funciona ninguna cámara trasera. Importa una foto.","RivoScan no puede abrir la cámara. Importa una foto, ajústala y guarda PDF.","Cerrar","Capturando página…","Error de imagen: ","Error de captura: ","No se puede importar la imagen: ","Foto guardada en Documents/RivoScan","Foto tomada sin recorte automático.","No se pudo guardar la foto: ","Ajusta las esquinas: ","Importar foto","Mejor cámara"},
         {"Auto · beste Kamera","Andere Rückkamera wird getestet…"," · Live-Kanten"," · einfache Kamera","Dokument im Rahmen ausrichten","Foto aufnehmen · in Documents/RivoScan speichern","Blauen Eckpunkt ziehen · Lupe zeigt die genaue Kante","Stapel: mehrere Seiten aufnehmen","Einzeln: eine Seite speichern"," bereit","ϟ Aus","ϟ An","Blitz für diese Kamera nicht verfügbar.","RivoScan Smart-Scanner","Seite anvisieren. Vier Ecken mit der Lupe präzise ausrichten und speichern. Stapel für mehrere Seiten, HD für Qualität.","Tastentöne ","an","aus","Kameras werden geladen…","Kameras nicht verfügbar: ","Keine Rückkamera verfügbar","Android stellt keine nutzbare Rückkamera bereit. Foto importieren.","Kamera wählen · RivoScan","Beste Kamera wird automatisch gewählt","Wechsel zu ","Keine funktionierende Rückkamera. Foto importieren.","Kamera nicht verfügbar. Foto importieren, Ecken anpassen und PDF speichern.","Schließen","Seite wird aufgenommen…","Bildfehler: ","Aufnahme fehlgeschlagen: ","Bildimport fehlgeschlagen: ","Foto in Documents/RivoScan gespeichert","Foto ohne automatischen Zuschnitt.","Foto konnte nicht gespeichert werden: ","Ecken anpassen: ","Foto importieren","Beste Kamera"},
@@ -65,9 +65,9 @@ final class RivoLocale {
          "Edges","Compare","Save","Preparing straightened page…",
          "Cleaning full-quality page…","Enhancement preview unavailable. Try Original."},
         {"التالي: تحسين","تنقية الوثيقة","الأصلية","تحسين","تحسين قوي","حذف الظلال",
-         "السبورة","أبيض وأسود","اختار التحسين وقارن بالأصل، ومن بعد اضغط ✓ للحفظ.",
-         "الحواف","مقارنة","حفظ","كنقوّمو الصفحة…",
-         "كننقّيو الصفحة بالجودة العالية…","المعاينة ما خداماش. اختار الأصلية."},
+         "السبورة","أبيض وأسود","اختر التحسين وقارنه بالصورة الأصلية، ثم اضغط ✓ للحفظ.",
+         "الحواف","مقارنة","حفظ","جارٍ تقويم الصفحة…",
+         "جارٍ تحسين الصفحة بجودة عالية…","المعاينة غير متاحة. اختر الصورة الأصلية."},
         {"Suivant : améliorer","Nettoyer le scan","Original","Améliorer","Intensif","Sans ombres",
          "Tableau blanc","N&B","Choisissez le filtre, comparez puis validez avec ✓.",
          "Bords","Comparer","Enregistrer","Redressement de la page…",
@@ -92,7 +92,7 @@ final class RivoLocale {
     private static final String[] SIGN_PLACE_KEYS={"signPlacementTitle","signDragHint","signSize"};
     private static final String[][] SIGN_PLACE_VALUES={
         {"Position signature","Drag the signature on the document preview, then adjust its size.","Signature size"},
-        {"موضع التوقيع","جرّ التوقيع فوق الوثيقة وحدد بلاصتو، ومن بعد بدل الحجم.","حجم التوقيع"},
+        {"موضع التوقيع","اسحب التوقيع فوق المستند لتحديد موضعه، ثم اضبط حجمه.","حجم التوقيع"},
         {"Placer la signature","Déplacez la signature sur le document et réglez sa taille.","Taille de signature"},
         {"Colocar firma","Arrastra la firma sobre el documento y ajusta el tamaño.","Tamaño de firma"},
         {"Unterschrift platzieren","Unterschrift im Dokument verschieben und Größe anpassen.","Unterschriftgröße"},
@@ -102,7 +102,7 @@ final class RivoLocale {
     private static final String[] SIGN_KEYS={"signBeforeSave","signPlacementHint","signatureClear","signatureCleared","signatureEmpty","signatureReady"};
     private static final String[][] SIGN_VALUES={
         {"Sign","Draw your signature. It will appear at the bottom-right of the scanned page. The original photo is kept unchanged.","Remove","Signature removed.","Draw something first.","Signature ready; tap ✓ Clean & Save."},
-        {"توقيع","رسم توقيعك هنا. غادي يتحط أسفل يمين الصفحة المنقّاة، والصورة الأصلية كتبقى بلا تغيير.","حذف","تحيد التوقيع.","رسم التوقيع أولاً.","التوقيع واجد؛ ضغط ✓ للتنقية والحفظ."},
+        {"توقيع","ارسم توقيعك هنا. سيظهر أسفل يمين الصفحة المحسّنة، وستبقى الصورة الأصلية دون تغيير.","حذف","تم حذف التوقيع.","رسم التوقيع أولاً.","التوقيع جاهز. اضغط ✓ للتحسين والحفظ."},
         {"Signer","Dessinez votre signature. Elle sera placée en bas à droite du scan, sans modifier l’original.","Supprimer","Signature supprimée.","Dessinez d’abord la signature.","Signature prête : validez avec ✓."},
         {"Firmar","Dibuje su firma. Se colocará abajo a la derecha sin alterar el original.","Quitar","Firma eliminada.","Dibuja la firma primero.","Firma lista, toca ✓."},
         {"Unterschreiben","Unterschrift zeichnen. Sie wird unten rechts angebracht; das Original bleibt unverändert.","Entfernen","Unterschrift entfernt.","Bitte erst unterschreiben.","Unterschrift bereit, ✓ drücken."},
@@ -112,7 +112,7 @@ final class RivoLocale {
     private static final String[] AUTO_KEYS={"autoCleanSave","enhanceFilters","autoCleaning","enhanceAuto","enhancePro","enhanceCrease"};
     private static final String[][] AUTO_TEXT={
         {"Clean & Save","Filters","Straightening and cleaning the document…","Auto Clean","Paper Scan","Reduce folds"},
-        {"تنقية وحفظ","الفلاتر","كنقومو الورقة وكننقيو الخطوط والكاشيات…","تنقية تلقائية","سكانير الورق الاحترافي","تقليل طيات الورق"},
+        {"تنقية وحفظ","الفلاتر","جارٍ تقويم المستند وتحسين النصوص والأختام…","تنقية تلقائية","سكانير الورق الاحترافي","تقليل طيات الورق"},
         {"Nettoyer et enregistrer","Filtres","Redressement et nettoyage du document…","Nettoyage auto","Scanner papier","Réduire les plis"},
         {"Limpiar y guardar","Filtros","Enderezando y limpiando el documento…","Limpieza automática","Escáner papel","Reducir pliegues"},
         {"Bereinigen und speichern","Filter","Dokument wird begradigt und bereinigt…","Automatisch","Papier-Scan","Falten reduzieren"},
@@ -135,7 +135,7 @@ final class RivoLocale {
         else if("pt".equals(language))lang=5;else if("it".equals(language))lang=6;
         if("notFound".equals(key))return new String[]{
             "Edges not detected. Drag the four blue points around your document.",
-            "ما تعرفناش على الحواف. جرّ الزوايا الزرقاء الأربعة حول الوثيقة.",
+            "تعذّر التعرّف على الحواف. اضبط الزوايا الزرقاء الأربع حول المستند.",
             "Bords non détectés. Déplacez les quatre points bleus autour du document.",
             "Bordes no detectados. Ajusta los cuatro puntos azules.",
             "Kanten nicht erkannt. Vier blaue Punkte an die Dokumentecken ziehen.",
@@ -144,7 +144,7 @@ final class RivoLocale {
         }[lang];
         if("found".equals(key))return new String[]{
             "Check the blue corners and adjust if needed.",
-            "راجع الزوايا الزرقاء وعدّلها إلا احتاج الأمر.",
+            "راجع الزوايا الزرقاء وعدّلها عند الحاجة.",
             "Vérifiez les coins bleus et ajustez-les si nécessaire.",
             "Comprueba los bordes azules y ajusta si hace falta.",
             "Blaue Ecken prüfen und bei Bedarf korrigieren.",
@@ -153,7 +153,7 @@ final class RivoLocale {
         }[lang];
         if("pageStored".equals(key))return new String[]{
             "Page saved in Documents/RivoScan",
-            "الصفحة تحفظات في Documents/RivoScan",
+            "تم حفظ الصفحة في Documents/RivoScan",
             "Page enregistrée dans Documents/RivoScan",
             "Página guardada en Documents/RivoScan",
             "Seite in Documents/RivoScan gespeichert",
@@ -162,7 +162,7 @@ final class RivoLocale {
         }[lang];
         if("pageNotStored".equals(key))return new String[]{
             "Image backup failed; the PDF save will still be attempted.",
-            "ما تحفظاتش نسخة الصورة؛ غادي نحاولو نحفظو PDF.",
+            "تعذّر حفظ نسخة الصورة؛ ستتم محاولة حفظ ملف PDF.",
             "Échec de la copie image ; l'enregistrement PDF sera essayé.",
             "No se pudo guardar la imagen; se intentará guardar PDF.",
             "Bildkopie fehlgeschlagen; PDF-Speicherung wird versucht.",
