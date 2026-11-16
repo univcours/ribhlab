@@ -19,6 +19,10 @@ public final class RivoCropEditor extends View {
     private Point[] corners=RivoEdgeDetector.fallback();
     private float left,top,scale;
     private int selected=-1;
+    private int activePointerId=-1;
+    private double startCornerX,startCornerY;
+    // Preserve the touch-to-handle offset so the document corner never jumps under a finger.
+    private float touchOffsetX,touchOffsetY;
     private boolean detected=false;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint loupePaint=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
@@ -28,15 +32,17 @@ public final class RivoCropEditor extends View {
     private float dp(float n){return n*getResources().getDisplayMetrics().density;}
 
     public void setDocument(Bitmap source,Point[] detected){
-        bitmap=source;this.detected=detected!=null;
-        corners=detected!=null?detected:RivoEdgeDetector.fallback();
-        selected=-1;invalidate();
+        bitmap=source;this.detected=detected!=null&&detected.length==4;
+        Point[] initial=this.detected?detected:RivoEdgeDetector.fallback();
+        corners=new Point[4];
+        for(int i=0;i<4;i++)corners[i]=new Point(initial[i].x,initial[i].y);
+        selected=-1;activePointerId=-1;invalidate();
     }
     public Point[] getCorners(){return corners;}
     public void useAutoCorners(){
         if(bitmap==null)return;
         Point[] result=RivoEdgeDetector.detect(bitmap);
-        detected=result!=null;corners=result!=null?result:RivoEdgeDetector.fallback();selected=-1;invalidate();
+        setDocument(bitmap,result);
     }
     private float px(Point p){return left+(float)p.x*bitmap.getWidth()*scale;}
     private float py(Point p){return top+(float)p.y*bitmap.getHeight()*scale;}
@@ -111,30 +117,92 @@ public final class RivoCropEditor extends View {
         canvas.drawCircle(cx,cy,radius+dp(3),decoration);
         decoration.setStyle(Paint.Style.FILL);
     }
+    /**
+     * Keep the page corners in TL, TR, BR, BL order and prevent folds or
+     * crossed handles that would generate a degenerate perspective transform.
+     */
+    private boolean validMove(int moving,double x,double y){
+        double[] xs=new double[4],ys=new double[4];
+        for(int i=0;i<4;i++){
+            xs[i]=i==moving?x:corners[i].x;
+            ys[i]=i==moving?y:corners[i].y;
+        }
+        double signedArea=0;
+        for(int i=0;i<4;i++){
+            int next=(i+1)%4;
+            signedArea+=xs[i]*ys[next]-xs[next]*ys[i];
+            double dx=xs[next]-xs[i],dy=ys[next]-ys[i];
+            if(dx*dx+dy*dy<.0004)return false;
+        }
+        if(signedArea<.024)return false;
+        // The four consecutive turns must stay convex in image coordinates.
+        for(int i=0;i<4;i++){
+            int b=(i+1)%4,c=(i+2)%4;
+            double cross=(xs[b]-xs[i])*(ys[c]-ys[b])
+                -(ys[b]-ys[i])*(xs[c]-xs[b]);
+            if(cross<=.0002)return false;
+        }
+        return true;
+    }
+
+    private void finishDrag(boolean cancelled){
+        if(selected<0)return;
+        if(cancelled){
+            corners[selected].x=startCornerX;
+            corners[selected].y=startCornerY;
+        }else performClick();
+        selected=-1;
+        activePointerId=-1;
+        invalidate();
+    }
+
+    @Override public boolean performClick(){
+        super.performClick();
+        return true;
+    }
+
     @Override public boolean onTouchEvent(MotionEvent event){
         if(bitmap==null||bitmap.isRecycled())return false;
         int action=event.getActionMasked();
         if(action==MotionEvent.ACTION_DOWN){
-            double best=Double.MAX_VALUE;selected=-1;
+            if(scale<=0)return false;
+            double best=Double.MAX_VALUE;
+            selected=-1;
             for(int i=0;i<4;i++){
                 double d=Math.hypot(event.getX()-px(corners[i]),event.getY()-py(corners[i]));
                 if(d<best){best=d;selected=i;}
             }
-            if(best>dp(60))selected=-1;
-            if(selected>=0){getParent().requestDisallowInterceptTouchEvent(true);invalidate();return true;}
-            return false;
+            if(best>dp(60)){selected=-1;return false;}
+            activePointerId=event.getPointerId(0);
+            startCornerX=corners[selected].x;
+            startCornerY=corners[selected].y;
+            touchOffsetX=px(corners[selected])-event.getX();
+            touchOffsetY=py(corners[selected])-event.getY();
+            if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);
+            invalidate();
+            return true;
         }
-        if(action==MotionEvent.ACTION_MOVE&&selected>=0){
-            if(scale<=0)return true;
-            double x=(event.getX()-left)/(bitmap.getWidth()*scale);
-            double y=(event.getY()-top)/(bitmap.getHeight()*scale);
-            corners[selected].x=Math.max(0,Math.min(1,x));
-            corners[selected].y=Math.max(0,Math.min(1,y));
-            invalidate();return true;
+        if(selected<0)return false;
+        if(action==MotionEvent.ACTION_MOVE){
+            int pointer=event.findPointerIndex(activePointerId);
+            if(pointer<0||scale<=0)return true;
+            double x=(event.getX(pointer)+touchOffsetX-left)/(bitmap.getWidth()*scale);
+            double y=(event.getY(pointer)+touchOffsetY-top)/(bitmap.getHeight()*scale);
+            x=Math.max(0,Math.min(1,x));
+            y=Math.max(0,Math.min(1,y));
+            if(validMove(selected,x,y)){
+                corners[selected].x=x;
+                corners[selected].y=y;
+                invalidate();
+            }
+            return true;
         }
-        if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL){
-            selected=-1;invalidate();return true;
+        if(action==MotionEvent.ACTION_POINTER_UP){
+            if(event.getPointerId(event.getActionIndex())==activePointerId)finishDrag(false);
+            return true;
         }
-        return selected>=0;
+        if(action==MotionEvent.ACTION_UP){finishDrag(false);return true;}
+        if(action==MotionEvent.ACTION_CANCEL){finishDrag(true);return true;}
+        return true;
     }
 }
