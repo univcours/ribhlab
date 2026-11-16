@@ -7,7 +7,7 @@ import {chromium} from 'playwright';
 const read=async p=>readFile(new URL('../'+p,import.meta.url),'utf8');
 const source=(await read('src/edge-adjustment.js')).replace(/^export /gm,'')
  +'\nwindow.__rivoOpenEdgeAdjustment=openEdgeAdjustment;\nwindow.__rivoCornerLoupe=cornerLoupeLayout;\nwindow.__rivoPaddedEdgeCanvas=paddedEdgeCanvas;\n';
-const css=await read('src/rivo-edge-adjustment.css');
+const css=(await read('src/rivo-edge-adjustment.css'))+'\n'+(await read('src/rivo-top-corner-loupe.css'));
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -71,27 +71,49 @@ try{
   assert.equal(frame.canvasHeight,Math.round(frame.height+frame.y*2));
   const cursorX=bbox.x+bbox.width*(frame.x+.055*frame.width)/frame.canvasWidth;
   const cursorY=bbox.y+bbox.height*(frame.y+.055*frame.height)/frame.canvasHeight;
-  const pixelSample=async()=>page.evaluate(()=>{
-   const c=document.querySelector('.rivo-edge-canvas');
-   const f=window.__rivoPaddedEdgeCanvas(460,640);
-   const touch=[(f.x+.055*f.width)/c.width,(f.y+.055*f.height)/c.height];
-   const {centerX,centerY,radius}=window.__rivoCornerLoupe(c.width,c.height,touch);
-   const ctx=c.getContext('2d');
-   return {center:Array.from(ctx.getImageData(Math.round(centerX),Math.round(centerY),1,1).data),
-     border:Array.from(ctx.getImageData(Math.round(centerX+radius+3),Math.round(centerY),1,1).data)};
+  const sampleLoupe=async()=>page.evaluate(()=>{
+   const dock=document.querySelector('.rivo-edge-adjust-overlay .rivo-corner-loupe-dock');
+   const preview=dock.querySelector('.rivo-corner-loupe-preview');
+   const photo=document.querySelector('.rivo-edge-canvas-wrap');
+   const a=dock.getBoundingClientRect(),b=photo.getBoundingClientRect();
+   const ctx=preview.getContext('2d'),center=Math.round(preview.width/2);
+   return {
+    active:dock.dataset.active,side:dock.dataset.side,
+    top:a.top,bottom:a.bottom,photoTop:b.top,
+    size:preview.getBoundingClientRect().width,
+    center:Array.from(ctx.getImageData(center,center,1,1).data),
+    opacity:getComputedStyle(preview).opacity,
+    documentUncovered:a.bottom<=b.top+1
+   };
   });
-  const before=await pixelSample();
+  const before=await sampleLoupe();
+  assert.equal(before.active,'false');
+  assert.ok(before.documentUncovered,'top loupe row must not overlap photograph');
   await page.mouse.move(cursorX,cursorY);
   await page.mouse.down();
-  const pressed=await pixelSample();
+  const pressed=await sampleLoupe();
   await page.screenshot({path:out+'/'+width+'-corner-loupe-pressed.png'});
-  assert.notDeepEqual(pressed.center,before.center,'6x magnifier target appears while dragging a real corner');
-  assert.ok(pressed.border[1]>=180&&pressed.border[2]>=150,'magnifier outline is teal and visible');
+  assert.equal(pressed.active,'true','magnifier is shown on initial finger down');
+  assert.equal(pressed.side,'right','finger at left corner makes top-right loupe');
+  assert.equal(pressed.opacity,'1');
+  assert.ok(pressed.size>=110,'loupe is large enough to inspect real image pixels');
+  assert.ok(pressed.center[3]>0,'magnifier center contains source pixels or crosshair');
+  assert.ok(pressed.documentUncovered,'circle never overlays the document');
+  assert.ok(pressed.top<pressed.photoTop,'magnifier remains at top');
   await page.mouse.move(cursorX+22,cursorY+18,{steps:5});
   await page.screenshot({path:out+'/'+width+'-corner-loupe-drag.png'});
   await page.mouse.up();
-  const after=await pixelSample();
-  assert.notDeepEqual(pressed.center,after.center,'magnifier must disappear when finger lifts');
+  const after=await sampleLoupe();
+  assert.equal(after.active,'false','loupe hides when finger releases');
+  assert.equal(after.opacity,'0');
+  const rightX=bbox.x+bbox.width*(frame.x+.945*frame.width)/frame.canvasWidth;
+  const rightY=bbox.y+bbox.height*(frame.y+.055*frame.height)/frame.canvasHeight;
+  await page.mouse.move(rightX,rightY);await page.mouse.down();
+  const opposite=await sampleLoupe();
+  assert.equal(opposite.active,'true');
+  assert.equal(opposite.side,'left','finger at right corner makes top-left loupe');
+  assert.ok(opposite.documentUncovered);
+  await page.mouse.up();
   await page.locator('[data-edge="save"]').click();
   await page.waitForFunction(()=>window.__rivoSaved?.length===1&&window.__rivoCompleted===1,null,{timeout:15000});
   const saved=await page.evaluate(()=>({result:window.__rivoSaved[0],completed:window.__rivoCompleted,overlay:!!document.querySelector('.rivo-edge-adjust-overlay')}));

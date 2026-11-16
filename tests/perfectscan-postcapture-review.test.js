@@ -63,8 +63,9 @@ test('PerfectScan review is an independent after-shutter step, before processing
 });
 test('PerfectScan review includes touch loupe and no live-camera frame marker',()=>{
  const capture=readFileSync(new URL('../src/perfectscan-capture-review.js',import.meta.url),'utf8');
- assert.match(capture,/if\(selected>=0&&corners\)drawLoupe\(corners\[selected\]\)/);
- assert.match(capture,/cornerLoupeLayout\(canvas.width,canvas.height,/);
+ assert.match(capture,/if\(selected>=0&&corners\)\{/);
+ assert.match(capture,/drawTopDockedLoupe\(loupeCanvas,source,corners\[selected\],canvas,frame\)/);
+ assert.match(capture,/dock\.dataset\.side=topLoupeSide\(corners\[selected\]\)/);
  assert.match(capture,/paddedEdgeCanvas\(/);
  assert.match(capture,/paddedEdgePoint\(frame,p\)/);
  assert.match(capture,/canvas.addEventListener\('pointerdown'/);
