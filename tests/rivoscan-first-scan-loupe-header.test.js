@@ -15,8 +15,8 @@ test('both 6x loupe previews stay in the TOP dock and away from the dragging fin
   assert.match(code,/class="rivo-corner-loupe-dock"/);
   assert.match(code,/data-side="right"/);
   assert.match(code,/data-active="false"/);
-  assert.match(code,/data-active='true'/);
-  assert.match(code,/data-active='false'/);
+  assert.match(code,/dock\.dataset\.active='true'/);
+  assert.match(code,/dock\.dataset\.active='false'/);
   assert.match(code,/drawTopDockedLoupe\(/);
   assert.match(code,/topLoupeSide\(/);
   assert.match(code,/aria-hidden','false'/);
