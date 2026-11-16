@@ -8,7 +8,7 @@ const source=async file=>readFile(new URL('../'+file,import.meta.url),'utf8');
 const oldEditor=(await source('src/edge-adjustment.js')).replace(/^export /gm,'');
 const review=(await source('src/perfectscan-capture-review.js'))
  .replace(/^import\s+[^;]+;\s*$/gm,'').replace(/^export /gm,'');
-const css=await source('src/perfectscan-capture-review.css');
+const css=(await source('src/perfectscan-capture-review.css'))+'\n'+(await source('src/rivo-top-corner-loupe.css'));
 const dir=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -72,10 +72,40 @@ try{
   assert.ok(frame.x>40&&frame.y>40,'PerfectScan photo is centered with all-sided safe margins');
   const x=bounds.x+bounds.width*(frame.x+.135*frame.width)/frame.canvasWidth;
   const y=bounds.y+bounds.height*(frame.y+.118*frame.height)/frame.canvasHeight;
+  const dockInfo=async()=>page.evaluate(()=>{
+   const dock=document.querySelector('.rivo-perfect-capture-overlay .rivo-corner-loupe-dock');
+   const stage=document.querySelector('.rivo-perfect-capture-stage');
+   const preview=dock.querySelector('.rivo-corner-loupe-preview');
+   const a=dock.getBoundingClientRect(),b=stage.getBoundingClientRect();
+   const c=preview.getContext('2d'),mid=preview.width/2;
+   return {active:dock.dataset.active,side:dock.dataset.side,
+    above:a.bottom<=b.top+1,top:a.top,photoTop:b.top,
+    diameter:preview.getBoundingClientRect().width,
+    alpha:c.getImageData(mid,mid,1,1).data[3],
+    opacity:getComputedStyle(preview).opacity};
+  });
+  const idle=await dockInfo();
+  assert.equal(idle.active,'false');
+  assert.ok(idle.above,'magnifier dock reserves real top space outside the image');
   await page.mouse.move(x,y);await page.mouse.down();
+  const pressed=await dockInfo();
+  assert.equal(pressed.active,'true','loupe appears on touch');
+  assert.equal(pressed.side,'right','finger on left: magnifier at top-right');
+  assert.ok(pressed.diameter>=110,'magnifier must be large');
+  assert.ok(pressed.alpha>0,'real image pixels painted in preview');
+  assert.ok(pressed.above&&pressed.top<pressed.photoTop,'top loupe never overlaps image');
   await page.screenshot({path:dir+'/'+width+'-perfectscan-corners-after-photo.png'});
   await page.mouse.move(x+16,y+14,{steps:4});
   await page.screenshot({path:dir+'/'+width+'-perfectscan-corner-loupe-drag.png'});
+  await page.mouse.up();
+  assert.equal((await dockInfo()).active,'false','hide on lift');
+  const rightX=bounds.x+bounds.width*(frame.x+.865*frame.width)/frame.canvasWidth;
+  const rightY=bounds.y+bounds.height*(frame.y+.118*frame.height)/frame.canvasHeight;
+  await page.mouse.move(rightX,rightY);await page.mouse.down();
+  const opposite=await dockInfo();
+  assert.equal(opposite.active,'true');
+  assert.equal(opposite.side,'left','finger on right: magnifier at top-left');
+  assert.ok(opposite.above,'image stays uncovered in both orientations');
   await page.mouse.up();
   await page.locator('[data-capture-action="continue"]').click();
   await page.waitForFunction(()=>window.__reviewResult!==null,{timeout:20000});
