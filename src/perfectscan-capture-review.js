@@ -3,7 +3,7 @@
  * This runs only AFTER a photo has been taken, BEFORE PerfectScan processing or saving.
  * It does not change the independent "Readjust edges" button on saved documents.
  */
-import {perspectiveCropImageData,validEdgeQuadrilateral,cornerLoupeLayout,paddedEdgeCanvas,paddedEdgePoint} from './edge-adjustment.js';
+import {perspectiveCropImageData,validEdgeQuadrilateral,paddedEdgeCanvas,paddedEdgePoint,topLoupeSide,drawTopDockedLoupe} from './edge-adjustment.js';
 const clip=(v,a,b)=>Math.min(b,Math.max(a,v));
 const defaultCorners=()=>[[.07,.07],[.93,.07],[.93,.93],[.07,.93]];
 const textByLang={
@@ -103,12 +103,14 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',tr.title);
   overlay.innerHTML='<section class="rivo-perfect-capture-panel"><header><strong>'+tr.title+'</strong><button data-capture-action="cancel" type="button" aria-label="'+tr.cancel+'">✕</button></header>'+
    '<p class="rivo-perfect-capture-hint">'+tr.description+'</p>'+
+   '<div class="rivo-corner-loupe-dock" data-side="right" data-active="false" aria-hidden="true"><canvas class="rivo-corner-loupe-preview" width="320" height="320"></canvas><span class="rivo-corner-loupe-hint">×6</span></div>'+
    '<div class="rivo-perfect-capture-stage"><canvas class="rivo-perfect-capture-canvas" aria-label="'+tr.description+'"></canvas></div>'+
    '<small class="rivo-perfect-capture-message" role="status"></small>'+
    '<nav class="rivo-perfect-capture-controls"><button type="button" data-capture-action="manual">'+tr.manual+'</button><button type="button" data-capture-action="reset">'+tr.reset+'</button><button type="button" data-capture-action="original">'+tr.original+'</button></nav>'+
    '<footer><button type="button" data-capture-action="cancel">'+tr.cancel+'</button><button type="button" data-capture-action="continue">'+tr.continue+'</button></footer></section>';
   document.body.appendChild(overlay);
   const canvas=overlay.querySelector('.rivo-perfect-capture-canvas'),status=overlay.querySelector('.rivo-perfect-capture-message');
+  const dock=overlay.querySelector('.rivo-corner-loupe-dock'),loupeCanvas=dock.querySelector('canvas');
   const submit=overlay.querySelector('[data-capture-action="continue"]');
   const init=Math.min(1,1250/Math.max(source.width,source.height));
   const frame=paddedEdgeCanvas(Math.max(1,Math.round(source.width*init)),
@@ -134,33 +136,16 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
     });
     context.restore();
    }
-   if(selected>=0&&corners)drawLoupe(corners[selected]);
+   if(selected>=0&&corners){
+    dock.dataset.side=topLoupeSide(corners[selected]);dock.dataset.active='true';
+    dock.setAttribute('aria-hidden','false');
+    drawTopDockedLoupe(loupeCanvas,source,corners[selected],canvas,frame);
+   }else{
+    dock.dataset.active='false';dock.setAttribute('aria-hidden','true');
+   }
    const valid=!corners||validEdgeQuadrilateral(corners);
    submit.disabled=busy||!valid;
    status.textContent=!valid?tr.invalid:(detected?tr.found:tr.missing);
-  }
-  function drawLoupe(p){
-   const touch=paddedEdgePoint(frame,p);
-   const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,
-     [touch[0]/canvas.width,touch[1]/canvas.height]);
-   const x=p[0]*source.width,y=p[1]*source.height;
-   const rx=radius*source.width/frame.width/zoom,ry=radius*source.height/frame.height/zoom;
-   const sx0=clip(x-rx,0,source.width),sy0=clip(y-ry,0,source.height);
-   const sx1=clip(x+rx,0,source.width),sy1=clip(y+ry,0,source.height);
-   if(sx1<=sx0||sy1<=sy0)return;
-   context.save();context.beginPath();context.arc(cx,cy,radius,0,2*Math.PI);context.clip();
-   context.fillStyle='#ebf5ff';context.fillRect(cx-radius,cy-radius,2*radius,2*radius);
-   context.drawImage(source,sx0,sy0,sx1-sx0,sy1-sy0,
-    cx+(sx0-x)/rx*radius,cy+(sy0-y)/ry*radius,(sx1-sx0)/rx*radius,(sy1-sy0)/ry*radius);
-   context.strokeStyle='white';context.lineWidth=1.5;context.beginPath();
-   context.moveTo(cx-radius,cy);context.lineTo(cx+radius,cy);
-   context.moveTo(cx,cy-radius);context.lineTo(cx,cy+radius);context.stroke();
-   context.beginPath();context.arc(cx,cy,4,0,2*Math.PI);context.fillStyle='#07b8c2';context.fill();
-   context.restore();
-   context.beginPath();context.arc(cx,cy,radius+3,0,2*Math.PI);
-   context.lineWidth=5;context.strokeStyle='#00e3cc';context.stroke();
-   context.beginPath();context.arc(cx,cy,radius+7,0,2*Math.PI);
-   context.lineWidth=2;context.strokeStyle='#fff';context.stroke();
   }
   function point(e){
    const b=canvas.getBoundingClientRect();
