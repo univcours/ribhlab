@@ -1,30 +1,39 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {cornerLoupeLayout,validEdgeQuadrilateral,projectiveSquareToQuad} from '../src/edge-adjustment.js';
+import {cornerLoupeLayout,topLoupeSide,drawTopDockedLoupe,validEdgeQuadrilateral,projectiveSquareToQuad} from '../src/edge-adjustment.js';
 import {persistMlKitPdf} from '../src/mlkit-scan-flow.js';
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('loupe appears at the opposite corner and 6x magnifies real source pixels',()=>{
- const w=400,h=600;
- const tl=cornerLoupeLayout(w,h,[.05,.07]);
- const br=cornerLoupeLayout(w,h,[.95,.93]);
- assert.equal(tl.zoom,6);
- assert.equal(tl.side,'right');
- assert.equal(br.side,'left');
- assert.ok(tl.centerX>tl.fingerX+tl.radius,'left edge finger has loupe immediately to its right');
- assert.ok(br.centerX<br.fingerX-br.radius,'right edge finger has loupe immediately to its left');
- assert.ok(tl.centerY<300,'top corner loupe stays near the touch instead of jumping to opposite bottom corner');
- assert.ok(br.centerY>300,'bottom corner loupe stays near the touch instead of jumping to opposite top corner');
- assert.ok(tl.centerX+tl.radius<=w);
- assert.ok(tl.centerY+tl.radius<=h);
- assert.ok(br.centerX-br.radius>=0);
- assert.ok(br.centerY-br.radius>=0);
- const src=source('src/edge-adjustment.js');
- assert.match(src,/if\(drag>=0&&drag<4\)drawMagnifyingLoupe/);
- assert.match(src,/drawImage\(image,sx0,sy0,sx1-sx0,sy1-sy0,dx,dy,dw,dh\)/);
- assert.match(src,/drag=distances\.indexOf\(min\);\s*try\{canvas\.setPointerCapture\(e\.pointerId\)\}catch\{\}\s*draw\(\)/);
- assert.match(src,/drag=-1;draw\(\)/);
+test('both 6x loupe previews stay in the TOP dock and away from the dragging finger',()=>{
+ const left=[.06,.90],right=[.94,.12];
+ assert.equal(topLoupeSide(left),'right');
+ assert.equal(topLoupeSide(right),'left');
+ const editor=source('src/edge-adjustment.js'),perfect=source('src/perfectscan-capture-review.js');
+ const css=source('src/rivo-top-corner-loupe.css'),main=source('src/main.js');
+ for(const code of [editor,perfect]){
+  assert.match(code,/class="rivo-corner-loupe-dock"/);
+  assert.match(code,/data-side="right"/);
+  assert.match(code,/data-active="false"/);
+  assert.match(code,/data-active='true'/);
+  assert.match(code,/data-active='false'/);
+  assert.match(code,/drawTopDockedLoupe\(/);
+  assert.match(code,/topLoupeSide\(/);
+  assert.match(code,/aria-hidden','false'/);
+ }
+ assert.match(editor,/function draw\(\)/);
+ assert.doesNotMatch(editor,/function drawMagnifyingLoupe\(/);
+ assert.doesNotMatch(perfect,/function drawLoupe\(/);
+ assert.match(editor,/return \{side:topLoupeSide\(corner\),zoom,radius:r/);
+ assert.match(editor,/ctx\.drawImage\(source,x0,y0,x1-x0,y1-y0,/);
+ assert.match(css,/height:clamp\(128px,22dvh,170px\)/);
+ assert.match(css,/\[data-side="left"\]/);
+ assert.match(css,/\[data-side="right"\]/);
+ assert.match(css,/\[data-active="false"\]/);
+ assert.match(css,/\[data-active="true"\]/);
+ assert.match(main,/import '\.\/rivo-top-corner-loupe\.css'/);
+ assert.equal(typeof drawTopDockedLoupe,'function');
+ assert.equal(cornerLoupeLayout(400,600,left).zoom,6,'legacy helper remains compatible');
 });
 test('first-use transient Google PDF file gets saved after a bounded retry',async()=>{
  const scan={pdf:{uri:'content://google/document/first',pageCount:1},scannedImages:['content://google/image/first']};
