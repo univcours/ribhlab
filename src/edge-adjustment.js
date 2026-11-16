@@ -114,6 +114,45 @@ export function cornerLoupeLayout(width,height,corner){
  const centerY=clamp(fingerY,radius+margin,h-radius-margin);
  return {radius,centerX,centerY,side,zoom:6,fingerX,fingerY};
 }
+/** The loupe is above the photo and aligned away from the fingertip. */
+export function topLoupeSide(corner){return Number(corner?.[0]??.5)>=.5?'left':'right';}
+/** Paints real source pixels into a separate circular canvas, never the
+ * document canvas. Relative source sampling is calibrated to screen pixels
+ * for an approximately 6x preview. Shared by both editing interfaces. */
+export function drawTopDockedLoupe(preview,source,corner,stageCanvas,frame){
+ if(!preview||!source||!stageCanvas||!frame)return;
+ const zoom=6,size=preview.width||320,cx=size/2,cy=size/2,r=size*.448;
+ const previewWidth=preview.getBoundingClientRect().width||146;
+ const stageWidth=stageCanvas.getBoundingClientRect().width||stageCanvas.width;
+ const shownWidth=frame.width*stageWidth/Math.max(1,stageCanvas.width);
+ const shownHeight=frame.height*stageWidth/Math.max(1,stageCanvas.width);
+ const sw=source.width,sh=source.height;
+ const ix=clamp(corner[0],0,1)*sw,iy=clamp(corner[1],0,1)*sh;
+ const rx=Math.max(.5,previewWidth*.448*sw/Math.max(1,shownWidth*zoom));
+ const ry=Math.max(.5,previewWidth*.448*sh/Math.max(1,shownHeight*zoom));
+ const x0=clamp(ix-rx,0,sw),x1=clamp(ix+rx,0,sw);
+ const y0=clamp(iy-ry,0,sh),y1=clamp(iy+ry,0,sh);
+ const ctx=preview.getContext('2d');
+ ctx.clearRect(0,0,size,size);
+ ctx.save();
+ ctx.beginPath();ctx.arc(cx,cy,r+11,0,2*Math.PI);ctx.fillStyle='#001d37';ctx.fill();
+ ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.clip();
+ ctx.fillStyle='#f0f8ff';ctx.fillRect(cx-r,cy-r,r*2,r*2);
+ if(x1>x0&&y1>y0){
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(source,x0,y0,x1-x0,y1-y0,
+   cx+(x0-ix)*r/rx,cy+(y0-iy)*r/ry,(x1-x0)*r/rx,(y1-y0)*r/ry);
+ }
+ ctx.strokeStyle='#fff';ctx.lineWidth=2.2;ctx.beginPath();
+ ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);
+ ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();
+ ctx.beginPath();ctx.arc(cx,cy,7,0,2*Math.PI);ctx.fillStyle='#0588ca';ctx.fill();
+ ctx.strokeStyle='#fff';ctx.lineWidth=2.7;ctx.stroke();
+ ctx.restore();
+ ctx.beginPath();ctx.arc(cx,cy,r+4,0,2*Math.PI);ctx.lineWidth=9;ctx.strokeStyle='#00d5d0';ctx.stroke();
+ ctx.beginPath();ctx.arc(cx,cy,r+10,0,2*Math.PI);ctx.lineWidth=3.5;ctx.strokeStyle='#fff';ctx.stroke();
+ return {side:topLoupeSide(corner),zoom,radius:r,centerX:cx,centerY:cy};
+}
 function decodeBase64(value){
  const s=String(value||'').split(',').pop(),out=new Uint8Array(s.length*3/4+4);
  let pos=0;for(let i=0;i<s.length;i+=32768){
@@ -135,10 +174,12 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',tr.title);
  overlay.innerHTML='<div class="rivo-edge-adjust-panel"><header><strong>'+tr.title+'</strong><button type="button" data-edge="close" aria-label="'+tr.cancel+'">✕</button></header>'+
    '<p>'+tr.info+'</p><label class="rivo-edge-page" hidden>'+tr.page+' <select aria-label="'+tr.pageSelect+'"></select></label>'+
+   '<div class="rivo-corner-loupe-dock" data-side="right" data-active="false" aria-hidden="true"><canvas class="rivo-corner-loupe-preview" width="320" height="320"></canvas><span class="rivo-corner-loupe-hint">×6</span></div>'+
    '<div class="rivo-edge-canvas-wrap"><canvas class="rivo-edge-canvas" aria-label="'+tr.info+'"></canvas></div>'+
    '<small class="rivo-edge-notice">'+tr.original+'</small><div class="rivo-edge-status" role="status"></div>'+
    '<footer><button type="button" data-edge="reset">'+tr.reset+'</button><button type="button" data-edge="save">'+tr.save+'</button></footer></div>';
- const canvas=overlay.querySelector('canvas'),status=overlay.querySelector('.rivo-edge-status'),select=overlay.querySelector('select');
+ const canvas=overlay.querySelector('.rivo-edge-canvas'),status=overlay.querySelector('.rivo-edge-status'),select=overlay.querySelector('select');
+ const dock=overlay.querySelector('.rivo-corner-loupe-dock'),loupeCanvas=dock.querySelector('canvas');
  const submit=overlay.querySelector('[data-edge="save"]');
  document.body.appendChild(overlay);
  overlay.querySelector('[data-edge="close"]').focus();
@@ -174,40 +215,15 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
    ctx.fillStyle='#004563';ctx.font=Math.max(10,canvas.width/75)+'px sans-serif';
    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),x,y);
   });
-  if(drag>=0&&drag<4)drawMagnifyingLoupe(ctx,points[drag]);
+  if(drag>=0&&drag<4){
+   dock.dataset.side=topLoupeSide(points[drag]);dock.dataset.active='true';
+   dock.setAttribute('aria-hidden','false');
+   drawTopDockedLoupe(loupeCanvas,image,points[drag],canvas,frame);
+  }else{
+   dock.dataset.active='false';dock.setAttribute('aria-hidden','true');
+  }
   submit.disabled=!validEdgeQuadrilateral(points);
   setStatus(submit.disabled?tr.bad:'');
- }
- function drawMagnifyingLoupe(ctx,corner){
-  // Real source pixels (not a snapshot of the screen), enlarged by 6x.
-  const touch=paddedEdgePoint(frame,corner);
-  const {radius,centerX:cx,centerY:cy,zoom}=cornerLoupeLayout(canvas.width,canvas.height,
-    [touch[0]/canvas.width,touch[1]/canvas.height]);
-  const ix=corner[0]*image.width,iy=corner[1]*image.height;
-  const srcRx=radius*(image.width/frame.width)/zoom;
-  const srcRy=radius*(image.height/frame.height)/zoom;
-  const sx0=Math.max(0,ix-srcRx),sy0=Math.max(0,iy-srcRy);
-  const sx1=Math.min(image.width,ix+srcRx),sy1=Math.min(image.height,iy+srcRy);
-  if(sx1<=sx0||sy1<=sy0)return;
-  const dx=cx+(sx0-ix)/srcRx*radius,dy=cy+(sy0-iy)/srcRy*radius;
-  const dw=(sx1-sx0)/srcRx*radius,dh=(sy1-sy0)/srcRy*radius;
-  ctx.save();
-  ctx.beginPath();ctx.arc(cx,cy,radius+5,0,2*Math.PI);
-  ctx.fillStyle='#082a42';ctx.fill();
-  ctx.beginPath();ctx.arc(cx,cy,radius,0,2*Math.PI);ctx.clip();
-  ctx.fillStyle='#e8f5fa';ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  ctx.drawImage(image,sx0,sy0,sx1-sx0,sy1-sy0,dx,dy,dw,dh);
-  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.97)';
-  ctx.beginPath();ctx.moveTo(cx-radius,cy);ctx.lineTo(cx+radius,cy);
-  ctx.moveTo(cx,cy-radius);ctx.lineTo(cx,cy+radius);ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);
-  ctx.fillStyle='#0a78cb';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
-  ctx.restore();
-  ctx.beginPath();ctx.arc(cx,cy,radius+3,0,2*Math.PI);
-  ctx.strokeStyle='#06e1cb';ctx.lineWidth=4;ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,radius+7,0,2*Math.PI);
-  ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2;ctx.stroke();
  }
  function eventPoint(e){
   const box=canvas.getBoundingClientRect();
