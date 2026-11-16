@@ -1,0 +1,44 @@
+/* RivoScan 0.45.40 — one identical, TOP-DOCKED, 6x source-pixel loupe
+ * for saved documents and PerfectScan, physically outside the photo stage.
+ * Space is reserved even before touch, preventing layout shifts / lost drag. */
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock{
+ --rivo-top-loupe-size:clamp(112px,min(42vw,20dvh),158px);
+ position:relative;display:flex;flex:0 0 auto;
+ box-sizing:border-box;width:100%;height:clamp(128px,22dvh,170px);
+ align-items:center;justify-content:flex-end;
+ padding:4px 12px;min-height:0;margin:0;
+ border:1px solid #2a638d;border-radius:11px;
+ background:linear-gradient(125deg,#092843,#113c5b);
+ pointer-events:none;overflow:hidden;
+}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock[data-side="left"]{justify-content:flex-start}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock[data-side="right"]{justify-content:flex-end}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock .rivo-corner-loupe-preview{
+ display:block!important;flex:0 0 auto;
+ width:var(--rivo-top-loupe-size)!important;height:var(--rivo-top-loupe-size)!important;
+ max-width:none!important;max-height:none!important;
+ min-width:0!important;min-height:0!important;
+ object-fit:contain;pointer-events:none;
+ box-sizing:border-box;border-radius:50%;
+ filter:drop-shadow(0 3px 10px #0009);
+}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock[data-active="false"] .rivo-corner-loupe-preview{opacity:0}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock[data-active="true"] .rivo-corner-loupe-preview{opacity:1}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock .rivo-corner-loupe-hint{
+ position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ color:#b6d9ea;font:700 16px/1.1 system-ui,sans-serif;
+ letter-spacing:.02em;pointer-events:none;opacity:.65;
+}
+body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock[data-active="true"] .rivo-corner-loupe-hint{display:none}
+@media(max-height:660px){
+ body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock{
+  --rivo-top-loupe-size:clamp(96px,min(39vw,18dvh),134px);
+  height:clamp(108px,20dvh,143px);
+  padding:2px 8px;
+ }
+}
+@media(max-height:525px){
+ body :is(.rivo-edge-adjust-panel,.rivo-perfect-capture-panel) .rivo-corner-loupe-dock{
+  --rivo-top-loupe-size:94px;height:104px;
+ }
+}
