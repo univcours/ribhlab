@@ -1,4 +1,5 @@
 import {mountDialogControls} from './modal-shell.js';
+import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 /**
  * Image-based object counting with a locally executed COCO-SSD model.
  * The model weights download on first use; photos stay on the phone.
@@ -56,11 +57,11 @@ export function openCountCam({language='en',capture}={}){
  const title=document.createElement('h2');title.textContent=L[0];panel.append(title);
  const toolbar=document.createElement('div');toolbar.className='rivo-code-actions';panel.append(toolbar);
  const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;panel.append(input);
- const view=document.createElement('canvas');view.className='rivo-count-preview';panel.append(view);
+ const view=document.createElement('canvas');view.className='rivo-count-preview';view.hidden=true;panel.append(view);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const results=document.createElement('ul');panel.append(results);
  const notes=document.createElement('p');notes.className='rivo-code-help';notes.textContent=L[8];panel.append(notes);
- let image=null,objectURL=null,closed=false,working=false,modelPromise=null,model=null;
+ let image=null,objectURL=null,closed=false,working=false,modelPromise=null,model=null,workspace=null;
  const close=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL);try{model?.dispose?.()}catch{}};
  const action=(text,callback)=>{
   const button=document.createElement('button');button.type='button';button.textContent=text;button.addEventListener('click',callback);
@@ -70,7 +71,7 @@ export function openCountCam({language='en',capture}={}){
   if(!image)return;
   const scale=Math.min(1,1000/Math.max(image.naturalWidth,image.naturalHeight));
   view.width=Math.round(image.naturalWidth*scale);view.height=Math.round(image.naturalHeight*scale);
-  const ctx=view.getContext('2d');ctx.drawImage(image,0,0,view.width,view.height);
+  view.hidden=false;const ctx=view.getContext('2d');ctx.drawImage(image,0,0,view.width,view.height);
   ctx.strokeStyle='#04bcf7';ctx.lineWidth=3;ctx.font='bold 16px sans-serif';
   for(const d of detections){
    const [x,y,w,h]=d.bbox;
@@ -84,7 +85,7 @@ export function openCountCam({language='en',capture}={}){
  const load=async source=>{
   const img=new Image();img.src=source;
   await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;if(img.complete&&img.naturalWidth)ok()});
-  if(closed)return;image=img;draw();status.textContent=L[6];results.replaceChildren();
+  if(closed)return;image=img;draw();workspace?.loaded();workspace?.choose('detect');status.textContent=L[6];results.replaceChildren();
  };
  action(L[1],async()=>{
   if(!capture)return;
@@ -112,6 +113,7 @@ export function openCountCam({language='en',capture}={}){
     const item=document.createElement('li');item.textContent=klass+': '+count;results.append(item);
    }
    status.textContent=L[7]+' · '+Object.values(counts).reduce((a,b)=>a+b,0);
+   workspace?.choose('results');workspace?.show(true);
   }catch(error){modelPromise=null;if(!closed)status.textContent=L[9]+(error?.message||String(error))}
   finally{working=false}
  });
@@ -122,5 +124,15 @@ export function openCountCam({language='en',capture}={}){
   try{await load(objectURL)}catch{status.textContent=L[9]}
  });
  mountDialogControls({overlay,panel,close,language});
+ const controls=[...toolbar.children];
+ workspace=mountPreviewFirstWorkspace({
+  panel,preview:view,language,defaultSection:'source',
+  sections:[
+   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:controls.slice(0,2)},
+   {id:'detect',label:({ar:'التعرف والعد',fr:'Détection',en:'Detect'})[language]||'Detect',nodes:[controls[2],notes]},
+   {id:'results',label:({ar:'النتيجة',fr:'Résultats',en:'Results'})[language]||'Results',nodes:[results]}
+  ],alwaysVisible:[status],hiddenNodes:[input]
+ });
+ status.classList.add('rivo-workspace-status');
  overlay.append(panel);document.body.append(overlay);return close;
 }
