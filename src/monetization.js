@@ -102,6 +102,23 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
 // backoff while the app is foregrounded; never hammer the network or UMP.
 const retryCounts={banner:0,interstitial:0};
 const retryTimers={banner:null,interstitial:null};
+let adVisibilityRecoveryAttached=false;
+function installAdVisibilityRecovery(){
+ if(adVisibilityRecoveryAttached||typeof document==='undefined')return;
+ adVisibilityRecoveryAttached=true;
+ // Register before any ad has loaded: recovery must work after a first NO_FILL.
+ document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible'||!state.ready||!state.consent)return;
+  if(!retryTimers.banner&&!state.bannerReady&&!state.bannerLoading&&AD_CONFIG.bannerEnabled){
+   retryCounts.banner=0;
+   scheduleBannerRelayout();
+  }
+  if(!retryTimers.interstitial&&!state.interstitialReady&&!state.busy){
+   retryCounts.interstitial=0;
+   void loadInterstitial();
+  }
+ });
+}
 function scheduleAdRetry(type){
  if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
  if(retryCounts[type]>=4)return; // bounded no-fill retries
@@ -285,7 +302,15 @@ async function loadInterstitial(){
 export async function initializeAds({retry=false,deferBanner=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
  if(liveAds&&!productionAdsConfigured()){status('Real AdMob publisher IDs missing; ads disabled');return false;}
- if(state.ready){if(retry){retryCounts.banner=0;retryCounts.interstitial=0;void loadInterstitial();if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}}return true;}
+ if(state.ready){
+  installAdVisibilityRecovery();
+  if(retry){
+   retryCounts.banner=0;retryCounts.interstitial=0;
+   if(!state.interstitialReady&&!state.busy)void loadInterstitial();
+   if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}
+  }
+  return true;
+ }
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
   let sdkInitializationStarted=false;
@@ -301,6 +326,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    sdkInitializationStarted=true;
    await AdMob.initialize();
    state.ready=true;
+   installAdVisibilityRecovery();
    void trackNativeAdEvents();
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
@@ -364,7 +390,11 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();}
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
- if(isAndroid&&!working)void initializeAds({retry:true});
+ if(isAndroid&&!working){
+  void initializeAds({retry:true});
+  // Android can fire app foreground before WebView navigation has settled.
+  if(typeof window!=='undefined')requestAnimationFrame(()=>scheduleBannerRelayout());
+ }
  if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
   try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
  }
