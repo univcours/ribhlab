@@ -326,7 +326,11 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  toggle.className='rivo-workspace-settings-toggle';
  toggle.textContent='⚙';toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
  toggle.setAttribute('aria-expanded','false');
- header.append(title,toggle);
+ const closeButton=document.createElement('button');closeButton.type='button';
+ closeButton.className='rivo-workspace-close';
+ closeButton.textContent='✕';closeButton.setAttribute('aria-label',L[5]);
+ closeButton.addEventListener('click',cleanup);
+ header.append(title,toggle,closeButton);
  const previewDock=document.createElement('div');
  previewDock.className='rivo-edit-preview-dock rivo-book-preview-dock';
  previewDock.append(preview);
