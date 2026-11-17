@@ -1,0 +1,321 @@
+/* Blue editor layout is imported last, after legacy modal rules. */
+/* One RivoScan editing rule: preview stays visible, ⚙ opens task-specific tools.
+   Only the settings drawer scrolls, never the entire image/editing dialog. */
+.rivo-workspace-header{display:flex;align-items:center;gap:10px;flex:none;padding:10px 14px;
+ background:#f7f9fc;border-bottom:1px solid #bfcde0}
+.rivo-workspace-title{flex:1;min-width:0;margin:0!important;font-size:clamp(15px,4vw,19px)!important;
+ line-height:1.24;color:#152e43}
+.rivo-workspace-settings-toggle{display:grid!important;place-items:center;
+ flex:none;min-width:43px;min-height:43px;width:44px;height:44px;padding:0!important;
+ border-radius:12px!important;background:#e8eef6!important;border:1px solid #9bb5d6!important;
+ color:#083877!important;font-size:25px!important;line-height:1!important}
+.rivo-workspace-settings-toggle.active,.rivo-workspace-settings-toggle[aria-expanded="true"]{
+ background:#09356f!important;border-color:#09356f!important;color:#fff!important}
+.rivo-id-overlay:has(.rivo-book-dialog){overflow:hidden;align-items:center;padding:8px}
+.rivo-id-dialog.rivo-book-dialog,
+.rivo-perfectscan-modal.rivo-preview-first-dialog,
+.rivo-editor-window.rivo-preview-first-dialog{
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ min-height:0;box-sizing:border-box}
+.rivo-id-dialog.rivo-book-dialog{
+ width:min(100%,720px);height:min(96dvh,950px);max-height:min(96dvh,950px);
+ padding:0!important;background:#f7f9fc}
+.rivo-edit-preview-dock{display:flex;align-items:center;justify-content:center;overflow:hidden;
+ flex:1 1 52%;min-height:min(35dvh,260px);min-width:0;padding:8px 10px;
+ background:#dbe2ec}
+.rivo-book-preview-dock .rivo-id-preview{display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:100%!important;object-fit:contain;
+ margin:0!important;border-radius:9px;touch-action:none;
+ user-select:none;-webkit-user-select:none}
+.rivo-workspace-status{display:block;flex:none;max-height:54px;overflow-y:auto;
+ margin:0!important;padding:5px 12px;font-size:11px!important;
+ line-height:1.3;color:#173760}
+.rivo-workspace-status:empty{display:none}
+.rivo-edit-settings-scroll{flex:0 1 34%;min-height:82px;max-height:40dvh;
+ min-width:0;overflow-y:auto!important;overflow-x:hidden;overscroll-behavior:contain;
+ touch-action:pan-y;scrollbar-width:thin;padding:8px 12px;
+ background:#f7f9fc;border-top:1px solid #c7d5e7}
+.rivo-workspace-settings[hidden],.rivo-workspace-task-panel[hidden]{display:none!important}
+.rivo-workspace-taskbar{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;
+ padding:3px 0 10px;position:sticky;top:0;z-index:2;background:#f7f9fc}
+.rivo-workspace-task{flex:1 0 auto;min-height:43px;padding:8px 10px!important;
+ border:1px solid #b5c7df!important;border-radius:10px!important;
+ color:#23436c!important;background:#fff!important;font-size:12px!important;
+ font-weight:700!important;white-space:nowrap}
+.rivo-workspace-task.active{background:#e0eaf8!important;border-color:#084da7!important;
+ color:#002d67!important}
+.rivo-workspace-task:disabled{opacity:.4}
+.rivo-workspace-task-panel{min-width:0}
+.rivo-book-dialog .rivo-id-row{margin:8px 0}
+.rivo-book-dialog .rivo-code-actions{margin:5px 0 10px}
+.rivo-book-dialog .rivo-code-actions button{min-height:44px}
+.rivo-edit-bottom-bar{flex:none!important;min-width:0;margin:0!important;
+ padding:8px 12px calc(9px + env(safe-area-inset-bottom,0px))!important;
+ border-top:1px solid #b7c7dc;background:#fff!important;z-index:2}
+.rivo-book-dialog .rivo-edit-bottom-bar button{min-height:47px}
+.rivo-perfectscan-modal.rivo-preview-first-dialog{
+ height:min(96dvh,960px);max-height:min(96dvh,960px)}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>header{flex:none;position:relative}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+ flex:1 1 52%;min-height:min(35dvh,260px);max-height:none;
+ margin:7px 10px!important;padding:8px!important}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview canvas{
+ max-width:100%!important;max-height:100%!important;object-fit:contain}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-status{
+ flex:none;margin:4px 10px 5px;max-height:64px;overflow-y:auto}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-edit-bottom-bar{
+ position:relative!important;bottom:auto!important}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-toolbar{
+ padding:3px 0 6px}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-control{
+ padding:6px 0}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-tip,
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-warning,
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-privacy{
+ margin:5px 0}
+.rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture{
+ flex:1 1 54%;min-height:min(35dvh,260px)}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header{
+ flex:none;gap:8px}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header strong{
+ min-width:0}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header .rivo-workspace-settings-toggle{
+ order:2}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header [data-edit="retake"]{
+ order:3}
+.rivo-editor-window.rivo-preview-first-dialog>.rivo-edit-settings-scroll{
+ padding:0 7px 7px;flex:0 1 34%;max-height:39dvh;background:#f0f4fa}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-filters{
+ background:transparent!important;border:0;overflow-x:auto}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-sliders{
+ display:grid;grid-template-columns:1fr;gap:8px;background:transparent!important;
+ padding:10px 7px}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-sliders[hidden],
+.rivo-editor-window.rivo-preview-first-dialog .rivo-eraser-control[hidden]{display:none!important}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-actions{
+ grid-template-columns:repeat(3,minmax(0,1fr));padding:6px 1px}
+.rivo-editor-save-dock .rivo-editor-save{display:block;width:100%;min-height:50px;
+ border:1px solid #05387b!important;border-radius:12px!important;
+ background:#05408d!important;color:#fff!important;
+ font-size:15px!important;font-weight:800!important}
+@media(max-width:620px){
+ .rivo-id-overlay:has(.rivo-book-dialog){padding:0}
+ .rivo-id-dialog.rivo-book-dialog,
+ .rivo-perfectscan-modal.rivo-preview-first-dialog{
+  width:100%;height:100dvh;max-height:100dvh;border-radius:0!important}
+ .rivo-edit-settings-scroll{max-height:38dvh}
+ .rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture{
+  min-height:min(31dvh,215px)}
+ .rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header .rivo-workspace-settings-toggle{
+  min-width:43px;flex:none}
+}
+@media(max-height:600px){
+ .rivo-edit-preview-dock,
+ .rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture,
+ .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+  min-height:120px}
+ .rivo-edit-settings-scroll{min-height:70px;max-height:35dvh}
+}
+
+
+/* Task-specific controls, legible CTAs and always-visible close action. */
+.rivo-workspace-close{display:grid!important;place-items:center;flex:none;width:44px;
+ height:44px;min-height:44px;padding:0!important;border-radius:12px!important;
+ border:1px solid #adc0d9!important;background:#e7ecf2!important;
+ color:#192b43!important;font-size:19px!important;font-weight:800!important}
+.rivo-book-dialog .rivo-workspace-task-panel>button,
+.rivo-perfectscan-modal .rivo-workspace-task-panel>button{
+ display:block;min-height:45px;width:100%;margin:7px 0;padding:10px 13px;
+ border:1px solid #b1c5df!important;border-radius:12px!important;
+ background:#fff!important;color:#093166!important;font-size:13px!important;
+ font-weight:700!important;text-align:start;white-space:normal}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-row input[type="range"]{
+ min-height:42px;accent-color:#054496}
+.rivo-book-dialog .rivo-edit-bottom-bar button{
+ min-height:47px;width:100%;display:block;
+ border:1px solid #05397c!important;border-radius:12px!important;
+ background:#07408b!important;color:#fff!important;
+ font-size:15px!important;font-weight:800!important;text-align:center}
+.rivo-workspace-task-panel .rivo-code-actions button{
+ flex:1 1 42%;margin:0;min-height:45px;
+ border-radius:11px!important;color:#0c356b!important;
+ background:#fff!important;border:1px solid #a5bcdb!important}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-hint{
+ font-size:12px!important;line-height:1.45;color:#2d4667}
+
+
+/* Keep Scan Editor header title readable in the unified light workspace. */
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header{
+ background:#f7f9fc!important;color:#172a43!important;
+ border-bottom:1px solid #b3c6de!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header strong{
+ color:#132a49!important;-webkit-text-fill-color:#132a49!important;
+ font-weight:850!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header [data-edit="cancel"]{
+ background:#eaf0f8!important;color:#12386a!important;
+ border-color:#a7bdd9!important;
+}
+
+/* Production Book Scan uses its existing accessible modal close control. */
+.rivo-book-dialog .rivo-modal-top.rivo-workspace-header{
+ position:relative;top:auto;flex:none;display:flex;align-items:center;
+ gap:9px;min-height:60px;margin:0;padding:8px 12px;background:#f4f9ff!important;
+ border-bottom:1px solid #c4dcfa;
+}
+.rivo-book-dialog .rivo-modal-top.rivo-workspace-header h2{
+ font-size:clamp(15px,4vw,19px)!important;margin:0!important;flex:1;min-width:0;
+ color:#18325c!important
+}
+.rivo-book-dialog .rivo-modal-top.rivo-workspace-header .rivo-modal-dismiss{
+ flex:none;width:44px;height:44px;border:1px solid #b8d5f4!important;
+ border-radius:11px!important;background:#eaf3ff!important;color:#194b87!important;
+ font-size:21px!important
+}
+
+
+/* Blue preview-first layout also applies to ID Photo, CountCam,
+   Formula OCR and Photo Translation: one relevant settings panel at a time. */
+.rivo-id-overlay:has(.rivo-shared-preview-dialog),
+.rivo-code-overlay:has(.rivo-shared-preview-dialog){overflow:hidden;align-items:center;padding:8px}
+.rivo-id-dialog.rivo-shared-preview-dialog,
+.rivo-code-dialog.rivo-shared-preview-dialog{
+ box-sizing:border-box;display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ width:min(100%,710px);height:min(96dvh,950px);max-height:min(96dvh,950px);
+ min-height:0;padding:0!important;border-radius:18px;
+ background:#f5faff!important;color:#18325c!important}
+.rivo-shared-preview-dialog>.rivo-workspace-header{
+ position:relative;flex:none;min-height:60px;margin:0;padding:9px 12px;
+ background:#f5faff!important;border-bottom:1px solid #bed6f5;
+ display:flex;align-items:center;gap:9px}
+.rivo-shared-preview-dialog>.rivo-workspace-header h2{flex:1;min-width:0;
+ font-size:clamp(15px,4vw,19px)!important;line-height:1.2;
+ margin:0!important;color:#173d78!important}
+.rivo-shared-preview-dialog>.rivo-workspace-header .rivo-modal-dismiss{
+ flex:none;width:44px;height:44px;border:1px solid #abcdf4!important;
+ background:#eaf3ff!important;color:#104683!important;border-radius:12px;font-size:21px}
+.rivo-shared-preview-dock{min-height:min(35dvh,260px);flex:1 1 55%;
+ background:#dbeaff;border-bottom:1px solid #bcd8f4}
+.rivo-shared-preview-dock .rivo-id-preview,
+.rivo-shared-preview-dock .rivo-count-preview,
+.rivo-shared-preview-dock .rivo-photo-translation-preview{
+ display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:100%!important;margin:0!important;
+ padding:0!important;border:1px solid #b2cdf0!important;border-radius:10px;
+ background:#fff;object-fit:contain}
+.rivo-shared-preview-dock [hidden]{display:none!important}
+.rivo-workspace-empty{color:#315583;text-align:center;padding:16px;
+ margin:0;font-size:13px;line-height:1.5}
+.rivo-shared-preview-dialog .rivo-workspace-settings{
+ flex:0 1 32%;max-height:39dvh;min-height:85px;
+ padding:9px 12px;background:#f5faff!important}
+.rivo-shared-preview-dialog .rivo-workspace-taskbar{background:#f5faff}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel>.rivo-id-row{
+ margin:7px 0;color:#19467f}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel input[type="range"]{
+ width:100%;accent-color:#0e61c2;min-height:35px}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel select,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel input,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel textarea{
+ border-color:#bfd5f3;color:#143e79;background:#fff;border-radius:10px}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel button,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions button{
+ min-height:44px;margin:4px;padding:9px;border:1px solid #bdd7f6!important;
+ background:#fff!important;color:#1755a2!important;border-radius:11px;font-weight:700}
+.rivo-shared-preview-dialog .rivo-workspace-status{color:#214e85;
+ background:#eef5ff;padding:5px 12px}
+.rivo-shared-preview-dialog .rivo-workspace-bottom{display:flex;gap:8px}
+.rivo-shared-preview-dialog .rivo-workspace-bottom button{
+ flex:1;min-height:49px;padding:11px;border:1px solid #1459b1!important;
+ border-radius:12px!important;background:#0e61c2!important;color:#fff!important;
+ font-size:13px!important;font-weight:800!important;white-space:normal}
+.rivo-shared-preview-dialog .rivo-workspace-bottom button:disabled{opacity:.5}
+.rivo-book-preview-dock .rivo-book-preview{
+ display:flex;justify-content:center;align-items:center;position:relative;max-width:100%;
+ max-height:100%;width:100%;height:100%;margin:0;padding:0;
+ background:transparent;border:0;overflow:hidden}
+.rivo-book-preview-dock .rivo-book-empty{font-size:13px;color:#245c9e;
+ padding:16px;text-align:center;line-height:1.4}
+@media(max-width:620px){
+ .rivo-id-overlay:has(.rivo-shared-preview-dialog),
+ .rivo-code-overlay:has(.rivo-shared-preview-dialog){padding:0}
+ .rivo-id-dialog.rivo-shared-preview-dialog,
+ .rivo-code-dialog.rivo-shared-preview-dialog{
+  width:100%;height:100dvh;max-height:100dvh;border-radius:0}
+ .rivo-shared-preview-dialog .rivo-workspace-settings{max-height:38dvh}
+}
+
+
+/* Final cascade override: older generic modal CSS must NEVER restore dialog
+   scrolling over a document. Only the contextual tools pane may scroll. */
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog,
+body .rivo-code-overlay:not(.rivo-live-overlay) .rivo-code-dialog.rivo-shared-preview-dialog,
+body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog,
+body .rivo-editor-overlay .rivo-editor-window.rivo-preview-first-dialog{
+ display:flex!important;flex-direction:column!important;
+ overflow-y:hidden!important;overflow-x:hidden!important;
+ overscroll-behavior:contain!important;min-height:0!important;
+ height:min(96dvh,960px)!important;max-height:min(96dvh,960px)!important;
+ padding:0!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-book-preview-dock,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-shared-preview-dock,
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-shared-preview-dock{
+ flex:1 1 50%!important;min-height:min(35dvh,250px)!important;
+ max-height:none!important;min-width:0!important;overflow:hidden!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:8px!important;margin:0!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-book-preview-dock .rivo-book-preview{
+ flex:1!important;min-height:0!important;max-height:100%!important;
+ margin:0!important;width:100%!important;height:100%!important;
+ border:0!important;display:flex!important;align-items:center!important;justify-content:center!important
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-book-preview-dock canvas.rivo-id-preview,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-shared-preview-dock canvas.rivo-id-preview,
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-shared-preview-dock canvas,
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-shared-preview-dock img{
+ display:block;max-width:100%!important;max-height:100%!important;
+ width:auto!important;height:auto!important;margin:0!important;
+ object-fit:contain!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-workspace-settings,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-workspace-settings,
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-settings,
+body .rivo-editor-overlay .rivo-editor-window.rivo-preview-first-dialog .rivo-workspace-settings,
+body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-workspace-settings{
+ flex:0 1 32%!important;min-height:75px!important;max-height:38dvh!important;
+ overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+ padding:9px 12px!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-workspace-settings[hidden],
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-workspace-settings[hidden],
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-settings[hidden],
+body .rivo-editor-overlay .rivo-editor-window.rivo-preview-first-dialog .rivo-workspace-settings[hidden],
+body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-workspace-settings[hidden]{
+ display:none!important;
+}
+body .rivo-id-overlay .rivo-book-dialog .rivo-modal-top.rivo-workspace-header,
+body .rivo-id-overlay .rivo-shared-preview-dialog .rivo-modal-top.rivo-workspace-header,
+body .rivo-code-overlay .rivo-shared-preview-dialog .rivo-modal-top.rivo-workspace-header{
+ flex:none!important;position:relative!important;top:auto!important;
+ margin:0!important;padding:9px 12px!important;min-height:57px!important;
+ display:flex!important;align-items:center!important;
+}
+body .rivo-editor-overlay .rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture,
+body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+ flex:1 1 52%!important;min-height:min(35dvh,250px)!important;
+ max-height:none!important;overflow:hidden!important;
+}
+@media(max-width:620px){
+ body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog,
+ body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog,
+ body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog,
+ body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog,
+ body .rivo-editor-overlay .rivo-editor-window.rivo-preview-first-dialog{
+  width:100%!important;height:100dvh!important;max-height:100dvh!important;
+  border-radius:0!important;
+ }
+}
