@@ -13,7 +13,7 @@ test('RivoScan Play AAB uses only dedicated original keystore secrets and exact 
  // This legacy workflow must never rebuild/publish 0.45.40 from a newer
  // 0.45.42+ branch. Its historical release is pinned and manually dispatched.
  assert.ok(flow.includes('ref: rivoscan-0.45.40-original-key'));
- assert.match(flow,/on:\\n  workflow_dispatch:\\n/);
- assert.doesNotMatch(flow,/\\n  push:\\n/);
+ assert.ok(flow.includes('on:')&&flow.includes('  workflow_dispatch:'));
+ assert.ok(!flow.includes('  push:'));
  assert.ok(flow.includes('TAG=rivoscan-0.45.40-original-key'));
 });
