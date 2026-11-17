@@ -75,6 +75,8 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
   (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads};
  countSpreads();
+ let bookSettingsOpen=false,bookTask='source';
+ let setBookTask=()=>{},setBookSettingsOpen=()=>{};
  const cleanup=()=>{closed=true;overlay.remove();if(objectURL)URL.revokeObjectURL(objectURL)};
  const load=async (src,{alreadySingle=false}={})=>{
   if(!singlePage&&image&&previousSpreads.length>=maxSpreads-1)
@@ -96,6 +98,8 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   });
   image=img;currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix(true);countSpreads();
+  setBookTask((singlePage||alreadySingle)?'flatten':'split');
+  setBookSettingsOpen(false);
   location.hidden=singlePage||currentIsSinglePage;
   autoSpine.hidden=singlePage||currentIsSinglePage;
  };
@@ -185,7 +189,8 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    const old=previousSpreads.pop();
    image=old.image;slider.value=String(old.spine);warpSlider.value=String(old.curvature);
    autoPageWarp=old.autoPageWarp;autoLineWarp=old.autoLineWarp;currentIsSinglePage=old.alreadySingle;showOriginal=false;
-   draw();countSpreads();
+   draw();countSpreads();setBookTask((singlePage||currentIsSinglePage)?'flatten':'split');
+   setBookSettingsOpen(false);
    location.hidden=singlePage||currentIsSinglePage;autoSpine.hidden=singlePage||currentIsSinglePage;
   });
  makeButton(actions,L[5],cleanup);
@@ -256,7 +261,28 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   autoLineWarp=found;draw();
   status.textContent=({ar:'تقويم تجريبي اعتماداً على السطور: راجع النتيجة قبل الحفظ.',en:'Line-aware beta: review page previews before saving.'})[language]||'Check correction before saving';
  });
- slider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
+ // Drag the separator on the photo while it remains visible.
+ let draggingSpine=false;
+ preview.addEventListener('pointerdown',event=>{
+  if(!image||busy||singlePage||currentIsSinglePage)return;
+  const rect=preview.getBoundingClientRect();
+  if(rect.width<=0)return;
+  if(Math.abs((event.clientX-rect.left)/rect.width-(+slider.value/100))>Math.max(.06,24/rect.width))return;
+  draggingSpine=true;
+  preview.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+ });
+ preview.addEventListener('pointermove',event=>{
+  if(!draggingSpine||!image)return;
+  const rect=preview.getBoundingClientRect();
+  if(rect.width<=0)return;
+  slider.value=String(Math.max(25,Math.min(75,Math.round((event.clientX-rect.left)*100/rect.width))));
+  autoPageWarp=null;autoLineWarp=null;showOriginal=false;draw();
+  event.preventDefault();
+ });
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])
+  preview.addEventListener(type,()=>{draggingSpine=false});
+ slider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;showOriginal=false;draw()});
  warpSlider.addEventListener('input',()=>{autoPageWarp=null;autoLineWarp=null;draw()});
  makeButton(saveAction,singlePage?
   (({en:'Save flattened PDF copy',ar:'حفظ PDF مصحح',fr:'Enregistrer PDF aplati',es:'Guardar PDF corregido',de:'Korrigiertes PDF speichern',pt:'Guardar PDF corrigido',it:'Salva PDF corretto'})[language]||'Save flattened PDF'):
@@ -291,6 +317,64 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   }catch(error){status.textContent=error?.message||String(error)}
   finally{busy=false}
  });
+ // Context-sensitive task drawer: show ONLY settings belonging to the chosen task.
+ // The photo canvas remains pinned outside the scrollable settings.
+ panel.classList.add('rivo-preview-first-dialog','rivo-book-dialog');
+ const header=document.createElement('div');header.className='rivo-workspace-header';
+ title.classList.add('rivo-workspace-title');
+ const toggle=document.createElement('button');toggle.type='button';
+ toggle.className='rivo-workspace-settings-toggle';
+ toggle.textContent='⚙';toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
+ toggle.setAttribute('aria-expanded','false');
+ header.append(title,toggle);
+ const previewDock=document.createElement('div');
+ previewDock.className='rivo-edit-preview-dock rivo-book-preview-dock';
+ previewDock.append(preview);
+ const drawer=document.createElement('div');
+ drawer.className='rivo-edit-settings-scroll rivo-workspace-settings';drawer.hidden=true;
+ const taskBar=document.createElement('div');taskBar.className='rivo-workspace-taskbar';
+ const groups={};
+ const labels={
+  source:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',
+  split:({ar:'تقسيم',fr:'Séparer',en:'Split'})[language]||'Split',
+  flatten:({ar:'تقويم',fr:'Aplatir',en:'Flatten'})[language]||'Flatten'
+ };
+ const icons={source:'▧',split:'◫',flatten:'⌁'};
+ for(const task of ['source',...(!singlePage?['split']:[]),'flatten']){
+  const tab=document.createElement('button');tab.type='button';
+  tab.className='rivo-workspace-task';tab.textContent=icons[task]+' '+labels[task];
+  tab.dataset.bookTask=task;
+  tab.addEventListener('click',()=>setBookTask(task));
+  taskBar.append(tab);
+  const group=document.createElement('div');group.className='rivo-workspace-task-panel';
+  group.dataset.bookPanel=task;group.hidden=true;groups[task]=group;
+ }
+ groups.source.append(actions,spreadCount);
+ if(!singlePage)groups.split.append(location,autoSpine);
+ groups.flatten.append(warpLabel,autoButton,lineButton,autoAll,compare,info);
+ drawer.append(taskBar,...Object.values(groups));
+ setBookTask=task=>{
+  if(!groups[task])task='flatten';
+  bookTask=task;
+  for(const [name,group] of Object.entries(groups))group.hidden=name!==task;
+  for(const tab of taskBar.children){
+   tab.classList.toggle('active',tab.dataset.bookTask===task);
+   tab.setAttribute('aria-pressed',String(tab.dataset.bookTask===task));
+   tab.disabled=tab.dataset.bookTask!=='source'&&!image;
+  }
+ };
+ setBookSettingsOpen=open=>{
+  bookSettingsOpen=!!open;
+  drawer.hidden=!bookSettingsOpen;
+  toggle.setAttribute('aria-expanded',String(bookSettingsOpen));
+  toggle.classList.toggle('active',bookSettingsOpen);
+ };
+ toggle.addEventListener('click',()=>setBookSettingsOpen(!bookSettingsOpen));
+ setBookTask('source');
+ setBookSettingsOpen(true);
+ status.classList.add('rivo-workspace-status');
+ saveAction.classList.add('rivo-edit-bottom-bar');
+ panel.replaceChildren(header,previewDock,status,drawer,saveAction,fileInput);
  overlay.append(panel);document.body.append(overlay);
  return cleanup;
 }
