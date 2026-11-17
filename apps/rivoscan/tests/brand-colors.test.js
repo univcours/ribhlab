@@ -6,12 +6,17 @@ const theme=readFileSync(new URL('../src/theme-brand.css',import.meta.url),'utf8
 const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const brand=readFileSync(new URL('../apply-rivoscan-branding.ps1',import.meta.url),'utf8');
 const build=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
-test('Full turquoise theme and icon use matching palette in all major surfaces',()=>{
- for(const color of ['#13d9cd','#079a9a','#06565f','#e0faf4'])assert.ok(icon.includes(color),'icon missing '+color);
- for(const color of ['#0cb6aa','#089b99','#056f72'])assert.ok(theme.includes(color),'theme missing '+color);
+test('Official royal-blue theme uses the current app palette in all major surfaces',()=>{
+ for(const color of ['#08489b','#073674','#1b6bd4','#e4eefa'])
+  assert.ok(theme.includes(color),'theme missing '+color);
  for(const part of ['.rivo-dark-ui .topbar','.rivo-home .rivo-tile','.rivo-dark-ui .mobilebar',
   '.rivo-perfectscan-modal','.rivo-editor-window','.library-selection-toolbar'])
   assert.ok(theme.includes(part),'theme area missing '+part);
+});
+test('The existing icon-generation pipeline remains intact during window palette changes',()=>{
+ // Icon artwork is a separate release asset, not a source for UI color tokens.
+ for(const color of ['#13d9cd','#079a9a','#06565f','#e0faf4'])
+  assert.ok(icon.includes(color),'icon asset missing '+color);
  assert.ok(brand.includes('scripts/create-turquoise-icon.mjs'));
  assert.ok(brand.toLowerCase().includes('#0aa59d'));
  assert.ok(build.scripts.prebuild.includes('create-turquoise-icon.mjs'));
