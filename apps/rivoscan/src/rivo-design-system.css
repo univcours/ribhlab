@@ -377,3 +377,18 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
  background:#fff!important;border:1px solid #a5dbd1!important}
 .rivo-book-dialog .rivo-workspace-task-panel .rivo-id-hint{
  font-size:12px!important;line-height:1.45;color:#2d6765}
+
+
+/* Keep Scan Editor header title readable in the unified light workspace. */
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header{
+ background:#f7fcfa!important;color:#173f43!important;
+ border-bottom:1px solid #b3ded5!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header strong{
+ color:#134749!important;-webkit-text-fill-color:#134749!important;
+ font-weight:850!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header [data-edit="cancel"]{
+ background:#eaf8f4!important;color:#126a68!important;
+ border-color:#a7d9ce!important;
+}
