@@ -1,4 +1,5 @@
 import {mountDialogControls} from './modal-shell.js';
+import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 import Tesseract from 'tesseract.js';
 const {recognize}=Tesseract;
 import {Translation} from '@capacitor-mlkit/translation';
@@ -40,6 +41,9 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
  const panel=document.createElement('section');panel.className='rivo-code-dialog';
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');title.textContent=L[0];panel.append(title);
+ const preview=document.createElement('img');
+ preview.className='rivo-photo-translation-preview';preview.alt=L[0];preview.hidden=true;
+ panel.append(preview);
  const actionRow=document.createElement('div');actionRow.className='rivo-code-actions';panel.append(actionRow);
  const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;panel.append(input);
  const source=labeledControl(panel,L[3],selectLang('en'));
@@ -49,13 +53,19 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
  const notice=document.createElement('p');notice.className='rivo-code-help';notice.textContent=L[11];panel.append(notice);
  const status=document.createElement('p');status.setAttribute('role','status');panel.append(status);
  const resultActions=document.createElement('div');resultActions.className='rivo-code-actions';panel.append(resultActions);
- let file=null,closed=false,busy=false,hasRecognition=false;
- const close=()=>{if(busy)return;closed=true;overlay.remove();input.value='';file=null};
+ let file=null,closed=false,busy=false,hasRecognition=false,photoURL=null,workspace=null;
+ const close=()=>{if(busy)return;closed=true;overlay.remove();input.value='';file=null;if(photoURL)URL.revokeObjectURL(photoURL)};
  const button=(parent,label,fn)=>{
   const b=document.createElement('button');b.type='button';b.textContent=label;
   b.addEventListener('click',fn);parent.append(b);return b;
  };
- const setFile=next=>{file=next;original.value='';translation.value='';translation.parentElement.hidden=true;hasRecognition=false;status.textContent=file?.name||'';};
+ const setFile=next=>{
+  if(photoURL)URL.revokeObjectURL(photoURL);
+  file=next;photoURL=URL.createObjectURL(next);
+  preview.src=photoURL;preview.hidden=false;workspace?.loaded();
+  original.value='';translation.value='';translation.parentElement.hidden=true;
+  hasRecognition=false;status.textContent=file?.name||'';
+ };
  button(actionRow,L[1],async()=>{
   if(busy||!capture)return;
   try{
@@ -116,6 +126,18 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
  });
  button(resultActions,L[10],close);
  mountDialogControls({overlay,panel,close,language});
+ const saveButton=[...resultActions.querySelectorAll('button')].find(button=>button.textContent===L[9]);
+ workspace=mountPreviewFirstWorkspace({
+  panel,preview,language,defaultSection:'source',
+  sections:[
+   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[actionRow]},
+   {id:'recognize',label:({ar:'التعرف على النص',fr:'OCR',en:'OCR'})[language]||'OCR',
+    nodes:[source.parentElement,original.parentElement,resultActions]},
+   {id:'translation',label:({ar:'الترجمة',fr:'Traduction',en:'Translation'})[language]||'Translation',
+    nodes:[target.parentElement,translation.parentElement,notice]}
+  ],alwaysVisible:[status],footer:[saveButton],hiddenNodes:[input]
+ });
+ status.classList.add('rivo-workspace-status');
  overlay.append(panel);document.body.append(overlay);
  return close;
 }
