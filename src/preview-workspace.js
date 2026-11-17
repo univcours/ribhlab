@@ -8,7 +8,7 @@ const words={
  ar:{settings:'الإعدادات',source:'الصورة',adjust:'الضبط',result:'النتيجة',advanced:'متقدم',empty:'صوّر أو استورد صورة باش تبان هنا'},
  fr:{settings:'Réglages',source:'Photo',adjust:'Ajuster',result:'Résultat',advanced:'Avancé',empty:'Photographiez ou importez une photo'}
 };
-export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],hiddenNodes=[],language='en',defaultSection=null}={}){
+export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],hiddenNodes=[],alwaysVisible=[],language='en',defaultSection=null}={}){
  if(!panel||!preview||!sections.length)throw Error('Invalid preview workspace');
  const lang=words[language]||words.en;
  const header=panel.querySelector(':scope > .rivo-modal-top')||panel.querySelector(':scope > header');
@@ -42,7 +42,7 @@ export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],
  drawer.append(nav,...panels.values());
  const actionBar=document.createElement('div');actionBar.className='rivo-edit-bottom-bar rivo-workspace-bottom';
  footer.filter(Boolean).forEach(el=>actionBar.append(el));
- panel.replaceChildren(header,dock,drawer,...(footer.length?[actionBar]:[]),...hiddenNodes.filter(Boolean));
+ panel.replaceChildren(header,dock,...alwaysVisible.filter(Boolean),drawer,...(footer.length?[actionBar]:[]),...hiddenNodes.filter(Boolean));
  let selected=defaultSection||sections[0].id,open=true;
  function choose(id){
   if(!panels.has(id))return;
