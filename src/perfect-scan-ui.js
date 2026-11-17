@@ -178,7 +178,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   ctx.drawImage(compareLayers.before,0,0);
   ctx.save();ctx.beginPath();ctx.rect(edge,0,canvas.width-edge,canvas.height);ctx.clip();
   ctx.drawImage(compareLayers.after,0,0);ctx.restore();
-  ctx.save();ctx.strokeStyle='#00cfb8';ctx.lineWidth=Math.max(3,canvas.width/550);
+  ctx.save();ctx.strokeStyle='#26A6F5';ctx.lineWidth=Math.max(3,canvas.width/550);
   ctx.beginPath();ctx.moveTo(edge,0);ctx.lineTo(edge,canvas.height);ctx.stroke();ctx.restore();
   preview.classList.add('rivo-perfect-split-active');
   tag.textContent=t.original+' / '+t.processed;
