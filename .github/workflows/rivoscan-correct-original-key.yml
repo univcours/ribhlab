@@ -1,20 +1,9 @@
 name: RivoScan 0.45.40 correct original upload key
 # Final release job: signed artifacts built from the branch after 161/161 responsive checks.
+# Historical 0.45.40 re-build only. New versions use the separate signed workflow.
+# Never auto-publish an old release from newer source commits.
 on:
   workflow_dispatch:
-  push:
-    branches: [rivoscan-standalone-ready]
-    paths:
-      - '.github/workflows/rivoscan-correct-original-key.yml'
-      - 'rivoscan-version.properties'
-      - 'package.json'
-      - 'assets/branding/**'
-      - 'src/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'scripts/create-turquoise-icon.mjs'
-      - 'apply-rivoscan-branding.ps1'
-      - 'tests/brand-colors.test.js'
 permissions:
   contents: write
 concurrency:
@@ -35,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: rivoscan-standalone-ready
+          ref: rivoscan-0.45.40-original-key
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
