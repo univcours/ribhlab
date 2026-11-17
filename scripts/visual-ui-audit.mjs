@@ -312,7 +312,10 @@ try{
    await overlay.waitFor({state:'visible',timeout:10000});
    const info=await overlay.evaluate(root=>{
     const panel=root.querySelector('[role="dialog"]'),close=root.querySelector('[data-rivo-modal-close]');
-    const buttons=[...root.querySelectorAll('.rivo-code-actions > button')];
+    // Only the active contextual settings panel contributes visible buttons.
+    // Hidden task panels must not be mistaken for clipped controls.
+    const buttons=[...root.querySelectorAll('.rivo-code-actions > button')]
+     .filter(button=>button.getClientRects().length>0&&getComputedStyle(button).visibility!=='hidden');
     const bounds=panel.getBoundingClientRect();
     return {close:!!close&&close.getBoundingClientRect().width>=40,
      fits:bounds.left>=-2&&bounds.right<=innerWidth+2,
@@ -325,12 +328,22 @@ try{
    check(width+': '+tag+' fits viewport',info.fits);
    check(width+': '+tag+' buttons not clipped',!info.clipped);
    if(id==='bookScan'){
-    check(width+': book advanced corrections collapsed',
-     await overlay.locator('details.rivo-book-advanced:not([open])').count()===1);
-    check(width+': Book Save disabled without photo',
-     await overlay.locator('.rivo-code-actions button').last().isDisabled());
+    const bookContext=await overlay.evaluate(root=>{
+     const panel=root.querySelector('.rivo-book-dialog');
+     const gear=panel?.querySelector('.rivo-workspace-settings-toggle');
+     const drawer=panel?.querySelector('.rivo-workspace-settings');
+     const source=panel?.querySelector('[data-book-panel="source"]');
+     const split=panel?.querySelector('[data-book-panel="split"]');
+     const flatten=panel?.querySelector('[data-book-panel="flatten"]');
+     return !!gear&&gear.getAttribute('aria-expanded')==='true'&&
+      !!drawer&&!drawer.hidden&&!!source&&!source.hidden&&
+      !!flatten&&flatten.hidden&&(!split||split.hidden);
+    });
+    check(width+': book source-only settings, advanced corrections behind gear',bookContext);
+    const bookSave=overlay.locator('.rivo-book-dialog .rivo-edit-bottom-bar button').last();
+    check(width+': Book Save disabled without photo',await bookSave.isDisabled());
     if(width===320){
-     const saveRect=await overlay.locator('.rivo-code-actions button').last().evaluate(button=>button.getBoundingClientRect().toJSON());
+     const saveRect=await bookSave.evaluate(button=>button.getBoundingClientRect().toJSON());
      check(width+': Book Save fits short screen',saveRect.bottom<=height+2);
     }
    }
@@ -354,11 +367,19 @@ try{
     methodHidden:root.querySelector('.rivo-perfectscan-control').hidden,
     previewHidden:root.querySelector('.rivo-perfectscan-preview').hidden,
     cameraEnabled:!root.querySelector('[data-perfect="camera"]').disabled,
-    hintReadable:getComputedStyle(small).color!=='rgb(184, 217, 242)'&&getComputedStyle(small).opacity==='1',
-    fits:bounds.height<innerHeight*.93&&bounds.left>=-2&&bounds.right<=innerWidth+2};
+    hintReadable:!!small&&getComputedStyle(small).color!=='rgb(184, 217, 242)'&&getComputedStyle(small).opacity==='1',
+    sourceOnly:modal.querySelector('.rivo-workspace-settings-toggle')?.getAttribute('aria-expanded')==='true'&&
+     !modal.querySelector('.rivo-workspace-settings').hidden&&
+     modal.querySelector('.rivo-workspace-task-panel:not([hidden])')?.contains(
+      modal.querySelector('[data-perfect="camera"]'))===true,
+    // Full-screen mobile modal is intentional and preserves a fixed image preview.
+    fits:bounds.height>=innerHeight*.65&&bounds.height<=innerHeight+2&&
+     bounds.top>=-2&&bounds.left>=-2&&bounds.right<=innerWidth+2};
   });
   check(width+': PerfectScan starts with readable source-photo choices',
-   perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&perfectInfo.fits);
+   perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&
+   perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&
+   perfectInfo.sourceOnly&&perfectInfo.fits);
   await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
   await perfect.locator('[data-perfect="close"]').click();
   await perfect.waitFor({state:'detached'});
