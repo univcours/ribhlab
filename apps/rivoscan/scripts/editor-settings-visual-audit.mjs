@@ -73,7 +73,7 @@ try{
  await screenshot(page,'02-book-scan-flatten-settings');
  await page.locator('.rivo-book-dialog .rivo-workspace-settings-toggle').click();
  await screenshot(page,'03-book-scan-preview-only');
- await page.locator('.rivo-book-dialog button').filter({hasText:'Close'}).first().click();
+ await page.locator('.rivo-book-dialog .rivo-workspace-close').click();
 
  // PerfectScan: same source preview, correction controls appear only when requested.
  await page.evaluate(async()=>{
