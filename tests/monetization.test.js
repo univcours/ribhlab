@@ -20,19 +20,19 @@ test('legacy premium timer does not enable rewarded ads',()=>{
 });
 test('interstitial requires consent, saved work, natural break, cooldown, session cap',()=>{
  const state={native:true,consent:true,ready:true,startedAt:1000,
-  now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0,launchCount:5};
+  now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0,launchCount:3};
  assert.equal(shouldShowInterstitial(state),true);
- for(const override of [{native:false},{consent:false},{ready:false},{savedCount:1},
-  {launchCount:4},{shownCount:8},{premiumUntil:1000000},{now:80000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
+ for(const override of [{native:false},{consent:false},{ready:false},{savedCount:0},
+  {launchCount:2},{shownCount:8},{premiumUntil:1000000},{now:80000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowInterstitial({...state,...override}),false);
 });
 test('Back ads only after completed work or two tool-to-Home transitions, never app-exit or overlays',()=>{
  const base={native:true,consent:true,ready:true,startedAt:1000,now:900000,
-  lastShownAt:0,savedCount:0,backTransitions:1,shownCount:0,premiumUntil:0,trigger:'back',launchCount:5};
+  lastShownAt:0,savedCount:0,backTransitions:1,shownCount:0,premiumUntil:0,trigger:'back',launchCount:3};
  assert.equal(shouldShowInterstitial(base),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2}),true);
  assert.equal(shouldShowInterstitial({...base,savedCount:1}),true);
- assert.equal(shouldShowInterstitial({...base,savedCount:1,trigger:'regular'}),false);
+ assert.equal(shouldShowInterstitial({...base,savedCount:1,trigger:'regular'}),true);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,shownCount:8}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,premiumUntil:1000000}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:80000}),false);
@@ -49,7 +49,7 @@ test('production cannot use Google test IDs or mismatched publishers',()=>{
  assert.equal(productionAdsConfigured({...real,androidAppId:'ca-app-pub-3940256099942544~3347511713'}),false);
 });
 
-test('first 4 launches are free from full-screen ads; fifth and later eligible',()=>{
+test('first 2 launches are free; third and later eligible at a safe break',()=>{
  const storage=new Map();
  const facade={getItem:key=>storage.get(key)||null,setItem:(key,v)=>storage.set(key,v)};
  for(let i=1;i<=6;i++){
@@ -87,12 +87,12 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
  assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,fullScreenAd:true}),false);
 });
 
-test('Native ad no-fill conditions retry with bounded 1/2/4 minute backoff',async()=>{
+test('Native ad no-fill conditions retry with bounded 1/2/4/8 minute backoff',async()=>{
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  assert.match(code,/const retryCounts=\{banner:0,interstitial:0\}/);
- assert.match(code,/if\(retryCounts\[type\]>=3\)return/);
- assert.match(code,/\[60000,120000,240000\]/);
+ assert.match(code,/if\(retryCounts\[type\]>=4\)return/);
+ assert.match(code,/\[60000,120000,240000,480000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
  assert.match(code,/scheduleAdRetry\('interstitial'\)/);
 });
