@@ -96,3 +96,16 @@ test('Native ad no-fill conditions retry with bounded 1/2/4/8 minute backoff',as
  assert.match(code,/scheduleAdRetry\('banner'\)/);
  assert.match(code,/scheduleAdRetry\('interstitial'\)/);
 });
+
+
+test('AdMob recovers NO_FILL inventory after a background/foreground cycle without showing startup ads',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const code=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
+ assert.match(code,/function installAdVisibilityRecovery\(\)/);
+ assert.match(code,/document\.addEventListener\('visibilitychange'/);
+ assert.match(code,/document\.visibilityState!=='visible'/);
+ assert.match(code,/installAdVisibilityRecovery\(\);/);
+ assert.match(code,/scheduleBannerRelayout\(\)/);
+ assert.match(code,/if\(!retryTimers\.interstitial&&!state\.interstitialReady&&!state\.busy\)/);
+ assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen)/);
+});
