@@ -346,7 +346,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  header.insertBefore(toggle,header.lastElementChild);
  const previewDock=document.createElement('div');
  previewDock.className='rivo-edit-preview-dock rivo-book-preview-dock';
- previewDock.append(preview);
+ previewDock.append(previewBox);
  const drawer=document.createElement('div');
  drawer.className='rivo-edit-settings-scroll rivo-workspace-settings';drawer.hidden=true;
  const taskBar=document.createElement('div');taskBar.className='rivo-workspace-taskbar';
