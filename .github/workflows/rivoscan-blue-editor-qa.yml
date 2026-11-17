@@ -1,0 +1,49 @@
+name: RivoScan blue contextual editor screenshot QA
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - 'src/**'
+      - 'scripts/rivoscan-blue-ui-screenshots.mjs'
+      - '.github/workflows/rivoscan-blue-editor-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rivoscan-blue-editor-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  editor-visual-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and real Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Validate blue production screens, responsive interactions and actual preview
+        run: |
+          npm run check
+          npm test
+          npm run build
+          npm run dev -- --host 127.0.0.1 > /tmp/rivo-blue-vite.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:5173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/rivoscan-blue-ui-screenshots.mjs
+      - name: Upload original 393x873 Android viewport PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.41-Blue-Editor-Screenshots
+          path: |
+            /tmp/rivoscan-prod-blue-screenshots/
+            /tmp/rivo-blue-vite.log
+          retention-days: 14
+          if-no-files-found: warn
