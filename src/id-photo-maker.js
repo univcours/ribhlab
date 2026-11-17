@@ -145,8 +145,8 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  mountDialogControls({overlay,panel,close,language});
  const rows=[...panel.querySelectorAll(':scope > .rivo-id-row')];
  if(rows.length!==5)throw Error('ID Photo controls unexpectedly changed');
- const [makeSheet,save]=actions.querySelectorAll('button');
- saveButton=save;saveButton.disabled=true;
+ const [makeSheet,saveControl]=actions.querySelectorAll('button');
+ saveButton=saveControl;saveButton.disabled=true;
  workspace=mountPreviewFirstWorkspace({
   panel,preview:canvas,language,defaultSection:'source',
   sections:[
