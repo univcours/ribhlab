@@ -103,8 +103,58 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const compare=root.querySelector('[data-perfect="compare"]');
  const actions=root.querySelector('.rivo-perfectscan-actions');
  const preview=root.querySelector('.rivo-perfectscan-preview');
+ // Shared preview-first pattern: gear opens only the relevant task's controls.
+ const modal=root.querySelector('.rivo-perfectscan-modal');
+ modal.classList.add('rivo-preview-first-dialog');
+ const header=modal.querySelector('header');
+ const gear=document.createElement('button');gear.type='button';
+ gear.className='rivo-workspace-settings-toggle';gear.textContent='⚙';
+ gear.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[lang]||'Settings');
+ gear.setAttribute('aria-expanded','false');
+ header.insertBefore(gear,header.lastElementChild);
+ const settingsScroll=document.createElement('div');
+ settingsScroll.className='rivo-edit-settings-scroll rivo-workspace-settings';
+ const tabs=document.createElement('div');tabs.className='rivo-workspace-taskbar';
+ const groups={};
+ const names={
+  source:({ar:'الصور',fr:'Photos',en:'Photos'})[lang]||'Photos',
+  correction:({ar:'التصحيح',fr:'Correction',en:'Correction'})[lang]||'Correction'
+ };
+ let task='source',drawerOpen=false;
+ const buttons={};
+ for(const name of ['source','correction']){
+  const button=document.createElement('button');button.type='button';
+  button.className='rivo-workspace-task';button.textContent=name==='source'?'▧ '+names[name]:'✦ '+names[name];
+  button.addEventListener('click',()=>chooseTask(name));
+  button.dataset.perfectTask=name;tabs.append(button);buttons[name]=button;
+  const group=document.createElement('div');group.className='rivo-workspace-task-panel';
+  group.hidden=true;groups[name]=group;
+ }
+ groups.source.append(modal.querySelector('.rivo-perfectscan-toolbar'),modal.querySelector('.rivo-perfectscan-tip'));
+ groups.correction.append(modal.querySelector('.rivo-perfectscan-control'),modal.querySelector('.rivo-perfectscan-warning'),modal.querySelector('.rivo-perfectscan-privacy'));
+ settingsScroll.append(tabs,groups.source,groups.correction);
+ modal.insertBefore(settingsScroll,actions);
+ actions.classList.add('rivo-edit-bottom-bar');
+ const chooseTask=name=>{
+  if(name==='correction'&&!base)return;
+  task=name;
+  for(const id of Object.keys(groups)){
+   groups[id].hidden=id!==name;
+   buttons[id].classList.toggle('active',id===name);
+   buttons[id].setAttribute('aria-pressed',String(id===name));
+  }
+  buttons.correction.disabled=!base;
+ };
+ const openSettings=open=>{
+  drawerOpen=!!open;settingsScroll.hidden=!drawerOpen;
+  gear.classList.toggle('active',drawerOpen);
+  gear.setAttribute('aria-expanded',String(drawerOpen));
+ };
+ gear.addEventListener('click',()=>openSettings(!drawerOpen));
+ // App starts with photo input; opening a photo closes the drawer for maximum preview.
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
  let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null,captureReviewPending=false;
+ chooseTask('source');openSettings(true);
  const setStatus=(message,alert=false)=>{status.hidden=false;status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed||captureReviewPending)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
@@ -154,6 +204,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   root.querySelector('[data-perfect="add"]').disabled=false;
   root.querySelector('[data-perfect="camera"]').textContent=t.capture;
   previewPixels(base.data,base.width,base.height,t.original);
+  chooseTask('correction');openSettings(false);
   const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
   setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
  }
