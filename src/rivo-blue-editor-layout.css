@@ -319,3 +319,27 @@ body .rivo-perfectscan-overlay .rivo-perfectscan-modal.rivo-preview-first-dialog
   border-radius:0!important;
  }
 }
+
+/* At 320dp OCR and photo-translation buttons must wrap INSIDE the settings
+   drawer. Never let a long translated label push the image off-screen. */
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel{
+ min-width:0!important;max-width:100%!important;overflow-x:hidden!important;
+}
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:7px!important;margin:6px 0!important;
+}
+body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions>button,
+body .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions>button{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+ width:100%!important;flex:none!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;word-break:normal!important;
+ line-height:1.25!important;padding:9px 7px!important;
+}
+@media(max-width:345px){
+ body .rivo-code-overlay .rivo-code-dialog.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+}
