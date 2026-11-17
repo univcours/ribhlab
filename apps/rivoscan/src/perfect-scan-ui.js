@@ -150,9 +150,10 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  };
  gear.addEventListener('click',()=>openSettings(!drawerOpen));
  // App starts with photo input; opening a photo closes the drawer for maximum preview.
- chooseTask('source');openSettings(true);
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
  let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null;
+ // Initialize context tabs only after the source-photo state exists.
+ chooseTask('source');openSettings(true);
  const setStatus=(message,alert=false)=>{status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed)return;closed=true;root.remove()};
  const previewPixels=(rgba,w,h,label)=>{
