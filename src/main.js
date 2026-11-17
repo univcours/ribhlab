@@ -57,6 +57,8 @@ import './rivo-edge-adjustment.css';
 import './perfectscan-capture-review.css';
 import './rivo-documents-heading-search.css';
 import './rivo-top-corner-loupe.css';
+// Last CSS layer wins over legacy modal scrolling: live editor preview stays visible.
+import './rivo-blue-editor-layout.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
