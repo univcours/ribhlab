@@ -392,3 +392,169 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
  background:#eaf0f8!important;color:#12386a!important;
  border-color:#a7bdd9!important;
 }
+
+
+/* RivoScan official navy/royal-blue palette — single cross-window authority. */
+/* Source of truth: theme-brand.css + compact-turquoise.css latest official blue values.
+   Keep photograph, video and document pixels untouched; theme the surrounding UI only. */
+:root{
+ --rivo-official-primary:#07479b;
+ --rivo-official-dark:#053472;
+ --rivo-official-bg:#f1f5fa;
+ --rivo-official-surface:#ffffff;
+ --rivo-official-ink:#122640;
+ --rivo-official-muted:#59687b;
+ --rivo-official-border:#c6d4e6;
+ --rivo-official-soft:#e4eefa;
+ --rivo-official-focus:#135ebf;
+ --rivo-brand-primary:var(--rivo-official-primary);
+ --rivo-brand-indigo:var(--rivo-official-dark);
+ --rivo-brand-text:var(--rivo-official-ink);
+ --rivo-brand-muted:var(--rivo-official-muted);
+ --rivo-brand-border:var(--rivo-official-border);
+ --rivo-brand-ice:var(--rivo-official-soft);
+}
+:where(.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay,
+ .rivo-merged-overlay,.rivo-shield-overlay,.rivo-reward-overlay,
+ .rivo-perfectscan-overlay,.rivo-pages-overlay,.rivo-editor-overlay,
+ .rivo-live-overlay){
+ --primary:var(--rivo-official-primary);
+ --accent:var(--rivo-official-primary);
+ accent-color:var(--rivo-official-primary);
+}
+:where(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window){
+ background:var(--rivo-official-bg)!important;
+ color:var(--rivo-official-ink)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window,
+ .rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog)
+ :where(h1,h2,h3,header strong,.rivo-workspace-title){
+ color:var(--rivo-official-dark)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window,
+ .rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog)
+ :where(p,small,.rivo-id-hint,.rivo-perfectscan-warning,.rivo-editor-tip){
+ color:var(--rivo-official-muted);
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(input[type="range"],input[type="checkbox"],input[type="radio"]){
+ accent-color:var(--rivo-official-primary)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(input,select,textarea){
+ border-color:var(--rivo-official-border);
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(button,input,select,textarea):focus-visible{
+ outline:3px solid var(--rivo-official-focus)!important;
+ outline-offset:2px;
+}
+/* All dialog chrome follows the blue identity; scan/photo content keeps its own pixels. */
+.rivo-workspace-header,
+.rivo-book-dialog .rivo-workspace-taskbar,
+.rivo-perfectscan-modal .rivo-workspace-taskbar,
+.rivo-editor-window .rivo-editor-header,
+.rivo-pages-top,.rivo-pages-count,.rivo-pages-bottom,
+.rivo-perfectscan-modal header{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important;
+ color:var(--rivo-official-ink)!important;
+}
+.rivo-book-dialog .rivo-edit-preview-dock,
+.rivo-perfectscan-modal .rivo-perfectscan-preview{
+ background:var(--rivo-official-soft)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-book-dialog .rivo-edit-settings-scroll,
+.rivo-perfectscan-modal .rivo-edit-settings-scroll,
+.rivo-editor-window .rivo-edit-settings-scroll{
+ background:var(--rivo-official-bg)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-settings-toggle,
+.rivo-workspace-close,
+.rivo-workspace-task,
+.rivo-merged-dialog button,
+.rivo-merged-dialog select,
+.rivo-shield-dialog button,
+.rivo-code-dialog .rivo-code-actions button,
+.rivo-release-dialog button,
+.rivo-pages-top button,.rivo-pages-count button,.rivo-page-operations button,
+.rivo-editor-window .rivo-editor-header button,
+.rivo-editor-window .rivo-editor-actions button{
+ background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-settings-toggle[aria-expanded="true"],
+.rivo-workspace-settings-toggle.active,
+.rivo-workspace-task.active,.rivo-filter-choice.active{
+ background:var(--rivo-official-soft)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-primary)!important;
+}
+.rivo-filter-choice{background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-ink)!important;border-color:var(--rivo-official-border)!important}
+.rivo-editor-filters,.rivo-editor-sliders,.rivo-pages-grid{
+ background:var(--rivo-official-bg)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-status,.rivo-perfectscan-status{
+ background:var(--rivo-official-soft)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-perfectscan-status.rivo-warning{
+ background:#fff3e9!important;color:#915318!important;border-color:#f6d6b9!important;
+}
+/* Primary confirmation buttons: consistent high contrast, regardless of editor. */
+.rivo-book-dialog .rivo-edit-bottom-bar button,
+.rivo-editor-save-dock .rivo-editor-save,
+.rivo-perfectscan-modal .rivo-perfectscan-actions [data-perfect="process"],
+.rivo-perfectscan-modal .rivo-perfectscan-actions [data-perfect="save"],
+.rivo-merged-dialog .rivo-merged-start,
+.rivo-pages-top .rivo-pages-save,
+.rivo-editor-window .rivo-editor-actions .rivo-editor-save{
+ background:var(--rivo-official-primary)!important;
+ color:#fff!important;
+ border-color:var(--rivo-official-dark)!important;
+}
+.rivo-workspace-close{font-weight:800}
+.rivo-perfectscan-modal footer,
+.rivo-editor-save-dock,.rivo-book-dialog .rivo-edit-bottom-bar{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-shield-head strong,.rivo-merged-dialog header strong{
+ color:var(--rivo-official-dark)!important;
+}
+.doc-detail-overlay{background:var(--rivo-official-bg)!important;
+ color:var(--rivo-official-ink)!important}
+.doc-viewer-header,.doc-detail-actions{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important}
+.doc-detail-overlay :where(button,input,select):focus-visible{
+ outline:3px solid var(--rivo-official-focus)!important;
+ outline-offset:2px;
+}
+.doc-zoom-actions button,.doc-action,.doc-viewer-back,.doc-viewer-menu{
+ background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+/* Live camera uses navy chrome; keep dark video stage for legible live detection. */
+.rivo-live-dialog{background:var(--rivo-official-dark)!important;color:#fff!important}
+.rivo-live-head,.rivo-live-actions{border-color:#34609c!important}
+.rivo-live-actions button{border-color:#4076b9!important}
+/* Danger and warning semantic states keep their own recognisable contrast. */
