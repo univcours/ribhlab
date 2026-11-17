@@ -1,3 +1,4 @@
+// Blue palette regression screenshots after restoring official RivoScan blue/azure brand.
 // Real Chromium screenshots from the current RivoScan editor modules, not mockups.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
