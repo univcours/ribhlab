@@ -351,3 +351,29 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
   min-height:120px}
  .rivo-edit-settings-scroll{min-height:70px;max-height:35dvh}
 }
+
+
+/* Task-specific controls, legible CTAs and always-visible close action. */
+.rivo-workspace-close{display:grid!important;place-items:center;flex:none;width:44px;
+ height:44px;min-height:44px;padding:0!important;border-radius:12px!important;
+ border:1px solid #add9d2!important;background:#e7f2f1!important;
+ color:#193f43!important;font-size:19px!important;font-weight:800!important}
+.rivo-book-dialog .rivo-workspace-task-panel>button,
+.rivo-perfectscan-modal .rivo-workspace-task-panel>button{
+ display:block;min-height:45px;width:100%;margin:7px 0;padding:10px 13px;
+ border:1px solid #b1dfd7!important;border-radius:12px!important;
+ background:#fff!important;color:#09665f!important;font-size:13px!important;
+ font-weight:700!important;text-align:start;white-space:normal}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-row input[type="range"]{
+ min-height:42px;accent-color:#05968e}
+.rivo-book-dialog .rivo-edit-bottom-bar button{
+ min-height:47px;width:100%;display:block;
+ border:1px solid #057c71!important;border-radius:12px!important;
+ background:#078b80!important;color:#fff!important;
+ font-size:15px!important;font-weight:800!important;text-align:center}
+.rivo-workspace-task-panel .rivo-code-actions button{
+ flex:1 1 42%;margin:0;min-height:45px;
+ border-radius:11px!important;color:#0c6b64!important;
+ background:#fff!important;border:1px solid #a5dbd1!important}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-hint{
+ font-size:12px!important;line-height:1.45;color:#2d6765}
