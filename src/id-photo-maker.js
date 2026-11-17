@@ -1,4 +1,5 @@
 import {mountDialogControls} from './modal-shell.js';
+import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 /** Optional on-device portrait cutout for printable ID sheets. */
 import {segmentPortrait} from './photo-background.js';
 export const MM_TO_PX_300=300/25.4;
@@ -83,7 +84,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  }
  row(({ar:'الخلفية (النموذج يتحمل أول مرة)',en:'Background (first-use model download)',fr:'Fond (premier téléchargement)'})[language]||'Background / downloaded model',bgSelect);
  panel.append(canvas,hint,status,actions);overlay.append(panel);document.body.append(overlay);
- let image=null,cutout=null,blobURL=null,closed=false,processing=false;
+ let image=null,cutout=null,blobURL=null,closed=false,processing=false,workspace=null,saveButton=null;
  const update=()=>{
   if(!image)return;
   canvas.hidden=false;
@@ -136,12 +137,26 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   try{
    const next=new Image();next.src=blobURL;
    await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
-   if(closed)return;image=next;cutout=null;
+   if(closed)return;image=next;cutout=null;workspace?.loaded();if(saveButton)saveButton.disabled=false;
     if(bgSelect.value!=='original')await applyBackground();else update();
   }catch{status.textContent=L[9]}
  };
  input.addEventListener('change',load);select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
  mountDialogControls({overlay,panel,close,language});
+ const rows=[...panel.querySelectorAll(':scope > .rivo-id-row')];
+ if(rows.length!==5)throw Error('ID Photo controls unexpectedly changed');
+ const [makeSheet,save]=actions.querySelectorAll('button');
+ saveButton=save;saveButton.disabled=true;
+ workspace=mountPreviewFirstWorkspace({
+  panel,preview:canvas,language,defaultSection:'source',
+  sections:[
+   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[rows[0]]},
+   {id:'adjust',label:({ar:'المقاس والتأطير',fr:'Cadrage',en:'Size & crop'})[language]||'Size & crop',
+    nodes:[rows[1],rows[2],rows[3],makeSheet]},
+   {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[4],hint]}
+  ],alwaysVisible:[status],footer:[saveButton]
+ });
+ status.classList.add('rivo-workspace-status');
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
  return close;
 }
