@@ -1,4 +1,5 @@
 import {mountDialogControls} from './modal-shell.js';
+import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 import Tesseract from 'tesseract.js';
 import {buildAIRequest,requestUserAI} from './ai-provider.js';
 import {findFormulaRegions,formulaRegionLayout} from './formula-regions.js';
@@ -51,7 +52,7 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  }
  const notice=document.createElement('p');notice.className='rivo-code-help';notice.textContent=L[8]+' '+L[10];panel.append(notice);
  const buttons=document.createElement('div');buttons.className='rivo-code-actions';panel.append(buttons);
- let selected=null,closed=false,busy=false,formulaRegions=[];
+ let selected=null,closed=false,busy=false,formulaRegions=[],workspace=null;
  const action=(container,text,cb)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',cb);container.append(b)};
  const secret=document.createElement('input');secret.type='password';secret.autocomplete='off';
  secret.placeholder=({en:'Personal OpenAI API key (session only)',ar:'مفتاح API الشخصي لهاد الجلسة',fr:'Clé API personnelle',es:'Clave API personal',de:'Persönlicher API-Schlüssel',pt:'Chave API pessoal',it:'Chiave API personale'})[language]||'Personal API key';
@@ -69,7 +70,7 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
   try{
    const img=await new Promise((ok,bad)=>{const picture=new Image();picture.onload=()=>ok(picture);picture.onerror=()=>bad(Error('Invalid formula image'));picture.src=url});
    const factor=Math.min(1,850/Math.max(img.naturalWidth,img.naturalHeight));
-   preview.hidden=false;
+   preview.hidden=false;workspace?.loaded();
    preview.width=Math.max(1,Math.round(img.naturalWidth*factor));
    preview.height=Math.max(1,Math.round(img.naturalHeight*factor));
    const ctx=preview.getContext('2d');
@@ -179,5 +180,17 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
  });
  action(buttons,L[7],close);
  mountDialogControls({overlay,panel,close,language});
+ const fieldLabels=[...panel.querySelectorAll(':scope > .rivo-id-row')];
+ const saveButton=[...buttons.querySelectorAll('button')].find(button=>button.textContent===L[6]);
+ if(!saveButton)throw Error('Formula save action missing');
+ workspace=mountPreviewFirstWorkspace({
+  panel,preview,language,defaultSection:'source',
+  sections:[
+   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[actions]},
+   {id:'result',label:({ar:'النص والمعادلة',fr:'Texte et formule',en:'Text & formula'})[language]||'Text & formula',nodes:[...fieldLabels,notice,buttons]},
+   {id:'advanced',label:({ar:'الذكاء الاصطناعي',fr:'IA facultative',en:'Optional AI'})[language]||'Optional AI',nodes:[aiOptions]}
+  ],alwaysVisible:[status],footer:[saveButton],hiddenNodes:[file]
+ });
+ status.classList.add('rivo-workspace-status');
  overlay.append(panel);document.body.append(overlay);return close;
 }
