@@ -25,7 +25,7 @@ export function productionAdsConfigured(config=AD_CONFIG){
 }
 // Onboarding protects first-time users from full-screen ads. One use = one
 // process/cold launch, not button taps or foreground resume events.
-export const FULLSCREEN_START_LAUNCH=5;
+export const FULLSCREEN_START_LAUNCH=3; // protect first two sessions
 export const APP_LAUNCH_KEY='rivo-ad-launch-count-v1';
 export const FULLSCREEN_LAST_SHOWN_KEY='rivo-ad-last-fullscreen-v1';
 export function registerLaunch(storage){
@@ -69,9 +69,9 @@ export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt
  // Never treat dismissing an overlay or exiting the app as an ad opportunity.
  const meaningfulBreak=trigger==='back'
   ?(savedCount>=1||backTransitions>=2)
-  :savedCount>=2;
+  :savedCount>=1;
  return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<8&&
-  now-startedAt>=90000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
+  now-startedAt>=60000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
@@ -104,11 +104,11 @@ const retryCounts={banner:0,interstitial:0};
 const retryTimers={banner:null,interstitial:null};
 function scheduleAdRetry(type){
  if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
- if(retryCounts[type]>=3)return;
- const delay=[60000,120000,240000][retryCounts[type]++];
+ if(retryCounts[type]>=4)return; // bounded no-fill retries
+ const delay=[60000,120000,240000,480000][retryCounts[type]++];
  retryTimers[type]=setTimeout(()=>{
   retryTimers[type]=null;
-  if(document.visibilityState==='hidden')return;
+  if(document.visibilityState==='hidden'){retryCounts[type]=Math.max(0,retryCounts[type]-1);return;}
   if(type==='banner')void loadBanner();
   else if(type==='interstitial')void loadInterstitial();
  },delay);
@@ -285,7 +285,7 @@ async function loadInterstitial(){
 export async function initializeAds({retry=false,deferBanner=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
  if(liveAds&&!productionAdsConfigured()){status('Real AdMob publisher IDs missing; ads disabled');return false;}
- if(state.ready){if(retry){void loadInterstitial();if(!deferBanner)void loadBanner();}return true;}
+ if(state.ready){if(retry){retryCounts.banner=0;retryCounts.interstitial=0;void loadInterstitial();if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}}return true;}
  if(state.initializing)return state.initializing;
  state.initializing=(async()=>{
   let sdkInitializationStarted=false;
