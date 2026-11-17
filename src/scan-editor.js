@@ -60,6 +60,59 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
      <button data-edit="save" class="rivo-editor-save">✓ ${tr(14)}</button>
    </nav>
  </div>`;
+ // Context-sensitive settings: show only filters, adjustments or tools.
+ const editorWindow=shell.querySelector('.rivo-editor-window');
+ editorWindow.classList.add('rivo-preview-first-dialog');
+ const editorHeader=shell.querySelector('.rivo-editor-header');
+ const gear=document.createElement('button');gear.type='button';
+ gear.className='rivo-workspace-settings-toggle';gear.textContent='⚙';
+ gear.setAttribute('aria-label',({ar:'إعدادات التعديل',fr:'Réglages',en:'Edit settings'})[getLanguage()]||'Settings');
+ gear.setAttribute('aria-expanded','false');
+ editorHeader.insertBefore(gear,editorHeader.lastElementChild);
+ const drawer=document.createElement('div');
+ drawer.className='rivo-edit-settings-scroll rivo-workspace-settings';
+ const tabs=document.createElement('div');tabs.className='rivo-workspace-taskbar';
+ const controls={};
+ const names={
+  filters:({ar:'الفلاتر',fr:'Filtres',en:'Filters'})[getLanguage()]||'Filters',
+  adjust:({ar:'الضبط',fr:'Réglages',en:'Adjust'})[getLanguage()]||'Adjust',
+  tools:({ar:'الأدوات',fr:'Outils',en:'Tools'})[getLanguage()]||'Tools'
+ };
+ for(const name of ['filters','adjust','tools']){
+  const tab=document.createElement('button');tab.type='button';
+  tab.className='rivo-workspace-task';tab.textContent=({filters:'◈',adjust:'☷',tools:'✎'})[name]+' '+names[name];
+  tab.dataset.editorTask=name;tabs.append(tab);
+  const group=document.createElement('div');group.className='rivo-workspace-task-panel';
+  group.hidden=true;controls[name]={tab,group};
+ }
+ controls.filters.group.append(shell.querySelector('.rivo-editor-filters'));
+ const adjustmentControls=shell.querySelector('.rivo-editor-sliders');
+ const eraserControls=shell.querySelector('.rivo-eraser-control');
+ controls.adjust.group.append(adjustmentControls,eraserControls);
+ const toolActions=shell.querySelector('.rivo-editor-actions');
+ controls.tools.group.append(toolActions,shell.querySelector('.rivo-editor-tip'));
+ const saveDock=document.createElement('div');saveDock.className='rivo-edit-bottom-bar rivo-editor-save-dock';
+ saveDock.append(toolActions.querySelector('[data-edit="save"]'));
+ const chooseEditorTask=name=>{
+  for(const [id,item] of Object.entries(controls)){
+   item.group.hidden=id!==name;
+   item.tab.classList.toggle('active',id===name);
+   item.tab.setAttribute('aria-pressed',String(id===name));
+  }
+  adjustmentControls.hidden=eraserActive;
+  eraserControls.hidden=!eraserActive;
+ };
+ for(const [name,item] of Object.entries(controls))
+  item.tab.addEventListener('click',()=>chooseEditorTask(name));
+ drawer.append(tabs,...Object.values(controls).map(item=>item.group));
+ editorWindow.append(drawer,saveDock);
+ let drawerOpen=false;
+ const showSettings=open=>{
+  drawerOpen=!!open;drawer.hidden=!drawerOpen;
+  gear.classList.toggle('active',drawerOpen);
+  gear.setAttribute('aria-expanded',String(drawerOpen));
+ };
+ gear.addEventListener('click',()=>showSettings(!drawerOpen));
  const preview=shell.querySelector('#rivo-editor-preview');
  const ctx=preview.getContext('2d',{willReadFrequently:true});
  const filters=['original','proscan','crease','enhance','magic','shadow','gray','bw','whiteboard','restore'];
@@ -67,6 +120,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  let angle=0,brightness=0,contrast=0,rendering=false,closed=false,renderCount=0;
  let creaseWarp=null,creaseWarpAngle=-1,creaseStrength=80;
  let eraserActive=preset==='eraser'||preset.startsWith('erase:'),timestampOn=preset==='timestamp',brushSize=36,drawing=false,lastPoint=null;
+ chooseEditorTask(eraserActive||preset==='crease'?'adjust':'filters');
+ showSettings(eraserActive);
   let eraseColor=preset.startsWith('erase:')?preset.slice(6):'all';
  const strokes=[];let strokeBatch=0;
  const abs=n=>Math.max(0,Math.min(255,n));
@@ -263,6 +318,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
   if(action==='compare')return;
   if(action==='eraser'){
     eraserActive=!eraserActive;
+     chooseEditorTask('adjust');
+     showSettings(true);
     shell.querySelector('.rivo-eraser-control').hidden=!eraserActive;
     shell.querySelector('[data-edit="eraser"]').classList.toggle('active',eraserActive);return;
   }
@@ -288,7 +345,8 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  };
  shell.addEventListener('click',async e=>{
   const preset=e.target.closest('[data-filter]');
-  if(preset){filter=preset.dataset.filter; shell.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===preset));await paint();return;}
+  if(preset){filter=preset.dataset.filter; shell.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el===preset));
+    chooseEditorTask('adjust');await paint();return;}
   const button=e.target.closest('[data-edit]');if(!button)return;
   try{button.disabled=true;await apply(button.dataset.edit);}
   catch(error){notify(error?.message||String(error),true);}
