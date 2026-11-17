@@ -709,3 +709,75 @@ body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab
  border-radius:11px!important;background:#eaf3ff!important;color:#194b87!important;
  font-size:21px!important
 }
+
+
+/* Blue preview-first layout also applies to ID Photo, CountCam,
+   Formula OCR and Photo Translation: one relevant settings panel at a time. */
+.rivo-id-overlay:has(.rivo-shared-preview-dialog),
+.rivo-code-overlay:has(.rivo-shared-preview-dialog){overflow:hidden;align-items:center;padding:8px}
+.rivo-id-dialog.rivo-shared-preview-dialog,
+.rivo-code-dialog.rivo-shared-preview-dialog{
+ box-sizing:border-box;display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ width:min(100%,710px);height:min(96dvh,950px);max-height:min(96dvh,950px);
+ min-height:0;padding:0!important;border-radius:18px;
+ background:#f5faff!important;color:#18325c!important}
+.rivo-shared-preview-dialog>.rivo-workspace-header{
+ position:relative;flex:none;min-height:60px;margin:0;padding:9px 12px;
+ background:#f5faff!important;border-bottom:1px solid #bed6f5;
+ display:flex;align-items:center;gap:9px}
+.rivo-shared-preview-dialog>.rivo-workspace-header h2{flex:1;min-width:0;
+ font-size:clamp(15px,4vw,19px)!important;line-height:1.2;
+ margin:0!important;color:#173d78!important}
+.rivo-shared-preview-dialog>.rivo-workspace-header .rivo-modal-dismiss{
+ flex:none;width:44px;height:44px;border:1px solid #abcdf4!important;
+ background:#eaf3ff!important;color:#104683!important;border-radius:12px;font-size:21px}
+.rivo-shared-preview-dock{min-height:min(35dvh,260px);flex:1 1 55%;
+ background:#dbeaff;border-bottom:1px solid #bcd8f4}
+.rivo-shared-preview-dock .rivo-id-preview,
+.rivo-shared-preview-dock .rivo-count-preview,
+.rivo-shared-preview-dock .rivo-photo-translation-preview{
+ display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:100%!important;margin:0!important;
+ padding:0!important;border:1px solid #b2cdf0!important;border-radius:10px;
+ background:#fff;object-fit:contain}
+.rivo-shared-preview-dock [hidden]{display:none!important}
+.rivo-workspace-empty{color:#315583;text-align:center;padding:16px;
+ margin:0;font-size:13px;line-height:1.5}
+.rivo-shared-preview-dialog .rivo-workspace-settings{
+ flex:0 1 32%;max-height:39dvh;min-height:85px;
+ padding:9px 12px;background:#f5faff!important}
+.rivo-shared-preview-dialog .rivo-workspace-taskbar{background:#f5faff}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel>.rivo-id-row{
+ margin:7px 0;color:#19467f}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel input[type="range"]{
+ width:100%;accent-color:#0e61c2;min-height:35px}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel select,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel input,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel textarea{
+ border-color:#bfd5f3;color:#143e79;background:#fff;border-radius:10px}
+.rivo-shared-preview-dialog .rivo-workspace-task-panel button,
+.rivo-shared-preview-dialog .rivo-workspace-task-panel .rivo-code-actions button{
+ min-height:44px;margin:4px;padding:9px;border:1px solid #bdd7f6!important;
+ background:#fff!important;color:#1755a2!important;border-radius:11px;font-weight:700}
+.rivo-shared-preview-dialog .rivo-workspace-status{color:#214e85;
+ background:#eef5ff;padding:5px 12px}
+.rivo-shared-preview-dialog .rivo-workspace-bottom{display:flex;gap:8px}
+.rivo-shared-preview-dialog .rivo-workspace-bottom button{
+ flex:1;min-height:49px;padding:11px;border:1px solid #1459b1!important;
+ border-radius:12px!important;background:#0e61c2!important;color:#fff!important;
+ font-size:13px!important;font-weight:800!important;white-space:normal}
+.rivo-shared-preview-dialog .rivo-workspace-bottom button:disabled{opacity:.5}
+.rivo-book-preview-dock .rivo-book-preview{
+ display:flex;justify-content:center;align-items:center;position:relative;max-width:100%;
+ max-height:100%;width:100%;height:100%;margin:0;padding:0;
+ background:transparent;border:0;overflow:hidden}
+.rivo-book-preview-dock .rivo-book-empty{font-size:13px;color:#245c9e;
+ padding:16px;text-align:center;line-height:1.4}
+@media(max-width:620px){
+ .rivo-id-overlay:has(.rivo-shared-preview-dialog),
+ .rivo-code-overlay:has(.rivo-shared-preview-dialog){padding:0}
+ .rivo-id-dialog.rivo-shared-preview-dialog,
+ .rivo-code-dialog.rivo-shared-preview-dialog{
+  width:100%;height:100dvh;max-height:100dvh;border-radius:0}
+ .rivo-shared-preview-dialog .rivo-workspace-settings{max-height:38dvh}
+}
