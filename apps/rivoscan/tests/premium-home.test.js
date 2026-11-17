@@ -52,9 +52,9 @@ test('Camera FAB remains outside four bottom navigation buttons',()=>{
  assert.ok(main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
  assert.ok(css.includes('safe-area-inset-bottom'));
 });
-test('Turquoise density, accessible controls and no overflowing action rows',()=>{
+test('Official blue density, accessible controls and no overflowing action rows',()=>{
  const css=file('src/compact-turquoise.css');
- for(const token of ['#079b97','minmax(min(100%,155px),1fr)','rivo-compact-selection',
+ for(const token of ['#07479b','minmax(min(100%,155px),1fr)','rivo-compact-selection',
    'flex-wrap:nowrap','rivo-live-overlay','prefers-reduced-motion:reduce',
    'grid-template-columns:repeat(auto-fit','overflow-y:auto']) assert.ok(css.includes(token),token);
  for(const lang of ['ar','en','fr','es','de','pt','it']){
@@ -86,14 +86,14 @@ test('Right-edge Android Back closes page manager, editor and every supported fu
  assert.ok(main.includes("start.side==='right'&&dx<=-84"));
  assert.ok(main.includes("document.querySelector('.busy')"));
 });
-test('Document viewer, file actions and native editors inherit turquoise colors',()=>{
+test('Document viewer, file actions and native editors inherit official branding',()=>{
  const css=file('src/compact-turquoise.css');
  for(const name of ['.doc-detail-overlay','.doc-action.doc-edit','.bulk-overlay .bulk-sheet',
  '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-perfectscan-overlay']){
   assert.ok(css.includes(name),name);
  }
 });
-test('Settings switches, language selector and search icons follow teal system',()=>{
+test('Settings switches, language selector and search icons follow official UI system',()=>{
  const css=file('src/compact-turquoise.css');
  for(const marker of ['.rivo-scanner-pref input[type="checkbox"][role="switch"]:checked',
    '.settings-sounds input[type="checkbox"][role="switch"]:checked',
