@@ -381,6 +381,60 @@ try{
    perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&
    perfectInfo.sourceOnly&&perfectInfo.fits);
   await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
+  if(width===360){
+   // Render a real synthetic document through PerfectScan and run the actual
+   // pixel-processing pipeline. This guards against automatic compare dividers.
+   const imageUrl=await page.evaluate(()=>{
+    const canvas=document.createElement('canvas');canvas.width=440;canvas.height=580;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fdfdfb';ctx.fillRect(0,0,440,580);
+    ctx.fillStyle='#132e51';ctx.font='bold 25px sans-serif';ctx.fillText('RivoScan Test Document',28,55);
+    ctx.font='17px sans-serif';
+    for(let i=0;i<14;i++){
+     ctx.fillText('Sample document line '+(i+1),28,95+i*30);
+    }
+    return canvas.toDataURL('image/png');
+   });
+   await perfect.locator('.rivo-perfect-file').setInputFiles({
+    name:'perfectscan-test.png',mimeType:'image/png',
+    buffer:Buffer.from(imageUrl.split(',')[1],'base64')
+   });
+   await page.waitForFunction(()=>{
+    const root=document.querySelector('.rivo-perfectscan-overlay');
+    return !!root&&!root.querySelector('.rivo-perfectscan-preview').hidden&&
+     root.querySelector('.rivo-perfectscan-preview canvas').width===440;
+   });
+   check('360: safe enhancement recommended by default',
+    await perfect.locator('[data-perfect-mode]').inputValue()==='enhance');
+   await perfect.locator('[data-perfect="process"]').click();
+   await perfect.locator('[data-perfect="save"]').waitFor({state:'visible',timeout:45000});
+   const enhanced=await perfect.evaluate(root=>{
+    const preview=root.querySelector('.rivo-perfectscan-preview');
+    const canvas=preview.querySelector('canvas');
+    const range=root.querySelector('.rivo-perfect-compare-range');
+    const compare=root.querySelector('[data-perfect="compare"]');
+    const save=root.querySelector('[data-perfect="save"]');
+    const box=canvas.getBoundingClientRect();
+    return {compareHidden:range.hidden,clean:!preview.classList.contains('rivo-perfect-split-active'),
+      compareVisible:!compare.hidden,saveReady:!save.disabled,
+      previewFits:box.width>120&&box.height>140&&box.right<=innerWidth+2};
+   });
+   check('360: preview stays unobstructed until Compare is requested',
+     enhanced.compareHidden&&enhanced.clean&&enhanced.compareVisible&&enhanced.saveReady&&enhanced.previewFits);
+   await page.screenshot({path:out+'/360-perfectscan-enhanced.png'});
+   await perfect.locator('[data-perfect="compare"]').click();
+   const compareActive=await perfect.evaluate(root=>
+    !root.querySelector('.rivo-perfect-compare-range').hidden&&
+    root.querySelector('.rivo-perfectscan-preview').classList.contains('rivo-perfect-split-active')&&
+    root.querySelector('[data-perfect="compare"]').getAttribute('aria-pressed')==='true'
+   );
+   check('360: split divider only shown when user chooses Compare',compareActive);
+   await page.screenshot({path:out+'/360-perfectscan-compare.png'});
+   await perfect.locator('[data-perfect="compare"]').click();
+   check('360: closing Compare restores enhanced image',
+    await perfect.locator('.rivo-perfect-compare-range').evaluate(x=>x.hidden));
+   await page.screenshot({path:out+'/360-perfectscan-restored.png'});
+  }
   await perfect.locator('[data-perfect="close"]').click();
   await perfect.waitFor({state:'detached'});
 
