@@ -143,7 +143,10 @@ export function assessDocumentQualityRGBA(image,width,height){
  const warnings=[];
  if(edgePercent<.3||sharpness<40)warnings.push('Low detectable detail: check focus and text sharpness');
  if(contrast<35)warnings.push('Low contrast: improve lighting');
- if(highlightPercent>60)warnings.push('Large bright area: check for glare or overexposure');
+ // A bright white sheet is NORMAL when dark printed ink is still legible.
+ // Warn about glare only when highlight clipping ALSO destroys contrast/detail.
+ if(highlightPercent>60&&(contrast<35||edgePercent<.3))
+  warnings.push('Large bright area: check for glare or overexposure');
  return {
   sharpness:Math.round(sharpness),edgePercent:Math.round(edgePercent*100)/100,
   highlightPercent:Math.round(highlightPercent*100)/100,contrast,warnings,
