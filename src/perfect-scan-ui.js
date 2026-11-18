@@ -85,6 +85,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  es:'Método de corrección',de:'Korrekturmethode',pt:'Método de correção',
  it:'Metodo di correzione'})[lang]+'</span><select data-perfect-mode aria-label="Correction method">'+
  (onUVDoc?'<option value="uvdoc">'+(nativeModeLabels[lang]||nativeModeLabels.en).uvdoc+'</option>':'')+
+ '<option value="enhance">'+({en:'Enhance text and contrast (recommended)',ar:'تحسين وضوح النص والتباين (مقترح)',fr:'Améliorer la lisibilité (recommandé)',es:'Mejorar legibilidad (recomendado)',de:'Text und Kontrast optimieren (empfohlen)',pt:'Melhorar a legibilidade (recomendado)',it:'Migliora la leggibilità (consigliato)'})[lang]+'</option>'+
  '<option value="geometry">'+t.geometry+'</option>'+
  (onSurface3D?'<option value="surface3d">'+(nativeModeLabels[lang]||nativeModeLabels.en).surface+'</option>':'')+
  '</select></label>'+
@@ -131,7 +132,13 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   group.hidden=true;groups[name]=group;
  }
  groups.source.append(modal.querySelector('.rivo-perfectscan-toolbar'),modal.querySelector('.rivo-perfectscan-tip'));
- groups.correction.append(modal.querySelector('.rivo-perfectscan-control'),modal.querySelector('.rivo-perfectscan-warning'),modal.querySelector('.rivo-perfectscan-privacy'));
+ const diagnostics=document.createElement('details');
+ diagnostics.className='rivo-perfectscan-diagnostics';diagnostics.hidden=true;
+ const diagnosticTitle=document.createElement('summary');
+ diagnosticTitle.textContent=({en:'Processing details',ar:'تفاصيل المعالجة',fr:'Détails du traitement',
+  es:'Detalles del proceso',de:'Verarbeitungsdetails',pt:'Detalhes do processamento',it:'Dettagli elaborazione'})[lang]||'Processing details';
+ const diagnosticBody=document.createElement('p');diagnostics.append(diagnosticTitle,diagnosticBody);
+ groups.correction.append(modal.querySelector('.rivo-perfectscan-control'),diagnostics,modal.querySelector('.rivo-perfectscan-warning'),modal.querySelector('.rivo-perfectscan-privacy'));
  settingsScroll.append(tabs,groups.source,groups.correction);
  modal.insertBefore(settingsScroll,actions);
  actions.classList.add('rivo-edit-bottom-bar');
@@ -152,8 +159,16 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  };
  gear.addEventListener('click',()=>openSettings(!drawerOpen));
  // App starts with photo input; opening a photo closes the drawer for maximum preview.
+ // Comparison is a deliberate opt-in preview action, never the default image.
+ preview.append(compare);
+ compare.classList.add('rivo-perfect-preview-compare');
+ compare.textContent=({en:'Compare',ar:'مقارنة',fr:'Comparer',es:'Comparar',
+  de:'Vergleichen',pt:'Comparar',it:'Confronta'})[lang]||'Compare';
+ compare.setAttribute('aria-pressed','false');
  const compareRange=root.querySelector('.rivo-perfect-compare-range');
  let base=null,extra=[],result=null,closed=false,working=false,compareLayers=null,captureReviewPending=false;
+ let compareActive=false;
+ tag.hidden=true;
  chooseTask('source');openSettings(true);
  const setStatus=(message,alert=false)=>{status.hidden=false;status.textContent=message;status.classList.toggle('rivo-warning',alert)};
  const close=()=>{if(closed||captureReviewPending)return;closed=true;root.remove()};
@@ -181,10 +196,30 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   ctx.save();ctx.strokeStyle='#26A6F5';ctx.lineWidth=Math.max(3,canvas.width/550);
   ctx.beginPath();ctx.moveTo(edge,0);ctx.lineTo(edge,canvas.height);ctx.stroke();ctx.restore();
   preview.classList.add('rivo-perfect-split-active');
+  tag.hidden=false;
   tag.textContent=t.original+' / '+t.processed;
  };
+ const setCompareMode=active=>{
+  compareActive=Boolean(active&&result&&!closed);
+  compareRange.hidden=!compareActive;
+  compare.setAttribute('aria-pressed',String(compareActive));
+  compare.textContent=compareActive
+   ?(({en:'Done comparing',ar:'إنهاء المقارنة',fr:'Terminer',es:'Terminar',
+      de:'Vergleich beenden',pt:'Terminar',it:'Fine confronto'})[lang]||'Done')
+   :(({en:'Compare',ar:'مقارنة',fr:'Comparer',es:'Comparar',
+      de:'Vergleichen',pt:'Comparar',it:'Confronta'})[lang]||'Compare');
+  if(compareActive)splitPreview();
+  else{
+   preview.classList.remove('rivo-perfect-split-active');
+   tag.hidden=true;
+   if(result)previewPixels(result.pixels,base.width,base.height,t.processed);
+  }
+ };
  const resetOutput=()=>{
-  result=null;compareLayers=null;compareRange.hidden=true;
+  result=null;compareLayers=null;compareActive=false;compareRange.hidden=true;
+  tag.hidden=true;
+  compare.setAttribute('aria-pressed','false');
+  diagnostics.hidden=true;diagnostics.open=false;diagnosticBody.textContent='';
   preview.classList.remove('rivo-perfect-split-active');
   save.disabled=true;save.hidden=true;
   compare.disabled=true;compare.hidden=true;
@@ -198,7 +233,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   root.querySelector('.rivo-perfectscan-modal').classList.add('rivo-perfectscan-has-source');
   root.querySelector('.rivo-perfectscan-empty').hidden=true;
   root.querySelector('.rivo-perfectscan-tip').hidden=false;
-  root.querySelector('.rivo-perfectscan-warning').hidden=false;
+  root.querySelector('.rivo-perfectscan-warning').hidden=true;
   root.querySelector('.rivo-perfectscan-control').hidden=false;
   root.querySelector('[data-perfect="add"]').hidden=false;
   root.querySelector('[data-perfect="add"]').disabled=false;
@@ -206,7 +241,8 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   previewPixels(base.data,base.width,base.height,t.original);
   chooseTask('correction');openSettings(false);
   const captureQuality=assessDocumentQualityRGBA(base.data,base.width,base.height);
-  setStatus(t.ready+(captureQuality.warnings.length?' · '+qualityLabels[lang]+': '+captureQuality.warnings.join('; '):''),captureQuality.reviewRecommended);
+  const firstWarning=captureQuality.warnings[0];
+  setStatus(firstWarning?qualityLabels[lang]+': '+firstWarning:t.ready,captureQuality.reviewRecommended);
  }
  async function addShots(files){
   if(!base){setStatus(t.none,true);return}
@@ -227,6 +263,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    process.disabled=!base;process.hidden=!base||!!result;
    save.disabled=!result;save.hidden=!result;
    compare.disabled=!result;compare.hidden=!result;
+   if(result&&!compareActive){compareRange.hidden=true;tag.hidden=true;}
    actions.hidden=!base;
   }
  }
@@ -287,17 +324,34 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const elapsed=Math.round(performance.now()-started);
    result={...processed,sourceName:base.name,extraCount:extra.length,elapsed};
    previewPixels(processed.pixels,base.width,base.height,t.processed);
-   compareLayers=null;compareRange.hidden=false;splitPreview();
-   const summary=t.frames+': '+processed.usedFrames+'/'+extra.length+
-     (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
-     ' · 2D: '+(processed.geometryApplied?'yes':'no')+
-     (processed.neuralUvdocApplied?' · UVDoc ONNX Android ✓':'')+
-     (processed.surface3DApplied?' · relative 3D surface ✓':
-        processed.surface3DRejectedReason?' · 3D abstained: '+processed.surface3DRejectedReason:'')+
-     ' · '+(processed.requiresReview?t.manual:t.clean)+
-     (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings.join('; '):'')+
-     ' · '+elapsed+' ms';
-   setStatus(summary,processed.requiresReview||processed.rejectedFrames.length>0);
+   compareLayers=null;
+   // Always show the completed correction unobstructed. Users can opt into
+   // a before/after divider with the Compare button on the picture.
+   setCompareMode(false);
+   const methodApplied=processed.neuralUvdocApplied?'UVDoc':processed.surface3DApplied?'3D':
+    processed.geometryApplied?'2D':method==='geometry'?'none':'enhance';
+   const appliedLabel=({
+    en:{UVDoc:'UVDoc applied',3D:'3D correction applied','2D':'Curvature correction applied',
+      none:'No reliable curvature found — enhanced without warping',enhance:'Enhanced — no geometric warp'},
+    ar:{UVDoc:'تم تطبيق UVDoc',3D:'تم التصحيح ثلاثي الأبعاد','2D':'تم تصحيح الانحناء',
+      none:'لم يُكتشف انحناء موثوق — تحسنت الصورة دون تشويه',enhance:'تم تحسين الصورة دون تغيير هندستها'},
+    fr:{UVDoc:'UVDoc appliqué',3D:'Correction 3D appliquée','2D':'Courbure corrigée',
+      none:'Aucune courbure fiable — amélioration sans déformation',enhance:'Image améliorée, sans déformation'}
+   })[lang]||{
+    UVDoc:'UVDoc applied',3D:'3D correction applied','2D':'Curvature correction applied',
+    none:'No reliable curvature found — enhanced without warping',enhance:'Enhanced without geometric warp'
+   };
+   const summary=appliedLabel[methodApplied]+
+    (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings[0]:'')+
+    (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'');
+   diagnosticBody.textContent=t.frames+': '+processed.usedFrames+'/'+extra.length+
+    ' · Selected: '+method+' · Applied: '+methodApplied+
+    ' · 2D confidence: '+Math.round((processed.geometryConfidence||0)*100)+'%'+
+    (processed.surface3DRejectedReason?' · 3D: '+processed.surface3DRejectedReason:'')+
+    (processed.quality.warnings.length?' · '+processed.quality.warnings.join('; '):'')+
+    ' · '+elapsed+' ms';
+   diagnostics.hidden=false;
+   setStatus(summary,processed.quality.reviewRecommended||processed.rejectedFrames.length>0);
   }catch(e){result=null;setStatus(t.failed+' '+e.message,true)}
   finally{disableDuring(false)}
  }
@@ -344,6 +398,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
   else if(action==='add')extrasInput.click();
   else if(action==='camera')cameraInput.click();
   else if(action==='process')run();
+  else if(action==='compare')setCompareMode(!compareActive);
   else if(action==='save')writeResult();
  });
  sourceInput.addEventListener('change',async()=>{
@@ -378,15 +433,9 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  root.querySelector('[data-perfect-mode]').addEventListener('change',()=>{
   resetOutput();if(base)previewPixels(base.data,base.width,base.height,t.original);
  });
- const before=()=>{if(base)previewPixels(base.data,base.width,base.height,t.original)};
- const after=()=>{if(result)splitPreview()};
- compareRange.addEventListener('input',splitPreview);
- compare.addEventListener('pointerdown',before);
- compare.addEventListener('pointerup',after);
- compare.addEventListener('pointercancel',after);
- compare.addEventListener('pointerleave',after);
- compare.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter')before()});
- compare.addEventListener('keyup',after);
+ // The slider is interactive only in explicit comparison mode; normal preview
+ // has no dividing line or overlap on document text.
+ compareRange.addEventListener('input',()=>{if(compareActive)splitPreview()});
  if(doc){
   try{
    const source=await bridge.readFile({uri:doc.uri});
