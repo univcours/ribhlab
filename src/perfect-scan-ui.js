@@ -343,15 +343,17 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    };
    const summary=appliedLabel[methodApplied]+
     (processed.quality.warnings.length?' · '+qualityLabels[lang]+': '+processed.quality.warnings[0]:'')+
-    (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'');
+    (processed.rejectedFrames.length?' · '+t.rejected+': '+processed.rejectedFrames.length:'')+
+    (processed.requiresReview?' · '+t.manual:'');
    diagnosticBody.textContent=t.frames+': '+processed.usedFrames+'/'+extra.length+
     ' · Selected: '+method+' · Applied: '+methodApplied+
     ' · 2D confidence: '+Math.round((processed.geometryConfidence||0)*100)+'%'+
+    (processed.surface3DApplied?' · relative 3D (not metric)':'')+
     (processed.surface3DRejectedReason?' · 3D: '+processed.surface3DRejectedReason:'')+
     (processed.quality.warnings.length?' · '+processed.quality.warnings.join('; '):'')+
     ' · '+elapsed+' ms';
    diagnostics.hidden=false;
-   setStatus(summary,processed.quality.reviewRecommended||processed.rejectedFrames.length>0);
+   setStatus(summary,processed.requiresReview||processed.rejectedFrames.length>0);
   }catch(e){result=null;setStatus(t.failed+' '+e.message,true)}
   finally{disableDuring(false)}
  }
