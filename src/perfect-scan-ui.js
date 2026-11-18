@@ -331,14 +331,14 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
    const methodApplied=processed.neuralUvdocApplied?'UVDoc':processed.surface3DApplied?'3D':
     processed.geometryApplied?'2D':method==='geometry'?'none':'enhance';
    const appliedLabel=({
-    en:{UVDoc:'UVDoc applied',3D:'3D correction applied','2D':'Curvature correction applied',
+    en:{UVDoc:'UVDoc applied','3D':'3D correction applied','2D':'Curvature correction applied',
       none:'No reliable curvature found — enhanced without warping',enhance:'Enhanced — no geometric warp'},
-    ar:{UVDoc:'تم تطبيق UVDoc',3D:'تم التصحيح ثلاثي الأبعاد','2D':'تم تصحيح الانحناء',
+    ar:{UVDoc:'تم تطبيق UVDoc','3D':'تم التصحيح ثلاثي الأبعاد','2D':'تم تصحيح الانحناء',
       none:'لم يُكتشف انحناء موثوق — تحسنت الصورة دون تشويه',enhance:'تم تحسين الصورة دون تغيير هندستها'},
-    fr:{UVDoc:'UVDoc appliqué',3D:'Correction 3D appliquée','2D':'Courbure corrigée',
+    fr:{UVDoc:'UVDoc appliqué','3D':'Correction 3D appliquée','2D':'Courbure corrigée',
       none:'Aucune courbure fiable — amélioration sans déformation',enhance:'Image améliorée, sans déformation'}
    })[lang]||{
-    UVDoc:'UVDoc applied',3D:'3D correction applied','2D':'Curvature correction applied',
+    UVDoc:'UVDoc applied','3D':'3D correction applied','2D':'Curvature correction applied',
     none:'No reliable curvature found — enhanced without warping',enhance:'Enhanced without geometric warp'
    };
    const summary=appliedLabel[methodApplied]+
