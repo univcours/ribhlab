@@ -1,0 +1,110 @@
+name: TradingFiew Android signed with original RivoScan upload certificate
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tradingfiew-rivoscan-key-signed.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tradingfiew-original-rivoscan-upload-key
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout current TradingFiew Android source
+        uses: actions/checkout@v4
+        with:
+          repository: tradingfiew/tradingfiew.github.io
+          ref: main
+          path: tradingfiew
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android API 36 and build-tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Prepare Gradle 9.6
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Import the EXISTING RivoScan upload key only into temporary runner memory/disk
+        shell: bash
+        env:
+          SIGN_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$SIGN_KEY_B64" || { echo '::error::RIVO_CORRECT_KEYSTORE_BASE64 unavailable in this repository.'; exit 1; }
+          test -n "$SIGN_KEY_PASS" || { echo '::error::RIVO_CORRECT_KEY_PASSWORD unavailable in this repository.'; exit 1; }
+          printf '%s' "$SIGN_KEY_B64" | base64 -d > "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
+          chmod 600 "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
+          echo "TRADINGFIEW_KEYSTORE_PATH=$RUNNER_TEMP/tradingfiew-rivo-original.p12" >> "$GITHUB_ENV"
+          echo 'TRADINGFIEW_KEY_ALIAS=key0' >> "$GITHUB_ENV"
+          echo "TRADINGFIEW_STORE_PASSWORD=$SIGN_KEY_PASS" >> "$GITHUB_ENV"
+          echo "TRADINGFIEW_KEY_PASSWORD=$SIGN_KEY_PASS" >> "$GITHUB_ENV"
+      - name: Verify ORIGINAL RivoScan registered Play upload certificate before signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          cert="$(keytool -list -v -storetype PKCS12 -keystore "$TRADINGFIEW_KEYSTORE_PATH" -storepass:env TRADINGFIEW_STORE_PASSWORD -alias "$TRADINGFIEW_KEY_ALIAS")"
+          actual="$(printf '%s\n' "$cert" | sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+).*$/\1/p' | head -n 1)"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::Original RivoScan upload certificate mismatch. Refusing build."
+            exit 1
+          fi
+          fingerprint="$(printf '%s\n' "$cert" | sed -nE 's/^[[:space:]]*SHA256: ([A-F0-9:]+).*$/\1/p' | head -n 1)"
+          test -n "$fingerprint"
+          echo "TRADINGFIEW_SIGNER_SHA256=$fingerprint" >> "$GITHUB_ENV"
+          echo "Verified original RivoScan certificate SHA-256: $fingerprint" >> "$GITHUB_STEP_SUMMARY"
+      - name: Build signed APK and signed Google Play AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p tradingfiew/android :app:assembleRelease :app:bundleRelease
+      - name: Verify both release signatures and package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=tradingfiew/android/app/build/outputs/apk/release/app-release.apk
+          aab=tradingfiew/android/app/build/outputs/bundle/release/app-release.aab
+          test -s "$apk" && test -s "$aab"
+          "$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name apksigner -type f | sort -V | tail -n 1)" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/apk-verification.txt"
+          grep -q 'Verified using v2 scheme.*true' "$RUNNER_TEMP/apk-verification.txt"
+          grep -qF "$TRADINGFIEW_SIGNER_SHA256" "$RUNNER_TEMP/apk-verification.txt"
+          jarsigner -verify "$aab" > "$RUNNER_TEMP/aab-verification.txt" 2>&1
+          grep -q 'jar verified' "$RUNNER_TEMP/aab-verification.txt"
+          keytool -printcert -jarfile "$aab" | grep -F "SHA256: $TRADINGFIEW_SIGNER_SHA256"
+          mkdir -p verified-artifacts
+          cp "$apk" verified-artifacts/TradingFiew-Android-RivoScan-key-signed.apk
+          cp "$aab" verified-artifacts/TradingFiew-Android-RivoScan-key-signed.aab
+          (cd verified-artifacts && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          printf '%s\n' "$TRADINGFIEW_SIGNER_SHA256" > verified-artifacts/SIGNING_CERT_SHA256.txt
+          echo '✅ Verified APK and AAB with RivoScan original Play upload key.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload verified signed application binaries (NOT private key)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TradingFiew-RivoScan-Original-Key-SIGNED
+          if-no-files-found: error
+          retention-days: 21
+          path: verified-artifacts/
+      - name: Delete temporary key
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
