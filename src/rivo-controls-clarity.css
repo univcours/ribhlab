@@ -197,3 +197,63 @@ body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
   max-height:48px;
  }
 }
+
+
+/* Shared high-contrast blue secondary actions across the main app. Preserve
+   established primary, dangerous and navigation styles. */
+#app .rivo-dark-ui :is(
+ .scan-action-secondary,.scan-documents-link,.scan-mlkit-link,
+ .rivo-library-chips button:not(.active),
+ .rivo-tool-pills button:not(.active),
+ .library-selection-toolbar .bulk-secondary button,
+ .rivo-home .rivo-section-title button,
+ .rivo-home .recent-empty button,
+ .document-buttons button:not(.document-delete),
+ .rivo-header-action,.rivo-header-back
+):not(:disabled){
+ color:#133f7c!important;
+ -webkit-text-fill-color:#133f7c!important;
+ background:#edf5ff!important;
+ border:1.5px solid #7fa4d0!important;
+ opacity:1!important;
+ text-shadow:none!important;
+}
+#app .rivo-dark-ui :is(
+ .rivo-library-chips button.active,
+ .rivo-tool-pills button.active
+):not(:disabled){
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ background:#1258ac!important;
+ border-color:#1258ac!important;
+ opacity:1!important;
+}
+#app .rivo-dark-ui :is(
+ .mobilebar button:not(.active),
+ .nav-button:not(.active)
+):not(:disabled){
+ color:#234c7a!important;-webkit-text-fill-color:#234c7a!important;
+ opacity:1!important;
+}
+#app .rivo-dark-ui :is(.mobilebar button.active,.nav-button.active){
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ background:#1256ac!important;border-color:#1256ac!important;
+}
+#app button:disabled:not([hidden]),#app [role="button"][aria-disabled="true"]{
+ opacity:1!important;
+ color:#4f6d8e!important;
+ -webkit-text-fill-color:#4f6d8e!important;
+ border-color:#c5d3e2!important;
+ cursor:not-allowed!important;
+}
+#app button:not(:disabled):focus-visible,
+#app [role="button"]:focus-visible{
+ outline:3px solid #0b67cf!important;
+ outline-offset:2px!important;
+}
+#app :is(.rivo-dark-ui,.rivo-home) button:not(:disabled):active{
+ filter:brightness(.91);
+}
+@media(prefers-reduced-motion:reduce){
+ #app button:not(:disabled):active{transform:none!important;transition:none!important;}
+}
