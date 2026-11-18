@@ -68,3 +68,21 @@ test('Capture quality scores focus and highlights without modifying the photo',(
  const report=perfectScanRGBA(src,w,h,{geometry:false});
  assert.equal(typeof report.quality.reviewRecommended,'boolean');
 });
+
+test('Bright readable printed pages do not trigger false glare alerts',()=>{
+ const width=240,height=280;
+ const data=new Uint8ClampedArray(width*height*4);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const i=(y*width+x)*4;
+  const ink=(y>15&&y<255&&(y%22<5)&&x>20&&x<220);
+  data[i]=data[i+1]=data[i+2]=ink?15:255;
+  data[i+3]=255;
+ }
+ const score=assessDocumentQualityRGBA(data,width,height);
+ assert.ok(score.highlightPercent>60);
+ assert.ok(score.contrast>35);
+ assert.equal(score.warnings.some(w=>/Large bright area/.test(w)),false);
+ const blank=new Uint8ClampedArray(width*height*4).fill(255);
+ const suspicious=assessDocumentQualityRGBA(blank,width,height);
+ assert.ok(suspicious.warnings.some(w=>/Large bright area/.test(w)));
+});
