@@ -91,19 +91,19 @@ jobs:
           PY
       - name: Build SIGNED TradingFiew APK and AAB
         env:
-          TRADINGFIEW_ADMOB_APP_ID: ${{ secrets.TRADINGFIEW_ADMOB_APP_ID }}
+          TRADINGFIEW_ADMOB_APP_ID: ca-app-pub-7945572016731367~1161939707
           TRADINGFIEW_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
           TRADINGFIEW_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           if [[ ! "${TRADINGFIEW_ADMOB_APP_ID:-}" =~ ^ca-app-pub-7945572016731367~[0-9]{10}$ ]]; then
-            echo "::error::Missing real TradingFiew AdMob APP ID. Set secret TRADINGFIEW_ADMOB_APP_ID on univcours/ribhlab. Ad unit IDs are NOT app IDs."
+            echo "::error::TradingFiew AdMob APP ID is invalid; refusing to sign."
             exit 2
           fi
           gradle --no-daemon -p tradingfiew/android :app:assembleRelease :app:bundleRelease
       - name: Verify both signatures, package identity and checksums
         env:
-          TRADINGFIEW_ADMOB_APP_ID: ${{ secrets.TRADINGFIEW_ADMOB_APP_ID }}
+          TRADINGFIEW_ADMOB_APP_ID: ca-app-pub-7945572016731367~1161939707
         shell: bash
         run: |
           set -euo pipefail
