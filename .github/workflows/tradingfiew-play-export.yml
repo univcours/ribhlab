@@ -1,0 +1,58 @@
+name: Export verified TradingFiew 1.0.2 signed bundle for Play publishing
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/tradingfiew-play-export.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  export-verified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Retrieve signed APK and AAB from original-key build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tradingfiew-play
+          gh run download 44315365442 --repo "$GITHUB_REPOSITORY" \
+             --name TradingFiew-Android-RivoScanOriginalKey-SIGNED --dir /tmp/tradingfiew-play
+          ls -lh /tmp/tradingfiew-play
+      - name: Verify exact original release and certificate (fail closed)
+        run: |
+          set -euo pipefail
+          cd /tmp/tradingfiew-play
+          AAB=TradingFiew-Android-1.0.2-RivoScanKey-SIGNED.aab
+          APK=TradingFiew-Android-1.0.2-RivoScanKey-SIGNED.apk
+          test -s "$AAB"
+          test -s "$APK"
+          jarsigner -verify "$AAB" | grep -F 'jar verified'
+          keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          sha256sum -c SHA256SUMS.txt
+          sha256sum "$AAB" "$APK" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish signed files to immutable source release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=tradingfiew-android-v1.0.2-rivo-key
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+             echo "::error::Release tag already exists. No overwrite permitted."
+             exit 1
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target rivoscan-standalone-ready \
+            --title 'TradingFiew Android 1.0.2 — original RivoScan upload key' \
+            --notes 'Signed Android package com.ribhlab.tradingfiew, versionCode 3. Intended for initial Play Console setup / internal testing. Not a verified production release; physical-device startup still requires QA.' \
+            /tmp/tradingfiew-play/TradingFiew-Android-1.0.2-RivoScanKey-SIGNED.apk \
+            /tmp/tradingfiew-play/TradingFiew-Android-1.0.2-RivoScanKey-SIGNED.aab \
+            /tmp/tradingfiew-play/SHA256SUMS.txt \
+            /tmp/tradingfiew-play/SIGNER-FINGERPRINTS.txt
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets,url >> "$GITHUB_STEP_SUMMARY"
