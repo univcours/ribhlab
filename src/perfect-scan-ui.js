@@ -79,7 +79,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
  '<p class="rivo-perfectscan-tip" hidden>'+t.tip+'</p>'+
  '<div class="rivo-perfectscan-empty" role="status"><span aria-hidden="true" class="rivo-perfectscan-empty-icon">▣</span><p>'+onboarding.hint+'</p></div>'+
- '<div class="rivo-perfectscan-preview" hidden role="img" aria-label="'+t.original+'"><canvas></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span>'+'<input type="range" class="rivo-perfect-compare-range" min="0" max="100" value="52" hidden aria-label="Before/after comparison"></div>'+
+ '<div class="rivo-perfectscan-preview" hidden role="group" aria-label="'+t.original+'"><canvas role="img" aria-label="'+t.original+'"></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span>'+'<input type="range" class="rivo-perfect-compare-range" min="0" max="100" value="52" hidden aria-label="Before/after comparison"></div>'+
  '<div class="rivo-perfectscan-control" hidden>'+
  '<label class="rivo-scan-method"><span>'+({en:'Correction method',ar:'طريقة التصحيح',fr:'Méthode de correction',
  es:'Método de corrección',de:'Korrekturmethode',pt:'Método de correção',
