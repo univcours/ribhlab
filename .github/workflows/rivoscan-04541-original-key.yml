@@ -101,10 +101,25 @@ jobs:
           name: RivoScan-0.45.43-OriginalKey-SIGNED-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
-      - name: Publish signed APK and AAB to GitHub Releases
+      - name: Check dedicated GitHub Release publishing authorization
+        id: release_auth
         if: success()
         env:
-          GH_TOKEN: ${{ github.token }}
+          RIVO_RELEASE_PAT: ${{ secrets.RIVO_RELEASE_PAT }}
+        run: |
+          if [ -n "$RIVO_RELEASE_PAT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Signed APK and AAB were verified and uploaded as workflow artifacts, but GitHub Releases publishing was skipped. Add the Actions secret RIVO_RELEASE_PAT with Contents:write and Workflows:write repository permissions, then rerun this workflow."
+            echo '### Release publication requires a separate GitHub credential' >> "$GITHUB_STEP_SUMMARY"
+            echo 'APK and AAB are signed and saved in Actions artifacts. The default GITHUB_TOKEN has Contents:write but received 403 when creating a release targeting this branch because its workflow files differ from the default branch.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'For GitHub Releases, add repository Actions secret **RIVO_RELEASE_PAT** with **Contents: write** and **Workflows: write** permissions, then rerun the release workflow. No signing key needs to be changed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Publish signed APK and AAB to GitHub Releases
+        if: ${{ success() && steps.release_auth.outputs.enabled == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.RIVO_RELEASE_PAT }}
         run: |
           set -euo pipefail
           TAG=rivoscan-0.45.43-original-key
