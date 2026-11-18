@@ -1,0 +1,64 @@
+name: Export TradingFiew 1.0.3 signed AdMob installer and bundle for Play
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/tradingfiew-admob-v4-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  export-verified:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download VERIFIED original-key signed 1.0.3 artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tradingfiew-1.0.3
+          gh run download 44414086441 --repo "$GITHUB_REPOSITORY" \
+            --name TradingFiew-Android-RivoScanOriginalKey-SIGNED \
+            --dir /tmp/tradingfiew-1.0.3
+          ls -lh /tmp/tradingfiew-1.0.3
+      - name: Verify signatures and file integrity before making links
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/tradingfiew-1.0.3
+          APK=TradingFiew-Android-1.0.3-RivoScanKey-SIGNED.apk
+          AAB=TradingFiew-Android-1.0.3-RivoScanKey-SIGNED.aab
+          test -s "$APK" && test -s "$AAB"
+          sha256sum --check SHA256SUMS.txt
+          keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          jarsigner -verify "$AAB" | grep -F "jar verified"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name aapt -type f | sort -V | tail -1)"
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='4' versionName='1.0.3'"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -F 'ca-app-pub-7945572016731367~1161939707'
+      - name: Publish immutable assets for first-party Play publisher
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=tradingfiew-android-v1.0.3-admob-rivo-key
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+             echo "::error::Release exists already; refusing overwrite."
+             exit 1
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target rivoscan-standalone-ready \
+            --title "TradingFiew Android 1.0.3 — signed AdMob interstitial-only" \
+            --notes "Original RivoScan upload key. Android com.ribhlab.tradingfiew, versionCode 4. Real TradingFiew AdMob App ID and Interstitial unit integrated with UMP. No Banner ads. Signed package for Play upload/QA; NOT a claim of public Play Production publication. Update Google Play Ads and Data Safety before distributing." \
+            /tmp/tradingfiew-1.0.3/TradingFiew-Android-1.0.3-RivoScanKey-SIGNED.apk \
+            /tmp/tradingfiew-1.0.3/TradingFiew-Android-1.0.3-RivoScanKey-SIGNED.aab \
+            /tmp/tradingfiew-1.0.3/SHA256SUMS.txt \
+            /tmp/tradingfiew-1.0.3/SIGNER-FINGERPRINTS.txt
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets >> "$GITHUB_STEP_SUMMARY"
