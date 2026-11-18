@@ -236,7 +236,7 @@ body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
  opacity:1!important;
 }
 #app .rivo-dark-ui :is(.mobilebar button.active,.nav-button.active){
- color:#fff!important;-webkit-text-fill-color:#fff!important;
+ color:#00d8ff!important;-webkit-text-fill-color:#00d8ff!important;
  background:#1256ac!important;border-color:#1256ac!important;
 }
 #app button:disabled:not([hidden]),#app [role="button"][aria-disabled="true"]{
