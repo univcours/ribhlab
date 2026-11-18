@@ -1,0 +1,64 @@
+name: RivoScan 0.45.43 verified AAB to Google Play production
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/rivoscan-play-production-04543.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: rivoscan-play-production-04543
+  cancel-in-progress: false
+jobs:
+  publish-existing-signed-aab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check production publisher credentials (never display secrets)
+        id: credentials
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo 'Google Play publisher credentials are configured.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON. No Google Play API submission was attempted."
+            echo 'Google Play publication blocked: the secret GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not configured in repository Actions. No edits were created or committed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Download previously verified original-key signed AAB
+        if: steps.credentials.outputs.available == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44315335996
+          github-token: ${{ github.token }}
+          name: RivoScan-0.45.43-OriginalKey-SIGNED-AAB
+          path: /tmp/rivoscan-play-aab
+      - name: Validate target bundle, version, and publisher script
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          set -euo pipefail
+          grep -Fx 'versionCode=147' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.43' rivoscan-version.properties
+          test -s /tmp/rivoscan-play-aab/app-release.aab
+          test "$(stat -c%s /tmp/rivoscan-play-aab/app-release.aab)" -gt 10000000
+          unzip -t -q /tmp/rivoscan-play-aab/app-release.aab | tail -1
+          python3 -m py_compile scripts/publish-rivoscan-play-aab-04543.py
+          sha256sum /tmp/rivoscan-play-aab/app-release.aab | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Install Google Play Android Publisher API client
+        if: steps.credentials.outputs.available == 'true'
+        run: python3 -m pip install --quiet --disable-pip-version-check google-api-python-client google-auth
+      - name: Publish versionCode 147 only to existing RivoScan production track
+        if: steps.credentials.outputs.available == 'true'
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          python3 scripts/publish-rivoscan-play-aab-04543.py \
+            --aab /tmp/rivoscan-play-aab/app-release.aab \
+            --package com.ribhlab.rivoscan --version-code 147 --track production
+          echo 'Submitted RivoScan 0.45.43 (147) to Google Play production API. Store review may still be required.' >> "$GITHUB_STEP_SUMMARY"
