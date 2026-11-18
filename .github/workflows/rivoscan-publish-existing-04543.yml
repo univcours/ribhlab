@@ -1,0 +1,59 @@
+name: Publish signed RivoScan 0.45.43 APK and AAB (reuse verified build)
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/rivoscan-publish-existing-04543.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: publish-rivoscan-04543-existing-assets
+  cancel-in-progress: false
+jobs:
+  publish-signed-artifacts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download original-key signed artifacts from verified build 44315335996
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44315335996
+          github-token: ${{ github.token }}
+          pattern: RivoScan-0.45.43-OriginalKey-SIGNED-*
+          merge-multiple: true
+          path: /tmp/rivo04543
+      - name: Verify APK and AAB are present before publishing
+        run: |
+          set -euo pipefail
+          test -s /tmp/rivo04543/app-release.apk
+          test -s /tmp/rivo04543/app-release.aab
+          test "$(stat -c%s /tmp/rivo04543/app-release.apk)" -gt 1000000
+          test "$(stat -c%s /tmp/rivo04543/app-release.aab)" -gt 1000000
+          unzip -t -q /tmp/rivo04543/app-release.apk | tail -1
+          unzip -t -q /tmp/rivo04543/app-release.aab | tail -1
+          echo 'Signed files from verified 0.45.43 source run:' >> "$GITHUB_STEP_SUMMARY"
+          sha256sum /tmp/rivo04543/app-release.apk /tmp/rivo04543/app-release.aab | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Publish exactly like the successful RivoScan 0.45.40 release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=rivoscan-0.45.43-original-key
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release $TAG already exists; refusing to overwrite a released version"
+            exit 1
+          fi
+          # Keep the successful historical workflow's target BRANCH instead
+          # of pointing tag creation at the workflow's own source commit.
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --target rivoscan-standalone-ready \
+            --title 'RivoScan 0.45.43 - PerfectScan UX and Blue Controls' \
+            --notes 'Signed with original Google Play upload key, versionCode 147. PerfectScan enhanced preview without automatic split overlay; Compare button is user-controlled, clearer warnings and high-contrast blue buttons. Play Console publication is separate.'
+          cp /tmp/rivo04543/app-release.apk /tmp/RivoScan-0.45.43-Signed.apk
+          cp /tmp/rivo04543/app-release.aab /tmp/RivoScan-0.45.43-GooglePlay.aab
+          gh release upload "$TAG" /tmp/RivoScan-0.45.43-GooglePlay.aab \
+            /tmp/RivoScan-0.45.43-Signed.apk --repo "$GITHUB_REPOSITORY"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets \
+            --jq '{url:.url,assets:[.assets[].name]}' | tee -a "$GITHUB_STEP_SUMMARY"
