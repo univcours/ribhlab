@@ -54,7 +54,10 @@ test('Exclusive correction selection avoids double geometric warp and ticking co
  assert.ok(ui.includes('const surface3dRequested=!!onSurface3D&&method===\'surface3d\''));
  assert.ok(ui.includes("geometry:method==='geometry'"));
  assert.ok(!ui.includes('input type="checkbox"'));
- assert.ok(ui.includes('processed.requiresReview?t.manual:t.clean'));
+ assert.ok(ui.includes("processed.requiresReview?' · '+t.manual:''"));
+ assert.ok(ui.includes('diagnostics.hidden=false;'));
+ assert.ok(ui.includes('methodApplied'));
+ assert.ok(ui.includes("geometry:method==='geometry'"));
  assert.ok(native.includes('AI_FLATTEN="uvdoc"'));
  assert.ok(native.includes('RivoUVDocPlugin.unwarpBitmap(this,image)'));
  assert.ok(uvdoc.includes('static Bitmap unwarpBitmap('));
