@@ -32,7 +32,7 @@ test('PerfectScan defaults to nonwarping readable enhancement; curvature is opt-
  assert.ok(src.includes("geometry:method==='geometry'"),'2D page warp only on explicit selection');
  assert.ok(src.includes('diagnostics.hidden=false;'),'technical details available on demand');
  assert.ok(src.includes('methodApplied'),'selected method must be reported separately from applied correction');
- assert.ok(src.includes('setStatus(summary,processed.quality.reviewRecommended'),'quality summary stays concise');
+ assert.ok(src.includes('setStatus(summary,processed.requiresReview'),'quality summary stays concise');
 });
 test('RivoScan blue high-contrast controls are loaded after legacy styles',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
