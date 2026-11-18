@@ -1,0 +1,199 @@
+/* RivoScan high-contrast interaction layer.
+ * The scanner image stays unobstructed; controls use genuine semantic states.
+ * Imported after old modal styles. Google ML Kit's native camera is untouched. */
+:root{
+  --rivo-action-blue:#1357b4;
+  --rivo-action-deep:#083d84;
+  --rivo-action-border:#477bbd;
+  --rivo-control-ink:#102f56;
+  --rivo-control-muted:#335779;
+  --rivo-control-paper:#ffffff;
+  --rivo-control-tint:#eaf3ff;
+  --rivo-control-focus:#247bef;
+}
+body :is(.rivo-perfectscan-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-editor-overlay) :is(button,select,[role="button"]){
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+body :is(.rivo-perfectscan-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-editor-overlay)
+ :is(button,select,[role="button"]):focus-visible{
+  outline:3px solid var(--rivo-control-focus)!important;
+  outline-offset:2px!important;
+}
+body :is(.rivo-perfectscan-overlay,.rivo-code-overlay,.rivo-id-overlay,.rivo-editor-overlay)
+ button:not(:disabled):active{
+  transform:scale(.985);
+  filter:brightness(.94);
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog{
+  background:#f5f9ff!important;
+  color:var(--rivo-control-ink)!important;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>header{
+  background:#fff!important;border-bottom:1px solid #c4d7ed!important;
+  color:var(--rivo-control-ink)!important;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>header strong{
+  color:#0c2f5c!important;font-size:clamp(18px,4.6vw,21px)!important;
+  letter-spacing:-.015em;line-height:1.25;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>header small{
+  color:#375b82!important;opacity:1!important;
+  font-size:12px!important;line-height:1.42!important;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>header [data-perfect="close"]{
+  background:#edf4fc!important;color:#0d3c78!important;
+  border:1px solid #aac4e3!important;min-height:44px;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+  position:relative;flex:1 1 auto!important;min-height:clamp(180px,35dvh,350px)!important;
+  min-width:0!important;margin:7px 9px 4px!important;
+  padding:8px!important;overflow:hidden!important;border-radius:14px!important;
+  background:#e8f2fe!important;border:1px solid #bed4f0!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+body .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview canvas{
+  display:block!important;width:auto!important;height:auto!important;
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;box-shadow:0 3px 13px #163b6322;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-tag[hidden],
+body .rivo-perfectscan-modal .rivo-perfect-compare-range[hidden],
+body .rivo-perfectscan-modal .rivo-perfect-preview-compare[hidden],
+body .rivo-perfectscan-modal .rivo-perfectscan-diagnostics[hidden],
+body .rivo-perfectscan-modal .rivo-perfectscan-warning[hidden]{
+  display:none!important;
+}
+body .rivo-perfectscan-modal .rivo-perfect-preview-compare{
+  display:flex;align-items:center;justify-content:center;
+  position:absolute;inset-block-start:12px;inset-inline-end:12px;z-index:3;
+  width:auto!important;max-width:48%;min-width:95px;min-height:43px;
+  padding:8px 13px!important;border:1.5px solid #1a529f!important;
+  border-radius:12px!important;background:#fff!important;
+  color:#124a91!important;font-size:13px!important;font-weight:800!important;
+  box-shadow:0 3px 9px #10356230;
+}
+body .rivo-perfectscan-modal .rivo-perfect-preview-compare[aria-pressed="true"]{
+  background:#124f9e!important;color:#fff!important;border-color:#124f9e!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-tag{
+  inset-block-start:12px;inset-inline-start:12px;max-width:54%;
+  line-height:1.35;white-space:normal;pointer-events:none;
+}
+body .rivo-perfectscan-modal .rivo-perfect-compare-range:not([hidden]){
+  position:absolute;z-index:4;inset-inline:14px;bottom:12px;
+  width:calc(100% - 28px)!important;max-width:none!important;
+  min-height:42px;accent-color:var(--rivo-action-blue);
+  background:transparent;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-status:not([hidden]){
+  flex:none;max-height:68px;overflow-y:auto;margin:4px 12px 5px!important;
+  padding:8px 11px!important;color:#163c6c!important;
+  background:#e8f2ff!important;border:1px solid #bfd4ed!important;
+  border-radius:10px!important;font-size:12.5px!important;line-height:1.45!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-status.rivo-warning{
+  background:#fff5e9!important;border-color:#e1a95c!important;color:#734414!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-control{
+  display:flex;flex-direction:column;align-items:stretch;gap:7px;
+  padding:6px 2px!important;
+}
+body .rivo-perfectscan-modal .rivo-scan-method{
+  display:flex!important;align-items:stretch!important;flex-direction:column;
+  gap:7px!important;min-width:0;width:100%;
+  color:#163c6b!important;font-weight:750!important;
+}
+body .rivo-perfectscan-modal [data-perfect-mode]{
+  box-sizing:border-box;width:100%!important;min-width:0;min-height:48px;
+  padding:10px 38px 10px 12px!important;
+  background:#fff!important;border:1.5px solid #84afd9!important;
+  color:#102f56!important;border-radius:12px!important;
+  font-size:14px!important;font-weight:650!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-toolbar button,
+body .rivo-perfectscan-modal .rivo-perfectscan-control>button,
+body .rivo-perfectscan-modal .rivo-workspace-task{
+  background:#fff!important;color:#17467f!important;
+  border:1.5px solid #769fcb!important;
+  opacity:1!important;min-height:44px;font-size:13px!important;font-weight:750!important;
+}
+body .rivo-perfectscan-modal .rivo-workspace-task.active{
+  color:#fff!important;background:#1259b3!important;border-color:#1259b3!important;
+}
+body .rivo-perfectscan-modal button:disabled:not([hidden]){
+  background:#e0e8f3!important;color:#4a6685!important;
+  border-color:#c4d0df!important;opacity:1!important;box-shadow:none!important;
+  cursor:not-allowed;
+}
+body .rivo-perfectscan-modal>.rivo-edit-bottom-bar{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:0!important;margin:0!important;
+  padding:10px 12px calc(11px + env(safe-area-inset-bottom,0px))!important;
+  background:#fff!important;border-top:1px solid #bed1e9!important;
+}
+body .rivo-perfectscan-modal>.rivo-edit-bottom-bar>button:not([hidden]){
+  box-sizing:border-box;width:100%!important;min-height:52px!important;
+  border:1.5px solid #07418d!important;border-radius:13px!important;
+  background:#1257b0!important;color:#fff!important;
+  font-size:15.5px!important;font-weight:850!important;
+  opacity:1!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-warning:not([hidden]),
+body .rivo-perfectscan-modal .rivo-perfectscan-privacy{
+  color:#2d527d!important;opacity:1!important;
+  font-size:12px!important;line-height:1.45!important;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-diagnostics{
+  margin:9px 2px;padding:9px 11px;
+  border:1px solid #a3c0e4;border-radius:10px;background:#f5f9ff;
+  color:#1d446f;font-size:12px;overflow-wrap:anywhere;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-diagnostics>summary{
+  cursor:pointer;min-height:31px;font-size:12px;font-weight:750;
+}
+body .rivo-perfectscan-modal .rivo-perfectscan-diagnostics p{
+  color:#294e79!important;line-height:1.55;white-space:normal;overflow-wrap:anywhere;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window) :is(
+ button:not(:disabled):not(.rivo-modal-dismiss):not(.rivo-workspace-settings-toggle),
+ select,input:not([type="checkbox"]):not([type="range"])) {
+  font-weight:680;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
+ :is(.rivo-workspace-task:not(.active),.rivo-filter-choice:not(.active),
+ .rivo-editor-actions button:not(.rivo-editor-save),.rivo-workspace-task-panel>button:not(:disabled)){
+  background:#f6faff!important;color:#163e76!important;
+  border:1.5px solid #7198ca!important;opacity:1!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
+ :is(.rivo-workspace-task.active,.rivo-filter-choice.active){
+  background:#145bb6!important;color:#fff!important;
+  border-color:#145bb6!important;opacity:1!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
+ button:disabled:not([hidden]){
+  opacity:1!important;color:#4d6b8e!important;
+  background:#e5eaf2!important;border-color:#ccd5e1!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
+ :is(input,select,textarea){
+  color:#193d65!important;border-color:#9bb9dc!important;
+  background:#fff!important;
+}
+@media(max-width:620px){
+ body .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+  min-height:clamp(165px,30dvh,280px)!important;
+ }
+ body .rivo-perfectscan-modal .rivo-perfect-preview-compare{
+  inset-block-start:9px;inset-inline-end:9px;
+ }
+}
+@media(max-height:590px){
+ body .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+  min-height:128px!important;
+ }
+ body .rivo-perfectscan-modal .rivo-perfectscan-status:not([hidden]){
+  max-height:48px;
+ }
+}
