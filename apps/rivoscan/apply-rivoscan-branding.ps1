@@ -105,13 +105,26 @@ if($xml -match 'android:roundIcon="[^"]+"') {
 } else {
   $xml=$xml.Replace('<application','<application android:roundIcon="@mipmap/ic_launcher_round"')
 }
-# AdMob: use Google sample app ID in all beta/QA builds. Never bundle real ads
-# until merchant account, privacy policy and production ad units are verified.
-$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
-if($xml -notmatch 'com.google.android.gms.ads.APPLICATION_ID') {
-  if(-not $xml.Contains('</application>')) { throw 'Android application closing tag is missing' }
-  $xml=$xml.Replace('</application>',$admobMeta+"`r`n"+'</application>')
+# Only validated production builds use real AdMob identifiers; debug remains sample.
+$liveAds=($env:VITE_RIVOSCAN_ADMOB_PRODUCTION -eq 'true')
+$admobAppId='ca-app-pub-3940256099942544~3347511713'
+if($liveAds){
+  $admobAppId=[string]$env:VITE_RIVOSCAN_ADMOB_APP_ID
+  if($admobAppId -notmatch '^ca-app-pub-(?!3940256099942544)[0-9]{16}~[0-9]{10}$'){
+    throw 'Production requires the verified real AdMob Android APP ID (~). Sample or unit IDs are invalid.'
+  }
 }
+$admobMeta='    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="'+$admobAppId+'" />'
+$admobPattern='<meta-data[^>]*android:name="com[.]google[.]android[.]gms[.]ads[.]APPLICATION_ID"[^>]*/>'
+if([regex]::IsMatch($xml,$admobPattern)){
+  $xml=[regex]::Replace($xml,$admobPattern,$admobMeta)
+} elseif($xml.Contains('com.google.android.gms.ads.APPLICATION_ID')) {
+  throw 'Unrecognized AdMob metadata; cannot safely rewrite it.'
+} else {
+  if(-not $xml.Contains('</application>')){throw 'Android application closing tag is missing'}
+  $xml=$xml.Replace('</application>',$admobMeta+[Environment]::NewLine+'</application>')
+}
+
 [IO.File]::WriteAllText($manifest,$xml,$utf8)
 
 # Set ONE authoritative version for Android Studio and the safe ADB installer.
