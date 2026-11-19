@@ -39,7 +39,7 @@ test('Far plates search wide, left, right and centre without out-of-bounds crops
 test('Live Moroccan plate reader performs actual zoom and regional OCR, confirming detected area twice',()=>{
  const s=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
  assert.ok(s.includes('plateSearchRoi(canvas.width,canvas.height,regionIndex)'));
- assert.ok(s.includes('if(!verifying)verifyRegion=regionIndex'));
+ assert.ok(s.includes('if(Number(data.confidence)>=40&&candidates.length&&!verifying)'));
  assert.ok(s.includes('const actual=await applyPlateZoom('));
  assert.ok(s.includes('autoZoomEnabled=!autoZoomEnabled'));
  assert.ok(s.includes('zoomRange=null;'));
