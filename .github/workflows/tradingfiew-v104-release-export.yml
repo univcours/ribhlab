@@ -22,7 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/tradingfiew-v104
-          gh run download 44430242543 --repo "$GITHUB_REPOSITORY" \
+          gh run download 44430544340 --repo "$GITHUB_REPOSITORY" \
             --name TradingFiew-Android-RivoScanOriginalKey-SIGNED \
             --dir /tmp/tradingfiew-v104
       - name: Independently verify exact package, version, real ads and existing signature
