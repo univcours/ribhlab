@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: tradingfiew/tradingfiew.github.io
-          ref: 43ef734b2f19591913b8ed82c5008c814c864d63
+          ref: a65b1d5eb6322918c76df3bb8f7c23fa3a15f58b
           path: tradingfiew
       - name: Set up Java 17
         uses: actions/setup-java@v4
