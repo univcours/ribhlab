@@ -1,0 +1,147 @@
+name: TradingFiew 1.0.6 — original-key signed Android QA and release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tradingfiew-v106-certified-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: tradingfiew-1-0-6-certified
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout exact QA-verified TradingFiew source
+        uses: actions/checkout@v7
+        with:
+          repository: tradingfiew/tradingfiew.github.io
+          ref: fcf1eb182185aca689a0f0d4c458f23728ec77d9
+          path: tradingfiew
+          persist-credentials: false
+      - name: Java 17 for Google Play Android build
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify required Android 36 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Prepare Gradle 9.6
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.6.0'
+      - name: Import existing RivoScan upload key into runner temporary storage
+        shell: bash
+        env:
+          SIGN_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$SIGN_KEY_B64"
+          test -n "$SIGN_KEY_PASS"
+          printf '%s' "$SIGN_KEY_B64" | base64 -d > "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
+          chmod 600 "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
+          echo "TRADINGFIEW_KEYSTORE_PATH=$RUNNER_TEMP/tradingfiew-rivo-original.p12" >> "$GITHUB_ENV"
+          echo 'TRADINGFIEW_KEY_ALIAS=key0' >> "$GITHUB_ENV"
+          echo "TRADINGFIEW_STORE_PASSWORD=$SIGN_KEY_PASS" >> "$GITHUB_ENV"
+          echo "TRADINGFIEW_KEY_PASSWORD=$SIGN_KEY_PASS" >> "$GITHUB_ENV"
+      - name: Verify original Google Play upload certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          cert="$(keytool -list -v -storetype PKCS12 -keystore "$TRADINGFIEW_KEYSTORE_PATH" -storepass:env TRADINGFIEW_STORE_PASSWORD -alias "$TRADINGFIEW_KEY_ALIAS")"
+          actual="$(printf '%s\n' "$cert" | sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+).*$/\1/p' | head -1)"
+          test "$actual" = "$expected" || { echo "::error::Upload signing certificate mismatch"; exit 1; }
+          echo 'Original Play upload signer verified' >> "$GITHUB_STEP_SUMMARY"
+      - name: Build signed release AAB and APK from exact tested source
+        shell: bash
+        env:
+          TRADINGFIEW_ADMOB_APP_ID: ca-app-pub-7945572016731367~1161939707
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --warning-mode all -p tradingfiew/android :app:assembleRelease :app:bundleRelease
+      - name: Verify signed v1.0.6 identity, certificate, R8 output and prepare artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=tradingfiew/android/app/build/outputs/apk/release/app-release.apk
+          AAB=tradingfiew/android/app/build/outputs/bundle/release/app-release.aab
+          R8=tradingfiew/android/app/build/outputs/mapping/release/mapping.txt
+          test -s "$APK" && test -s "$AAB" && test -s "$R8"
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          AAPT="$(find "$SDK_ROOT/build-tools" -name aapt -type f | sort -V | tail -1)"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='7' versionName='1.0.6'"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -F 'ca-app-pub-7945572016731367~1161939707'
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/tradingfiew-signature.txt"
+          grep -q 'Verified using v2 scheme.*true' "$RUNNER_TEMP/tradingfiew-signature.txt"
+          apk_sha="$(sed -nE 's/.*certificate SHA-1 digest: ([0-9a-fA-F]+).*/\1/p' "$RUNNER_TEMP/tradingfiew-signature.txt" | head -1)"
+          expected_sha='e9b3e2779575ba08a91372fc3885eba01dd3e73e'
+          test "$(printf '%s' "$apk_sha" | tr '[:upper:]' '[:lower:]')" = "$expected_sha"
+          jarsigner -verify "$AAB" | grep -F 'jar verified'
+          keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          mkdir -p tradingfiew/release-smoke release-public
+          cp "$APK" tradingfiew/release-smoke/tradingfiew-release.apk
+          cp "$APK" release-public/TradingFiew-Android-1.0.6-RivoScanKey-SIGNED.apk
+          cp "$AAB" release-public/TradingFiew-Android-1.0.6-RivoScanKey-SIGNED.aab
+          (cd release-public && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          echo 'Verified original Play signer, AdMob App ID and 1.0.6/Code7 identity' >> "$GITHUB_STEP_SUMMARY"
+      - name: Enable Android emulator virtualization
+        run: sudo setfacl -m "u:$(id -un):rw" /dev/kvm
+      - name: Test the EXACT signed v1.0.6 APK on Android 11 with live website
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          heap-size: 384M
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: cd tradingfiew && bash scripts/android-real-release-smoke.sh
+      - name: Preserve emulator QA logcat, UI and release APK if test fails
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: TradingFiew-1.0.6-original-key-emulator-evidence
+          path: tradingfiew/release-smoke/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish immutable signed release assets ONLY after QA passes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=tradingfiew-android-v1.0.6
+          if gh release view "$tag" -R univcours/ribhlab >/dev/null 2>&1; then
+            echo "::error::Release tag already exists, refuse overwrite"
+            exit 1
+          fi
+          gh release create "$tag" -R univcours/ribhlab \
+            release-public/TradingFiew-Android-1.0.6-RivoScanKey-SIGNED.apk \
+            release-public/TradingFiew-Android-1.0.6-RivoScanKey-SIGNED.aab \
+            release-public/SHA256SUMS.txt \
+            --title 'TradingFiew Android 1.0.6 — Gradle deprecation and CI compatibility fixes' \
+            --notes 'Original-key signed code7 Android package, AdMob Interstitial-only, UMP. Migrated deprecated Gradle build syntax and GitHub actions. Exact signed APK emulator launched and chart UI verified. Source commit fcf1eb182185aca689a0f0d4c458f23728ec77d9.'
+          echo "Signed release available: https://github.com/univcours/ribhlab/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
+      - name: Delete temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/tradingfiew-rivo-original.p12"
