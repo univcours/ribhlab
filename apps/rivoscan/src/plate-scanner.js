@@ -56,7 +56,9 @@ export function moroccanPlateCandidates(text){
    found.set(key,candidate);
  };
  for(const match of raw.matchAll(forward))add(match[1],match[2],match[3],match[4]);
- for(const match of raw.matchAll(reversed))add(match[4],match[2],match[3],match[1]);
+ // OCR can reverse Arabic text. Only try RTL reversal if the usual plate order
+ // produced no valid candidate: 1-أ-7 would otherwise become two false IDs.
+ if(!found.size)for(const match of raw.matchAll(reversed))add(match[4],match[2],match[3],match[1]);
  return [...found.values()];
 }
 export function plateCandidates(text){
