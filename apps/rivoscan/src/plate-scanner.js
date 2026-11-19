@@ -318,11 +318,17 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    }
    if(!framed){detection.hidden=true;guide.hidden=false;}
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
-   if(Number(data.confidence)>=40&&candidates.length){
+   const targets=[search.value,...watch].map(normalizePlate).filter(q=>q.length>=3);
+   const soughtPlateSeen=targets.length
+    ?candidates.some(plate=>matchingPlateTargets(plate,targets).length>0)
+    :candidates.length>0;
+   if(Number(data.confidence)>=40&&candidates.length&&!verifying)
+    verifyRegion=regionIndex;
+   if(Number(data.confidence)>=40&&soughtPlateSeen){
     missedFrames=0;
-    // Confirm on the same crop next frame before moving to another region.
-    if(!verifying)verifyRegion=regionIndex;
    }else{
+    // Keep searching/zooming when other cars are recognized but the requested
+    // Moroccan plate is still too distant to read.
     missedFrames++;
     if(autoZoomEnabled&&!zoomBusy&&zoomRange){
      const next=planPlateAutoZoom({range:zoomRange,current:zoomCurrent,
