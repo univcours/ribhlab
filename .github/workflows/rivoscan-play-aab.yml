@@ -14,11 +14,6 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ vars.RIVOSCAN_ADMOB_PRODUCTION }}
-      VITE_RIVOSCAN_ADMOB_APP_ID: ${{ vars.RIVOSCAN_ADMOB_APP_ID }}
-      VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID: ${{ vars.RIVOSCAN_ADMOB_INTERSTITIAL_ID }}
-      VITE_RIVOSCAN_ADMOB_APP_OPEN_ID: ${{ vars.RIVOSCAN_ADMOB_APP_OPEN_ID }}
     timeout-minutes: 40
     defaults:
       run:
@@ -28,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Configure verified RivoScan production AdMob IDs
+        run: node scripts/write-admob-production-env.mjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -70,6 +67,7 @@ jobs:
           unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
           unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
           grep -F 'versionCode=104' rivoscan-version.properties
+          test "$VITE_RIVOSCAN_ADMOB_PRODUCTION" = "true"
           if [[ "$VITE_RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
             grep -F 'com.google.android.gms.ads.APPLICATION_ID' android/app/src/main/AndroidManifest.xml
             grep -F "$VITE_RIVOSCAN_ADMOB_APP_ID" android/app/src/main/AndroidManifest.xml
