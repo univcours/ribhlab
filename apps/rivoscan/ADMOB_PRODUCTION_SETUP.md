@@ -1,16 +1,26 @@
-# RivoScan AdMob production setup
+# RivoScan real AdMob setup (2026-11-19)
 
-RivoScan's REAL AdMob application ID has not yet been verified. Never substitute a publisher ID from AdSense, a different app, Google samples, or an API key.
+The original RivoScan Android AdMob identifiers are restored from the repository's
+2026-11-06 publisher screenshot / 2026-11-07 verified source on
+feat/rivoscan-play-release-qa-20261107 (src/admob-production-ids.js).
+These are NOT the IDs for TradingFiew, NovaGrid or another app.
 
-Set these GitHub Repository Variables in Settings > Secrets and variables > Actions > Variables:
+AAB release workflow now sets the verified RivoScan Android App ID, Interstitial
+and App Open IDs automatically from src/admob-production-ids.js, using
+scripts/write-admob-production-env.mjs. Production is always true for this
+release-only AAB job, and both build-time config and Android Manifest are
+validated. Debug APKs stay on Google SAMPLE IDs. No banner, no surprise rewarded
+paywall. The archived Rewarded ID is retained for possible future opt-in use,
+but no rewarded ad is enabled by this change.
 
-- RIVOSCAN_ADMOB_PRODUCTION = true
-- RIVOSCAN_ADMOB_APP_ID = verified Android App ID with tilde: ca-app-pub-...~...
-- RIVOSCAN_ADMOB_INTERSTITIAL_ID = real Interstitial unit with slash: ca-app-pub-.../...
-- RIVOSCAN_ADMOB_APP_OPEN_ID = optional real App Open unit matching the same publisher; leave blank to disable it
+Play production still needs upload-signing GitHub Secrets:
+RIVOSCAN_PLAY_KEYSTORE_B64, RIVOSCAN_PLAY_KEY_ALIAS,
+RIVOSCAN_PLAY_STORE_PASSWORD and RIVOSCAN_PLAY_KEY_PASSWORD.
+If any are unavailable, the workflow produces an UNSIGNED AAB for inspection
+only. It does not publish to Google Play.
 
-Never enable production without matching IDs. All ad types require UMP consent. Banner and anchor ads remain disabled; no in-content ads.
-
-The AAB workflow will bundle with these public variables and replace the AndroidManifest App ID. Only signed AABs with validated live IDs can be considered for a Play release. Existing signing Secrets RIVOSCAN_PLAY_KEYSTORE_B64, RIVOSCAN_PLAY_KEY_ALIAS, RIVOSCAN_PLAY_STORE_PASSWORD, RIVOSCAN_PLAY_KEY_PASSWORD must also be configured. Without those, the artifact is an UNSIGNED candidate, not Play ready.
-
-Debug and local QA builds intentionally keep sample Google IDs, not live ads. Before rollout verify Play listing linking, app-ads.txt, privacy policy, UMP, and register test devices. Never click live advertisements for testing.
+Before rollout, verify AdMob ownership and linking to com.ribhlab.rivoscan,
+app-ads.txt, privacy/UMP consent, test-device ad requests, Play data safety,
+and a Play versionCode higher than the currently published version.
+Never click your own production ads. A successful build does not guarantee ads
+will serve or generate revenue.

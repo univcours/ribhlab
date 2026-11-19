@@ -1,6 +1,6 @@
-// RivoScan Android AdMob field QA: no banner, no real ads in debug builds.
-// Production AdMob APP ID is NOT known; do not substitute an ad unit ID for it.
-// Google sample units prevent invalid paid traffic during development.
+// RivoScan Android AdMob: debug uses Google test IDs; Play AAB uses
+// publisher-confirmed RivoScan App ID and ad-unit IDs from the 2026-11-07
+// archived configuration. Never use real ads while testing, never show banners.
 import { Capacitor } from '@capacitor/core';
 import {resolveAdMobConfig} from './admob-config.js';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
