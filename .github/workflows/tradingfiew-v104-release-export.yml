@@ -1,0 +1,67 @@
+name: TradingFiew 1.0.4 — signed Android release package
+on:
+  push:
+    branches: [rivoscan-standalone-ready]
+    paths:
+      - '.github/workflows/tradingfiew-v104-release-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download code5 signed APK and AAB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tradingfiew-v104
+          gh run download 44430242543 --repo "$GITHUB_REPOSITORY" \
+            --name TradingFiew-Android-RivoScanOriginalKey-SIGNED \
+            --dir /tmp/tradingfiew-v104
+      - name: Independently verify exact package, version, real ads and existing signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/tradingfiew-v104
+          APK=TradingFiew-Android-1.0.4-RivoScanKey-SIGNED.apk
+          AAB=TradingFiew-Android-1.0.4-RivoScanKey-SIGNED.aab
+          test -s "$APK" && test -s "$AAB"
+          sha256sum --check SHA256SUMS.txt
+          keytool -printcert -jarfile "$AAB" |
+            grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          jarsigner -verify "$AAB" | grep -F 'jar verified'
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name aapt -type f | sort -V | tail -1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner -type f | sort -V | tail -1)"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$AAPT" dump badging "$APK" |
+            grep -F "name='com.ribhlab.tradingfiew' versionCode='5' versionName='1.0.4'"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml |
+            grep -F 'ca-app-pub-7945572016731367~1161939707'
+      - name: Create ordinary official update with unchanged store identity
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=tradingfiew-android-v1.0.4
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Version 1.0.4 release exists, refusing to overwrite signed output"
+            exit 1
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target rivoscan-standalone-ready \
+            --title "TradingFiew 1.0.4" \
+            --notes "Maintenance update: improved Android compatibility and chart initialization for older Chrome engines. Package com.ribhlab.tradingfiew, versionCode 5. Signed with the existing original upload certificate. The Google Play rollout status is verified separately." \
+            /tmp/tradingfiew-v104/TradingFiew-Android-1.0.4-RivoScanKey-SIGNED.apk \
+            /tmp/tradingfiew-v104/TradingFiew-Android-1.0.4-RivoScanKey-SIGNED.aab \
+            /tmp/tradingfiew-v104/SHA256SUMS.txt \
+            /tmp/tradingfiew-v104/SIGNER-FINGERPRINTS.txt
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets >> "$GITHUB_STEP_SUMMARY"
