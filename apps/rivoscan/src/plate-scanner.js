@@ -83,6 +83,14 @@ export function matchingPlateTargets(plate,targets=[]){
  const qs=Array.isArray(targets)?targets:[targets];
  return [...new Set(qs.map(normalizePlate).filter(q=>q.length>=3&&matchesPlate(plate,q)))];
 }
+/** Other recognized cars must not stop the search for a watched plate. */
+export function hasPlateSearchHit(candidates,targets=[]){
+ const qs=(Array.isArray(targets)?targets:[targets]).map(normalizePlate).filter(q=>q.length>=3);
+ if(!Array.isArray(candidates)||!candidates.length)return false;
+ return qs.length
+  ?candidates.some(plate=>matchingPlateTargets(plate,qs).length>0)
+  :true;
+}
 export function plateOcrLines(blocks){
  const rows=[];
  for(const block of (Array.isArray(blocks)?blocks:[])){
@@ -318,10 +326,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    }
    if(!framed){detection.hidden=true;guide.hidden=false;}
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
-   const targets=[search.value,...watch].map(normalizePlate).filter(q=>q.length>=3);
-   const soughtPlateSeen=targets.length
-    ?candidates.some(plate=>matchingPlateTargets(plate,targets).length>0)
-    :candidates.length>0;
+   const soughtPlateSeen=hasPlateSearchHit(candidates,[search.value,...watch]);
    if(Number(data.confidence)>=40&&candidates.length&&!verifying)
     verifyRegion=regionIndex;
    if(Number(data.confidence)>=40&&soughtPlateSeen){
