@@ -14,6 +14,11 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      VITE_RIVOSCAN_ADMOB_PRODUCTION: ${{ vars.RIVOSCAN_ADMOB_PRODUCTION }}
+      VITE_RIVOSCAN_ADMOB_APP_ID: ${{ vars.RIVOSCAN_ADMOB_APP_ID }}
+      VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID: ${{ vars.RIVOSCAN_ADMOB_INTERSTITIAL_ID }}
+      VITE_RIVOSCAN_ADMOB_APP_OPEN_ID: ${{ vars.RIVOSCAN_ADMOB_APP_OPEN_ID }}
     timeout-minutes: 40
     defaults:
       run:
@@ -65,6 +70,11 @@ jobs:
           unzip -t android/app/build/outputs/bundle/release/app-release.aab > /dev/null
           unzip -Z -1 android/app/build/outputs/bundle/release/app-release.aab | grep -F 'base/manifest/AndroidManifest.xml'
           grep -F 'versionCode=104' rivoscan-version.properties
+          if [[ "$VITE_RIVOSCAN_ADMOB_PRODUCTION" == "true" ]]; then
+            grep -F 'com.google.android.gms.ads.APPLICATION_ID' android/app/src/main/AndroidManifest.xml
+            grep -F "$VITE_RIVOSCAN_ADMOB_APP_ID" android/app/src/main/AndroidManifest.xml
+            ! grep -F 'ca-app-pub-3940256099942544' android/app/src/main/AndroidManifest.xml
+          fi
           grep -F 'versionName=0.45.0' rivoscan-version.properties
       - name: Check authorized signing secrets
         id: signing
@@ -74,11 +84,11 @@ jobs:
           STORE_PASS: ${{ secrets.RIVOSCAN_PLAY_STORE_PASSWORD }}
           KEY_PASS: ${{ secrets.RIVOSCAN_PLAY_KEY_PASSWORD }}
         run: |
-          if [[ -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
+          if [[ "$VITE_RIVOSCAN_ADMOB_PRODUCTION" == "true" && -n "$KEYSTORE_B64" && -n "$KEY_ALIAS" && -n "$STORE_PASS" && -n "$KEY_PASS" ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No upload signing secrets: AAB stays UNSIGNED, NOT Play-ready."
+            echo "::notice::Both production AdMob variables and signing secrets are required: AAB stays UNSIGNED, NOT Play-ready."
           fi
       - name: Sign with user-supplied upload key
         if: steps.signing.outputs.enabled == 'true'
