@@ -2,16 +2,10 @@
 // Production AdMob APP ID is NOT known; do not substitute an ad unit ID for it.
 // Google sample units prevent invalid paid traffic during development.
 import { Capacitor } from '@capacitor/core';
+import {resolveAdMobConfig} from './admob-config.js';
 import { AdMob, AdmobConsentStatus, RewardAdPluginEvents, AppOpenAdPluginEvents } from '@capacitor-community/admob';
 
-export const AD_CONFIG=Object.freeze({
- testMode:true,
- androidAppId:'ca-app-pub-3940256099942544~3347511713',
- rewarded:'ca-app-pub-3940256099942544/5224354917',
- interstitial:'ca-app-pub-3940256099942544/1033173712',
- appOpen:'ca-app-pub-3940256099942544/9257395921',
- bannerEnabled:false
-});
+export const AD_CONFIG=resolveAdMobConfig(import.meta.env||{});
 export const PREMIUM_MINUTES=10;
 export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
 export const APP_OPEN_COOLDOWN_MS=20*60*1000;
@@ -70,7 +64,7 @@ async function loadInterstitial(){
  }catch(error){status('Interstitial unavailable',String(error?.message||error));return false;}
 }
 async function loadAppOpen(){
- if(!state.ready||state.appOpenReady||state.busy)return false;
+ if(!AD_CONFIG.appOpen||!state.ready||state.appOpenReady||state.busy)return false;
  try{
   await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
   const check=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
