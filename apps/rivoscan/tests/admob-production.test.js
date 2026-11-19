@@ -48,3 +48,25 @@ test('Release AAB selects archived real IDs, not unverifiable external settings'
  assert.match(workflow,/write-admob-production-env[.]mjs/);
  assert.doesNotMatch(workflow,/vars[.]RIVOSCAN_ADMOB_APP_ID/);
 });
+
+test('Play AAB env generator emits real RivoScan IDs and production mode',async()=>{
+ const {mkdtemp,readFile,rm,writeFile}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const {spawnSync}=await import('node:child_process');
+ const {fileURLToPath}=await import('node:url');
+ const temp=await mkdtemp(join(tmpdir(),'rivo-admob-'));
+ try{
+  const output=join(temp,'github-env');
+  await writeFile(output,'');
+  const script=fileURLToPath(new URL('../scripts/write-admob-production-env.mjs',import.meta.url));
+  const result=spawnSync(process.execPath,[script],{env:{...process.env,GITHUB_ENV:output},encoding:'utf8'});
+  assert.equal(result.status,0,result.stderr);
+  const parsed=Object.fromEntries((await readFile(output,'utf8')).trim().split('\n').map(line=>line.split('=')));
+  assert.equal(parsed.VITE_RIVOSCAN_ADMOB_PRODUCTION,'true');
+  assert.equal(parsed.VITE_RIVOSCAN_ADMOB_APP_ID,RIVOSCAN_ADMOB_APP_ID);
+  assert.equal(parsed.VITE_RIVOSCAN_ADMOB_INTERSTITIAL_ID,RIVOSCAN_INTERSTITIAL_ID);
+  assert.equal(parsed.VITE_RIVOSCAN_ADMOB_APP_OPEN_ID,RIVOSCAN_APP_OPEN_ID);
+  assert.equal(resolveAdMobConfig(parsed).testMode,false);
+ }finally{await rm(temp,{recursive:true,force:true});}
+});
