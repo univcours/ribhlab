@@ -27,7 +27,7 @@ test('File library uses a short icon row only when exactly one file is selected'
 });
 test('All extra features live in Tools including QR and plates',()=>{
  const main=file('src/main.js'),tools=file('src/tools-hub.js');
- for(const name of ['scanCode','plateScanner','bookScan','managePages','photoTranslation','toExcel','privacyShield','perfectScanQuality','smartAutoCapture'])
+ for(const name of ['scanCode','plateScanner','bookScan','managePages','photoTranslation','toExcel','privacyShield','smartAutoCapture'])
   assert.ok(tools.includes(name),name);
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
  assert.ok(!home.includes('data-hub-action'));
@@ -40,7 +40,7 @@ test('Home feature rail routes to shared tools, no second duplicated scanner or 
  assert.ok(home.includes('data-rivo-feature'));
  assert.ok(main.includes('void openHubAction(el.dataset.rivoFeature)'));
  assert.ok(main.includes("spec.type==='privacyShield'"));
- assert.ok(main.includes("spec.type==='perfectScan'"));
+ assert.ok(!main.includes("spec.type==='perfectScan'"));
  assert.ok(main.includes("spec.type==='smartAutoCapture'"));
  assert.ok(main.includes("autoCapture:true"));
 });

@@ -23,13 +23,11 @@ test('Google cancellation never saves; no automatic CameraX fallback',()=>{
  assert.ok(main.includes("if(mlkitFull&&result?.scanMode!=='ID Card')"));
  assert.ok(main.includes('await idCardToPdf(picked)'));
 });
-test('PerfectScan Pro remains in saved-document tools, not as camera fallback',()=>{
- const main=get('src/main.js'),ui=get('src/perfect-scan-ui.js');
- assert.ok(main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
- assert.ok(main.includes("onUVDoc:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
- assert.ok(main.includes("onSurface3D:!COMPACT_BUILD&&Capacitor.isNativePlatform()"));
- assert.ok(main.includes("id=\"scan-multi-angle\""),'advanced correction remains accessible');
- assert.ok(main.includes('Advanced paper correction'),'label must describe the result, not implementation details');
- assert.ok(ui.includes("title:'PerfectScan Pro'"));
- assert.ok(!ui.includes('data-perfect-review'));
+test('No removed PerfectScan entry is available in release, while ML Kit and editor remain',()=>{
+ const main=get('src/main.js'),editor=get('src/scan-editor.js');
+ assert.ok(!main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
+ assert.ok(!main.includes('function launchPerfectScan('));
+ assert.ok(!main.includes('id="scan-multi-angle"'));
+ assert.ok(main.includes("openSmartScanner()"));
+ assert.ok(editor.includes("filter==='crease'"));
 });

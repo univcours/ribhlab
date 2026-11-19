@@ -11,7 +11,7 @@ test('compact Home and Tools shrink tiles without sacrificing four readable quic
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
  assert.match(css,/min-height:79px!important;height:auto!important/);
  assert.match(css,/font-size:clamp\(11px,3vw,11\.5px\)/);
- for(const id of ['smartAutoCapture','scanCode','perfectScanQuality','privacyShield'])
+ for(const id of ['smartAutoCapture','scanCode','plateScanner','privacyShield'])
   assert.ok(main.includes(id),id+' is still actionable');
 });
 
