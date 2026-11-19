@@ -6,8 +6,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Release",
     "close": "Got it",
     "items": [
-      "AI Deep Clean (Google ML Kit FULL) now opens from the main Scan button, Home shortcut, ID Card and Tools. Google handles auto-crop, cleanup and review; native CameraX is only an on-device fallback or manual corner editor. Advanced photo fusion, UVDoc and relative 3D live under Scan settings, without any separate PerfectScan screen.",
-      "One document scanner: UVDoc AI flatten now works inside the native camera filters, with visible processing and a Save button that activates only after a real result. No separate Pro/Smart scan buttons, no consent checkbox, no empty white photo preview; optional 2–4-angle correction lives under Scan > Advanced.",
+      "AI Deep Clean (Google ML Kit FULL) now opens from the main Scan button, Home shortcut, ID Card and Tools. Google handles auto-crop, cleanup and review; native CameraX is only an on-device fallback or manual corner editor. UVDoc remains available in supported native scanner filters.",
+      "One document scanner: UVDoc AI flatten now works inside the native camera filters, with visible processing and a Save button that activates only after a real result. No separate Pro/Smart scan buttons, no consent checkbox, no empty white photo preview; standard document enhancement remains available in Scan.",
       "Capture review is now mandatory: real photo stays on screen with paper-corner adjustment, quality check for blur, glare and lighting, live filter processing, Before/After and Save or Retake. High-resolution crop is increased in HD, with turquoise theme and redesigned launcher icon.",
       "Comfort design with checked-photo Share and Delete side-by-side; strong wrinkle correction slider and on-device AI Deep Clean.",
       "Interactive gallery: 6× pinch zoom, double tap, pan and direct edit. Reduce wrinkles protects originals, stamps and signatures.",
@@ -25,8 +25,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "النسخة",
     "close": "فهمت",
     "items": [
-      "AI Deep Clean ديال Google ML Kit FULL ولى هو السكان الرئيسي من الرئيسية وScan وحتى البطاقة. Google كيدير قص الورقة والتنقية والمراجعة؛ CameraX غي احتياط أو لتعديل الزوايا. دمج الصور وUVDoc و3D بقاو فإعدادات السكان بلا PerfectScan بوحدو.",
-      "سكانير واحد: UVDoc AI دخل لفلاتر الكاميرا، المعالجة كتبان قدامك، والحفظ ما كيتفعل حتى تجهز النتيجة. حيدنا سكانات Pro/Smart المنفصلين، المربع الأبيض الفارغ وخانة الموافقة؛ تصحيح 2 حتى 4 صور باقي داخل السكان > المتقدم.",
+      "AI Deep Clean ديال Google ML Kit FULL ولى هو السكان الرئيسي من الرئيسية وScan وحتى البطاقة. Google كيدير قص الورقة والتنقية والمراجعة؛ CameraX غي احتياط أو لتعديل الزوايا. UVDoc باقي ففلاتر السكان المدعوم.",
+      "سكانير واحد: UVDoc AI دخل لفلاتر الكاميرا، المعالجة كتبان قدامك، والحفظ ما كيتفعل حتى تجهز النتيجة. حيدنا سكانات Pro/Smart المنفصلين، المربع الأبيض الفارغ وخانة الموافقة؛ التحسين العادي ديال الوثائق باقي فالسكان.",
       "المعاينة ولات إجبارية: الصورة كتبقى قدامك مع تحديد الزوايا وفحص الوضوح والضوء والوهج؛ الفلاتر والتقدم والمقارنة، ومن بعد حفظ أو إعادة التصوير. جودة قص أعلى ووِجهة وأيقونة فيروزية.",
       "ستايل مريح، مشاركة ومسح حدا بعضهم ملي تختار الصورة، وقوة تقويم التجاعيد وتنقية AI على الهاتف.",
       "المعاينة فيها زوم 6 مرات، التنقل والتعديل المباشر. تقليل التجاعيد كيحافظ على الأصل والكاشيات والتواقيع.",
@@ -44,8 +44,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Version",
     "close": "Compris",
     "items": [
-      "AI Deep Clean (Google ML Kit FULL) est désormais le scanner principal depuis Accueil, Scan et Carte d'identité. CameraX sert de secours ou à ajuster les coins. Fusion multi-vues, UVDoc et 3D relative restent dans les réglages du scan, sans module séparé.",
-      "Un seul scanner : UVDoc IA intégré aux filtres natifs, traitement visible et Enregistrer activé après le résultat. Plus de boutons Pro/Smart séparés, case de consentement ou aperçu blanc vide ; correction multi-angle dans Scan > Avancé.",
+      "AI Deep Clean (Google ML Kit FULL) est désormais le scanner principal depuis Accueil, Scan et Carte d'identité. CameraX sert de secours ou à ajuster les coins. UVDoc reste disponible dans les filtres natifs compatibles.",
+      "Un seul scanner : UVDoc IA intégré aux filtres natifs, traitement visible et Enregistrer activé après le résultat. Plus de boutons Pro/Smart séparés, case de consentement ou aperçu blanc vide ; amélioration des documents dans Scan.",
       "Photo conservée à l'écran pour contrôle des angles, flou, éclairage et reflets ; traitement visible, filtres, comparaison, enregistrer ou reprendre. Recadrage HD amélioré et thème/icône turquoise.",
       "Interface apaisée, Partager et Supprimer côte à côte pour les photos sélectionnées, correction des plis et nettoyage IA.",
       "Galerie tactile avec zoom 6× et édition directe. Réduction des plis avec cachets et signatures préservés.",
@@ -63,8 +63,8 @@ export const changesForVersion=(language='en')=>{
     "subtitle": "Versión",
     "close": "Entendido",
     "items": [
-      "AI Deep Clean (Google ML Kit FULL) ahora es el escáner principal desde Inicio, Escanear y DNI. CameraX solo como respaldo o editor de esquinas. Fusión, UVDoc y 3D relativa en ajustes, sin PerfectScan separado.",
-      "Un solo escáner: UVDoc IA integrado en filtros de cámara, procesamiento visible y Guardar activo tras la imagen. Sin botones Pro/Smart separados, casilla de aceptación ni vista blanca vacía; multiángulo en Escanear > Avanzado.",
+      "AI Deep Clean (Google ML Kit FULL) ahora es el escáner principal desde Inicio, Escanear y DNI. CameraX solo como respaldo o editor de esquinas. UVDoc permanece en los filtros compatibles.",
+      "Un solo escáner: UVDoc IA integrado en filtros de cámara, procesamiento visible y Guardar activo tras la imagen. Sin botones Pro/Smart separados, casilla de aceptación ni vista blanca vacía; mejora de documentos en Escanear.",
       "La foto permanece visible: ajustar esquinas, revisar enfoque, luz y reflejos, filtros, comparación y Guardar/Repetir. Recorte HD mejorado y estilo/icono turquesa.",
       "Diseño cómodo, Compartir y Eliminar juntos para fotos elegidas, ajuste de pliegues y limpieza IA local.",
       "Galería con zoom 6× y edición directa. Reduce pliegues manteniendo sellos y firmas.",
