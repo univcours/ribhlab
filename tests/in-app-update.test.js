@@ -21,3 +21,24 @@ test('Update prompted only by Play availability and not during active saving',()
  assert.match(main,/checkPlayUpdate\(\{language/);
  assert.match(main,/working:busy\|\|nativeCaptureDepth>0/);
 });
+
+test('Offline Android device continues using its installed app: no update modal',async()=>{
+ const {playUpdateOnline}=await import('../src/play-updates.js');
+ assert.equal(playUpdateOnline({onLine:false}),false);
+ assert.equal(playUpdateOnline({onLine:true}),true);
+ assert.equal(playUpdateOnline(undefined),true);
+ const source=read('src/play-updates.js');
+ assert.match(source,/window\.addEventListener\('offline',\(\)=>clearPrompt\(\)\)/);
+ assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return false;\}/);
+ assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return;\}/);
+});
+
+test('All seven supported languages offer an optional update, not an automatic forced update',()=>{
+ const source=read('src/play-updates.js');
+ for(const lang of ['en','ar','fr','es','de','pt','it'])
+  assert.match(source,new RegExp('\\n '+lang+':\\{title:'));
+ assert.match(source,/quit\.addEventListener\('click',\(\)=>clearPrompt\(\)\)/);
+ assert.doesNotMatch(source,/document\.body\.append\(overlay\);installedPrompt=true;update\.focus\(\);\s*void run\(\)/);
+ assert.match(source,/update\.addEventListener\('click',run\)/);
+ assert.match(source,/window\.addEventListener\('offline',\(\)=>clearPrompt\(\)\)/);
+});

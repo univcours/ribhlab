@@ -42,7 +42,7 @@ test('Tools search gives useful translated empty-result feedback, not a bare zer
 
 test('all supported languages retain meaningful concise tool names',()=>{
  for(const lang of hubLanguages()){
-  for(const id of ['perfectScanQuality','scanCode','bookScan','formulaOcr','photoTranslation','idPhotoMaker']){
+  for(const id of ['plateScanner','scanCode','bookScan','formulaOcr','photoTranslation','idPhotoMaker']){
    const value=hubLabel(lang,id,'');
    assert.ok(value&&value.length<=40,lang+': '+id+' should remain readable');
   }

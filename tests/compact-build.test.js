@@ -16,8 +16,8 @@ test('compact excludes costly optional engines and keeps Google scan + PerfectCl
  assert.ok(flow.includes("VITE_RIVO_COMPACT: '1'"));
  assert.ok(flow.includes('libtranslate_jni.so'));
  assert.ok(main.includes("COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1'"));
- assert.ok(main.includes("Capacitor.isPluginAvailable('RivoUVDoc')"));
- assert.ok(main.includes("Capacitor.isPluginAvailable('RivoSurface3D')"));
+ assert.ok(!main.includes("Capacitor.isPluginAvailable('RivoUVDoc')"));
+ assert.ok(!main.includes("Capacitor.isPluginAvailable('RivoSurface3D')"));
  assert.ok(main.includes('await openSmartScanner({mode})'));
  const scanner=read('src/mlkit-scan-flow.js');
  assert.ok(scanner.includes("scannerMode:'FULL'"));

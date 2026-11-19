@@ -4,6 +4,7 @@ import {reconstructPositionedTable} from './table-reconstruct.js';
 import {wordTablesFromFile} from './word-tables.js';
 import {editableSlidesFromFile} from './editable-pptx.js';
 import {recognize} from 'tesseract.js';
+import {safePdfRenderScale} from './pdf-safety.js';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
 
@@ -44,7 +45,8 @@ export async function exportToolFile({file,format,language='en',save,progress=()
         .sort((a,b)=>b.y-a.y||a.x-b.x);
      const pageRows=reconstructPositionedTable(sorted);
      if(!sorted.length){
-      const viewport=page.getViewport({scale:1.4}),canvas=document.createElement('canvas');
+      const original=page.getViewport({scale:1});
+      const viewport=page.getViewport({scale:safePdfRenderScale(original.width,original.height,1.4)}),canvas=document.createElement('canvas');
       canvas.width=Math.round(viewport.width);canvas.height=Math.round(viewport.height);
       await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
       const result=(await recognize(canvas,ocrLang)).data.text;

@@ -1,46 +1,99 @@
 import {createWorker} from 'tesseract.js';
+import {readPlateZoomRange,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from './plate-distance.js';
 
 const labels={
- en:['Plate Scanner Pro','Search plate / digits while camera is live','Point camera toward a license plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
- ar:['قارئ لوحات السيارات Pro','بحث عن لوحة أو أرقام والكاميرا خدامة','وجّه الكاميرا نحو لوحة السيارة','تسجلات اللوحة','مطابقة · تصورات السيارة','الكاميرا غير متاحة','أول مرة يمكن تحتاج تحميل نموذج OCR','بلا بحث'],
- fr:['Scanner de plaques Pro','Rechercher une plaque ou des chiffres en direct','Cadrez une plaque','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut se télécharger au premier lancement','Aucune cible']
+ en:['Plate Scanner','Search for a plate (e.g. 12345 A 7)','Point the camera at the whole plate','Plate saved','Match found · photo captured','Camera unavailable','OCR model may download on first use','No target'],
+ ar:['قارئ اللوحات','ابحث عن لوحة (مثال 12345 أ 7)','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','تلقات مطابقة · تصوّرات السيارة','الكاميرا غير متاحة','أول استعمال يمكن يحتاج تحميل نموذج القراءة','ما كاين حتى رقم للبحث'],
+ fr:['Lecteur de plaques','Rechercher une plaque (ex. 12345 A 7)','Cadrez la plaque entière','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut être téléchargé au premier usage','Aucune cible'],
+ es:['Lector de matrículas','Buscar matrícula (ej. 12345 A 7)','Enfoca la matrícula completa','Matrícula guardada','Coincidencia · foto capturada','Cámara no disponible','El modelo OCR puede descargarse en el primer uso','Sin objetivo'],
+ de:['Kennzeichenleser','Kennzeichen suchen (z. B. 12345 A 7)','Ganzes Kennzeichen erfassen','Kennzeichen gespeichert','Übereinstimmung · Foto aufgenommen','Kamera nicht verfügbar','OCR-Modell wird eventuell beim ersten Mal geladen','Kein Suchziel'],
+ pt:['Leitor de matrículas','Procurar matrícula (ex. 12345 A 7)','Aponte a câmara para toda a matrícula','Matrícula guardada','Correspondência · fotografia capturada','Câmara indisponível','O modelo OCR poderá ser descarregado no primeiro uso','Sem alvo'],
+ it:['Lettore targhe','Cerca targa (es. 12345 A 7)','Inquadra tutta la targa','Targa salvata','Corrispondenza · foto acquisita','Fotocamera non disponibile','Il modello OCR potrebbe essere scaricato al primo uso','Nessun obiettivo']
 };
+// Standard Morocco registration: serial 1–99999 · one official series letter · province 1–99.
+// Since August 2026, Arabic and Latin equivalents may appear together with the MA emblem.
+// Keep older Arabic-only plates readable. Never invent an unreadable province/series.
+export const MOROCCAN_PLATE_SERIES=Object.freeze({
+ 'أ':'A','ا':'A','آ':'A','إ':'A','ب':'B','د':'D','ه':'H',
+ 'و':'E','ط':'T','ي':'Y','ك':'K','ل':'L','م':'M','ن':'N',
+ 'ص':'C','ف':'F','ر':'R','س':'S'
+});
+const officialLatin=new Set(Object.values(MOROCCAN_PLATE_SERIES));
+const digitValue=d=>{
+ const a='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+ return a>=0?String(a):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+};
+const cleanedText=value=>String(value??'').normalize('NFKC')
+ .replace(/[٠-٩۰-۹]/g,digitValue)
+ .replace(/[\u0640\u064b-\u065f\u0670\u200e\u200f]/g,'')
+ .replace(/[إآا]/g,'أ').toUpperCase();
 export function normalizePlate(value){
- return String(value??'').normalize('NFKC').replace(/[٠-٩۰-۹]/g,d=>{
-  const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
-  return i>=0?String(i):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
- }).toUpperCase().replace(/[^A-Z0-9\u0621-\u064A]/g,'');
+ return cleanedText(value).replace(/[^A-Z0-9\u0621-\u064a]/g,'');
+}
+const seriesCode=letter=>MOROCCAN_PLATE_SERIES[letter]||(officialLatin.has(letter)?letter:null);
+const seriesLetter=letter=>MOROCCAN_PLATE_SERIES[letter]?letter:null;
+export function plateComparisonKey(value){
+ // Enable matching Arabic-only and 2026 Arabic/Latin bilingual plates.
+ const valuePlate=normalizePlate(value);
+ return Array.from(valuePlate).map(letter=>seriesCode(letter)||letter).join('')
+  .replace(/^MA(?=\d)/,'');
+}
+const series='[أبدهوطيكلمنصفرسABDHETYKLMNCFRS]';
+const between='[\\s\\-|/:·]*';
+const divided='[\\s\\-|/:·]+';
+const forward=new RegExp('(?:^|[^\\p{L}\\p{N}])(?:MA\\s*)?(\\d{1,5})'+between+'('+series+')(?:'+divided+'('+series+'))?'+between+'(\\d{1,2})(?=$|[^\\p{L}\\p{N}])','gu');
+const reversed=new RegExp('(?:^|[^\\p{L}\\p{N}])(\\d{1,2})'+divided+'('+series+')(?:'+divided+'('+series+'))?'+divided+'(\\d{1,5})(?=$|[^\\p{L}\\p{N}])','gu');
+// Native log values stay Unicode-safe so Arabic series can be exported to Excel/TXT.
+export function moroccanPlateCandidates(text){
+ const raw=cleanedText(text);
+ const found=new Map();
+ const add=(serial,first,second,province)=>{
+  const order=Number(serial),region=Number(province);
+  if(!Number.isInteger(order)||order<1||order>99999||
+     !Number.isInteger(region)||region<1||region>99)return;
+  const left=seriesCode(first),right=second?seriesCode(second):null;
+  if(!left||(second&&left!==right))return;
+  const letter=seriesLetter(first)||seriesLetter(second)||first;
+  const candidate=normalizePlate(serial+letter+province);
+  const key=plateComparisonKey(candidate);
+  // Prefer displaying the real Arabic character when dual-script OCR finds it.
+  if(!found.has(key)||(!/[\u0621-\u064a]/.test(found.get(key))&&/[\u0621-\u064a]/.test(candidate)))
+   found.set(key,candidate);
+ };
+ for(const match of raw.matchAll(forward))add(match[1],match[2],match[3],match[4]);
+ // OCR can reverse Arabic text. Only try RTL reversal if the usual plate order
+ // produced no valid candidate: 1-أ-7 would otherwise become two false IDs.
+ if(!found.size)for(const match of raw.matchAll(reversed))add(match[4],match[2],match[3],match[1]);
+ return [...found.values()];
 }
 export function plateCandidates(text){
- const raw=String(text||'').normalize('NFKC')
-  .replace(/[٠-٩۰-۹]/g,d=>{
-   const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
-   return String(i>=0?i:'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-  }).toUpperCase();
- const out=[];
- for(const line of raw.split(/\n+/)){
-  const patterns=[
-   /(?:^|\s)(\d{2,6})[\s\-|]*([A-Z\u0621-\u064A])[\s\-|]*(\d{1,2})(?:\s|$)/g,
-   /(?:^|\s)([A-Z]{1,3})[\s\-]*([0-9]{3,6})(?:\s|$)/g
-  ];
-  for(const pattern of patterns){
-   for(const match of line.matchAll(pattern)){
-    const plate=normalizePlate(match.slice(1).join(''));
-    if(plate.length>=5&&plate.length<=12&&!out.includes(plate))out.push(plate);
-   }
-  }
+ const matches=moroccanPlateCandidates(text);
+ if(matches.length)return matches;
+ // Legacy international plates remain supported without mislabelling them Moroccan.
+ const raw=cleanedText(text),out=[];
+ for(const match of raw.matchAll(/(?:^|[^\p{L}\p{N}])([A-Z]{1,3})[\s-]+(\d{3,6})(?=$|[^\p{L}\p{N}])/gu)){
+  if(match[1]==='MA')continue;
+  const plate=normalizePlate(match[1]+match[2]);
+  if(plate.length>=5&&!out.includes(plate))out.push(plate);
  }
  return out;
 }
 export function matchesPlate(plate,query){
- const p=normalizePlate(plate),q=normalizePlate(query);
+ const p=plateComparisonKey(plate),q=plateComparisonKey(query);
  return q.length>=3&&p.includes(q);
 }
-
-// Manual search stays live. Pinned targets are local-only, not uploaded.
+// Manual search stays live. Pinned targets are stored on this device only.
 export function matchingPlateTargets(plate,targets=[]){
  const qs=Array.isArray(targets)?targets:[targets];
  return [...new Set(qs.map(normalizePlate).filter(q=>q.length>=3&&matchesPlate(plate,q)))];
+}
+/** Other recognized cars must not stop the search for a watched plate. */
+export function hasPlateSearchHit(candidates,targets=[]){
+ const qs=(Array.isArray(targets)?targets:[targets]).map(normalizePlate).filter(q=>q.length>=3);
+ if(!Array.isArray(candidates)||!candidates.length)return false;
+ return qs.length
+  ?candidates.some(plate=>matchingPlateTargets(plate,qs).length>0)
+  :true;
 }
 export function plateOcrLines(blocks){
  const rows=[];
@@ -68,6 +121,15 @@ export function plateBoxInView(bbox,roi,ocrScale,video,view){
  if(right-left<8||bottom-top<5)return null;
  return {x:left,y:top,width:right-left,height:bottom-top};
 }
+const zoomCopy={
+ en:{auto:'AUTO ZOOM',off:'ZOOM OFF',missing:'Camera zoom unavailable; searching image regions',hint:'Keep the vehicle in view while the camera searches and zooms',logUnavailable:'Plate history unavailable',saveFailed:'Save failed'},
+ ar:{auto:'تقريب تلقائي',off:'التقريب متوقف',missing:'تقريب الكاميرا غير متاح؛ غادي نبحث فالصورة',hint:'وجّه الكاميرا للوحة وغادي تقرّب تلقائياً',logUnavailable:'حفظ السجل غير متاح',saveFailed:'تعذّر الحفظ'},
+ fr:{auto:'ZOOM AUTO',off:'ZOOM ARRÊT',missing:'Zoom indisponible ; recherche dans les zones de l’image',hint:'Gardez la plaque dans le cadre pour la recherche automatique',logUnavailable:'Historique indisponible',saveFailed:'Échec de l’enregistrement'},
+ es:{auto:'ZOOM AUTO',off:'ZOOM DESACT.',missing:'Zoom no disponible; se buscan zonas de la imagen',hint:'Mantén la matrícula en el encuadre para la búsqueda automática',logUnavailable:'Historial no disponible',saveFailed:'Error al guardar'},
+ de:{auto:'AUTO-ZOOM',off:'ZOOM AUS',missing:'Kamerazoom nicht verfügbar; Bildbereiche werden geprüft',hint:'Kennzeichen im Bild halten, während die Kamera sucht',logUnavailable:'Verlauf nicht verfügbar',saveFailed:'Speichern fehlgeschlagen'},
+ pt:{auto:'ZOOM AUTO',off:'ZOOM DESL.',missing:'Zoom indisponível; a procurar nas regiões da imagem',hint:'Mantenha a matrícula visível durante a pesquisa',logUnavailable:'Histórico indisponível',saveFailed:'Falha ao guardar'},
+ it:{auto:'ZOOM AUTO',off:'ZOOM SPENTO',missing:'Zoom non disponibile; ricerca nelle aree dell’immagine',hint:'Tieni la targa nell’inquadratura durante la ricerca',logUnavailable:'Cronologia non disponibile',saveFailed:'Salvataggio non riuscito'}
+};
 function btn(label,fn){
  const el=document.createElement('button');el.type='button';el.textContent=label;el.setAttribute('aria-label',label);el.addEventListener('click',fn);return el;
 }
@@ -107,7 +169,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(!watch.includes(value)&&watch.length<20){watch.push(value);persistWatch();renderWatch();}
   search.value='';search.focus();
  });
- addTarget.title=language==='ar'?'إضافة رقم للمراقبة':'Add watch target';
+ addTarget.title=({en:'Add watch target',ar:'إضافة لوحة للمراقبة',fr:'Ajouter une plaque suivie',es:'Añadir matrícula vigilada',de:'Kennzeichen zur Suche hinzufügen',pt:'Adicionar matrícula à pesquisa',it:'Aggiungi targa da monitorare'})[language]||'Add watch target';
  search.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();addTarget.click();}
  });
@@ -123,11 +185,49 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const last=document.createElement('strong');last.className='rivo-live-result';last.hidden=true;
  const foot=document.createElement('div');foot.className='rivo-live-actions';
  const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
- const torch=btn('⚡',()=>toggleTorch());foot.append(count,torch);
- const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6];
+ const Z=zoomCopy[language]||zoomCopy.en;
+ const zoomButton=btn(Z.auto,()=>{
+  autoZoomEnabled=!autoZoomEnabled;
+  renderZoom();
+  if(!autoZoomEnabled&&zoomRange&&zoomCurrent>zoomRange.min+0.05)
+   void setCameraZoom(zoomRange.min);
+ });
+ zoomButton.className='rivo-plate-auto-zoom';
+ zoomButton.setAttribute('aria-pressed','true');
+ const torch=btn('⚡',()=>toggleTorch());foot.append(count,zoomButton,torch);
+ const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
  panel.append(header,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
+ let zoomRange=null,zoomCurrent=1,zoomBusy=false,autoZoomEnabled=true,missedFrames=0,searchPass=0,verifyRegion=null,lastZoomAt=0;
+ function renderZoom(){
+  zoomButton.disabled=!zoomRange;
+  zoomButton.setAttribute('aria-pressed',String(autoZoomEnabled&&Boolean(zoomRange)));
+  zoomButton.textContent=zoomRange
+   ?(autoZoomEnabled?Z.auto:Z.off)+' ×'+zoomCurrent.toFixed(1)
+   :Z.auto+' · N/A';
+  zoomButton.title=zoomRange?Z.hint:Z.missing;
+  if(!zoomRange)hint.textContent=L[6]+' · '+Z.missing;
+ }
+ async function setCameraZoom(target){
+  if(closed||zoomBusy||!zoomRange)return false;
+  const track=stream?.getVideoTracks()?.[0];
+  if(!track||track.readyState==='ended')return false;
+  zoomBusy=true;
+  try{
+   const actual=await applyPlateZoom(track,zoomRange,target);
+   if(closed)return false;
+   zoomCurrent=actual;lastZoomAt=Date.now();missedFrames=0;observed.clear();searchPass=0;verifyRegion=null;
+   renderZoom();
+   return true;
+  }catch(error){
+   console.warn('Camera zoom unavailable; continuing with regional OCR:',error);
+   zoomRange=null;
+   if(!closed)renderZoom();
+   return false;
+  }finally{zoomBusy=false;}
+ }
+ renderZoom();
  const key=e=>{if(e.key==='Escape'||e.key==='Backspace'&&e.target!==search){e.preventDefault();stop();}};
  const stop=()=>{
   if(closed)return;closed=true;clearTimeout(nextTimer);
@@ -144,7 +244,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  }
  function snapshot(){
   const canvas=document.createElement('canvas');
-  const width=Math.min(1440,video.videoWidth||1280),ratio=width/(video.videoWidth||1280);
+  const width=Math.min(2304,video.videoWidth||1280),ratio=width/(video.videoWidth||1280);
   canvas.width=width;canvas.height=Math.max(1,Math.round((video.videoHeight||720)*ratio));
   canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
   return canvas;
@@ -162,12 +262,12 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  }
  async function recordPlate(plate){
   // Expire old sightings before testing duplicates; the same car may pass again later.
-  const now=Date.now();
+  const now=Date.now(),key=plateComparisonKey(plate);
   for(const [p,time] of confirmed)if(now-time>30000)confirmed.delete(p);
-  if(closed||confirmed.has(plate))return;
+  if(closed||confirmed.has(key))return;
   const match=matchingPlateTargets(plate,[search.value,...watch]).length>0;
   // A brief second OCR confirmation suppresses false alarms/captures.
-  confirmed.set(plate,now);
+  confirmed.set(key,now);
   let photoName='';
   if(match){
    // Native alert is reliable after asynchronous OCR when WebAudio autoplay is blocked.
@@ -185,19 +285,21 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    if(closed)return;
    foundCount++;count.textContent=String(foundCount);
    last.hidden=false;last.textContent=plate;
-   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · TXT not available');
+   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · '+Z.logUnavailable);
    guide.classList.toggle('matched',match);
-  }catch(error){if(!closed)status.textContent='Save failed: '+String(error?.message||error);}
+  }catch(error){if(!closed)status.textContent=Z.saveFailed+': '+String(error?.message||error);}
  }
  async function scanFrame(){
   if(closed||processing||!worker||video.readyState<2)return;
   processing=true;
   try{
-   // Focus OCR on the on-screen number-plate target, not the whole vehicle/background.
+   // Search full frame and overlapping crops. A phone cannot pan mechanically.
    const canvas=snapshot();
-   const roi={x:Math.round(canvas.width*.10),y:Math.round(canvas.height*.29),
-    w:Math.round(canvas.width*.80),h:Math.round(canvas.height*.43)};
-   const scale=Math.min(1.35,1100/Math.max(roi.w,roi.h));
+   const verifying=verifyRegion!=null;
+   const regionIndex=verifying?verifyRegion:searchPass++;
+   verifyRegion=null;
+   const roi=plateSearchRoi(canvas.width,canvas.height,regionIndex);
+   const scale=Math.min(1.75,1800/Math.max(roi.w,roi.h));
    const small=document.createElement('canvas');
    small.width=Math.max(1,Math.round(roi.w*scale));
    small.height=Math.max(1,Math.round(roi.h*scale));
@@ -209,7 +311,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    const candidates=plateCandidates(data.text);
    const now=Date.now();
    let framed=false;
-   if(Number(data.confidence)>=55){
+   if(Number(data.confidence)>=40){
     const lines=plateOcrLines(data.blocks);
     for(const plate of candidates){
      const line=lines.find(row=>plateCandidates(row.text).includes(plate));
@@ -224,22 +326,49 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
        detection.classList.toggle('matched',matchingPlateTargets(plate,[search.value,...watch]).length>0);
       }
      }
-     const seen=observed.get(plate);
-     const streak=seen&&now-seen.time<6500?seen.streak+1:1;
-     observed.set(plate,{time:now,streak});
+     const key=plateComparisonKey(plate),seen=observed.get(key);
+     const streak=seen&&now-seen.time<10000?seen.streak+1:1;
+     observed.set(key,{time:now,streak});
      if(streak>=2)await recordPlate(plate);
     }
    }
    if(!framed){detection.hidden=true;guide.hidden=false;}
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
+   const soughtPlateSeen=hasPlateSearchHit(candidates,[search.value,...watch]);
+   if(Number(data.confidence)>=40&&candidates.length&&!verifying)
+    verifyRegion=regionIndex;
+   if(Number(data.confidence)>=40&&soughtPlateSeen){
+    missedFrames=0;
+   }else{
+    // Keep searching/zooming when other cars are recognized but the requested
+    // Moroccan plate is still too distant to read.
+    missedFrames++;
+    if(autoZoomEnabled&&!zoomBusy&&zoomRange){
+     const next=planPlateAutoZoom({range:zoomRange,current:zoomCurrent,
+      misses:missedFrames,elapsedMs:now-lastZoomAt});
+     if(next!=null)await setCameraZoom(next);
+    }
+   }
   }catch(error){if(!closed)console.warn('License plate OCR:',error);}
   finally{processing=false;if(!closed)nextTimer=setTimeout(scanFrame,650);}
  }
  async function start(){
   try{
-   stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+   stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{
+    facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1440},frameRate:{ideal:24}
+   }});
    if(closed){stream.getTracks().forEach(t=>t.stop());return;}
    video.srcObject=stream;await video.play();
+   const track=stream.getVideoTracks()[0];
+   let capabilities={};
+   try{capabilities=track?.getCapabilities?.()||{};}catch{}
+   zoomRange=readPlateZoomRange(capabilities,track?.getSettings?.());
+   zoomCurrent=zoomRange?.current||1;lastZoomAt=Date.now();
+   renderZoom();
+   // Optional autofocus: Android WebView devices expose differing controls.
+   if(capabilities.focusMode?.includes?.('continuous')){
+    try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch{}
+   }
    worker=await createWorker(['eng','ara'],1).catch(()=>createWorker('eng',1));
    if(closed){void worker.terminate();return;}
    working=true;status.textContent=L[2];void scanFrame();
