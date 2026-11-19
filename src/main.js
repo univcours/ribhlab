@@ -5,6 +5,7 @@ import {homeTiles,premiumCopy} from './premium-home-model.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
+import {compressPdfPreservingContent} from './pdf-compress-safe.js';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -630,7 +631,7 @@ const opts = {
   scan:`<p class="hint">LIVE CAMERA: Watch a green outline follow the paper. Capture, drag four corners to adjust them, then Save page. GALLERY: Import an existing photo, adjust its corners and save. Multiple saved pages become one PDF.</p><div class="field"><label>Scan appearance</label><select name="filter"><option value="color">Original color</option><option value="enhance" selected>Enhanced document</option><option value="gray">Black & white (grayscale)</option><option value="bw">High contrast monochrome</option></select></div><div class="field"><label>Image quality</label><select name="quality"><option value=".95">Maximum</option><option value=".85">High</option><option value=".65">Balanced</option></select></div>`,
   images:`<div class="field"><label>Image quality</label><select name="quality"><option value=".95">High</option><option value=".75" selected>Balanced</option><option value=".5">Smaller file</option></select></div>`,
   pdftoimages:`<div class="field"><label>Image format</label><select name="format"><option value="jpeg">JPG</option><option value="png">PNG</option></select></div><div class="field"><label>Resolution</label><select name="scale"><option value="1">Standard</option><option value="1.5" selected>High</option><option value="2">Extra high</option></select></div>`,
-  compress:`<div class="field"><label>Compression quality</label><select name="quality"><option value=".38">Smaller file</option><option value=".58" selected>Balanced</option><option value=".78">Higher quality</option></select></div><p class="hint">Best for scanned PDFs. Pages are converted to images, so existing selectable text, links and forms may be lost. Results are not guaranteed to be smaller.</p>`,
+  compress:`<div class="field"><label>Compression mode</label><select name="compressionMode"><option value="preserve" selected>Keep searchable text (recommended)</option><option value="raster">Recompress as images (loses searchable text)</option></select></div><div class="field"><label>Image-only quality</label><select name="quality"><option value=".38">Smaller file</option><option value=".58" selected>Balanced</option><option value=".78">Higher quality</option></select></div><p class="hint">Preserve mode keeps selectable text, links and forms but cannot always make an already-optimized PDF smaller. Rewriting digitally signed PDFs can invalidate signatures. Image-only mode removes searchable text and interactive fields. Your original file remains untouched.</p>`,
   ocr:`<div class="field"><label>OCR language</label><select name="ocrLang"><option value="eng" selected>English</option><option value="fra">Français</option><option value="ara">العربية</option><option value="spa">Español</option><option value="deu">Deutsch</option><option value="por">Português</option><option value="ita">Italiano</option></select></div><p class="hint">First OCR use may download trained language data. OCR depends on image quality and can take time.</p>`,
   metadata:`<p class="hint">Clears commonly used metadata fields. Not a guarantee of forensic sanitization; embedded content, comments or hidden data may remain.</p>`
 };
@@ -1700,12 +1701,31 @@ async function pdfToImages(){const pdf=await pdfjsOpen(files[0]);try{
  }
  return new Uint8Array(await zip.generateAsync({type:'uint8array'}));
  }finally{await pdf.destroy()}}
-async function compressPdf(){const source=await pdfjsOpen(files[0]);try{
- const out=await PDFDocument.create();if(source.numPages>70)throw Error('For device stability, process PDFs of 70 pages or fewer.');
- for(let i=1;i<=source.numPages;i++){
-  progress(`Compressing page ${i}/${source.numPages}`);const p=await source.getPage(i),viewport=p.getViewport({scale:1});const scale=Math.min(1.15,1450/Math.max(viewport.width,viewport.height));const canvas=await renderPage(source,i,scale);const jpg=await out.embedJpg(await(await canvasBlob(canvas,'image/jpeg',Number(setting('quality'))||.58)).arrayBuffer());const page=out.addPage([viewport.width,viewport.height]);page.drawImage(jpg,{x:0,y:0,width:viewport.width,height:viewport.height});
- }return out.save({useObjectStreams:true});
- }finally{await source.destroy()}}
+async function compressPdf(){
+ const mode=setting('compressionMode')||'preserve';
+ if(mode==='preserve'){
+  progress('Optimizing PDF without flattening searchable content…');
+  return compressPdfPreservingContent(new Uint8Array(await files[0].arrayBuffer()));
+ }
+ if(mode!=='raster')throw Error('Unknown PDF compression mode.');
+ const source=await pdfjsOpen(files[0]);
+ try{
+  const out=await PDFDocument.create();
+  if(source.numPages>70)throw Error('For device stability, process PDFs of 70 pages or fewer.');
+  for(let i=1;i<=source.numPages;i++){
+   progress(`Compressing image page ${i}/${source.numPages}`);
+   const p=await source.getPage(i),viewport=p.getViewport({scale:1});
+   const scale=Math.min(1.15,1450/Math.max(viewport.width,viewport.height));
+   const canvas=await renderPage(source,i,scale);
+   const jpg=await out.embedJpg(await(await canvasBlob(canvas,'image/jpeg',Number(setting('quality'))||.58)).arrayBuffer());
+   const page=out.addPage([viewport.width,viewport.height]);
+   page.drawImage(jpg,{x:0,y:0,width:viewport.width,height:viewport.height});
+  }
+  const output=await out.save({useObjectStreams:true});
+  if(output.length>=files[0].size)throw Error('Compression would increase PDF size; original unchanged.');
+  return output;
+ }finally{await source.destroy();}
+}
 async function pdfToText(ocr=false){
  const source=files[0];let lines=[];
  if(ocr){
