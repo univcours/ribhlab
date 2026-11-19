@@ -104,7 +104,7 @@ jobs:
       - name: Check Google Play publishing authorization
         id: play_auth
         env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
         run: |
           if [ -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
@@ -116,7 +116,7 @@ jobs:
       - name: Submit signed RivoScan 0.45.44 to existing Google Play production
         if: steps.play_auth.outputs.enabled == 'true'
         env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
         run: |
           set -euo pipefail
           python3 -m pip install --quiet --disable-pip-version-check google-api-python-client google-auth
@@ -133,8 +133,9 @@ jobs:
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           test -s "$APK" && test -s "$AAB"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::Release $TAG already exists. Refusing to overwrite a signed build."
-            exit 1
+            echo "::notice::Signed APK and AAB are already published on GitHub Release $TAG. No overwrite; store submission result above is independent."
+            echo 'Original-key APK and AAB already exist in GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
           cp "$APK" /tmp/RivoScan-0.45.44-Signed.apk
           cp "$AAB" /tmp/RivoScan-0.45.44-GooglePlay.aab
