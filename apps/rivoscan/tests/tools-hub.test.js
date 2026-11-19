@@ -8,7 +8,7 @@ const groups=toolGroups.flatMap(g=>g.entries);
 test('RivoScan has nineteen high-value Tools, not repeated tiles for the same output',()=>{
  assert.deepEqual(toolGroups.map(g=>g.id),['scan','convert','edit','utilities']);
  assert.equal(groups.length,19);
- assert.equal(new Set(groups).size,20);
+ assert.equal(new Set(groups).size,19);
  for(const required of ['scanCode','plateScanner','ocr','bookScan','convertDocument','photoStudio',
  'combineFiles','managePages','annotatePdf','pdfPrivacy','smartAutoCapture','privacyShield','peerTransfer','shareFiles'])
   assert.ok(groups.includes(required),required+' stays accessible');

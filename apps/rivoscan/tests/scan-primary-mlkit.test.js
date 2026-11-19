@@ -28,17 +28,13 @@ test('CameraX fallback never replaces Google ML Kit FULL after cancellation, and
  assert.ok(!main.includes('id="camera"'),'no separate basic camera button next to main scanner');
 });
 
-test('PerfectScan not user-facing; advanced correction integrated with scanner settings',()=>{
+test('Retired PerfectScan has no routes, scanner panels, or editor entry',()=>{
  const main=get('src/main.js');
- const ui=get('src/perfect-scan-ui.js');
- assert.ok(main.includes('data-scan-advanced'));
- assert.ok(main.includes("document.querySelectorAll('[data-scan-advanced]')"));
- assert.ok(main.includes('id="scan-multi-angle"'));
- assert.ok(!main.includes('PerfectScan Pro'));
- assert.ok(!main.includes('data-perfectscan-launch'));
- assert.ok(!ui.includes("title:'PerfectScan Pro'"));
- assert.ok(!ui.includes('data-perfect="mlkit"'));
- assert.ok(!ui.includes('data-perfect-review'));
- assert.ok(ui.includes('data-perfect-mode'));
- assert.ok(ui.includes('originalKept:true'));
+ const editor=get('src/scan-editor.js');
+ const hub=get('src/tools-hub.js');
+ for(const marker of ['perfect-scan-ui','launchPerfectScan','scan-multi-angle','perfectScanQuality','data-scan-advanced'])
+  assert.ok(!main.includes(marker),marker);
+ assert.ok(!editor.includes('onPerfectScan'));
+ assert.ok(!hub.includes('perfectScanQuality'));
+ assert.ok(main.includes('id="smart-scanner"'));
 });
