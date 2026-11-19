@@ -269,7 +269,7 @@ try{
     return {tileCount:tiles.length,distinct:new Set(ids).size,clipped};
   });
   check(width+': all Tools card titles visible and not clipped',
-   toolLabelFit.tileCount===19&&toolLabelFit.distinct===19&&toolLabelFit.clipped.length===0);
+   toolLabelFit.tileCount===18&&toolLabelFit.distinct===18&&toolLabelFit.clipped.length===0);
   const compactMetrics=await page.evaluate(()=>{
    const cards=[...document.querySelectorAll('.rivo-hub-tile')];
    const heights=cards.map(el=>el.getBoundingClientRect().height);
@@ -280,7 +280,7 @@ try{
      scanOrbit:getComputedStyle(document.querySelector('.rivo-nav-scan-ring'),'::before').animationName==='rivo-orbit-border'};
   });
   check(width+': compact Tools tiles keep quiet edges and rotating Smart Scan ring',
-    compactMetrics.count===19&&compactMetrics.compact&&compactMetrics.widthsValid&&
+    compactMetrics.count===18&&compactMetrics.compact&&compactMetrics.widthsValid&&
     compactMetrics.orbit&&compactMetrics.scanOrbit);
   await page.locator('.rivo-hub-tile').first().focus();
   const focusedOrbit=await page.locator('.rivo-hub-tile').first().evaluate(el=>
