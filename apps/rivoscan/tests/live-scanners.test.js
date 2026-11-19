@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
 import {createScanLedger,scannerLogNames} from '../src/scan-ledger.js';
-import {normalizePlate,plateCandidates,moroccanPlateCandidates,plateComparisonKey,matchesPlate,matchingPlateTargets,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
+import {normalizePlate,plateCandidates,moroccanPlateCandidates,plateComparisonKey,matchesPlate,matchingPlateTargets,hasPlateSearchHit,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
 import {newScanDeduplicator,safeScannedUrl,decodeFormat} from '../src/barcode-scanner.js';
 import {readFileSync} from 'node:fs';
 
@@ -223,4 +223,12 @@ test('Arabic and official Latin series are equivalent in live search and watchli
  assert.equal(matchesPlate('00012و20','00012E20'),true);
  assert.deepEqual(matchingPlateTargets('12345أ7',['12345A7','45أ7']),['12345A7','45أ7']);
  assert.equal(matchesPlate('12345أ7','A7'),false);
+});
+
+test('Distant target search continues zooming despite unrelated nearby cars',()=>{
+ assert.equal(hasPlateSearchHit(['12345أ7'],['98765B20']),false);
+ assert.equal(hasPlateSearchHit(['12345أ7','98765ب20'],['98765B20']),true);
+ assert.equal(hasPlateSearchHit(['12345أ7'],[]),true);
+ assert.equal(hasPlateSearchHit([],['12345أ7']),false);
+ assert.equal(hasPlateSearchHit(['12345أ7'],['12']),true);
 });
