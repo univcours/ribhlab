@@ -1,0 +1,105 @@
+name: TradingFiew 1.0.5 — signed R8 emulator QA and release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tradingfiew-v105-certified-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: tradingfiew-v105-certified-release
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout the exact fixed TradingFiew source
+        uses: actions/checkout@v4
+        with:
+          repository: tradingfiew/tradingfiew.github.io
+          ref: 43ef734b2f19591913b8ed82c5008c814c864d63
+          path: tradingfiew
+      - name: Verify signed build and download original-key artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/univcours/ribhlab/actions/runs/44509385110 > /tmp/signing-run.json
+          jq -e '.status == "completed" and .conclusion == "success" and .head_sha == "22023d29f53623cab5de137fb8f00a20adca39cb"' /tmp/signing-run.json
+          mkdir -p signed
+          gh run download 44509385110 -R univcours/ribhlab -n TradingFiew-1.0.5-R8-ORIGINAL-KEY-SIGNED -D signed
+          cd signed
+          sha256sum --check SHA256SUMS.txt
+          test -s R8_MAPPING.txt
+          test -s TradingFiew-Android-RivoScan-key-signed.aab
+          test -s TradingFiew-Android-RivoScan-key-signed.apk
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Check signed AAB and APK against original Google Play upload certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=signed/TradingFiew-Android-RivoScan-key-signed.apk
+          AAB=signed/TradingFiew-Android-RivoScan-key-signed.aab
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='6' versionName='1.0.5'"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -F 'ca-app-pub-7945572016731367~1161939707'
+          jarsigner -verify "$AAB" | grep -F 'jar verified'
+          keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          mkdir -p tradingfiew/release-smoke release-public
+          cp "$APK" tradingfiew/release-smoke/tradingfiew-release.apk
+          cp "$APK" release-public/TradingFiew-Android-1.0.5-RivoScanKey-SIGNED.apk
+          cp "$AAB" release-public/TradingFiew-Android-1.0.5-RivoScanKey-SIGNED.aab
+          (cd release-public && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - name: Enable hardware virtualization
+        run: sudo setfacl -m "u:$(id -un):rw" /dev/kvm
+      - name: Smoke-test exact signed optimized 1.0.5 on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          heap-size: 384M
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: cd tradingfiew && bash scripts/android-real-release-smoke.sh
+      - name: Preserve real-launch QA evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: TradingFiew-1.0.5-ORIGINAL-KEY-DEVICE-SMOKE
+          path: tradingfiew/release-smoke/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish signed APK and AAB release assets only after smoke test
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag=tradingfiew-android-v1.0.5
+          if gh release view "$tag" -R univcours/ribhlab >/dev/null 2>&1; then
+            echo "::error::Release tag already exists; refusing overwrite"
+            exit 1
+          fi
+          gh release create "$tag" -R univcours/ribhlab \
+            release-public/TradingFiew-Android-1.0.5-RivoScanKey-SIGNED.apk \
+            release-public/TradingFiew-Android-1.0.5-RivoScanKey-SIGNED.aab \
+            release-public/SHA256SUMS.txt \
+            --title 'TradingFiew Android 1.0.5 — R8 / Play DEX optimization' \
+            --notes 'Signed Google Play APK and AAB versionCode 6, original RivoScan upload certificate. R8 optimization enabled and real signed Android emulator launch smoke test passed. Source: tradingfiew/tradingfiew.github.io@43ef734b2f19591913b8ed82c5008c814c864d63. R8 mapping is retained in private Actions artifacts, not published.'
+          echo "Certified signed release: https://github.com/univcours/ribhlab/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
