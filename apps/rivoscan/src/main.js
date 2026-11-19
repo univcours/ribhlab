@@ -23,6 +23,8 @@ import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import {openPrivacyShield} from './privacy-shield.js';
+import {safeDocumentName} from './file-safety.js';
+import {safePdfRenderScale} from './pdf-safety.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -1164,7 +1166,7 @@ function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
 async function saveOut(bytes,name,mime='application/pdf'){
   const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
-  const safe=String(name||'RivoScan.pdf').replace(/[^\w.\-]/g,'_').slice(0,110);
+  const safe=safeDocumentName(name);
   if(Capacitor.isNativePlatform()){
     if(Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
       // Genuine permanent public storage. MediaStore exposes Documents/RivoScan in Samsung My Files.
@@ -1225,7 +1227,7 @@ async function shareSelectedFiles(){
     const uris=[];
     for(let i=0;i<files.length;i++){
       progress('Preparing attachment '+(i+1)+'/'+files.length);
-      const f=files[i],safe=f.name.replace(/[^\w.\-]/g,'_').slice(0,80)||'file';
+      const f=files[i],safe=safeDocumentName(f.name,{maxLength:80,fallback:'file'});
       const b64=toBase64(new Uint8Array(await f.arrayBuffer()));
       const saved=await Filesystem.writeFile({directory:Directory.Cache,path:'RivoScanShare/'+Date.now()+'_'+i+'_'+safe,data:b64,recursive:true});
       uris.push(saved.uri);
@@ -1302,7 +1304,18 @@ async function imagesToPdf(filter,sourceFiles=files){
  return pdf.save({useObjectStreams:true});
 }
 async function renderPage(pdf,pageNum,scale=1.5){
- const page=await pdf.getPage(pageNum);const vp=page.getViewport({scale});const canvas=document.createElement('canvas');canvas.width=Math.round(vp.width);canvas.height=Math.round(vp.height);await page.render({canvasContext:canvas.getContext('2d'),canvas,viewport:vp}).promise;page.cleanup();return canvas;
+ const page=await pdf.getPage(pageNum);
+ try{
+  const original=page.getViewport({scale:1});
+  const bounded=safePdfRenderScale(original.width,original.height,scale);
+  const vp=page.getViewport({scale:bounded});
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(vp.width));canvas.height=Math.max(1,Math.round(vp.height));
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw Error('This device cannot render this PDF page.');
+  await page.render({canvasContext:ctx,canvas,viewport:vp}).promise;
+  return canvas;
+ }finally{page.cleanup();}
 }
 async function pdfjsOpen(f){return pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer()),useSystemFonts:true}).promise}
 async function mergePdfs(){requireFiles(2);const out=await PDFDocument.create();for(let i=0;i<files.length;i++){progress(`Merging ${i+1} / ${files.length}`);const src=await pdfFromFile(files[i]);const copied=await out.copyPages(src,src.getPageIndices());for(const p of copied)out.addPage(p)}return out.save({useObjectStreams:true})}
@@ -1350,7 +1363,10 @@ async function compressPdf(){const source=await pdfjsOpen(files[0]);try{
  const out=await PDFDocument.create();if(source.numPages>70)throw Error('For device stability, process PDFs of 70 pages or fewer.');
  for(let i=1;i<=source.numPages;i++){
   progress(`Compressing page ${i}/${source.numPages}`);const p=await source.getPage(i),viewport=p.getViewport({scale:1});const scale=Math.min(1.15,1450/Math.max(viewport.width,viewport.height));const canvas=await renderPage(source,i,scale);const jpg=await out.embedJpg(await(await canvasBlob(canvas,'image/jpeg',Number(setting('quality'))||.58)).arrayBuffer());const page=out.addPage([viewport.width,viewport.height]);page.drawImage(jpg,{x:0,y:0,width:viewport.width,height:viewport.height});
- }return out.save({useObjectStreams:true});
+ }
+ const output=await out.save({useObjectStreams:true});
+ if(output.length>=files[0].size)throw Error('Compression would increase PDF size. Your original remains unchanged.');
+ return output;
  }finally{await source.destroy()}}
 async function pdfToText(ocr=false){
  const source=files[0];let lines=[];

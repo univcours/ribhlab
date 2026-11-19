@@ -224,7 +224,15 @@ public class RivoDocumentsPlugin extends Plugin {
         String name = (raw == null ? "" : raw).replaceAll("[\\\\/\\x00-\\x1f:*?\"<>|]", "_").trim();
         if (name.startsWith(".")) name = "Scan" + name;
         if (name.isEmpty()) name = "RivoScan_" + System.currentTimeMillis() + ".pdf";
-        if (name.length() > 110) name = name.substring(name.length()-110);
+        if (name.length() > 110) {
+            // Preserve the start of the title and the file extension.
+            int dot = name.lastIndexOf('.');
+            String extension = dot > 0 && name.length() - dot <= 13 ? name.substring(dot) : "";
+            String stem = extension.isEmpty() ? name : name.substring(0, dot);
+            int end = Math.min(stem.length(), 110 - extension.length());
+            if (end > 0 && end < stem.length() && Character.isHighSurrogate(stem.charAt(end-1))) end--;
+            name = stem.substring(0, end) + extension;
+        }
         return name;
     }
 
