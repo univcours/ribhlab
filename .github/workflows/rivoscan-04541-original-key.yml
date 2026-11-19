@@ -1,14 +1,5 @@
 name: RivoScan 0.45.43 signed original key APK AAB
 on:
-  push:
-    branches: [rivoscan-standalone-ready]
-    paths:
-      - 'src/**'
-      - 'scripts/**'
-      - 'tests/**'
-      - 'rivoscan-version.properties'
-      - 'package.json'
-      - '.github/workflows/rivoscan-04541-original-key.yml'
   workflow_dispatch:
 permissions:
   contents: write
