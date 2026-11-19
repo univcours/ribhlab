@@ -39,6 +39,6 @@ jobs:
           test -f native/android/RivoDocumentsPlugin.java
           test -f native/android/RivoLiveScannerActivity.java
           test -f native/android/RivoCropEditor.java
-          grep -q 'upsertCodeLedger' native/android/RivoDocumentsPlugin.java
-          grep -q 'Intent.ACTION_EDIT' native/android/RivoDocumentsPlugin.java
+          grep -Fq 'upsertScannerLog' native/android/RivoDocumentsPlugin.java
+          grep -Fq 'Intent.ACTION_VIEW' native/android/RivoDocumentsPlugin.java
           grep -Fq 'if(points==null)return' native/android/RivoLiveScannerActivity.java
