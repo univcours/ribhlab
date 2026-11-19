@@ -21,3 +21,14 @@ test('Update prompted only by Play availability and not during active saving',()
  assert.match(main,/checkPlayUpdate\(\{language/);
  assert.match(main,/working:busy\|\|nativeCaptureDepth>0/);
 });
+
+test('Offline Android device continues using its installed app: no update modal',async()=>{
+ const {playUpdateOnline}=await import('../src/play-updates.js');
+ assert.equal(playUpdateOnline({onLine:false}),false);
+ assert.equal(playUpdateOnline({onLine:true}),true);
+ assert.equal(playUpdateOnline(undefined),true);
+ const source=read('src/play-updates.js');
+ assert.match(source,/window\.addEventListener\('offline',\(\)=>clearPrompt\(\)\)/);
+ assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return false;\}/);
+ assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return;\}/);
+});

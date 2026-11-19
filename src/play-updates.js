@@ -3,6 +3,9 @@ import {Capacitor,registerPlugin} from '@capacitor/core';
 const NativePlayUpdate=registerPlugin('RivoPlayUpdate');
 const android=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 let checking=null,lastCheck=0,installedPrompt=false;
+// Android WebView provides navigator.onLine; offline is never an update requirement.
+export function playUpdateOnline(navigatorLike=globalThis.navigator){return navigatorLike?.onLine!==false;}
+if(typeof window!=='undefined')window.addEventListener('offline',()=>clearPrompt());
 const labels={
  en:{title:'RivoScan update required',body:'A newer version is available on Google Play. Update to keep using the latest version of RivoScan.',update:'Update with Google Play',exit:'Close app',retry:'Try again'},
  ar:{title:'تحديث RivoScan ضروري',body:'كاين تحديث جديد فـGoogle Play. حدّث التطبيق باش تستعمل النسخة الجديدة.',update:'حدّث عبر Google Play',exit:'إغلاق التطبيق',retry:'عاود المحاولة'},
@@ -24,16 +27,19 @@ function renderPrompt(language,onClose){
  const update=document.createElement('button');update.type='button';update.textContent=copy.update;
  const quit=document.createElement('button');quit.type='button';quit.textContent=copy.exit;quit.className='rivo-update-close';
  const run=async()=>{
+  if(!playUpdateOnline()){clearPrompt();return;}
   update.disabled=true;
   error.textContent='';
   try{
    const result=await NativePlayUpdate.install();
    if(!result?.started){
     error.textContent='Google Play update is not available right now.';
+    if(!playUpdateOnline()){clearPrompt();return;}
     const state=await NativePlayUpdate.check();
     if(!state.available||!state.allowed){clearPrompt();return}
    }
-  }catch(e){error.textContent=String(e?.message||e)}
+  }catch(e){if(!playUpdateOnline()){clearPrompt();return;}
+   error.textContent=String(e?.message||e)}
   finally{update.disabled=false}
  };
  update.addEventListener('click',run);
@@ -45,6 +51,7 @@ function renderPrompt(language,onClose){
 }
 export async function checkPlayUpdate({language='en',onClose=()=>{},force=false,working=false}={}){
  if(!android||working||typeof document==='undefined')return false;
+ if(!playUpdateOnline()){clearPrompt();return false;}
  if(installedPrompt)return true;
  if(checking)return checking;
  if(!force&&Date.now()-lastCheck<5*60*1000)return false;
@@ -52,9 +59,11 @@ export async function checkPlayUpdate({language='en',onClose=()=>{},force=false,
  checking=(async()=>{
   try{
    const info=await NativePlayUpdate.check();
+   if(!playUpdateOnline()){clearPrompt();return false;}
    if(info?.available&&info?.allowed){renderPrompt(language,onClose);return true}
    clearPrompt();return false;
-  }catch(e){console.warn('Play update check unavailable:',String(e?.message||e));return false}
+  }catch(e){if(!playUpdateOnline())clearPrompt();
+   console.warn('Play update check unavailable:',String(e?.message||e));return false}
   finally{checking=null}
  })();
  return checking;
