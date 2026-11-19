@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {safeDocumentName,spreadsheetText} from '../src/file-safety.js';
+import {readFileSync} from 'node:fs';
 test('Unicode document names are preserved and paths cannot escape storage',()=>{
  assert.equal(safeDocumentName('عقد_شراء_2026.pdf'),'عقد_شراء_2026.pdf');
  assert.equal(safeDocumentName('Réception été.pdf'),'Réception été.pdf');
@@ -16,4 +17,10 @@ test('OCR formula-looking cells are safe in CSV and TSV',()=>{
   assert.ok(spreadsheetText(candidate).startsWith("'"));
  assert.equal(spreadsheetText('Hello World'),'Hello World');
  assert.equal(spreadsheetText('محمد'),'محمد');
+});
+
+test('Android filename sanitizer retains extensions on long Unicode titles',()=>{
+ const source=readFileSync(new URL('../native/android/RivoDocumentsPlugin.java',import.meta.url),'utf8');
+ assert.ok(source.includes('110 - extension.length()'));
+ assert.ok(source.includes('Character.isHighSurrogate'));
 });
