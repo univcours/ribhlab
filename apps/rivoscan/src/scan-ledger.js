@@ -36,12 +36,12 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   rows.push(record);
   // Authoritative recovery journal is committed before file export. Failures stay queued.
   storage.setItem(config.storage,JSON.stringify(rows));
+  if(!bridge||typeof bridge.upsertScannerLog!=='function')
+   return {record,saved:false,reason:'Native scanner file storage unavailable'};
   const table=[config.columns,...rows.map(row=>kind==='codes'
     ?[row.at,row.type,row.value]:[row.at,row.plate,row.match?'YES':'NO',row.photo])];
   const text=table.map(row=>row.map(value=>spreadsheetText(clean(value))).join('\t')).join('\n')+'\n';
   const xlsx=await createOCRWorkbook({pages:[{name:kind==='codes'?'Scanned codes':'Vehicle plates',rows:table}]});
-  if(!bridge||typeof bridge.upsertScannerLog!=='function')
-   return {record,saved:false,reason:'Native scanner file storage unavailable'};
   const files=[
    {name:config.text,mimeType:'text/plain',bytes:new TextEncoder().encode(text)},
    {name:config.excel,mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',bytes:xlsx}
