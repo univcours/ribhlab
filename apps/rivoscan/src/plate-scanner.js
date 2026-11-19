@@ -1,4 +1,5 @@
 import {createWorker} from 'tesseract.js';
+import {readPlateZoomRange,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from './plate-distance.js';
 
 const labels={
  en:['Moroccan Plate Scanner','Search Moroccan plate (e.g. 12345 أ 7)','Point camera at the entire Moroccan plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
@@ -82,6 +83,14 @@ export function matchingPlateTargets(plate,targets=[]){
  const qs=Array.isArray(targets)?targets:[targets];
  return [...new Set(qs.map(normalizePlate).filter(q=>q.length>=3&&matchesPlate(plate,q)))];
 }
+/** Other recognized cars must not stop the search for a watched plate. */
+export function hasPlateSearchHit(candidates,targets=[]){
+ const qs=(Array.isArray(targets)?targets:[targets]).map(normalizePlate).filter(q=>q.length>=3);
+ if(!Array.isArray(candidates)||!candidates.length)return false;
+ return qs.length
+  ?candidates.some(plate=>matchingPlateTargets(plate,qs).length>0)
+  :true;
+}
 export function plateOcrLines(blocks){
  const rows=[];
  for(const block of (Array.isArray(blocks)?blocks:[])){
@@ -108,6 +117,11 @@ export function plateBoxInView(bbox,roi,ocrScale,video,view){
  if(right-left<8||bottom-top<5)return null;
  return {x:left,y:top,width:right-left,height:bottom-top};
 }
+const zoomCopy={
+ en:{auto:'AUTO ZOOM',off:'ZOOM OFF',missing:'Camera zoom unavailable; searching image regions',hint:'Keep the vehicle in view; automatic zoom checks the scene before magnifying'},
+ ar:{auto:'زوم تلقائي',off:'الزوم موقوف',missing:'زوم الكاميرا غير متاح؛ كنقلب فمناطق الصورة',hint:'وجّه الكاميرا للسيارة؛ غادي يفتّش ويقرّب تدريجياً'},
+ fr:{auto:'ZOOM AUTO',off:'ZOOM ARRÊT',missing:'Zoom caméra indisponible : recherche par zones',hint:'Gardez le véhicule dans le cadre ; recherche et zoom progressifs'}
+};
 function btn(label,fn){
  const el=document.createElement('button');el.type='button';el.textContent=label;el.setAttribute('aria-label',label);el.addEventListener('click',fn);return el;
 }
@@ -163,11 +177,49 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const last=document.createElement('strong');last.className='rivo-live-result';last.hidden=true;
  const foot=document.createElement('div');foot.className='rivo-live-actions';
  const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
- const torch=btn('⚡',()=>toggleTorch());foot.append(count,torch);
- const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6];
+ const Z=zoomCopy[language]||zoomCopy.en;
+ const zoomButton=btn(Z.auto,()=>{
+  autoZoomEnabled=!autoZoomEnabled;
+  renderZoom();
+  if(!autoZoomEnabled&&zoomRange&&zoomCurrent>zoomRange.min+0.05)
+   void setCameraZoom(zoomRange.min);
+ });
+ zoomButton.className='rivo-plate-auto-zoom';
+ zoomButton.setAttribute('aria-pressed','true');
+ const torch=btn('⚡',()=>toggleTorch());foot.append(count,zoomButton,torch);
+ const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
  panel.append(header,searchRow,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
+ let zoomRange=null,zoomCurrent=1,zoomBusy=false,autoZoomEnabled=true,missedFrames=0,searchPass=0,verifyRegion=null,lastZoomAt=0;
+ function renderZoom(){
+  zoomButton.disabled=!zoomRange;
+  zoomButton.setAttribute('aria-pressed',String(autoZoomEnabled&&Boolean(zoomRange)));
+  zoomButton.textContent=zoomRange
+   ?(autoZoomEnabled?Z.auto:Z.off)+' ×'+zoomCurrent.toFixed(1)
+   :Z.auto+' · N/A';
+  zoomButton.title=zoomRange?Z.hint:Z.missing;
+  if(!zoomRange)hint.textContent=L[6]+' · '+Z.missing;
+ }
+ async function setCameraZoom(target){
+  if(closed||zoomBusy||!zoomRange)return false;
+  const track=stream?.getVideoTracks()?.[0];
+  if(!track||track.readyState==='ended')return false;
+  zoomBusy=true;
+  try{
+   const actual=await applyPlateZoom(track,zoomRange,target);
+   if(closed)return false;
+   zoomCurrent=actual;lastZoomAt=Date.now();missedFrames=0;observed.clear();searchPass=0;verifyRegion=null;
+   renderZoom();
+   return true;
+  }catch(error){
+   console.warn('Camera zoom unavailable; continuing with regional OCR:',error);
+   zoomRange=null;
+   if(!closed)renderZoom();
+   return false;
+  }finally{zoomBusy=false;}
+ }
+ renderZoom();
  const key=e=>{if(e.key==='Escape'||e.key==='Backspace'&&e.target!==search){e.preventDefault();stop();}};
  const stop=()=>{
   if(closed)return;closed=true;clearTimeout(nextTimer);
@@ -184,7 +236,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  }
  function snapshot(){
   const canvas=document.createElement('canvas');
-  const width=Math.min(1440,video.videoWidth||1280),ratio=width/(video.videoWidth||1280);
+  const width=Math.min(2304,video.videoWidth||1280),ratio=width/(video.videoWidth||1280);
   canvas.width=width;canvas.height=Math.max(1,Math.round((video.videoHeight||720)*ratio));
   canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
   return canvas;
@@ -202,12 +254,12 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  }
  async function recordPlate(plate){
   // Expire old sightings before testing duplicates; the same car may pass again later.
-  const now=Date.now();
+  const now=Date.now(),key=plateComparisonKey(plate);
   for(const [p,time] of confirmed)if(now-time>30000)confirmed.delete(p);
-  if(closed||confirmed.has(plate))return;
+  if(closed||confirmed.has(key))return;
   const match=matchingPlateTargets(plate,[search.value,...watch]).length>0;
   // A brief second OCR confirmation suppresses false alarms/captures.
-  confirmed.set(plate,now);
+  confirmed.set(key,now);
   let photoName='';
   if(match){
    // Native alert is reliable after asynchronous OCR when WebAudio autoplay is blocked.
@@ -233,11 +285,13 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(closed||processing||!worker||video.readyState<2)return;
   processing=true;
   try{
-   // Focus OCR on the on-screen number-plate target, not the whole vehicle/background.
+   // Search full frame and overlapping crops. A phone cannot pan mechanically.
    const canvas=snapshot();
-   const roi={x:Math.round(canvas.width*.10),y:Math.round(canvas.height*.29),
-    w:Math.round(canvas.width*.80),h:Math.round(canvas.height*.43)};
-   const scale=Math.min(1.65,1600/Math.max(roi.w,roi.h));
+   const verifying=verifyRegion!=null;
+   const regionIndex=verifying?verifyRegion:searchPass++;
+   verifyRegion=null;
+   const roi=plateSearchRoi(canvas.width,canvas.height,regionIndex);
+   const scale=Math.min(1.75,1800/Math.max(roi.w,roi.h));
    const small=document.createElement('canvas');
    small.width=Math.max(1,Math.round(roi.w*scale));
    small.height=Math.max(1,Math.round(roi.h*scale));
@@ -264,22 +318,49 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
        detection.classList.toggle('matched',matchingPlateTargets(plate,[search.value,...watch]).length>0);
       }
      }
-     const seen=observed.get(plate);
-     const streak=seen&&now-seen.time<6500?seen.streak+1:1;
-     observed.set(plate,{time:now,streak});
+     const key=plateComparisonKey(plate),seen=observed.get(key);
+     const streak=seen&&now-seen.time<10000?seen.streak+1:1;
+     observed.set(key,{time:now,streak});
      if(streak>=2)await recordPlate(plate);
     }
    }
    if(!framed){detection.hidden=true;guide.hidden=false;}
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
+   const soughtPlateSeen=hasPlateSearchHit(candidates,[search.value,...watch]);
+   if(Number(data.confidence)>=40&&candidates.length&&!verifying)
+    verifyRegion=regionIndex;
+   if(Number(data.confidence)>=40&&soughtPlateSeen){
+    missedFrames=0;
+   }else{
+    // Keep searching/zooming when other cars are recognized but the requested
+    // Moroccan plate is still too distant to read.
+    missedFrames++;
+    if(autoZoomEnabled&&!zoomBusy&&zoomRange){
+     const next=planPlateAutoZoom({range:zoomRange,current:zoomCurrent,
+      misses:missedFrames,elapsedMs:now-lastZoomAt});
+     if(next!=null)await setCameraZoom(next);
+    }
+   }
   }catch(error){if(!closed)console.warn('License plate OCR:',error);}
   finally{processing=false;if(!closed)nextTimer=setTimeout(scanFrame,650);}
  }
  async function start(){
   try{
-   stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+   stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{
+    facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1440},frameRate:{ideal:24}
+   }});
    if(closed){stream.getTracks().forEach(t=>t.stop());return;}
    video.srcObject=stream;await video.play();
+   const track=stream.getVideoTracks()[0];
+   let capabilities={};
+   try{capabilities=track?.getCapabilities?.()||{};}catch{}
+   zoomRange=readPlateZoomRange(capabilities,track?.getSettings?.());
+   zoomCurrent=zoomRange?.current||1;lastZoomAt=Date.now();
+   renderZoom();
+   // Optional autofocus: Android WebView devices expose differing controls.
+   if(capabilities.focusMode?.includes?.('continuous')){
+    try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch{}
+   }
    worker=await createWorker(['eng','ara'],1).catch(()=>createWorker('eng',1));
    if(closed){void worker.terminate();return;}
    working=true;status.textContent=L[2];void scanFrame();

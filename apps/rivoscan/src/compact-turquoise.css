@@ -708,3 +708,8 @@ body:has(.rivo-live-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
  .rivo-live-preview.rivo-code-accepted .rivo-detection-outline,
  .rivo-live-preview.rivo-code-accepted::after{animation:none!important}
 }
+
+/* Optional hardware auto zoom; stays visible inside the scrolling action bar. */
+.rivo-live-actions .rivo-plate-auto-zoom{font-weight:750;min-width:115px!important;flex:0 0 auto!important;}
+.rivo-live-actions .rivo-plate-auto-zoom[aria-pressed="true"]{border-color:#36c8c5;background:#164b62;color:#e7ffff;}
+.rivo-live-actions .rivo-plate-auto-zoom:disabled{opacity:.65;cursor:not-allowed;}
