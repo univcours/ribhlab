@@ -183,7 +183,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  panel.append(header,searchRow,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
- let zoomRange=null,zoomCurrent=1,zoomBusy=false,autoZoomEnabled=true,missedFrames=0,searchPass=0,lastZoomAt=0;
+ let zoomRange=null,zoomCurrent=1,zoomBusy=false,autoZoomEnabled=true,missedFrames=0,searchPass=0,verifyRegion=null,lastZoomAt=0;
  function renderZoom(){
   zoomButton.disabled=!zoomRange;
   zoomButton.setAttribute('aria-pressed',String(autoZoomEnabled&&Boolean(zoomRange)));
@@ -201,7 +201,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   try{
    const actual=await applyPlateZoom(track,zoomRange,target);
    if(closed)return false;
-   zoomCurrent=actual;lastZoomAt=Date.now();missedFrames=0;observed.clear();searchPass=0;
+   zoomCurrent=actual;lastZoomAt=Date.now();missedFrames=0;observed.clear();searchPass=0;verifyRegion=null;
    renderZoom();
    return true;
   }catch(error){
@@ -279,7 +279,10 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   try{
    // Search full frame and overlapping crops. A phone cannot pan mechanically.
    const canvas=snapshot();
-   const roi=plateSearchRoi(canvas.width,canvas.height,searchPass++);
+   const verifying=verifyRegion!=null;
+   const regionIndex=verifying?verifyRegion:searchPass++;
+   verifyRegion=null;
+   const roi=plateSearchRoi(canvas.width,canvas.height,regionIndex);
    const scale=Math.min(1.75,1800/Math.max(roi.w,roi.h));
    const small=document.createElement('canvas');
    small.width=Math.max(1,Math.round(roi.w*scale));
@@ -308,7 +311,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
       }
      }
      const key=plateComparisonKey(plate),seen=observed.get(key);
-     const streak=seen&&now-seen.time<7000?seen.streak+1:1;
+     const streak=seen&&now-seen.time<10000?seen.streak+1:1;
      observed.set(key,{time:now,streak});
      if(streak>=2)await recordPlate(plate);
     }
@@ -317,6 +320,8 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    for(const [plate,info] of observed)if(now-info.time>8000)observed.delete(plate);
    if(Number(data.confidence)>=40&&candidates.length){
     missedFrames=0;
+    // Confirm on the same crop next frame before moving to another region.
+    if(!verifying)verifyRegion=regionIndex;
    }else{
     missedFrames++;
     if(autoZoomEnabled&&!zoomBusy&&zoomRange){

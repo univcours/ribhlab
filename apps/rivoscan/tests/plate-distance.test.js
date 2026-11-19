@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {readPlateZoomRange,boundPlateZoom,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from '../src/plate-distance.js';
 test('Auto zoom: camera-supported ranges, limits and hardware confirmation',async()=>{
  assert.equal(readPlateZoomRange({},{}),null);
@@ -33,4 +34,16 @@ test('Far plates search wide, left, right and centre without out-of-bounds crops
  assert.ok(regions[1].x<regions[2].x);
  assert.ok(regions[3].w>regions[1].w);
  assert.throws(()=>plateSearchRoi(0,1080,0),/Invalid camera frame/);
+});
+
+test('Live Moroccan plate reader performs actual zoom and regional OCR, confirming detected area twice',()=>{
+ const s=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
+ assert.ok(s.includes('plateSearchRoi(canvas.width,canvas.height,regionIndex)'));
+ assert.ok(s.includes('if(!verifying)verifyRegion=regionIndex'));
+ assert.ok(s.includes('const actual=await applyPlateZoom('));
+ assert.ok(s.includes('autoZoomEnabled=!autoZoomEnabled'));
+ assert.ok(s.includes('zoomRange=null;'));
+ assert.ok(s.includes('capabilities.focusMode'));
+ assert.ok(s.includes('stream?.getTracks().forEach(t=>t.stop())'));
+ assert.ok(s.includes('width:{ideal:2560}'));
 });
