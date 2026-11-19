@@ -23,6 +23,7 @@ import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import {openPrivacyShield} from './privacy-shield.js';
+import {safeDocumentName} from './file-safety.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -1164,7 +1165,7 @@ function blobToBytes(blob){return blob.arrayBuffer().then(b=>new Uint8Array(b))}
 function toBase64(bytes){let out='';const chunk=16384;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.slice(i,i+chunk));return btoa(out)}
 async function saveOut(bytes,name,mime='application/pdf'){
   const data=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
-  const safe=String(name||'RivoScan.pdf').replace(/[^\w.\-]/g,'_').slice(0,110);
+  const safe=safeDocumentName(name);
   if(Capacitor.isNativePlatform()){
     if(Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoDocuments')){
       // Genuine permanent public storage. MediaStore exposes Documents/RivoScan in Samsung My Files.
@@ -1225,7 +1226,7 @@ async function shareSelectedFiles(){
     const uris=[];
     for(let i=0;i<files.length;i++){
       progress('Preparing attachment '+(i+1)+'/'+files.length);
-      const f=files[i],safe=f.name.replace(/[^\w.\-]/g,'_').slice(0,80)||'file';
+      const f=files[i],safe=safeDocumentName(f.name,{maxLength:80,fallback:'file'});
       const b64=toBase64(new Uint8Array(await f.arrayBuffer()));
       const saved=await Filesystem.writeFile({directory:Directory.Cache,path:'RivoScanShare/'+Date.now()+'_'+i+'_'+safe,data:b64,recursive:true});
       uris.push(saved.uri);

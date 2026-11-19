@@ -1,4 +1,5 @@
 import {createOCRWorkbook} from './xlsx-export.js';
+import {spreadsheetText} from './file-safety.js';
 
 const CONFIG=Object.freeze({
  codes:{storage:'rivo-scan-ledger-codes-v1',text:'RivoScan_Scans.txt',excel:'RivoScan_Scans.xlsx',columns:['Date & Time','Type','Value']},
@@ -37,7 +38,7 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
   storage.setItem(config.storage,JSON.stringify(rows));
   const table=[config.columns,...rows.map(row=>kind==='codes'
     ?[row.at,row.type,row.value]:[row.at,row.plate,row.match?'YES':'NO',row.photo])];
-  const text=table.map(row=>row.map(clean).join('\t')).join('\n')+'\n';
+  const text=table.map(row=>row.map(value=>spreadsheetText(clean(value))).join('\t')).join('\n')+'\n';
   const xlsx=await createOCRWorkbook({pages:[{name:kind==='codes'?'Scanned codes':'Vehicle plates',rows:table}]});
   if(!bridge||typeof bridge.upsertScannerLog!=='function')
    return {record,saved:false,reason:'Native scanner file storage unavailable'};
@@ -66,7 +67,7 @@ export function createScanLedger({bridge=null,storage=globalThis.localStorage,cl
    const table=[config.columns,...rows.map(row=>kind==='codes'
     ?[row.at,row.type,row.value]:[row.at,row.plate,row.match?'YES':'NO',row.photo])];
    if(!bridge?.upsertScannerLog)throw Error('Native scanner file storage unavailable');
-   const text=new TextEncoder().encode(table.map(row=>row.map(clean).join('\t')).join('\n')+'\n');
+   const text=new TextEncoder().encode(table.map(row=>row.map(value=>spreadsheetText(clean(value))).join('\t')).join('\n')+'\n');
    const xlsx=await createOCRWorkbook({pages:[{name:kind==='codes'?'Scanned codes':'Vehicle plates',rows:table}]});
    await bridge.upsertScannerLog({name:config.text,mimeType:'text/plain',base64:toBase64(text)});
    await bridge.upsertScannerLog({name:config.excel,mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',base64:toBase64(xlsx)});

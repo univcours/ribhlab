@@ -6,6 +6,7 @@ import {editableSlidesFromFile} from './editable-pptx.js';
 import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
+import {spreadsheetText} from './file-safety.js';
 
 export async function exportToolFile({file,format,language='en',save,progress=()=>{}}){
  if(!file)throw Error('Select a file first');
@@ -67,7 +68,7 @@ export async function exportToolFile({file,format,language='en',save,progress=()
    await save(workbook,'RivoScan_Excel_Extract_'+date+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
    return;
   }
-  const csv='\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\r\n');
+  const csv='\ufeff'+rows.map(row=>row.map(x=>'"'+spreadsheetText(x).replaceAll('"','""')+'"').join(',')).join('\r\n');
   await save(new TextEncoder().encode(csv),'RivoScan_Excel_Extract_'+date+'.csv','text/csv');
   return;
  }
