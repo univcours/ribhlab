@@ -47,11 +47,11 @@ function renderPrompt(language,onClose){
   finally{update.disabled=false}
  };
  update.addEventListener('click',run);
- quit.addEventListener('click',()=>{if(typeof onClose==='function')onClose()});
+ quit.addEventListener('click',()=>clearPrompt());
  dialog.append(h,p,error,update,quit);overlay.append(dialog);
- // Don't close on outside-tap/Back: the Play update requires explicit action.
+ // Always permit continuing on the installed version. Offline users never see this prompt.
  document.body.append(overlay);installedPrompt=true;update.focus();
- void run();
+ // The update starts ONLY after the user taps the Google Play update button.
 }
 export async function checkPlayUpdate({language='en',onClose=()=>{},force=false,working=false}={}){
  if(!android||working||typeof document==='undefined')return false;
