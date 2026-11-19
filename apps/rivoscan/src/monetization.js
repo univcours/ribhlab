@@ -17,7 +17,7 @@ export const FULLSCREEN_COOLDOWN_MS=8*60*1000;
 export const APP_OPEN_COOLDOWN_MS=20*60*1000;
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
- 'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
+ 'bookScan','formulaOcr','photoTranslation','aiChat','solverAI',
  'countCam','toWord','toWordTables','toExcel','toPpt','toPptEditable',
  'restorePhoto','enhance','eraseColoredMarks','eraseLightWatermark',
  'manualErase','lockPdf','idPhotoMaker','ocr','compress'

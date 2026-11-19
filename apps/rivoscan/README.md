@@ -182,8 +182,8 @@ The ID Card tool now captures a front and back photograph and arranges both on O
 
 Known gaps versus CamScanner: no advanced AI handwriting removal, nonrigid book dewarping, formula solver, photo translation, secure PDF encryption, public cloud sharing link, full Word/Excel layout recreation or semantic object repair. These are explicitly unimplemented, not silently advertised as working.
 
-## 0.41.0 native PerfectScan
-Official UVDoc ONNX on Android plus optional relative 3D surface triangulation using 2–4 camera views. Original source preserved, review before save, no paywall until physical QA. See PERFECTSCAN_IMPLEMENTATION.md.
+## 0.41.0 native correction experiment (retired)
+Legacy multi-view correction was removed; UVDoc remains in native scanner filters.
 
 ## 0.41.1 scan-review and turquoise release
 Every scanned document remains visible for manual corner confirmation and locally computed sharpness/exposure/glare diagnostic; the UI advises Save or Retake instead of silently saving. Processing filters visibly render the source and enhanced output, with explicit user confirmation. The HD document perspective crop uses up to 3300px source detail when supported, while non-HD remains memory-bounded. A matching turquoise SVG, native adaptive icon and automatically generated PNGs replace the old blue palette. Do not uninstall an old signed build to force updates; all Pro tools remain open during field QA.
@@ -245,7 +245,7 @@ The single Scan action from Home, Scan workspace, Tools and ID Card now directly
 
 ## v0.43.3 — reserve Premium/PRO for a future paid offer
 - Ad-funded tools and the unlock card have **AD** before watching a video, **ON** when access is active; toolbar badge is AD, not PRO. The Tools navigation uses a grid icon rather than a paid-subscription crown.
-- Visible scan-filter labels Paper Scan, Book Scan and PerfectScan drop misleading Pro branding. The actual filtering, rewarded 10-minute access window, consent and documents are unchanged.
+- Visible scan-filter labels Paper Scan and Book Scan drop misleading Pro branding. The actual filtering, rewarded 10-minute access window, consent and documents are unchanged.
 - This is not a paid subscription. Do not show Premium/PRO branding unless a real premium subscription product is launched and its purchase/entitlement flow is implemented.
 
 ## v0.43.4 — compact advanced AI drawer and lower full-circle scan FAB

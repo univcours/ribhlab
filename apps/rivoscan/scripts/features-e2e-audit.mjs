@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const dir='/tmp/rivoscan-visual-ui';
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-const results={privacy:null,perfectScan:null};
+const results={privacy:null};
 try{
  const ctx=await browser.newContext({viewport:{width:393,height:873},acceptDownloads:true});
  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.0'));
@@ -49,15 +49,6 @@ try{
  assert.ok(pixels.redacted[0]<20&&pixels.redacted[1]<20&&pixels.redacted[2]<20);
  assert.ok(pixels.clear[0]>235&&pixels.clear[1]>235&&pixels.clear[2]>235);
  results.privacy={success:true,output:download.suggestedFilename(),pixels};
- await page.locator('.mobilebar [data-tab="tools"]').click();
- await page.locator('[data-hub-action="perfectScanQuality"]').click();
- await page.locator('.rivo-perfect-file').setInputFiles({name:'quality.png',mimeType:'image/png',buffer:input});
- await page.locator('[data-perfect="process"]').click();
- await page.locator('.rivo-perfect-compare-range').waitFor({state:'visible',timeout:35000});
- await page.locator('.rivo-perfect-compare-range').fill('30');
- assert.equal(await page.locator('[data-perfect="save"]').isEnabled(),true);
- await page.screenshot({path:dir+'/393-perfectscan-quality.png'});
- results.perfectScan={success:true,comparison:'30%'};
 }finally{
  await browser.close();
  await writeFile(dir+'/features-e2e-report.json',JSON.stringify(results,null,2));

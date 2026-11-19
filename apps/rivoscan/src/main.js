@@ -22,10 +22,7 @@ import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
 import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
-import { openPerfectScan } from './perfect-scan-ui.js';
 import {openPrivacyShield} from './privacy-shield.js';
-import { unwarpPixelsAndroid } from './uvdoc-android.js';
-import { reconstructRelativeSurfaceAndroid } from './surface3d-android.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -51,8 +48,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const RivoLiveScanner = registerPlugin('RivoLiveScanner');
 const RivoDocuments = registerPlugin('RivoDocuments');
 const scanLedger=createScanLedger({bridge:RivoDocuments,storage:localStorage});
-const RivoUVDoc = registerPlugin('RivoUVDoc');
-const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
   // Keep the real Android status bar on screen; do not draw the app under it.
@@ -367,15 +362,14 @@ function recentDocuments(limit=12,query=homeSearchQuery){
  }).join('');
 }
 const RIVO_FEATURE_TEXT={
- en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Quality',perfectSub:'Sharper documents',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
- ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',perfect:'PerfectScan Quality',perfectSub:'تحسين جودة الوثائق',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
- fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
+ en:{hero:'Scan smarter, keep it private.',subtitle:'Three powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
+ ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'ثلاث أدوات قوية فواجهة وحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي ملي تثبت الورقة',qr:'QR / Barcode UltraScan',qrSub:'كاميرا وحدة كتتعرف تلقائياً',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
+ fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Trois fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
 };
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
  {id:'scanCode',icon:'grid',label:'qr',detail:'qrSub'},
- {id:'perfectScanQuality',icon:'sparkle',label:'perfect',detail:'perfectSub'},
  {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
 ];
 function home(){
@@ -471,15 +465,7 @@ function scannerWorkspace(){
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="camerax-four-corners">${ico('camera',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('image',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button></div>
-  <details class="rivo-unified-scan-advanced">
-   <summary>${({en:'Advanced corrections · optional',ar:'تصحيحات متقدمة · اختيارية',fr:'Corrections avancées · facultatives',
-    es:'Correcciones avanzadas · opcionales',de:'Erweiterte Korrekturen · optional',
-    pt:'Correções avançadas · opcionais',it:'Correzioni avanzate · facoltative'})[language]||'Advanced corrections'}</summary>
-   <button type="button" id="scan-multi-angle">${ico('image',20)} ${({en:'Combine 2–4 camera angles · 3D beta',ar:'دمج 2 حتى 4 صور · 3D تجريبي',
-    fr:'Fusionner 2–4 photos · 3D bêta',es:'Combinar 2–4 fotos · 3D beta',
-    de:'2–4 Ansichten kombinieren · 3D Beta',pt:'Combinar 2–4 fotos · 3D beta',
-    it:'Unisci 2–4 foto · 3D beta'})[language]||'Multi-angle correction'}</button>
-  </details>
+
   <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
   <div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
@@ -611,26 +597,6 @@ function launchPrivacyShield(doc=null){
    if(activeTool?.id==='library')refreshVisibleLibrary();
    else if(!activeTool){const recent=document.getElementById('home-recents');if(recent)recent.innerHTML=recentDocuments(14)}
   }});
-}
-function launchPerfectScan(doc=null){
-  return openPerfectScan({
-    doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
-    onSurface3D:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
-      (reference,render,extraFrames,width,height)=>reconstructRelativeSurfaceAndroid({
-        plugin:RivoSurface3D,reference,render,extraFrames,width,height}):null,
-    onUVDoc:Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'?
-      (rgba,width,height)=>unwarpPixelsAndroid({plugin:RivoUVDoc,rgba,width,height}):null,
-    // ML Kit FULL is now Scan itself, never an extra Deep Clean CTA.
-    onRefresh:async()=>{
-      await loadLibrary(false);
-      if(activeTool?.id==='library')refreshVisibleLibrary();
-      else{
-        const rows=document.getElementById('home-recents');
-        if(rows)rows.innerHTML=recentDocuments();
-      }
-    },
-    notify:toast
-  });
 }
 function openLibrary(){
   docViewerUI.close();
@@ -844,8 +810,6 @@ function wire(){
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner());
-  document.getElementById('scan-multi-angle')?.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()});
-  document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()}));
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
@@ -864,7 +828,6 @@ async function openHubAction(id){
  if(!spec){await openTool(id);return;}
  if(!(await requestPremium(id)))return;
  if(spec.type==='privacyShield'){void launchPrivacyShield();return;}
- if(spec.type==='perfectScan'){void launchPerfectScan();return;}
  if(spec.type==='smartAutoCapture'){await openSmartScanner({autoCapture:true});return;}
  if(spec.type==='mergedDialog'){
   openMergedToolDialog({id,language,onChoose:action=>openHubAction(action),
@@ -1455,7 +1418,6 @@ function navigateRivoBack(){
  const dialogs=[
   ['.rivo-pages-overlay','[data-page-action="close"]'],
   ['.rivo-editor-overlay','[data-edit="cancel"]'],
-  ['.rivo-perfectscan-overlay','[data-perfect="close"]'],
   ['.rivo-shield-overlay','[data-shield="close"]']
  ];
  for(const [selector,closeSelector] of dialogs){

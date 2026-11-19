@@ -4,14 +4,13 @@
 // user can restore them, but duplicated/experimental controls do not clutter Tools.
 // Do not hide QR/barcode, vehicle plates, PDF core, OCR or Excel export.
 export const toolGroups=[
- {id:'scan',entries:['smartAutoCapture','scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'scan',entries:['smartAutoCapture','scanCode','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
  {id:'convert',entries:['convertDocument']},
  {id:'edit',entries:['privacyShield','photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
  smartAutoCapture:{icon:'scan',color:'green',type:'smartAutoCapture'},
- perfectScanQuality:{icon:'sparkle',color:'green',type:'perfectScan'},
  privacyShield:{icon:'shield',color:'green',type:'privacyShield'},
  // Composite tiles delegate to the already tested original implementations.
  convertDocument:{icon:'convert',color:'green',type:'mergedDialog'},
@@ -31,7 +30,6 @@ export const hubSpecial={
  formulaOcr:{icon:'text',color:'blue',type:'formulaOcr'},
  smartScanPro:{icon:'scan',color:'green',type:'mlkitFull'},
  bookScan:{icon:'file',color:'sky',type:'book'},
- documentFlatten:{icon:'file',color:'green',type:'flatten'},
  slideScan:{icon:'image',color:'pink',type:'scan'},
  whiteboard:{icon:'image',color:'green',type:'photo',preset:'whiteboard'},
  timestamp:{icon:'clock',color:'blue',type:'photo',preset:'timestamp'},
@@ -63,7 +61,6 @@ const groups={
 };
 const labels={
  smartAutoCapture:['Smart AutoCapture','التصوير التلقائي الذكي','Capture auto intelligente','Captura automática','Intelligente Auto-Aufnahme','Captura automática inteligente','Cattura automatica intelligente'],
- perfectScanQuality:['PerfectScan Quality','تحسين جودة الوثائق','Qualité PerfectScan','Calidad PerfectScan','PerfectScan Qualität','Qualidade PerfectScan','Qualità PerfectScan'],
  privacyShield:['Privacy Shield','حماية وإخفاء المعلومات','Masquage sécurisé','Protección de privacidad','Datenschutz-Schutz','Proteção de privacidade','Protezione privacy'],
  convertDocument:['Convert documents','تحويل الوثائق','Convertir des documents','Convertir documentos','Dokumente konvertieren','Converter documentos','Converti documenti'],
  annotatePdf:['Write & sign PDF','الكتابة والتوقيع على PDF','Annoter et signer PDF','Anotar y firmar PDF','PDF beschriften & signieren','Anotar e assinar PDF','Annota e firma PDF'],
@@ -82,7 +79,6 @@ const labels={
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],
  bookScan:['Book Scan (auto split & flatten)','مسح الكتب الاحترافي (فصل وتقويم تلقائي)','Scanner livre (séparer et redresser)','Escanear libro (dividir y aplanar)','Buchscan (trennen & glätten)','Digitalizar livro (separar e corrigir)','Scansiona libro (separa e correggi)'],
- documentFlatten:['Document Flattening (beta)','تقويم الوثائق المنحنية','Aplatir document (bêta)','Aplanar documento (beta)','Dokument glätten (Beta)','Achatar documento (beta)','Appiattisci documento (beta)'],
  slideScan:['Slides Scan','مسح العروض','Scanner des diapositives','Escanear diapositivas','Folien scannen','Digitalizar slides','Scansione slide'],
  whiteboard:['Whiteboard Enhance','تحسين السبورة','Améliorer tableau blanc','Mejorar pizarra','Whiteboard verbessern','Melhorar quadro','Migliora lavagna'],
  timestamp:['Timestamp','إضافة التاريخ والساعة','Horodatage','Fecha y hora','Zeitstempel','Data e hora','Data e ora'],

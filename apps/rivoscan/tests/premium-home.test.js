@@ -27,7 +27,7 @@ test('File library uses a short icon row only when exactly one file is selected'
 });
 test('All extra features live in Tools including QR and plates',()=>{
  const main=file('src/main.js'),tools=file('src/tools-hub.js');
- for(const name of ['scanCode','plateScanner','bookScan','managePages','photoTranslation','toExcel','privacyShield','perfectScanQuality','smartAutoCapture'])
+ for(const name of ['scanCode','plateScanner','bookScan','managePages','photoTranslation','toExcel','privacyShield','smartAutoCapture'])
   assert.ok(tools.includes(name),name);
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
  assert.ok(!home.includes('data-hub-action'));
@@ -40,7 +40,6 @@ test('Home feature rail routes to shared tools, no second duplicated scanner or 
  assert.ok(home.includes('data-rivo-feature'));
  assert.ok(main.includes('void openHubAction(el.dataset.rivoFeature)'));
  assert.ok(main.includes("spec.type==='privacyShield'"));
- assert.ok(main.includes("spec.type==='perfectScan'"));
  assert.ok(main.includes("spec.type==='smartAutoCapture'"));
  assert.ok(main.includes("autoCapture:true"));
 });
@@ -78,9 +77,9 @@ test('No redundant Home/All Tools link inside Documents; native topbar handles B
 });
 test('Right-edge Android Back closes page manager, editor and every supported full-screen tool first',()=>{
  const main=file('src/main.js');
- for(const tag of ['rivo-pages-overlay','rivo-editor-overlay','rivo-perfectscan-overlay',
+ for(const tag of ['rivo-pages-overlay','rivo-editor-overlay',
  'rivo-code-overlay','rivo-id-overlay','data-page-action="close"',
- 'data-edit="cancel"','data-perfect="close"']){
+ 'data-edit="cancel"']){
   assert.ok(main.includes(tag),tag);
  }
  assert.ok(main.includes("start.side==='right'&&dx<=-84"));
@@ -89,7 +88,7 @@ test('Right-edge Android Back closes page manager, editor and every supported fu
 test('Document viewer, file actions and native editors inherit official branding',()=>{
  const css=file('src/compact-turquoise.css');
  for(const name of ['.doc-detail-overlay','.doc-action.doc-edit','.bulk-overlay .bulk-sheet',
- '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-perfectscan-overlay']){
+ '.rivo-editor-overlay','.rivo-pages-overlay']){
   assert.ok(css.includes(name),name);
  }
 });
