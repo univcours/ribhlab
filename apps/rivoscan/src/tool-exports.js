@@ -1,4 +1,3 @@
-import JSZip from 'jszip';
 import {createOCRWorkbook} from './xlsx-export.js';
 import {reconstructPositionedTable} from './table-reconstruct.js';
 import {wordTablesFromFile} from './word-tables.js';
@@ -7,6 +6,7 @@ import {recognize} from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
 import {spreadsheetText} from './file-safety.js';
+import {createImageSlideDeck} from './image-pptx.js';
 
 export async function exportToolFile({file,format,language='en',save,progress=()=>{}}){
  if(!file)throw Error('Select a file first');
@@ -84,7 +84,7 @@ export async function exportToolFile({file,format,language='en',save,progress=()
   const add=async canvas=>{
    if(slideImgs.length>=30)throw Error('Maximum 30 slides');
    const blob=await new Promise((ok,bad)=>canvas.toBlob(b=>b?ok(b):bad(Error('Cannot render slide')),'image/jpeg',.85));
-   slideImgs.push(new Uint8Array(await blob.arrayBuffer()));
+   slideImgs.push({bytes:new Uint8Array(await blob.arrayBuffer()),width:canvas.width,height:canvas.height});
   };
   if(isPdf){
    const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true}).promise;
@@ -109,19 +109,8 @@ export async function exportToolFile({file,format,language='en',save,progress=()
    }finally{URL.revokeObjectURL(blobUrl)}
   }
   if(!slideImgs.length)throw Error('No slides to export');
-  const zip=new JSZip(),sids=slideImgs.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+1}"/>`).join('');
-  zip.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>'+slideImgs.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')+'</Types>');
-  zip.folder('_rels').file('.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>');
-  zip.folder('ppt').file('presentation.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst>'+sids+'</p:sldIdLst><p:sldSz cx="9144000" cy="5143500" type="screen16x9"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>');
-  zip.folder('ppt').folder('_rels').file('presentation.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+slideImgs.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('')+'</Relationships>');
-  const slideDir=zip.folder('ppt').folder('slides'),rels=slideDir.folder('_rels'),media=zip.folder('ppt').folder('media');
-  for(let i=0;i<slideImgs.length;i++){
-   media.file('slide'+(i+1)+'.jpg',slideImgs[i]);
-   const pic=`<p:pic><p:nvPicPr><p:cNvPr id="2" name="Document page ${i+1}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="9144000" cy="5143500"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
-   slideDir.file('slide'+(i+1)+'.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>'+pic+'</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>');
-   rels.file('slide'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/slide'+(i+1)+'.jpg"/></Relationships>');
-  }
-  await save(new Uint8Array(await zip.generateAsync({type:'arraybuffer',compression:'DEFLATE'})),'RivoScan_Slides_'+date+'.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  const bytes=await createImageSlideDeck(slideImgs);
+  await save(bytes,'RivoScan_Slides_'+date+'.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation');
   return;
  }
  throw Error('Unsupported output format');
