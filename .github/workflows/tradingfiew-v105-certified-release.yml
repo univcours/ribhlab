@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: tradingfiew/tradingfiew.github.io
-          ref: 43ef734b2f19591913b8ed82c5008c814c864d63
+          ref: a65b1d5eb6322918c76df3bb8f7c23fa3a15f58b
           path: tradingfiew
       - name: Verify signed build and download original-key artifact
         shell: bash
@@ -31,10 +31,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api repos/univcours/ribhlab/actions/runs/44509385110 > /tmp/signing-run.json
-          jq -e '.status == "completed" and .conclusion == "success" and .head_sha == "22023d29f53623cab5de137fb8f00a20adca39cb"' /tmp/signing-run.json
+          gh api repos/univcours/ribhlab/actions/runs/44510576544 > /tmp/signing-run.json
+          jq -e '.status == "completed" and .conclusion == "success" and .head_sha == "dc04fe53b0ef29836ba862235b9420524499ab6a"' /tmp/signing-run.json
           mkdir -p signed
-          gh run download 44509385110 -R univcours/ribhlab -n TradingFiew-1.0.5-R8-ORIGINAL-KEY-SIGNED -D signed
+          gh run download 44510576544 -R univcours/ribhlab -n TradingFiew-1.0.5-R8-ORIGINAL-KEY-SIGNED -D signed
           cd signed
           sha256sum --check SHA256SUMS.txt
           test -s R8_MAPPING.txt
@@ -101,5 +101,5 @@ jobs:
             release-public/TradingFiew-Android-1.0.5-RivoScanKey-SIGNED.aab \
             release-public/SHA256SUMS.txt \
             --title 'TradingFiew Android 1.0.5 — R8 / Play DEX optimization' \
-            --notes 'Signed Google Play APK and AAB versionCode 6, original RivoScan upload certificate. R8 optimization enabled and real signed Android emulator launch smoke test passed. Source: tradingfiew/tradingfiew.github.io@43ef734b2f19591913b8ed82c5008c814c864d63. R8 mapping is retained in private Actions artifacts, not published.'
+            --notes 'Signed Google Play APK and AAB versionCode 6, original RivoScan upload certificate. R8 optimization enabled and real signed Android emulator launch smoke test passed. Source: tradingfiew/tradingfiew.github.io@a65b1d5eb6322918c76df3bb8f7c23fa3a15f58b. R8 mapping is retained in private Actions artifacts, not published.'
           echo "Certified signed release: https://github.com/univcours/ribhlab/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
