@@ -1,0 +1,115 @@
+name: Sign RibhMeasure 1.0.0 with original RivoScan upload key
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ribhmeasure-rivoscan-key-signed.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ribhmeasure-original-rivoscan-upload-key
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Fetch pinned RibhMeasure source from the RibhLab site repository
+        uses: actions/checkout@v4
+        with:
+          repository: ribhlab/ribhlab.github.io
+          ref: 140cc8e89baf0234724f5753a2814820d31b415b
+          path: source
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -r | head -n1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Gradle 8.13
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Extract pinned Android source
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -q source/public/downloads/RibhMeasure-Android-Source-v1.0.0.zip -d "$RUNNER_TEMP"
+          test -s "$RUNNER_TEMP/RibhMeasure/app/build.gradle"
+          grep -F "applicationId 'com.ribhlab.ribhmeasure'" "$RUNNER_TEMP/RibhMeasure/app/build.gradle"
+      - name: Import existing RivoScan original upload key privately and verify Play certificate
+        shell: bash
+        env:
+          RIVO_KEY_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIBHMEASURE_SIGNING_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_KEY_BASE64" || { echo '::error::Existing RivoScan keystore secret is missing'; exit 1; }
+          test -n "$RIBHMEASURE_SIGNING_PASSWORD" || { echo '::error::Existing RivoScan password secret is missing'; exit 1; }
+          umask 077
+          KEYFILE="$RUNNER_TEMP/ribhmeasure-original-rivoscan.p12"
+          printf '%s' "$RIVO_KEY_BASE64" | base64 -d > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          export RIBHMEASURE_SIGNING_KEYSTORE="$KEYFILE"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$KEYFILE" -storepass:env RIBHMEASURE_SIGNING_PASSWORD -alias key0)"
+          SHA1="$(printf '%s\n' "$CERT" | sed -nE 's/^[[:space:]]*SHA1: ([A-F0-9:]+).*$/\1/p' | head -n1)"
+          EXPECTED='E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          if [ "$SHA1" != "$EXPECTED" ]; then
+            echo '::error::Keystore does not match original RivoScan registered upload certificate; refusing to sign'
+            exit 1
+          fi
+          SHA256="$(printf '%s\n' "$CERT" | sed -nE 's/^[[:space:]]*SHA256: ([A-F0-9:]+).*$/\1/p' | head -n1)"
+          test -n "$SHA256"
+          echo "RIBHMEASURE_SIGNING_KEYSTORE=$KEYFILE" >> "$GITHUB_ENV"
+          echo "RIBHMEASURE_SIGNER_SHA256=$SHA256" >> "$GITHUB_ENV"
+          echo 'Verified original RivoScan registered Google Play upload certificate SHA-1.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Compile test, lint, signed Android APK and AAB
+        shell: bash
+        env:
+          RIBHMEASURE_SIGNING_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p "$RUNNER_TEMP/RibhMeasure" :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:bundleRelease
+      - name: Verify both signatures and correct package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/RibhMeasure/app/build/outputs/apk/release/app-release.apk"
+          AAB="$RUNNER_TEMP/RibhMeasure/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$APK" && test -s "$AAB"
+          AAPT="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f | sort -V | tail -1)"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.ribhmeasure' versionCode='1' versionName='1.0.0'"
+          APKSIGNER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/ribhmeasure-apk-certificate.txt"
+          EXPECTED_HEX="$(printf '%s' "$RIBHMEASURE_SIGNER_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          ACTUAL_HEX="$(sed -nE 's/.*certificate SHA-256 digest: ([0-9a-fA-F]+).*/\1/p' "$RUNNER_TEMP/ribhmeasure-apk-certificate.txt" | head -n1 | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL_HEX" && test "$ACTUAL_HEX" = "$EXPECTED_HEX"
+          jarsigner -verify "$AAB" > "$RUNNER_TEMP/ribhmeasure-aab-check.txt" 2>&1
+          grep -F 'jar verified' "$RUNNER_TEMP/ribhmeasure-aab-check.txt"
+          keytool -printcert -jarfile "$AAB" | grep -F "SHA256: $RIBHMEASURE_SIGNER_SHA256"
+          mkdir -p signed-artifacts
+          cp "$APK" signed-artifacts/RibhMeasure-v1.0.0-RivoScan-key-signed.apk
+          cp "$AAB" signed-artifacts/RibhMeasure-v1.0.0-RivoScan-key-signed.aab
+          (cd signed-artifacts && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          echo 'APK and AAB signed using original RivoScan Play upload key.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'NOT YET for Play release: default AdMob test IDs until app-specific live ad units are configured.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload signed app binaries only (never signing material)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RibhMeasure-v1.0.0-RivoScan-key-SIGNED-TEST-ADS
+          path: signed-artifacts/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Destroy transient signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/ribhmeasure-original-rivoscan.p12"
