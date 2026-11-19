@@ -269,7 +269,7 @@ try{
     return {tileCount:tiles.length,distinct:new Set(ids).size,clipped};
   });
   check(width+': all Tools card titles visible and not clipped',
-   toolLabelFit.tileCount===19&&toolLabelFit.distinct===19&&toolLabelFit.clipped.length===0);
+   toolLabelFit.tileCount===18&&toolLabelFit.distinct===18&&toolLabelFit.clipped.length===0);
   const compactMetrics=await page.evaluate(()=>{
    const cards=[...document.querySelectorAll('.rivo-hub-tile')];
    const heights=cards.map(el=>el.getBoundingClientRect().height);
@@ -280,7 +280,7 @@ try{
      scanOrbit:getComputedStyle(document.querySelector('.rivo-nav-scan-ring'),'::before').animationName==='rivo-orbit-border'};
   });
   check(width+': compact Tools tiles keep quiet edges and rotating Smart Scan ring',
-    compactMetrics.count===19&&compactMetrics.compact&&compactMetrics.widthsValid&&
+    compactMetrics.count===18&&compactMetrics.compact&&compactMetrics.widthsValid&&
     compactMetrics.orbit&&compactMetrics.scanOrbit);
   await page.locator('.rivo-hub-tile').first().focus();
   const focusedOrbit=await page.locator('.rivo-hub-tile').first().evaluate(el=>
@@ -353,90 +353,18 @@ try{
    check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
   }
 
-  // Real PerfectScan initial state: no pale text, fake previews or empty advanced controls.
+  // Validate the replacement Plate Scanner tile without accessing a real camera.
   await page.locator('.mobilebar [data-go="home"]').click();
-  await page.locator('[data-rivo-feature="perfectScanQuality"]').click();
-  const perfect=page.locator('.rivo-perfectscan-overlay');
-  await perfect.waitFor({state:'visible',timeout:8000});
-  const perfectInfo=await perfect.evaluate(root=>{
-   const modal=root.querySelector('.rivo-perfectscan-modal');
-   const small=modal.querySelector('header small');
-   const bounds=modal.getBoundingClientRect();
-   return {empty:!root.querySelector('.rivo-perfectscan-empty').hidden,
-    addHidden:root.querySelector('[data-perfect="add"]').hidden,
-    methodHidden:root.querySelector('.rivo-perfectscan-control').hidden,
-    previewHidden:root.querySelector('.rivo-perfectscan-preview').hidden,
-    cameraEnabled:!root.querySelector('[data-perfect="camera"]').disabled,
-    hintReadable:!!small&&getComputedStyle(small).color!=='rgb(184, 217, 242)'&&getComputedStyle(small).opacity==='1',
-    sourceOnly:modal.querySelector('.rivo-workspace-settings-toggle')?.getAttribute('aria-expanded')==='true'&&
-     !modal.querySelector('.rivo-workspace-settings').hidden&&
-     modal.querySelector('.rivo-workspace-task-panel:not([hidden])')?.contains(
-      modal.querySelector('[data-perfect="camera"]'))===true,
-    // Full-screen mobile modal is intentional and preserves a fixed image preview.
-    fits:bounds.height>=innerHeight*.65&&bounds.height<=innerHeight+2&&
-     bounds.top>=-2&&bounds.left>=-2&&bounds.right<=innerWidth+2};
+  const plateTile=page.locator('[data-rivo-feature="plateScanner"]');
+  await plateTile.waitFor({state:'visible',timeout:8000});
+  const plateLayout=await plateTile.evaluate(el=>{
+   const rect=el.getBoundingClientRect(),title=el.getAttribute('aria-label')||'';
+   return {fits:rect.width>25&&rect.height>35&&rect.left>=-2&&rect.right<=innerWidth+2,
+    labeled:Boolean(title.trim()),removed:!document.querySelector('[data-rivo-feature="perfectScanQuality"]')};
   });
-  check(width+': PerfectScan starts with readable source-photo choices',
-   perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&
-   perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&
-   perfectInfo.sourceOnly&&perfectInfo.fits);
-  await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
-  if(width===360){
-   // Render a real synthetic document through PerfectScan and run the actual
-   // pixel-processing pipeline. This guards against automatic compare dividers.
-   const imageUrl=await page.evaluate(()=>{
-    const canvas=document.createElement('canvas');canvas.width=440;canvas.height=580;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fdfdfb';ctx.fillRect(0,0,440,580);
-    ctx.fillStyle='#132e51';ctx.font='bold 25px sans-serif';ctx.fillText('RivoScan Test Document',28,55);
-    ctx.font='17px sans-serif';
-    for(let i=0;i<14;i++){
-     ctx.fillText('Sample document line '+(i+1),28,95+i*30);
-    }
-    return canvas.toDataURL('image/png');
-   });
-   await perfect.locator('.rivo-perfect-file').setInputFiles({
-    name:'perfectscan-test.png',mimeType:'image/png',
-    buffer:Buffer.from(imageUrl.split(',')[1],'base64')
-   });
-   await page.waitForFunction(()=>{
-    const root=document.querySelector('.rivo-perfectscan-overlay');
-    return !!root&&!root.querySelector('.rivo-perfectscan-preview').hidden&&
-     root.querySelector('.rivo-perfectscan-preview canvas').width===440;
-   });
-   check('360: safe enhancement recommended by default',
-    await perfect.locator('[data-perfect-mode]').inputValue()==='enhance');
-   await perfect.locator('[data-perfect="process"]').click();
-   await perfect.locator('[data-perfect="save"]').waitFor({state:'visible',timeout:45000});
-   const enhanced=await perfect.evaluate(root=>{
-    const preview=root.querySelector('.rivo-perfectscan-preview');
-    const canvas=preview.querySelector('canvas');
-    const range=root.querySelector('.rivo-perfect-compare-range');
-    const compare=root.querySelector('[data-perfect="compare"]');
-    const save=root.querySelector('[data-perfect="save"]');
-    const box=canvas.getBoundingClientRect();
-    return {compareHidden:range.hidden,clean:!preview.classList.contains('rivo-perfect-split-active'),
-      compareVisible:!compare.hidden,saveReady:!save.disabled,
-      previewFits:box.width>120&&box.height>140&&box.right<=innerWidth+2};
-   });
-   check('360: preview stays unobstructed until Compare is requested',
-     enhanced.compareHidden&&enhanced.clean&&enhanced.compareVisible&&enhanced.saveReady&&enhanced.previewFits);
-   await page.screenshot({path:out+'/360-perfectscan-enhanced.png'});
-   await perfect.locator('[data-perfect="compare"]').click();
-   const compareActive=await perfect.evaluate(root=>
-    !root.querySelector('.rivo-perfect-compare-range').hidden&&
-    root.querySelector('.rivo-perfectscan-preview').classList.contains('rivo-perfect-split-active')&&
-    root.querySelector('[data-perfect="compare"]').getAttribute('aria-pressed')==='true'
-   );
-   check('360: split divider only shown when user chooses Compare',compareActive);
-   await page.screenshot({path:out+'/360-perfectscan-compare.png'});
-   await perfect.locator('[data-perfect="compare"]').click();
-   check('360: closing Compare restores enhanced image',
-    await perfect.locator('.rivo-perfect-compare-range').evaluate(x=>x.hidden));
-   await page.screenshot({path:out+'/360-perfectscan-restored.png'});
-  }
-  await perfect.locator('[data-perfect="close"]').click();
-  await perfect.waitFor({state:'detached'});
+  check(width+': localized Plate Scanner shortcut fits and replaces removed tool',
+   plateLayout.fits&&plateLayout.labeled&&plateLayout.removed);
+  await page.screenshot({path:out+'/'+width+'-plate-scanner-shortcut.png'});
 
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
