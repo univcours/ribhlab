@@ -6,14 +6,13 @@
 // Smart AutoCapture already has the dedicated central camera and a Home quick action;
 // avoid showing the same camera tool again as a redundant Tools tile.
 export const toolGroups=[
- {id:'scan',entries:['scanCode','perfectScanQuality','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
+ {id:'scan',entries:['scanCode','idcard','idPhotoMaker','plateScanner','photoTranslation','formulaOcr','ocr','bookScan']},
  {id:'convert',entries:['convertDocument']},
  {id:'edit',entries:['privacyShield','photoStudio','combineFiles','managePages','annotatePdf','pdfPrivacy','compress']},
  {id:'utilities',entries:['peerTransfer','shareFiles']}
 ];
 export const hubSpecial={
  smartAutoCapture:{icon:'scan',color:'green',type:'smartAutoCapture'},
- perfectScanQuality:{icon:'sparkle',color:'green',type:'perfectScan'},
  privacyShield:{icon:'shield',color:'green',type:'privacyShield'},
  // Composite tiles delegate to the already tested original implementations.
  convertDocument:{icon:'convert',color:'green',type:'mergedDialog'},
@@ -80,7 +79,7 @@ const labels={
  solverAI:['Solver AI (your own API key)','Solver AI (مفتاح شخصي)','Solver AI (clé API personnelle)','Solver AI (clave API propia)','Solver AI (eigener API-Schlüssel)','Solver AI (chave API própria)','Solver AI (chiave API personale)'],
  countCam:['CountCam (common objects)','CountCam (عدّ الأشياء)','CountCam (compter objets)','CountCam (contar objetos)','CountCam (Objekte zählen)','CountCam (contar objetos)','CountCam (conta oggetti)'],
  scanCode:['Scan QR / Barcodes','مسح QR والباركود','Scanner QR / codes-barres','Escanear QR y códigos','QR / Barcodes scannen','Ler QR e códigos','Scansiona QR e codici'],
- plateScanner:['Scan License Plates','قراءة لوحات السيارات','Lire les plaques auto','Leer matrículas','Kennzeichen scannen','Ler matrículas','Leggi targhe auto'],
+ plateScanner:['Plate Scanner','قارئ اللوحات','Lecteur de plaques','Lector de matrículas','Kennzeichenleser','Leitor de matrículas','Lettore targhe'],
  idcard:['ID Cards','البطاقة الوطنية',"Cartes d’identité",'Documentos de identidad','Ausweise','Cartões de identidade','Carte d’identità'],
  smartScanPro:['AI Scan — clean paper (beta)','AI Scan — ورقة نقية (تجريبي)','Scan IA — papier nettoyé (bêta)','Escáner IA — papel limpio (beta)','KI-Scan — Papier reinigen (Beta)','Scan IA — papel limpo (beta)','Scan IA — carta pulita (beta)'],
  bookScan:['Scan Book Pages','مسح صفحات الكتب','Scanner des livres','Escanear libros','Buchseiten scannen','Digitalizar livros','Scansiona libri'],

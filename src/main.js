@@ -26,10 +26,7 @@ import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import {openEdgeAdjustment,edgeAdjustableDocument} from './edge-adjustment.js';
-import { openPerfectScan } from './perfect-scan-ui.js';
 import {openPrivacyShield} from './privacy-shield.js';
-import { unwarpPixelsAndroid } from './uvdoc-android.js';
-import { reconstructRelativeSurfaceAndroid } from './surface3d-android.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -263,7 +260,6 @@ const docViewerUI=createDocumentViewer({
         onRetake:()=>openSmartScanner(),
         // The one native scanner has its own filters, including neural correction.
         preset:'crease',
-        onPerfectScan:d=>launchPerfectScan(d),
         onRefresh:async()=>{
           await loadLibrary(false);
           if(activeTool?.id==='library')refreshVisibleLibrary();
@@ -509,26 +505,30 @@ function recentDocuments(limit=12,query=homeSearchQuery){
  }).join('');
 }
 const RIVO_FEATURE_TEXT={
- en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · folds, curves and shadows',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
- ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية في واجهة واحدة.',auto:'Smart AutoCapture',autoSub:'تصوير تلقائي عند ثبات المستند',qr:'QR / Barcode UltraScan',qrSub:'كاميرا واحدة تتعرف على الرموز تلقائيًا',perfect:'PerfectScan Pro',perfectSub:'UVDoc AI · تقويم التجاعيد والانحناء',privacy:'Privacy Shield',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
- fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Smart AutoCapture',autoSub:'Document stable · capture auto',qr:'QR / Barcode UltraScan',qrSub:'Une caméra · reconnaissance auto',perfect:'PerfectScan Quality',perfectSub:'Documents plus nets',privacy:'Privacy Shield',privacySub:'Masquer les données sensibles',short:'Actions rapides'}
+ en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',plates:'Plate Scanner',plateSub:'Live license-plate reading',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
+ ar:{hero:'مسح ذكي، جودة أفضل، وخصوصية.',subtitle:'أربع أدوات قوية في واجهة واحدة.',auto:'التصوير التلقائي',autoSub:'تصوير تلقائي عند ثبات المستند',qr:'قارئ QR والباركود',qrSub:'كاميرا واحدة تتعرف على الرموز تلقائياً',plates:'قارئ اللوحات',plateSub:'قراءة اللوحات مباشرة بالكاميرا',privacy:'حماية الخصوصية',privacySub:'إخفاء المعلومات نهائياً',short:'إجراءات سريعة'},
+ fr:{hero:'Numérisez mieux, restez privé.',subtitle:'Quatre fonctions, une interface simple.',auto:'Capture automatique',autoSub:'Document stable · capture auto',qr:'Lecteur QR / codes-barres',qrSub:'Une caméra · détection automatique',plates:'Lecteur de plaques',plateSub:'Lecture en direct par caméra',privacy:'Protection des données',privacySub:'Masquer les données sensibles',short:'Actions rapides'},
+ es:{hero:'Escanea mejor, protege tus datos.',subtitle:'Cuatro herramientas. Una interfaz sencilla.',auto:'Captura automática',autoSub:'Foto automática con documento estable',qr:'Lector QR y códigos',qrSub:'Una cámara · detección automática',plates:'Lector de matrículas',plateSub:'Lectura en directo por cámara',privacy:'Protección de datos',privacySub:'Oculta datos confidenciales',short:'Acciones rápidas'},
+ de:{hero:'Intelligent scannen, Daten schützen.',subtitle:'Vier Funktionen. Eine einfache Oberfläche.',auto:'Automatische Aufnahme',autoSub:'Scharfes, stabiles Dokument erfassen',qr:'QR-/Barcode-Leser',qrSub:'Eine Kamera · automatische Erkennung',plates:'Kennzeichenleser',plateSub:'Live-Erkennung per Kamera',privacy:'Datenschutz',privacySub:'Vertrauliche Daten dauerhaft verdecken',short:'Schnellzugriff'},
+ pt:{hero:'Digitalize melhor, proteja os seus dados.',subtitle:'Quatro ferramentas. Uma interface simples.',auto:'Captura automática',autoSub:'Foto automática com documento estável',qr:'Leitor QR e códigos',qrSub:'Uma câmara · deteção automática',plates:'Leitor de matrículas',plateSub:'Leitura em direto pela câmara',privacy:'Proteção de dados',privacySub:'Ocultar dados sensíveis',short:'Ações rápidas'},
+ it:{hero:'Scansioni migliori, dati protetti.',subtitle:'Quattro strumenti. Un’interfaccia semplice.',auto:'Acquisizione automatica',autoSub:'Foto automatica con documento stabile',qr:'Lettore QR e codici',qrSub:'Una fotocamera · rilevamento automatico',plates:'Lettore targhe',plateSub:'Lettura live dalla fotocamera',privacy:'Protezione dati',privacySub:'Nascondi dati sensibili',short:'Azioni rapide'}
 };
 const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]||key;
 // Visual labels stay short; full descriptive names remain accessible to assistive tech.
 const RIVO_COMPACT_FEATURE_LABELS={
- en:{smartAutoCapture:'Auto Scan',scanCode:'QR / Barcode',perfectScanQuality:'PerfectScan',privacyShield:'Privacy'},
- ar:{smartAutoCapture:'سكان تلقائي',scanCode:'QR / باركود',perfectScanQuality:'تحسين الوثائق',privacyShield:'الخصوصية'},
- fr:{smartAutoCapture:'Scan auto',scanCode:'QR / Codes',perfectScanQuality:'PerfectScan',privacyShield:'Confidentialité'},
- es:{smartAutoCapture:'Scan auto',scanCode:'QR / Código',perfectScanQuality:'PerfectScan',privacyShield:'Privacidad'},
- de:{smartAutoCapture:'Auto-Scan',scanCode:'QR / Codes',perfectScanQuality:'PerfectScan',privacyShield:'Datenschutz'},
- pt:{smartAutoCapture:'Scan auto',scanCode:'QR / Código',perfectScanQuality:'PerfectScan',privacyShield:'Privacidade'},
- it:{smartAutoCapture:'Scan auto',scanCode:'QR / Codici',perfectScanQuality:'PerfectScan',privacyShield:'Privacy'}
+ en:{smartAutoCapture:'Auto Scan',scanCode:'QR / Barcode',plateScanner:'Plate Scanner',privacyShield:'Privacy'},
+ ar:{smartAutoCapture:'تصوير تلقائي',scanCode:'QR / باركود',plateScanner:'قارئ اللوحات',privacyShield:'الخصوصية'},
+ fr:{smartAutoCapture:'Scan auto',scanCode:'QR / Codes',plateScanner:'Lecteur de plaques',privacyShield:'Confidentialité'},
+ es:{smartAutoCapture:'Escáner auto',scanCode:'QR / Códigos',plateScanner:'Lector de matrículas',privacyShield:'Privacidad'},
+ de:{smartAutoCapture:'Auto-Scan',scanCode:'QR / Codes',plateScanner:'Kennzeichenleser',privacyShield:'Datenschutz'},
+ pt:{smartAutoCapture:'Scan auto',scanCode:'QR / Códigos',plateScanner:'Leitor de matrículas',privacyShield:'Privacidade'},
+ it:{smartAutoCapture:'Scansione auto',scanCode:'QR / Codici',plateScanner:'Lettore targhe',privacyShield:'Privacy'}
 };
 const compactFeatureLabel=id=>(RIVO_COMPACT_FEATURE_LABELS[language]||RIVO_COMPACT_FEATURE_LABELS.en)[id]||id;
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
  {id:'scanCode',icon:'qr',label:'qr',detail:'qrSub'},
- {id:'perfectScanQuality',icon:'sparkle',label:'perfect',detail:'perfectSub'},
+ {id:'plateScanner',icon:'scan',label:'plates',detail:'plateSub'},
  {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
 ];
 function home(){
@@ -651,7 +651,7 @@ function scannerWorkspace(){
   <div class="scan-quick-actions"><button class="scan-action-primary" id="smart-scanner" data-primary-scanner="mlkit-full">${ico('scan',25)} <span><b>${aiScanLabel}</b><small>${aiScanHint}</small></span><span class="scan-action-arrow">→</span></button>
   <button class="scan-action-secondary" id="scanner-gallery">${ico('edges',24)} <span><b>${sl('import')}</b><small>${sl('corners')}</small></span></button></div>
   <div class="scan-quick-toolbar"><button data-open-library class="scan-documents-link">${ico('file',20)} ${dl('documents')}</button>
-   <button type="button" class="scan-documents-link rivo-perfectscan-restore" id="scan-multi-angle">${ico('sparkle',19)} ${escapeHTML(({en:'Advanced paper correction',ar:'تصحيح متقدم للوثائق',fr:'Correction avancée du papier',es:'Corrección avanzada',de:'Erweiterte Dokumentkorrektur',pt:'Correção avançada',it:'Correzione avanzata'})[language]||'Advanced paper correction')}</button></div>
+   </div>
   <div class="scan-runtime" role="status">${live?aiScanHint:({en:'Native four-corner scanner needs the Android app; official ML Kit is available as fallback.',ar:'تحديد الحواف يحتاج التطبيق Android؛ ML Kit متاح كخيار بديل.',fr:'Le recadrage natif nécessite Android; ML Kit est un repli.'})[language]||'Native scanner requires Android.'}</div>
   <div class="rivo-scan-scroll" tabindex="0"><div class="panel scan-session-panel"><div class="scan-panel-heading"><h3>${sl('pages')} <span class="scan-page-count">${files.length}</span></h3><small>${sl('auto')}</small></div>
   <div class="filelist" id="filelist">${renderFiles()}</div><div id="scanpreview"></div>
@@ -797,26 +797,6 @@ function launchPrivacyShield(doc=null){
    if(activeTool?.id==='library')refreshVisibleLibrary();
    else if(!activeTool){const recent=document.getElementById('home-recents');if(recent)recent.innerHTML=recentDocuments(14)}
   }});
-}
-function launchPerfectScan(doc=null){
-  return openPerfectScan({
-    doc,bridge:RivoDocuments,getLanguage:()=>language,onSave:saveOut,
-    onSurface3D:!COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoSurface3D')?
-      (reference,render,extraFrames,width,height)=>reconstructRelativeSurfaceAndroid({
-        plugin:RivoSurface3D,reference,render,extraFrames,width,height}):null,
-    onUVDoc:!COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&Capacitor.isPluginAvailable('RivoUVDoc')?
-      (rgba,width,height)=>unwarpPixelsAndroid({plugin:RivoUVDoc,rgba,width,height}):null,
-    // ML Kit FULL is now Scan itself, never an extra Deep Clean CTA.
-    onRefresh:async()=>{
-      await loadLibrary(false);
-      if(activeTool?.id==='library')refreshVisibleLibrary();
-      else{
-        const rows=document.getElementById('home-recents');
-        if(rows)rows.innerHTML=recentDocuments();
-      }
-    },
-    notify:toast
-  });
 }
 function openLibrary(){
   docViewerUI.close();
@@ -1081,8 +1061,6 @@ function wire(){
 
   document.getElementById('camera')?.addEventListener('click',openCamera);
   document.getElementById('smart-scanner')?.addEventListener('click',()=>openSmartScanner());
-  document.getElementById('scan-multi-angle')?.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()});
-  document.querySelectorAll('[data-scan-advanced]').forEach(button=>button.addEventListener('click',async()=>{if(await requestPremium('documentFlatten'))launchPerfectScan()}));
   document.getElementById('scanner-gallery')?.addEventListener('click',()=>openLiveScanner({gallery:true}));
   if(activeTool?.id==='peerTransfer')closeTransfer=initPeerTransfer({onReceive:saveReceivedPeerFile,notify:toast,getLanguage:()=>language});
   document.getElementById('filelist')?.addEventListener('click',e=>{const remove=e.target.closest('[data-remove]');const move=e.target.closest('[data-move]');if(remove){const index=+remove.dataset.remove;files.splice(index,1);scanRotations.splice(index,1)}if(move){const i=+move.dataset.move,j=i+Number(move.dataset.dir);if(j>=0&&j<files.length){[files[i],files[j]]=[files[j],files[i]];[scanRotations[i],scanRotations[j]]=[scanRotations[j],scanRotations[i]]}}updateFileDisplay()});
@@ -1101,7 +1079,6 @@ async function openHubAction(id){
  if(!spec){await openTool(id);return;}
  if(!(await requestPremium(id)))return;
  if(spec.type==='privacyShield'){void launchPrivacyShield();return;}
- if(spec.type==='perfectScan'){void launchPerfectScan();return;}
  if(spec.type==='smartAutoCapture'){await openSmartScanner({autoCapture:true});return;}
  if(spec.type==='mergedDialog'){
   openMergedToolDialog({id,language,onChoose:action=>openHubAction(action),

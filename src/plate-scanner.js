@@ -2,27 +2,14 @@ import {createWorker} from 'tesseract.js';
 import {readPlateZoomRange,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from './plate-distance.js';
 
 const labels={
- en:['Moroccan Plate Scanner','Search Moroccan plate (e.g. 12345 أ 7)','Point camera at the entire Moroccan plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
- ar:['قارئ لوحات السيارات المغربية','قلب على لوحة بحال 12345 أ 7','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','مطابقة · تصورات السيارة','الكاميرا غير متاحة','أول مرة يمكن تحتاج تحميل نموذج OCR','بلا بحث'],
- fr:['Scanner des plaques marocaines','Chercher une plaque (ex. 12345 أ 7)','Cadrez la plaque marocaine entière','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut se télécharger au premier lancement','Aucune cible']
+ en:['Plate Scanner','Search for a plate (e.g. 12345 A 7)','Point the camera at the whole plate','Plate saved','Match found · photo captured','Camera unavailable','OCR model may download on first use','No target'],
+ ar:['قارئ اللوحات','ابحث عن لوحة (مثال 12345 أ 7)','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','تلقات مطابقة · تصوّرات السيارة','الكاميرا غير متاحة','أول استعمال يمكن يحتاج تحميل نموذج القراءة','ما كاين حتى رقم للبحث'],
+ fr:['Lecteur de plaques','Rechercher une plaque (ex. 12345 A 7)','Cadrez la plaque entière','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut être téléchargé au premier usage','Aucune cible'],
+ es:['Lector de matrículas','Buscar matrícula (ej. 12345 A 7)','Enfoca la matrícula completa','Matrícula guardada','Coincidencia · foto capturada','Cámara no disponible','El modelo OCR puede descargarse en el primer uso','Sin objetivo'],
+ de:['Kennzeichenleser','Kennzeichen suchen (z. B. 12345 A 7)','Ganzes Kennzeichen erfassen','Kennzeichen gespeichert','Übereinstimmung · Foto aufgenommen','Kamera nicht verfügbar','OCR-Modell wird eventuell beim ersten Mal geladen','Kein Suchziel'],
+ pt:['Leitor de matrículas','Procurar matrícula (ex. 12345 A 7)','Aponte a câmara para toda a matrícula','Matrícula guardada','Correspondência · fotografia capturada','Câmara indisponível','O modelo OCR poderá ser descarregado no primeiro uso','Sem alvo'],
+ it:['Lettore targhe','Cerca targa (es. 12345 A 7)','Inquadra tutta la targa','Targa salvata','Corrispondenza · foto acquisita','Fotocamera non disponibile','Il modello OCR potrebbe essere scaricato al primo uso','Nessun obiettivo']
 };
-// Standard Morocco registration: serial 1–99999 · one official series letter · province 1–99.
-// Since August 2026, Arabic and Latin equivalents may appear together with the MA emblem.
-// Keep older Arabic-only plates readable. Never invent an unreadable province/series.
-export const MOROCCAN_PLATE_SERIES=Object.freeze({
- 'أ':'A','ا':'A','آ':'A','إ':'A','ب':'B','د':'D','ه':'H',
- 'و':'E','ط':'T','ي':'Y','ك':'K','ل':'L','م':'M','ن':'N',
- 'ص':'C','ف':'F','ر':'R','س':'S'
-});
-const officialLatin=new Set(Object.values(MOROCCAN_PLATE_SERIES));
-const digitValue=d=>{
- const a='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
- return a>=0?String(a):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-};
-const cleanedText=value=>String(value??'').normalize('NFKC')
- .replace(/[٠-٩۰-۹]/g,digitValue)
- .replace(/[\u0640\u064b-\u065f\u0670\u200e\u200f]/g,'')
- .replace(/[إآا]/g,'أ').toUpperCase();
 export function normalizePlate(value){
  return cleanedText(value).replace(/[^A-Z0-9\u0621-\u064a]/g,'');
 }
@@ -161,7 +148,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(!watch.includes(value)&&watch.length<20){watch.push(value);persistWatch();renderWatch();}
   search.value='';search.focus();
  });
- addTarget.title=language==='ar'?'إضافة رقم للمراقبة':'Add watch target';
+ addTarget.title=({en:'Add watch target',ar:'إضافة لوحة للمراقبة',fr:'Ajouter une plaque suivie',es:'Añadir matrícula vigilada',de:'Kennzeichen zur Suche hinzufügen',pt:'Adicionar matrícula à pesquisa',it:'Aggiungi targa da monitorare'})[language]||'Add watch target';
  search.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();addTarget.click();}
  });
