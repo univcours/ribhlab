@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
 import {createScanLedger,scannerLogNames} from '../src/scan-ledger.js';
-import {normalizePlate,plateCandidates,matchesPlate,matchingPlateTargets,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
+import {normalizePlate,plateCandidates,moroccanPlateCandidates,plateComparisonKey,matchesPlate,matchingPlateTargets,plateOcrLines,plateBoxInView} from '../src/plate-scanner.js';
 import {newScanDeduplicator,safeScannedUrl,decodeFormat} from '../src/barcode-scanner.js';
 import {readFileSync} from 'node:fs';
 
@@ -200,4 +200,27 @@ test('UltraScan frames reflect actual live symbols, never imported photo coordin
  assert.ok(src.includes("entry.format+'\\u0000'+entry.value"));
  assert.ok(src.includes("dedup.absence();"));
  assert.ok(src.includes('if(drawOutline(outline,video'));
+});
+
+test('Moroccan plates: Arabic/Latin series, new 2026 MA badge, province and Arabic digits',()=>{
+ assert.deepEqual(moroccanPlateCandidates('MA 12345 - أ/A - 7'),['12345أ7']);
+ assert.deepEqual(moroccanPlateCandidates('MA 00012 - و/E - 20'),['00012و20']);
+ assert.deepEqual(moroccanPlateCandidates('١٢٣٤٥ - ب - ٢٠'),['12345ب20']);
+ assert.deepEqual(moroccanPlateCandidates('MA 12345 ب B 20'),['12345ب20']);
+ assert.deepEqual(moroccanPlateCandidates('7 | أ | 12345'),['12345أ7']);
+ assert.deepEqual(moroccanPlateCandidates('1 - أ - 7'),['1أ7']);
+ assert.deepEqual(moroccanPlateCandidates('12345 - A - 99'),['12345A99']);
+ assert.deepEqual(moroccanPlateCandidates('MA 12345 أ/A 7\n98765 د/D 20'),['12345أ7','98765د20']);
+});
+test('Moroccan recognition rejects invalid/mismatched plates rather than inventing identifiers',()=>{
+ for(const text of ['0-أ-7','12345-أ-0','123456-أ-7','12345-أ-100','12345-ج-7','MA 12345 أ/B 7','HELLO THERE'])
+  assert.deepEqual(moroccanPlateCandidates(text),[],text);
+});
+test('Arabic and official Latin series are equivalent in live search and watchlist',()=>{
+ assert.equal(plateComparisonKey('١٢٣٤٥ - أ - ٧'),plateComparisonKey('12345-A-7'));
+ assert.equal(plateComparisonKey('12345-و-20'),plateComparisonKey('12345-E-20'));
+ assert.equal(matchesPlate('12345أ7','12345A7'),true);
+ assert.equal(matchesPlate('00012و20','00012E20'),true);
+ assert.deepEqual(matchingPlateTargets('12345أ7',['12345A7','45أ7']),['12345A7','45أ7']);
+ assert.equal(matchesPlate('12345أ7','A7'),false);
 });

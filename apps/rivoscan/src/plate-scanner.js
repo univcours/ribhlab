@@ -1,43 +1,81 @@
 import {createWorker} from 'tesseract.js';
 
 const labels={
- en:['Plate Scanner Pro','Search plate / digits while camera is live','Point camera toward a license plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
- ar:['قارئ لوحات السيارات Pro','بحث عن لوحة أو أرقام والكاميرا خدامة','وجّه الكاميرا نحو لوحة السيارة','تسجلات اللوحة','مطابقة · تصورات السيارة','الكاميرا غير متاحة','أول مرة يمكن تحتاج تحميل نموذج OCR','بلا بحث'],
- fr:['Scanner de plaques Pro','Rechercher une plaque ou des chiffres en direct','Cadrez une plaque','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut se télécharger au premier lancement','Aucune cible']
+ en:['Moroccan Plate Scanner','Search Moroccan plate (e.g. 12345 أ 7)','Point camera at the entire Moroccan plate','Saved plate','Target matched · photo captured','Camera unavailable','OCR model may download on first launch','No target'],
+ ar:['قارئ لوحات السيارات المغربية','قلب على لوحة بحال 12345 أ 7','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','مطابقة · تصورات السيارة','الكاميرا غير متاحة','أول مرة يمكن تحتاج تحميل نموذج OCR','بلا بحث'],
+ fr:['Scanner des plaques marocaines','Chercher une plaque (ex. 12345 أ 7)','Cadrez la plaque marocaine entière','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut se télécharger au premier lancement','Aucune cible']
 };
+// Standard Morocco registration: serial 1–99999 · one official series letter · province 1–99.
+// Since August 2026, Arabic and Latin equivalents may appear together with the MA emblem.
+// Keep older Arabic-only plates readable. Never invent an unreadable province/series.
+export const MOROCCAN_PLATE_SERIES=Object.freeze({
+ 'أ':'A','ا':'A','آ':'A','إ':'A','ب':'B','د':'D','ه':'H',
+ 'و':'E','ط':'T','ي':'Y','ك':'K','ل':'L','م':'M','ن':'N',
+ 'ص':'C','ف':'F','ر':'R','س':'S'
+});
+const officialLatin=new Set(Object.values(MOROCCAN_PLATE_SERIES));
+const digitValue=d=>{
+ const a='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+ return a>=0?String(a):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+};
+const cleanedText=value=>String(value??'').normalize('NFKC')
+ .replace(/[٠-٩۰-۹]/g,digitValue)
+ .replace(/[\u0640\u064b-\u065f\u0670\u200e\u200f]/g,'')
+ .replace(/[إآا]/g,'أ').toUpperCase();
 export function normalizePlate(value){
- return String(value??'').normalize('NFKC').replace(/[٠-٩۰-۹]/g,d=>{
-  const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
-  return i>=0?String(i):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
- }).toUpperCase().replace(/[^A-Z0-9\u0621-\u064A]/g,'');
+ return cleanedText(value).replace(/[^A-Z0-9\u0621-\u064a]/g,'');
+}
+const seriesCode=letter=>MOROCCAN_PLATE_SERIES[letter]||(officialLatin.has(letter)?letter:null);
+const seriesLetter=letter=>MOROCCAN_PLATE_SERIES[letter]?letter:null;
+export function plateComparisonKey(value){
+ // Enable matching Arabic-only and 2026 Arabic/Latin bilingual plates.
+ const valuePlate=normalizePlate(value);
+ return Array.from(valuePlate).map(letter=>seriesCode(letter)||letter).join('')
+  .replace(/^MA(?=\d)/,'');
+}
+const series='[أبدهوطيكلمنصفرسABDHETYKLMNCFRS]';
+const between='[\\s\\-|/:·]*';
+const divided='[\\s\\-|/:·]+';
+const forward=new RegExp('(?:^|[^\\p{L}\\p{N}])(?:MA\\s*)?(\\d{1,5})'+between+'('+series+')(?:'+divided+'('+series+'))?'+between+'(\\d{1,2})(?=$|[^\\p{L}\\p{N}])','gu');
+const reversed=new RegExp('(?:^|[^\\p{L}\\p{N}])(\\d{1,2})'+divided+'('+series+')(?:'+divided+'('+series+'))?'+divided+'(\\d{1,5})(?=$|[^\\p{L}\\p{N}])','gu');
+// Native log values stay Unicode-safe so Arabic series can be exported to Excel/TXT.
+export function moroccanPlateCandidates(text){
+ const raw=cleanedText(text);
+ const found=new Map();
+ const add=(serial,first,second,province)=>{
+  const order=Number(serial),region=Number(province);
+  if(!Number.isInteger(order)||order<1||order>99999||
+     !Number.isInteger(region)||region<1||region>99)return;
+  const left=seriesCode(first),right=second?seriesCode(second):null;
+  if(!left||(second&&left!==right))return;
+  const letter=seriesLetter(first)||seriesLetter(second)||first;
+  const candidate=normalizePlate(serial+letter+province);
+  const key=plateComparisonKey(candidate);
+  // Prefer displaying the real Arabic character when dual-script OCR finds it.
+  if(!found.has(key)||(!/[\u0621-\u064a]/.test(found.get(key))&&/[\u0621-\u064a]/.test(candidate)))
+   found.set(key,candidate);
+ };
+ for(const match of raw.matchAll(forward))add(match[1],match[2],match[3],match[4]);
+ for(const match of raw.matchAll(reversed))add(match[4],match[2],match[3],match[1]);
+ return [...found.values()];
 }
 export function plateCandidates(text){
- const raw=String(text||'').normalize('NFKC')
-  .replace(/[٠-٩۰-۹]/g,d=>{
-   const i='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
-   return String(i>=0?i:'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-  }).toUpperCase();
- const out=[];
- for(const line of raw.split(/\n+/)){
-  const patterns=[
-   /(?:^|\s)(\d{2,6})[\s\-|]*([A-Z\u0621-\u064A])[\s\-|]*(\d{1,2})(?:\s|$)/g,
-   /(?:^|\s)([A-Z]{1,3})[\s\-]*([0-9]{3,6})(?:\s|$)/g
-  ];
-  for(const pattern of patterns){
-   for(const match of line.matchAll(pattern)){
-    const plate=normalizePlate(match.slice(1).join(''));
-    if(plate.length>=5&&plate.length<=12&&!out.includes(plate))out.push(plate);
-   }
-  }
+ const matches=moroccanPlateCandidates(text);
+ if(matches.length)return matches;
+ // Legacy international plates remain supported without mislabelling them Moroccan.
+ const raw=cleanedText(text),out=[];
+ for(const match of raw.matchAll(/(?:^|[^\p{L}\p{N}])([A-Z]{1,3})[\s-]+(\d{3,6})(?=$|[^\p{L}\p{N}])/gu)){
+  if(match[1]==='MA')continue;
+  const plate=normalizePlate(match[1]+match[2]);
+  if(plate.length>=5&&!out.includes(plate))out.push(plate);
  }
  return out;
 }
 export function matchesPlate(plate,query){
- const p=normalizePlate(plate),q=normalizePlate(query);
+ const p=plateComparisonKey(plate),q=plateComparisonKey(query);
  return q.length>=3&&p.includes(q);
 }
-
-// Manual search stays live. Pinned targets are local-only, not uploaded.
+// Manual search stays live. Pinned targets are stored on this device only.
 export function matchingPlateTargets(plate,targets=[]){
  const qs=Array.isArray(targets)?targets:[targets];
  return [...new Set(qs.map(normalizePlate).filter(q=>q.length>=3&&matchesPlate(plate,q)))];
@@ -197,7 +235,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    const canvas=snapshot();
    const roi={x:Math.round(canvas.width*.10),y:Math.round(canvas.height*.29),
     w:Math.round(canvas.width*.80),h:Math.round(canvas.height*.43)};
-   const scale=Math.min(1.35,1100/Math.max(roi.w,roi.h));
+   const scale=Math.min(1.65,1600/Math.max(roi.w,roi.h));
    const small=document.createElement('canvas');
    small.width=Math.max(1,Math.round(roi.w*scale));
    small.height=Math.max(1,Math.round(roi.h*scale));
@@ -209,7 +247,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    const candidates=plateCandidates(data.text);
    const now=Date.now();
    let framed=false;
-   if(Number(data.confidence)>=55){
+   if(Number(data.confidence)>=40){
     const lines=plateOcrLines(data.blocks);
     for(const plate of candidates){
      const line=lines.find(row=>plateCandidates(row.text).includes(plate));
