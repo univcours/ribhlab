@@ -32,3 +32,13 @@ test('Offline Android device continues using its installed app: no update modal'
  assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return false;\}/);
  assert.match(source,/if\(!playUpdateOnline\(\)\)\{clearPrompt\(\);return;\}/);
 });
+
+test('All seven supported languages offer an optional update, not an automatic forced update',()=>{
+ const source=read('src/play-updates.js');
+ for(const lang of ['en','ar','fr','es','de','pt','it'])
+  assert.match(source,new RegExp('\\n '+lang+':\\{title:'));
+ assert.match(source,/quit\.addEventListener\('click',\(\)=>clearPrompt\(\)\)/);
+ assert.doesNotMatch(source,/document\.body\.append\(overlay\);installedPrompt=true;update\.focus\(\);\s*void run\(\)/);
+ assert.match(source,/update\.addEventListener\('click',run\)/);
+ assert.match(source,/window\.addEventListener\('offline',\(\)=>clearPrompt\(\)\)/);
+});
