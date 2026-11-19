@@ -114,7 +114,7 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
           AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)"
           test -x "$APKSIGNER" && test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='4' versionName='1.0.3'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='5' versionName='1.0.4'"
           # Must contain the real AdMob App ID, never Google's TEST ID.
           "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -F "$TRADINGFIEW_ADMOB_APP_ID"
 
