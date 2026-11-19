@@ -1,0 +1,368 @@
+/* RivoScan Premium Turquoise: approved mockup adapted to functioning controls.
+   Loaded last. Real files and native scanner, no invented thumbnails or fake ads. */
+:root{
+ --premium-ink:#142842;--premium-dark:#062956;--premium-main:#07489d;
+ --premium-teal:#0a5ecb;--premium-paper:#f2f6fb;--premium-edge:#cfdbea;
+ color-scheme:light;
+}
+html,body,#app,body.rivo-native-android{background:#f0f4fa!important;color:#142842!important}
+#app .rivo-dark-ui,#app .rivo-dark-ui .main{
+ background:linear-gradient(160deg,#fafcff,#ebf1f8 56%,#f4f7fa)!important;color:#142842!important;
+}
+#app .rivo-dark-ui .content{color:#142842!important;max-width:1170px;margin-inline:auto}
+#app .rivo-dark-ui .topbar{
+ background:#ffffffef!important;border-bottom:1px solid #d2dcea!important;
+ box-shadow:0 3px 20px #072c5d0f!important;backdrop-filter:blur(15px);
+}
+#app .rivo-dark-ui .crumb strong{color:#072d5f!important;-webkit-text-fill-color:#072d5f!important}
+#app .rivo-premium-badge{
+ display:flex;align-items:center;gap:4px;min-height:35px;padding:0 10px;
+ color:#083571!important;background:linear-gradient(145deg,#e9f1fb,#c8d9f0)!important;
+ border:1px solid #8dacd5!important;border-radius:999px;box-shadow:0 3px 10px #073e8620;
+ font-size:12px;font-weight:900;
+}
+#app .rivo-premium-home{width:100%;max-width:100%;min-width:0;padding-bottom:12px}
+#app .rivo-premium-hero{
+ isolation:isolate;position:relative;overflow:hidden;box-sizing:border-box;
+ padding:21px;border-radius:25px;min-height:185px;
+ display:flex;flex-direction:column;gap:14px;
+ border:1px solid #0e5dc5!important;
+ background:radial-gradient(ellipse at 8% 12%,#2f84f463,transparent 48%),
+ linear-gradient(112deg,#083d83,#072c5d 57%,#042b4b)!important;
+ box-shadow:0 16px 27px #0830642b,inset 0 1px 0 #ffffff48!important;color:#fff!important;
+}
+#app .rivo-premium-hero:after{
+ content:"";position:absolute;z-index:-1;top:-100px;inset-inline-end:-75px;
+ width:215px;height:215px;border:21px solid #4c95f522;border-radius:50%;pointer-events:none;
+}
+#app .rivo-hero-top{display:flex;gap:12px;align-items:flex-start}
+#app .rivo-hero-icon{
+ flex:none;display:grid;place-items:center;width:59px;height:59px;border-radius:19px;
+ color:#eaf3ff;background:linear-gradient(135deg,#1462c8,#063459);
+ border:1px solid #d5e7ff63;box-shadow:0 0 21px #146ee45e,inset 0 1px 2px #ffffff75;
+}
+#app .rivo-hero-copy{flex:1;min-width:0}
+#app .rivo-hero-copy small{font-size:10px;letter-spacing:1.3px;color:#b7d3f7;font-weight:900}
+#app .rivo-hero-copy h1{margin:4px 0 6px;color:#fff!important;font-size:clamp(18px,4.5vw,24px);line-height:1.25;font-weight:900}
+#app .rivo-hero-copy p{margin:0;color:#dde9f8;font-size:12px;line-height:1.6}
+#app .rivo-hero-timer{
+ flex:none;display:flex;align-items:center;gap:4px;white-space:nowrap;
+ padding:8px 10px;border:1px solid #ffffff5a;border-radius:999px;
+ background:#ffffff20;font-size:12px;font-weight:900;color:#fff;
+}
+#app .rivo-hero-action{
+ align-self:center;width:min(100%,370px);min-height:48px;padding:11px 17px;
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ background:linear-gradient(180deg,#fff2c2,#ffd96e 50%,#edae39)!important;
+ border:1px solid #fff3bd!important;border-radius:999px;
+ color:#6d4407!important;font-weight:900;font-size:14px;
+ box-shadow:0 7px 20px #01163260,0 4px 0 #be8c3b2e!important;
+}
+#app .rivo-hero-action:active{transform:translateY(2px)}
+#app .rivo-hero-note{text-align:center;font-size:10px;color:#d0e0f6}
+#app .rivo-premium-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ margin:25px 0 12px;
+}
+#app .rivo-premium-heading h2{font-size:19px;font-weight:900;line-height:1.3;color:#10305a!important;margin:0 0 4px}
+#app .rivo-premium-heading p{font-size:12px;color:#667486;margin:0;line-height:1.4}
+#app .rivo-premium-heading button{
+ border:0;background:transparent!important;color:#06418e!important;
+ font-size:12px;font-weight:850;padding:9px 0;white-space:nowrap;
+ display:inline-flex;align-items:center;gap:4px;
+}
+#app .rivo-premium-tools{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+}
+#app .rivo-premium-tile{
+ box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ position:relative;min-width:0;min-height:117px;gap:10px;padding:13px 7px;
+ border:1px solid #d7e0eb!important;border-radius:20px;
+ background:linear-gradient(145deg,#fff,#f3f6fb)!important;
+ color:#1a365b!important;text-align:center;
+ box-shadow:0 5px 16px #04255012!important;
+ transition:transform .15s ease,box-shadow .15s ease;
+}
+#app .rivo-premium-tile:active{transform:scale(.975)}
+#app .rivo-premium-tile-icon{
+ display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:16px;
+ color:#084089;background:#e1eaf6;
+}
+#app .rivo-premium-tile strong{
+ color:#193457!important;font-size:clamp(10px,2.8vw,13px);font-weight:850;
+ line-height:1.3;overflow-wrap:anywhere;
+}
+#app .rivo-premium-tile-main{
+ background:linear-gradient(135deg,#095cc9 0%,#07489e 60%,#043678)!important;
+ border-color:#0d5abe!important;box-shadow:0 9px 18px #063a7e38!important;
+}
+#app .rivo-premium-tile-main .rivo-premium-tile-icon{color:#fff;background:#ffffff25}
+#app .rivo-premium-tile-main strong{color:#fff!important}
+#app .rivo-premium-lock{
+ position:absolute;inset-inline-end:5px;top:5px;
+ background:#fff3d7;color:#9e661a;border-radius:999px;padding:3px 5px;
+ font-size:9px;font-weight:900;display:flex;align-items:center;gap:2px;
+}
+#app .rivo-premium-search{
+ box-sizing:border-box;display:flex;align-items:center;gap:9px;width:100%;min-height:48px;
+ padding:0 14px;margin:0 0 12px;border:1px solid #cdd9e9!important;border-radius:15px;
+ background:#fff!important;color:#0e4791;box-shadow:0 3px 12px #072b5a10;
+}
+#app .rivo-premium-search input{flex:1;min-width:0;background:transparent;border:0!important;outline:0!important;font-size:13px;color:#1c3350!important}
+#app .rivo-premium-recent{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+ padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#app .rivo-premium-recent .rivo-recent-card{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ grid-template-rows:auto auto auto!important;
+ min-width:0;min-height:136px;padding:12px!important;border-radius:18px!important;
+ background:#fff!important;border:1px solid #d3ddea!important;
+ box-shadow:0 4px 13px #102c500f!important;overflow:hidden;
+}
+#app .rivo-premium-recent .rivo-file-thumb{
+ grid-column:1/-1;grid-row:1;width:40px!important;height:43px!important;
+}
+#app .rivo-premium-recent .recent-file-meta{grid-column:1/-1;grid-row:2;min-width:0}
+#app .rivo-premium-recent .recent-file-meta strong{
+ font-size:11px!important;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ color:#23364e!important;
+}
+#app .rivo-premium-recent .recent-file-meta small{
+ display:block;font-size:9px!important;color:#727e8e!important;line-height:1.35;overflow:hidden;
+}
+#app .rivo-premium-recent .rivo-recent-check{grid-column:2;grid-row:1;justify-self:end}
+#app .rivo-premium-recent .rivo-expand-card{grid-column:1;grid-row:3;justify-self:start}
+#app .rivo-premium-recent .rivo-recent-actions{
+ grid-column:1/-1!important;grid-row:4;display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 0;
+}
+#app .rivo-premium-recent .rivo-recent-actions button{
+ flex:1 1 40%;min-width:0;min-height:35px!important;font-size:10px!important;padding:5px 4px!important;
+}
+#app .rivo-premium-recent .rivo-recent-actions svg{width:14px;height:14px}
+#app .rivo-premium-recent .rivo-recent-card.doc-selected{
+ background:#e6eef9!important;border:2px solid #064daa!important;
+}
+#app .rivo-library-chips{display:flex;gap:8px;margin:1px 0 13px;flex-wrap:wrap}
+#app .rivo-library-chips button{
+ flex:1;min-width:0;min-height:40px;padding:8px 13px;border-radius:999px;
+ background:#f3f6fb;color:#26456e;border:1px solid #cfd9e7;
+ font-size:12px;font-weight:850;
+}
+#app .rivo-library-chips button.active{
+ background:linear-gradient(135deg,#0950ad,#04387d)!important;
+ border-color:#073f89!important;color:#fff!important;
+}
+#app .rivo-dark-ui .document-entry{border-color:#cfdae9!important;border-radius:17px!important}
+#app .rivo-dark-ui .document-entry.doc-selected{background:#e6effa!important;border-color:#06489e!important}
+#app .rivo-dark-ui .rivo-hub-tile{
+ border:1px solid #d1ddec!important;background:linear-gradient(150deg,#fff,#eff4fa)!important;
+ border-radius:19px!important;
+}
+#app .rivo-dark-ui .rivo-hub-tile strong{color:#1b3455!important}
+#app .rivo-dark-ui .rivo-hub-tile .tool-icon{background:#e0eaf8;color:#08428f}
+.rivo-editor-overlay .rivo-editor-retake{
+ min-height:44px;white-space:nowrap;padding:8px 15px;border-radius:14px!important;
+ background:#e3edfa!important;border:1px solid #8dadd6!important;
+ color:#063675!important;font-weight:900!important;
+}
+@media(max-width:780px){
+ #app .rivo-dark-ui .mobilebar{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:center!important;gap:5px!important;min-height:73px!important;
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom,0px))!important;
+  background:#fffffff7!important;border-top:1px solid #cfdbea!important;
+  box-shadow:0 -5px 17px #0c2e5a16!important;
+ }
+ #app .rivo-dark-ui .mobilebar button{
+  min-width:0!important;min-height:53px!important;
+  font-size:10px!important;color:#647183!important;
+ }
+ #app .rivo-dark-ui .mobilebar button.active{
+  color:#083b7e!important;background:#e1ebf7!important;border-color:#a7bfde!important;
+ }
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  display:grid!important;place-items:center!important;
+  position:fixed!important;left:50%!important;right:auto!important;
+  bottom:calc(83px + env(safe-area-inset-bottom,0px))!important;
+  width:70px!important;height:70px!important;min-height:70px!important;
+  padding:0!important;margin:0!important;
+  transform:translateX(-50%)!important;border:4px solid #edf4fc!important;
+  border-radius:50%!important;z-index:65!important;
+  background:radial-gradient(circle at 30% 18%,#3987ee,#0a57bb 46%,#04377a)!important;
+  color:#fff!important;box-shadow:0 9px 21px #04387c5c,0 0 0 4px #c8dbf5a8!important;
+ }
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab svg{width:31px!important;height:31px!important}
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab:active{
+  transform:translateX(-50%) scale(.95)!important;
+ }
+ #app .rivo-dark-ui .content{padding-bottom:calc(178px + env(safe-area-inset-bottom,0px))!important}
+ #app .rivo-premium-hero{padding:16px 13px;border-radius:22px}
+ #app .rivo-hero-top{gap:9px}
+ #app .rivo-hero-icon{width:48px;height:48px;border-radius:15px}
+ #app .rivo-hero-icon svg{width:26px;height:26px}
+ #app .rivo-hero-timer{padding:6px 7px;font-size:10px}
+ #app .rivo-premium-tools{gap:8px}
+ #app .rivo-premium-tile{min-height:107px;border-radius:17px;padding:12px 5px}
+ #app .rivo-premium-tile-icon{width:43px;height:43px;border-radius:14px}
+ #app .rivo-premium-tile-icon svg{width:25px;height:25px}
+}
+@media(max-width:380px){
+ #app .rivo-premium-hero{padding:13px 10px}
+ #app .rivo-hero-copy p{font-size:11px}
+ #app .rivo-premium-tools{gap:6px}
+ #app .rivo-premium-tile{padding:10px 3px}
+ #app .rivo-premium-recent{gap:7px}
+}
+@media(min-width:781px){
+ #app .rivo-premium-tools{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #app .rivo-premium-recent{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-premium-tile{transition:none!important}
+}
+
+/* Compact top bar: keep Android status/header legible on 360 px screens. */
+#app .rivo-dark-ui .topbar{min-width:0;gap:7px}
+#app .rivo-dark-ui .topbar .crumb{flex:1 1 auto;min-width:0;gap:6px}
+#app .rivo-dark-ui .topbar .topright{flex:none;gap:5px}
+#app .rivo-dark-ui .topbar .crumb strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:440px){
+ #app .rivo-dark-ui .topbar .rivo-header-feature{display:none!important}
+ #app .rivo-dark-ui .topbar .rivo-header-action{width:37px;min-width:37px;padding:0!important}
+ #app .rivo-dark-ui .topbar .rivo-premium-badge{padding:0 7px;min-height:33px;font-size:11px}
+ #app .rivo-dark-ui .topbar:has(.rivo-header-back) .rivo-premium-badge{display:none!important}
+ #app .rivo-dark-ui .topbar .crumb strong{font-size:15px}
+ #app .rivo-dark-ui .topbar .rivo-build-version{font-size:9px;padding:4px 5px}
+}
+@media(max-width:345px){
+ #app .rivo-dark-ui .topbar .rivo-premium-badge{display:none!important}
+}
+
+/* The camera is a real FAB, separate from the four-item navigation bar.
+   On tablet/desktop it stays floating at the bottom corner. */
+#app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:grid!important;place-items:center!important;
+ position:fixed!important;right:24px!important;left:auto!important;bottom:24px!important;
+ width:68px!important;height:68px!important;border-radius:50%!important;
+ background:radial-gradient(circle at 30% 18%,#3987ee,#0a57bb 46%,#04377a)!important;
+ border:4px solid #ecf3fc!important;color:#fff!important;
+ box-shadow:0 9px 22px #083a7c50!important;z-index:65!important;
+}
+@media(max-width:780px){
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  left:50%!important;right:auto!important;
+  bottom:calc(83px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateX(-50%)!important;width:70px!important;height:70px!important;
+ }
+}
+/* Do not block multi-select actions, modals, saved-file preview or edit flows. */
+body.rivo-multiselect #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-reward-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-editor-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.doc-detail-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.bulk-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-release-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-code-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-id-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab,
+body:has(.rivo-perfectscan-modal) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:none!important;
+}
+
+/* Compact native-looking advertising indicator; no countdown or access duration on cards. */
+#app .rivo-premium-lock{letter-spacing:.4px;font-size:10px;font-weight:900;padding:3px 7px}
+#app .rivo-hero-timer{min-width:51px;justify-content:center;letter-spacing:.6px}
+#app .rivo-video-access{background:#fff2d7;color:#99620e;border:1px solid #f5d99e;font-size:10px;font-weight:900;padding:3px 8px;letter-spacing:.4px}
+
+/* v0.43.4: compact ad-supported AI settings — collapsed by default.
+   The explanatory/reward action remains available only after opening the control. */
+#app .rivo-ai-compact{
+ display:block;box-sizing:border-box;width:100%;margin:2px 0 9px;
+ border:1px solid #a4bdde;border-radius:17px;
+ background:linear-gradient(110deg,#eff5fd 0%,#ffffff 100%);
+ box-shadow:0 5px 15px #07336d14;
+ overflow:hidden;
+}
+#app .rivo-ai-toggle{
+ display:flex;align-items:center;gap:11px;width:100%;min-width:0;box-sizing:border-box;
+ min-height:57px;padding:8px 11px;border:0!important;border-radius:16px!important;
+ background:transparent!important;color:#092c5a!important;text-align:start;
+ box-shadow:none!important;touch-action:manipulation;
+}
+#app .rivo-ai-toggle:focus-visible{outline:3px solid #0f54af;outline-offset:-3px}
+#app .rivo-ai-symbol{
+ width:39px;height:39px;display:grid;place-items:center;flex:none;
+ background:linear-gradient(145deg,#1a6ad3,#05397d);color:white;
+ border:1px solid #0e4b9b;border-radius:12px;box-shadow:0 3px 10px #0638793b;
+}
+#app .rivo-ai-name{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+#app .rivo-ai-name small{color:#567296!important;font-size:9px;font-weight:850;letter-spacing:.45px}
+#app .rivo-ai-name strong{
+ color:#082a56!important;font-size:13px;font-weight:850;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#app .rivo-ai-status{
+ display:inline-grid;place-items:center;flex:none;min-width:31px;min-height:23px;
+ padding:0 6px;border-radius:999px;background:#fff1d0;border:1px solid #f2d99c;
+ color:#805614!important;font-size:10px;font-weight:900;letter-spacing:.7px;
+}
+#app .rivo-ai-chevron{
+ display:grid;place-items:center;flex:none;color:#0c3a77;
+ transform:rotate(-90deg);transition:transform .18s ease;
+}
+#app .rivo-ai-toggle[aria-expanded="true"] .rivo-ai-chevron{transform:rotate(90deg)}
+#app .rivo-ai-details[hidden]{display:none!important}
+#app .rivo-ai-details{
+ display:flex;flex-direction:column;gap:10px;
+ padding:0 13px 13px;border-top:1px solid #d8e2ee;
+ background:linear-gradient(180deg,#ffffff,#f1f6fc);
+ color:#213b5c;
+}
+#app .rivo-ai-details p{margin:12px 0 0;font-size:12px;line-height:1.55;color:#475c78}
+#app .rivo-ai-watch{
+ display:flex;justify-content:center;align-items:center;gap:8px;
+ min-height:43px;width:100%;padding:9px 14px;border-radius:13px!important;
+ border:1px solid #e0bd69!important;
+ background:linear-gradient(180deg,#ffedb8,#ffd66e)!important;
+ color:#754f15!important;font-weight:850;font-size:12px;
+ box-shadow:0 4px 11px #bb934224!important;
+}
+#app .rivo-ai-details small{
+ display:flex;align-items:center;justify-content:center;gap:5px;
+ font-size:10px;color:#687b93;
+}
+@media(max-width:780px){
+ /* Leave a central notch for the lowered, fully visible camera circle. */
+ #app .rivo-dark-ui .mobilebar{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) 76px minmax(0,1fr) minmax(0,1fr)!important;
+  column-gap:2px!important;overflow:visible!important;
+  min-height:73px!important;
+  padding-bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;
+ }
+ #app .rivo-dark-ui .mobilebar button:nth-of-type(1){grid-column:1}
+ #app .rivo-dark-ui .mobilebar button:nth-of-type(2){grid-column:2}
+ #app .rivo-dark-ui .mobilebar button:nth-of-type(3){grid-column:4}
+ #app .rivo-dark-ui .mobilebar button:nth-of-type(4){grid-column:5}
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+  position:fixed!important;display:grid!important;place-items:center!important;
+  left:50%!important;right:auto!important;
+  width:70px!important;height:70px!important;min-width:70px!important;min-height:70px!important;
+  box-sizing:border-box!important;
+  bottom:calc(26px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateX(-50%)!important;overflow:visible!important;
+  border:4px solid #eef4fc!important;border-radius:50%!important;
+  clip-path:none!important;z-index:68!important;
+ }
+ #app .rivo-dark-ui .floating-scan.rivo-camera-fab svg{width:30px!important;height:30px!important}
+ #app .rivo-dark-ui .content{padding-bottom:calc(126px + env(safe-area-inset-bottom,0px))!important}
+}
+@media(max-width:359px){
+ #app .rivo-dark-ui .mobilebar{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) 74px minmax(0,1fr) minmax(0,1fr)!important;
+ }
+ #app .rivo-ai-toggle{gap:7px;padding:8px}
+ #app .rivo-ai-symbol{width:36px;height:36px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-ai-chevron{transition:none}
+}

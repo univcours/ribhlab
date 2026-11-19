@@ -1,0 +1,161 @@
+name: RivoScan Android debug build
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-android.yml'
+  push:
+    branches: [main, feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/**'
+      - '.github/workflows/rivoscan-android.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android-debug:
+    name: Build Android debug APK (not for Play Store production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME/platforms"
+          ls "$ANDROID_HOME/platforms"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate JavaScript source and PDF page selection
+        run: npm run check && npm test
+      - name: Verify installer syntax and strict no-downgrade version guard
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            'install-rivoscan-android.ps1', [ref]$tokens, [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List | Out-Host
+            throw 'Installer contains PowerShell syntax errors.'
+          }
+          $source = Get-Content 'install-rivoscan-android.ps1' -Raw
+          foreach ($guard in @(
+            'aapt dump badging',
+            'pm path com.ribhlab.rivoscan',
+            '$installed.VersionCode -gt $apkVersionCode',
+            '$installed.VersionCode -eq $apkVersionCode',
+            'RIVOSCAN_REINSTALL_SAME_VERSION',
+            'install -r $apk'
+          )) {
+            if (-not $source.Contains($guard)) {
+              throw "Missing anti-downgrade guard: $guard"
+            }
+          }
+      - name: Bundle offline web assets
+        run: npm run build
+      - name: Generate Android wrapper and synchronize
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Use AGP 9-compatible ProGuard default
+        run: |
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Integrate live camera edges and interactive crop editor
+        shell: pwsh
+        run: ./install-live-scanner.ps1
+      - name: Install Android adaptive and themed RivoScan icon
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Verify adaptive launcher and app identity
+        run: |
+          grep -F 'android:icon="@mipmap/ic_launcher"' android/app/src/main/AndroidManifest.xml
+          grep -F 'android:roundIcon="@mipmap/ic_launcher_round"' android/app/src/main/AndroidManifest.xml
+          grep -F '<adaptive-icon' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'rivoscan_launcher_foreground' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          grep -F 'rivoscan_launcher_monochrome' android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          # Capacitor's generated versionCode may be stale; the LAST applied
+          # RivoScan Gradle override is the actual source of truth in Android Studio.
+          grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
+          grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
+          grep -F 'versionCode=104' rivoscan-version.properties
+          grep -F 'rivo-build-version' src/main.js
+          grep -F 'version as appVersion' src/main.js
+          grep -F 'rivo-library-version' src/main.js
+          grep -F 'versionName=0.45.0' rivoscan-version.properties
+          grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
+      - name: Verify scanner integration, capture review and local log persistence
+        run: |
+          set -euo pipefail
+          JAVA=android/app/src/main/java/com/ribhlab/rivoscan
+          test -f "$JAVA/RivoDocumentsPlugin.java"
+          test -f "$JAVA/RivoCropEditor.java"
+          test -f "$JAVA/RivoLiveScannerActivity.java"
+          grep -Fq 'registerPlugin(RivoDocumentsPlugin.class)' "$JAVA/MainActivity.java"
+          grep -Fq 'registerPlugin(RivoLiveScannerPlugin.class)' "$JAVA/MainActivity.java"
+          grep -Fq 'RivoLiveScannerActivity' android/app/src/main/AndroidManifest.xml
+          grep -Fq 'upsertScannerLog' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'RivoScan_Plates.xlsx' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'RivoScan_Scans.xlsx' "$JAVA/RivoDocumentsPlugin.java"
+          grep -Fq 'editor.setDocument(bitmap,found)' "$JAVA/RivoLiveScannerActivity.java"
+          grep -Fq 'new RivoCropEditor(this)' "$JAVA/RivoLiveScannerActivity.java"
+          grep -Fq 'createScanLedger' src/main.js
+          grep -Fq 'decodeFromVideoElement' src/barcode-scanner.js
+          grep -Fq "spec.type==='plates'" src/main.js
+          grep -Fq 'getOnBackInvokedDispatcher()' "$JAVA/RivoLiveScannerActivity.java"
+          node --check src/scan-ledger.js
+          node --check src/barcode-scanner.js
+          node --check src/plate-scanner.js
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          # The small binary distribution is sufficient for Android builds.
+          # GitHub-hosted Gradle mirrors can temporarily return HTTP 504/timeouts.
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Gradle assembleDebug attempt $attempt failed (network or build error); retrying"
+            sleep $((attempt * 12))
+          done
+          test "$success" -eq 1
+      - name: Inspect final APK for RivoScan identity, launcher and native scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='104' versionName='0.45.0'"
+          "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
+          "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(foreground|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
+          cat /tmp/rivoscan-launcher-badging.txt
+          cat /tmp/rivoscan-launcher-resources.txt
+          unzip -Z -1 "$APK" | grep -E '^classes[0-9]*[.]dex$' > /tmp/rivoscan-dex-list.txt
+          while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
+          grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
+          echo "PASS: APK 0.45.0 contains launcher resources and native scanner classes."
+      - name: Save APK for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-debug-APK
+          path: apps/rivoscan/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

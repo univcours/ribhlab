@@ -1,0 +1,17 @@
+appId: com.ribhlab.rivoscan
+---
+- launchApp
+- tapOn:
+    point: "11%,93%"
+- takeScreenshot: 01-maestro-home
+- tapOn:
+    point: "29%,93%"
+- takeScreenshot: 02-maestro-documents
+- tapOn:
+    point: "71%,93%"
+- takeScreenshot: 03-maestro-tools
+- tapOn:
+    point: "89%,93%"
+- takeScreenshot: 04-maestro-settings
+# The Android WebView is not in the native accessibility hierarchy on some devices.
+# Pixel taps are verified by the separate fail-on-duplicate ADB screenshot workflow.

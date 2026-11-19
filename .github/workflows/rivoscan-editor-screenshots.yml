@@ -1,0 +1,51 @@
+name: RivoScan preview-first editor screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/src/book-split.js'
+      - 'apps/rivoscan/src/perfect-scan-ui.js'
+      - 'apps/rivoscan/src/scan-editor.js'
+      - 'apps/rivoscan/src/rivo-design-system.css'
+      - 'apps/rivoscan/scripts/editor-settings-visual-audit.mjs'
+      - '.github/workflows/rivoscan-editor-screenshots.yml'
+permissions:
+  contents: read
+jobs:
+  capture-editors:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install RivoScan and browser
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps --only-shell chromium
+      - name: Check source and produce actual editor screenshots
+        run: |
+          npm run check
+          npm test
+          npm run dev -- --host 127.0.0.1 > /tmp/rivoscan-editor-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:5173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/editor-settings-visual-audit.mjs
+      - name: Upload all editor screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Edited-Interfaces-Screenshots
+          path: |
+            /tmp/rivoscan-editor-screenshots/
+            /tmp/rivoscan-editor-vite.log
+          retention-days: 14
+          if-no-files-found: warn

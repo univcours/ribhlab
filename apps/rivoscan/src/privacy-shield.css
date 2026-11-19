@@ -1,0 +1,31 @@
+/* RivoScan Privacy Shield — raster-safe masks, never reversible PDF annotations */
+.rivo-shield-overlay{position:fixed;inset:0;z-index:100205;background:#031b22ea;
+ display:flex;align-items:stretch;justify-content:center;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.rivo-shield-dialog{width:100%;max-width:720px;min-width:0;display:flex;flex-direction:column;gap:9px;
+ padding:12px;background:#f5fbfa;color:#143f43;overflow:hidden}
+.rivo-shield-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rivo-shield-head div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rivo-shield-head strong{font-size:17px;color:#056f72}
+.rivo-shield-head small{font-size:11px;color:#587a78;line-height:1.3}
+.rivo-shield-overlay button{border:1px solid #b8e5dc;color:#08746f;background:#e7f8f3;
+ border-radius:10px;padding:7px 10px;min-height:40px;font-size:11px;font-weight:700;
+ white-space:nowrap;flex:0 0 auto}
+.rivo-shield-overlay button:disabled{opacity:.45}
+.rivo-shield-toolbar,.rivo-shield-pages{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;
+ overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:none}
+.rivo-shield-toolbar>*{flex:0 0 auto}
+.rivo-shield-hint,.rivo-shield-note{font-size:11px;color:#456d6c;line-height:1.5;margin:0}
+.rivo-shield-stage{position:relative;flex:1 1 auto;min-height:0;overflow:auto;
+ display:flex;align-items:center;justify-content:center;background:#d4e8e7;border-radius:12px;
+ border:1px solid #9ecac2;padding:7px}
+.rivo-shield-stage canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;
+ object-fit:contain;touch-action:none;box-shadow:0 2px 18px #16423c2a;cursor:crosshair}
+.rivo-shield-empty{font-size:13px;color:#416d69;text-align:center;padding:22px}
+.rivo-shield-pages{justify-content:space-between}
+.rivo-shield-pages span{font-size:12px;white-space:nowrap}
+.rivo-shield-save{flex:none;background:#079b97!important;border-color:#07857f!important;color:white!important;
+ min-height:47px!important;font-size:13px!important}
+.rivo-shield-overlay button:focus-visible,.rivo-shield-stage canvas:focus-visible{
+ outline:2px solid #04ae9e;outline-offset:2px}
+@media(max-height:650px){.rivo-shield-dialog{gap:5px;padding:7px}.rivo-shield-hint{display:none}}
+@media(prefers-reduced-motion:reduce){.rivo-shield-overlay *{scroll-behavior:auto!important}}

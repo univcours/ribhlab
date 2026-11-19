@@ -1,0 +1,110 @@
+name: RivoScan - real Android Google Play screenshot capture
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rivoscan-android-beta]
+    paths:
+      - 'apps/rivoscan/scripts/play-store-screenshots.sh'
+      - 'apps/rivoscan/scripts/capture-ui-audit.sh'
+      - 'apps/rivoscan/scripts/capture-webview-interactions.mjs'
+      - 'apps/rivoscan/tests/ui-consistency.test.js'
+      - 'apps/rivoscan/src/main.js'
+      - 'apps/rivoscan/src/tools-hub.js'
+      - 'apps/rivoscan/tests/tools-hub.test.js'
+      - 'apps/rivoscan/src/compact-turquoise.css'
+      - 'apps/rivoscan/src/plate-scanner.js'
+      - 'apps/rivoscan/src/scan-ledger.js'
+      - 'apps/rivoscan/tests/premium-home.test.js'
+      - 'apps/rivoscan/src/rivoscan-premium-native.css'
+      - 'apps/rivoscan/src/page-manager.js'
+      - 'apps/rivoscan/native/android/MainActivity.kt'
+      - 'apps/rivoscan/install-live-scanner.ps1'
+      - 'apps/rivoscan/src/turquoise-v2.css'
+      - 'apps/rivoscan/src/ui-consistency.css'
+      - 'apps/rivoscan/src/book-split.js'
+      - 'apps/rivoscan/src/formula-ocr.js'
+      - 'apps/rivoscan/src/barcode-scanner.js'
+      - 'apps/rivoscan/src/photo-translation.js'
+      - 'apps/rivoscan/src/id-photo-maker.js'
+      - 'apps/rivoscan/src/pdf-lock.js'
+      - 'apps/rivoscan/src/library-bulk.js'
+      - 'apps/rivoscan/src/page-manager.js'
+      - 'apps/rivoscan/install-live-scanner.ps1'
+      - 'apps/rivoscan/src/turquoise-v2-model.js'
+      - 'apps/rivoscan/src/scan-editor.js'
+      - 'apps/rivoscan/src/filter-laser.css'
+      - 'apps/rivoscan/native/android/RivoLiveScannerActivity.java'
+      - '.github/workflows/rivoscan-play-screenshots.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  capture-real-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/rivoscan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build RivoScan source and Android app
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+          npx cap add android
+          npx cap sync android
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" android/app/build.gradle
+      - name: Install native scanner
+        shell: pwsh
+        run: ./install-live-scanner.ps1
+      - name: Apply exact app branding and version
+        shell: pwsh
+        run: ./apply-rivoscan-branding.ps1
+      - name: Build Android debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          success=0
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon; then success=1; break; fi
+            echo "::warning::Android compile attempt $attempt failed, retrying"
+            sleep $((attempt*10))
+          done
+          test "$success" -eq 1
+          test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run installed RivoScan and capture real screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: bash apps/rivoscan/scripts/play-store-screenshots.sh
+      - name: Attach actual Google Play screenshots for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-REAL-Android-Play-Screenshots
+          path: /tmp/rivoscan-play-screenshots/
+          if-no-files-found: warn
+          retention-days: 14

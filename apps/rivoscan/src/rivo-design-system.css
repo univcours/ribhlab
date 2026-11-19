@@ -1,0 +1,560 @@
+/* RivoScan 2026 — coherent brand UI for real Android WebView screens.
+ * Based on the approved visual direction. Content, documents and scanners are functional,
+ * not decorative mockups. Related actions always remain in one horizontal scroll rail. */
+:root{
+ --rivo-brand-deep:#062956;
+ --rivo-brand:#07479b;
+ --rivo-brand-bright:#0b61d2;
+ --rivo-mint:#e6edf7;
+ --rivo-ice:#f5f8fb;
+ --rivo-ink:#172a43;
+ --rivo-border:#ccd8e8;
+ --rivo-surface:#ffffff;
+ --rivo-shadow:0 4px 15px #07275117;
+ --rivo-radius:15px;
+ color-scheme:light;
+}
+#app .rivo-dark-ui .content{background:#f3f6fb!important}
+#app .rivo-dark-ui .topbar{
+ min-height:51px!important;
+ background:linear-gradient(108deg,#062e62,#062855)!important;
+ border-color:#0b3e80!important;
+ box-shadow:0 3px 14px #06204235!important;
+}
+#app .rivo-dark-ui .topbar .crumb strong{
+ color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;
+ font-size:16px!important;font-weight:850!important;
+}
+#app .rivo-dark-ui .topbar .crumb small{color:#b2cae9!important}
+#app .rivo-dark-ui .topbar .rivo-header-back{
+ color:#ecf4ff!important;background:#0d3d7b!important;border-color:#477bbf!important;
+}
+/* Full width home/recents, but a compact top brand + single-line quick tool rail. */
+#app .rivo-compact-home{
+ gap:7px!important;min-height:310px;max-width:720px;margin-inline:auto!important;
+ height:calc(100dvh - 167px)!important;
+}
+#app .rivo-compact-home .rivo-home-identity{
+ flex:0 0 auto;display:flex;align-items:center;gap:9px!important;min-height:72px!important;
+ border-radius:16px;padding:8px 11px!important;
+ background:radial-gradient(circle at 90% 0%,#287ded2e,transparent 45%),
+ linear-gradient(115deg,#05316a,#06234a)!important;
+ color:white!important;box-shadow:0 7px 17px #06265045!important;
+ border:1px solid #1a60bb!important;
+}
+#app .rivo-home-logo{
+ display:grid;place-items:center;flex:0 0 45px;width:45px;height:45px;
+ border-radius:14px;background:#0b51ad25;border:2px solid #6aabff;
+ box-shadow:0 0 13px #388eff7e;color:#eaf3ff!important;
+}
+#app .rivo-home-heading{display:flex;flex-direction:column;min-width:0;gap:2px;flex:1}
+#app .rivo-home-heading strong{color:white!important;font-size:18px!important;font-weight:850;line-height:1.15}
+#app .rivo-home-heading small{font-size:10px!important;color:#d6e5f9!important;
+ line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;
+ -webkit-line-clamp:2;-webkit-box-orient:vertical}
+#app .rivo-home-secure{
+ width:32px;height:32px;flex:0 0 32px;border-radius:10px;
+ display:grid;place-items:center;background:#ffffff1f;color:#b8d7ff!important;
+ border:1px solid #4a8de577;
+}
+/* Four high-value tools in a SINGLE compact horizontal row, even at 320px. */
+#app .rivo-compact-home .rivo-feature-rail{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ gap:6px!important;min-height:82px!important;max-height:82px!important;
+ flex:0 0 82px!important;overflow-x:auto!important;overflow-y:hidden!important;
+ padding:1px 1px 4px!important;
+ scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+ scroll-snap-type:x proximity;overscroll-behavior-x:contain;
+}
+#app .rivo-feature-tile{
+ min-width:79px!important;width:calc((100% - 18px)/4)!important;flex:0 0 max(79px,calc((100% - 18px)/4))!important;
+ min-height:74px!important;height:74px!important;max-height:74px!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ padding:6px 4px!important;gap:5px!important;scroll-snap-align:start;
+ background:linear-gradient(145deg,#fff,#f0f5fb)!important;
+ border:1px solid var(--rivo-border)!important;border-radius:13px!important;
+ box-shadow:0 2px 10px #03295a15!important;color:#133158!important;
+ text-align:center!important;
+}
+#app .rivo-feature-tile:active{transform:scale(.97)}
+#app .rivo-feature-icon{display:grid;place-items:center;flex:0 0 27px;width:29px;height:27px;
+ color:#07418e!important;border-radius:8px;background:#d9e6f7}
+#app .rivo-feature-tile strong{
+ font-size:9px!important;line-height:1.15!important;overflow:hidden;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+ color:#113059!important;word-break:normal;font-weight:800!important;
+}
+#app .rivo-compact-home .rivo-home-intro{min-height:21px!important;max-height:21px!important}
+#app .rivo-compact-home .rivo-home-intro h1{
+ font-size:13px!important;color:#062f64!important;font-weight:800!important;
+}
+#app .rivo-compact-home .rivo-premium-search{
+ min-height:37px!important;max-height:37px!important;
+ border:1px solid #b5c6dc!important;background:#fff!important;
+ box-shadow:0 2px 8px #07275110!important;
+}
+#app .rivo-compact-home .rivo-premium-recent{
+ border-radius:13px;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr))!important;
+ align-content:start;gap:5px!important;overflow-y:auto!important;min-height:0!important;
+}
+#app .rivo-compact-home .rivo-recent-card{
+ min-height:54px!important;height:54px!important;max-height:54px!important;
+ border:1px solid #d0dae8!important;background:#fff!important;
+ box-shadow:0 2px 8px #06265010!important;
+}
+#app .rivo-dark-ui .rivo-camera-fab{
+ background:radial-gradient(circle at 36% 20%,#3e8cf2,#0854b8 55%,#053779)!important;
+ box-shadow:0 5px 18px #084fac78,0 0 0 5px #d8e7fb!important;
+}
+/* Documents are always the main content. Small controls stay in horizontal rails. */
+#app .rivo-dark-ui .library-heading{
+ gap:7px!important;align-items:center!important;padding:8px 0!important;
+}
+#app .rivo-dark-ui .library-heading-actions,
+#app .rivo-dark-ui .library-controls,
+#app .rivo-dark-ui .storage-actions{
+ flex-direction:row!important;flex-wrap:nowrap!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ gap:5px!important;scrollbar-width:thin;
+}
+#app .rivo-dark-ui .library-heading h1{font-size:16px!important;color:#062e62!important}
+#app .rivo-dark-ui .library-panel,
+#app .rivo-dark-ui .panel{
+ border:1px solid #cdd8e6!important;border-radius:var(--rivo-radius)!important;
+ background:#fff!important;box-shadow:var(--rivo-shadow)!important;
+}
+#app .rivo-dark-ui .library-search{min-height:38px!important;border-radius:11px!important}
+#app .rivo-dark-ui .rivo-library-chips button{
+ height:33px!important;min-height:33px!important;border-radius:9px!important;
+ font-size:10px!important;padding:4px 10px!important;
+}
+#app .rivo-dark-ui .document-entry{
+ border-radius:12px!important;box-shadow:none!important;min-height:53px!important;
+}
+/* Tools are compact horizontal strips, one per category (no repeated cards). */
+#app .rivo-dark-ui .rivo-tools-section{margin:8px 0 10px!important}
+#app .rivo-dark-ui .rivo-tools-section h2{
+ margin:0 0 6px!important;font-weight:800!important;font-size:12px!important
+}
+#app .rivo-dark-ui .rivo-hub-grid{
+ flex-direction:row!important;flex-wrap:nowrap!important;
+ overflow-x:auto!important;overflow-y:hidden!important;gap:6px!important;
+ scroll-snap-type:x proximity;scrollbar-width:thin;
+}
+#app .rivo-dark-ui .rivo-hub-tile{
+ flex:0 0 101px!important;min-width:101px!important;max-width:101px!important;
+ min-height:79px!important;max-height:84px!important;
+ border-radius:13px!important;background:linear-gradient(160deg,#fff,#f1f5fa)!important;
+ box-shadow:0 2px 7px #08336c10!important;
+}
+#app .rivo-dark-ui .rivo-hub-tile:active{transform:scale(.975)}
+#app .rivo-dark-ui .rivo-hub-tile strong{font-size:9px!important;line-height:1.18!important}
+#app .rivo-dark-ui .rivo-hub-tile .tool-icon{border-radius:10px!important;color:#07428f!important}
+/* Consolidated action rows and navigation: no unintended wrap. */
+#app .rivo-dark-ui .mobilebar{
+ background:#fff!important;border-top:1px solid #b9cce4!important;
+ box-shadow:0 -5px 15px #03255120!important;
+}
+#app .rivo-dark-ui .mobilebar button{
+ overflow:hidden;white-space:nowrap!important;word-break:normal!important;
+ min-width:0!important;
+}
+#app .rivo-dark-ui .mobilebar button.active{
+ background:#07418e!important;color:white!important;border-radius:12px!important;
+}
+#app .rivo-dark-ui .mobilebar button.active svg{stroke:#fff!important}
+#app .rivo-dark-ui .settings-identity{
+ border-radius:16px!important;background:linear-gradient(110deg,#edf3fa,#fff)!important;
+ border:1px solid #bdcfe6!important;
+}
+#app .rivo-dark-ui .settings-row{
+ min-height:43px!important;border-color:#d8e2ee!important;
+}
+#app .rivo-dark-ui .settings-section{border-radius:15px!important;background:white!important}
+#app .rivo-dark-ui .rivo-settings-actions{
+ flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;
+}
+/* Document editor and PDF tools have slim, horizontal action controls. */
+.rivo-editor-actions,.rivo-perfectscan-toolbar,.rivo-perfectscan-actions,
+.rivo-live-actions,.rivo-merged-dialog form{
+ scrollbar-width:thin;
+}
+.rivo-perfectscan-toolbar,.rivo-perfectscan-actions{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ overflow-x:auto!important;gap:6px!important;
+}
+.rivo-perfectscan-toolbar button,.rivo-perfectscan-actions button{
+ flex:0 0 auto!important;min-height:40px!important;
+ padding:7px 11px!important;border-radius:10px!important;font-size:11px!important;
+}
+.rivo-perfectscan-modal{border-radius:17px 17px 0 0!important}
+.rivo-perfectscan-preview{border-radius:14px!important;overflow:hidden!important}
+.rivo-live-head strong{font-size:14px!important}
+.rivo-live-dialog{background:#061624!important}
+.rivo-live-preview{border-color:#0a59c0!important}
+.rivo-live-actions button{height:40px!important;min-height:40px!important}
+/* Respect system accessibility settings. */
+#app .rivo-dark-ui button:focus-visible,.rivo-feature-tile:focus-visible{
+ outline:2px solid #0957bd!important;outline-offset:2px!important;
+}
+@media(max-width:360px){
+ #app .rivo-compact-home .rivo-feature-rail{gap:4px!important}
+ #app .rivo-feature-tile{flex-basis:79px!important;min-width:79px!important}
+ #app .rivo-home-heading strong{font-size:16px!important}
+ #app .rivo-home-heading small{font-size:9px!important}
+ #app .rivo-home-logo{flex-basis:40px;width:40px;height:40px}
+ #app .rivo-dark-ui .rivo-hub-tile{flex-basis:96px!important;min-width:96px!important;max-width:96px!important}
+}
+@media(min-width:781px){
+ #app .rivo-compact-home{height:min(790px,calc(100dvh - 115px))!important}
+ #app .rivo-feature-tile{max-width:150px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-feature-tile,#app .rivo-hub-tile{transition:none!important;animation:none!important}
+}
+
+/* PerfectScan before/after shows actual original vs processed pixels.
+   Slider redraws a split canvas; unlike CSS filters it never fakes the output. */
+.rivo-perfectscan-preview{position:relative!important}
+.rivo-perfect-compare-range{
+ position:absolute!important;inset-inline:13px!important;bottom:10px!important;
+ width:calc(100% - 26px)!important;max-width:530px!important;margin:auto!important;
+ z-index:6!important;accent-color:#0853b4!important;
+ background:#e8f0fad9!important;border-radius:12px!important;
+ min-height:33px!important;padding:4px 7px!important;touch-action:pan-x!important;
+}
+.rivo-perfect-compare-range[hidden]{display:none!important}
+.rivo-perfectscan-preview.rivo-perfect-split-active .rivo-perfectscan-tag{
+ color:#fff!important;background:#062854db!important;border:1px solid #4e90e6!important;
+}
+
+/* Fullscreen privacy editing hides the bottom camera, but the source itself remains private. */
+body:has(.rivo-shield-overlay) #app .rivo-dark-ui .floating-scan.rivo-camera-fab{
+ display:none!important;
+}
+
+
+/* One RivoScan editing rule: preview stays visible, ⚙ opens task-specific tools.
+   Only the settings drawer scrolls, never the entire image/editing dialog. */
+.rivo-workspace-header{display:flex;align-items:center;gap:10px;flex:none;padding:10px 14px;
+ background:#f7f9fc;border-bottom:1px solid #bfcde0}
+.rivo-workspace-title{flex:1;min-width:0;margin:0!important;font-size:clamp(15px,4vw,19px)!important;
+ line-height:1.24;color:#152e43}
+.rivo-workspace-settings-toggle{display:grid!important;place-items:center;
+ flex:none;min-width:43px;min-height:43px;width:44px;height:44px;padding:0!important;
+ border-radius:12px!important;background:#e8eef6!important;border:1px solid #9bb5d6!important;
+ color:#083877!important;font-size:25px!important;line-height:1!important}
+.rivo-workspace-settings-toggle.active,.rivo-workspace-settings-toggle[aria-expanded="true"]{
+ background:#09356f!important;border-color:#09356f!important;color:#fff!important}
+.rivo-id-overlay:has(.rivo-book-dialog){overflow:hidden;align-items:center;padding:8px}
+.rivo-id-dialog.rivo-book-dialog,
+.rivo-perfectscan-modal.rivo-preview-first-dialog,
+.rivo-editor-window.rivo-preview-first-dialog{
+ display:flex!important;flex-direction:column!important;overflow:hidden!important;
+ min-height:0;box-sizing:border-box}
+.rivo-id-dialog.rivo-book-dialog{
+ width:min(100%,720px);height:min(96dvh,950px);max-height:min(96dvh,950px);
+ padding:0!important;background:#f7f9fc}
+.rivo-edit-preview-dock{display:flex;align-items:center;justify-content:center;overflow:hidden;
+ flex:1 1 52%;min-height:min(35dvh,260px);min-width:0;padding:8px 10px;
+ background:#dbe2ec}
+.rivo-book-preview-dock .rivo-id-preview{display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:100%!important;object-fit:contain;
+ margin:0!important;border-radius:9px;touch-action:none;
+ user-select:none;-webkit-user-select:none}
+.rivo-workspace-status{display:block;flex:none;max-height:54px;overflow-y:auto;
+ margin:0!important;padding:5px 12px;font-size:11px!important;
+ line-height:1.3;color:#173760}
+.rivo-workspace-status:empty{display:none}
+.rivo-edit-settings-scroll{flex:0 1 34%;min-height:82px;max-height:40dvh;
+ min-width:0;overflow-y:auto!important;overflow-x:hidden;overscroll-behavior:contain;
+ touch-action:pan-y;scrollbar-width:thin;padding:8px 12px;
+ background:#f7f9fc;border-top:1px solid #c7d5e7}
+.rivo-workspace-settings[hidden],.rivo-workspace-task-panel[hidden]{display:none!important}
+.rivo-workspace-taskbar{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;
+ padding:3px 0 10px;position:sticky;top:0;z-index:2;background:#f7f9fc}
+.rivo-workspace-task{flex:1 0 auto;min-height:43px;padding:8px 10px!important;
+ border:1px solid #b5c7df!important;border-radius:10px!important;
+ color:#23436c!important;background:#fff!important;font-size:12px!important;
+ font-weight:700!important;white-space:nowrap}
+.rivo-workspace-task.active{background:#e0eaf8!important;border-color:#084da7!important;
+ color:#002d67!important}
+.rivo-workspace-task:disabled{opacity:.4}
+.rivo-workspace-task-panel{min-width:0}
+.rivo-book-dialog .rivo-id-row{margin:8px 0}
+.rivo-book-dialog .rivo-code-actions{margin:5px 0 10px}
+.rivo-book-dialog .rivo-code-actions button{min-height:44px}
+.rivo-edit-bottom-bar{flex:none!important;min-width:0;margin:0!important;
+ padding:8px 12px calc(9px + env(safe-area-inset-bottom,0px))!important;
+ border-top:1px solid #b7c7dc;background:#fff!important;z-index:2}
+.rivo-book-dialog .rivo-edit-bottom-bar button{min-height:47px}
+.rivo-perfectscan-modal.rivo-preview-first-dialog{
+ height:min(96dvh,960px);max-height:min(96dvh,960px)}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>header{flex:none;position:relative}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+ flex:1 1 52%;min-height:min(35dvh,260px);max-height:none;
+ margin:7px 10px!important;padding:8px!important}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview canvas{
+ max-width:100%!important;max-height:100%!important;object-fit:contain}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-status{
+ flex:none;margin:4px 10px 5px;max-height:64px;overflow-y:auto}
+.rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-edit-bottom-bar{
+ position:relative!important;bottom:auto!important}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-toolbar{
+ padding:3px 0 6px}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-control{
+ padding:6px 0}
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-tip,
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-warning,
+.rivo-perfectscan-modal.rivo-preview-first-dialog .rivo-perfectscan-privacy{
+ margin:5px 0}
+.rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture{
+ flex:1 1 54%;min-height:min(35dvh,260px)}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header{
+ flex:none;gap:8px}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header strong{
+ min-width:0}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header .rivo-workspace-settings-toggle{
+ order:2}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header [data-edit="retake"]{
+ order:3}
+.rivo-editor-window.rivo-preview-first-dialog>.rivo-edit-settings-scroll{
+ padding:0 7px 7px;flex:0 1 34%;max-height:39dvh;background:#f0f4fa}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-filters{
+ background:transparent!important;border:0;overflow-x:auto}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-sliders{
+ display:grid;grid-template-columns:1fr;gap:8px;background:transparent!important;
+ padding:10px 7px}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-sliders[hidden],
+.rivo-editor-window.rivo-preview-first-dialog .rivo-eraser-control[hidden]{display:none!important}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-actions{
+ grid-template-columns:repeat(3,minmax(0,1fr));padding:6px 1px}
+.rivo-editor-save-dock .rivo-editor-save{display:block;width:100%;min-height:50px;
+ border:1px solid #05387b!important;border-radius:12px!important;
+ background:#05408d!important;color:#fff!important;
+ font-size:15px!important;font-weight:800!important}
+@media(max-width:620px){
+ .rivo-id-overlay:has(.rivo-book-dialog){padding:0}
+ .rivo-id-dialog.rivo-book-dialog,
+ .rivo-perfectscan-modal.rivo-preview-first-dialog{
+  width:100%;height:100dvh;max-height:100dvh;border-radius:0!important}
+ .rivo-edit-settings-scroll{max-height:38dvh}
+ .rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture{
+  min-height:min(31dvh,215px)}
+ .rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header .rivo-workspace-settings-toggle{
+  min-width:43px;flex:none}
+}
+@media(max-height:600px){
+ .rivo-edit-preview-dock,
+ .rivo-editor-window.rivo-preview-first-dialog>.rivo-editor-picture,
+ .rivo-perfectscan-modal.rivo-preview-first-dialog>.rivo-perfectscan-preview:not([hidden]){
+  min-height:120px}
+ .rivo-edit-settings-scroll{min-height:70px;max-height:35dvh}
+}
+
+
+/* Task-specific controls, legible CTAs and always-visible close action. */
+.rivo-workspace-close{display:grid!important;place-items:center;flex:none;width:44px;
+ height:44px;min-height:44px;padding:0!important;border-radius:12px!important;
+ border:1px solid #adc0d9!important;background:#e7ecf2!important;
+ color:#192b43!important;font-size:19px!important;font-weight:800!important}
+.rivo-book-dialog .rivo-workspace-task-panel>button,
+.rivo-perfectscan-modal .rivo-workspace-task-panel>button{
+ display:block;min-height:45px;width:100%;margin:7px 0;padding:10px 13px;
+ border:1px solid #b1c5df!important;border-radius:12px!important;
+ background:#fff!important;color:#093166!important;font-size:13px!important;
+ font-weight:700!important;text-align:start;white-space:normal}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-row input[type="range"]{
+ min-height:42px;accent-color:#054496}
+.rivo-book-dialog .rivo-edit-bottom-bar button{
+ min-height:47px;width:100%;display:block;
+ border:1px solid #05397c!important;border-radius:12px!important;
+ background:#07408b!important;color:#fff!important;
+ font-size:15px!important;font-weight:800!important;text-align:center}
+.rivo-workspace-task-panel .rivo-code-actions button{
+ flex:1 1 42%;margin:0;min-height:45px;
+ border-radius:11px!important;color:#0c356b!important;
+ background:#fff!important;border:1px solid #a5bcdb!important}
+.rivo-book-dialog .rivo-workspace-task-panel .rivo-id-hint{
+ font-size:12px!important;line-height:1.45;color:#2d4667}
+
+
+/* Keep Scan Editor header title readable in the unified light workspace. */
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header{
+ background:#f7f9fc!important;color:#172a43!important;
+ border-bottom:1px solid #b3c6de!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header strong{
+ color:#132a49!important;-webkit-text-fill-color:#132a49!important;
+ font-weight:850!important;
+}
+.rivo-editor-window.rivo-preview-first-dialog .rivo-editor-header [data-edit="cancel"]{
+ background:#eaf0f8!important;color:#12386a!important;
+ border-color:#a7bdd9!important;
+}
+
+
+/* RivoScan official navy/royal-blue palette — single cross-window authority. */
+/* Source of truth: theme-brand.css + compact-turquoise.css latest official blue values.
+   Keep photograph, video and document pixels untouched; theme the surrounding UI only. */
+:root{
+ --rivo-official-primary:#07479b;
+ --rivo-official-dark:#053472;
+ --rivo-official-bg:#f1f5fa;
+ --rivo-official-surface:#ffffff;
+ --rivo-official-ink:#122640;
+ --rivo-official-muted:#59687b;
+ --rivo-official-border:#c6d4e6;
+ --rivo-official-soft:#e4eefa;
+ --rivo-official-focus:#135ebf;
+ --rivo-brand-primary:var(--rivo-official-primary);
+ --rivo-brand-indigo:var(--rivo-official-dark);
+ --rivo-brand-text:var(--rivo-official-ink);
+ --rivo-brand-muted:var(--rivo-official-muted);
+ --rivo-brand-border:var(--rivo-official-border);
+ --rivo-brand-ice:var(--rivo-official-soft);
+}
+:where(.rivo-code-overlay,.rivo-id-overlay,.rivo-release-overlay,
+ .rivo-merged-overlay,.rivo-shield-overlay,.rivo-reward-overlay,
+ .rivo-perfectscan-overlay,.rivo-pages-overlay,.rivo-editor-overlay,
+ .rivo-live-overlay){
+ --primary:var(--rivo-official-primary);
+ --accent:var(--rivo-official-primary);
+ accent-color:var(--rivo-official-primary);
+}
+:where(.rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window){
+ background:var(--rivo-official-bg)!important;
+ color:var(--rivo-official-ink)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window,
+ .rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog)
+ :where(h1,h2,h3,header strong,.rivo-workspace-title){
+ color:var(--rivo-official-dark)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-reward-dialog,
+ .rivo-perfectscan-modal,.rivo-pages-modal,.rivo-editor-window,
+ .rivo-code-dialog,.rivo-id-dialog,.rivo-release-dialog)
+ :where(p,small,.rivo-id-hint,.rivo-perfectscan-warning,.rivo-editor-tip){
+ color:var(--rivo-official-muted);
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(input[type="range"],input[type="checkbox"],input[type="radio"]){
+ accent-color:var(--rivo-official-primary)!important;
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(input,select,textarea){
+ border-color:var(--rivo-official-border);
+}
+:where(.rivo-merged-dialog,.rivo-shield-dialog,.rivo-code-dialog,
+ .rivo-id-dialog,.rivo-release-dialog,.rivo-perfectscan-modal,
+ .rivo-pages-modal,.rivo-editor-window)
+ :where(button,input,select,textarea):focus-visible{
+ outline:3px solid var(--rivo-official-focus)!important;
+ outline-offset:2px;
+}
+/* All dialog chrome follows the blue identity; scan/photo content keeps its own pixels. */
+.rivo-workspace-header,
+.rivo-book-dialog .rivo-workspace-taskbar,
+.rivo-perfectscan-modal .rivo-workspace-taskbar,
+.rivo-editor-window .rivo-editor-header,
+.rivo-pages-top,.rivo-pages-count,.rivo-pages-bottom,
+.rivo-perfectscan-modal header{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important;
+ color:var(--rivo-official-ink)!important;
+}
+.rivo-book-dialog .rivo-edit-preview-dock,
+.rivo-perfectscan-modal .rivo-perfectscan-preview{
+ background:var(--rivo-official-soft)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-book-dialog .rivo-edit-settings-scroll,
+.rivo-perfectscan-modal .rivo-edit-settings-scroll,
+.rivo-editor-window .rivo-edit-settings-scroll{
+ background:var(--rivo-official-bg)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-settings-toggle,
+.rivo-workspace-close,
+.rivo-workspace-task,
+.rivo-merged-dialog button,
+.rivo-merged-dialog select,
+.rivo-shield-dialog button,
+.rivo-code-dialog .rivo-code-actions button,
+.rivo-release-dialog button,
+.rivo-pages-top button,.rivo-pages-count button,.rivo-page-operations button,
+.rivo-editor-window .rivo-editor-header button,
+.rivo-editor-window .rivo-editor-actions button{
+ background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-settings-toggle[aria-expanded="true"],
+.rivo-workspace-settings-toggle.active,
+.rivo-workspace-task.active,.rivo-filter-choice.active{
+ background:var(--rivo-official-soft)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-primary)!important;
+}
+.rivo-filter-choice{background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-ink)!important;border-color:var(--rivo-official-border)!important}
+.rivo-editor-filters,.rivo-editor-sliders,.rivo-pages-grid{
+ background:var(--rivo-official-bg)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-workspace-status,.rivo-perfectscan-status{
+ background:var(--rivo-official-soft)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-perfectscan-status.rivo-warning{
+ background:#fff3e9!important;color:#915318!important;border-color:#f6d6b9!important;
+}
+/* Primary confirmation buttons: consistent high contrast, regardless of editor. */
+.rivo-book-dialog .rivo-edit-bottom-bar button,
+.rivo-editor-save-dock .rivo-editor-save,
+.rivo-perfectscan-modal .rivo-perfectscan-actions [data-perfect="process"],
+.rivo-perfectscan-modal .rivo-perfectscan-actions [data-perfect="save"],
+.rivo-merged-dialog .rivo-merged-start,
+.rivo-pages-top .rivo-pages-save,
+.rivo-editor-window .rivo-editor-actions .rivo-editor-save{
+ background:var(--rivo-official-primary)!important;
+ color:#fff!important;
+ border-color:var(--rivo-official-dark)!important;
+}
+.rivo-workspace-close{font-weight:800}
+.rivo-perfectscan-modal footer,
+.rivo-editor-save-dock,.rivo-book-dialog .rivo-edit-bottom-bar{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+.rivo-shield-head strong,.rivo-merged-dialog header strong{
+ color:var(--rivo-official-dark)!important;
+}
+.doc-detail-overlay{background:var(--rivo-official-bg)!important;
+ color:var(--rivo-official-ink)!important}
+.doc-viewer-header,.doc-detail-actions{
+ background:var(--rivo-official-surface)!important;
+ border-color:var(--rivo-official-border)!important}
+.doc-detail-overlay :where(button,input,select):focus-visible{
+ outline:3px solid var(--rivo-official-focus)!important;
+ outline-offset:2px;
+}
+.doc-zoom-actions button,.doc-action,.doc-viewer-back,.doc-viewer-menu{
+ background:var(--rivo-official-surface)!important;
+ color:var(--rivo-official-dark)!important;
+ border-color:var(--rivo-official-border)!important;
+}
+/* Live camera uses navy chrome; keep dark video stage for legible live detection. */
+.rivo-live-dialog{background:var(--rivo-official-dark)!important;color:#fff!important}
+.rivo-live-head,.rivo-live-actions{border-color:#34609c!important}
+.rivo-live-actions button{border-color:#4076b9!important}
+/* Danger and warning semantic states keep their own recognisable contrast. */
