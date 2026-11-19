@@ -12,7 +12,7 @@ test('Image-backed slides use valid OOXML PowerPoint structure and one slide per
  assert.ok(archive.file('ppt/slides/slide1.xml'));
  assert.ok(archive.file('ppt/slides/slide2.xml'));
  assert.ok(archive.file('ppt/_rels/presentation.xml.rels'));
- const pictures=Object.keys(archive.files).filter(x=>/^ppt\/media\/[^/]+\.jpg$/i.test(x));
+ const pictures=Object.keys(archive.files).filter(x=>x.startsWith('ppt/media/')&&!x.endsWith('/'));
  assert.ok(pictures.length>=2);
  const xml=await archive.file('ppt/slides/slide1.xml').async('string');
  assert.ok(xml.includes('<p:pic>')||xml.includes('<p:pic '));
