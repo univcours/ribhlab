@@ -51,10 +51,21 @@ jobs:
           grep -Fq 'showPrivacyOptionsForm' src/monetization.js
           test -f tests/live-scanners.test.js
           npm run build
-      - name: Validate non-destructive installer PowerShell syntax
+      - name: Production build must fail closed on missing live AdMob IDs
+        run: |
+          if VITE_RIVOSCAN_ADMOB_PRODUCTION=true node scripts/validate-admob-build.mjs; then
+            echo "ERROR: Test/demo AdMob build was incorrectly accepted as production"
+            exit 1
+          fi
+      - name: Validate installer and Android AdMob integration PowerShell syntax
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path './install-rivoscan-android.ps1').Path, [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+          foreach ($name in @('install-rivoscan-android.ps1','apply-rivoscan-branding.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $name).Path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error $_.Message }
+              exit 1
+            }
+          }

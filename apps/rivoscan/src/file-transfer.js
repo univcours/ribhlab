@@ -1,4 +1,5 @@
 import { translateStatus } from './i18n-extra.js';
+import {safeDocumentName} from './file-safety.js';
 /**
  * RivoScan P2P beta: direct, encrypted WebRTC data channel.
  * Manual offer/answer exchange avoids a signaling server.
@@ -8,15 +9,16 @@ const MAX_SINGLE = 15 * 1024 * 1024;
 const MAX_TOTAL = 60 * 1024 * 1024;
 const CHUNK = 16 * 1024;
 
-const safeName = name => String(name || 'received-file')
-  .replace(/[\\/\x00-\x1f<>:"|?*]/g, '_').slice(0, 120) || 'received-file';
+const safeName=name=>safeDocumentName(name,{maxLength:120,fallback:'received-file'});
+
 function encodeSignal(desc) {
   const bytes = new TextEncoder().encode(JSON.stringify({type: desc.type, sdp:desc.sdp}));
   let binary = '';
   for(let i=0;i<bytes.length;i+=8192) binary += String.fromCharCode(...bytes.subarray(i,i+8192));
   return btoa(binary);
 }
-function decodeSignal(str) {
+export function decodeSignal(str) {
+  if(typeof str!=='string'||str.length>200000)throw Error('Connection code is too large or invalid.');
   const text = new TextDecoder().decode(Uint8Array.from(atob(str.trim().replace(/\s/g,'')),c=>c.charCodeAt(0)));
   const parsed=JSON.parse(text);
   if(!['offer','answer'].includes(parsed.type) || typeof parsed.sdp !== 'string' || parsed.sdp.length > 100000) throw Error('Invalid connection code.');
@@ -49,6 +51,7 @@ export function initPeerTransfer({onReceive,notify,getLanguage=()=> 'en'}){
   }
   const find=id=>document.getElementById(id);
   let pc=null,channel=null,pending=null,disconnected=false,sendInProgress=false;
+  let receiveQueue=Promise.resolve();
   let totalReceived=0;
   const status=s=>{const el=find('peer-status');if(el)el.textContent=translateStatus(getLanguage(),s)};
   const buttons=()=>{const connected=channel?.readyState==='open';const send=find('peer-send');if(send)send.disabled=!connected||sendInProgress;};
@@ -69,17 +72,20 @@ export function initPeerTransfer({onReceive,notify,getLanguage=()=> 'en'}){
     channel.onopen=()=>{status('Connected securely — choose a file and Send.');buttons()};
     channel.onclose=()=>{status('Peer connection closed.');buttons()};
     channel.onerror=()=>status('Data channel error; try pairing again.');
-    channel.onmessage=async evt=>{
+    channel.onmessage=evt=>{
+      // A second file can arrive while the first is still being saved.
+      // Serialize every data-channel event so no chunks or metadata overtake writes.
+      receiveQueue=receiveQueue.catch(()=>{}).then(async()=>{
+      if(disconnected||channel!==ch)return;
       try{
         if(typeof evt.data === 'string'){
           const msg=JSON.parse(evt.data);
-          if(msg.type!=='file'||!Number.isSafeInteger(msg.size)||msg.size<0||msg.size>MAX_SINGLE||
+          if(msg.type!=='file'||!Number.isSafeInteger(msg.size)||msg.size<=0||msg.size>MAX_SINGLE||
              typeof msg.name!=='string'||msg.name.length>255) throw Error('Invalid incoming file metadata.');
           if(pending)throw Error('Incoming file stream was interrupted.');
           if(totalReceived+msg.size>MAX_TOTAL)throw Error('Transfer exceeds 60 MB receive limit.');
           pending={name:safeName(msg.name),mime:msg.mime||'application/octet-stream',size:msg.size,parts:[],received:0};
           status('Receiving '+pending.name+' (0%)');
-          if(msg.size===0)await finishIncoming();
           return;
         }
         if(!pending)throw Error('Unexpected incoming data.');
@@ -90,6 +96,7 @@ export function initPeerTransfer({onReceive,notify,getLanguage=()=> 'en'}){
         status('Receiving '+pending.name+' ('+Math.round(pending.received/Math.max(1,pending.size)*100)+'%)');
         if(pending.received===pending.size)await finishIncoming();
       }catch(err){pending=null;status('Receive failed: '+err.message);notify?.(err.message,true)}
+      });
     };
   }
   async function finishIncoming(){
@@ -140,8 +147,8 @@ export function initPeerTransfer({onReceive,notify,getLanguage=()=> 'en'}){
     const selected=[...(find('peer-files')?.files||[])];
     if(!selected.length){notify?.('Choose one or more files first.',true);return}
     if(!channel||channel.readyState!=='open'){notify?.('Connect to the receiver first.',true);return}
-    if(selected.some(f=>f.size>MAX_SINGLE)||selected.reduce((s,f)=>s+f.size,0)>MAX_TOTAL){
-      notify?.('Max 15 MB per file and 60 MB per batch.',true);return
+    if(selected.some(f=>f.size===0||f.size>MAX_SINGLE)||selected.reduce((s,f)=>s+f.size,0)>MAX_TOTAL){
+      notify?.('Choose nonempty files: max 15 MB each and 60 MB total.',true);return
     }
     sendInProgress=true;buttons();
     try{

@@ -25,6 +25,7 @@ import { openScanEditor } from './scan-editor.js';
 import {openPrivacyShield} from './privacy-shield.js';
 import {safeDocumentName} from './file-safety.js';
 import {safePdfRenderScale} from './pdf-safety.js';
+import {compressPdfPreservingContent} from './pdf-compress-safe.js';
 import { openPageManager } from './page-manager.js';
 import { exportToolFile } from './tool-exports.js';
 import {openBarcodeScanner} from './barcode-scanner.js';
@@ -447,7 +448,7 @@ const opts = {
   scan:`<p class="hint">LIVE CAMERA: Watch a green outline follow the paper. Capture, drag four corners to adjust them, then Save page. GALLERY: Import an existing photo, adjust its corners and save. Multiple saved pages become one PDF.</p><div class="field"><label>Scan appearance</label><select name="filter"><option value="color">Original color</option><option value="enhance" selected>Enhanced document</option><option value="gray">Black & white (grayscale)</option><option value="bw">High contrast monochrome</option></select></div><div class="field"><label>Image quality</label><select name="quality"><option value=".95">Maximum</option><option value=".85">High</option><option value=".65">Balanced</option></select></div>`,
   images:`<div class="field"><label>Image quality</label><select name="quality"><option value=".95">High</option><option value=".75" selected>Balanced</option><option value=".5">Smaller file</option></select></div>`,
   pdftoimages:`<div class="field"><label>Image format</label><select name="format"><option value="jpeg">JPG</option><option value="png">PNG</option></select></div><div class="field"><label>Resolution</label><select name="scale"><option value="1">Standard</option><option value="1.5" selected>High</option><option value="2">Extra high</option></select></div>`,
-  compress:`<div class="field"><label>Compression quality</label><select name="quality"><option value=".38">Smaller file</option><option value=".58" selected>Balanced</option><option value=".78">Higher quality</option></select></div><p class="hint">Best for scanned PDFs. Pages are converted to images, so existing selectable text, links and forms may be lost. Results are not guaranteed to be smaller.</p>`,
+  compress:`<div class="field"><label>Compression mode</label><select name="compressionMode"><option value="preserve" selected>Preserve selectable text and links (recommended)</option><option value="raster">Recompress scanned pages as images (text and forms are lost)</option></select></div><div class="field"><label>Image mode quality</label><select name="quality"><option value=".38">Smaller file</option><option value=".58" selected>Balanced</option><option value=".78">Higher quality</option></select></div><p class="hint">Preserve mode rewrites PDF object streams and keeps searchable content in most documents. Signed PDF signatures may become invalid on any rewrite. Image mode permanently loses selectable text, links and interactive fields. If no smaller file can be made, the original is unchanged.</p>`,
   ocr:`<div class="field"><label>OCR language</label><select name="ocrLang"><option value="eng" selected>English</option><option value="fra">Français</option><option value="ara">العربية</option><option value="spa">Español</option><option value="deu">Deutsch</option><option value="por">Português</option><option value="ita">Italiano</option></select></div><p class="hint">First OCR use may download trained language data. OCR depends on image quality and can take time.</p>`,
   metadata:`<p class="hint">Clears commonly used metadata fields. Not a guarantee of forensic sanitization; embedded content, comments or hidden data may remain.</p>`
 };
@@ -1359,15 +1360,31 @@ async function pdfToImages(){const pdf=await pdfjsOpen(files[0]);try{
  }
  return new Uint8Array(await zip.generateAsync({type:'uint8array'}));
  }finally{await pdf.destroy()}}
-async function compressPdf(){const source=await pdfjsOpen(files[0]);try{
- const out=await PDFDocument.create();if(source.numPages>70)throw Error('For device stability, process PDFs of 70 pages or fewer.');
- for(let i=1;i<=source.numPages;i++){
-  progress(`Compressing page ${i}/${source.numPages}`);const p=await source.getPage(i),viewport=p.getViewport({scale:1});const scale=Math.min(1.15,1450/Math.max(viewport.width,viewport.height));const canvas=await renderPage(source,i,scale);const jpg=await out.embedJpg(await(await canvasBlob(canvas,'image/jpeg',Number(setting('quality'))||.58)).arrayBuffer());const page=out.addPage([viewport.width,viewport.height]);page.drawImage(jpg,{x:0,y:0,width:viewport.width,height:viewport.height});
+async function compressPdf(){
+ const mode=setting('compressionMode')||'preserve';
+ if(mode==='preserve'){
+  progress('Optimizing PDF while preserving selectable text and annotations…');
+  return compressPdfPreservingContent(new Uint8Array(await files[0].arrayBuffer()));
  }
- const output=await out.save({useObjectStreams:true});
- if(output.length>=files[0].size)throw Error('Compression would increase PDF size. Your original remains unchanged.');
- return output;
- }finally{await source.destroy()}}
+ if(mode!=='raster')throw Error('Unknown PDF compression mode.');
+ const source=await pdfjsOpen(files[0]);
+ try{
+  const out=await PDFDocument.create();
+  if(source.numPages>70)throw Error('For device stability, process PDFs of 70 pages or fewer.');
+  for(let i=1;i<=source.numPages;i++){
+   progress(`Recompressing scanned page ${i}/${source.numPages}`);
+   const p=await source.getPage(i),viewport=p.getViewport({scale:1});
+   const scale=Math.min(1.15,1450/Math.max(viewport.width,viewport.height));
+   const canvas=await renderPage(source,i,scale);
+   const jpg=await out.embedJpg(await(await canvasBlob(canvas,'image/jpeg',Number(setting('quality'))||.58)).arrayBuffer());
+   const page=out.addPage([viewport.width,viewport.height]);
+   page.drawImage(jpg,{x:0,y:0,width:viewport.width,height:viewport.height});
+  }
+  const output=await out.save({useObjectStreams:true});
+  if(output.length>=files[0].size)throw Error('Compression would increase PDF size. Your original remains unchanged.');
+  return output;
+ }finally{await source.destroy();}
+}
 async function pdfToText(ocr=false){
  const source=files[0];let lines=[];
  if(ocr){
