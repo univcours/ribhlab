@@ -10,6 +10,23 @@ const labels={
  pt:['Leitor de matrículas','Procurar matrícula (ex. 12345 A 7)','Aponte a câmara para toda a matrícula','Matrícula guardada','Correspondência · fotografia capturada','Câmara indisponível','O modelo OCR poderá ser descarregado no primeiro uso','Sem alvo'],
  it:['Lettore targhe','Cerca targa (es. 12345 A 7)','Inquadra tutta la targa','Targa salvata','Corrispondenza · foto acquisita','Fotocamera non disponibile','Il modello OCR potrebbe essere scaricato al primo uso','Nessun obiettivo']
 };
+// Standard Morocco registration: serial 1–99999 · one official series letter · province 1–99.
+// Since August 2026, Arabic and Latin equivalents may appear together with the MA emblem.
+// Keep older Arabic-only plates readable. Never invent an unreadable province/series.
+export const MOROCCAN_PLATE_SERIES=Object.freeze({
+ 'أ':'A','ا':'A','آ':'A','إ':'A','ب':'B','د':'D','ه':'H',
+ 'و':'E','ط':'T','ي':'Y','ك':'K','ل':'L','م':'M','ن':'N',
+ 'ص':'C','ف':'F','ر':'R','س':'S'
+});
+const officialLatin=new Set(Object.values(MOROCCAN_PLATE_SERIES));
+const digitValue=d=>{
+ const a='٠١٢٣٤٥٦٧٨٩'.indexOf(d);
+ return a>=0?String(a):String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+};
+const cleanedText=value=>String(value??'').normalize('NFKC')
+ .replace(/[٠-٩۰-۹]/g,digitValue)
+ .replace(/[\u0640\u064b-\u065f\u0670\u200e\u200f]/g,'')
+ .replace(/[إآا]/g,'أ').toUpperCase();
 export function normalizePlate(value){
  return cleanedText(value).replace(/[^A-Z0-9\u0621-\u064a]/g,'');
 }
@@ -105,9 +122,13 @@ export function plateBoxInView(bbox,roi,ocrScale,video,view){
  return {x:left,y:top,width:right-left,height:bottom-top};
 }
 const zoomCopy={
- en:{auto:'AUTO ZOOM',off:'ZOOM OFF',missing:'Camera zoom unavailable; searching image regions',hint:'Keep the vehicle in view; automatic zoom checks the scene before magnifying'},
- ar:{auto:'زوم تلقائي',off:'الزوم موقوف',missing:'زوم الكاميرا غير متاح؛ كنقلب فمناطق الصورة',hint:'وجّه الكاميرا للسيارة؛ غادي يفتّش ويقرّب تدريجياً'},
- fr:{auto:'ZOOM AUTO',off:'ZOOM ARRÊT',missing:'Zoom caméra indisponible : recherche par zones',hint:'Gardez le véhicule dans le cadre ; recherche et zoom progressifs'}
+ en:{auto:'AUTO ZOOM',off:'ZOOM OFF',missing:'Camera zoom unavailable; searching image regions',hint:'Keep the vehicle in view while the camera searches and zooms',logUnavailable:'Plate history unavailable',saveFailed:'Save failed'},
+ ar:{auto:'تقريب تلقائي',off:'التقريب متوقف',missing:'تقريب الكاميرا غير متاح؛ غادي نبحث فالصورة',hint:'وجّه الكاميرا للوحة وغادي تقرّب تلقائياً',logUnavailable:'حفظ السجل غير متاح',saveFailed:'تعذّر الحفظ'},
+ fr:{auto:'ZOOM AUTO',off:'ZOOM ARRÊT',missing:'Zoom indisponible ; recherche dans les zones de l’image',hint:'Gardez la plaque dans le cadre pour la recherche automatique',logUnavailable:'Historique indisponible',saveFailed:'Échec de l’enregistrement'},
+ es:{auto:'ZOOM AUTO',off:'ZOOM DESACT.',missing:'Zoom no disponible; se buscan zonas de la imagen',hint:'Mantén la matrícula en el encuadre para la búsqueda automática',logUnavailable:'Historial no disponible',saveFailed:'Error al guardar'},
+ de:{auto:'AUTO-ZOOM',off:'ZOOM AUS',missing:'Kamerazoom nicht verfügbar; Bildbereiche werden geprüft',hint:'Kennzeichen im Bild halten, während die Kamera sucht',logUnavailable:'Verlauf nicht verfügbar',saveFailed:'Speichern fehlgeschlagen'},
+ pt:{auto:'ZOOM AUTO',off:'ZOOM DESL.',missing:'Zoom indisponível; a procurar nas regiões da imagem',hint:'Mantenha a matrícula visível durante a pesquisa',logUnavailable:'Histórico indisponível',saveFailed:'Falha ao guardar'},
+ it:{auto:'ZOOM AUTO',off:'ZOOM SPENTO',missing:'Zoom non disponibile; ricerca nelle aree dell’immagine',hint:'Tieni la targa nell’inquadratura durante la ricerca',logUnavailable:'Cronologia non disponibile',saveFailed:'Salvataggio non riuscito'}
 };
 function btn(label,fn){
  const el=document.createElement('button');el.type='button';el.textContent=label;el.setAttribute('aria-label',label);el.addEventListener('click',fn);return el;
@@ -264,9 +285,9 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    if(closed)return;
    foundCount++;count.textContent=String(foundCount);
    last.hidden=false;last.textContent=plate;
-   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · Excel not available');
+   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · '+Z.logUnavailable);
    guide.classList.toggle('matched',match);
-  }catch(error){if(!closed)status.textContent='Save failed: '+String(error?.message||error);}
+  }catch(error){if(!closed)status.textContent=Z.saveFailed+': '+String(error?.message||error);}
  }
  async function scanFrame(){
   if(closed||processing||!worker||video.readyState<2)return;

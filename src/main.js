@@ -518,11 +518,11 @@ const featureText=key=>(RIVO_FEATURE_TEXT[language]||RIVO_FEATURE_TEXT.en)[key]|
 const RIVO_COMPACT_FEATURE_LABELS={
  en:{smartAutoCapture:'Auto Scan',scanCode:'QR / Barcode',plateScanner:'Plate Scanner',privacyShield:'Privacy'},
  ar:{smartAutoCapture:'تصوير تلقائي',scanCode:'QR / باركود',plateScanner:'قارئ اللوحات',privacyShield:'الخصوصية'},
- fr:{smartAutoCapture:'Scan auto',scanCode:'QR / Codes',plateScanner:'Lecteur de plaques',privacyShield:'Confidentialité'},
- es:{smartAutoCapture:'Escáner auto',scanCode:'QR / Códigos',plateScanner:'Lector de matrículas',privacyShield:'Privacidad'},
- de:{smartAutoCapture:'Auto-Scan',scanCode:'QR / Codes',plateScanner:'Kennzeichenleser',privacyShield:'Datenschutz'},
- pt:{smartAutoCapture:'Scan auto',scanCode:'QR / Códigos',plateScanner:'Leitor de matrículas',privacyShield:'Privacidade'},
- it:{smartAutoCapture:'Scansione auto',scanCode:'QR / Codici',plateScanner:'Lettore targhe',privacyShield:'Privacy'}
+ fr:{smartAutoCapture:'Scan auto',scanCode:'QR / Codes',plateScanner:'Plaques',privacyShield:'Confidentialité'},
+ es:{smartAutoCapture:'Escáner auto',scanCode:'QR / Códigos',plateScanner:'Matrículas',privacyShield:'Privacidad'},
+ de:{smartAutoCapture:'Auto-Scan',scanCode:'QR / Codes',plateScanner:'Kennzeichen',privacyShield:'Datenschutz'},
+ pt:{smartAutoCapture:'Scan auto',scanCode:'QR / Códigos',plateScanner:'Matrículas',privacyShield:'Privacidade'},
+ it:{smartAutoCapture:'Scansione auto',scanCode:'QR / Codici',plateScanner:'Targhe',privacyShield:'Privacy'}
 };
 const compactFeatureLabel=id=>(RIVO_COMPACT_FEATURE_LABELS[language]||RIVO_COMPACT_FEATURE_LABELS.en)[id]||id;
 const featureTiles=[
