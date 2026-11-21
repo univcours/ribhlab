@@ -5,7 +5,7 @@ import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,sh
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
  assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,true);
- for(const id of ['interstitial','banner','rewarded'])
+ for(const id of ['interstitial','banner','rewarded','appOpen'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -74,15 +74,18 @@ test('the first launch is eligible; launch count is no longer a fullscreen-ad ga
  assert.equal(FULLSCREEN_START_LAUNCH,1);
  assert.equal(registerLaunch({getItem:()=>{throw Error('private storage')},setItem(){}}),0);
 });
-test('App Open is entirely disabled; startup only initializes inventory',async()=>{
+test('App Open can only show every third real launch while the startup loading screen is visible',async()=>{
  const {readFileSync}=await import('node:fs');
  const code=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen|isAppOpenLoaded)/);
- assert.doesNotMatch(code,/AppOpenAdPluginEvents|shouldShowAppOpen/);
- assert.match(code,/export async function startAdsAtLaunch/);
- assert.match(code,/await initializeAds\(\)/);
- assert.match(main,/void startAdsAtLaunch\(\)/);
+ assert.match(code,/AdMob\.loadAppOpen/);
+ assert.match(code,/AdMob\.isAppOpenLoaded/);
+ assert.match(code,/AdMob\.showAppOpen/);
+ assert.match(code,/AppOpenAdPluginEvents/);
+ assert.match(code,/shouldOfferAtOpen\(state\.launchCount\)/);
+ assert.match(code,/if\(!initialized\|\|!isLoading\(\)\|\|state\.busy\)return false/);
+ assert.match(main,/startAdsAtLaunch\(\{isLoading:bootVisible\}\)/);
+ assert.match(main,/startupScreen\?\.remove\(\)/);
  assert.doesNotMatch(main,/atNaturalNavigation\(\{[^}]*trigger:'exit'/);
 });
 test('native banner stays hidden while any full-screen ad is active',async()=>{
@@ -122,5 +125,5 @@ test('AdMob recovers NO_FILL inventory after a background/foreground cycle witho
  assert.match(code,/installAdVisibilityRecovery\(\);/);
  assert.match(code,/scheduleBannerRelayout\(\)/);
  assert.match(code,/if\(!retryTimers\.interstitial&&!state\.interstitialReady&&!state\.busy\)/);
- assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen)/);
+ assert.match(code,/if\(!isLoading\(\)\)return false/);
 });
