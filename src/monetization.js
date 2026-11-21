@@ -161,6 +161,9 @@ function bannerObstructed(){
   'dialog[open]','[role="dialog"][aria-modal="true"]'
  ].join(',');
  return [...document.querySelectorAll(selector)].some(el=>{
+  // Book Scan alone is clipped ABOVE the native banner; keep the loaded ad visible.
+  // Any other modal still hides the ad so no content or controls can cover it.
+  if(el.matches('.rivo-book-overlay,.rivo-book-overlay > .rivo-book-dialog'))return false;
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
   return b.width>0&&b.height>0&&style.visibility!=='hidden'&&style.display!=='none';
  });
