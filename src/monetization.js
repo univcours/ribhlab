@@ -329,29 +329,34 @@ async function loadBanner(){
   scheduleAdRetry('banner');return false;
  }finally{state.bannerLoading=false;}
 }
+let appOpenLoadPromise=null;
 async function loadAppOpen(){
- if(!isAndroid||!state.ready||!state.consent||state.appOpenReady||state.appOpenLoading||!AD_CONFIG.appOpen)return false;
- state.appOpenLoading=true;
- try{
-  // This is the real App Open format. It may contain video or an image.
-  // The plugin requires the Google demo UNIT, not isTesting, for QA.
-  await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
-  state.appOpenReady=true;return true;
- }catch(error){
-  state.appOpenReady=false;status('App Open unavailable',String(error?.message||error));return false;
- }finally{state.appOpenLoading=false;}
+ if(!isAndroid||!state.ready||!state.consent||!AD_CONFIG.appOpen)return false;
+ if(state.appOpenReady)return true;
+ if(appOpenLoadPromise)return appOpenLoadPromise;
+ appOpenLoadPromise=(async()=>{
+  state.appOpenLoading=true;
+  try{
+   // Video OR image creative, selected by Google; no force-video option.
+   await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
+   state.appOpenReady=true;return true;
+  }catch(error){
+   state.appOpenReady=false;status('App Open unavailable',String(error?.message||error));return false;
+  }finally{state.appOpenLoading=false;}
+ })();
+ try{return await appOpenLoadPromise;}finally{appOpenLoadPromise=null;}
 }
-async function showReadyAppOpen(){
- if(!isAndroid||!state.ready||!state.consent||state.busy||!state.appOpenReady)return false;
+async function showReadyAppOpen({stillOpening=()=>true}={}){
+ if(!isAndroid||!state.ready||!state.consent||state.busy||!state.appOpenReady||!stillOpening())return false;
  if(typeof document!=='undefined'&&document.visibilityState==='hidden')return false;
  state.busy=true;state.appOpenReady=false;
  try{
   const {value:loaded}=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
-  if(!loaded)return false;
+  if(!loaded||!stillOpening())return false;
   await pauseBannerForFullscreen();
+  if(!stillOpening())return false;
   await AdMob.showAppOpen({adId:AD_CONFIG.appOpen});
-  recordFullscreenTime();
-  return true;
+  recordFullscreenTime();return true;
  }catch(error){status('App Open not shown',String(error?.message||error));return false;}
  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadAppOpen();}
 }
@@ -478,7 +483,8 @@ export async function startAdsAtLaunch({isLoading=()=>false}={}){
  if(!eligible||!isLoading())return false;
  if(!state.appOpenReady)await loadAppOpen();
  if(!isLoading())return false;
- return showReadyAppOpen();
+ state.appOpenAttemptedLaunch=state.launchCount;
+ return showReadyAppOpen({stillOpening:isLoading});
 }
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
