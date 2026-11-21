@@ -8,7 +8,7 @@ on:
       - 'tests/**'
       - 'package.json'
       - 'rivoscan-version.properties'
-      - '.github/workflows/rivoscan-04556-appopen-third-reward-signed.yml'
+      - '.github/workflows/rivoscan-04556-nav-readability-signed.yml'
   workflow_dispatch:
 permissions:
   contents: write
