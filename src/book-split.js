@@ -43,7 +43,7 @@ function makeButton(parent,title,callback){
 }
 export function openBookSplitter({language='en',save,capture,cleanPage,singlePage=false}={}){
  const L=dict[language]||dict.en,UI=bookUI[language]||bookUI.en,overlay=document.createElement('div');
- overlay.className='rivo-id-overlay';
+ overlay.className='rivo-id-overlay rivo-book-overlay';
  const panel=document.createElement('section');panel.className='rivo-id-dialog';panel.setAttribute('role','dialog');
  panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');
