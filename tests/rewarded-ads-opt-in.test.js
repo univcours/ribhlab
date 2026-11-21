@@ -26,12 +26,14 @@ test('only a positive earned native reward grants the 10-minute ad-free break',(
  assert.match(monetization,/state\.busy=false;void restoreBannerAfterFullscreen\(\);void loadRewarded\(\)/);
  assert.match(monetization,/now>=premiumUntil/);
 });
-test('voluntary watch button is attached in Me, not required for document access',()=>{
+test('reward video has a contextual Watch/Skip choice, no direct Settings button or feature gate',()=>{
  const main=source('src/main.js'),monetization=source('src/monetization.js');
- assert.match(main,/data-watch-rewarded/);
+ assert.doesNotMatch(main,/data-watch-rewarded/);
+ assert.doesNotMatch(main,/settings-section rivo-rewarded-choice/);
+ assert.match(main,/showRewardOffer/);
  assert.match(main,/watchRewardedVideoForBreak\(\)/);
- assert.match(main,/settings-section rivo-rewarded-choice/);
  assert.match(main,/data-ad-privacy/);
- assert.match(monetization,/export async function requestPremium\(_id\)\{return true;\}/);
+ assert.match(monetization,/export async function requestPremium\(id\)/);
+ assert.match(monetization,/return true; \/\/ Every feature stays usable/);
  for(const id of ['scan','images','library','merge','idcard'])assert.equal(isPremiumFeature(id),false);
 });
