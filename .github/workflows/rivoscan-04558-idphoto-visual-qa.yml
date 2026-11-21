@@ -1,0 +1,46 @@
+name: RivoScan 0.45.58 genuine ID Photo Maker mobile layout QA
+on:
+  push:
+    branches: [fix/rivoscan-04558-id-photo-compact-empty-layout]
+    paths:
+      - 'src/**'
+      - 'scripts/qa-id-photo-layout-04558.mjs'
+      - 'package.json'
+      - '.github/workflows/rivoscan-04558-idphoto-visual-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render-real-idphoto-webview:
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install, check and build current production WebView
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Render actual compact Photo dialog and imported photo editor on three screen sizes
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivo-idphoto-04558-server.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          RIVO_IDPHOTO_QA_OUTPUT=/tmp/rivo-idphoto-04558 node scripts/qa-id-photo-layout-04558.mjs
+      - name: Upload actual WebView screenshots and measured geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.58-ID-Photo-Real-UI-320-360-393
+          path: |
+            /tmp/rivo-idphoto-04558/
+            /tmp/rivo-idphoto-04558-server.log
+          retention-days: 14
+          if-no-files-found: warn
