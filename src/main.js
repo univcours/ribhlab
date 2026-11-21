@@ -65,6 +65,8 @@ import './rivo-button-finish.css';
 import './rivo-book-banner-safe.css';
 // Final, consistent original scanner icon frame in Home, Tools, Documents and Settings.
 import './rivo-logo-consistent.css';
+import './rivo-reward-offer.css';
+import {showRewardOffer} from './rivo-reward-offer.js';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
@@ -77,7 +79,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,watchRewardedVideoForBreak,getPremiumStatus,refreshBannerPosition} from './monetization.js';
+import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,watchRewardedVideoForBreak,peekRewardedOffer,consumeRewardedOffer,getPremiumStatus,refreshBannerPosition} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -380,8 +382,28 @@ const scanLabels={
 };
 const sl=(key)=>scanLabels[language]?.[key]||scanLabels.en[key]||key;
 
-configureAds({getLanguage:()=>language,notify:(message,error)=>toast(message,error),onChange:()=>{if(activeTool?.id==='me')render();}});
+configureAds({getLanguage:()=>language,notify:(message,error)=>toast(message,error),onChange:()=>{if(activeTool?.id==='me')render();else scheduleRewardIfSafe()}});
 const groupTitle = {create:'create',organize:'organize',edit:'edit',convert:'convert'};
+/** A queued PRO offer is presented only on a safe navigation screen, never
+ * inside a scanner, PDF editor, photo capture, or during file saving. */
+function offerRewardIfSafe(){
+ if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'||busy)return;
+ if(activeTool&&activeTool.id!=='tools'&&activeTool.id!=='me')return;
+ if(document.querySelector('.rivo-reward-overlay,.rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-perfectscan-overlay,.rivo-editor-overlay,.rivo-book-overlay,.busy,[role="dialog"][aria-modal="true"]'))return;
+ const reason=peekRewardedOffer();if(!reason)return;
+ const offered=showRewardOffer({language,reason,
+  onSkip:()=>{},
+  onWatch:async()=>{
+   const ok=await watchRewardedVideoForBreak();
+   if(ok)toast(({ar:'ربحت 10 دقائق بلا إعلانات كاملة',fr:'10 minutes sans annonces plein écran',en:'10 minutes without full-screen ads'})[language]||'10 minutes without full-screen ads');
+   else toast(({ar:'الفيديو غير متاح حالياً؛ ميزات التطبيق باقية مجانية',fr:'Vidéo indisponible. Les outils restent gratuits.',en:'Video unavailable. All tools remain free.'})[language]||'Video unavailable',true);
+  }});
+ if(offered)consumeRewardedOffer();
+}
+function scheduleRewardIfSafe(){
+ if(typeof window==='undefined')return;
+ requestAnimationFrame(()=>{if(document.visibilityState!=='hidden')offerRewardIfSafe()});
+}
 function render(){
   if(closeTransfer){closeTransfer();closeTransfer=null;}
   previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
@@ -412,6 +434,7 @@ function render(){
   observeDocumentThumbnails();
   refreshBannerPosition();
   refreshToolHelp();
+  scheduleRewardIfSafe();
 }
 
 const documentThumbnailCache=new Map(),documentThumbnailPending=new Set();
@@ -605,12 +628,6 @@ function settingsWorkspace(){
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
- <div class="settings-section rivo-rewarded-choice">
-  <h2>${({ar:'فيديو اختياري',fr:'Vidéo facultative',es:'Vídeo opcional',de:'Optionales Video',pt:'Vídeo opcional',it:'Video facoltativo',en:'Optional video'})[language]||'Optional video'}</h2>
-  <p>${({ar:'شاهد إعلاناً بمحض اختيارك لتحصل على 10 دقائق دون إعلانات بملء الشاشة. جميع أدوات المسح والحفظ متاحة دون مشاهدة الفيديو.',fr:'Regardez volontairement une publicité pour obtenir 10 minutes sans publicité plein écran. Tous les outils restent gratuits.',es:'Mira un anuncio voluntariamente para disfrutar de 10 minutos sin anuncios a pantalla completa.',de:'Sieh dir freiwillig Werbung an, um 10 Minuten ohne Vollbildanzeigen zu erhalten.',pt:'Assista voluntariamente a um anúncio para ganhar 10 minutos sem anúncios de tela cheia.',it:'Guarda volontariamente un annuncio per 10 minuti senza annunci a schermo intero.',en:'Watch an ad voluntarily for 10 minutes without full-screen ads. Scanning and saving stay free.'})[language]||'Watch an ad voluntarily for 10 minutes without full-screen ads.'}</p>
-  <button type="button" class="btn rivo-watch-rewarded" data-watch-rewarded ${!ad.native?'disabled':''}>${({ar:'شاهد فيديو للحصول على المكافأة',fr:'Regarder une vidéo pour la récompense',es:'Ver vídeo para obtener recompensa',de:'Video für Belohnung ansehen',pt:'Ver vídeo por recompensa',it:'Guarda un video per una ricompensa',en:'Watch video for reward'})[language]||'Watch video for reward'}</button>
-  ${ad.remainingMs>0?`<p role="status">${Math.ceil(ad.remainingMs/60000)} ${({ar:'دقائق متبقية دون إعلانات كاملة',fr:'minutes sans annonces plein écran',en:'minutes without full-screen ads'})[language]||'minutes remaining without full-screen ads'}</p>`:''}
- </div>
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
@@ -1025,17 +1042,6 @@ function wire(){
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
-  document.querySelectorAll('[data-watch-rewarded]').forEach(button=>button.addEventListener('click',async()=>{
-    if(button.disabled)return;
-    button.disabled=true;
-    const rewarded=await watchRewardedVideoForBreak();
-    if(rewarded){
-      toast(({ar:'حصلت على 10 دقائق دون إعلانات كاملة',fr:'10 minutes sans publicité plein écran',en:'10 minutes without full-screen ads'})[language]||'10 minutes without full-screen ads');
-    }else{
-      toast(({ar:'فيديو المكافأة غير متاح حالياً، جميع الأدوات ما زالت مجانية',fr:'Vidéo indisponible pour le moment. Les outils restent gratuits.',en:'Reward video not available right now. All tools remain free.'})[language]||'Reward video unavailable',true);
-    }
-    if(activeTool?.id==='me')render();
-  }));
   // Diagnostic controls must never be wired in a store/release build.
   if(import.meta.env.DEV){
     document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
@@ -1863,10 +1869,19 @@ document.addEventListener('touchend',event=>{
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
-render();
+// At third cold launch attempt App Open ONLY on this actual branded loading
+// screen. A bounded startup gate never blocks tools waiting for ad inventory.
+const startupScreen=document.getElementById('rivo-boot-screen');
+async function finishInitialLoading(){
+ const bootVisible=()=>!!startupScreen?.isConnected&&document.visibilityState!=='hidden';
+ const attempt=startAdsAtLaunch({isLoading:bootVisible}).catch(error=>console.warn('Startup App Open skipped',error));
+ // Do not hold the splash for network inventory once the normal startup window
+ // has passed. If ad loading finishes after this, the ad is NOT displayed.
+ if(startupScreen)await Promise.race([attempt,new Promise(resolve=>setTimeout(resolve,1500))]);
+ render();startupScreen?.remove();
+}
+void finishInitialLoading();
 void refreshSystemLanguage();
-// Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
-void startAdsAtLaunch();
 void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))
