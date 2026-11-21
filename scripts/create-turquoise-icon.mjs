@@ -1,7 +1,7 @@
 /**
  * RivoScan original scanner-document icon from the 0.45.44 source tree.
- * Keep the exact approved artwork. Crop only its existing wordmark, leaving
- * the original symbol, with modest white edge padding. No new R or remote art.
+ * Keep the exact approved symbol-only artwork, without the source wordmark.
+ * The launcher exterior is transparent; in-app headers remain unchanged.
  */
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
