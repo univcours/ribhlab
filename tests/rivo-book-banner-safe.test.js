@@ -25,10 +25,11 @@ test('Book preview shrinks until photo is loaded, editor keeps scrollable contro
  assert.match(css,/overflow-y:auto!important/);
  assert.match(book,/previewDock\.classList\.remove\('rivo-book-empty-dock'\)/);
 });
-test('real AdMob video-capable interstitial is configured but rewarded videos are NOT enabled',()=>{
+test('AdMob has optional rewarded videos and natural-break interstitials',()=>{
  const ads=read('src/monetization.js');
  assert.match(ads,/AdMob\.prepareInterstitial/);
  assert.match(ads,/AdMob\.showInterstitial/);
- assert.match(ads,/Rewarded videos and App Open ads are not used or requested/);
- assert.doesNotMatch(ads,/AdMob\.(prepareRewardVideoAd|showRewardVideoAd|showRewardVideo)/);
+ assert.match(ads,/AdMob\.prepareRewardVideoAd/);
+ assert.match(ads,/AdMob\.showRewardVideoAd/);
+ assert.match(ads,/Rewarded video unavailable/);
 });
