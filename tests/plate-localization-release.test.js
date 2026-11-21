@@ -19,7 +19,7 @@ test('Plate Scanner labels and camera messages follow all seven app locales',()=
  assert.match(main,/compactFeatureLabel\(f\.id\)/);
  assert.doesNotMatch(plate,/Moroccan Plate Scanner|قارئ لوحات السيارات المغربية|Scanner des plaques marocaines/);
 });
-test('New release only increases 0.45.43 original Play version without removing local files',()=>{
+test('New release only increases 0.45.44 original Play version without removing local files',()=>{
  const version=get('rivoscan-version.properties');
  assert.match(version,/^versionCode=149$/m);
  assert.match(version,/^versionName=0\.45\.45$/m);
