@@ -26,5 +26,7 @@ test('all RivoScan in-app marks preserve the original logo with white inset',()=
  assert.equal((main.match(/src="\/rivoscan-icon\.png"/g)||[]).length,3);
  assert.match(main,/import '\.\/rivo-brand-fit\.css'/);
  assert.match(css,/object-fit:\s*contain\s*!important/);
- assert.match(css,/object-position:\s*center center\s*!important/);\n assert.match(css,/background:\s*#fff\s*!important/);\n assert.match(css,/padding:\s*3px 7px\s*!important/);
+ assert.match(css,/object-position:\s*center center\s*!important/);
+ assert.match(css,/background:\s*#fff\s*!important/);
+ assert.match(css,/padding:\s*3px 7px\s*!important/);
 });
