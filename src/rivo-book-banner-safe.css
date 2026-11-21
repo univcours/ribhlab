@@ -1,0 +1,99 @@
+/* Book Scan / Android: PDF Save is always ABOVE the native AdMob 320x50 banner.
+ * No CSS can cover the separate native ad view: reserve its actual measured
+ * bottom offset. Keep the lower Android navigation gesture area unoccupied. */
+html body.rivo-native-android .rivo-id-overlay.rivo-book-overlay{
+  position:fixed!important;
+  inset-block-start:0!important;
+  inset-inline:0!important;
+  bottom:max(8px,env(safe-area-inset-bottom,0px))!important;
+  top:0!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  padding:8px 8px 0!important;
+}
+/* The native AdMob banner is anchored to this very same bottom offset. */
+html body.rivo-native-android.rivo-has-ad-banner .rivo-id-overlay.rivo-book-overlay{
+  bottom:calc(var(--rivo-banner-bottom,98px) + var(--rivo-banner-height,50px) + 8px)!important;
+}
+html body.rivo-native-android .rivo-id-overlay.rivo-book-overlay > .rivo-id-dialog.rivo-book-dialog{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  height:100%!important;
+  max-height:100%!important;
+  width:min(100%,720px)!important;
+  border-radius:15px 15px 0 0!important;
+  overflow:hidden!important;
+  padding:0!important;
+}
+/* Empty preview was expanding to ~half the display through legacy flex rules. */
+html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+ .rivo-book-preview-dock.rivo-book-empty-dock{
+  flex:0 0 clamp(112px,20dvh,172px)!important;
+  height:clamp(112px,20dvh,172px)!important;
+  min-height:112px!important;
+  max-height:172px!important;
+  padding:8px!important;
+  overflow:hidden!important;
+}
+html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+ .rivo-book-preview-dock:not(.rivo-book-empty-dock){
+  flex:1 1 auto!important;
+  min-height:100px!important;
+  max-height:none!important;
+}
+html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+ .rivo-workspace-settings:not([hidden]){
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+}
+html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+ > .rivo-edit-bottom-bar.rivo-code-actions{
+  position:relative!important;
+  inset:auto!important;
+  bottom:auto!important;
+  margin:0!important;
+  margin-top:auto!important;
+  flex:0 0 auto!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  z-index:5!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:8px 12px 10px!important;
+  background:#f5faff!important;
+  border-top:1px solid #c7daef!important;
+  box-sizing:border-box!important;
+}
+html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+ > .rivo-edit-bottom-bar.rivo-code-actions > button{
+  box-sizing:border-box!important;
+  display:block!important;
+  min-height:50px!important;
+  width:100%!important;
+  max-width:100%!important;
+  padding:11px 12px!important;
+  margin:0!important;
+  border-radius:12px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+@media (max-height:620px){
+  html body.rivo-native-android .rivo-book-overlay .rivo-id-dialog.rivo-book-dialog
+  .rivo-book-preview-dock.rivo-book-empty-dock{
+    flex-basis:100px!important;
+    height:100px!important;
+    min-height:100px!important;
+    max-height:100px!important;
+  }
+}
