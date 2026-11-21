@@ -6,7 +6,11 @@
 const words={
  en:{settings:'Settings',source:'Photo',adjust:'Adjust',result:'Result',advanced:'Advanced',empty:'Take or import a photo to see it here'},
  ar:{settings:'الإعدادات',source:'الصورة',adjust:'الضبط',result:'النتيجة',advanced:'متقدم',empty:'صوّر أو استورد صورة باش تبان هنا'},
- fr:{settings:'Réglages',source:'Photo',adjust:'Ajuster',result:'Résultat',advanced:'Avancé',empty:'Photographiez ou importez une photo'}
+ fr:{settings:'Réglages',source:'Photo',adjust:'Ajuster',result:'Résultat',advanced:'Avancé',empty:'Photographiez ou importez une photo'},
+ es:{settings:'Ajustes',source:'Foto',adjust:'Ajustar',result:'Resultado',advanced:'Avanzado',empty:'Toma o importa una foto'},
+ de:{settings:'Einstellungen',source:'Foto',adjust:'Anpassen',result:'Ergebnis',advanced:'Erweitert',empty:'Foto aufnehmen oder importieren'},
+ pt:{settings:'Definições',source:'Foto',adjust:'Ajustar',result:'Resultado',advanced:'Avançado',empty:'Tire ou importe uma foto'},
+ it:{settings:'Impostazioni',source:'Foto',adjust:'Regola',result:'Risultato',advanced:'Avanzate',empty:'Scatta o importa una foto'}
 };
 export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],hiddenNodes=[],alwaysVisible=[],language='en',defaultSection=null}={}){
  if(!panel||!preview||!sections.length)throw Error('Invalid preview workspace');

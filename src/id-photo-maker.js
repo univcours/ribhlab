@@ -42,6 +42,15 @@ export function setPNGResolution(bytes,dpi=300){
  const out=new Uint8Array(src.length+21);out.set(src.subarray(0,33),0);
  out.set(chunk,33);out.set(src.subarray(33),54);return out;
 }
+const photoUI={
+ en:{import:'Import photo',none:'No photo selected',source:'Photo',adjust:'Size & crop',background:'Background',loading:'Removing background on your device…',notReady:'Background model not ready'},
+ ar:{import:'استيراد صورة',none:'لم تُختَر صورة',source:'الصورة',adjust:'المقاس والتأطير',background:'الخلفية',loading:'جاري إزالة الخلفية على جهازك…',notReady:'نموذج الخلفية غير جاهز'},
+ fr:{import:'Importer une photo',none:'Aucune photo sélectionnée',source:'Photo',adjust:'Format et cadrage',background:'Arrière-plan',loading:'Suppression du fond sur votre appareil…',notReady:'Modèle de fond indisponible'},
+ es:{import:'Importar foto',none:'Ninguna foto seleccionada',source:'Foto',adjust:'Tamaño y recorte',background:'Fondo',loading:'Eliminando el fondo en el dispositivo…',notReady:'Modelo de fondo no disponible'},
+ de:{import:'Foto importieren',none:'Kein Foto ausgewählt',source:'Foto',adjust:'Größe und Zuschnitt',background:'Hintergrund',loading:'Hintergrund wird auf dem Gerät entfernt…',notReady:'Hintergrundmodell nicht bereit'},
+ pt:{import:'Importar foto',none:'Nenhuma foto selecionada',source:'Foto',adjust:'Tamanho e recorte',background:'Fundo',loading:'Removendo fundo no dispositivo…',notReady:'Modelo de fundo indisponível'},
+ it:{import:'Importa foto',none:'Nessuna foto selezionata',source:'Foto',adjust:'Dimensioni e ritaglio',background:'Sfondo',loading:'Rimozione dello sfondo sul dispositivo…',notReady:'Modello sfondo non pronto'}
+};
 const strings={
  en:['ID Photo Maker','Choose portrait','Photo size','Headroom','Left / Right','Make sheet','Save PNG · 10×15 cm at 300 DPI','Close','Optional local portrait background replacement uses a model download. Review the cutout; acceptance is not guaranteed.','Image could not be loaded.'],
  ar:['صور شخصية للطباعة','اختر صورة شخصية','المقاس','أعلى وأسفل','يمين ويسار','إعداد صفحة الطباعة','حفظ PNG · 10×15 سم بدقة 300 DPI','إغلاق','تغيير الخلفية اختياري ومحلي بعد تحميل النموذج. راجع حواف الشخص؛ قبول الصورة غير مضمون.','تعذر فتح الصورة.'],
@@ -62,13 +71,18 @@ function cropImage(ctx,image,rect,offsetX,offsetY){
     rect.x,rect.y,rect.w,rect.h);
 }
 export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
- const L=strings[language]||strings.en;
+ const L=strings[language]||strings.en, UI=photoUI[language]||photoUI.en;
  const overlay=document.createElement('div');overlay.className='rivo-id-overlay';
- const panel=document.createElement('section');panel.className='rivo-id-dialog';panel.setAttribute('role','dialog');
+ const panel=document.createElement('section');panel.className='rivo-id-dialog rivo-id-photo-dialog';panel.setAttribute('role','dialog');
  panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');title.textContent=L[0];panel.append(title);
  const select=document.createElement('select');for(const [key,size] of Object.entries(photoSizes)){const opt=document.createElement('option');opt.value=key;opt.textContent=size.label;select.append(opt)}
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label',L[1]);
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.className='rivo-id-native-file';input.setAttribute('aria-label',L[1]);
+ const picker=document.createElement('div');picker.className='rivo-id-picker';
+ const pickButton=document.createElement('button');pickButton.type='button';pickButton.className='rivo-id-import-button';pickButton.textContent=UI.import;
+ const fileName=document.createElement('span');fileName.className='rivo-id-filename';fileName.textContent=UI.none;fileName.setAttribute('aria-live','polite');
+ pickButton.addEventListener('click',()=>input.click());
+ picker.append(pickButton,fileName,input);
  const x=document.createElement('input');x.type='range';x.min='-100';x.max='100';x.value='0';
  const y=document.createElement('input');y.type='range';y.min='-100';y.max='100';y.value='0';
  const canvas=document.createElement('canvas');canvas.className='rivo-id-preview';canvas.hidden=true;
@@ -76,7 +90,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  const status=document.createElement('p');status.setAttribute('role','status');
  const actions=document.createElement('div');actions.className='rivo-code-actions';
  const row=(caption,control)=>{const label=document.createElement('label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
- row(L[1],input);row(L[2],select);row(L[3],y);row(L[4],x);
+ row(L[1],picker);row(L[2],select);row(L[3],y);row(L[4],x);
  const bgSelect=document.createElement('select');
  const names=({ar:['الأصلية','بيضاء','زرقاء','رمادية'],fr:['Original','Blanc','Bleu','Gris'],es:['Original','Blanco','Azul','Gris'],de:['Original','Weiß','Blau','Grau'],pt:['Original','Branco','Azul','Cinzento'],it:['Originale','Bianco','Blu','Grigio'],en:['Original','White','Light blue','Gray']})[language]||['Original','White','Light blue','Gray'];
  for(const [i,key] of ['original','white','blue','gray'].entries()){
@@ -109,7 +123,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   if(bgSelect.value==='original'||cutout){update();return}
   if(processing)return;
   processing=true;
-  status.textContent=({ar:'كنعزلو الشخص محلياً... أول مرة خاص الإنترنت',en:'On-device background removal; first use needs internet…'})[language]||'Loading portrait segmentation model…';
+  status.textContent=UI.loading;
   try{
    cutout=await segmentPortrait(image,{onProgress:msg=>{if(!closed)status.textContent=msg}});
    if(!closed)update();
@@ -121,7 +135,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  button(L[5],()=>{if(!processing)update()});
  button(L[6],async()=>{
   if(!image||closed||processing)return;
-  if(bgSelect.value!=='original'&&!cutout){status.textContent='Background model not ready';return}
+  if(bgSelect.value!=='original'&&!cutout){status.textContent=UI.notReady;return}
   try{
    update();
    const blob=await new Promise((ok,bad)=>canvas.toBlob(v=>v?ok(v):bad(Error(L[9])),'image/png'));
@@ -137,7 +151,9 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   try{
    const next=new Image();next.src=blobURL;
    await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
-   if(closed)return;image=next;cutout=null;workspace?.loaded();if(saveButton)saveButton.disabled=false;
+   if(closed)return;image=next;cutout=null;fileName.textContent=file.name;
+   workspace?.loaded();workspace?.choose('adjust');workspace?.show(true);
+   if(saveButton)saveButton.disabled=false;
     if(bgSelect.value!=='original')await applyBackground();else update();
   }catch{status.textContent=L[9]}
  };
@@ -150,10 +166,10 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
  workspace=mountPreviewFirstWorkspace({
   panel,preview:canvas,language,defaultSection:'source',
   sections:[
-   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[rows[0]]},
-   {id:'adjust',label:({ar:'المقاس والتأطير',fr:'Cadrage',en:'Size & crop'})[language]||'Size & crop',
+   {id:'source',label:UI.source,nodes:[rows[0]]},
+   {id:'adjust',label:UI.adjust,
     nodes:[rows[1],rows[2],rows[3],makeSheet]},
-   {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[4],hint]}
+   {id:'background',label:UI.background,nodes:[rows[4],hint]}
   ],alwaysVisible:[status],footer:[saveButton]
  });
  status.classList.add('rivo-workspace-status');
