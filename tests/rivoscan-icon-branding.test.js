@@ -32,7 +32,8 @@ test('launcher uses the original scanner-document symbol without the wordmark',(
 });
 test('in-app and Android launcher preserve original approved image without drawing a new letter',()=>{
  const main=text('src/main.js'),fit=text('src/rivo-brand-fit.css'),gen=text('scripts/create-turquoise-icon.mjs');
- assert.equal(main.split('src="/rivoscan-icon.png"').length-1,3);
+ assert.equal(main.split('src="/rivoscan-icon.png"').length-1,2);
+ assert.equal(main.split('src="/rivoscan-header-mark.png"').length-1,1);
  assert.match(fit,/object-fit:contain!important/);
  assert.match(fit,/background:#fff!important/);
  assert.match(gen,/SOURCE_SHA256='e2e1626a748593fd71e39c00bb3826a6de16b365ecfc344e8807549ab1b4dc8f'/);
