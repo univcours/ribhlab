@@ -23,7 +23,7 @@ test('0.45.26 launcher is full-bleed with blue R and safe adaptive foreground, n
 test('native 320x50 banner anchored in exactly the same passive slot on all pages',()=>{
  const ad=t('src/monetization.js'),css=t('src/rivo-device-safe.css'),main=t('src/main.js');
  assert.match(main,/refreshBannerPosition\(\)/);
- assert.match(main,/src="\/rivoscan-header-mark.png"/);
+ assert.equal((main.match(/src="\/rivoscan-icon\.png"/g)||[]).length,3);\n assert.doesNotMatch(main,/rivoscan-header-mark\.png/);
  assert.match(ad,/position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin/);
  assert.match(ad,/adSize:BannerAdSize.BANNER/);
  assert.match(ad,/AdMob\.removeBanner\(\)/);

@@ -20,11 +20,11 @@ test('rewarded-ad unavailability does not direct consumers to internal debugging
 });
 
 
-test('all RivoScan in-app marks use the uncropped symbol-only header asset',()=>{
+test('all RivoScan in-app marks preserve the original logo with white inset',()=>{
  const css=readFileSync(new URL('../src/rivo-brand-fit.css',import.meta.url),'utf8');
- assert.equal((main.match(/src="\/rivoscan-header-mark\.png"/g)||[]).length,1);
- assert.equal((main.match(/src="\/rivoscan-icon\.png"/g)||[]).length,2);
+ assert.equal((main.match(/src="\/rivoscan-header-mark\.png"/g)||[]).length,0);
+ assert.equal((main.match(/src="\/rivoscan-icon\.png"/g)||[]).length,3);
  assert.match(main,/import '\.\/rivo-brand-fit\.css'/);
  assert.match(css,/object-fit:\s*contain\s*!important/);
- assert.match(css,/object-position:\s*center center\s*!important/);
+ assert.match(css,/object-position:\s*center center\s*!important/);\n assert.match(css,/background:\s*#fff\s*!important/);\n assert.match(css,/padding:\s*3px 7px\s*!important/);
 });
