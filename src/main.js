@@ -77,7 +77,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,watchRewardedVideoForBreak,getPremiumStatus,refreshBannerPosition} from './monetization.js';
+import {configureAds,initializeAds,startAdsAtLaunch,launchEligible,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus,refreshBannerPosition} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -605,12 +605,6 @@ function settingsWorkspace(){
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
- <div class="settings-section rivo-rewarded-choice">
-  <h2>${({ar:'فيديو اختياري',fr:'Vidéo facultative',es:'Vídeo opcional',de:'Optionales Video',pt:'Vídeo opcional',it:'Video facoltativo',en:'Optional video'})[language]||'Optional video'}</h2>
-  <p>${({ar:'شاهد إعلاناً بمحض اختيارك لتحصل على 10 دقائق دون إعلانات بملء الشاشة. جميع أدوات المسح والحفظ متاحة دون مشاهدة الفيديو.',fr:'Regardez volontairement une publicité pour obtenir 10 minutes sans publicité plein écran. Tous les outils restent gratuits.',es:'Mira un anuncio voluntariamente para disfrutar de 10 minutos sin anuncios a pantalla completa.',de:'Sieh dir freiwillig Werbung an, um 10 Minuten ohne Vollbildanzeigen zu erhalten.',pt:'Assista voluntariamente a um anúncio para ganhar 10 minutos sem anúncios de tela cheia.',it:'Guarda volontariamente un annuncio per 10 minuti senza annunci a schermo intero.',en:'Watch an ad voluntarily for 10 minutes without full-screen ads. Scanning and saving stay free.'})[language]||'Watch an ad voluntarily for 10 minutes without full-screen ads.'}</p>
-  <button type="button" class="btn rivo-watch-rewarded" data-watch-rewarded ${!ad.native?'disabled':''}>${({ar:'شاهد فيديو للحصول على المكافأة',fr:'Regarder une vidéo pour la récompense',es:'Ver vídeo para obtener recompensa',de:'Video für Belohnung ansehen',pt:'Ver vídeo por recompensa',it:'Guarda un video per una ricompensa',en:'Watch video for reward'})[language]||'Watch video for reward'}</button>
-  ${ad.remainingMs>0?`<p role="status">${Math.ceil(ad.remainingMs/60000)} ${({ar:'دقائق متبقية دون إعلانات كاملة',fr:'minutes sans annonces plein écran',en:'minutes without full-screen ads'})[language]||'minutes remaining without full-screen ads'}</p>`:''}
- </div>
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
@@ -1025,17 +1019,6 @@ function wire(){
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
-  document.querySelectorAll('[data-watch-rewarded]').forEach(button=>button.addEventListener('click',async()=>{
-    if(button.disabled)return;
-    button.disabled=true;
-    const rewarded=await watchRewardedVideoForBreak();
-    if(rewarded){
-      toast(({ar:'حصلت على 10 دقائق دون إعلانات كاملة',fr:'10 minutes sans publicité plein écran',en:'10 minutes without full-screen ads'})[language]||'10 minutes without full-screen ads');
-    }else{
-      toast(({ar:'فيديو المكافأة غير متاح حالياً، جميع الأدوات ما زالت مجانية',fr:'Vidéo indisponible pour le moment. Les outils restent gratuits.',en:'Reward video not available right now. All tools remain free.'})[language]||'Reward video unavailable',true);
-    }
-    if(activeTool?.id==='me')render();
-  }));
   // Diagnostic controls must never be wired in a store/release build.
   if(import.meta.env.DEV){
     document.querySelectorAll('[data-ad-retry]').forEach(el=>el.addEventListener('click',async()=>{await initializeAds({retry:true});if(activeTool?.id==='me')render()}));
@@ -1863,10 +1846,28 @@ document.addEventListener('touchend',event=>{
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
 
+// A true cold-start presentation surface on every third opening only.
+ // Never present an App Open ad after this surface disappears.
+let rivoStartupSplash=null;
+if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'&&launchEligible(getPremiumStatus().launchCount)){
+ rivoStartupSplash=document.createElement('div');
+ rivoStartupSplash.className='rivo-startup-ad-splash';
+ rivoStartupSplash.setAttribute('role','status');
+ rivoStartupSplash.setAttribute('aria-label','Loading RivoScan');
+ rivoStartupSplash.innerHTML='<span class="rivo-startup-ad-brand">RivoScan</span><span class="rivo-startup-ad-caption">Loading documents…</span>';
+ document.body.append(rivoStartupSplash);
+}
 render();
 void refreshSystemLanguage();
+// Only a short genuine startup window; never hold users waiting for an ad.
+const startupAdTask=startAdsAtLaunch({isLoading:()=>!!rivoStartupSplash?.isConnected});
+if(rivoStartupSplash){
+ const splash=rivoStartupSplash;
+ const safety=setTimeout(()=>splash.remove(),1700);
+ void Promise.resolve(startupAdTask).catch(error=>console.warn('Launch ad skipped',error))
+  .finally(()=>{clearTimeout(safety);splash.remove()});
+}
 // Consent-gated AdMob: real IDs in Play release, demo IDs in QA.
-void startAdsAtLaunch();
 void checkPlayUpdate({language,onClose:()=>CapacitorApp.minimizeApp().catch(console.warn)});
 try{
  if(shouldShowReleaseNotes(localStorage,appVersion))
