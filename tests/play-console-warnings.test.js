@@ -19,6 +19,8 @@ test('Android 15 status/navigation and keyboard insets replace deprecated bar-co
  }
  assert.doesNotMatch(m,/StatusBar\.setBackgroundColor\(/);
  assert.doesNotMatch(m,/StatusBar\.setOverlaysWebView\(/);
+ assert.doesNotMatch(m,/from '@capacitor\/status-bar'/);
+ assert.equal(JSON.parse(read('package.json')).dependencies['@capacitor/status-bar'],undefined);
 });
 test('Android 16 removes rotation restrictions and permits large-screen resizing',()=>{
  const p=read('install-live-scanner.ps1');

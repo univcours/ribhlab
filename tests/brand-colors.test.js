@@ -41,7 +41,8 @@ test('Ice Blue independent Android status bar has dark readable system icons',()
  assert.ok(main.includes("import './rivo-blue-theme.css'"));
  assert.ok(!main.includes('StatusBar.setBackgroundColor('));
  assert.ok(!main.includes('StatusBar.setOverlaysWebView('));
- assert.ok(main.includes('StatusBar.setStyle({style:Style.Light})'));
+ assert.ok(!main.includes("from '@capacitor/status-bar'"));
+ assert.ok(!JSON.parse(read('package.json')).dependencies['@capacitor/status-bar']);
  assert.ok(read('install-live-scanner.ps1').includes('WindowCompat.setDecorFitsSystemWindows(getWindow(), false);'));
  assert.ok(!read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor('));
 });

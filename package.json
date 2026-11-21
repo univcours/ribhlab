@@ -26,7 +26,6 @@
     "pngjs": "^7.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor-mlkit/document-scanner": "8.2.1",
-    "@capacitor/status-bar": "^8.0.0",
     "@zxing/browser": "^0.2.1",
     "@zxing/library": "^0.23.0",
     "@tensorflow/tfjs": "^4.22.0",

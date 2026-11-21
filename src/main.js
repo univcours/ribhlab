@@ -18,7 +18,6 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
 import {mlkitFullOptions,persistMlKitPdf,mlkitAutoCleanMode} from './mlkit-scan-flow.js';
@@ -89,9 +88,8 @@ const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
-  // Native WindowInsets own screen-safe layout; avoid deprecated Android 15 bar-color APIs.
-  StatusBar.show().then(()=>StatusBar.setStyle({style:Style.Light}))
-    .catch(error=>console.warn('Android system bar visibility:',error));
+  // No old @capacitor/status-bar plugin: MainActivity applies WindowInsets
+  // and WindowInsetsControllerCompat to keep system bars visible and legible.
 }
 
 const icons = {
