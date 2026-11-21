@@ -340,6 +340,31 @@ try{
       !!flatten&&flatten.hidden&&(!split||split.hidden);
     });
     check(width+': book source-only settings, advanced corrections behind gear',bookContext);
+    const mobileBook=await overlay.evaluate(root=>{
+     const panel=root.querySelector('.rivo-book-dialog');
+     const dock=panel?.querySelector('.rivo-book-preview-dock');
+     const save=panel?.querySelector('.rivo-edit-bottom-bar button');
+     const footer=panel?.querySelector('.rivo-edit-bottom-bar');
+     const settings=panel?.querySelector('.rivo-workspace-settings');
+     const active=panel?.querySelector('.rivo-workspace-task.active');
+     const other=panel?.querySelector('.rivo-workspace-task:disabled');
+     if(!panel||!dock||!save||!footer||!settings||!active||!other)return null;
+     const p=panel.getBoundingClientRect(),d=dock.getBoundingClientRect();
+     const s=save.getBoundingClientRect(),f=footer.getBoundingClientRect();
+     const activeStyle=getComputedStyle(active),disabledStyle=getComputedStyle(other);
+     return {
+      previewCompact:d.height<=Math.min(220,innerHeight*.30)+3,
+      fullSave:s.width>=p.width-34 && s.left>=p.left-1 && s.right<=p.right+1,
+      safeBottom:s.bottom<=innerHeight-18 && f.bottom<=innerHeight+2,
+      scrollSettings:getComputedStyle(settings).overflowY==='auto',
+      disabledContrast:activeStyle.backgroundColor!==disabledStyle.backgroundColor,
+      fit:d.top>=p.top&&d.bottom<=s.top,
+     };
+    });
+    check(width+': Book empty preview stays compact',mobileBook?.previewCompact);
+    check(width+': Book Save is full width and above Android navigation safe area',mobileBook?.fullSave&&mobileBook?.safeBottom);
+    check(width+': Book settings scroll independently and disabled tabs stay distinct',mobileBook?.scrollSettings&&mobileBook?.disabledContrast&&mobileBook?.fit);
+
     const bookSave=overlay.locator('.rivo-book-dialog .rivo-edit-bottom-bar button').last();
     check(width+': Book Save disabled without photo',await bookSave.isDisabled());
     if(width===320){
@@ -348,6 +373,44 @@ try{
     }
    }
    await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
+   if(id==='bookScan'){
+    // Load a synthetic test photo locally; no private camera or user documents.
+    const pngBase64=await page.evaluate(()=>{
+     const c=document.createElement('canvas');c.width=480;c.height=300;
+     const cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,480,300);
+     cx.fillStyle='#e4e4ed';cx.fillRect(230,0,20,300);
+     cx.fillStyle='#243d63';
+     for(let row=0;row<8;row++){
+      cx.fillRect(35,35+row*27,150,4);cx.fillRect(290,35+row*27,150,4);
+     }
+     return c.toDataURL('image/png').split(',')[1];
+    });
+    await overlay.locator('input[type="file"]').setInputFiles({
+     name:'TEST_book_spread.png',mimeType:'image/png',
+     buffer:Buffer.from(pngBase64,'base64')
+    });
+    await page.waitForFunction(()=>{
+     const p=document.querySelector('.rivo-book-dialog');
+     return !!p&&!p.querySelector('.rivo-book-preview-empty') &&
+      !p.querySelector('.rivo-edit-bottom-bar button')?.disabled;
+    },{timeout:20000});
+    const loadedBook=await overlay.evaluate(root=>{
+     const panel=root.querySelector('.rivo-book-dialog');
+     const dock=panel.querySelector('.rivo-book-preview-dock');
+     const save=panel.querySelector('.rivo-edit-bottom-bar button');
+     const s=save.getBoundingClientRect(),p=panel.getBoundingClientRect();
+     return {
+      loaded:!dock.classList.contains('rivo-book-empty-dock'),
+      enabled:!save.disabled,
+      fullWidth:s.width>=p.width-34,
+      safe:s.bottom<=innerHeight-18,
+      splitEnabled:!panel.querySelector('[data-book-task="split"]')?.disabled
+     };
+    });
+    check(width+': Book imported TEST photo allows Save and Split with safe full-width footer',
+      loadedBook.loaded&&loadedBook.enabled&&loadedBook.fullWidth&&loadedBook.safe&&loadedBook.splitEnabled);
+    await page.screenshot({path:out+'/'+width+'-'+tag+'-loaded-test-photo.png'});
+   }
    await overlay.locator('[data-rivo-modal-close]').click();
    await overlay.waitFor({state:'detached',timeout:8000});
    check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
