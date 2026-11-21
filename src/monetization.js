@@ -23,9 +23,9 @@ export function productionAdsConfigured(config=AD_CONFIG){
     owner(config.androidAppId)===owner(config.interstitial)&&
     (!config.banner||owner(config.banner)===owner(config.androidAppId));
 }
-// Onboarding protects first-time users from full-screen ads. One use = one
-// process/cold launch, not button taps or foreground resume events.
-export const FULLSCREEN_START_LAUNCH=3; // protect first two sessions
+// Standard interstitial eligibility: no launch-count or saved-document gate.
+// Ads are still restricted to natural navigation transitions with no per-session display ceiling.
+export const FULLSCREEN_START_LAUNCH=1;
 export const APP_LAUNCH_KEY='rivo-ad-launch-count-v1';
 export const FULLSCREEN_LAST_SHOWN_KEY='rivo-ad-last-fullscreen-v1';
 export function registerLaunch(storage){
@@ -51,7 +51,8 @@ function recordFullscreenTime(now=Date.now()){
  try{localStorage.setItem(FULLSCREEN_LAST_SHOWN_KEY,String(now))}catch{}
 }
 export const PREMIUM_MINUTES=10;
-export const FULLSCREEN_COOLDOWN_MS=2*60*1000; // 2+ actual actions and a completed-task break still required
+export const FULLSCREEN_COOLDOWN_MS=60*1000; // 60-second minimum between full-screen ads
+export const MIN_INTERSTITIAL_SESSION_MS=30*1000; // no launch ads; only natural breaks after 30 seconds
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
  'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
@@ -61,17 +62,16 @@ const PREMIUM_IDS=new Set([
 ]);
 export function isPremiumFeature(id){return PREMIUM_IDS.has(String(id||''));}
 export function remainingPremiumMs(until,now=Date.now()){return Math.max(0,Number(until||0)-now);}
-export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt,savedCount,shownCount,premiumUntil,ready=true,trigger='regular',backTransitions=0,launchCount=0}){
- // The fifth and later launches can monetize natural transitions, never exit.
- // Even with higher inventory, do not show after each tap (at least 2 real actions).
- // A Back press is a natural page transition only when returning from an
- // actual tool to Home, after either a completed save or two tool returns.
- // Never treat dismissing an overlay or exiting the app as an ad opportunity.
- const meaningfulBreak=trigger==='back'
-  ?(savedCount>=1||backTransitions>=2)
-  :savedCount>=1;
- return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<8&&
-  now-startedAt>=60000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
+export function shouldShowInterstitial({
+ native,consent,startedAt=0,now=Date.now(),lastShownAt=0,shownCount=0,
+ premiumUntil=0,ready=true,trigger='regular'
+}={}){
+ // Show only at a real navigation break, never on launch or during a task.
+ // No requirement to save a file, reach a certain launch, or press Back twice.
+ const naturalTransition=trigger==='regular'||trigger==='back';
+ return !!(native&&consent&&ready&&naturalTransition&&
+  now-startedAt>=MIN_INTERSTITIAL_SESSION_MS&&
+  (!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
@@ -95,7 +95,7 @@ async function trackNativeAdEvents(){
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:storedTime(FULLSCREEN_LAST_SHOWN_KEY),busy:false,
- interstitialReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
+ interstitialReady:false,interstitialLoading:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 // AdMob can return NO_FILL even when configured correctly. Retry with bounded
@@ -122,7 +122,7 @@ function installAdVisibilityRecovery(){
 function scheduleAdRetry(type){
  if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
  if(retryCounts[type]>=4)return; // bounded no-fill retries
- const delay=[60000,120000,240000,480000][retryCounts[type]++];
+ const delay=[30000,60000,120000,240000][retryCounts[type]++];
  retryTimers[type]=setTimeout(()=>{
   retryTimers[type]=null;
   if(document.visibilityState==='hidden'){retryCounts[type]=Math.max(0,retryCounts[type]-1);return;}
@@ -292,12 +292,20 @@ async function loadBanner(){
  }finally{state.bannerLoading=false;}
 }
 async function loadInterstitial(){
- if(!state.ready||state.interstitialReady||state.busy)return false;
+ if(!state.ready||state.interstitialReady||state.interstitialLoading||state.busy)return false;
+ state.interstitialLoading=true;
  try{
   adStats.interstitialRequests++;
   await AdMob.prepareInterstitial({adId:AD_CONFIG.interstitial,isTesting:AD_CONFIG.testMode});
-  adStats.interstitialLoads++;retryCounts.interstitial=0;state.interstitialReady=true;status('Interstitial ready');return true;
- }catch(error){status('Interstitial unavailable',String(error?.message||error));scheduleAdRetry('interstitial');return false;}
+  adStats.interstitialLoads++;retryCounts.interstitial=0;state.interstitialReady=true;
+  adStats.lastInterstitialError='';status('Interstitial ready');return true;
+ }catch(error){
+  const detail=String(error?.message||error||'Interstitial load failed');
+  state.interstitialReady=false;adStats.lastInterstitialError=detail;
+  status('Interstitial unavailable',detail);scheduleAdRetry('interstitial');return false;
+ }finally{
+  state.interstitialLoading=false;
+ }
 }
 export async function initializeAds({retry=false,deferBanner=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
@@ -327,7 +335,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    await AdMob.initialize();
    state.ready=true;
    installAdVisibilityRecovery();
-   void trackNativeAdEvents();
+   await trackNativeAdEvents();
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
@@ -366,28 +374,31 @@ export async function startAdsAtLaunch(){
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;
- // Count actual tool -> Home transitions, not button taps, gesture duplicates
- // or app-exit presses. A first Back without work remains advertisement-free.
  if(trigger==='back')state.backTransitions++;
- if(!state.interstitialReady)return false;
+ // If an ad is not ready, request one without blocking navigation; a later
+ // natural transition can show it once the native SDK confirms it is loaded.
+ if(!state.interstitialReady){
+  if(!state.interstitialLoading&&!retryTimers.interstitial)void loadInterstitial();
+  return false;
+ }
  const now=Date.now();
  if(!shouldShowInterstitial({native:isAndroid,consent:state.consent,ready:state.ready,
     startedAt:state.startedAt,now,lastShownAt:state.lastFullscreenAt,
-    savedCount:state.savedCount,shownCount:state.shownCount,
-    premiumUntil:state.unlockedUntil,trigger,backTransitions:state.backTransitions,
-    launchCount:state.launchCount}))return false;
+    shownCount:state.shownCount,premiumUntil:state.unlockedUntil,trigger}))return false;
  state.busy=true;state.interstitialReady=false;
  try{
-  // Preloaded full-screen ad can contain video; its creative is chosen by
-  // AdMob. Never wait for fresh network loading when the user presses Back.
   await pauseBannerForFullscreen();
   await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
   recordFullscreenTime();state.shownCount++;state.savedCount=0;
   state.backTransitions=0;
   status(trigger==='back'?'Interstitial shown on return to Home':'Interstitial shown');
   return true;
- }catch(error){status('Interstitial failed',String(error?.message||error));return false;}
- finally{state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();}
+ }catch(error){
+  const detail=String(error?.message||error||'Interstitial show failed');
+  adStats.lastInterstitialError=detail;status('Interstitial failed',detail);return false;
+ }finally{
+  state.busy=false;void restoreBannerAfterFullscreen();void loadInterstitial();
+ }
 }
 export async function onAppForeground({backgroundMs=0,working=false}={}){
  if(isAndroid&&!working){

@@ -43,6 +43,29 @@ for(let y=0;y<512;y++)for(let x=0;x<512;x++){
  for(let c=0;c<3;c++)flat.data[i+c]=Math.round(opacity*colors[c]+(1-opacity)*background[c]);
  flat.data[i+3]=255;
 }
+// Keep the approved icon pixels and artwork, but prevent Android launchers
+// and the Play listing from clipping its outermost details.
+const LOGO_WHITE_INSET=16;
+const beforeInset=Uint8Array.from(flat.data);
+const innerSize=512-LOGO_WHITE_INSET*2;
+const sample=(sx,sy,c)=>{
+ const x0=Math.max(0,Math.min(511,Math.floor(sx))),y0=Math.max(0,Math.min(511,Math.floor(sy)));
+ const x1=Math.min(x0+1,511),y1=Math.min(y0+1,511);
+ const dx=sx-x0,dy=sy-y0;
+ const v=(x,y)=>beforeInset[(y*512+x)*4+c];
+ return Math.round((1-dx)*(1-dy)*v(x0,y0)+dx*(1-dy)*v(x1,y0)+(1-dx)*dy*v(x0,y1)+dx*dy*v(x1,y1));
+};
+for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+ const i=(y*512+x)*4;
+ if(x<LOGO_WHITE_INSET||y<LOGO_WHITE_INSET||x>=512-LOGO_WHITE_INSET||y>=512-LOGO_WHITE_INSET){
+  flat.data[i]=255;flat.data[i+1]=255;flat.data[i+2]=255;flat.data[i+3]=255;continue;
+ }
+ const sx=(x-LOGO_WHITE_INSET+.5)*512/innerSize-.5;
+ const sy=(y-LOGO_WHITE_INSET+.5)*512/innerSize-.5;
+ for(let c=0;c<3;c++)flat.data[i+c]=sample(Math.max(0,sx),Math.max(0,sy),c);
+ flat.data[i+3]=255;
+}
+
 for(let y=0;y<512;y++)for(let x=0;x<512;x++){
  const i=(y*512+x)*4;
  for(let c=0;c<4;c++)header.data[i+c]=flat.data[i+c];
