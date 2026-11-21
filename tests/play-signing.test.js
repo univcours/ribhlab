@@ -40,3 +40,13 @@ test('verified RivoScan AdMob public units and original Play upload key are wire
   assert.ok(!ci.includes('keynovagrid'));
  }
 });
+
+test('current production release uses RivoScan registered AdMob Application ID, not version-derived digits',()=>{
+ const ci=read('.github/workflows/rivoscan-04544-original-key.yml');
+ const script=read('scripts/prepare-rivoscan-admob-release.mjs');
+ assert.ok(ci.includes('VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607'));
+ assert.ok(!ci.includes('~1519328607'));
+ assert.ok(!ci.includes('~1529328607'));
+ assert.ok(script.includes("RIVO_APPROVED_ADMOB_APP_ID='ca-app-pub-7945572016731367~1509328607'"));
+ assert.ok(script.includes('app!==RIVO_APPROVED_ADMOB_APP_ID'));
+});

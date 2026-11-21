@@ -154,7 +154,10 @@ jobs:
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.ribhlab.rivoscan' versionCode='148' versionName='0.45.44'"
+          VERSION_CODE="$(sed -n 's/^versionCode=//p' rivoscan-version.properties)"
+          VERSION_NAME="$(sed -n 's/^versionName=//p' rivoscan-version.properties)"
+          test -n "$VERSION_CODE" && test -n "$VERSION_NAME"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'"
           "$AAPT" dump badging "$APK" | grep '^application-icon-' > /tmp/rivoscan-launcher-badging.txt
           "$AAPT" dump resources "$APK" | grep -E 'rivoscan_launcher_(adaptive|background)|ic_launcher' > /tmp/rivoscan-launcher-resources.txt
           cat /tmp/rivoscan-launcher-badging.txt
@@ -163,7 +166,7 @@ jobs:
           while IFS= read -r dex; do unzip -p "$APK" "$dex" | strings; done < /tmp/rivoscan-dex-list.txt > /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerPlugin' /tmp/rivoscan-dex-strings.txt
           grep -F 'RivoLiveScannerActivity' /tmp/rivoscan-dex-strings.txt
-          echo "PASS: APK 0.45.40 contains launcher resources and native scanner classes."
+          echo "PASS: APK $VERSION_NAME ($VERSION_CODE) contains launcher resources and native scanner classes."
       - name: Report exact ARM64 APK size
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
@@ -174,6 +177,6 @@ jobs:
       - name: Save APK for testing
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-standalone-0.45.40-arm64-debug-APK
+          name: RivoScan-standalone-0.45.48-arm64-debug-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
