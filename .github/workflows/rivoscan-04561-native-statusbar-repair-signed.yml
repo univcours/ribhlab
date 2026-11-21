@@ -126,3 +126,55 @@ jobs:
             --title 'RivoScan 0.45.61 signed real Android status icons repair APK' \
             --notes 'RivoScan 0.45.61: fixes the real Android clock, Wi-Fi, battery and network icons disappearing. Explicitly SHOWS native system status bars and clears fullscreen/immersive flags whenever the Activity launches, resumes or regains focus, preserving native pale status background and dark symbols. Includes Neo Glass Blue dashboard, original icons, ID Photo Maker fix, and safe AdMob placement. Signed private test build; not submitted to Google Play. Test-only signed build, not submitted to Google Play. Test-only signed build: NOT submitted to Google Play. WARNING: Play-installed app may use a different signing certificate, so the raw APK might not update it. Never uninstall and lose documents to force installation.'
           echo 'Signed test APK published as a GitHub prerelease; Google Play was NOT touched.' >> "$GITHUB_STEP_SUMMARY"
+
+  android-statusbar-real-device-emulator:
+    needs: signed-ui-test-apk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: RivoScan-0.45.61-OriginalKey-SIGNED-Test-APK
+          path: android-test
+      - name: Enable hardware acceleration for Android emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Check actual Android 15 status icons and capture OS-owned bar
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -e
+            mkdir -p qa/rivoscan-real-statusbar
+            adb install -r android-test/app-release.apk
+            adb shell am start -n com.ribhlab.rivoscan/.MainActivity
+            sleep 14
+            adb shell screencap -p /sdcard/rivo-statusbar-launch.png
+            adb pull /sdcard/rivo-statusbar-launch.png qa/rivoscan-real-statusbar/android15-launch.png
+            adb shell dumpsys window > qa/rivoscan-real-statusbar/window-launch.txt
+            adb shell dumpsys activity top > qa/rivoscan-real-statusbar/activity-launch.txt
+            adb shell input keyevent 3
+            sleep 2
+            adb shell am start -n com.ribhlab.rivoscan/.MainActivity
+            sleep 8
+            adb shell screencap -p /sdcard/rivo-statusbar-return.png
+            adb pull /sdcard/rivo-statusbar-return.png qa/rivoscan-real-statusbar/android15-return.png
+            adb shell dumpsys window > qa/rivoscan-real-statusbar/window-return.txt
+            test -s qa/rivoscan-real-statusbar/android15-launch.png
+            test -s qa/rivoscan-real-statusbar/android15-return.png
+            echo 'Android 15 emulator launched the signed APK; screenshots show actual Android status bar before and after return.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload real Android status bar screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.61-Android15-Native-StatusBar-Real-Screenshots
+          path: qa/rivoscan-real-statusbar/
+          retention-days: 30
+          if-no-files-found: warn
