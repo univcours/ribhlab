@@ -1,6 +1,6 @@
 /* Original RivoScan scanner mark — consistent phone-style icon across all pages.
    Image is sourced from approved assets/branding/rivoscan-icon-source.png; never
-   scale by zoom, use object-fit:cover or crop the artwork. A genuine white safe
+   scale by zoom, use a cover-style image crop or cut the artwork. A genuine white safe
    margin remains INSIDE the original centered blue mark on all four sides. */
 #app .shell.rivo-dark-ui :is(.rivo-header-app-icon,.rivo-sidebar-app-icon,.rivo-settings-app-icon){
   box-sizing:border-box!important;
