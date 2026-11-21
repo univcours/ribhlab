@@ -93,11 +93,11 @@ jobs:
           # RivoScan Gradle override is the actual source of truth in Android Studio.
           grep -E 'apply from: file' android/app/build.gradle | grep -F 'rivoscan-version.gradle'
           grep -F "apply from: file('../../rivoscan-version.gradle')" android/app/build.gradle
-          grep -F 'versionCode=147' rivoscan-version.properties
+          grep -F 'versionCode=150' rivoscan-version.properties
           grep -F 'rivo-build-version' src/main.js
           grep -F 'version as appVersion' src/main.js
           grep -F 'rivo-library-version' src/main.js
-          grep -F 'versionName=0.45.44' rivoscan-version.properties
+          grep -F 'versionName=0.45.46' rivoscan-version.properties
           grep -F 'android.defaultConfig.versionCode' rivoscan-version.gradle || grep -F 'versionCode rivoCode' rivoscan-version.gradle
       - name: Verify scanner integration, capture review and local log persistence
         run: |
@@ -131,7 +131,7 @@ jobs:
           ! grep -Fq 'button(trNative("detect")' "$JAVA/RivoLiveScannerActivity.java"
           grep -Fq 'RivoUVDocPlugin.unwarpBitmap' "$JAVA/RivoLiveScannerActivity.java"
           grep -Fq 'RivoDocumentEnhancer.PRO_SCAN' "$JAVA/RivoLiveScannerActivity.java"
-          grep -Fq 'onPerfectScan:d=>launchPerfectScan(d)' src/main.js
+          ! grep -Fq 'launchPerfectScan(' src/main.js
       - name: Build debug APK
         run: |
           cd android

@@ -25,6 +25,7 @@ test('build uses the owner-approved new blue R icon, not the older wordmark',()=
  assert.ok(gen.includes('public/rivoscan-icon.png'));
  assert.ok(gen.includes('rivoscan-ai-icon-source.png'));
  assert.ok(gen.includes('public/rivoscan-store-icon.png'));
+ assert.ok(gen.includes('const LOGO_WHITE_INSET=16'),'white margin must be applied in the real image generator, not only CSS');
  assert.ok(!gen.includes('pngquant'));
  assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));

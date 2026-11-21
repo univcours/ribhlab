@@ -60,6 +60,7 @@ import './rivo-blue-editor-layout.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import './rivo-brand-fit.css';
+import './rivo-id-photo-mobile.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';

@@ -1,4 +1,4 @@
-name: RivoScan 0.45.45 signed original key APK AAB
+name: RivoScan 0.45.46 signed original key APK AAB
 on:
   push:
     branches: [rivoscan-standalone-ready]
@@ -40,8 +40,8 @@ jobs:
       - name: Check version and live ad identifiers
         run: |
           set -euo pipefail
-          grep -Fx 'versionCode=149' rivoscan-version.properties
-          grep -Fx 'versionName=0.45.45' rivoscan-version.properties
+          grep -Fx 'versionCode=150' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.46' rivoscan-version.properties
           node scripts/prepare-rivoscan-admob-release.mjs --check-only
       - name: Install, verify source, run tests, bundle assets
         run: |
@@ -84,21 +84,21 @@ jobs:
           test -s "$AAB"
           AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='149' versionName='0.45.45'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='150' versionName='0.45.46'"
           "$APKSIGNER" verify "$APK"
           jarsigner -verify "$AAB" | grep -F 'jar verified'
           keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
-          echo 'Signed RivoScan 0.45.45 (149) APK and AAB match original Google Play upload certificate.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Signed RivoScan 0.45.46 (150) APK and AAB match original Google Play upload certificate.' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed Android APK (original key)
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.45-OriginalKey-SIGNED-APK
+          name: RivoScan-0.45.46-OriginalKey-SIGNED-APK
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
       - name: Upload signed Google Play AAB (original key)
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.45-OriginalKey-SIGNED-AAB
+          name: RivoScan-0.45.46-OriginalKey-SIGNED-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
       - name: Check Google Play publishing authorization
@@ -113,22 +113,22 @@ jobs:
             echo "::warning::Google Play service account not configured. No Google Play upload attempted."
             echo "Google Play publication was not attempted: missing service-account credentials." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Submit signed RivoScan 0.45.45 to existing Google Play production
+      - name: Submit signed RivoScan 0.45.46 to existing Google Play production
         if: steps.play_auth.outputs.enabled == 'true'
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
         run: |
           set -euo pipefail
           python3 -m pip install --quiet --disable-pip-version-check google-api-python-client google-auth
-          python3 scripts/publish-rivoscan-play-aab-04545.py \
+          python3 scripts/publish-rivoscan-play-aab-04546.py \
             --aab android/app/build/outputs/bundle/release/app-release.aab \
-            --package com.ribhlab.rivoscan --track production --version-code 149
-      - name: Publish signed RivoScan 0.45.45 APK and AAB on GitHub
+            --package com.ribhlab.rivoscan --track production --version-code 150
+      - name: Publish signed RivoScan 0.45.46 APK and AAB on GitHub
         env:
           GH_TOKEN: ${{ secrets.RIVO_RELEASE_PAT || github.token }}
         run: |
           set -euo pipefail
-          TAG=rivoscan-0.45.45-original-key
+          TAG=rivoscan-0.45.46-original-key
           APK=android/app/build/outputs/apk/release/app-release.apk
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           test -s "$APK" && test -s "$AAB"
@@ -137,10 +137,10 @@ jobs:
             echo 'Original-key APK and AAB already exist in GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          cp "$APK" /tmp/RivoScan-0.45.45-Signed.apk
-          cp "$AAB" /tmp/RivoScan-0.45.45-GooglePlay.aab
-          gh release create "$TAG" /tmp/RivoScan-0.45.45-Signed.apk /tmp/RivoScan-0.45.45-GooglePlay.aab \
+          cp "$APK" /tmp/RivoScan-0.45.46-Signed.apk
+          cp "$AAB" /tmp/RivoScan-0.45.46-GooglePlay.aab
+          gh release create "$TAG" /tmp/RivoScan-0.45.46-Signed.apk /tmp/RivoScan-0.45.46-GooglePlay.aab \
             --repo "$GITHUB_REPOSITORY" --target rivoscan-standalone-ready \
-            --title 'RivoScan 0.45.45 — Interstitial ad reliability and seven languages' \
-            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 149. Store publication requires a separate Play submission. Interstitial ads now use standard natural-break eligibility and a one-minute cooldown.'
-          echo 'Published signed 0.45.45 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
+            --title 'RivoScan 0.45.46 — Interstitial ad reliability and seven languages' \
+            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 150. Store publication requires a separate Play submission. Interstitial ads now use standard natural-break eligibility and a one-minute cooldown.'
+          echo 'Published signed 0.45.46 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
