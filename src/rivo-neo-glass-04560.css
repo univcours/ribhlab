@@ -1,0 +1,411 @@
+/* RivoScan 0.45.60 — Neo Glass Blue dashboard, approved concept.
+   Real app elements only: six routed actions, full Files area, existing scan
+   and PDF workflows. No decorative fake controls, no edits to image pixels.
+   This is the FINAL CSS layer to beat historic compact/legacy geometry.
+*/
+:root{
+ --rivo-neo-ink:#0b2b5a;
+ --rivo-neo-blue:#0865d4;
+ --rivo-neo-cyan:#1bc5fa;
+ --rivo-neo-light:#edf6ff;
+ --rivo-neo-border:#c6ddf3;
+ --rivo-neo-radius:19px;
+}
+/* Polished light chrome harmonizes with native Android's pale status bar.
+   The actual status icons remain owned by Android, not web content. */
+html body #app .shell.rivo-dark-ui .topbar,
+body.rivo-native-android #app .shell.rivo-dark-ui .topbar{
+ background:linear-gradient(115deg,#f6fbff 0%,#e7f4ff 100%)!important;
+ color:#103d78!important;
+ border-bottom:1px solid #c2def3!important;
+ box-shadow:0 2px 11px #15539412!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb strong,
+html body #app .shell.rivo-dark-ui .topbar .crumb .rivo-build-version,
+html body #app .shell.rivo-dark-ui .topbar .rivo-header-back{
+ color:#123d79!important;-webkit-text-fill-color:#123d79!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb strong{
+ font-weight:850!important;letter-spacing:-.35px!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-header-back{
+ background:#e3f0ff!important;border:1px solid #b8d4f0!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale,
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-sound{
+ border-radius:13px!important;
+ border:1px solid #b1d8f8!important;
+ background:linear-gradient(160deg,#f4fbff,#dbf0ff)!important;
+ color:#114d92!important;-webkit-text-fill-color:#114d92!important;
+ box-shadow:0 2px 7px #0b3d7421!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale select{
+ color:#114d92!important;-webkit-text-fill-color:#114d92!important;
+ background:transparent!important;
+}
+html body #app .shell.rivo-dark-ui .topbar :is(.rivo-top-locale,.rivo-top-sound) svg{
+ color:#135da9!important;stroke:#135da9!important;
+}
+
+/* Dashboard scrolls AS A WHOLE inside the pre-existing native-ad-safe viewport.
+   The previous UI only scrolled #home-recents, which would clip a 6-card hero. */
+html body #app .shell.rivo-dark-ui .content>.rivo-neo-dashboard,
+html body.rivo-native-android #app .shell.rivo-dark-ui .content>.rivo-neo-dashboard{
+ box-sizing:border-box!important;
+ display:block!important;
+ flex:1 1 auto!important;
+ align-self:stretch!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:100%!important;min-height:0!important;max-height:100%!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior-y:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ margin:0!important;
+ padding:5px 6px 22px!important;
+ scrollbar-width:thin!important;
+ background:transparent!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard > :not(#home-recents){
+ flex-shrink:initial!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-neo-hero{
+ box-sizing:border-box!important;position:relative!important;isolation:isolate!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ min-height:170px!important;width:100%!important;max-width:100%!important;
+ overflow:hidden!important;
+ padding:21px 15px!important;margin:0 0 14px!important;
+ border:1px solid #1a78e5!important;
+ border-radius:25px!important;
+ color:#fff!important;
+ background:linear-gradient(130deg,#073a9b 0%,#0959ca 42%,#087de7 79%,#11b9f0 100%)!important;
+ box-shadow:0 8px 21px #06478831,inset 0 1px 0 #ffffff6b!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero::before{
+ content:'';position:absolute;z-index:0;pointer-events:none;
+ width:340px;height:175px;right:-85px;bottom:-107px;
+ border:2px solid #92edff58;border-radius:50%;
+ box-shadow:0 -22px 80px #48d5ff38;
+ transform:rotate(-15deg);
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero::after{
+ content:'';position:absolute;z-index:0;pointer-events:none;
+ left:-60px;right:-50px;bottom:-68px;height:115px;
+ border-top:2px solid #8ef9ff5e;border-radius:50%;
+ transform:rotate(-5deg);
+ background:linear-gradient(5deg,#21ceff1a,transparent 50%);
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero-copy{
+ position:relative;z-index:2;flex:1 1 62%;
+ display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+ min-width:0;max-width:66%;
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero-kicker{
+ display:inline-flex;align-items:center;gap:6px;
+ padding:5px 10px;border:1px solid #a7e7ff55;border-radius:999px;
+ color:#edfbff;background:#ffffff1c;font-size:11px;line-height:1;
+ font-weight:800;letter-spacing:.3px;
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero h2{
+ font-size:clamp(21px,5.8vw,33px)!important;line-height:1.08!important;
+ letter-spacing:-.8px;margin:4px 0 0!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ font-weight:900!important;text-shadow:0 2px 7px #00296848;
+}
+#app .shell.rivo-dark-ui .rivo-neo-hero p{
+ display:flex;flex-direction:column;gap:2px;max-width:100%;
+ margin:0!important;
+ font-size:clamp(11px,3.1vw,13px)!important;line-height:1.4!important;
+ color:#e7f8ff!important;overflow-wrap:break-word;
+}
+#app .shell.rivo-dark-ui .rivo-neo-start{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:39px;margin:5px 0 0!important;padding:8px 13px!important;
+ border-radius:12px!important;
+ border:1px solid #ffffffa9!important;
+ background:linear-gradient(135deg,#fff,#e4f9ff)!important;
+ color:#0850a8!important;-webkit-text-fill-color:#0850a8!important;
+ box-shadow:0 3px 9px #013b8c42!important;
+ font-size:12px!important;font-weight:850!important;
+ white-space:normal!important;text-align:center;
+}
+#app .shell.rivo-dark-ui .rivo-neo-start svg{width:18px;height:18px;stroke:#0b65bd!important;}
+#app .shell.rivo-dark-ui .rivo-neo-phone-scene{
+ position:relative;z-index:1;flex:0 0 clamp(92px,32%,158px);
+ align-self:stretch;display:grid;place-items:center;
+ perspective:550px;pointer-events:none;
+}
+#app .shell.rivo-dark-ui .rivo-neo-phone{
+ position:relative;box-sizing:border-box;
+ width:clamp(90px,29vw,131px);height:clamp(137px,42vw,187px);
+ display:grid;place-items:center;
+ border:6px solid #09254c;border-radius:23px;
+ background:linear-gradient(165deg,#eaf7ff,#b8e0ff);
+ box-shadow:8px 9px 17px #06205476,inset 0 0 0 2px #ffffffb8;
+ transform:rotate(13deg) rotateY(-15deg);
+ overflow:hidden;
+}
+#app .shell.rivo-dark-ui .rivo-neo-phone-top{
+ position:absolute;top:0;left:28%;right:28%;height:7px;
+ background:#0b2b5a;border-radius:0 0 8px 8px;
+}
+#app .shell.rivo-dark-ui .rivo-neo-page{
+ position:relative;display:flex;flex-direction:column;align-items:center;
+ width:68%;height:70%;padding:15px 5px 7px;gap:7px;
+ border-radius:5px;background:#fff;box-shadow:0 3px 9px #2f4d8b3e;
+ color:#1980d8;
+}
+#app .shell.rivo-dark-ui .rivo-neo-page>svg{width:31px;height:31px;flex:0 0 31px;opacity:.83;}
+#app .shell.rivo-dark-ui .rivo-neo-page-line{
+ width:80%;height:4px;border-radius:99px;background:#83bbe7;
+}
+#app .shell.rivo-dark-ui .rivo-neo-page-line.short{width:50%;align-self:flex-start;margin-left:10%;}
+#app .shell.rivo-dark-ui .rivo-neo-scan-beam{
+ position:absolute;top:50%;left:-13%;right:-13%;height:4px;
+ background:#5efaff;border-radius:4px;
+ box-shadow:0 0 9px 4px #65eaffb8,0 0 19px 8px #38dfff54;
+}
+#app .shell.rivo-dark-ui .rivo-neo-scan-corner{
+ position:absolute;top:21%;left:12%;width:17px;height:17px;
+ border-top:3px solid #02baff;border-left:3px solid #02baff;border-radius:4px 0 0 0;
+}
+#app .shell.rivo-dark-ui .rivo-neo-scan-corner.b{
+ top:auto;left:auto;right:12%;bottom:21%;
+ transform:rotate(180deg);
+}
+
+/* Six primary actions, two columns at any phone size; all are real buttons. */
+#app .shell.rivo-dark-ui .rivo-neo-feature-section{
+ margin:0!important;padding:0!important;width:100%!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-grid{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ align-items:stretch!important;gap:11px!important;
+ width:100%!important;box-sizing:border-box!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card{
+ box-sizing:border-box!important;display:flex!important;
+ position:relative;isolation:isolate;
+ flex-direction:column!important;align-items:stretch!important;
+ justify-content:flex-start!important;text-align:start!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ min-height:136px!important;height:auto!important;
+ padding:13px 12px 12px!important;gap:6px!important;
+ border:1.5px solid #ffffff!important;
+ border-radius:var(--rivo-neo-radius)!important;
+ background:linear-gradient(150deg,#ffffff 0%,#eaf5ff 74%,#dceeff 100%)!important;
+ box-shadow:0 5px 14px #1358a51b,inset 0 1px 0 #fff!important;
+ color:#0b2b5a!important;-webkit-text-fill-color:#0b2b5a!important;
+ overflow:hidden!important;
+ transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card::before{
+ content:'';position:absolute;inset:0;border-radius:inherit;
+ box-shadow:inset 0 0 0 1px #a6d6ff9e;pointer-events:none;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-top{
+ display:flex;justify-content:space-between;align-items:flex-start;
+ gap:8px;min-height:45px;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-icon{
+ display:grid;place-items:center;flex:0 0 44px;
+ width:44px;height:44px;
+ color:#fff!important;
+ border-radius:13px;
+ background:linear-gradient(145deg,#15bcf5,#035bca 78%,#0844a7);
+ box-shadow:0 3px 8px #066ac447,inset 0 1px 1px #ffffff8f;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-icon svg{
+ width:26px;height:26px;stroke:#fff!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-pdf .rivo-neo-card-icon{
+ background:linear-gradient(145deg,#ff7777,#e82c4a 80%,#b7162e);
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-translate .rivo-neo-card-icon{
+ background:linear-gradient(145deg,#a58bff,#6550db 78%,#4b2aa6);
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-images .rivo-neo-card-icon{
+ background:linear-gradient(145deg,#58d29c,#0c9f9a 78%,#057d80);
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-more .rivo-neo-card-icon{
+ background:linear-gradient(145deg,#ffbc56,#eb8722 76%,#ce6315);
+}
+#app .shell.rivo-dark-ui .rivo-neo-card-arrow{
+ display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;
+ border-radius:50%;color:#0c5db7!important;background:#d5eafb;
+ font-size:27px;line-height:1;direction:ltr;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card strong{
+ color:#0b2754!important;-webkit-text-fill-color:#0b2754!important;
+ display:block;font-size:clamp(13px,3.5vw,16px)!important;
+ line-height:1.26!important;font-weight:850!important;
+ overflow-wrap:anywhere;white-space:normal!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card small{
+ display:block;color:#375d84!important;-webkit-text-fill-color:#375d84!important;
+ font-size:clamp(10px,2.9vw,12px)!important;line-height:1.35!important;
+ font-weight:550!important;white-space:normal!important;
+ overflow-wrap:anywhere;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card:active{
+ transform:scale(.979)!important;box-shadow:0 2px 5px #1358a535!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-card:focus-visible,
+#app .shell.rivo-dark-ui .rivo-neo-start:focus-visible{
+ outline:3px solid #2ecfff!important;outline-offset:3px!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-quick-heading{
+ margin:16px 2px 7px!important;color:#153f78!important;
+ font-weight:850!important;font-size:13px!important;line-height:1.35!important;
+}
+/* Retain the original four functional advanced shortcuts in a compact rail. */
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-home-trust{
+ box-sizing:border-box!important;
+ margin:12px 0 5px!important;padding:7px 11px!important;
+ border-radius:13px!important;min-height:34px!important;height:auto!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-feature-rail{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:6px!important;flex:none!important;
+ height:auto!important;min-height:67px!important;max-height:none!important;
+ padding:1px!important;margin:0 0 11px!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-feature-tile{
+ min-width:0!important;max-width:none!important;width:100%!important;
+ min-height:65px!important;height:auto!important;max-height:none!important;
+ border:1px solid #b3d9f7!important;border-radius:12px!important;
+ background:linear-gradient(160deg,#fff,#eaf5ff)!important;
+ box-shadow:0 2px 7px #16518e18!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-feature-tile strong{
+ font-size:clamp(10px,2.8vw,11px)!important;color:#184574!important;
+ line-height:1.2!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-feature-icon{
+ color:#086cc7!important;background:#dcefff!important;
+}
+/* Files and search remain real, not decorative mockup content. */
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-search-title-row{
+ margin:7px 0 7px!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-home-intro h1{
+ color:#11396e!important;font-size:18px!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard #home-recents.rivo-premium-recent{
+ box-sizing:border-box!important;
+ min-height:190px!important;height:auto!important;max-height:none!important;
+ width:100%!important;overflow:visible!important;
+ padding:2px 1px 16px!important;margin:0!important;flex:none!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard #home-recents>.rivo-recent-card{
+ border-radius:14px!important;
+ border:1px solid #d0e1f3!important;
+ background:#fff!important;
+ box-shadow:0 2px 9px #0a4a7e11!important;
+}
+#app .shell.rivo-dark-ui .rivo-neo-dashboard .rivo-onboarding{
+ min-height:174px!important;
+}
+/* All 18 Tools remain, with larger legible two-column Neo Glass cards. */
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:10px!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid .rivo-hub-tile{
+ position:relative!important;display:flex!important;
+ flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;
+ box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;
+ min-height:119px!important;height:auto!important;max-height:none!important;
+ padding:11px 8px!important;gap:9px!important;
+ border-radius:19px!important;border:1px solid #bcd8f4!important;
+ background:linear-gradient(145deg,#fff 0%,#eaf5ff 100%)!important;
+ box-shadow:0 4px 12px #164a8b1e,inset 0 1px 0 #fff!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-tile .tool-icon{
+ display:grid!important;place-items:center!important;flex:0 0 43px!important;
+ width:43px!important;height:43px!important;min-height:43px!important;
+ border-radius:13px!important;
+ background:linear-gradient(145deg,#17b7f4,#1264cc)!important;
+ box-shadow:0 3px 8px #116ab63d!important;
+ color:#fff!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-tile .tool-icon svg{
+ width:25px!important;height:25px!important;stroke:#fff!important;
+}
+#app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-tile strong{
+ color:#0e386e!important;font-size:clamp(12px,3.2vw,14px)!important;
+ line-height:1.3!important;overflow-wrap:anywhere!important;
+ font-weight:780!important;
+}
+/* Five genuine navigation actions, with the camera still centered and tappable.
+   The ad reservation, bottom offsets and route handlers are NOT changed. */
+@media(max-width:780px){
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
+  background:linear-gradient(180deg,#f8fcff,#e8f5ff)!important;
+  border-top:1px solid #c2dff6!important;
+  box-shadow:0 -4px 16px #0b478f1f!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button:not(.rivo-nav-scan){
+  color:#1f568d!important;-webkit-text-fill-color:#1f568d!important;
+  background:transparent!important;
+  border-color:transparent!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button:not(.rivo-nav-scan).active{
+  color:#0666cb!important;-webkit-text-fill-color:#0666cb!important;
+  background:#e0f0ff!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button:not(.rivo-nav-scan) svg{
+  stroke:#1c5c9b!important;color:#1c5c9b!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five>button:not(.rivo-nav-scan).active svg{
+  stroke:#086ad0!important;color:#086ad0!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-ring{
+  background:linear-gradient(145deg,#1bcafb,#0969de 58%,#0340a8)!important;
+  border:3px solid #fff!important;
+  box-shadow:0 0 0 3px #8fddff,0 4px 12px #0958a852!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-ring svg{
+  color:#fff!important;stroke:#fff!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-label{
+  color:#094e9d!important;-webkit-text-fill-color:#094e9d!important;
+  text-shadow:none!important;
+ }
+}
+@media(max-width:360px){
+ #app .shell.rivo-dark-ui .rivo-neo-hero{
+  padding:17px 11px!important;min-height:156px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-neo-phone-scene{
+  flex-basis:30%;
+ }
+ #app .shell.rivo-dark-ui .rivo-neo-card-grid{gap:8px!important;}
+ #app .shell.rivo-dark-ui .rivo-neo-card{
+  min-height:126px!important;padding:11px 9px!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-neo-card-icon{
+  width:40px;height:40px;flex-basis:40px;
+ }
+ #app .shell.rivo-dark-ui .rivo-neo-card strong{
+  font-size:13px!important;
+ }
+}
+@media(min-width:781px){
+ #app .shell.rivo-dark-ui .rivo-neo-dashboard{
+  max-width:900px!important;margin:0 auto!important;
+  padding:13px 17px 25px!important;
+  height:auto!important;max-height:none!important;overflow-y:visible!important;
+ }
+ #app .shell.rivo-dark-ui .rivo-neo-hero{min-height:210px!important;padding:29px!important;}
+ #app .shell.rivo-dark-ui .rivo-neo-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+}
+html[dir="rtl"] #app .shell.rivo-dark-ui .rivo-neo-card,
+html[dir="rtl"] #app .shell.rivo-dark-ui .rivo-neo-hero-copy{text-align:right!important;}
+html[dir="rtl"] #app .shell.rivo-dark-ui .rivo-neo-card-arrow{transform:scaleX(-1);}
+@media(prefers-reduced-motion:reduce){
+ #app .shell.rivo-dark-ui .rivo-neo-card{transition:none!important;}
+}
