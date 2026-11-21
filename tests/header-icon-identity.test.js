@@ -21,7 +21,7 @@ test('header app icon has a real border, rounded corners and phone-sized respons
 test('header icon is expanded WITHOUT a CSS zoom/crop or substituting another brand',()=>{
  const generator=readFileSync(new URL('../scripts/create-turquoise-icon.mjs',import.meta.url),'utf8');
  const fit=readFileSync(new URL('../src/rivo-brand-fit.css',import.meta.url),'utf8');
- assert.match(generator,/const header=originalMark\(500\)/);
+ assert.match(generator,/const header=originalMark\(450\)/);
  assert.match(generator,/assets\/branding\/rivoscan-icon-source\.png/);
  assert.match(generator,/public\/rivoscan-header-mark\.png/);
  assert.match(fit,/#app \.rivo-dark-ui \.rivo-header-app-icon > img\.topbar-brand-icon\{/);
