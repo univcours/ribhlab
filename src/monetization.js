@@ -3,6 +3,7 @@
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, RewardAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
+import {countProFeatureUse,shouldOfferAtOpen} from './rivo-reward-frequency.js';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -112,11 +113,29 @@ async function trackNativeAdEvents(){
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  unlockedUntil:readRewardedBreak(),savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:storedTime(FULLSCREEN_LAST_SHOWN_KEY),busy:false,
+ rewardOfferPending:null,
  interstitialReady:false,interstitialLoading:false,rewardedReady:false,rewardedLoading:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 // AdMob can return NO_FILL even when configured correctly. Retry with bounded
 // backoff while the app is foregrounded; never hammer the network or UMP.
+// Opening and PRO-use thresholds only queue a choice; rewarded inventory may
+// NEVER open on its own. The user explicitly accepts or skips each offer.
+if(isAndroid&&shouldOfferAtOpen(state.launchCount))state.rewardOfferPending='launch';
+function queueRewardOffer(reason){
+ if(!isAndroid||state.rewardOfferPending)return;
+ state.rewardOfferPending=reason;
+ state.onChange();
+}
+export function peekRewardedOffer(){
+ return isAndroid&&state.ready&&state.consent&&state.rewardedReady&&!state.busy
+   ?state.rewardOfferPending:null;
+}
+export function consumeRewardedOffer(){
+ const reason=state.rewardOfferPending;
+ state.rewardOfferPending=null;
+ return reason;
+}
 const retryCounts={banner:0,interstitial:0};
 const retryTimers={banner:null,interstitial:null};
 let adVisibilityRecoveryAttached=false;
@@ -388,7 +407,13 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  return state.initializing;
 }
 // All document tools stay free; optional rewarded ads grant only an interstitial-free break.
-export async function requestPremium(_id){return true;}
+export async function requestPremium(id){
+ if(isAndroid&&isPremiumFeature(id)){
+  const {due}=countProFeatureUse(typeof localStorage==='undefined'?null:localStorage);
+  if(due)queueRewardOffer('pro');
+ }
+ return true; // Every feature stays usable without watching an ad.
+}
 export async function watchRewardedVideoForBreak(){
  if(!isAndroid||state.busy)return false;
  if(!(await initializeAds()))return false;
@@ -463,7 +488,7 @@ export async function onAppForeground({backgroundMs=0,working=false}={}){
   if(typeof window!=='undefined')requestAnimationFrame(()=>scheduleBannerRelayout());
  }
  if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
-  try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
+  try{state.launchCount=registerLaunch(localStorage);if(shouldOfferAtOpen(state.launchCount))queueRewardOffer('launch');state.onChange()}catch{}
  }
  return false; // Never replace App Open with a policy-violating launch/exit interstitial.
 }
