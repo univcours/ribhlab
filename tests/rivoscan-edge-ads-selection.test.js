@@ -63,12 +63,15 @@ test('PDF adjustment saves a new PDF with all other original pages unchanged',()
  assert.ok(edges.includes("await onSave(correctedBytes"));
  assert.doesNotMatch(edges,/bridge\.deleteFile|bridge\.renameFile/);
 });
-test('ad loading is restricted to AdMob Banner + Interstitial and respects editor overlay',()=>{
+test('native ads use Banner + natural-break Interstitial + opt-in Rewarded and respect overlays',()=>{
  const ads=read('src/monetization.js');
  assert.match(ads,/AdMob\.showBanner\(/);
  assert.match(ads,/AdMob\.prepareInterstitial\(/);
  assert.match(ads,/AdMob\.showInterstitial\(/);
  assert.match(ads,/\.rivo-edge-adjust-overlay/);
- assert.doesNotMatch(ads,/AdMob\.(?:showReward|prepareReward|loadAppOpen|showAppOpen)/);
- assert.doesNotMatch(ads,/RewardAdPluginEvents|rivo-reward-watch/);
+ assert.match(ads,/AdMob\.prepareRewardVideoAd\(/);
+ assert.match(ads,/AdMob\.showRewardVideoAd\(/);
+ assert.match(ads,/RewardAdPluginEvents/);
+ assert.doesNotMatch(ads,/AdMob\.(?:loadAppOpen|showAppOpen)/);
+ assert.match(ads,/export async function requestPremium\(_id\)\{return true;\}/);
 });
