@@ -1,6 +1,9 @@
 name: TradingFiew signed release with RivoScan original Play key
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tradingfiew-rivoscan-original-key-release.yml'
 permissions:
   contents: read
 concurrency:
