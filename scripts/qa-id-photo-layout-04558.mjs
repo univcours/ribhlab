@@ -30,7 +30,7 @@ try{
   page.on('pageerror',e=>report.errors.push(String(e.message)));
   await page.goto(base,{waitUntil:'networkidle',timeout:45000});
   await page.locator('.rivo-compact-home').waitFor({timeout:25000});
-  await page.locator('[data-tab="tools"]').first().click();
+  await page.locator('.mobilebar [data-tab="tools"]').first().click();
   const action=page.locator('[data-hub-action="idPhotoMaker"]').first();
   await action.scrollIntoViewIfNeeded();await action.click();
   const dlg=page.locator('.rivo-id-photo-dialog.rivo-shared-preview-dialog');
