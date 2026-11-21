@@ -1,0 +1,25 @@
+/* Preserve the exact approved RivoScan logo; add only a slim white inset. */
+#app .brand img,
+#app .topbar .topbar-brand-icon,
+#app .settings-logo img {
+  display:block!important;
+  box-sizing:border-box!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  background:#fff!important;
+}
+#app .brand img,
+#app .settings-logo img {
+  padding:3px 7px!important;
+}
+#app .topbar .topbar-brand-icon {
+  padding:2px 4px!important;
+}
+
+/* Same original scanner artwork in sidebar, toolbar and Settings: never crop. */
+#app .brand img,#app .topbar .topbar-brand-icon,#app .settings-logo img{
+  max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:50% 50%!important;
+  overflow:visible!important;
+  background-color:#fff!important;
+}
