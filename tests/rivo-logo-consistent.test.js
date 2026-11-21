@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const t=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('original centered RivoScan icon is identical across header, sidebar and internal Settings',()=>{
+ const main=t('src/main.js'),generator=t('scripts/create-turquoise-icon.mjs');
+ const css=t('src/rivo-logo-consistent.css');
+ assert.match(generator,/SOURCE_SHA256='e2e1626a748593fd71e39c00bb3826a6de16b365ecfc344e8807549ab1b4dc8f'/);
+ assert.match(generator,/const header=originalMark\(450\)/);
+ assert.equal((main.match(/src="\/rivoscan-header-mark\.png"/g)||[]).length,3);
+ assert.ok(main.includes('rivo-header-app-icon'));
+ assert.ok(main.includes('rivo-sidebar-app-icon'));
+ assert.ok(main.includes('rivo-settings-app-icon'));
+ assert.ok(css.includes('object-fit:contain!important'));
+ assert.ok(css.includes('padding:2px!important'));
+ assert.ok(css.includes('width:54px!important'));
+ assert.ok(css.includes('border-radius:13px!important'));
+ assert.ok(!css.includes('object-fit:cover'));
+ assert.ok(!css.includes('scale('));
+ assert.ok(main.includes("import './rivo-logo-consistent.css'"));
+});
