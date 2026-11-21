@@ -59,6 +59,8 @@ import './rivo-documents-heading-search.css';
 import './rivo-top-corner-loupe.css';
 // Last CSS layer wins over legacy modal scrolling: live editor preview stays visible.
 import './rivo-blue-editor-layout.css';
+// Final consistent treatment for buttons, with no disabled/active behavior changes.
+import './rivo-button-finish.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
