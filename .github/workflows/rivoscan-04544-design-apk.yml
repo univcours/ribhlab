@@ -69,17 +69,30 @@ jobs:
           chmod +x gradlew
           sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
           ./gradlew assembleRelease --no-daemon
-      - name: Verify package, version, signer and bundled interface
+      - name: Sign and verify the final package against the published certificate
+        env:
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
           apk=android/app/build/outputs/apk/release/app-release.apk
-          toolsdir="$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)")"
+          toolsdir="$ANDROID_HOME/build-tools/36.0.0"
+          if [[ ! -x "$toolsdir/apksigner" ]]; then
+            sdkmanager 'build-tools;36.0.0'
+          fi
           "$toolsdir/aapt" dump badging "$apk" > "$RUNNER_TEMP/rivo-badging.txt"
           grep -F "name='com.ribhlab.rivoscan' versionCode='148' versionName='0.45.44'" "$RUNNER_TEMP/rivo-badging.txt"
-          "$toolsdir/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/rivo-certificate.txt"
-          grep -Fi 'Signer #1 certificate SHA-1 digest: e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/rivo-certificate.txt"
-          python - "$apk" <<'PY'
+          mkdir -p deliverable
+          output="deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk"
+          "$toolsdir/apksigner" sign --ks "$RIVO_SIGNING_KEYSTORE_PATH" --ks-type PKCS12 \
+            --ks-key-alias "$RIVO_UPLOAD_KEY_ALIAS" --ks-pass env:RIVO_UPLOAD_STORE_PASSWORD \
+            --key-pass env:RIVO_UPLOAD_KEY_PASSWORD --v4-signing-enabled false --out "$output" "$apk"
+          "$toolsdir/apksigner" verify --verbose --print-certs-pem "$output" | tee "$RUNNER_TEMP/rivo-cert.txt"
+          sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' "$RUNNER_TEMP/rivo-cert.txt" > "$RUNNER_TEMP/rivo-cert.pem"
+          openssl x509 -in "$RUNNER_TEMP/rivo-cert.pem" -outform DER -out "$RUNNER_TEMP/rivo-cert.der"
+          echo "4abf1d24a0aa2318e9fa78e565e79cafe26949c198dceb1d8361b6214d51e4e7  $RUNNER_TEMP/rivo-cert.der" | sha256sum -c -
+          python - "$output" <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
           import sys
@@ -90,8 +103,6 @@ jobs:
                       if apk.read(entry) != file.read_bytes():
                           raise SystemExit("Packaged web asset differs: "+entry)
           PY
-          mkdir -p deliverable
-          cp "$apk" deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk
           sha256sum deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Store verified APK
         uses: actions/upload-artifact@v4
