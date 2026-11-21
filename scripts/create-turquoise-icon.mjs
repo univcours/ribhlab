@@ -17,7 +17,8 @@ const input=PNG.sync.read(source,{checkCRC:true});
 if(input.width!==512||input.height!==512)throw Error('Original RivoScan icon must be 512x512');
 // The source contains the original blue document/scanner mark above a wordmark.
 const ICON_CROP=Object.freeze({x:58,y:7,size:394});
-const LOGO_WHITE_INSET=18;
+// Launcher uses the existing approved artwork, not a new painted logo.
+// The near-white area OUTSIDE the rounded blue mark becomes alpha-transparent.
 function sample(x,y,c){
  const lo=n=>Math.max(0,Math.min(511,n));
  const x0=Math.floor(lo(x)),y0=Math.floor(lo(y)),x1=lo(x0+1),y1=lo(y0+1);
@@ -38,9 +39,37 @@ function originalMark(visibleSize){
  }
  return PNG.sync.write(out);
 }
-const store=originalMark(512-2*LOGO_WHITE_INSET);
-const adaptive=originalMark(320);
-const header=originalMark(450); // Restore the approved rounded phone icon proportions: the original centered mark has safe white space on all sides.
+/* Remove ONLY the white background connected to the outer image edge.
+ * The paper, scanner brackets, original blue mark, and all inner white details
+ * are preserved byte-for-byte in sampled RGB; no new glyph is drawn.
+ * A flood fill is safer than a global white->transparent filter (which would
+ * erase the original white document graphic). */
+function removeOuterWhite(bytes){
+  const png=PNG.sync.read(bytes,{checkCRC:true});
+  const {width:w,height:h,data}=png,seen=new Uint8Array(w*h);
+  const queue=new Int32Array(w*h);let head=0,tail=0;
+  const push=(n)=>{if(!seen[n]){seen[n]=1;queue[tail++]=n;}};
+  for(let x=0;x<w;x++){push(x);push((h-1)*w+x);}
+  for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
+  while(head<tail){
+    const n=queue[head++],k=n*4;
+    const r=data[k],g=data[k+1],b=data[k+2];
+    // The outside is white/off-white; never traverse into the blue artwork.
+    if(r<185||g<185||b<185||Math.max(r,g,b)-Math.min(r,g,b)>90)continue;
+    data[k]=0;data[k+1]=0;data[k+2]=0;data[k+3]=0;
+    const x=n%w,y=(n-x)/w;
+    if(x)push(n-1);if(x+1<w)push(n+1);
+    if(y)push(n-w);if(y+1<h)push(n+w);
+  }
+  return PNG.sync.write(png);
+}
+// No opaque white surround: the launcher owns the exterior shape.
+// Keep a small 12px safety inset so the original blue symbol is never clipped.
+const store=removeOuterWhite(originalMark(488));
+// Adaptive foreground fits comfortably inside Android's central safe mask.
+const adaptive=removeOuterWhite(originalMark(334));
+// In-app header logo is deliberately unchanged by the launcher fix.
+const header=originalMark(450);
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
 for(const [name,data] of [
  ['public/rivoscan-icon.png',store],
@@ -54,4 +83,4 @@ for(const [name,data] of [
 ]){
  const path=join(root,name);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,data);
 }
-console.log('[RivoScan] Original scanner-document symbol-only icon with white padding, no new R.');
+console.log('[RivoScan] Original scanner-document icon with transparent launcher corners, no white surround.');
