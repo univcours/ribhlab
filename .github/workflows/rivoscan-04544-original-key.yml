@@ -1,4 +1,4 @@
-name: RivoScan 0.45.49 repaired from original 0.45.44 - signed APK AAB
+name: RivoScan 0.45.50 repaired from original 0.45.44 - signed APK AAB
 on:
   push:
     branches: [fix/rivoscan-04544-repair-04549]
@@ -40,8 +40,8 @@ jobs:
       - name: Check version and live ad identifiers
         run: |
           set -euo pipefail
-          grep -Fx 'versionCode=153' rivoscan-version.properties
-          grep -Fx 'versionName=0.45.49' rivoscan-version.properties
+          grep -Fx 'versionCode=154' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.50' rivoscan-version.properties
           node scripts/prepare-rivoscan-admob-release.mjs --check-only
       - name: Install, verify source, run tests, bundle assets
         run: |
@@ -91,7 +91,7 @@ jobs:
       - name: Upload R8 deobfuscation mapping
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.49-R8-Mapping
+          name: RivoScan-0.45.50-R8-Mapping
           path: android/app/build/outputs/mapping/release/mapping.txt
           retention-days: 30
       - name: Verify app identity and original Play signature
@@ -103,21 +103,21 @@ jobs:
           test -s "$AAB"
           AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='153' versionName='0.45.49'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='154' versionName='0.45.50'"
           "$APKSIGNER" verify "$APK"
           jarsigner -verify "$AAB" | grep -F 'jar verified'
           keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
-          echo 'Signed RivoScan 0.45.49 (153) APK and AAB match original Google Play upload certificate. APK may not update Play-signed installs directly; distribute the AAB via Play.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Signed RivoScan 0.45.50 (154) APK and AAB match original Google Play upload certificate. APK may not update Play-signed installs directly; distribute the AAB via Play.' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed Android APK (original key)
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.49-OriginalKey-SIGNED-APK
+          name: RivoScan-0.45.50-OriginalKey-SIGNED-APK
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
       - name: Upload signed Google Play AAB (original key)
         uses: actions/upload-artifact@v4
         with:
-          name: RivoScan-0.45.49-OriginalKey-SIGNED-AAB
+          name: RivoScan-0.45.50-OriginalKey-SIGNED-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
       - name: Check Google Play publishing authorization
@@ -132,22 +132,22 @@ jobs:
             echo "::warning::Google Play service account not configured. No Google Play upload attempted."
             echo "Google Play publication was not attempted: missing service-account credentials." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Submit signed RivoScan 0.45.49 to existing Google Play production
+      - name: Submit signed RivoScan 0.45.50 to existing Google Play production
         if: steps.play_auth.outputs.enabled == 'true'
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.RIVOSCAN_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || secrets.PLAY_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_PLAY_JSON_KEY }}
         run: |
           set -euo pipefail
           python3 -m pip install --quiet --disable-pip-version-check google-api-python-client google-auth
-          python3 scripts/publish-rivoscan-play-aab-04549.py \
+          python3 scripts/publish-rivoscan-play-aab-04550.py \
             --aab android/app/build/outputs/bundle/release/app-release.aab \
-            --package com.ribhlab.rivoscan --track production --version-code 153
-      - name: Publish signed RivoScan 0.45.49 APK and AAB on GitHub
+            --package com.ribhlab.rivoscan --track production --version-code 154
+      - name: Publish signed RivoScan 0.45.50 APK and AAB on GitHub
         env:
           GH_TOKEN: ${{ secrets.RIVO_RELEASE_PAT || github.token }}
         run: |
           set -euo pipefail
-          TAG=rivoscan-0.45.49-repaired-04544
+          TAG=rivoscan-0.45.50-repaired-04544-r8
           APK=android/app/build/outputs/apk/release/app-release.apk
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           test -s "$APK" && test -s "$AAB"
@@ -155,10 +155,10 @@ jobs:
             echo "::error::Release $TAG already exists. Refusing to overwrite a signed build."
             exit 1
           fi
-          cp "$APK" /tmp/RivoScan-0.45.49-Signed.apk
-          cp "$AAB" /tmp/RivoScan-0.45.49-GooglePlay.aab
-          gh release create "$TAG" /tmp/RivoScan-0.45.49-Signed.apk /tmp/RivoScan-0.45.49-GooglePlay.aab \
+          cp "$APK" /tmp/RivoScan-0.45.50-Signed.apk
+          cp "$AAB" /tmp/RivoScan-0.45.50-GooglePlay.aab
+          gh release create "$TAG" /tmp/RivoScan-0.45.50-Signed.apk /tmp/RivoScan-0.45.50-GooglePlay.aab \
             --repo "$GITHUB_REPOSITORY" --target fix/rivoscan-04544-repair-04549 \
-            --title 'RivoScan 0.45.49 — Scanner reliability and seven languages' \
-            --notes 'Based on original production 0.45.44. Repairs: original scan icon with white inset, Book Scan preview and safe PDF save, ID Photo Maker mobile UI, seven-language controls, normal consent-gated banner/interstitial and serial loading. Signed with original Play upload key. VersionCode 153. If installed from Google Play, update via the Google Play store, not the raw upload-signed APK.'
-          echo 'Published signed 0.45.49 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
+            --title 'RivoScan 0.45.50 — Scanner reliability and seven languages' \
+            --notes 'Based on original production 0.45.44. Repairs: original scan icon with white inset, Book Scan preview and safe PDF save, ID Photo Maker mobile UI, seven-language controls, normal consent-gated banner/interstitial and serial loading. Signed with original Play upload key. VersionCode 154. If installed from Google Play, update via the Google Play store, not the raw upload-signed APK.'
+          echo 'Published signed 0.45.50 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
