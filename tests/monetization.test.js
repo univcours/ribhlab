@@ -68,18 +68,20 @@ test('the first launch is eligible; launch count is no longer a fullscreen-ad ga
  const facade={getItem:key=>storage.get(key)||null,setItem:(key,v)=>storage.set(key,v)};
  for(let i=1;i<=6;i++){
   assert.equal(registerLaunch(facade),i);
-  assert.equal(launchEligible(i),true);
+  assert.equal(launchEligible(i),i%3===0);
  }
  assert.equal(launchEligible(0),false);
  assert.equal(FULLSCREEN_START_LAUNCH,1);
  assert.equal(registerLaunch({getItem:()=>{throw Error('private storage')},setItem(){}}),0);
 });
-test('App Open is entirely disabled; startup only initializes inventory',async()=>{
+test('App Open is limited to a third-opening splash; never shows late',async()=>{
  const {readFileSync}=await import('node:fs');
  const code=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
- assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen|isAppOpenLoaded)/);
- assert.doesNotMatch(code,/AppOpenAdPluginEvents|shouldShowAppOpen/);
+ assert.match(code,/AdMob\.loadAppOpen\(/);
+ assert.match(code,/AdMob\.isAppOpenLoaded\(/);
+ assert.match(code,/AdMob\.showAppOpen\(/);
+ assert.match(code,/if\(!isLoading\(\)\)return false/);
  assert.match(code,/export async function startAdsAtLaunch/);
  assert.match(code,/await initializeAds\(\)/);
  assert.match(main,/void startAdsAtLaunch\(\)/);
@@ -122,5 +124,5 @@ test('AdMob recovers NO_FILL inventory after a background/foreground cycle witho
  assert.match(code,/installAdVisibilityRecovery\(\);/);
  assert.match(code,/scheduleBannerRelayout\(\)/);
  assert.match(code,/if\(!retryTimers\.interstitial&&!state\.interstitialReady&&!state\.busy\)/);
- assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen)/);
+ assert.match(code,/loadAppOpen\(\)/);
 });
