@@ -29,6 +29,8 @@ import android.os.Build;
 import android.view.WindowManager;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import android.view.Gravity;
 import android.view.View;
@@ -183,23 +185,20 @@ public final class RivoLiveScannerActivity extends AppCompatActivity {
         root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(6,55,61));
         content=new FrameLayout(this);
         root.addView(content,new FrameLayout.LayoutParams(-1,-1));
-        // RivoScan brand: deep blue camera chrome, white system icons.
-        getWindow().setStatusBarColor(Color.rgb(7,61,65));
-        getWindow().setNavigationBarColor(Color.rgb(7,61,65));
-        getWindow().getDecorView().setSystemUiVisibility(
-            getWindow().getDecorView().getSystemUiVisibility()
-              & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        // Live scanner must not cover Samsung's clock, Wi-Fi, battery or nav bar.
+        // Android 15+ edge-to-edge: preserve camera controls outside system bars.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        if(Build.VERSION.SDK_INT >= 35){
-            ViewCompat.setOnApplyWindowInsetsListener(root,(view,insets)->{
-                Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                view.setPadding(bars.left,bars.top,bars.right,bars.bottom);
-                return insets;
-            });
-            ViewCompat.requestApplyInsets(root);
-        }
+        WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
+        new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
+            .setAppearanceLightStatusBars(false);
+        ViewCompat.setOnApplyWindowInsetsListener(root,(view,insets)->{
+            Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() |
+                WindowInsetsCompat.Type.displayCutout());
+            Insets keyboard=insets.getInsets(WindowInsetsCompat.Type.ime());
+            view.setPadding(bars.left,bars.top,bars.right,Math.max(bars.bottom,keyboard.bottom));
+            return insets;
+        });
         setContentView(root);
+        ViewCompat.requestApplyInsets(root);
         showCamera();
         String imageUri=getIntent().getStringExtra("imageUri");
         if(imageUri!=null){importImage(Uri.parse(imageUri));}

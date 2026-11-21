@@ -24,6 +24,7 @@ import android.view.WindowManager;
 import android.graphics.Color;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
@@ -31,11 +32,9 @@ import androidx.appcompat.app.ActionBar;
 
 public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
-        // Keep Android's real clock, network and battery bar visible.
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
-            WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        getWindow().setStatusBarColor(Color.rgb(233,245,251));
-        getWindow().setNavigationBarColor(Color.rgb(8,39,82));
+        // Android 15/16: no deprecated status/navigation bar color setters.
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
             .setAppearanceLightStatusBars(true);
         registerPlugin(RivoLiveScannerPlugin.class);
@@ -48,26 +47,24 @@ public class MainActivity extends BridgeActivity {
         // own branded HTML header. Hide it even on upgraded installations.
         ActionBar nativeActionBar=getSupportActionBar();
         if(nativeActionBar!=null)nativeActionBar.hide();
-        // Android 15/16 target SDK 35+ enforces edge-to-edge. Capacitor StatusBar
-        // overlaysWebView=false alone cannot keep the app below the system bar.
-        if (Build.VERSION.SDK_INT >= 35) {
-            // Keep the Android system status bar entirely outside the WebView.
-            // Its Ice Blue native strip remains visible while HTML scrolls below it.
-            View content = findViewById(android.R.id.content);
-            View web = getBridge().getWebView();
-            content.setBackgroundColor(Color.rgb(233,245,251));
-            web.setBackgroundColor(Color.rgb(233,245,251));
-            ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-                Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars() |
-                    WindowInsetsCompat.Type.displayCutout());
-                if (view.getPaddingTop() != bars.top) {
-                    view.setPadding(view.getPaddingLeft(), bars.top,
-                        view.getPaddingRight(), view.getPaddingBottom());
-                }
-                return insets;
-            });
-            ViewCompat.requestApplyInsets(content);
-        }
+        // Reserve real system/gesture/keyboard insets around the WebView.
+        // The root background draws behind transparent status/navigation bars.
+        View content = findViewById(android.R.id.content);
+        View web = getBridge().getWebView();
+        content.setBackgroundColor(Color.rgb(233,245,251));
+        web.setBackgroundColor(Color.rgb(233,245,251));
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() |
+                WindowInsetsCompat.Type.displayCutout());
+            Insets keyboard = insets.getInsets(WindowInsetsCompat.Type.ime());
+            int bottom = Math.max(bars.bottom, keyboard.bottom);
+            if (view.getPaddingLeft()!=bars.left || view.getPaddingTop()!=bars.top ||
+                view.getPaddingRight()!=bars.right || view.getPaddingBottom()!=bottom) {
+                view.setPadding(bars.left,bars.top,bars.right,bottom);
+            }
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(content);
     }
 }
 '@
@@ -101,7 +98,36 @@ if($gradleText -notmatch 'com\.microsoft\.onnxruntime:onnxruntime-android:') {
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$uvRuntime",1)
 }
 $gradleText=$gradleText.Replace("getDefaultProguardFile('proguard-android.txt')","getDefaultProguardFile('proguard-android-optimize.txt')")
+# Ensure real Release AAB runs R8: generated Capacitor templates default to minifyEnabled=false.
+if($gradleText -notmatch 'RIVOSCAN_R8_RELEASE_OPTIMIZATION'){
+ $gradleText += @'
+
+// RIVOSCAN_R8_RELEASE_OPTIMIZATION
+android {
+  buildTypes {
+    release {
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+  }
+}
+'@
+}
 [System.IO.File]::WriteAllText($gradle,$gradleText,[System.Text.UTF8Encoding]::new($false))
+$proguard=Join-Path $android 'app\proguard-rules.pro'
+if(-not(Test-Path -LiteralPath $proguard)){throw 'No Capacitor ProGuard rules; R8 cannot be enabled safely'}
+$rules=[System.IO.File]::ReadAllText($proguard)
+if($rules -notmatch 'RIVOSCAN_KEEP_NATIVE_ENTRY_POINTS'){
+ $rules += @'
+
+# RIVOSCAN_KEEP_NATIVE_ENTRY_POINTS: preserve native entry points, not the entire DEX.
+-keep class com.ribhlab.rivoscan.MainActivity { *; }
+-keep class com.ribhlab.rivoscan.Rivo*Plugin { *; }
+-keepattributes RuntimeVisibleAnnotations,RuntimeInvisibleAnnotations,Signature,InnerClasses,EnclosingMethod
+'@
+ [System.IO.File]::WriteAllText($proguard,$rules,[System.Text.UTF8Encoding]::new($false))
+}
 
 if($env:RIVO_COMPACT_BUILD -ne '1') {
 # Bundle UVDoc ONNX model into Android assets after verifying the official
@@ -147,9 +173,7 @@ $themeXml=@'
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
     <item name="android:windowBackground">#E9F5FB</item>
-    <item name="android:statusBarColor">#E9F5FB</item>
-    <item name="android:navigationBarColor">#082752</item>
-    <item name="android:windowLightStatusBar">true</item>
+    <!-- Edge-to-edge colors are supplied by inset-aware root view, not deprecated bar attributes. -->
   </style>
 </resources>
 '@
@@ -161,7 +185,7 @@ if($m -notmatch 'android\.permission\.CAMERA') {
  $m=$m.Replace('<application','<uses-permission android:name="android.permission.CAMERA" />' + "`r`n    " + '<uses-feature android:name="android.hardware.camera" android:required="false" />' + "`r`n    " + '<application')
 }
 if($m -notmatch 'RivoLiveScannerActivity') {
- $m=$m.Replace('</application>','    <activity android:name=".RivoLiveScannerActivity" android:exported="false" android:screenOrientation="portrait" />' + "`r`n    " + '</application>')
+ $m=$m.Replace('</application>','    <activity android:name=".RivoLiveScannerActivity" android:exported="false"  />' + "`r`n    " + '</application>')
 }
 # Force the MainActivity theme without touching RivoLiveScannerActivity or
 # unrelated manifest declarations. Fail rather than silently shipping two bars.
@@ -175,6 +199,11 @@ if($oldActivity -match 'android:theme\s*=\s*"[^"]*"'){
   $newActivity=$oldActivity.Substring(0,$oldActivity.Length-1)+' android:theme="@style/RivoScanNoActionBar">'
 }
 $m=$m.Replace($oldActivity,$newActivity)
+# Android 16: no orientation/size locks on phones, foldables or tablets.
+$m=[regex]::Replace($m,'\s+android:screenOrientation="[^"]+"','')
+$m=[regex]::Replace($m,'\s+android:resizeableActivity="[^"]+"','')
+if(([regex]::Matches($m,'<application\b')).Count -ne 1){throw 'Android manifest application element must be unique'}
+$m=$m.Replace('<application','<application android:resizeableActivity="true"')
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
 & (Join-Path $root 'apply-rivoscan-branding.ps1')
 Write-Host 'RivoScan live edge camera + manual crop + gallery import integrated into Android.' -ForegroundColor Green

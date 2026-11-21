@@ -39,7 +39,9 @@ test('Premium Blue palette is the only design palette of major surfaces and scan
 });
 test('Ice Blue independent Android status bar has dark readable system icons',()=>{
  assert.ok(main.includes("import './rivo-blue-theme.css'"));
- assert.ok(main.includes("StatusBar.setBackgroundColor({color:'#E9F5FB'})"));
+ assert.ok(!main.includes('StatusBar.setBackgroundColor('));
+ assert.ok(!main.includes('StatusBar.setOverlaysWebView('));
  assert.ok(main.includes('StatusBar.setStyle({style:Style.Light})'));
- assert.ok(read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor(Color.rgb(233,245,251));'));
+ assert.ok(read('install-live-scanner.ps1').includes('WindowCompat.setDecorFitsSystemWindows(getWindow(), false);'));
+ assert.ok(!read('install-live-scanner.ps1').includes('getWindow().setStatusBarColor('));
 });

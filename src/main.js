@@ -89,11 +89,9 @@ const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
-  // Keep the separate pale Android status bar with DARK, high-contrast clock/network/battery glyphs.
-  StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
-    .then(()=>StatusBar.setBackgroundColor({color:'#E9F5FB'}))
-    .then(()=>StatusBar.setStyle({style:Style.Light}))
-    .catch(error=>console.warn('Android status bar configuration:',error));
+  // Native WindowInsets own screen-safe layout; avoid deprecated Android 15 bar-color APIs.
+  StatusBar.show().then(()=>StatusBar.setStyle({style:Style.Light}))
+    .catch(error=>console.warn('Android system bar visibility:',error));
 }
 
 const icons = {

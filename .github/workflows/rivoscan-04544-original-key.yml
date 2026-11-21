@@ -1,4 +1,4 @@
-name: RivoScan 0.45.49 repaired from original 0.45.49 - signed APK AAB
+name: RivoScan 0.45.49 repaired from original 0.45.44 - signed APK AAB
 on:
   push:
     branches: [fix/rivoscan-04544-repair-04549]
@@ -75,6 +75,25 @@ jobs:
           chmod +x gradlew
           sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
           ./gradlew assembleRelease bundleRelease --no-daemon
+      - name: Verify R8 and Android 16 fixes in release build
+        run: |
+          set -euo pipefail
+          APP=android/app
+          test -s "$APP/build/outputs/mapping/release/mapping.txt"
+          grep -Fq 'RIVOSCAN_R8_RELEASE_OPTIMIZATION' "$APP/build.gradle"
+          grep -Eq 'minifyEnabled[[:space:]]+true' "$APP/build.gradle"
+          grep -Eq 'shrinkResources[[:space:]]+true' "$APP/build.gradle"
+          MANIFEST=$(find "$APP/build/intermediates/merged_manifests" -name AndroidManifest.xml -path '*/release/*' | head -1)
+          test -n "$MANIFEST"
+          grep -Fq 'resizeableActivity="true"' "$MANIFEST"
+          ! grep -Fq 'screenOrientation="portrait"' "$MANIFEST"
+          echo 'R8 mapping verified; Android resizability and orientation checks passed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload R8 deobfuscation mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.49-R8-Mapping
+          path: android/app/build/outputs/mapping/release/mapping.txt
+          retention-days: 30
       - name: Verify app identity and original Play signature
         run: |
           set -euo pipefail
