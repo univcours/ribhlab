@@ -65,6 +65,7 @@ import './rivo-button-finish.css';
 import './rivo-book-banner-safe.css';
 // Final, consistent original scanner icon frame in Home, Tools, Documents and Settings.
 import './rivo-logo-consistent.css';
+import './rivo-startup-ads.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
