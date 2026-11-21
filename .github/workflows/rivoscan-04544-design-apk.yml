@@ -1,0 +1,103 @@
+name: Build corrected RivoScan 0.45.44 APK
+on:
+  push:
+    branches: ['build/rivoscan-04544-design-9e85f9a']
+    paths: ['.github/workflows/rivoscan-04544-design-apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      RIVO_COMPACT_BUILD: '1'
+      VITE_RIVO_COMPACT: '1'
+      VITE_RIVO_ADMOB_MODE: live
+      VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809190
+      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
+      VITE_RIVO_ADMOB_APP_OPEN_ID: ca-app-pub-7945572016731367/6270875707
+      VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9e85f9adc9ee0c8edcde87ef06994835f56547d5
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check version and live ad identifiers
+        run: |
+          set -euo pipefail
+          grep -Fx 'versionCode=148' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.44' rivoscan-version.properties
+          node scripts/prepare-rivoscan-admob-release.mjs --check-only
+      - name: Install, verify source, run tests, bundle assets
+        run: |
+          npm install --no-audit --no-fund --legacy-peer-deps
+          npm run check
+          npm test
+          npm run build
+      - name: Generate native Capacitor project
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Prepare Android ML Kit compatible compact release
+        run: |
+          python3 scripts/prepare-rivoscan-compact.py
+          test ! -e android/app/src/main/assets/uvdoc/inference.onnx
+      - name: Activate real AdMob application ID in Android manifest
+        run: node scripts/prepare-rivoscan-admob-release.mjs
+      - name: Configure Play original upload key securely
+        env:
+          RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: python3 scripts/prepare-rivoscan-signing.py
+      - name: Build signed release APK
+        env:
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew assembleRelease --no-daemon
+      - name: Verify package, version, signer and bundled interface
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          toolsdir="$(dirname "$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)")"
+          "$toolsdir/aapt" dump badging "$apk" > "$RUNNER_TEMP/rivo-badging.txt"
+          grep -F "name='com.ribhlab.rivoscan' versionCode='148' versionName='0.45.44'" "$RUNNER_TEMP/rivo-badging.txt"
+          "$toolsdir/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/rivo-certificate.txt"
+          grep -Fi 'Signer #1 certificate SHA-1 digest: e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/rivo-certificate.txt"
+          python - "$apk" <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import sys
+          with ZipFile(sys.argv[1]) as apk:
+              for file in Path("dist").rglob("*"):
+                  if file.is_file():
+                      entry="assets/public/"+file.relative_to("dist").as_posix()
+                      if apk.read(entry) != file.read_bytes():
+                          raise SystemExit("Packaged web asset differs: "+entry)
+          PY
+          mkdir -p deliverable
+          cp "$apk" deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk
+          sha256sum deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Store verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.44-DesignFix-SIGNED
+          path: deliverable/RivoScan-0.45.44-DesignFix-SIGNED.apk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
