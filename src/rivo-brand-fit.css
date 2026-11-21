@@ -23,3 +23,16 @@
   overflow:visible!important;
   background-color:#fff!important;
 }
+
+
+/* Full-bleed header ONLY: no CSS zoom, no white inset and no clipping of logo art.
+   The header asset is derived losslessly from the same approved original PNG. */
+#app .rivo-dark-ui .rivo-header-app-icon > img.topbar-brand-icon{
+  display:block!important;
+  width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;
+  padding:0!important;margin:0!important;
+  object-fit:contain!important;object-position:center center!important;
+  background:transparent!important;
+  transform:none!important;filter:none!important;
+}
