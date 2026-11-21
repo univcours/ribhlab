@@ -40,7 +40,7 @@ function originalMark(visibleSize){
 }
 const store=originalMark(512-2*LOGO_WHITE_INSET);
 const adaptive=originalMark(320);
-const header=originalMark(500); // 6px safe edge; original scanner artwork fills the icon without clipping.
+const header=originalMark(450); // Restore the approved rounded phone icon proportions: the original centered mark has safe white space on all sides.
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
 for(const [name,data] of [
  ['public/rivoscan-icon.png',store],
