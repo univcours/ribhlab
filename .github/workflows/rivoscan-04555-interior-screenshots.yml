@@ -1,0 +1,43 @@
+name: RivoScan 0.45.55 actual WebView interior screenshots
+on:
+  push:
+    branches:
+      - feat/rivoscan-04555-auto-third-reward-prompt
+    paths:
+      - .github/workflows/rivoscan-04555-interior-screenshots.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture-actual-webview:
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build current RivoScan 0.45.55 WebView
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Capture real UI screens at 1080x1920
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivoscan-04555-server.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          RIVO_PHONE_OUTPUT=/tmp/rivoscan-04555-interior node scripts/phone-play-screenshots.mjs
+      - name: Upload original captured screenshots and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.55-Actual-Interior-1080x1920
+          path: |
+            /tmp/rivoscan-04555-interior/
+            /tmp/rivoscan-04555-server.log
+          retention-days: 14
+          if-no-files-found: warn
