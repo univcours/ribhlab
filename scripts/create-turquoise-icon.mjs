@@ -40,7 +40,7 @@ function originalMark(visibleSize){
 }
 const store=originalMark(512-2*LOGO_WHITE_INSET);
 const adaptive=originalMark(320);
-const header=originalMark(450);
+const header=originalMark(500); // 6px safe edge; original scanner artwork fills the icon without clipping.
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
 for(const [name,data] of [
  ['public/rivoscan-icon.png',store],
