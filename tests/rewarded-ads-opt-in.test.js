@@ -32,6 +32,6 @@ test('direct Rewarded video button is removed from Settings without gating docum
  assert.doesNotMatch(main,/settings-section rivo-rewarded-choice/);
  assert.match(main,/rivo-startup-ad-splash/);
  assert.match(main,/data-ad-privacy/);
- assert.match(monetization,/export async function requestPremium\(_id\)\{return true;\}/);
+ assert.match(monetization,/export async function requestPremium\(id\)/);
  for(const id of ['scan','images','library','merge','idcard'])assert.equal(isPremiumFeature(id),false);
 });
