@@ -66,6 +66,11 @@ body .rivo-id-overlay .rivo-id-dialog.rivo-id-photo-dialog.rivo-shared-preview-d
   overscroll-behavior:contain!important;
   background:#f7fbff!important;
 }
+/* The gear must still close/open the contextual drawer in empty state. */
+body .rivo-id-overlay .rivo-id-dialog.rivo-id-photo-dialog.rivo-shared-preview-dialog
+  >.rivo-workspace-settings[hidden]{
+  display:none!important;
+}
 body .rivo-id-overlay .rivo-id-dialog.rivo-id-photo-dialog
   .rivo-workspace-taskbar{
   display:grid!important;
