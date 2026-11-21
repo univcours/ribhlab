@@ -1,0 +1,99 @@
+/* RivoScan 0.45.51: consistent, accessible controls across the REAL app.
+ * Cosmetic layer only: no event handlers, disabled-state overrides, fake icons,
+ * or changes to scanning/PDF/camera processing. Imported AFTER legacy themes. */
+#app .rivo-dark-ui :is(button,select,[role="button"]):not(:disabled){
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+}
+#app .rivo-dark-ui :is(.rivo-top-locale,.rivo-top-sound){
+ box-sizing:border-box;
+ min-height:43px;
+ border:1.5px solid #94c7f4!important;
+ border-radius:13px!important;
+ background:linear-gradient(145deg,#174b88,#0a3977)!important;
+ color:#effaff!important;
+ box-shadow:inset 0 1px 0 #ffffff32,0 4px 12px #061e3c4d!important;
+}
+#app .rivo-dark-ui .rivo-top-locale select{
+ min-height:40px;
+ color:inherit;
+ font-weight:750;
+ background:transparent;
+}
+#app .rivo-dark-ui :is(
+ .rivo-home .rivo-tile,
+ .rivo-tools-hub .rivo-hub-tile,
+ .scan-action-secondary,
+ .scan-documents-link,
+ .scan-mlkit-link,
+ .library-controls button,
+ .rivo-library-chips button,
+ .rivo-tool-pills button
+):not(:disabled){
+ border-radius:15px!important;
+ box-shadow:inset 0 1px 0 #ffffffa8,0 4px 12px #041d3b21;
+ transition:box-shadow .15s ease,filter .15s ease,transform .15s ease;
+}
+#app .rivo-dark-ui :is(
+ .rivo-home .rivo-tile,
+ .rivo-tools-hub .rivo-hub-tile,
+ .scan-action-secondary,
+ .scan-documents-link,
+ .scan-mlkit-link,
+ .library-controls button
+):not(:disabled):active{
+ filter:brightness(.94);
+ transform:scale(.985);
+}
+body :is(
+ .rivo-book-dialog,
+ .rivo-shared-preview-dialog,
+ .rivo-perfectscan-modal,
+ .rivo-editor-window,
+ .rivo-code-dialog,
+ .rivo-id-dialog
+) :is(
+ .rivo-code-actions button,
+ .rivo-workspace-task,
+ .rivo-workspace-task-panel button,
+ .rivo-workspace-bottom button,
+ .rivo-edit-bottom-bar button,
+ .rivo-perfectscan-toolbar button,
+ .rivo-editor-actions button
+){
+ box-sizing:border-box;
+ min-height:44px;
+ border-radius:12px!important;
+ text-overflow:ellipsis;
+ font-weight:750;
+ line-height:1.25;
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+}
+body :is(.rivo-book-dialog,.rivo-shared-preview-dialog,.rivo-perfectscan-modal,.rivo-code-dialog,.rivo-id-dialog)
+ :is(button,[role="button"]):focus-visible,
+#app .rivo-dark-ui :is(button,select,[role="button"]):focus-visible{
+ outline:3px solid #47caff!important;
+ outline-offset:2px!important;
+}
+body :is(.rivo-book-dialog,.rivo-shared-preview-dialog,.rivo-perfectscan-modal,.rivo-editor-window)
+ :is(.rivo-code-actions button,.rivo-workspace-task,.rivo-edit-bottom-bar button):disabled{
+ opacity:1!important;
+ cursor:not-allowed;
+}
+@media(max-width:380px){
+ #app .rivo-dark-ui :is(.rivo-tools-hub .rivo-hub-tile,.rivo-home .rivo-tile){
+  border-radius:13px!important;
+ }
+ body :is(.rivo-book-dialog,.rivo-shared-preview-dialog,.rivo-perfectscan-modal,.rivo-editor-window)
+ :is(.rivo-code-actions button,.rivo-workspace-task-panel button){
+  padding-inline:7px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #app .rivo-dark-ui :is(button,.rivo-hub-tile,.rivo-tile){
+  transition:none!important;
+ }
+}
