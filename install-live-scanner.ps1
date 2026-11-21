@@ -35,14 +35,15 @@ public class MainActivity extends BridgeActivity {
         // Android 15/16: no deprecated status/navigation bar color setters.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView())
-            .setAppearanceLightStatusBars(true);
+        // Do NOT set system-bar appearance before BridgeActivity is initialized:
+        // the Android/Capacitor theme can reset the clock/signal/battery tint.
         registerPlugin(RivoLiveScannerPlugin.class);
         registerPlugin(RivoDocumentsPlugin.class);
         registerPlugin(RivoUVDocPlugin.class);
         registerPlugin(RivoSurface3DPlugin.class);
         registerPlugin(RivoPlayUpdatePlugin.class);
         super.onCreate(savedInstanceState);
+        applyReadableStatusBar();
         // A second Android AppCompat ActionBar was displaying above RivoScan's
         // own branded HTML header. Hide it even on upgraded installations.
         ActionBar nativeActionBar=getSupportActionBar();
@@ -65,6 +66,27 @@ public class MainActivity extends BridgeActivity {
             return insets;
         });
         ViewCompat.requestApplyInsets(content);
+        // Android 15/16 edge-to-edge: reassert dark native symbols after
+        // the WebView and decor view finish applying their own window flags.
+        content.post(this::applyReadableStatusBar);
+    }
+
+    private void applyReadableStatusBar() {
+        // Native system icons (time, signal, Wi-Fi, battery) are OS-owned.
+        // Dark icons on the existing light #E9F5FB status-bar background;
+        // do not draw fake status icons in HTML or cover the real system bar.
+        new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
+            .setAppearanceLightStatusBars(true);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        applyReadableStatusBar();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(hasFocus) applyReadableStatusBar();
     }
 }
 '@
@@ -173,7 +195,11 @@ $themeXml=@'
     <item name="android:windowActionBar">false</item>
     <item name="android:windowNoTitle">true</item>
     <item name="android:windowBackground">#E9F5FB</item>
-    <!-- Edge-to-edge colors are supplied by inset-aware root view, not deprecated bar attributes. -->
+    <!-- Match the original light system/status area with readable DARK OS icons.
+         On Android 15+ the inset-aware root already draws #E9F5FB under
+         the transparent status bar; this theme also covers older Android. -->
+    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:statusBarColor">#E9F5FB</item>
   </style>
 </resources>
 '@
