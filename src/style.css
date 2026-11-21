@@ -1392,3 +1392,42 @@ body.rivo-native-android .rivo-dark-ui .topbar{background:#082752}
 .rivo-video-access{font-size:11px;color:#11407F;background:#F5FAFF;border-radius:7px;padding:3px 8px;display:inline-block;margin-top:4px;font-weight:700}
 .rivo-has-ad-banner .content{padding-bottom:120px!important}
 @media(max-width:760px){.rivo-has-ad-banner .floating-scan{bottom:154px}}
+
+/* The original RivoScan artwork in the header, presented as a phone-style app icon.
+   Only the frame is styled; /rivoscan-icon.png stays intact and uncropped. */
+#app .rivo-dark-ui .rivo-header-app-icon{
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:2px;
+  overflow:hidden;
+  border-radius:13px;
+  border:1.5px solid #F5FAFF;
+  background:linear-gradient(145deg,#FFFFFF 0%,#E9F5FB 62%,#B8D9F2 100%);
+  box-shadow:0 0 0 1px #26A6F57A,0 5px 13px #0614277A,inset 0 1px 0 #FFFFFFCC;
+}
+#app .rivo-dark-ui .rivo-header-app-icon .topbar-brand-icon{
+  display:block;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  object-fit:contain;
+  border:0;
+  border-radius:10px;
+  background:#082752;
+  filter:none;
+  box-shadow:none;
+}
+@media(max-width:780px){
+  #app .rivo-dark-ui .rivo-header-app-icon{
+    width:40px;
+    height:40px;
+    flex-basis:40px;
+    border-radius:12px;
+  }
+  #app .rivo-dark-ui .rivo-header-app-icon .topbar-brand-icon{border-radius:9px}
+}
