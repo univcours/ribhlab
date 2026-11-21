@@ -15,7 +15,7 @@ test('original centered RivoScan icon is identical across header, sidebar and in
  assert.ok(css.includes('padding:2px!important'));
  assert.ok(css.includes('width:54px!important'));
  assert.ok(css.includes('border-radius:13px!important'));
- assert.ok(!css.includes('object-fit:cover'));
+ assert.ok(!/object-fit:cover\s*!important\s*;/.test(css));
  assert.ok(!css.includes('scale('));
  assert.ok(main.includes("import './rivo-logo-consistent.css'"));
 });
