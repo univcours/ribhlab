@@ -32,7 +32,7 @@ test('build uses the owner-approved new blue R icon, not the older wordmark',()=
 });
 test('in-app and Android launcher preserve original approved image without drawing a new letter',()=>{
  const main=text('src/main.js'),fit=text('src/rivo-brand-fit.css'),gen=text('scripts/create-turquoise-icon.mjs');
- assert.equal((main.match(/src="\\/rivoscan-icon\\.png"/g)||[]).length,3);
+ assert.equal(main.split('src="/rivoscan-icon.png"').length-1,3);
  assert.match(fit,/object-fit:contain!important/);
  assert.match(fit,/background:#fff!important/);
  assert.match(gen,/SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7'/);
