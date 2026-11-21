@@ -73,6 +73,8 @@ import './rivo-controls-clarity.css';
 import './rivo-nav-readability.css';
 // ID Photo Maker: final compact empty-state layout overrides old fullscreen preview CSS.
 import './rivo-id-photo-layout-04558.css';
+// Final dashboard-only Neo Glass theme approved from the RivoScan concept mockup.
+import './rivo-neo-glass-04560.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -557,6 +559,38 @@ const RIVO_COMPACT_FEATURE_LABELS={
  it:{smartAutoCapture:'Scansione auto',scanCode:'QR / Codici',plateScanner:'Targhe',privacyShield:'Privacy'}
 };
 const compactFeatureLabel=id=>(RIVO_COMPACT_FEATURE_LABELS[language]||RIVO_COMPACT_FEATURE_LABELS.en)[id]||id;
+/* Neo Glass dashboard visual labels. Every tile is backed by an existing handler. */
+const RIVO_NEO_COPY={
+ en:{hero:'Smart Document Scanner',tagline:'Scan · Enhance · Convert',second:'Share · Organize',start:'Start scanning',tools:'Explore tools',shortcuts:'Quick actions',
+   scan:['Scan Document','Capture & enhance'],pdf:['PDF Tools','Edit, merge & export'],id:['ID Photo Maker','Photos ready to print'],
+   translate:['Translate (OCR)','Read & translate text'],images:['Images to PDF','Convert photos to PDF'],more:['More Tools','All document utilities']},
+ ar:{hero:'ماسح الوثائق الذكي',tagline:'مسح · تحسين · تحويل',second:'مشاركة · تنظيم',start:'ابدأ المسح',tools:'استكشف الأدوات',shortcuts:'اختصارات سريعة',
+   scan:['مسح الوثائق','التقاط وتحسين'],pdf:['أدوات PDF','تعديل ودمج وتصدير'],id:['الصور الشخصية','صور جاهزة للطباعة'],
+   translate:['الترجمة (OCR)','قراءة وترجمة النصوص'],images:['الصور إلى PDF','تحويل الصور إلى PDF'],more:['المزيد من الأدوات','كل أدوات الوثائق']},
+ fr:{hero:'Scanner intelligent',tagline:'Scanner · Améliorer · Convertir',second:'Partager · Organiser',start:'Scanner maintenant',tools:'Explorer les outils',shortcuts:'Actions rapides',
+   scan:['Scanner un document','Capture et amélioration'],pdf:['Outils PDF','Modifier, fusionner, exporter'],id:['Photo d’identité','Photos prêtes à imprimer'],
+   translate:['Traduction (OCR)','Lire et traduire'],images:['Images en PDF','Convertir des photos en PDF'],more:['Autres outils','Tous les utilitaires']},
+ es:{hero:'Escáner inteligente',tagline:'Escanear · Mejorar · Convertir',second:'Compartir · Organizar',start:'Escanear ahora',tools:'Explorar herramientas',shortcuts:'Accesos rápidos',
+   scan:['Escanear documento','Capturar y mejorar'],pdf:['Herramientas PDF','Editar, unir y exportar'],id:['Fotos de carné','Fotos para imprimir'],
+   translate:['Traducir (OCR)','Leer y traducir texto'],images:['Imágenes a PDF','Convertir fotos en PDF'],more:['Más herramientas','Utilidades de documentos']},
+ de:{hero:'Intelligenter Scanner',tagline:'Scannen · Optimieren · Umwandeln',second:'Teilen · Organisieren',start:'Jetzt scannen',tools:'Tools entdecken',shortcuts:'Schnellzugriff',
+   scan:['Dokument scannen','Aufnehmen und optimieren'],pdf:['PDF-Werkzeuge','Bearbeiten, verbinden, exportieren'],id:['Passfotos','Druckfertige Fotos'],
+   translate:['Übersetzen (OCR)','Text lesen und übersetzen'],images:['Bilder zu PDF','Fotos in PDF umwandeln'],more:['Weitere Tools','Alle Dokument-Werkzeuge']},
+ pt:{hero:'Scanner inteligente',tagline:'Digitalizar · Melhorar · Converter',second:'Partilhar · Organizar',start:'Digitalizar agora',tools:'Explorar ferramentas',shortcuts:'Ações rápidas',
+   scan:['Digitalizar documento','Capturar e melhorar'],pdf:['Ferramentas PDF','Editar, juntar e exportar'],id:['Fotos de identificação','Fotos para impressão'],
+   translate:['Traduzir (OCR)','Ler e traduzir textos'],images:['Imagens em PDF','Converter fotos em PDF'],more:['Mais ferramentas','Todas as ferramentas']},
+ it:{hero:'Scanner intelligente',tagline:'Scansiona · Migliora · Converti',second:'Condividi · Organizza',start:'Scansiona ora',tools:'Esplora strumenti',shortcuts:'Azioni rapide',
+   scan:['Scansiona documento','Acquisisci e migliora'],pdf:['Strumenti PDF','Modifica, unisci, esporta'],id:['Fototessere','Foto pronte da stampare'],
+   translate:['Traduci (OCR)','Leggi e traduci testi'],images:['Immagini in PDF','Converti foto in PDF'],more:['Altri strumenti','Tutti gli strumenti']}
+};
+const RIVO_NEO_CARDS=[
+ {id:'scan',icon:'scan',route:'data-live-camera',key:'scan'},
+ {id:'pdf',icon:'file',route:'data-tab="tools"',key:'pdf'},
+ {id:'id',icon:'user',route:'data-hub-action="idPhotoMaker"',key:'id'},
+ {id:'translate',icon:'text',route:'data-hub-action="photoTranslation"',key:'translate'},
+ {id:'images',icon:'image',route:'data-hub-action="convertDocument"',key:'images'},
+ {id:'more',icon:'grid',route:'data-tab="tools"',key:'more'}
+];
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
  {id:'scanCode',icon:'qr',label:'qr',detail:'qrSub'},
@@ -564,8 +598,31 @@ const featureTiles=[
  {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
 ];
 function home(){
- const copy=premiumCopy(language);
- return `<section class="app-home rivo-home rivo-compact-home">
+ const copy=premiumCopy(language),neo=RIVO_NEO_COPY[language]||RIVO_NEO_COPY.en;
+ return `<section class="app-home rivo-home rivo-compact-home rivo-neo-dashboard">
+  <section class="rivo-neo-hero" aria-label="${escapeHTML(neo.hero)}">
+   <div class="rivo-neo-hero-copy">
+    <span class="rivo-neo-hero-kicker">${ico('shield',15)} RivoScan</span>
+    <h2>${escapeHTML(neo.hero)}</h2>
+    <p>${escapeHTML(neo.tagline)}<span>${escapeHTML(neo.second)}</span></p>
+    <button type="button" class="rivo-neo-start" data-live-camera>${ico('scan',18)} ${escapeHTML(neo.start)}</button>
+   </div>
+   <div class="rivo-neo-phone-scene" aria-hidden="true"><div class="rivo-neo-phone">
+     <div class="rivo-neo-phone-top"></div><div class="rivo-neo-page">
+      ${ico('file',53)}<span class="rivo-neo-page-line"></span><span class="rivo-neo-page-line"></span><span class="rivo-neo-page-line short"></span>
+     </div><span class="rivo-neo-scan-beam"></span><span class="rivo-neo-scan-corner a"></span><span class="rivo-neo-scan-corner b"></span>
+   </div></div>
+  </section>
+  <section class="rivo-neo-feature-section" aria-label="${escapeHTML(neo.tools)}">
+   <div class="rivo-neo-card-grid">
+    ${RIVO_NEO_CARDS.map(c=>`<button type="button" class="rivo-neo-card rivo-neo-card-${c.id}" ${c.route}
+     aria-label="${escapeHTML(neo[c.key][0])}: ${escapeHTML(neo[c.key][1])}">
+      <span class="rivo-neo-card-top"><span class="rivo-neo-card-icon">${ico(c.icon,27)}</span><span class="rivo-neo-card-arrow" aria-hidden="true">›</span></span>
+      <strong>${escapeHTML(neo[c.key][0])}</strong><small>${escapeHTML(neo[c.key][1])}</small>
+    </button>`).join('')}
+   </div>
+  </section>
+  <div class="rivo-neo-quick-heading">${escapeHTML(neo.shortcuts)}</div>
   <div class="rivo-home-trust" aria-label="${ut('privacy')}">
    <span>${ico('shield',16)} ${escapeHTML(featureText('hero'))}</span>
   </div>
