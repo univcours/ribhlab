@@ -1,18 +1,17 @@
-/* Keep the approved RivoScan artwork intact and add a small white side margin. */
+/* Preserve the exact approved RivoScan logo; add only a slim white inset. */
 #app .brand img,
 #app .topbar .topbar-brand-icon,
 #app .settings-logo img {
   display:block!important;
+  box-sizing:border-box!important;
   object-fit:contain!important;
   object-position:center center!important;
-  background:#FFFFFF!important;
+  background:#fff!important;
 }
-#app .brand img {
-  padding:2px 6px!important;
+#app .brand img,
+#app .settings-logo img {
+  padding:3px 7px!important;
 }
 #app .topbar .topbar-brand-icon {
-  padding:1px 3px!important;
-}
-#app .settings-logo img {
-  padding:2px 6px!important;
+  padding:2px 4px!important;
 }
