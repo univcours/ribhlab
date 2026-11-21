@@ -1,0 +1,59 @@
+/* RivoScan 0.45.56 – legible phone navigation and header controls.
+ * Real 360px screenshot audit showed dark text over the navy mobile dock.
+ * Visual-only fix; no event handlers, scan logic, ad spacing or icon artwork touched. */
+@media(max-width:780px){
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five > button:not(.active):not(:disabled){
+  color:#D6E9FF!important;
+  -webkit-text-fill-color:#D6E9FF!important;
+  opacity:1!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five > button:not(.active):not(:disabled) svg{
+  color:#D6E9FF!important;
+  stroke:#D6E9FF!important;
+  opacity:1!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five > button.active:not(:disabled){
+  color:#71EBFF!important;
+  -webkit-text-fill-color:#71EBFF!important;
+  opacity:1!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five > button.active:not(:disabled) svg{
+  color:#71EBFF!important;
+  stroke:#71EBFF!important;
+ }
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five .rivo-nav-scan-label{
+  color:#D6F9FF!important;
+  -webkit-text-fill-color:#D6F9FF!important;
+  text-shadow:0 1px 3px #03234F!important;
+  opacity:1!important;
+ }
+}
+html body #app .shell.rivo-dark-ui .rivo-top-locale,
+html body #app .shell.rivo-dark-ui .rivo-top-sound{
+ border-color:#ACD9FF!important;
+ background:linear-gradient(145deg,#17538F,#0B3975)!important;
+ color:#F3FAFF!important;
+ -webkit-text-fill-color:#F3FAFF!important;
+ opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-top-locale select{
+ color:#F3FAFF!important;
+ -webkit-text-fill-color:#F3FAFF!important;
+ opacity:1!important;
+ font-weight:750!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-top-locale select option{
+ color:#0A3268!important;
+ background:#FFFFFF!important;
+ -webkit-text-fill-color:#0A3268!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-top-locale,.rivo-top-sound) svg{
+ color:#F3FAFF!important;
+ stroke:#F3FAFF!important;
+ opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five button{
+  transition:none!important;
+ }
+}
