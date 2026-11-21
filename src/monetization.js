@@ -1,7 +1,7 @@
 // RivoScan AdMob: QA builds use demo inventory; production needs real app-specific IDs.
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, RewardAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, RewardAdPluginEvents, AppOpenAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
 import {countProFeatureUse,shouldOfferAtOpen} from './rivo-reward-frequency.js';
 
@@ -14,6 +14,7 @@ export const AD_CONFIG=Object.freeze({
  banner:liveAds?(adEnv.VITE_RIVO_ADMOB_BANNER_ID||''):demoPublisher+'/6300978111',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
  rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
+ appOpen:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_OPEN_ID||''):demoPublisher+'/9257395921',
  bannerEnabled:!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(adEnv.VITE_RIVO_ADMOB_BANNER_ID||'')
 });
 export function productionAdsConfigured(config=AD_CONFIG){
@@ -21,11 +22,13 @@ export function productionAdsConfigured(config=AD_CONFIG){
  const interOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.interstitial||'');
  const bannerOk=!config.banner||/^ca-app-pub-\d{16}\/\d+$/.test(config.banner);
  const rewardOk=!config.rewarded||/^ca-app-pub-\d{16}\/\d+$/.test(config.rewarded);
+ const openOk=!config.appOpen||/^ca-app-pub-\d{16}\/\d+$/.test(config.appOpen);
  const owner=id=>String(id||'').split(/[~/]/)[0];
- return appOk&&interOk&&bannerOk&&rewardOk&&owner(config.androidAppId)!==demoPublisher&&
+ return appOk&&interOk&&bannerOk&&rewardOk&&openOk&&owner(config.androidAppId)!==demoPublisher&&
     owner(config.androidAppId)===owner(config.interstitial)&&
     (!config.banner||owner(config.banner)===owner(config.androidAppId))&&
-    (!config.rewarded||owner(config.rewarded)===owner(config.androidAppId));
+    (!config.rewarded||owner(config.rewarded)===owner(config.androidAppId))&&
+    (!config.appOpen||owner(config.appOpen)===owner(config.androidAppId));
 }
 // Standard interstitial eligibility: no launch-count or saved-document gate.
 // Ads are still restricted to natural navigation transitions with no per-session display ceiling.
@@ -95,6 +98,7 @@ const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android
 const adStats={bannerRequests:0,bannerLoads:0,bannerImpressions:0,
  interstitialRequests:0,interstitialLoads:0,interstitialImpressions:0,
  rewardedRequests:0,rewardedLoads:0,rewardedImpressions:0,rewardsEarned:0,
+ appOpenRequests:0,appOpenLoads:0,appOpenImpressions:0,
  lastBannerError:'',lastInterstitialError:''};
 let impressionListenersAttached=false;
 async function trackNativeAdEvents(){
@@ -104,6 +108,7 @@ async function trackNativeAdEvents(){
    [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;state.onChange()}],
    [InterstitialAdPluginEvents.AdImpression,()=>{adStats.interstitialImpressions++;state.onChange()}],
    [RewardAdPluginEvents.AdImpression,()=>{adStats.rewardedImpressions++;state.onChange()}],
+   [AppOpenAdPluginEvents.AdImpression,()=>{adStats.appOpenImpressions++;state.onChange()}],
    [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=String(e?.message||e||'No fill');state.onChange()}],
    [InterstitialAdPluginEvents.FailedToLoad,e=>{adStats.lastInterstitialError=String(e?.message||e||'No fill');state.onChange()}]
   ]) await AdMob.addListener(event,handle);
@@ -113,7 +118,7 @@ async function trackNativeAdEvents(){
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  unlockedUntil:readRewardedBreak(),savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:storedTime(FULLSCREEN_LAST_SHOWN_KEY),busy:false,
- rewardOfferPending:null,
+ rewardOfferPending:null,appOpenReady:false,appOpenLoading:false,appOpenLoadedAt:0,
  interstitialReady:false,interstitialLoading:false,rewardedReady:false,rewardedLoading:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
@@ -121,7 +126,7 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
 // backoff while the app is foregrounded; never hammer the network or UMP.
 // Opening and PRO-use thresholds only queue a choice; rewarded inventory may
 // NEVER open on its own. The user explicitly accepts or skips each offer.
-if(isAndroid&&shouldOfferAtOpen(state.launchCount))state.rewardOfferPending='launch';
+// Every third genuine launch is reserved for a native App Open ad; never a rewarded auto-play.
 function queueRewardOffer(reason){
  if(!isAndroid||state.rewardOfferPending)return;
  state.rewardOfferPending=reason;
@@ -332,6 +337,22 @@ async function loadBanner(){
   scheduleAdRetry('banner');return false;
  }finally{state.bannerLoading=false;}
 }
+async function loadAppOpen(){
+ if(!isAndroid||!state.ready||!state.consent||!AD_CONFIG.appOpen||state.appOpenLoading||state.busy)return false;
+ if(state.appOpenReady && Date.now()-state.appOpenLoadedAt<4*60*60*1000)return true;
+ state.appOpenLoading=true;state.appOpenReady=false;
+ try{
+  adStats.appOpenRequests++;
+  await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
+  const ready=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
+  if(ready?.value!==true)return false;
+  state.appOpenLoadedAt=Date.now();state.appOpenReady=true;adStats.appOpenLoads++;
+  return true;
+ }catch(error){
+  console.warn('App Open inventory unavailable',String(error?.message||error));
+  return false;
+ }finally{state.appOpenLoading=false;}
+}
 async function loadRewarded(){
  if(!state.ready||!state.consent||state.rewardedReady||state.rewardedLoading||state.busy||!AD_CONFIG.rewarded)return false;
  state.rewardedLoading=true;
@@ -445,12 +466,31 @@ async function restoreBannerAfterFullscreen(){
  if(!state.bannerReady||bannerObstructed())return;
  await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>{});
 }
-// App Open inventory has been removed. Never show an interstitial on launch.
-// Prepare the SDK and pre-load the next natural-break interstitial silently.
-export async function startAdsAtLaunch(){
+// Attempt App Open ONLY on every third genuine startup, while a real loading
+// overlay exists. Never show it after app content is ready or during any tool.
+export async function startAdsAtLaunch({isLoading=()=>false}={}){
  if(!isAndroid)return false;
- await initializeAds();
- return false;
+ const eligible=shouldOfferAtOpen(state.launchCount);
+ if(!eligible){void initializeAds();return false;}
+ if(typeof isLoading!=='function'||!isLoading())return false;
+ const initialized=await initializeAds({deferBanner:true});
+ if(!initialized||!isLoading()||state.busy)return false;
+ if(!(await loadAppOpen())||!isLoading()||state.busy)return false;
+ state.busy=true;
+ try{
+  // App Open is native and is NOT an interstitial; Google owns its close UI.
+  await pauseBannerForFullscreen();
+  if(!isLoading())return false;
+  await AdMob.showAppOpen({adId:AD_CONFIG.appOpen});
+  recordFullscreenTime();
+  status('App Open shown during startup loading');
+  return true;
+ }catch(error){
+  console.warn('App Open show skipped',String(error?.message||error));return false;
+ }finally{
+  state.busy=false;state.appOpenReady=false;
+  void restoreBannerAfterFullscreen(); // banner only after startup content
+ }
 }
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
