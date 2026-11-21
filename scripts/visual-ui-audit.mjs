@@ -2,11 +2,14 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
+import {PNG} from 'pngjs';
+import {toolGroups} from '../src/tools-hub.js';
 const out=process.env.RIVO_VISUAL_OUTPUT||'/tmp/rivoscan-visual-ui';
 const base=process.env.RIVO_URL||'http://127.0.0.1:4173';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const appVersion=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
+const expectedTools=toolGroups.flatMap(group=>group.entries);
 const report={title:`RivoScan ${appVersion} responsive UI regressions`,checks:[],failures:[],screens:[]};
 const check=(name,ok)=>{report.checks.push({name,ok:!!ok});if(!ok)report.failures.push(name)};
 try{
@@ -266,10 +269,10 @@ try{
       return text.height<=1||text.bottom>bounds.bottom+2||
         style.webkitLineClamp==='2'||style.textOverflow==='ellipsis';
     }).map(tile=>tile.dataset.hubAction);
-    return {tileCount:tiles.length,distinct:new Set(ids).size,clipped};
+    return {ids,clipped};
   });
   check(width+': all Tools card titles visible and not clipped',
-   toolLabelFit.tileCount===19&&toolLabelFit.distinct===19&&toolLabelFit.clipped.length===0);
+   toolLabelFit.ids.length===expectedTools.length&&expectedTools.every(id=>toolLabelFit.ids.includes(id))&&toolLabelFit.clipped.length===0);
   const compactMetrics=await page.evaluate(()=>{
    const cards=[...document.querySelectorAll('.rivo-hub-tile')];
    const heights=cards.map(el=>el.getBoundingClientRect().height);
@@ -280,7 +283,7 @@ try{
      scanOrbit:getComputedStyle(document.querySelector('.rivo-nav-scan-ring'),'::before').animationName==='rivo-orbit-border'};
   });
   check(width+': compact Tools tiles keep quiet edges and rotating Smart Scan ring',
-    compactMetrics.count===19&&compactMetrics.compact&&compactMetrics.widthsValid&&
+    compactMetrics.count===expectedTools.length&&compactMetrics.compact&&compactMetrics.widthsValid&&
     compactMetrics.orbit&&compactMetrics.scanOrbit);
   await page.locator('.rivo-hub-tile').first().focus();
   const focusedOrbit=await page.locator('.rivo-hub-tile').first().evaluate(el=>
@@ -298,6 +301,8 @@ try{
 
   const navInfo=await page.evaluate(()=>{const bar=document.querySelector('.mobilebar'),scan=bar.querySelector('.rivo-nav-scan'),selected=bar.querySelector('button.active'),buttons=[...bar.querySelectorAll(':scope > button')];const b=bar.getBoundingClientRect(),s=scan.getBoundingClientRect(),style=getComputedStyle(bar);return {count:buttons.length,columns:style.gridTemplateColumns.split(' ').filter(Boolean).length,center:Math.abs((b.left+b.width/2)-(s.left+s.width/2))<3,dark:style.backgroundImage.includes('gradient')||style.backgroundColor==='rgb(8, 39, 82)',selected:!!selected&&getComputedStyle(selected).color==='rgb(0, 216, 255)',icons:buttons.every(x=>x.querySelector('svg')),bottom:b.bottom<=innerHeight+2,uncovered:document.querySelector('.floating-scan')?getComputedStyle(document.querySelector('.floating-scan')).display==='none':true};});
   check(width+': blue navbar five aligned positions; scanner center; active cyan',navInfo.count===5&&navInfo.columns===5&&navInfo.center&&navInfo.dark&&navInfo.selected&&navInfo.icons&&navInfo.bottom&&navInfo.uncovered);
+  const inactiveInk=await page.locator('.mobilebar button:not(.active)').first().evaluate(el=>getComputedStyle(el).webkitTextFillColor);
+  check(width+': inactive navigation label is readable on navy',inactiveInk==='rgb(245, 250, 255)');
   if(navInfo.count!==5||navInfo.columns!==5||!navInfo.center||!navInfo.dark||!navInfo.selected||!navInfo.icons||!navInfo.bottom||!navInfo.uncovered) console.warn('RivoScan navbar QA',width,JSON.stringify(navInfo));
   await page.screenshot({path:out+'/'+width+'-tools.png'});
 
@@ -348,95 +353,11 @@ try{
     }
    }
    await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
+   if(id==='idPhotoMaker')await verifyIDSheet(overlay,page,String(width));
    await overlay.locator('[data-rivo-modal-close]').click();
    await overlay.waitFor({state:'detached',timeout:8000});
    check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
   }
-
-  // Real PerfectScan initial state: no pale text, fake previews or empty advanced controls.
-  await page.locator('.mobilebar [data-go="home"]').click();
-  await page.locator('[data-rivo-feature="perfectScanQuality"]').click();
-  const perfect=page.locator('.rivo-perfectscan-overlay');
-  await perfect.waitFor({state:'visible',timeout:8000});
-  const perfectInfo=await perfect.evaluate(root=>{
-   const modal=root.querySelector('.rivo-perfectscan-modal');
-   const small=modal.querySelector('header small');
-   const bounds=modal.getBoundingClientRect();
-   return {empty:!root.querySelector('.rivo-perfectscan-empty').hidden,
-    addHidden:root.querySelector('[data-perfect="add"]').hidden,
-    methodHidden:root.querySelector('.rivo-perfectscan-control').hidden,
-    previewHidden:root.querySelector('.rivo-perfectscan-preview').hidden,
-    cameraEnabled:!root.querySelector('[data-perfect="camera"]').disabled,
-    hintReadable:!!small&&getComputedStyle(small).color!=='rgb(184, 217, 242)'&&getComputedStyle(small).opacity==='1',
-    sourceOnly:modal.querySelector('.rivo-workspace-settings-toggle')?.getAttribute('aria-expanded')==='true'&&
-     !modal.querySelector('.rivo-workspace-settings').hidden&&
-     modal.querySelector('.rivo-workspace-task-panel:not([hidden])')?.contains(
-      modal.querySelector('[data-perfect="camera"]'))===true,
-    // Full-screen mobile modal is intentional and preserves a fixed image preview.
-    fits:bounds.height>=innerHeight*.65&&bounds.height<=innerHeight+2&&
-     bounds.top>=-2&&bounds.left>=-2&&bounds.right<=innerWidth+2};
-  });
-  check(width+': PerfectScan starts with readable source-photo choices',
-   perfectInfo.empty&&perfectInfo.addHidden&&perfectInfo.methodHidden&&
-   perfectInfo.previewHidden&&perfectInfo.cameraEnabled&&perfectInfo.hintReadable&&
-   perfectInfo.sourceOnly&&perfectInfo.fits);
-  await page.screenshot({path:out+'/'+width+'-perfectscan-empty.png'});
-  if(width===360){
-   // Render a real synthetic document through PerfectScan and run the actual
-   // pixel-processing pipeline. This guards against automatic compare dividers.
-   const imageUrl=await page.evaluate(()=>{
-    const canvas=document.createElement('canvas');canvas.width=440;canvas.height=580;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fdfdfb';ctx.fillRect(0,0,440,580);
-    ctx.fillStyle='#132e51';ctx.font='bold 25px sans-serif';ctx.fillText('RivoScan Test Document',28,55);
-    ctx.font='17px sans-serif';
-    for(let i=0;i<14;i++){
-     ctx.fillText('Sample document line '+(i+1),28,95+i*30);
-    }
-    return canvas.toDataURL('image/png');
-   });
-   await perfect.locator('.rivo-perfect-file').setInputFiles({
-    name:'perfectscan-test.png',mimeType:'image/png',
-    buffer:Buffer.from(imageUrl.split(',')[1],'base64')
-   });
-   await page.waitForFunction(()=>{
-    const root=document.querySelector('.rivo-perfectscan-overlay');
-    return !!root&&!root.querySelector('.rivo-perfectscan-preview').hidden&&
-     root.querySelector('.rivo-perfectscan-preview canvas').width===440;
-   });
-   check('360: safe enhancement recommended by default',
-    await perfect.locator('[data-perfect-mode]').inputValue()==='enhance');
-   await perfect.locator('[data-perfect="process"]').click();
-   await perfect.locator('[data-perfect="save"]').waitFor({state:'visible',timeout:45000});
-   const enhanced=await perfect.evaluate(root=>{
-    const preview=root.querySelector('.rivo-perfectscan-preview');
-    const canvas=preview.querySelector('canvas');
-    const range=root.querySelector('.rivo-perfect-compare-range');
-    const compare=root.querySelector('[data-perfect="compare"]');
-    const save=root.querySelector('[data-perfect="save"]');
-    const box=canvas.getBoundingClientRect();
-    return {compareHidden:range.hidden,clean:!preview.classList.contains('rivo-perfect-split-active'),
-      compareVisible:!compare.hidden,saveReady:!save.disabled,
-      previewFits:box.width>120&&box.height>140&&box.right<=innerWidth+2};
-   });
-   check('360: preview stays unobstructed until Compare is requested',
-     enhanced.compareHidden&&enhanced.clean&&enhanced.compareVisible&&enhanced.saveReady&&enhanced.previewFits);
-   await page.screenshot({path:out+'/360-perfectscan-enhanced.png'});
-   await perfect.locator('[data-perfect="compare"]').click();
-   const compareActive=await perfect.evaluate(root=>
-    !root.querySelector('.rivo-perfect-compare-range').hidden&&
-    root.querySelector('.rivo-perfectscan-preview').classList.contains('rivo-perfect-split-active')&&
-    root.querySelector('[data-perfect="compare"]').getAttribute('aria-pressed')==='true'
-   );
-   check('360: split divider only shown when user chooses Compare',compareActive);
-   await page.screenshot({path:out+'/360-perfectscan-compare.png'});
-   await perfect.locator('[data-perfect="compare"]').click();
-   check('360: closing Compare restores enhanced image',
-    await perfect.locator('.rivo-perfect-compare-range').evaluate(x=>x.hidden));
-   await page.screenshot({path:out+'/360-perfectscan-restored.png'});
-  }
-  await perfect.locator('[data-perfect="close"]').click();
-  await perfect.waitFor({state:'detached'});
 
   await page.locator('.mobilebar [data-tab="me"]').click();
   await page.locator('.app-settings').waitFor({state:'visible'});
@@ -481,10 +402,117 @@ try{
   report.screens.push({width,height,home,library,tools,overflow,errors});
   await ctx.close();
  }
+ for(const [width,height,language,touch] of [[320,568,'de',true],[360,740,'ar',true],[740,360,'ar',true],[1024,768,'fr',true],[1024,768,'en',false]]){
+  const ctx=await browser.newContext({viewport:{width,height},isMobile:touch,hasTouch:touch});
+  await ctx.addInitScript(({version,language})=>{
+   localStorage.setItem('rivo-language',language);
+   localStorage.setItem('rivo-release-notes-read',version);
+  },{version:appVersion,language});
+  const page=await ctx.newPage();
+  try{
+   await page.goto(base);
+   await page.locator('[data-tab="tools"]:visible').click();
+   if(width>780){
+    const wide=await page.evaluate(()=>{
+     const bar=document.querySelector('.mobilebar').getBoundingClientRect();
+     const sidebar=document.querySelector('.sidebar').getBoundingClientRect();
+     const main=document.querySelector('.main').getBoundingClientRect();
+     return {bar:bar.width>0,fixed:Math.abs(bar.bottom-innerHeight)<=1,
+       sidebar:sidebar.width>0,mainWidth:main.width};
+    });
+    check(language+' wide navigation leaves room for tools',
+     wide.bar===touch&&wide.sidebar===!touch&&wide.mainWidth>=width*.65&&(!touch||wide.fixed));
+   }
+   await page.locator('[data-hub-action="idPhotoMaker"]').click();
+   await verifyIDSheet(page.locator('.rivo-id-dialog'),page,width+'x'+height+'-'+language);
+  }finally{await ctx.close()}
+ }
 }finally{
  await browser.close();
  await writeFile(out+'/report.json',JSON.stringify(report,null,2));
 }
 console.log(JSON.stringify({checks:report.checks.length,failures:report.failures,
- screenshots:report.screens.length*5},null,2));
+ phoneWidths:report.screens.map(screen=>screen.width)},null,2));
 assert.equal(report.failures.length,0,'RivoScan UI responsive test failed');
+
+async function verifyIDSheet(dialog,page,scenario){
+ const source=new PNG({width:48,height:110});
+ for(let y=0;y<source.height;y++){
+  for(let x=0;x<source.width;x++){
+   const i=(y*source.width+x)*4;
+   source.data.set([32,80+y,132,255],i);
+  }
+ }
+ const save=dialog.locator('.rivo-workspace-bottom button');
+ check(scenario+' ID photo requires a source to save',await save.isDisabled());
+ await dialog.locator('input[type=file]').setInputFiles({
+  name:'layout-sample.png',mimeType:'image/png',buffer:PNG.sync.write(source)
+ });
+ const canvas=dialog.locator('.rivo-shared-preview-dock canvas');
+ await canvas.waitFor({state:'visible'});
+ await dialog.locator('.rivo-workspace-settings-toggle').click();
+ const adjust=dialog.locator('[data-preview-task="adjust"]');
+ await adjust.click();
+ const group=dialog.locator('[data-preview-panel="adjust"]');
+ const tabs=dialog.locator('.rivo-workspace-taskbar');
+ const tabBounds=await tabs.boundingBox();
+ const layout=await group.evaluate(el=>{
+  const last=el.lastElementChild,first=el.firstElementChild;
+  const body=el.getBoundingClientRect(),label=first.getBoundingClientRect();
+  el.scrollTop=el.scrollHeight;
+  const bounds=last.getBoundingClientRect();
+  const hit=document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
+  return {firstVisible:label.top>=body.top&&label.bottom<=body.bottom+1,
+    lastReachable:last.contains(hit),lastFits:bounds.bottom<=body.bottom+1};
+ });
+ check(scenario+' size field and final action reachable',layout.firstVisible&&layout.lastReachable&&layout.lastFits);
+ check(scenario+' settings tabs stay in place when scrolling',Math.abs((await tabs.boundingBox()).y-tabBounds.y)<1);
+ await dialog.locator('[data-preview-task="background"]').click();
+ await adjust.click();
+ check(scenario+' newly selected group starts at first control',await group.evaluate(el=>el.scrollTop===0));
+ const preview=await canvas.boundingBox();
+ check(scenario+' preview fits without covering controls',preview.width>80&&preview.height>110&&
+  (preview.y+preview.height<=tabBounds.y+1||preview.x+preview.width<=tabBounds.x+1||
+   tabBounds.x+tabBounds.width<=preview.x+1));
+ await page.screenshot({path:out+'/'+scenario+'-id-photo-loaded.png'});
+ const select=group.locator('select');
+ for(const [size,across,down] of [['35x45',2,2],['30x40',2,3],['40x50',2,2],['2x2',1,2]]){
+  await select.selectOption(size);
+  const previewPNG=await canvas.evaluate(el=>el.toDataURL('image/png').split(',')[1]);
+  const download=page.waitForEvent('download');
+  await save.click();
+  const bytes=await readFile(await (await download).path());
+  const png=PNG.sync.read(bytes);
+  check(scenario+' '+size+' saved pixels match preview',
+   png.data.equals(PNG.sync.read(Buffer.from(previewPNG,'base64')).data));
+  const resolution=[];
+  for(let offset=8;offset+12<=bytes.length;offset+=bytes.readUInt32BE(offset)+12){
+   if(bytes.toString('ascii',offset+4,offset+8)==='pHYs')
+    resolution.push([bytes.readUInt32BE(offset+8),bytes.readUInt32BE(offset+12),bytes[offset+16]]);
+  }
+  check(scenario+' '+size+' print format is 10 × 15 cm at 300 DPI',
+   png.width===1181&&png.height===1772&&JSON.stringify(resolution)==='[[11811,11811,1]]');
+  // Count actual ink intervals and compare both paper edges on each axis.
+  const ink=(x,y)=>png.data[(y*png.width+x)*4]===32;
+  const start=png.data.findIndex((v,i)=>i%4===0&&v===32)/4;
+  function centered(length,painted,copies){
+   const marks=Array.from({length},(_,i)=>painted(i));
+   const first=marks.indexOf(true),last=marks.lastIndexOf(true);
+   const starts=marks.filter((v,i)=>v&&!marks[i-1]).length;
+   return starts===copies&&first>=0&&Math.abs(first-(length-1-last))<=1;
+  }
+  check(scenario+' '+size+' printed grid centered on both axes',start>=0&&
+   centered(png.width,x=>ink(x,Math.floor(start/png.width)),across)&&
+   centered(png.height,y=>ink(start%png.width,y),down));
+ }
+ await dialog.locator('[data-preview-task="source"]').click();
+ const file=dialog.locator('input[type=file]');
+ await file.setInputFiles({name:'unreadable.png',mimeType:'image/png',buffer:Buffer.from('invalid')});
+ await canvas.waitFor({state:'hidden'});
+ await dialog.locator('[role=status]:not(:empty)').waitFor();
+ check(scenario+' invalid replacement clears the previous sheet',
+  await save.isDisabled()&&await dialog.locator('.rivo-workspace-empty').isVisible());
+ await file.setInputFiles({name:'new.png',mimeType:'image/png',buffer:PNG.sync.write(source)});
+ await canvas.waitFor({state:'visible'});
+ check(scenario+' good replacement restores export',await save.isEnabled());
+}

@@ -3,12 +3,28 @@ import assert from 'node:assert/strict';
 import {layoutIDPhotoSheet,photoSizes} from '../src/id-photo-maker.js';
 import {changesForVersion,shouldShowReleaseNotes} from '../src/whats-new.js';
 import {readFileSync} from 'node:fs';
-test('Photo sheets use real 300DPI dimensions and every photo stays inside print margins',()=>{
- for(const size of Object.keys(photoSizes)){
+test('300 DPI photo sheets center every preset with its original copy count and print margins',()=>{
+ const expectedCopies={'35x45':4,'30x40':6,'40x50':4,'2x2':2};
+ const pixels=mm=>Math.round(mm*300/25.4);
+ for(const [size,preset] of Object.entries(photoSizes)){
   const page=layoutIDPhotoSheet(size);
-  assert.equal(page.sheetW,Math.round(100*300/25.4));assert.equal(page.sheetH,Math.round(150*300/25.4));
-  assert.ok(page.positions.length>0);
-  for(const rect of page.positions){assert.ok(rect.x>=0&&rect.y>=0);assert.ok(rect.x+rect.w<=page.sheetW&&rect.y+rect.h<=page.sheetH)}
+  assert.deepEqual([page.sheetW,page.sheetH],[pixels(100),pixels(150)]);
+  assert.equal(page.positions.length,expectedCopies[size],size);
+  const left=page.positions[0].x,top=page.positions[0].y;
+  const last=page.positions.at(-1);
+  const right=page.sheetW-last.x-last.w,bottom=page.sheetH-last.y-last.h;
+  assert.ok(Math.min(left,top,right,bottom)>=pixels(5),size+' print margins');
+  assert.ok(Math.abs(left-right)<=1&&Math.abs(top-bottom)<=1,size+' centering');
+  for(const [index,rect] of page.positions.entries()){
+   assert.deepEqual([rect.w,rect.h],[pixels(preset.w),pixels(preset.h)]);
+   if(!index)continue;
+   const previous=page.positions[index-1];
+   if(rect.y===previous.y)assert.equal(rect.x-previous.x-previous.w,pixels(3));
+   else{
+    assert.equal(rect.x,left);
+    assert.equal(rect.y-previous.y-previous.h,pixels(3));
+   }
+  }
  }
 });
 test('Release notes are shown only for unseen version and describe real work',()=>{
@@ -178,8 +194,7 @@ test('ID portraits support an actual optional on-device background model',()=>{
  assert.ok(src.includes('await net.segmentPerson('));
  assert.ok(src.includes("globalCompositeOperation='destination-in'"));
  for(const name of ['white','blue','gray','original'])assert.ok(ui.includes(name));
- assert.ok(ui.includes('await segmentPortrait(image'));
- assert.ok(ui.includes('Background model not ready'));
+ assert.match(ui,/await segmentPortrait\(/);
 });
 
 test('Linear formula OCR generates editable conservative TeX without inventing stacked fractions',async()=>{

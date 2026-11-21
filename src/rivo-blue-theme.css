@@ -290,6 +290,9 @@ body[dir=rtl] .rivo-id-dialog{
  #app .rivo-dark-ui .crumb strong{font-size:17px!important}
  #app .rivo-dark-ui .topbar-brand-icon{width:30px!important;height:30px!important}
  #app .rivo-dark-ui .rivo-build-version{font-size:10.5px!important;color:#E9F5FB!important}
+}
+@media(max-width:780px), (pointer:coarse){
+ #app .shell.rivo-dark-ui>.desktop-wrap{display:none!important}
  #app .rivo-dark-ui .mobilebar{
   position:fixed!important;bottom:0!important;left:0!important;right:0!important;
   display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
@@ -349,6 +352,8 @@ body[dir=rtl] .rivo-id-dialog{
   padding-bottom:calc(var(--rivo-nav-height) + 24px + env(safe-area-inset-bottom,0px))!important;
   min-height:0!important;
  }
+}
+@media(max-width:780px){
  #app .rivo-dark-ui .rivo-tools-hub .rivo-hub-grid,
  #app .rivo-dark-ui .rivo-hub-grid{
   display:grid!important;
@@ -391,7 +396,7 @@ body[dir=rtl] .rivo-id-dialog{
 
 /* Force the final five-slot mobile navbar even over legacy 4-column selectors.
    The explicit inline grid on nav protects Android WebView builds with historical CSS. */
-@media(max-width:780px){
+@media(max-width:780px), (pointer:coarse){
  html body #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
   display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
   grid-auto-flow:row!important;grid-auto-rows:56px!important;
@@ -450,7 +455,7 @@ body.rivo-has-ad-banner #app .rivo-dark-ui .rivo-ad-banner-slot{display:flex!imp
  width:min(320px,100%)!important;height:100%!important;
  background:transparent!important;border:0!important;border-radius:0!important;
 }
-@media(max-width:780px){
+@media(max-width:780px), (pointer:coarse){
  /* The blue navbar is completely above the independently rendered native ad. */
  html body.rivo-has-ad-banner #app .shell.rivo-dark-ui nav.mobilebar.rivo-nav-five{
   bottom:var(--rivo-banner-height,50px)!important;

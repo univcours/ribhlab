@@ -6,7 +6,11 @@
 const words={
  en:{settings:'Settings',source:'Photo',adjust:'Adjust',result:'Result',advanced:'Advanced',empty:'Take or import a photo to see it here'},
  ar:{settings:'الإعدادات',source:'الصورة',adjust:'الضبط',result:'النتيجة',advanced:'متقدم',empty:'صوّر أو استورد صورة باش تبان هنا'},
- fr:{settings:'Réglages',source:'Photo',adjust:'Ajuster',result:'Résultat',advanced:'Avancé',empty:'Photographiez ou importez une photo'}
+ fr:{settings:'Réglages',source:'Photo',adjust:'Ajuster',result:'Résultat',advanced:'Avancé',empty:'Photographiez ou importez une photo'},
+ es:{settings:'Ajustes',source:'Foto',adjust:'Ajustar',result:'Resultado',advanced:'Avanzado',empty:'Haz una foto o importa una para verla aquí'},
+ de:{settings:'Einstellungen',source:'Foto',adjust:'Anpassen',result:'Ergebnis',advanced:'Erweitert',empty:'Foto aufnehmen oder importieren, um es hier zu sehen'},
+ pt:{settings:'Definições',source:'Foto',adjust:'Ajustar',result:'Resultado',advanced:'Avançado',empty:'Tire ou importe uma foto para a ver aqui'},
+ it:{settings:'Impostazioni',source:'Foto',adjust:'Regola',result:'Risultato',advanced:'Avanzate',empty:'Scatta o importa una foto per visualizzarla qui'}
 };
 export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],hiddenNodes=[],alwaysVisible=[],language='en',defaultSection=null}={}){
  if(!panel||!preview||!sections.length)throw Error('Invalid preview workspace');
@@ -46,12 +50,13 @@ export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],
  let selected=defaultSection||sections[0].id,open=true;
  function choose(id){
   if(!panels.has(id))return;
-  selected=id;
   for(const [name,group] of panels){
    group.hidden=name!==id;
    const tab=tabs.get(name);tab.classList.toggle('active',name===id);
    tab.setAttribute('aria-pressed',String(name===id));
   }
+  if(selected!==id)panels.get(id).scrollTop=0;
+  selected=id;
  }
  function show(visible){
   open=!!visible;drawer.hidden=!open;gear.classList.toggle('active',open);
@@ -60,6 +65,7 @@ export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],
  for(const [id,tab] of tabs)tab.addEventListener('click',()=>choose(id));
  gear.addEventListener('click',()=>show(!open));
  const loaded=()=>{empty.hidden=true;dock.classList.add('rivo-workspace-has-image');show(false)};
+ const clear=()=>{empty.hidden=false;dock.classList.remove('rivo-workspace-has-image')};
  choose(selected);show(true);
- return {choose,show,loaded,drawer,dock,gear,empty};
+ return {choose,show,loaded,clear,drawer,dock,gear,empty};
 }

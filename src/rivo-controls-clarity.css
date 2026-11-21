@@ -228,16 +228,20 @@ body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-editor-window)
  border-color:#1258ac!important;
  opacity:1!important;
 }
-#app .rivo-dark-ui :is(
- .mobilebar button:not(.active),
- .nav-button:not(.active)
-):not(:disabled){
+#app .rivo-dark-ui .nav-button:not(.active):not(:disabled){
  color:#234c7a!important;-webkit-text-fill-color:#234c7a!important;
  opacity:1!important;
 }
-#app .rivo-dark-ui :is(.mobilebar button.active,.nav-button.active){
+#app .rivo-dark-ui .nav-button.active{
  color:#00d8ff!important;-webkit-text-fill-color:#00d8ff!important;
  background:#1256ac!important;border-color:#1256ac!important;
+}
+#app .shell.rivo-dark-ui .mobilebar button:not(.active):not(:disabled){
+ color:var(--rivo-nav-ink)!important;-webkit-text-fill-color:currentColor!important;
+}
+#app .shell.rivo-dark-ui .mobilebar button.active{
+ color:var(--rivo-nav-current)!important;-webkit-text-fill-color:currentColor!important;
+ background:#0b3973!important;border-color:#0b3973!important;
 }
 #app button:disabled:not([hidden]),#app [role="button"][aria-disabled="true"]{
  opacity:1!important;

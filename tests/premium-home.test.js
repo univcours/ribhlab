@@ -50,7 +50,8 @@ test('Scanner uses the fifth centered nav slot on phone, while desktop FAB remai
  assert.equal((nav.match(/<button\b/g)||[]).length,5);
  assert.ok(nav.includes('class="rivo-nav-scan" data-live-camera'));
  assert.ok(main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
- assert.ok(nav.includes('repeat(5,minmax(0,1fr))'));
+ assert.ok(!nav.includes('style='),'responsive CSS controls navigation visibility');
+ assert.ok(css.includes('grid-template-columns:repeat(5,minmax(0,1fr))!important'));
  assert.ok(css.includes('.floating-scan.rivo-camera-fab{display:none!important}'));
  assert.ok(css.includes('safe-area-inset-bottom'));
 });

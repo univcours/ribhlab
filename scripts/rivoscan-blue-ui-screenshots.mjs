@@ -1,11 +1,12 @@
 // Blue palette regression screenshots after restoring official RivoScan blue/azure brand.
 // Real Chromium screenshots from the current RivoScan editor modules, not mockups.
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
 const output='/tmp/rivoscan-prod-blue-screenshots';
 const base=process.env.RIVO_URL||'http://127.0.0.1:5173';
+const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const results=[];
@@ -16,15 +17,17 @@ const screenshot=async(page,name)=>{
 const verify=async(page,preview,drawer,dialog)=>{
  const metrics=await page.evaluate(({preview,drawer,dialog})=>{
   const pic=document.querySelector(preview),panel=document.querySelector(drawer),win=document.querySelector(dialog);
-  if(!pic||!panel||!win)throw Error('Editing workspace missing DOM element');
+  const controls=panel?.querySelector('.rivo-workspace-task-panel:not([hidden])');
+  if(!pic||!controls||!win)throw Error('Editing workspace missing DOM element');
   const rect=pic.getBoundingClientRect(),css=getComputedStyle(panel),outer=getComputedStyle(win);
   return {height:rect.height,width:rect.width,drawerVisible:css.display!=='none',
-    scroll:css.overflowY,outerScroll:outer.overflowY};
+    scroll:getComputedStyle(controls).overflowY,drawerScroll:css.overflowY,outerScroll:outer.overflowY};
  },{preview,drawer,dialog});
  assert.ok(metrics.height>=130&&metrics.width>=100,
    'Document preview must be visible during settings changes: '+JSON.stringify(metrics));
  assert.equal(metrics.drawerVisible,true,'Contextual settings must be visible');
  assert.equal(metrics.scroll,'auto','Only contextual settings should scroll');
+ assert.equal(metrics.drawerScroll,'hidden','Task tabs stay outside the scrollable controls');
  assert.equal(metrics.outerScroll,'hidden','Entire dialog must not scroll away');
  return metrics;
 };
@@ -162,7 +165,7 @@ try{
  await page.locator('.rivo-shared-preview-dialog .rivo-modal-dismiss').click();
 
  await writeFile(output+'/report.json',JSON.stringify({images:results,viewport:'393x873',
-   type:'production RivoScan 0.45.41 blue editor modules rendered in Chromium with synthetic TEST photo'},null,2));
+   type:'RivoScan '+version+' editor modules rendered in Chromium with a synthetic test image'},null,2));
  console.log('Created actual RivoScan editor screenshots:',results);
  await ctx.close();
 }finally{await browser.close()}
