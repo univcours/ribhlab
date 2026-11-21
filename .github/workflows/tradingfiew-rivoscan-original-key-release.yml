@@ -76,7 +76,7 @@ jobs:
           QA_APK=android/app/build/outputs/apk/r8Qa/app-r8Qa.apk
           test -s "$QA_APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
-          "$AAPT" dump badging "$QA_APK" | grep -F "name='com.ribhlab.tradingfiew.r8qa' versionCode='9'"
+          "$AAPT" dump badging "$QA_APK" | grep -F "name='com.ribhlab.tradingfiew.r8qa' versionCode='10'"
           echo "R8 QA APK built with Google's official test AdMob IDs." >> "$GITHUB_STEP_SUMMARY"
       - name: Build signed production APK and AAB
         working-directory: tradingfiew
@@ -91,14 +91,14 @@ jobs:
           grep -q 'jar verified' /tmp/tradingfiew-aab-verify.txt
           keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='9' versionName='1.0.8'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='10' versionName='1.0.9'"
           grep -R -F 'ca-app-pub-7945572016731367~6802871518' android/app/build/intermediates/merged_manifests/release >/dev/null
-          echo "TradingFiew 1.0.8 / versionCode 9: signed APK and AAB verified against the original RivoScan upload certificate." >> "$GITHUB_STEP_SUMMARY"
+          echo "TradingFiew 1.0.9 / versionCode 9: signed APK and AAB verified against the original RivoScan upload certificate." >> "$GITHUB_STEP_SUMMARY"
           echo "Production AdMob App ID is configured; QA build uses Google test ads." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed release and QA artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: TradingFiew-1.0.8-RivoScan-original-key
+          name: TradingFiew-1.0.9-RivoScan-original-key
           path: |
             tradingfiew/android/app/build/outputs/apk/release/*.apk
             tradingfiew/android/app/build/outputs/bundle/release/*.aab
