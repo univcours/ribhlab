@@ -130,7 +130,6 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
 function queueRewardOffer(reason){
  if(!isAndroid||state.rewardOfferPending)return;
  state.rewardOfferPending=reason;
- state.onChange();
 }
 export function peekRewardedOffer(){
  return isAndroid&&state.ready&&state.consent&&state.rewardedReady&&!state.busy
@@ -180,7 +179,7 @@ export function configureAds({getLanguage,notify,onChange}={}){
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
- interstitialReady:state.interstitialReady,rewardedReady:state.rewardedReady,
+ interstitialReady:state.interstitialReady,rewardedReady:state.rewardedReady,appOpenReady:state.appOpenReady,
  rewardedEnabled:!!AD_CONFIG.rewarded&&(!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(AD_CONFIG.rewarded)),
  bannerReady:state.bannerReady,bannerError:state.bannerError,
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
@@ -197,7 +196,7 @@ function bannerObstructed(){
  if(state.busy||keyboard)return true;
  if(typeof document==='undefined')return false;
  const selector=[
-  '.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay','.rivo-perfect-capture-overlay',
+  '.rivo-reward-overlay','.rivo-id-overlay','.rivo-code-overlay','.rivo-live-overlay','.rivo-perfectscan-overlay','.rivo-perfect-capture-overlay',
   '.rivo-editor-overlay','.rivo-pages-overlay','.rivo-pages-modal','.rivo-page-manager-overlay',
   '.rivo-shield-overlay','.rivo-merged-overlay','.rivo-update-gate',
   '.doc-detail-overlay','.bulk-overlay','.rivo-edge-adjust-overlay','.busy',
