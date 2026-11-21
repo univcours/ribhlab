@@ -1,4 +1,4 @@
-# RivoScan 0.45.48 — safe Android installation diagnosis
+# RivoScan 0.45.49 — safe Android installation diagnosis
 
 Do not uninstall RivoScan or clear app storage to solve an installation error. Saved
 documents and settings may be lost.
