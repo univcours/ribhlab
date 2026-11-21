@@ -1,0 +1,14 @@
+/* RivoScan brand marks: use the complete symbol artwork, never crop it. */
+#app .brand img,
+#app .topbar .topbar-brand-icon,
+#app .settings-logo img {
+  display:block!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+}
+#app .brand img {
+  padding:2px!important;
+}
+#app .topbar .topbar-brand-icon {
+  padding:1px!important;
+}

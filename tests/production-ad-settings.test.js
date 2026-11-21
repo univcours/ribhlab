@@ -18,3 +18,12 @@ test('rewarded-ad unavailability does not direct consumers to internal debugging
  for(const text of ['Open Me → Ad diagnostics','Diagnostics publicitaires','تشخيص الإشهارات'])
   assert.equal(monetization.includes(text),false,'Private debugging reference leaked to users');
 });
+
+
+test('all RivoScan in-app marks use the uncropped symbol-only header asset',()=>{
+ const css=readFileSync(new URL('../src/rivo-brand-fit.css',import.meta.url),'utf8');
+ assert.equal((main.match(/src="\/rivoscan-header-mark\.png"/g)||[]).length,3);
+ assert.match(main,/import '\.\/rivo-brand-fit\.css'/);
+ assert.match(css,/object-fit:\s*contain\s*!important/);
+ assert.match(css,/object-position:\s*center center\s*!important/);
+});

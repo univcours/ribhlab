@@ -59,6 +59,7 @@ import './rivo-top-corner-loupe.css';
 import './rivo-blue-editor-layout.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
+import './rivo-brand-fit.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -381,7 +382,7 @@ function render(){
   if(closeTransfer){closeTransfer();closeTransfer=null;}
   previewURLs.forEach(u=>URL.revokeObjectURL(u));previewURLs=[];
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
-  const aside = `<aside class="sidebar"><div class="brand"><img src="/rivoscan-icon.png" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
+  const aside = `<aside class="sidebar"><div class="brand"><img src="/rivoscan-header-mark.png" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
   const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
     <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-header-mark.png" alt="RivoScan blue scan icon"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
@@ -583,7 +584,7 @@ function settingsWorkspace(){
  const adTitle=({ar:'تشخيص الإعلانات',fr:'Diagnostic des annonces',en:'Ad diagnostics'})[language]||'Ad diagnostics';
  const adText=ad.native?(ad.ready?(ad.consent?'AdMob initialized · consent ready':'Consent not ready'):'AdMob not ready'):'AdMob works in the installed Android app only';
  return `<section class="app-settings"><div class="page-heading"><h1>${ut('me')}</h1><p>RivoScan · v${appVersion}</p></div>
- <div class="rivo-settings-scroll" tabindex="0"><div class="settings-identity"><div class="settings-logo"><img src="/rivoscan-icon.png" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
+ <div class="rivo-settings-scroll" tabindex="0"><div class="settings-identity"><div class="settings-logo"><img src="/rivoscan-header-mark.png" alt=""></div><div><h2>RivoScan</h2><small>${ut('noAccount')} · ${ut('privacy')}</small></div></div>
  <div class="settings-section rivo-scan-settings">
   <details class="rivo-scan-pref-details">
    <summary class="rivo-scan-pref-summary"><span class="rivo-pref-summary-icon">${ico('check',18)}</span>

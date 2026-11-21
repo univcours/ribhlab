@@ -8,7 +8,7 @@ on:
       - 'tests/**'
       - 'rivoscan-version.properties'
       - 'package.json'
-      - '.github/workflows/rivoscan-04545-original-key.yml'
+      - '.github/workflows/rivoscan-04544-original-key.yml'
   workflow_dispatch:
 permissions:
   contents: write
@@ -88,7 +88,7 @@ jobs:
           "$APKSIGNER" verify "$APK"
           jarsigner -verify "$AAB" | grep -F 'jar verified'
           keytool -printcert -jarfile "$AAB" | grep -Fi 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
-          echo 'Signed RivoScan 0.45.45 (148) APK and AAB match original Google Play upload certificate.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Signed RivoScan 0.45.45 (149) APK and AAB match original Google Play upload certificate.' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed Android APK (original key)
         uses: actions/upload-artifact@v4
         with:
@@ -141,6 +141,6 @@ jobs:
           cp "$AAB" /tmp/RivoScan-0.45.45-GooglePlay.aab
           gh release create "$TAG" /tmp/RivoScan-0.45.45-Signed.apk /tmp/RivoScan-0.45.45-GooglePlay.aab \
             --repo "$GITHUB_REPOSITORY" --target rivoscan-standalone-ready \
-            --title 'RivoScan 0.45.45 — Scanner reliability and seven languages' \
-            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 148. Store publication requires a separate Play submission.'
+            --title 'RivoScan 0.45.45 — Interstitial ad reliability and seven languages' \
+            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 148. Store publication requires a separate Play submission. Interstitial ads now use standard natural-break eligibility and a one-minute cooldown.'
           echo 'Published signed 0.45.45 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"
