@@ -71,6 +71,9 @@ jobs:
           echo "Signing certificate SHA-1: $ACTUAL_SHA1" >> "$GITHUB_STEP_SUMMARY"
           test "$ACTUAL_SHA1" = "$EXPECTED_SHA1" || { echo "::error::Signing certificate mismatch. Release stopped."; exit 1; }
           echo "Confirmed the same original upload certificate used by RivoScan." >> "$GITHUB_STEP_SUMMARY"
+      - name: Run TradingFiew Android manifest and AdMob regression tests
+        working-directory: tradingfiew
+        run: python -m unittest discover -s tests -p 'test_android_twa_config.py'
       - name: Build R8 QA variant using Google test ads
         working-directory: tradingfiew
         run: |
@@ -95,8 +98,27 @@ jobs:
           keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
           "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='10' versionName='1.0.9'"
+          "$AAPT" dump permissions "$APK" | grep -F 'com.google.android.gms.permission.AD_ID'
+          APK_STRINGS="$(for DEX in $(unzip -Z1 "$APK" | grep -E '^classes[0-9]*\\.dex          echo "Production AdMob App ID is configured; QA build uses Google test ads." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload signed release and QA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TradingFiew-1.0.9-RivoScan-original-key
+          path: |
+            tradingfiew/android/app/build/outputs/apk/release/*.apk
+            tradingfiew/android/app/build/outputs/bundle/release/*.aab
+            tradingfiew/android/app/build/outputs/apk/r8Qa/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Delete temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rivoscan-original-upload.p12"
+); do unzip -p "$APK" "$DEX" | strings; done)"
+          grep -F 'ca-app-pub-7945572016731367/2464542387' <<< "$APK_STRINGS" >/dev/null
+          if grep -F 'ca-app-pub-7945572016731367/6455758286' <<< "$APK_STRINGS" >/dev/null; then echo '::error::Banner unit ID is incorrectly used as Interstitial'; exit 1; fi
+          if grep -F 'ca-app-pub-7945572016731367/8117339646' <<< "$APK_STRINGS" >/dev/null; then echo '::error::Old Interstitial ID remains in the release'; exit 1; fi
           grep -R -F 'ca-app-pub-7945572016731367~6802871518' android/app/build/intermediates/merged_manifests/release >/dev/null
-          echo "TradingFiew 1.0.9 / versionCode 9: signed APK and AAB verified against the original RivoScan upload certificate." >> "$GITHUB_STEP_SUMMARY"
+          echo "TradingFiew 1.0.9 / versionCode 10: signed APK and AAB verified against the original RivoScan upload certificate." >> "$GITHUB_STEP_SUMMARY"
           echo "Production AdMob App ID is configured; QA build uses Google test ads." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed release and QA artifacts
         uses: actions/upload-artifact@v4
