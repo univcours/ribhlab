@@ -26,9 +26,9 @@ test('all info controls have fixed circular dimensions and simple i glyph',()=>{
  assert.match(style,/min-height:32px!important;max-height:32px!important/);
  assert.match(read('src/tool-help.js'),/button\.textContent='i'/);
 });
-test('launcher is a symbol-only R, separately inset for Android adaptive masks',()=>{
+test('launcher preserves the original scanner icon, safely inset for Android adaptive masks',()=>{
  const code=read('scripts/create-turquoise-icon.mjs');
- assert.match(code,/assets\/branding\/rivoscan-ai-icon-source\.png/);
+ assert.match(code,/assets\/branding\/rivoscan-icon-source\.png/);
  assert.match(code,/public\/rivoscan-adaptive-foreground\.png/);
  assert.match(code,/public\/rivoscan-store-icon\.png/);
  assert.match(code,/symbol-only/i);
