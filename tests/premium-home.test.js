@@ -147,7 +147,7 @@ test('Manual ad badges, test buttons and video unlock are not rendered',()=>{
  assert.ok(!main.includes('rivo-video-access"'));
  assert.ok(!main.includes('rivo-ad-settings'));
  assert.ok(!main.includes('class="rivo-ai-watch"'));
- assert.ok(ads.includes('export async function requestPremium(_id){return true;}'));
+ assert.ok(ads.includes('export async function requestPremium(id){'));;
  assert.ok(ads.includes('shouldShowInterstitial'));
  assert.ok(main.includes('data-ad-privacy'),'consent-related privacy access remains available');
 });
