@@ -117,7 +117,9 @@ try{
  });
  await page.locator('.rivo-shared-preview-dialog input[type="file"]').setInputFiles(input);
  await page.waitForFunction(()=>document.querySelector('.rivo-shared-preview-dialog canvas')?.width>500);
- await page.locator('.rivo-shared-preview-dialog .rivo-workspace-settings-toggle').click();
+ // After importing an ID photo the adjustment drawer may already be open.
+ const idPhotoSettings=page.locator('.rivo-shared-preview-dialog .rivo-workspace-settings-toggle');
+ if(await idPhotoSettings.getAttribute('aria-expanded')!=='true')await idPhotoSettings.click();
  await page.locator('.rivo-shared-preview-dialog [data-preview-task="adjust"]').click();
  await verify(page,'.rivo-shared-preview-dock canvas','.rivo-shared-preview-dialog .rivo-workspace-settings','.rivo-shared-preview-dialog');
  await screenshot(page,'09-id-photo-size-crop-settings');
