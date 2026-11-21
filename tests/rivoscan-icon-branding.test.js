@@ -25,7 +25,7 @@ test('launcher uses the original scanner-document symbol without the wordmark',(
  assert.ok(gen.includes('public/rivoscan-icon.png'));
  assert.ok(gen.includes('rivoscan-icon-source.png'));
  assert.ok(gen.includes('public/rivoscan-store-icon.png'));
- assert.ok(gen.includes('const LOGO_WHITE_INSET=18'),'white margin must be applied in the real image generator, not only CSS');
+ assert.ok(gen.includes('removeOuterWhite(originalMark(488))'),'launcher must have transparent outer corners, not white padding');
  assert.ok(!gen.includes('pngquant'));
  assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));
@@ -37,14 +37,14 @@ test('in-app and Android launcher preserve original approved image without drawi
  assert.match(fit,/object-fit:contain!important/);
  assert.match(fit,/background:#fff!important/);
  assert.match(gen,/SOURCE_SHA256='e2e1626a748593fd71e39c00bb3826a6de16b365ecfc344e8807549ab1b4dc8f'/);
- assert.match(gen,/LOGO_WHITE_INSET=18/);
+ assert.match(gen,/removeOuterWhite\(originalMark\(334\)\)/);
  assert.doesNotMatch(gen,/drawText|drawLetter|putText|writeLetter|fetch\(/);
  assert.ok(gen.includes('const ICON_CROP='));
 });
 test('Android legacy and adaptive launchers use the approved brand image',()=>{
  const ps=text('apply-rivoscan-branding.ps1');
  assert.ok(ps.includes('rivoscan_launcher_adaptive.png'));
- assert.ok(ps.includes('<solid android:color="#FFFFFF"/>'),'use blue launcher background to match new symbol-only icon');
+ assert.ok(ps.includes('<gradient android:startColor="#0739BE" android:endColor="#04B9EB" android:angle="0"/>'),'adaptive Android launcher must not have a white background');
  assert.ok(ps.includes('<foreground android:drawable="@drawable/rivoscan_launcher_adaptive"/>'));
  assert.ok(ps.includes('mipmap-anydpi-v26/ic_launcher.xml'));
  const main=text('src/main.js'),html=text('index.html');
