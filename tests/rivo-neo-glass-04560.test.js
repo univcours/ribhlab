@@ -35,6 +35,9 @@ test('Final CSS overrides legacy tiny cards and fixed-height/hidden-scroll Andro
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
  assert.match(css,/rivo-tools-hub \.rivo-hub-grid/);
  assert.match(css,/rivo-nav-scan-ring/);
+ assert.match(css,/button:not\(\.active\):not\(:disabled\):not\(\.rivo-nav-scan\)/);
+ assert.match(css,/#1a538c/i);
+ assert.match(css,/-webkit-text-fill-color:#1a538c!important/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.doesNotMatch(css,/\.rivo-ad-banner-slot\s*\{/);
 });
