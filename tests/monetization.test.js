@@ -84,7 +84,7 @@ test('App Open is limited to a third-opening splash; never shows late',async()=>
  assert.match(code,/if\(!isLoading\(\)\)return false/);
  assert.match(code,/export async function startAdsAtLaunch/);
  assert.match(code,/await initializeAds\(\)/);
- assert.match(main,/void startAdsAtLaunch\(\)/);
+ assert.match(main,/const startupAdTask=startAdsAtLaunch\(\{isLoading:/);
  assert.doesNotMatch(main,/atNaturalNavigation\(\{[^}]*trigger:'exit'/);
 });
 test('native banner stays hidden while any full-screen ad is active',async()=>{
