@@ -11,7 +11,7 @@ if(-not (Test-Path -LiteralPath $manifest)) {
   throw 'RivoScan Android project or branding source missing. Run npm run build and npx cap sync android first.'
 }
 
-# Create the same blue icon for Web and Android before packaging.
+# Create original scanner logo with alpha-transparent outer corners before packaging.
 $generator=Join-Path $root 'scripts/create-turquoise-icon.mjs'
 if(-not (Test-Path -LiteralPath $generator)){throw 'Premium Blue launcher icon generator missing.'}
 & node $generator
@@ -28,7 +28,7 @@ function Write-Xml([string]$file,[string]$data) {
   [IO.File]::WriteAllText($file,$data,$utf8)
 }
 
-# Keep a non-adaptive bitmap fallback for old devices.
+# Keep the original transparent-outside rounded icon for legacy launchers.
 $drawable = Join-Path $res 'drawable-nodpi'
 [IO.Directory]::CreateDirectory($drawable) | Out-Null
 [IO.File]::WriteAllBytes((Join-Path $drawable 'rivoscan_icon.png'),$bytes)
@@ -45,7 +45,7 @@ foreach($bucket in @('mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi')) {
   }
 }
 
-# Use original scanner-document artwork, safely inset for Android adaptive masks.
+# Use original scanner-document artwork with transparent exterior for Android adaptive masks.
 $adaptiveBytes = [Convert]::FromBase64String([IO.File]::ReadAllText($adaptiveSource).Trim())
 [IO.File]::WriteAllBytes((Join-Path $drawable 'rivoscan_launcher_adaptive.png'),$adaptiveBytes)
 $monochrome = @'
@@ -66,7 +66,7 @@ $adaptive = @'
 '@
 $background = @'
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#FFFFFF"/>
+    <gradient android:startColor="#0739BE" android:endColor="#04B9EB" android:angle="0"/>
 </shape>
 '@
 Write-Xml (Join-Path $res 'drawable/rivoscan_launcher_background.xml') $background
