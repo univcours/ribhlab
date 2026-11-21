@@ -25,9 +25,19 @@ test('build uses the owner-approved new blue R icon, not the older wordmark',()=
  assert.ok(gen.includes('public/rivoscan-icon.png'));
  assert.ok(gen.includes('rivoscan-ai-icon-source.png'));
  assert.ok(gen.includes('public/rivoscan-store-icon.png'));
+ assert.ok(gen.includes('const LOGO_WHITE_INSET=16'),'white margin must be applied in the real image generator, not only CSS');
  assert.ok(!gen.includes('pngquant'));
  assert.ok(!gen.includes('palette'));
  assert.ok(!gen.includes('function paint('));
+});
+test('in-app and Android launcher preserve original approved image without drawing a new letter',()=>{
+ const main=text('src/main.js'),fit=text('src/rivo-brand-fit.css'),gen=text('scripts/create-turquoise-icon.mjs');
+ assert.equal(main.split('src="/rivoscan-icon.png"').length-1,3);
+ assert.match(fit,/object-fit:contain!important/);
+ assert.match(fit,/background:#fff!important/);
+ assert.match(gen,/SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7'/);
+ assert.match(gen,/LOGO_WHITE_INSET=16/);
+ assert.doesNotMatch(gen,/drawText|drawLetter|putText|writeLetter/);
 });
 test('Android legacy and adaptive launchers use the approved brand image',()=>{
  const ps=text('apply-rivoscan-branding.ps1');
