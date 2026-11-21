@@ -74,5 +74,5 @@ test('native ads use Banner + natural-break Interstitial + opt-in Rewarded and r
  assert.match(ads,/RewardAdPluginEvents/);
  assert.match(ads,/AdMob\.loadAppOpen\(/);
  assert.match(ads,/AdMob\.showAppOpen\(/);
- assert.match(ads,/export async function requestPremium\(_id\)\{return true;\}/);
+ assert.match(ads,/export async function requestPremium\(id\)/);
 });
