@@ -110,23 +110,9 @@ jobs:
           name: RivoScan-0.45.61-OriginalKey-SIGNED-Test-APK
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
-      - name: Publish a prerelease test APK to GitHub only
-        env:
-          GH_TOKEN: ${{ secrets.RIVO_RELEASE_PAT || github.token }}
+      - name: Publish status of signed APK artifact (no GitHub Releases permission)
         run: |
-          set -euo pipefail
-          TAG=rivoscan-0.45.61-restore-status-icons-165-20261121
-          cp android/app/build/outputs/apk/release/app-release.apk /tmp/RivoScan-0.45.61-OriginalKey-SIGNED-Test.apk
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::warning::Release already exists; the Actions artifact remains available."
-            exit 0
-          fi
-          gh release create "$TAG" /tmp/RivoScan-0.45.61-OriginalKey-SIGNED-Test.apk \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title 'RivoScan 0.45.61 signed real Android status icons repair APK' \
-            --notes 'RivoScan 0.45.61: fixes the real Android clock, Wi-Fi, battery and network icons disappearing. Explicitly SHOWS native system status bars and clears fullscreen/immersive flags whenever the Activity launches, resumes or regains focus, preserving native pale status background and dark symbols. Includes Neo Glass Blue dashboard, original icons, ID Photo Maker fix, and safe AdMob placement. Signed private test build; not submitted to Google Play. Test-only signed build, not submitted to Google Play. Test-only signed build: NOT submitted to Google Play. WARNING: Play-installed app may use a different signing certificate, so the raw APK might not update it. Never uninstall and lose documents to force installation.'
-          echo 'Signed test APK published as a GitHub prerelease; Google Play was NOT touched.' >> "$GITHUB_STEP_SUMMARY"
-
+          echo 'Signed 0.45.61 APK is available as the verified Actions artifact. GitHub Releases creation is blocked by repository permissions; do NOT attempt it.' >> "$GITHUB_STEP_SUMMARY"
   android-statusbar-real-device-emulator:
     needs: signed-ui-test-apk
     runs-on: ubuntu-24.04
