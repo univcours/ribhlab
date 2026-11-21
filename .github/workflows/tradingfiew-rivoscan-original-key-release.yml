@@ -77,7 +77,7 @@ jobs:
           QA_APK=android/app/build/outputs/apk/r8Qa/app-r8Qa.apk
           test -s "$QA_APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
-          "$AAPT" dump badging "$QA_APK" | grep -F "name='com.ribhlab.tradingfiew.r8qa' versionCode='10'"
+          "$AAPT" dump badging "$QA_APK" | grep -F "name='com.ribhlab.tradingfiew.r8qa' versionCode='11'"
           echo "R8 QA APK built with Google's official test AdMob IDs." >> "$GITHUB_STEP_SUMMARY"
       - name: Build and verify signed production APK and AAB
         working-directory: tradingfiew
@@ -93,7 +93,7 @@ jobs:
           grep -q 'jar verified' /tmp/tradingfiew-aab-verify.txt
           keytool -printcert -jarfile "$AAB" | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='10' versionName='1.0.9'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.tradingfiew' versionCode='11' versionName='1.0.10'"
           "$AAPT" dump permissions "$APK" | grep -F 'com.google.android.gms.permission.AD_ID'
           DEX_FILES="$(unzip -Z1 "$APK" | grep -E '^classes([0-9]+)?[.]dex$')"
           APK_STRINGS="$(while IFS= read -r DEX; do unzip -p "$APK" "$DEX" | strings; done <<< "$DEX_FILES")"
@@ -101,12 +101,12 @@ jobs:
           if grep -F 'ca-app-pub-7945572016731367/6455758286' <<< "$APK_STRINGS" >/dev/null; then echo '::error::Banner unit ID incorrectly used as Interstitial'; exit 1; fi
           if grep -F 'ca-app-pub-7945572016731367/8117339646' <<< "$APK_STRINGS" >/dev/null; then echo '::error::Old Interstitial ID remains'; exit 1; fi
           grep -R -F 'ca-app-pub-7945572016731367~6802871518' android/app/build/intermediates/merged_manifests/release >/dev/null
-          echo "TradingFiew 1.0.9 / versionCode 10: AAB and APK signed with the original RivoScan certificate." >> "$GITHUB_STEP_SUMMARY"
+          echo "TradingFiew 1.0.10 / versionCode 11: AAB and APK signed with the original RivoScan certificate." >> "$GITHUB_STEP_SUMMARY"
           echo "Verified real AdMob App ID, Interstitial unit ID and AD_ID permission. QA build remains on Google test ads." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed release and QA artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: TradingFiew-1.0.9-RivoScan-original-key
+          name: TradingFiew-1.0.10-RivoScan-original-key
           path: |
             tradingfiew/android/app/build/outputs/apk/release/*.apk
             tradingfiew/android/app/build/outputs/bundle/release/*.aab
