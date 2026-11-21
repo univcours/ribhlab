@@ -152,6 +152,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
    const next=new Image();next.src=blobURL;
    await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
    if(closed)return;image=next;cutout=null;fileName.textContent=file.name;
+   panel.classList.add('rivo-id-photo-ready');
    workspace?.loaded();workspace?.choose('adjust');workspace?.show(true);
    if(saveButton)saveButton.disabled=false;
     if(bgSelect.value!=='original')await applyBackground();else update();
