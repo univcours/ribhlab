@@ -1,0 +1,46 @@
+name: RivoScan 0.45.60 Neo Glass REAL WebView visual QA
+on:
+  push:
+    branches: [feat/rivoscan-04560-neo-glass-dashboard-20261121]
+    paths:
+      - 'src/**'
+      - 'scripts/qa-neo-glass-04560.mjs'
+      - 'package.json'
+      - '.github/workflows/rivoscan-04560-neo-glass-visual.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-neo-glass-mobile:
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build production RivoScan WebView
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm run build
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Verify REAL six-card Home, ID photo, Tools screens at 320/360/393 widths
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/rivo-neo-04560-server.log 2>&1 &
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          RIVO_NEO_QA_OUTPUT=/tmp/rivo-neo-glass-04560 node scripts/qa-neo-glass-04560.mjs
+      - name: Attach genuine screenshots and measured geometry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.60-Actual-Neo-Glass-Screens-320-360-393
+          path: |
+            /tmp/rivo-neo-glass-04560/
+            /tmp/rivo-neo-04560-server.log
+          retention-days: 14
+          if-no-files-found: warn
