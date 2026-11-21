@@ -17,7 +17,7 @@ test('native system Status Bar uses readable dark OS icons on the existing light
 test('system status icons get restored after app resume or camera returns focus',()=>{
  const ps=get('install-live-scanner.ps1');
  assert.match(ps,/content\.post\(this::applyReadableStatusBar\)/);
- assert.match(ps,/@Override protected void onResume\(\)\s*\{\s*super\.onResume\(\);\s*applyReadableStatusBar\(\);/);
+ assert.match(ps,/@Override public void onResume\(\)\s*\{\s*super\.onResume\(\);\s*applyReadableStatusBar\(\);/);
  assert.match(ps,/@Override public void onWindowFocusChanged\(boolean hasFocus\)\s*\{\s*super\.onWindowFocusChanged\(hasFocus\);\s*if\(hasFocus\) applyReadableStatusBar\(\);/);
  assert.match(ps,/int bottom = Math\.max\(bars\.bottom, keyboard\.bottom\)/);
  assert.doesNotMatch(ps,/FLAG_FULLSCREEN\);[\s\S]*getWindow\(\)\.addFlags\(WindowManager\.LayoutParams\.FLAG_FULLSCREEN\)/);
