@@ -79,7 +79,7 @@ public class MainActivity extends BridgeActivity {
             .setAppearanceLightStatusBars(true);
     }
 
-    @Override protected void onResume() {
+    @Override public void onResume() {
         super.onResume();
         applyReadableStatusBar();
     }
