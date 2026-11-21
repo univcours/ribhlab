@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('the new launcher has no RivoScan wordmark and Play uses a full-bleed asset',()=>{
  const script=read('scripts/create-turquoise-icon.mjs');
- assert.match(script,/rivoscan-ai-icon-source\.png/);
+ assert.match(script,/rivoscan-icon-source\.png/);
  assert.match(script,/new PNG\(\{width:512,height:512\}\)/);
  assert.match(script,/symbol-only/i);
  assert.match(script,/public\/rivoscan-store-icon\.png/);
  assert.match(script,/public\/rivoscan-adaptive-foreground\.png/);
- assert.match(script,/RivoScan approved icon fetch failed/);
+ assert.match(script,/Approved original scanner icon SHA256 mismatch/);
 });
 test('Android build uses the original signature and strictly increasing version',()=>{
  const workflow=read('.github/workflows/rivoscan-04544-original-key.yml');

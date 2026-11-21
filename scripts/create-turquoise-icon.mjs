@@ -1,93 +1,57 @@
-/** RivoScan 0.45.26 - user approved symbol-only glossy blue R.
- * Separate full-bleed store icon and centred adaptive launcher foreground.
+/**
+ * RivoScan original scanner-document icon from the 0.45.44 source tree.
+ * Keep the exact approved artwork. Crop only its existing wordmark, leaving
+ * the original symbol, with modest white edge padding. No new R or remote art.
  */
-import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import pngjs from 'pngjs';
 const {PNG}=pngjs,root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const remote='https://gcdn.picsart.com/picsart-mcp/ce5d87c2-dc15-45ff-8b58-16e8d5ac8fd7.png';
-const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7';
-const sizes={play:504,adaptive:360,header:456};
-const sourcePath=join(root,'assets/branding/rivoscan-ai-icon-source.png');
+const SOURCE_SHA256='e2e1626a748593fd71e39c00bb3826a6de16b365ecfc344e8807549ab1b4dc8f';
+const source=readFileSync(join(root,'assets/branding/rivoscan-icon-source.png'));
+if(createHash('sha256').update(source).digest('hex')!==SOURCE_SHA256)
+ throw Error('Approved original scanner icon SHA256 mismatch: refusing replacement artwork');
+const input=PNG.sync.read(source,{checkCRC:true});
+if(input.width!==512||input.height!==512)throw Error('Original RivoScan icon must be 512x512');
+// The source contains the original blue document/scanner mark above a wordmark.
+const ICON_CROP=Object.freeze({x:58,y:7,size:394});
+const LOGO_WHITE_INSET=18;
+function sample(x,y,c){
+ const lo=n=>Math.max(0,Math.min(511,n));
+ const x0=Math.floor(lo(x)),y0=Math.floor(lo(y)),x1=lo(x0+1),y1=lo(y0+1);
+ const tx=Math.max(0,Math.min(1,x-x0)),ty=Math.max(0,Math.min(1,y-y0));
+ const v=(xx,yy)=>input.data[(yy*512+xx)*4+c];
+ return Math.round(v(x0,y0)*(1-tx)*(1-ty)+v(x1,y0)*tx*(1-ty)+v(x0,y1)*(1-tx)*ty+v(x1,y1)*tx*ty);
+}
+function originalMark(visibleSize){
+ const out=new PNG({width:512,height:512}),offset=Math.floor((512-visibleSize)/2);
+ for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+  const idx=(y*512+x)*4;
+  for(let c=0;c<4;c++)out.data[idx+c]=255;
+  if(x>=offset&&y>=offset&&x<offset+visibleSize&&y<offset+visibleSize){
+   const sx=ICON_CROP.x+(x-offset+.5)*ICON_CROP.size/visibleSize-.5;
+   const sy=ICON_CROP.y+(y-offset+.5)*ICON_CROP.size/visibleSize-.5;
+   for(let c=0;c<3;c++)out.data[idx+c]=sample(sx,sy,c);
+  }
+ }
+ return PNG.sync.write(out);
+}
+const store=originalMark(512-2*LOGO_WHITE_INSET);
+const adaptive=originalMark(320);
+const header=originalMark(450);
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
-let bytes;
-if(existsSync(sourcePath))bytes=readFileSync(sourcePath);
-else{
- const response=await fetch(remote,{signal:AbortSignal.timeout(40000)});
- if(!response.ok)throw Error('RivoScan approved icon fetch failed: Image host HTTP '+response.status);
- bytes=Buffer.from(await response.arrayBuffer());
- if(bytes.length>8_000_000)throw Error('Icon file too large');
- mkdirSync(dirname(sourcePath),{recursive:true});writeFileSync(sourcePath,bytes);
-}
-if(createHash('sha256').update(bytes).digest('hex')!==SOURCE_SHA256)
- throw Error('Approved icon SHA256 mismatch: wrong or re-encoded artwork (refuse silent replacement)');
-if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw Error('Invalid approved icon PNG');
-const input=PNG.sync.read(bytes,{checkCRC:true});
-if(input.width!==1254||input.height!==1254)throw Error('Expected 1254x1254 icon artwork');
-const flat=new PNG({width:512,height:512}),adaptive=new PNG({width:512,height:512});
-const header=new PNG({width:512,height:512});
-const lim=(n,a,b)=>Math.min(b,Math.max(a,n));
-function pixel(x,y,c){
- const fx=lim((x+.5)*1254/512-.5,0,1253),fy=lim((y+.5)*1254/512-.5,0,1253);
- const x0=Math.floor(fx),y0=Math.floor(fy),x1=Math.min(x0+1,1253),y1=Math.min(y0+1,1253);
- const tx=fx-x0,ty=fy-y0;
- const v=(xx,yy)=>input.data[(yy*1254+xx)*4+c];
- return v(x0,y0)*(1-tx)*(1-ty)+v(x1,y0)*tx*(1-ty)+v(x0,y1)*(1-tx)*ty+v(x1,y1)*tx*ty;
-}
-for(let y=0;y<512;y++)for(let x=0;x<512;x++){
- const i=(y*512+x)*4,colors=[pixel(x,y,0),pixel(x,y,1),pixel(x,y,2)];
- const opacity=lim((Math.max(...colors)-18)/65,0,1);
- const background=[5+6*x/511,49+82*x/511,178+50*x/511];
- for(let c=0;c<3;c++)flat.data[i+c]=Math.round(opacity*colors[c]+(1-opacity)*background[c]);
- flat.data[i+3]=255;
-}
-// Keep the approved icon pixels and artwork, but prevent Android launchers
-// and the Play listing from clipping its outermost details.
-const LOGO_WHITE_INSET=16;
-const beforeInset=Uint8Array.from(flat.data);
-const innerSize=512-LOGO_WHITE_INSET*2;
-const sample=(sx,sy,c)=>{
- const x0=Math.max(0,Math.min(511,Math.floor(sx))),y0=Math.max(0,Math.min(511,Math.floor(sy)));
- const x1=Math.min(x0+1,511),y1=Math.min(y0+1,511);
- const dx=sx-x0,dy=sy-y0;
- const v=(x,y)=>beforeInset[(y*512+x)*4+c];
- return Math.round((1-dx)*(1-dy)*v(x0,y0)+dx*(1-dy)*v(x1,y0)+(1-dx)*dy*v(x0,y1)+dx*dy*v(x1,y1));
-};
-for(let y=0;y<512;y++)for(let x=0;x<512;x++){
- const i=(y*512+x)*4;
- if(x<LOGO_WHITE_INSET||y<LOGO_WHITE_INSET||x>=512-LOGO_WHITE_INSET||y>=512-LOGO_WHITE_INSET){
-  flat.data[i]=255;flat.data[i+1]=255;flat.data[i+2]=255;flat.data[i+3]=255;continue;
- }
- const sx=(x-LOGO_WHITE_INSET+.5)*512/innerSize-.5;
- const sy=(y-LOGO_WHITE_INSET+.5)*512/innerSize-.5;
- for(let c=0;c<3;c++)flat.data[i+c]=sample(Math.max(0,sx),Math.max(0,sy),c);
- flat.data[i+3]=255;
-}
-
-for(let y=0;y<512;y++)for(let x=0;x<512;x++){
- const i=(y*512+x)*4;
- for(let c=0;c<4;c++)header.data[i+c]=flat.data[i+c];
- // Keep the R/symbol inside Android adaptive masks instead of shrinking Play art.
- const inset=Math.floor((512-sizes.adaptive)/2);
- const sx=Math.floor((x-inset)*512/sizes.adaptive),sy=Math.floor((y-inset)*512/sizes.adaptive);
- if(sx>=0&&sx<512&&sy>=0&&sy<512){
-  const k=(sy*512+sx)*4;
-  for(let c=0;c<4;c++)adaptive.data[i+c]=flat.data[k+c];
- }
-}
-const store=PNG.sync.write(flat),adapt=PNG.sync.write(adaptive);
 for(const [name,data] of [
  ['public/rivoscan-icon.png',store],
  ['public/rivoscan-store-icon.png',store],
  ['public/rivoscan-play-icon.png',store],
- ['public/rivoscan-adaptive-foreground.png',adapt],
- ['public/rivoscan-header-mark.png',PNG.sync.write(header)],
+ ['public/rivoscan-adaptive-foreground.png',adaptive],
+ ['public/rivoscan-header-mark.png',header],
  ['public/rivoscan-logo.png',fullLogo],
  ['node_modules/.cache/rivoscan/icon.png.b64',Buffer.from(store.toString('base64')+'\n')],
- ['node_modules/.cache/rivoscan/adaptive.png.b64',Buffer.from(adapt.toString('base64')+'\n')]
+ ['node_modules/.cache/rivoscan/adaptive.png.b64',Buffer.from(adaptive.toString('base64')+'\n')]
 ]){
- const p=join(root,name);mkdirSync(dirname(p),{recursive:true});writeFileSync(p,data);
+ const path=join(root,name);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,data);
 }
-console.log('[RivoScan] Symbol-only large R ready without wordmark: full-bleed Play icon and safe Android adaptive foreground');
+console.log('[RivoScan] Original scanner-document symbol-only icon with white padding, no new R.');

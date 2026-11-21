@@ -45,7 +45,7 @@ foreach($bucket in @('mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi')) {
   }
 }
 
-# Use the user's exact chosen R+scan art, safely inset for Android adaptive masks.
+# Use original scanner-document artwork, safely inset for Android adaptive masks.
 $adaptiveBytes = [Convert]::FromBase64String([IO.File]::ReadAllText($adaptiveSource).Trim())
 [IO.File]::WriteAllBytes((Join-Path $drawable 'rivoscan_launcher_adaptive.png'),$adaptiveBytes)
 $monochrome = @'
@@ -66,7 +66,7 @@ $adaptive = @'
 '@
 $background = @'
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#0B54C4"/>
+    <solid android:color="#FFFFFF"/>
 </shape>
 '@
 Write-Xml (Join-Path $res 'drawable/rivoscan_launcher_background.xml') $background
