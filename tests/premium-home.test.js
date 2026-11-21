@@ -25,12 +25,15 @@ test('File library uses a short icon row only when exactly one file is selected'
  assert.ok(bulk.includes("compactAction('merge'"));
  assert.ok(bulk.includes("compactAction('cancel'"));
 });
-test('All extra features live in Tools including QR and plates',()=>{
+test('Tools retain all advanced features while Home links directly to six real core actions',()=>{
  const main=file('src/main.js'),tools=file('src/tools-hub.js');
  for(const name of ['scanCode','plateScanner','bookScan','managePages','photoTranslation','toExcel','privacyShield','smartAutoCapture'])
   assert.ok(tools.includes(name),name);
  const home=main.slice(main.indexOf('function home(){'),main.indexOf('function toolsWorkspace(){'));
- assert.ok(!home.includes('data-hub-action'));
+ assert.ok(home.includes('RIVO_NEO_CARDS.map('));
+ assert.ok(home.includes('data-hub-action') || main.includes('data-hub-action="idPhotoMaker"'));
+ assert.ok(home.includes('rivo-neo-card-grid'));
+ assert.ok(main.includes('rivo-neo-card-pdf') || main.includes('rivo-neo-card-${c.id}'));
  assert.ok(main.includes('openHubAction(id)'));
 });
 test('Home feature rail routes to shared tools, no second duplicated scanner or Privacy Shield',()=>{
