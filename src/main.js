@@ -69,6 +69,8 @@ import './rivo-reward-offer.css';
 import {showRewardOffer} from './rivo-reward-offer.js';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
+// Last layer restores legible mobile navigation and language controls.
+import './rivo-nav-readability.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
