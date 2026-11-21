@@ -13,6 +13,7 @@ export const AD_CONFIG=Object.freeze({
  banner:liveAds?(adEnv.VITE_RIVO_ADMOB_BANNER_ID||''):demoPublisher+'/6300978111',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
  rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
+ appOpen:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_OPEN_ID||''):demoPublisher+'/9257395921',
  bannerEnabled:!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(adEnv.VITE_RIVO_ADMOB_BANNER_ID||'')
 });
 export function productionAdsConfigured(config=AD_CONFIG){
@@ -20,11 +21,13 @@ export function productionAdsConfigured(config=AD_CONFIG){
  const interOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.interstitial||'');
  const bannerOk=!config.banner||/^ca-app-pub-\d{16}\/\d+$/.test(config.banner);
  const rewardOk=!config.rewarded||/^ca-app-pub-\d{16}\/\d+$/.test(config.rewarded);
+ const openOk=!config.appOpen||/^ca-app-pub-\d{16}\/\d+$/.test(config.appOpen);
  const owner=id=>String(id||'').split(/[~/]/)[0];
- return appOk&&interOk&&bannerOk&&rewardOk&&owner(config.androidAppId)!==demoPublisher&&
+ return appOk&&interOk&&bannerOk&&rewardOk&&openOk&&owner(config.androidAppId)!==demoPublisher&&
     owner(config.androidAppId)===owner(config.interstitial)&&
     (!config.banner||owner(config.banner)===owner(config.androidAppId))&&
-    (!config.rewarded||owner(config.rewarded)===owner(config.androidAppId));
+    (!config.rewarded||owner(config.rewarded)===owner(config.androidAppId))&&
+    (!config.appOpen||owner(config.appOpen)===owner(config.androidAppId));
 }
 // Standard interstitial eligibility: no launch-count or saved-document gate.
 // Ads are still restricted to natural navigation transitions with no per-session display ceiling.
@@ -40,7 +43,17 @@ export function registerLaunch(storage){
   return next;
  }catch{return 0}
 }
-export function launchEligible(count){return Number(count)>=FULLSCREEN_START_LAUNCH}
+export const AD_FREQUENCY=3;
+export const PREMIUM_USE_COUNT_KEY='rivo-pro-feature-use-count-v1';
+export function eachThird(count){return Number.isInteger(Number(count))&&Number(count)>0&&Number(count)%AD_FREQUENCY===0;}
+export function registerPremiumUsage(storage){
+ if(!storage)return 0;
+ try{
+  const prior=Math.max(0,Math.min(1000000,Math.trunc(Number(storage.getItem(PREMIUM_USE_COUNT_KEY))||0)));
+  const next=prior+1;storage.setItem(PREMIUM_USE_COUNT_KEY,String(next));return next;
+ }catch{return 0}
+}
+export function launchEligible(count){return eachThird(count)}
 export function shouldCountWarmSession({backgroundMs=0,working=false,fullScreenAd=false}={}){
  // A real return after at least one minute counts as a new usage session,
  // even when Android kept the process in memory after Home / Back.
@@ -112,7 +125,9 @@ async function trackNativeAdEvents(){
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  unlockedUntil:readRewardedBreak(),savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:storedTime(FULLSCREEN_LAST_SHOWN_KEY),busy:false,
- interstitialReady:false,interstitialLoading:false,rewardedReady:false,rewardedLoading:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
+ interstitialReady:false,interstitialLoading:false,rewardedReady:false,rewardedLoading:false,
+ appOpenReady:false,appOpenLoading:false,pendingProInterstitial:false,appOpenAttemptedLaunch:0,
+ bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 // AdMob can return NO_FILL even when configured correctly. Retry with bounded
@@ -158,6 +173,7 @@ export function getPremiumStatus(){
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
  interstitialReady:state.interstitialReady,rewardedReady:state.rewardedReady,
  rewardedEnabled:!!AD_CONFIG.rewarded&&(!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(AD_CONFIG.rewarded)),
+ appOpenReady:state.appOpenReady,proUseCount:storedTime(PREMIUM_USE_COUNT_KEY),
  bannerReady:state.bannerReady,bannerError:state.bannerError,
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
   adStats:{...adStats},liveAds};
@@ -313,6 +329,32 @@ async function loadBanner(){
   scheduleAdRetry('banner');return false;
  }finally{state.bannerLoading=false;}
 }
+async function loadAppOpen(){
+ if(!isAndroid||!state.ready||!state.consent||state.appOpenReady||state.appOpenLoading||!AD_CONFIG.appOpen)return false;
+ state.appOpenLoading=true;
+ try{
+  // This is the real App Open format. It may contain video or an image.
+  // The plugin requires the Google demo UNIT, not isTesting, for QA.
+  await AdMob.loadAppOpen({adId:AD_CONFIG.appOpen});
+  state.appOpenReady=true;return true;
+ }catch(error){
+  state.appOpenReady=false;status('App Open unavailable',String(error?.message||error));return false;
+ }finally{state.appOpenLoading=false;}
+}
+async function showReadyAppOpen(){
+ if(!isAndroid||!state.ready||!state.consent||state.busy||!state.appOpenReady)return false;
+ if(typeof document!=='undefined'&&document.visibilityState==='hidden')return false;
+ state.busy=true;state.appOpenReady=false;
+ try{
+  const {value:loaded}=await AdMob.isAppOpenLoaded({adId:AD_CONFIG.appOpen});
+  if(!loaded)return false;
+  await pauseBannerForFullscreen();
+  await AdMob.showAppOpen({adId:AD_CONFIG.appOpen});
+  recordFullscreenTime();
+  return true;
+ }catch(error){status('App Open not shown',String(error?.message||error));return false;}
+ finally{state.busy=false;void restoreBannerAfterFullscreen();void loadAppOpen();}
+}
 async function loadRewarded(){
  if(!state.ready||!state.consent||state.rewardedReady||state.rewardedLoading||state.busy||!AD_CONFIG.rewarded)return false;
  state.rewardedLoading=true;
@@ -349,7 +391,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
   if(retry){
    retryCounts.banner=0;retryCounts.interstitial=0;
    if(!state.interstitialReady&&!state.busy)void loadInterstitial();
-   if(!state.rewardedReady&&!state.rewardedLoading&&!state.busy)void loadRewarded();
+   if(!state.appOpenReady&&!state.appOpenLoading&&!state.busy)void loadAppOpen();
    if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}
   }
   return true;
@@ -374,7 +416,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
-   void loadRewarded(); // preload; NEVER show without an explicit user tap
+   void loadAppOpen(); // show ONLY on each third launch and ONLY at an app-opening screen
    if(!deferBanner)void loadBanner();
    return true;
   }catch(error){
@@ -388,7 +430,14 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  return state.initializing;
 }
 // All document tools stay free; optional rewarded ads grant only an interstitial-free break.
-export async function requestPremium(_id){return true;}
+export async function requestPremium(id){
+ if(isAndroid&&isPremiumFeature(id)){
+  const count=registerPremiumUsage(typeof localStorage!=='undefined'?localStorage:null);
+  if(eachThird(count))state.pendingProInterstitial=true;
+ }
+ // No feature is blocked, and no Rewarded ad is forced.
+ return true;
+}
 export async function watchRewardedVideoForBreak(){
  if(!isAndroid||state.busy)return false;
  if(!(await initializeAds()))return false;
@@ -420,16 +469,20 @@ async function restoreBannerAfterFullscreen(){
  if(!state.bannerReady||bannerObstructed())return;
  await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>{});
 }
-// App Open inventory has been removed. Never show an interstitial on launch.
-// Prepare the SDK and pre-load the next natural-break interstitial silently.
-export async function startAdsAtLaunch(){
+// Every third real cold opening: show the App Open format ONLY while the splash is visible.
+// If app content is already visible or no fill arrives, skip; never pop an ad late.
+export async function startAdsAtLaunch({isLoading=()=>false}={}){
  if(!isAndroid)return false;
- await initializeAds();
- return false;
+ const eligible=launchEligible(state.launchCount);
+ if(!(await initializeAds()))return false;
+ if(!eligible||!isLoading())return false;
+ if(!state.appOpenReady)await loadAppOpen();
+ if(!isLoading())return false;
+ return showReadyAppOpen();
 }
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
- if(state.busy||working)return false;
+ if(state.busy||working||!state.pendingProInterstitial)return false;
  if(trigger==='back')state.backTransitions++;
  // If an ad is not ready, request one without blocking navigation; a later
  // natural transition can show it once the native SDK confirms it is loaded.
@@ -446,6 +499,7 @@ export async function atNaturalNavigation({working=false,trigger='regular'}={}){
   await pauseBannerForFullscreen();
   await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
   recordFullscreenTime();state.shownCount++;state.savedCount=0;
+  state.pendingProInterstitial=false;
   state.backTransitions=0;
   status(trigger==='back'?'Interstitial shown on return to Home':'Interstitial shown');
   return true;
@@ -463,9 +517,16 @@ export async function onAppForeground({backgroundMs=0,working=false}={}){
   if(typeof window!=='undefined')requestAnimationFrame(()=>scheduleBannerRelayout());
  }
  if(isAndroid&&shouldCountWarmSession({backgroundMs,working,fullScreenAd:state.busy})){
-  try{state.launchCount=registerLaunch(localStorage);state.onChange()}catch{}
+  try{
+   state.launchCount=registerLaunch(localStorage);state.onChange();
+   // True foreground return, not during editing or while the user is working.
+   if(launchEligible(state.launchCount)&&state.appOpenAttemptedLaunch!==state.launchCount){
+    state.appOpenAttemptedLaunch=state.launchCount;
+    if(state.appOpenReady)return await showReadyAppOpen();
+   }
+  }catch(error){console.warn('App Open foreground skipped',error)}
  }
- return false; // Never replace App Open with a policy-violating launch/exit interstitial.
+ return false;
 }
 export async function showTestInterstitial(){
  if(!AD_CONFIG.testMode||!isAndroid)return false;
