@@ -4,4 +4,16 @@
 <meta name="theme-color" content="#061427"><meta name="description" content="RivoScan: private document scanner and PDF toolkit. Scan, sign, merge, split, OCR and convert PDF files.">
 <link rel="icon" type="image/png" href="/rivoscan-icon.png?v=20261114c">
 <title>RivoScan — Your documents, done.</title>
-</head><body><div id="app"></div><script type="module" src="/src/main.js"></script></body></html>
+<style>
+#rivo-boot-screen{position:fixed;inset:0;z-index:2147482990;display:flex;flex-direction:column;gap:15px;
+align-items:center;justify-content:center;background:linear-gradient(145deg,#061427,#0d3e81);color:#fff;
+font-family:system-ui,sans-serif;box-sizing:border-box;padding:24px}
+#rivo-boot-screen img{width:78px;height:78px;border:2px solid #effaff;border-radius:20px;
+object-fit:contain;background:#fff;box-shadow:0 9px 28px #02132788}
+#rivo-boot-screen strong{font-size:25px;letter-spacing:.1px;font-weight:800}
+#rivo-boot-screen small{font-size:13px;color:#d1eaff}
+#rivo-boot-screen .rivo-boot-progress{width:min(176px,54vw);height:3px;border-radius:4px;
+background:linear-gradient(90deg,#1a62be,#7bcfff);opacity:.9}
+</style></head><body><div id="rivo-boot-screen" role="status" aria-label="RivoScan loading">
+<img src="/rivoscan-icon.png" alt="" /><strong>RivoScan</strong><small>Loading documents…</small><div class="rivo-boot-progress" aria-hidden="true"></div>
+</div><div id="app"></div><script type="module" src="/src/main.js"></script></body></html>
