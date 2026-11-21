@@ -16,7 +16,7 @@ test('ordinary navigation break shows a preloaded ad after 30-second warm-up',()
 test('natural-break interstitials never require saving or multiple launches',()=>{
  assert.doesNotMatch(code,/shownCount\s*<\s*12/);
  assert.match(code,/naturalTransition/);
- assert.match(code,/if\(state\.busy\|\|working\)return false/);
+ assert.match(code,/if\(state\.busy\|\|working\|\|!state\.pendingProInterstitial\)return false/);
  assert.match(code,/if\(!state\.interstitialReady\)/);
  assert.match(code,/await AdMob\.showInterstitial/);
 });
