@@ -7,11 +7,12 @@ test('0.45.26 launcher is full-bleed with blue R and safe adaptive foreground, n
  const image=PNG.sync.read(read('public/rivoscan-icon.png'));
  assert.equal(image.width,512);assert.equal(image.height,512);
 
- // Full-bleed Play store icon has no transparent black border.
- for(const [x,y] of [[0,0],[511,0],[0,511],[511,511],[255,255]]){
+ // Corners must be alpha-transparent so the blue logo integrates with launchers.
+ for(const [x,y] of [[0,0],[511,0],[0,511],[511,511]]){
   const i=(y*512+x)*4;
-  assert.equal(image.data[i+3],255,'opaque Play logo required');
+  assert.equal(image.data[i+3],0,'transparent launcher corner required');
  }
+ assert.equal(image.data[(255*512+255)*4+3],255,'original scanner illustration stays opaque');
  const adaptive=PNG.sync.read(read('public/rivoscan-adaptive-foreground.png'));
  assert.equal(adaptive.width,512);
  assert.equal(adaptive.height,512);
