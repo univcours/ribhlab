@@ -1,0 +1,10 @@
+/* Only the third cold launch has a brief loading surface.
+   App Open ads must NOT cover live document editing or appear after startup. */
+.rivo-startup-ad-splash{
+ position:fixed;inset:0;z-index:2147483400;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:12px;padding:24px;background:linear-gradient(150deg,#061c3d,#0a4387);
+ color:#fff;pointer-events:auto;box-sizing:border-box;
+}
+.rivo-startup-ad-brand{font:800 clamp(23px,7vw,34px)/1.2 system-ui,sans-serif}
+.rivo-startup-ad-caption{color:#d5e9fb;font:500 13px/1.4 system-ui,sans-serif}
