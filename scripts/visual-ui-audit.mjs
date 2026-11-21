@@ -340,6 +340,31 @@ try{
       !!flatten&&flatten.hidden&&(!split||split.hidden);
     });
     check(width+': book source-only settings, advanced corrections behind gear',bookContext);
+    const mobileBook=await overlay.evaluate(root=>{
+     const panel=root.querySelector('.rivo-book-dialog');
+     const dock=panel?.querySelector('.rivo-book-preview-dock');
+     const save=panel?.querySelector('.rivo-edit-bottom-bar button');
+     const footer=panel?.querySelector('.rivo-edit-bottom-bar');
+     const settings=panel?.querySelector('.rivo-workspace-settings');
+     const active=panel?.querySelector('.rivo-workspace-task.active');
+     const other=panel?.querySelector('.rivo-workspace-task:disabled');
+     if(!panel||!dock||!save||!footer||!settings||!active||!other)return null;
+     const p=panel.getBoundingClientRect(),d=dock.getBoundingClientRect();
+     const s=save.getBoundingClientRect(),f=footer.getBoundingClientRect();
+     const activeStyle=getComputedStyle(active),disabledStyle=getComputedStyle(other);
+     return {
+      previewCompact:d.height<=Math.min(220,innerHeight*.30)+3,
+      fullSave:s.width>=p.width-34 && s.left>=p.left-1 && s.right<=p.right+1,
+      safeBottom:s.bottom<=innerHeight-18 && f.bottom<=innerHeight+2,
+      scrollSettings:getComputedStyle(settings).overflowY==='auto',
+      disabledContrast:activeStyle.backgroundColor!==disabledStyle.backgroundColor,
+      fit:d.top>=p.top&&d.bottom<=s.top,
+     };
+    });
+    check(width+': Book empty preview stays compact',mobileBook?.previewCompact);
+    check(width+': Book Save is full width and above Android navigation safe area',mobileBook?.fullSave&&mobileBook?.safeBottom);
+    check(width+': Book settings scroll independently and disabled tabs stay distinct',mobileBook?.scrollSettings&&mobileBook?.disabledContrast&&mobileBook?.fit);
+
     const bookSave=overlay.locator('.rivo-book-dialog .rivo-edit-bottom-bar button').last();
     check(width+': Book Save disabled without photo',await bookSave.isDisabled());
     if(width===320){
