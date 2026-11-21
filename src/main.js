@@ -61,6 +61,8 @@ import './rivo-top-corner-loupe.css';
 import './rivo-blue-editor-layout.css';
 // Final consistent treatment for buttons, with no disabled/active behavior changes.
 import './rivo-button-finish.css';
+// Keep Book Scan Save PDF above the real native banner and Android navigation.
+import './rivo-book-banner-safe.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
