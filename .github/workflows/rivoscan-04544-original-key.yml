@@ -142,5 +142,5 @@ jobs:
           gh release create "$TAG" /tmp/RivoScan-0.45.45-Signed.apk /tmp/RivoScan-0.45.45-GooglePlay.aab \
             --repo "$GITHUB_REPOSITORY" --target rivoscan-standalone-ready \
             --title 'RivoScan 0.45.45 — Interstitial ad reliability and seven languages' \
-            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 148. Store publication requires a separate Play submission. Interstitial ads now use standard natural-break eligibility and a one-minute cooldown.'
+            --notes 'Original Google Play upload key. Plate Scanner localized in seven languages; improved plate OCR and zoom, text-preserving PDF compression, safer file transfer, optional online updates. PerfectScan entry removed. VersionCode 149. Store publication requires a separate Play submission. Interstitial ads now use standard natural-break eligibility and a one-minute cooldown.'
           echo 'Published signed 0.45.45 APK and AAB to GitHub Releases.' >> "$GITHUB_STEP_SUMMARY"

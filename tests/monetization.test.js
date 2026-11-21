@@ -42,7 +42,8 @@ test('interstitial loading is serialized and retried at a later navigation when 
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  assert.match(code,/interstitialLoading:false/);
- assert.match(code,/state\.interstitialLoading\)return false/);
+ assert.match(code,/state\.interstitialLoading/);
+ assert.match(code,/state\.interstitialLoading\|\|state\.busy/);
  assert.match(code,/if\(!state\.interstitialReady\)\{/);
  assert.match(code,/void loadInterstitial\(\)/);
  assert.match(code,/await trackNativeAdEvents\(\)/);

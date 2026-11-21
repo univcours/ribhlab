@@ -1,14 +1,18 @@
-/* RivoScan brand marks: use the complete symbol artwork, never crop it. */
+/* Keep the approved RivoScan artwork intact and add a small white side margin. */
 #app .brand img,
 #app .topbar .topbar-brand-icon,
 #app .settings-logo img {
   display:block!important;
   object-fit:contain!important;
   object-position:center center!important;
+  background:#FFFFFF!important;
 }
 #app .brand img {
-  padding:2px!important;
+  padding:2px 6px!important;
 }
 #app .topbar .topbar-brand-icon {
-  padding:1px!important;
+  padding:1px 3px!important;
+}
+#app .settings-logo img {
+  padding:2px 6px!important;
 }
