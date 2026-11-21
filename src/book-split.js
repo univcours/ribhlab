@@ -5,6 +5,16 @@ import {estimateBookSpine} from './book-spine.js';
 import {estimateLineWarp,applyLineWarpCanvas} from './line-aware-dewarp.js';
 import {estimateTextGridWarp,applyTextGridCanvas} from './text-grid-dewarp.js';
 
+// All Book Scan controls, status messages and empty states follow the app language.
+const bookUI={
+ en:{title:'Book Scan',empty:'Take or import a book photo to preview its pages.',source:'Photo',split:'Split',flatten:'Flatten',settings:'Book scan settings',invalid:'Unsupported image or photo larger than 18 MB',noPhoto:'Add a book photo before using this action.',saving:'Creating PDF…',clean:'ML Kit cleanup applied on device. Review the pages: covered text cannot be restored.',spine:'Spine estimate',confidence:'confidence'},
+ ar:{title:'مسح الكتب',empty:'صوّر أو استورد صورة كتاب باش تشوف الصفحات هنا.',source:'الصورة',split:'تقسيم',flatten:'تقويم',settings:'إعدادات مسح الكتاب',invalid:'الصورة غير مدعومة أو حجمها فوق 18 ميغابايت',noPhoto:'صوّر أو استورد صورة كتاب أولاً.',saving:'جاري إعداد PDF…',clean:'تم تنظيف الصفحات على الجهاز. راجع النتيجة: النص المغطى قد لا يمكن استرجاعه.',spine:'تقدير وسط الكتاب',confidence:'الثقة'},
+ fr:{title:'Scanner un livre',empty:'Photographiez ou importez un livre pour afficher les pages.',source:'Photo',split:'Séparer',flatten:'Aplatir',settings:'Réglages du livre',invalid:'Image non prise en charge ou supérieure à 18 Mo',noPhoto:'Importez une photo du livre avant cette action.',saving:'Création du PDF…',clean:'Nettoyage local effectué. Vérifiez les pages : le texte masqué ne peut pas être restauré.',spine:'Reliure estimée',confidence:'fiabilité'},
+ es:{title:'Escanear libro',empty:'Toma o importa una foto del libro para ver las páginas.',source:'Foto',split:'Separar',flatten:'Aplanar',settings:'Ajustes del libro',invalid:'Imagen no compatible o mayor de 18 MB',noPhoto:'Importa una foto del libro primero.',saving:'Creando PDF…',clean:'Limpieza local realizada. Revisa las páginas; el texto cubierto no se puede recuperar.',spine:'Lomo estimado',confidence:'confianza'},
+ de:{title:'Buch scannen',empty:'Buchseite fotografieren oder importieren, um die Vorschau zu sehen.',source:'Foto',split:'Trennen',flatten:'Glätten',settings:'Bucheinstellungen',invalid:'Bild nicht unterstützt oder größer als 18 MB',noPhoto:'Bitte zuerst ein Buchfoto hinzufügen.',saving:'PDF wird erstellt…',clean:'Lokale Bereinigung abgeschlossen. Bitte prüfen: verdeckter Text ist nicht wiederherstellbar.',spine:'Geschätzter Buchfalz',confidence:'Sicherheit'},
+ pt:{title:'Digitalizar livro',empty:'Tire ou importe uma foto do livro para ver as páginas.',source:'Foto',split:'Dividir',flatten:'Achatar',settings:'Definições do livro',invalid:'Imagem não suportada ou maior que 18 MB',noPhoto:'Adicione primeiro uma foto do livro.',saving:'Criando PDF…',clean:'Limpeza local concluída. Reveja as páginas; texto oculto não pode ser recuperado.',spine:'Lombada estimada',confidence:'confiança'},
+ it:{title:'Scansione libro',empty:'Scatta o importa una foto del libro per vedere le pagine.',source:'Foto',split:'Dividi',flatten:'Appiattisci',settings:'Impostazioni libro',invalid:'Immagine non supportata o superiore a 18 MB',noPhoto:'Importa prima una foto del libro.',saving:'Creazione PDF…',clean:'Pulizia locale completata. Controlla le pagine: il testo coperto non si può ripristinare.',spine:'Dorso stimato',confidence:'affidabilità'}
+};
 const dict={
  en:['Book Scan — split facing pages','Take photo','Import a book photo','Spine location','Save 2-page PDF','Close','Adjust the center separator and guided curvature until text lines look straighter. This is a real non-rigid correction, not automatic 3D reconstruction.'],
  ar:['مسح كتاب — فصل الصفحتين','تصوير الكتاب','استيراد صورة الكتاب','موقع وسط الكتاب','حفظ PDF بجوج صفحات','إغلاق','حرك خط وسط الكتاب وضبط انحناء الصفحة حتى تبان السطور مستقيمة. التقويم هندسي غير خطي ولكن ماشي إعادة بناء أوتوماتيكية ثلاثية الأبعاد.'],
@@ -32,12 +42,12 @@ function makeButton(parent,title,callback){
  const b=document.createElement('button');b.type='button';b.textContent=title;b.addEventListener('click',callback);parent.append(b);return b;
 }
 export function openBookSplitter({language='en',save,capture,cleanPage,singlePage=false}={}){
- const L=dict[language]||dict.en,overlay=document.createElement('div');
+ const L=dict[language]||dict.en,UI=bookUI[language]||bookUI.en,overlay=document.createElement('div');
  overlay.className='rivo-id-overlay';
  const panel=document.createElement('section');panel.className='rivo-id-dialog';panel.setAttribute('role','dialog');
  panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');
- title.textContent=singlePage?({en:'Document Flattening — correct curved paper',ar:'تقويم الوثائق — تصحيح الورق المنحني',fr:'Aplatir le document — corriger la courbure',es:'Aplanar documento — corregir curvas',de:'Dokument glätten — gewelltes Papier',pt:'Achatar documento — corrigir curvas',it:'Appiattisci documento — correggi curvature'})[language]||'Document Flattening':L[0];
+ title.textContent=singlePage?({en:'Document Flattening — correct curved paper',ar:'تقويم الوثائق — تصحيح الورق المنحني',fr:'Aplatir le document — corriger la courbure',es:'Aplanar documento — corregir curvas',de:'Dokument glätten — gewelltes Papier',pt:'Achatar documento — corrigir curvas',it:'Appiattisci documento — correggi curvature'})[language]||'Document Flattening':UI.title;
  panel.append(title);
  const actions=document.createElement('div');actions.className='rivo-code-actions';panel.append(actions);
  const fileInput=document.createElement('input');fileInput.type='file';fileInput.accept='image/*';fileInput.multiple=!singlePage;fileInput.hidden=true;panel.append(fileInput);
@@ -46,7 +56,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const preview=document.createElement('canvas');preview.className='rivo-id-preview';
  const previewBox=document.createElement('div');previewBox.className='rivo-book-preview rivo-book-preview-empty';
  const emptyNote=document.createElement('p');emptyNote.className='rivo-book-empty';
- emptyNote.textContent=({ar:'صوّر أو استورد صفحة كتاب باش تبان هنا.',en:'Take or import a book photo to preview its pages.',fr:'Photographiez ou importez une page pour la prévisualiser.'})[language]||'Add a book photo';
+ emptyNote.textContent=UI.empty;
  previewBox.append(preview,emptyNote);panel.append(previewBox);
  const location=document.createElement('label');location.className='rivo-id-row';location.textContent=L[3];
  const slider=document.createElement('input');slider.type='range';slider.min='25';slider.max='75';slider.value='50';location.append(slider);panel.append(location);
@@ -109,7 +119,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    image,spine:+slider.value,curvature:+warpSlider.value,
    autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
-  image=img;previewBox.classList.remove('rivo-book-preview-empty');emptyNote.hidden=true;
+  image=img;previewBox.classList.remove('rivo-book-preview-empty');previewDock.classList.remove('rivo-book-empty-dock');emptyNote.hidden=true;
   for(const button of [autoSpine,autoButton,lineButton,autoAll,compare,saveButton])button.disabled=false;
   currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix(true);countSpreads();
@@ -192,7 +202,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
      const url=URL.createObjectURL(file);
      try{await load(url,{alreadySingle:true})}finally{URL.revokeObjectURL(url)}
     }
-    status.textContent=({en:'ML Kit FULL cleanup applied on device. Review each result: blocked text cannot be reconstructed.',ar:'تنقية ML Kit FULL على الجهاز. راجع كل صفحة: النص المغطى ما نضمنوش يرجع.',fr:'ML Kit FULL a nettoyé la page. Vérifiez le résultat.'})[language]||'Review cleaned page';
+    status.textContent=UI.clean;
    }catch(error){status.textContent=error?.message||String(error)}
    finally{busy=false}
   });
@@ -211,7 +221,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   const files=[...(fileInput.files||[])];fileInput.value='';
   for(const file of files){
    if(!file.type.startsWith('image/')||file.size>18*1024*1024){
-    status.textContent='Unsupported or oversized photo (max 18 MB each)';break;
+    status.textContent=UI.invalid;break;
    }
    const url=URL.createObjectURL(file);
    try{await load(url)}
@@ -232,7 +242,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
     status.textContent=({ar:'وسط الكتاب ما واضحش؛ حرك الخط يدوياً.',en:'Gutter uncertain; use manual separator.'})[language]||'Manual separator required';return;
    }
    slider.value=String(result.spine);autoPageWarp=null;autoLineWarp=null;draw();
-   status.textContent='Spine beta '+result.spine+'% · confidence '+Math.round(result.confidence*100)+'%';
+   status.textContent=UI.spine+' '+result.spine+'% · '+UI.confidence+' '+Math.round(result.confidence*100)+'%';
   }catch(error){status.textContent=error?.message||String(error)}
  });
  autoButton.addEventListener('click',()=>{
@@ -300,7 +310,8 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const saveButton=makeButton(saveAction,singlePage?
   (({en:'Save flattened PDF copy',ar:'حفظ PDF مصحح',fr:'Enregistrer PDF aplati',es:'Guardar PDF corregido',de:'Korrigiertes PDF speichern',pt:'Guardar PDF corrigido',it:'Salva PDF corretto'})[language]||'Save flattened PDF'):
   L[4],async()=>{
-  if(!image||busy)return;busy=true;
+  if(!image||busy)return;busy=true;saveButton.disabled=true;
+  status.textContent=UI.saving;
   try{
    const pdf=await PDFDocument.create();
    const current={image,spine:+slider.value,curvature:+warpSlider.value,autoLineWarp,autoPageWarp,alreadySingle:currentIsSinglePage};
@@ -328,7 +339,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    await save(new Uint8Array(await pdf.save({useObjectStreams:true})),(singlePage?'RivoScan_Flatten_':'RivoScan_Book_')+Date.now()+'.pdf','application/pdf');
    if(!closed)cleanup();
   }catch(error){status.textContent=error?.message||String(error)}
-  finally{busy=false}
+  finally{busy=false;if(!closed)saveButton.disabled=!image}
  });
  saveButton.disabled=true;
  for(const button of [autoSpine,autoButton,lineButton,autoAll,compare])button.disabled=true;
@@ -341,21 +352,17 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  title.classList.add('rivo-workspace-title');
  const toggle=document.createElement('button');toggle.type='button';
  toggle.className='rivo-workspace-settings-toggle';
- toggle.textContent='⚙';toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
+ toggle.textContent='⚙';toggle.setAttribute('aria-label',UI.settings);
  toggle.setAttribute('aria-expanded','false');
  header.insertBefore(toggle,header.lastElementChild);
  const previewDock=document.createElement('div');
- previewDock.className='rivo-edit-preview-dock rivo-book-preview-dock';
+ previewDock.className='rivo-edit-preview-dock rivo-book-preview-dock rivo-book-empty-dock';
  previewDock.append(previewBox);
  const drawer=document.createElement('div');
  drawer.className='rivo-edit-settings-scroll rivo-workspace-settings';drawer.hidden=true;
  const taskBar=document.createElement('div');taskBar.className='rivo-workspace-taskbar';
  const groups={};
- const labels={
-  source:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',
-  split:({ar:'تقسيم',fr:'Séparer',en:'Split'})[language]||'Split',
-  flatten:({ar:'تقويم',fr:'Aplatir',en:'Flatten'})[language]||'Flatten'
- };
+ const labels={source:UI.source,split:UI.split,flatten:UI.flatten};
  const icons={source:'▧',split:'◫',flatten:'⌁'};
  for(const task of ['source',...(!singlePage?['split']:[]),'flatten']){
   const tab=document.createElement('button');tab.type='button';
