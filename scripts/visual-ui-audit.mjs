@@ -373,6 +373,44 @@ try{
     }
    }
    await page.screenshot({path:out+'/'+width+'-'+tag+'.png'});
+   if(id==='bookScan'){
+    // Load a synthetic test photo locally; no private camera or user documents.
+    const pngBase64=await page.evaluate(()=>{
+     const c=document.createElement('canvas');c.width=480;c.height=300;
+     const cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,480,300);
+     cx.fillStyle='#e4e4ed';cx.fillRect(230,0,20,300);
+     cx.fillStyle='#243d63';
+     for(let row=0;row<8;row++){
+      cx.fillRect(35,35+row*27,150,4);cx.fillRect(290,35+row*27,150,4);
+     }
+     return c.toDataURL('image/png').split(',')[1];
+    });
+    await overlay.locator('input[type="file"]').setInputFiles({
+     name:'TEST_book_spread.png',mimeType:'image/png',
+     buffer:Buffer.from(pngBase64,'base64')
+    });
+    await page.waitForFunction(()=>{
+     const p=document.querySelector('.rivo-book-dialog');
+     return !!p&&!p.querySelector('.rivo-book-preview-empty') &&
+      !p.querySelector('.rivo-edit-bottom-bar button')?.disabled;
+    },{timeout:20000});
+    const loadedBook=await overlay.evaluate(root=>{
+     const panel=root.querySelector('.rivo-book-dialog');
+     const dock=panel.querySelector('.rivo-book-preview-dock');
+     const save=panel.querySelector('.rivo-edit-bottom-bar button');
+     const s=save.getBoundingClientRect(),p=panel.getBoundingClientRect();
+     return {
+      loaded:!dock.classList.contains('rivo-book-empty-dock'),
+      enabled:!save.disabled,
+      fullWidth:s.width>=p.width-34,
+      safe:s.bottom<=innerHeight-18,
+      splitEnabled:!panel.querySelector('[data-book-task="split"]')?.disabled
+     };
+    });
+    check(width+': Book imported TEST photo allows Save and Split with safe full-width footer',
+      loadedBook.loaded&&loadedBook.enabled&&loadedBook.fullWidth&&loadedBook.safe&&loadedBook.splitEnabled);
+    await page.screenshot({path:out+'/'+width+'-'+tag+'-loaded-test-photo.png'});
+   }
    await overlay.locator('[data-rivo-modal-close]').click();
    await overlay.waitFor({state:'detached',timeout:8000});
    check(width+': '+tag+' close works',await page.locator('[data-rivo-managed-modal="true"]').count()===0);
