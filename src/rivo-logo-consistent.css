@@ -1,0 +1,57 @@
+/* Original RivoScan scanner mark — consistent phone-style icon across all pages.
+   Image is sourced from approved assets/branding/rivoscan-icon-source.png; never
+   scale by zoom, use object-fit:cover or crop the artwork. A genuine white safe
+   margin remains INSIDE the original centered blue mark on all four sides. */
+#app .shell.rivo-dark-ui :is(.rivo-header-app-icon,.rivo-sidebar-app-icon,.rivo-settings-app-icon){
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-shrink:0!important;
+  overflow:hidden!important;
+  padding:2px!important;
+  border:1.5px solid #edf8ff!important;
+  border-radius:13px!important;
+  background:linear-gradient(145deg,#ffffff,#e1f2ff)!important;
+  box-shadow:0 0 0 1px #3da9f388,0 4px 12px #09275252,inset 0 1px 0 #fff!important;
+}
+#app .shell.rivo-dark-ui .topbar .rivo-header-app-icon{
+  width:44px!important;height:44px!important;flex-basis:44px!important;
+}
+#app .shell.rivo-dark-ui .sidebar .rivo-sidebar-app-icon{
+  width:49px!important;height:49px!important;flex-basis:49px!important;
+  border-radius:15px!important;
+}
+#app .shell.rivo-dark-ui .settings-logo .rivo-settings-app-icon{
+  width:54px!important;height:54px!important;flex-basis:54px!important;
+  border-radius:15px!important;
+}
+#app .shell.rivo-dark-ui :is(.topbar,.sidebar,.settings-logo)
+ :is(.rivo-header-app-icon,.rivo-sidebar-app-icon,.rivo-settings-app-icon) > img{
+  box-sizing:border-box!important;
+  display:block!important;
+  width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;
+  min-width:0!important;min-height:0!important;
+  flex:1 1 auto!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  padding:0!important;margin:0!important;
+  transform:none!important;filter:none!important;
+  background:#fff!important;
+  border:0!important;border-radius:9px!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+@media(max-width:780px){
+  #app .shell.rivo-dark-ui .topbar .rivo-header-app-icon{
+    width:40px!important;height:40px!important;flex-basis:40px!important;
+    border-radius:12px!important;
+  }
+}
+@media(max-width:360px){
+  #app .shell.rivo-dark-ui .topbar .rivo-header-app-icon{
+    width:36px!important;height:36px!important;flex-basis:36px!important;
+    border-radius:11px!important;
+  }
+}
