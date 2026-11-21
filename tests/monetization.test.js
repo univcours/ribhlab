@@ -24,7 +24,7 @@ test('ordinary interstitial conditions do not require a saved file or multiple l
  assert.equal(shouldShowInterstitial(state),true);
  assert.equal(shouldShowInterstitial({...state,launchCount:0}),true);
  assert.equal(shouldShowInterstitial({...state,trigger:'back'}),true);
- for(const override of [{native:false},{consent:false},{ready:false},{shownCount:12},
+ for(const override of [{native:false},{consent:false},{ready:false},
   {premiumUntil:1000000},{now:1000+MIN_INTERSTITIAL_SESSION_MS-1},
   {lastShownAt:32000-FULLSCREEN_COOLDOWN_MS+1},{trigger:'exit'}])
   assert.equal(shouldShowInterstitial({...state,...override}),false);
@@ -35,6 +35,9 @@ test('interstitials are limited to natural breaks with a one-minute cooldown',()
  assert.equal(shouldShowInterstitial(base),true);
  assert.equal(shouldShowInterstitial({...base,trigger:'back'}),true);
  assert.equal(shouldShowInterstitial({...base,trigger:'exit'}),false);
+ assert.equal(shouldShowInterstitial({...base,shownCount:999}),true);
+ assert.equal(MIN_INTERSTITIAL_SESSION_MS,10000);
+ assert.equal(FULLSCREEN_COOLDOWN_MS,45000);
  assert.equal(shouldShowInterstitial({...base,lastShownAt:900000- FULLSCREEN_COOLDOWN_MS+1}),false);
  assert.equal(shouldShowInterstitial({...base,lastShownAt:900000-FULLSCREEN_COOLDOWN_MS}),true);
 });
@@ -99,12 +102,12 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
  assert.equal(shouldCountWarmSession({backgroundMs:MIN_BACKGROUND_MS,fullScreenAd:true}),false);
 });
 
-test('Native ad no-fill conditions retry with bounded 1/2/4/8 minute backoff',async()=>{
+test('Native no-fill inventory retries after 30/60/120/240 seconds without hammering AdMob',async()=>{
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  assert.match(code,/const retryCounts=\{banner:0,interstitial:0\}/);
  assert.match(code,/if\(retryCounts\[type\]>=4\)return/);
- assert.match(code,/\[60000,120000,240000,480000\]/);
+ assert.match(code,/\[30000,60000,120000,240000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
  assert.match(code,/scheduleAdRetry\('interstitial'\)/);
 });

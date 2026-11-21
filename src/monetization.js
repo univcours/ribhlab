@@ -24,7 +24,7 @@ export function productionAdsConfigured(config=AD_CONFIG){
     (!config.banner||owner(config.banner)===owner(config.androidAppId));
 }
 // Standard interstitial eligibility: no launch-count or saved-document gate.
-// Ads are still restricted to natural navigation transitions.
+// Ads are still restricted to natural navigation transitions with no per-session display ceiling.
 export const FULLSCREEN_START_LAUNCH=1;
 export const APP_LAUNCH_KEY='rivo-ad-launch-count-v1';
 export const FULLSCREEN_LAST_SHOWN_KEY='rivo-ad-last-fullscreen-v1';
@@ -51,8 +51,8 @@ function recordFullscreenTime(now=Date.now()){
  try{localStorage.setItem(FULLSCREEN_LAST_SHOWN_KEY,String(now))}catch{}
 }
 export const PREMIUM_MINUTES=10;
-export const FULLSCREEN_COOLDOWN_MS=60*1000; // at most one interstitial per minute
-export const MIN_INTERSTITIAL_SESSION_MS=30*1000;
+export const FULLSCREEN_COOLDOWN_MS=45*1000; // ordinary 45-second pacing between full-screen ads
+export const MIN_INTERSTITIAL_SESSION_MS=10*1000; // never interrupt app launch, allow first ordinary navigation
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
  'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
@@ -69,7 +69,7 @@ export function shouldShowInterstitial({
  // Show only at a real navigation break, never on launch or during a task.
  // No requirement to save a file, reach a certain launch, or press Back twice.
  const naturalTransition=trigger==='regular'||trigger==='back';
- return !!(native&&consent&&ready&&naturalTransition&&shownCount<12&&
+ return !!(native&&consent&&ready&&naturalTransition&&
   now-startedAt>=MIN_INTERSTITIAL_SESSION_MS&&
   (!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
@@ -122,7 +122,7 @@ function installAdVisibilityRecovery(){
 function scheduleAdRetry(type){
  if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
  if(retryCounts[type]>=4)return; // bounded no-fill retries
- const delay=[60000,120000,240000,480000][retryCounts[type]++];
+ const delay=[30000,60000,120000,240000][retryCounts[type]++];
  retryTimers[type]=setTimeout(()=>{
   retryTimers[type]=null;
   if(document.visibilityState==='hidden'){retryCounts[type]=Math.max(0,retryCounts[type]-1);return;}
