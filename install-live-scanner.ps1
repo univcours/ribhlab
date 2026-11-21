@@ -32,7 +32,9 @@ import androidx.appcompat.app.ActionBar;
 
 public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
-        // Android 15/16: no deprecated status/navigation bar color setters.
+        // Keep edge-to-edge content below the REAL native system status bar.
+        // Clearing FLAG_FULLSCREEN once here is not enough: a camera/bridge
+        // transition can restore immersive flags while the app is running.
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         // Do NOT set system-bar appearance before BridgeActivity is initialized:
@@ -43,7 +45,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(RivoSurface3DPlugin.class);
         registerPlugin(RivoPlayUpdatePlugin.class);
         super.onCreate(savedInstanceState);
-        applyReadableStatusBar();
+        restoreVisibleNativeStatusBar();
         // A second Android AppCompat ActionBar was displaying above RivoScan's
         // own branded HTML header. Hide it even on upgraded installations.
         ActionBar nativeActionBar=getSupportActionBar();
@@ -68,25 +70,39 @@ public class MainActivity extends BridgeActivity {
         ViewCompat.requestApplyInsets(content);
         // Android 15/16 edge-to-edge: reassert dark native symbols after
         // the WebView and decor view finish applying their own window flags.
-        content.post(this::applyReadableStatusBar);
+        content.post(this::restoreVisibleNativeStatusBar);
+        // The first native inset pass can change system UI flags; repeat once
+        // after the WebView's first layout instead of changing any pixels. 
+        web.post(this::restoreVisibleNativeStatusBar);
     }
 
-    private void applyReadableStatusBar() {
-        // Native system icons (time, signal, Wi-Fi, battery) are OS-owned.
-        // Dark icons on the existing light #E9F5FB status-bar background;
-        // do not draw fake status icons in HTML or cover the real system bar.
-        new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
-            .setAppearanceLightStatusBars(true);
+    private void restoreVisibleNativeStatusBar() {
+        // IMPORTANT: always display the ACTUAL Android OS bar, not an HTML clone.
+        // Previous builds changed only icon color; this could leave the real
+        // clock, signal and battery hidden after an immersive camera transition.
+        final View decor=getWindow().getDecorView();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        int flags=decor.getSystemUiVisibility();
+        flags &= ~(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LOW_PROFILE |
+            View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        if(decor.getSystemUiVisibility()!=flags)decor.setSystemUiVisibility(flags);
+        final WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(getWindow(), decor);
+        // Explicitly SHOW native clock/Wi-Fi/signal/battery status in all states.
+        controller.show(WindowInsetsCompat.Type.statusBars());
+        // Original pale Android/system status area needs dark native glyphs.
+        controller.setAppearanceLightStatusBars(true);
     }
 
     @Override public void onResume() {
         super.onResume();
-        applyReadableStatusBar();
+        restoreVisibleNativeStatusBar();
+        getWindow().getDecorView().post(this::restoreVisibleNativeStatusBar);
     }
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(hasFocus) applyReadableStatusBar();
+        if(hasFocus) restoreVisibleNativeStatusBar();
     }
 }
 '@
@@ -198,6 +214,7 @@ $themeXml=@'
     <!-- Match the original light system/status area with readable DARK OS icons.
          On Android 15+ the inset-aware root already draws #E9F5FB under
          the transparent status bar; this theme also covers older Android. -->
+    <item name="android:windowFullscreen">false</item>
     <item name="android:windowLightStatusBar">true</item>
     <item name="android:statusBarColor">#E9F5FB</item>
   </style>
