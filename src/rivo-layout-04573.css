@@ -1,0 +1,241 @@
+/* RivoScan 0.45.73 — focused layout repair.
+ * The 0.45.44 blue/ice theme and per-feature colors remain intact.
+ * All card heights are border-box; no child may visually extend into
+ * My Files, search, native banner, or its neighbour.
+ */
+html body #app .shell.rivo-dark-ui .rivo-compact-home {
+  box-sizing:border-box!important;
+  gap:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-trust {
+  flex:0 0 auto!important;
+  margin-bottom:12px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail {
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:112px!important;
+  grid-auto-rows:112px!important;
+  align-items:stretch!important;
+  justify-items:stretch!important;
+  flex:0 0 122px!important;
+  width:100%!important;
+  height:122px!important;
+  min-height:122px!important;
+  max-height:122px!important;
+  padding:4px 1px 6px!important;
+  margin:0 0 14px!important;
+  gap:7px!important;
+  overflow:hidden!important;
+  position:relative!important;
+  isolation:isolate!important;
+  z-index:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile {
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-direction:column!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  height:112px!important;
+  min-height:112px!important;
+  max-height:112px!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:8px 3px!important;
+  gap:6px!important;
+  border-width:2px!important;
+  border-radius:15px!important;
+  overflow:hidden!important;
+  animation:rivo-073-border-glow 5s ease-in-out infinite!important;
+  transform:none!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon{
+  box-sizing:border-box!important;
+  width:40px!important;height:40px!important;
+  min-width:40px!important;max-width:40px!important;
+  min-height:40px!important;max-height:40px!important;
+  flex:0 0 40px!important;
+  margin:0!important;
+  padding:6px!important;
+  overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon svg {
+  box-sizing:border-box!important;
+  display:block!important;
+  width:26px!important;height:26px!important;
+  max-width:100%!important;max-height:100%!important;
+  stroke-width:2.3!important;
+  overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile strong{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  flex:0 0 auto!important;
+  margin:0!important;padding:0 1px!important;
+  line-height:1.2!important;
+  font-weight:850!important;
+  font-size:clamp(9px,2.6vw,12px)!important;
+  text-align:center!important;
+  text-wrap:balance!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  color:#082752!important;
+  -webkit-text-fill-color:#082752!important;
+  text-shadow:none!important;
+}
+/* Four distinct but cohesive Tools-style gradients. */
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(1){
+  background:linear-gradient(145deg,#F0FBFF,#B9E8FF)!important;
+  border-color:#169FE7!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(2){
+  background:linear-gradient(145deg,#FFF2F7,#FFC0D9)!important;
+  border-color:#EC3F86!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"]{
+  background:linear-gradient(145deg,#FFF8EA,#FFD29B)!important;
+  border-color:#E9911F!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(4){
+  background:linear-gradient(145deg,#F8F2FF,#D7BDFF)!important;
+  border-color:#8655E7!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(1) .rivo-feature-icon svg{stroke:#0676BB!important}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(2) .rivo-feature-icon svg{stroke:#C92266!important}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"] .rivo-feature-icon svg{stroke:#A95402!important}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile:nth-child(4) .rivo-feature-icon svg{stroke:#6631C9!important}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-search-title-row{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  min-width:0!important;
+  padding:0!important;
+  margin:0 0 12px!important;
+  gap:9px!important;
+  z-index:2!important;
+  clear:both!important;
+  overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-search-title-row .rivo-home-intro{
+  box-sizing:border-box!important;flex:0 0 auto!important;align-self:center!important;
+  max-width:35%!important;min-width:0!important;
+  overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-search-title-row .rivo-home-intro h1{
+  display:block!important;
+  font-size:clamp(14px,3.7vw,18px)!important;
+  line-height:1.22!important;
+  margin:0!important;
+  color:#082752!important;
+  -webkit-text-fill-color:#082752!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-home-search-title-row .rivo-premium-search{
+  display:flex!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  height:42px!important;
+  max-height:42px!important;
+  min-height:42px!important;
+  padding:0 10px!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+/* Both panes remain visible. Only Plate is top/bottom; QR stays side-by-side. */
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-dialog{
+  display:flex!important;flex-direction:column!important;
+  min-height:0!important;overflow:hidden!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage {
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;
+  flex:1 1 auto!important;
+  min-height:180px!important;
+  min-width:0!important;
+  max-height:none!important;
+  height:auto!important;
+  width:100%!important;
+  gap:8px!important;
+  overflow:hidden!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-live-preview{
+  box-sizing:border-box!important;
+  grid-column:1!important;grid-row:1!important;
+  width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  overflow:hidden!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-live-results-pane{
+  box-sizing:border-box!important;
+  grid-column:1!important;grid-row:2!important;
+  width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;
+  display:flex!important;flex-direction:column!important;
+  overflow:hidden!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-results-history{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scroll-padding-bottom:10px!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-results-empty[hidden],
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-current-line[hidden],
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-copy[hidden]{
+  display:none!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-current-line:not([hidden]){
+  display:flex!important;align-items:center!important;
+  width:100%!important;max-width:100%!important;
+}
+/* Scroll the entire Tools collection to its very last card above native AdMob. */
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-scroll{
+  box-sizing:border-box!important;
+  flex:1 1 0!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:4px 4px 38px!important;
+  scroll-padding-bottom:38px!important;
+  overscroll-behavior-y:contain!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid>.rivo-hub-tile{
+  min-width:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid>.rivo-hub-tile strong{
+  overflow-wrap:anywhere!important;
+  line-height:1.3!important;
+}
+@keyframes rivo-073-border-glow{
+  0%,100%{box-shadow:inset 0 0 0 1px #FFFFFFA8,0 2px 6px #11407F18}
+  50%{box-shadow:inset 0 0 0 1px #FFFFFFEF,0 2px 11px #11407F30}
+}
+@media(max-width:359px){
+ html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail{gap:4px!important}
+ html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile{padding:6px 2px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui .rivo-compact-home .rivo-feature-rail>.rivo-feature-tile{
+  animation:none!important;
+ }
+}
