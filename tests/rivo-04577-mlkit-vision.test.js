@@ -34,10 +34,10 @@ test('interface uses light legible cards, vivid zoom ratio, vector book controls
  assert.match(book,/tab\.innerHTML='<svg/);
  assert.doesNotMatch(book,/const icons=\{source:'▧'/);
 });
-test('0.45.79 uses unique monotonic Android code 192 and both ML Kit plugins',()=>{
+test('0.45.80 uses unique monotonic Android code 192 and both ML Kit plugins',()=>{
  const pkg=JSON.parse(read('package.json'));
- assert.equal(pkg.version,'0.45.79');
+ assert.equal(pkg.version,'0.45.80');
  assert.equal(pkg.dependencies['@capacitor-mlkit/barcode-scanning'],'8.2.1');
  assert.equal(pkg.dependencies['@capacitor-mlkit/text-recognition'],'8.2.1');
- assert.match(read('rivoscan-version.properties'),/^versionCode=194$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=195$/m);
 });
