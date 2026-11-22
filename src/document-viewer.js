@@ -293,12 +293,12 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     const actionRow=tag('div','doc-detail-actions');
     actionRow.setAttribute('role','toolbar');
     actionRow.setAttribute('aria-label','Document actions');
-    actionRow.appendChild(button('⊞ '+({ar:'مسح جديد',fr:'Nouveau scan',en:'New Scan'})[lang()]||'New Scan','doc-action doc-action-scan',()=>{
+    actionRow.appendChild(button('⊞ '+(({ar:'مسح جديد',fr:'Nouveau scan',en:'New Scan',es:'Nuevo escaneo',de:'Neuer Scan',pt:'Nova digitalização',it:'Nuova scansione'})[lang()]||'New Scan'),'doc-action doc-action-scan',()=>{
       close();void onAddScan();
     }));
     const convertTool=pdfType(current)?'pdftoimages':imageType(current)?'images':null;
     if(convertTool){
-      actionRow.appendChild(button('⇄ '+({ar:'تحويل',fr:'Convertir',en:'Convert'})[lang()]||'Convert','doc-action doc-action-convert',async()=>{
+      actionRow.appendChild(button('⇄ '+(({ar:'تحويل',fr:'Convertir',en:'Convert',es:'Convertir',de:'Konvertieren',pt:'Converter',it:'Converti'})[lang()]||'Convert'),'doc-action doc-action-convert',async()=>{
         if(!bytes){feedback(word('tooLarge'));return;}
         const selected={...current},copy=bytes.slice();
         close();try{await onEdit(convertTool,selected,copy);}catch(error){feedback(error);}
