@@ -1,0 +1,100 @@
+name: RivoScan 0.45.63 signed tester from 0.45.44
+on:
+  push:
+    branches: [fix/rivoscan-04544-user-request]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivoscan-04563-refresh-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  signed-tester:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      RIVO_COMPACT_BUILD: '1'
+      VITE_RIVO_COMPACT: '1'
+      VITE_RIVO_ADMOB_MODE: live
+      VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809190
+      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
+      VITE_RIVO_ADMOB_REWARDED_ID: ca-app-pub-7945572016731367/4148993879
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Validate version and real AdMob configuration
+        run: |
+          set -euo pipefail
+          grep -Fx 'versionCode=178' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.63' rivoscan-version.properties
+          node scripts/prepare-rivoscan-admob-release.mjs --check-only
+      - name: Install and run source checks
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+      - name: Create Android project and sync plugins
+        run: |
+          npx cap add android
+          npx cap sync android
+          python3 scripts/prepare-rivoscan-compact.py
+          node scripts/prepare-rivoscan-admob-release.mjs
+      - name: Sign with original Google Play upload key
+        env:
+          RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: python3 scripts/prepare-rivoscan-signing.py
+      - name: Assemble signed Android APK only - NEVER upload to Play
+        env:
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew assembleRelease --no-daemon
+      - name: Verify APK version, signature and installation metadata
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='178' versionName='0.45.63'"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$APKSIGNER" verify --print-certs "$APK" | tee "$RUNNER_TEMP/rivoscan-apk-certs.txt"
+          grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/rivoscan-apk-certs.txt"
+          echo 'APK signed with original upload key. No Google Play upload.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Save signed APK as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.63-UserRefresh-SIGNED
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+      - name: Publish tester APK on GitHub releases (NOT Google Play)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=rivoscan-0.45.63-user-refresh
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          cp "$APK" /tmp/RivoScan-0.45.63-UserRefresh-SIGNED.apk
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Test release already exists; preserving it." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh release create "$TAG" /tmp/RivoScan-0.45.63-UserRefresh-SIGNED.apk \
+              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+              --title 'RivoScan 0.45.63 — 0.45.44 restored UI tester' \
+              --notes 'Signed APK for hands-on testing only; no Google Play submission. Restored 0.45.44 codebase, distinct animated color cards and icons, safer ID Photo layout, reward option after PRO usages 1/4/7... and native banner/interstitial preloading. Test thoroughly before publishing.'
+          fi
