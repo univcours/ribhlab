@@ -8,8 +8,8 @@ test('Single-file actions stay in one row and multiple selection lives in a comp
  for(const name of ['share','delete','merge','organize','all','cancel'])
   assert.ok(bar.includes("compactAction('"+name+"'"),name);
  assert.ok(bar.includes('rivo-inline-bulk'));
- assert.ok(m.includes('rowDocumentActions(doc,index)'));
- assert.ok(m.includes('rivo-row-inline-actions'));
+ assert.ok(m.includes('bulkUI.count()===1'));
+ assert.ok(m.includes('rivo-file-quick-actions'));
  assert.ok(m.includes('data-doc-delete='));
  assert.ok(css.includes('flex-wrap:nowrap'));
  assert.ok(b.includes("window.confirm(t('confirm')"));
