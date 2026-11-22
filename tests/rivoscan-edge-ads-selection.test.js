@@ -44,12 +44,12 @@ test('perspective crop renders from original pixels without modifying source',()
  assert.ok(Math.abs(result.data[midpoint+1]-65)<3,'center y remains mapped');
  assert.equal(result.data[midpoint+3],255);
 });
-test('the selected file receives only its own edge action, while bulk options require at least two',()=>{
+test('only supported documents offer edge adjustment in row menu, bulk tools still require two',()=>{
  const main=read('src/main.js'),bulk=read('src/library-bulk.js');
  assert.ok(main.includes('edgeAdjustableDocument(doc)'));
  assert.ok(main.includes('edgeAdjustableDocument(item)'));
  assert.ok(main.includes('data-doc-edges'));
- assert.ok(main.includes("ico('edges',17)"));
+ assert.ok(main.includes("ico('edges',15)"));
  assert.match(main,/openEdgeAdjustment\(\{/);
  assert.match(main,/onSave:saveOut/);
  assert.match(bulk,/selected\.size<2/);
