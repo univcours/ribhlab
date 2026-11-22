@@ -4,10 +4,10 @@
  */
 const puppeteer=require('puppeteer-core');
 const fs=require('node:fs'),path=require('node:path');
-const out=path.join(process.cwd(),'qa','04573');
+const out=path.join(process.cwd(),'qa','04574');
 fs.mkdirSync(out,{recursive:true});
 const sizes=[[320,700],[360,780],[393,852],[412,915],[540,960],[768,1024]];
-const report={appVersion:'0.45.73',source:'actual RivoScan Vite preview in headless Chrome; camera video simulated',sizes:[],errors:[]};
+const report={appVersion:'0.45.74',source:'actual RivoScan Vite preview in headless Chrome; camera video simulated',sizes:[],errors:[]};
 const pause=t=>new Promise(r=>setTimeout(r,t));
 const assert=(condition,message)=>{if(!condition)throw new Error(message)};
 const chrome=process.env.CHROME_BIN||[
@@ -25,7 +25,7 @@ try{
   page.on('pageerror',e=>report.errors.push({width,error:e.message}));
   await page.evaluateOnNewDocument(()=>{
    localStorage.removeItem('rivo-language');
-   localStorage.setItem('rivo-release-notes-read','0.45.73');
+   localStorage.setItem('rivo-release-notes-read','0.45.74');
   });
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:45000});
   await pause(850);
@@ -132,5 +132,5 @@ try{
  }
 }finally{fs.writeFileSync(path.join(out,'visual-qa-report.json'),JSON.stringify(report,null,2));await browser.close()}
 assert(report.errors.length===0,'Page errors: '+JSON.stringify(report.errors));
-console.log('PASS 0.45.73: six viewports, full AUTO header, nonoverlap Home, Tools scrolling, vertical Plate 50/50, QR horizontal');
+console.log('PASS 0.45.74: six viewports, full AUTO header, nonoverlap Home, Tools scrolling, vertical Plate 50/50, QR horizontal');
 })().catch(e=>{report.errors.push({fatal:e.message});fs.writeFileSync(path.join(out,'visual-qa-report.json'),JSON.stringify(report,null,2));console.error(e);process.exit(1)});
