@@ -1,0 +1,25 @@
+/* RivoScan 0.45.80 — previous 0.45.78 document list and controls restored.
+   Keep ONLY the real 0.45.79 PDF/photo thumbnails, their shape and proportions.
+   Do not override the old file-title, selection, preview or action layout. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.rivo-recent-card,.document-entry) .rivo-file-thumb{
+ box-sizing:border-box!important;
+ width:58px!important;min-width:58px!important;max-width:58px!important;
+ height:72px!important;min-height:72px!important;max-height:72px!important;
+ border-radius:5px!important;overflow:hidden!important;
+ border:1px solid #8cafcf88!important;
+ box-shadow:0 1px 4px #123d5c10!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-thumb img{
+ display:block!important;width:100%!important;height:100%!important;
+ object-fit:contain!important;object-position:center!important;
+ border-radius:3px!important;filter:none!important;opacity:1!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  :is(.rivo-recent-card,.document-entry) .rivo-file-thumb{
+  width:50px!important;min-width:50px!important;max-width:50px!important;
+  height:66px!important;min-height:66px!important;max-height:66px!important;
+ }
+}
