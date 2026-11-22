@@ -21,7 +21,7 @@ test('Home features have four distinct accessible colors with visible icons',()=
  assert.match(css,/prefers-reduced-motion:reduce/);
 });
 test('Only Plate is vertical top-camera and bottom-results, QR remains horizontal',()=>{
- assert.match(css,/\.rivo-plate-overlay\.rivo-live-overlay \.rivo-live-split-stage\{/);
+ assert.match(css,/\.rivo-plate-overlay\.rivo-live-overlay \.rivo-live-split-stage\s*\{/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\)!important/);
  assert.match(css,/grid-template-rows:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
  assert.match(css,/grid-column:1!important;grid-row:2!important/);
