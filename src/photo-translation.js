@@ -4,6 +4,7 @@ import Tesseract from 'tesseract.js';
 const {recognize}=Tesseract;
 import {Translation} from '@capacitor-mlkit/translation';
 import {Capacitor} from '@capacitor/core';
+import {recognizeMlkitLatin} from './rivo-mlkit-vision.js';
 
 export const translationLanguages={
  ar:{label:'العربية',ocr:'ara'},en:{label:'English',ocr:'eng'},
@@ -84,9 +85,14 @@ export function openPhotoTranslation({language='en',capture,save,notify=()=>{}}=
   try{
    if(file.size>16*1024*1024)throw Error('Photo limit: 16 MB');
    const model=translationLanguages[source.value];
-   const result=await recognize(file,model.ocr);
+   // Google ML Kit is the primary Android OCR engine for Latin scripts.
+    // ML Kit v2 has no Arabic OCR model, so Arabic still uses offline Tesseract.
+    const nativeText=await recognizeMlkitLatin(file,{language:source.value}).catch(error=>{
+      console.warn('ML Kit text recognition fallback:',error);return null;
+    });
+    const text=nativeText?.trim()?nativeText:(await recognize(file,model.ocr)).data.text;
    if(closed)return;
-   original.value=(result.data.text||'').trim();hasRecognition=Boolean(original.value);
+   original.value=String(text||'').trim();hasRecognition=Boolean(original.value);
    status.textContent=hasRecognition?L[7]:L[13];
   }catch(error){if(!closed)status.textContent=error?.message||String(error)}
   finally{busy=false}
