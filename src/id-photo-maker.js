@@ -169,12 +169,12 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   left:'<path d="m14 6-6 6 6 6"/>',right:'<path d="m10 6 6 6-6 6"/>',
   reset:'<path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/>'
  };
- const names={
+ const railNames={
   en:['Photo','Size & crop','Background','Move up','Move down','Move left','Move right','Reset position'],
   ar:['الصورة','المقاس والتأطير','الخلفية','فوق','تحت','يسار','يمين','إرجاع الوسط'],
   fr:['Photo','Cadrage','Fond','Haut','Bas','Gauche','Droite','Centrer']
  };
- const namesForLang=names[language]||names.en;
+ const namesForLang=railNames[language]||railNames.en;
  const leftRail=document.createElement('div'),rightRail=document.createElement('div');
  leftRail.className='rivo-id-side-rail rivo-id-side-left';
  rightRail.className='rivo-id-side-rail rivo-id-side-right';
