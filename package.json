@@ -1,6 +1,6 @@
 {
   "name": "rivoscan",
-  "version": "0.45.76",
+  "version": "0.45.77",
   "private": true,
   "type": "module",
   "scripts": {
@@ -35,7 +35,9 @@
     "@capacitor-mlkit/translation": "8.2.1",
     "pptxgenjs": "^4.0.1",
     "@tensorflow-models/body-pix": "^2.2.1",
-    "@capacitor-community/admob": "^8.2.0"
+    "@capacitor-community/admob": "^8.2.0",
+    "@capacitor-mlkit/barcode-scanning": "8.2.1",
+    "@capacitor-mlkit/text-recognition": "8.2.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
