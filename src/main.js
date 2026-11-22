@@ -69,6 +69,8 @@ import './rivo-qa-04570.css';
 import './rivo-classic-04572.css';
 // Latest visual layer: minimal cards, inline glyphs, neon text and revolving accent edge.
 import './rivo-visual-04574.css';
+// Final icon identity: use the approved glossy cobalt/cyan RivoScan launcher palette.
+import './rivo-icon-identity-04575.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -411,11 +413,11 @@ function render(){
   // Native Google banner appears in this non-interactive blue band.
   const bannerSlot = `<div class="rivo-ad-banner-slot" role="complementary" aria-label="Advertisement"><div class="rivo-ad-banner-frame" aria-hidden="true"></div></div>`;
   const mobile = `<nav class="mobilebar rivo-nav-five" style="display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important" aria-label="Main navigation">
-    <button type="button" data-go="home" class="${isHome?'active':''}">${ico('home')}${ut('home')}</button>
-    <button type="button" data-open-library class="${isDocs?'active':''}">${ico('folder')}${ut('documents')}</button>
+    <button type="button" data-go="home" class="${isHome?'active':''}"><span class="rivo-nav-icon">${ico('home')}</span>${ut('home')}</button>
+    <button type="button" data-open-library class="${isDocs?'active':''}"><span class="rivo-nav-icon">${ico('folder')}</span>${ut('documents')}</button>
     <button type="button" class="rivo-nav-scan" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}"><span class="rivo-nav-scan-ring">${ico('scan',27)}</span><span class="rivo-nav-scan-label">${ut('scan')}</span></button>
-    <button type="button" data-tab="tools" class="${isTools?'active':''}">${ico('grid')}${ut('tools')}</button>
-    <button type="button" data-tab="me" class="${isMe?'active':''}">${ico('user')}${ut('me')}</button></nav>`;
+    <button type="button" data-tab="tools" class="${isTools?'active':''}"><span class="rivo-nav-icon">${ico('grid')}</span>${ut('tools')}</button>
+    <button type="button" data-tab="me" class="${isMe?'active':''}"><span class="rivo-nav-icon">${ico('user')}</span>${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
