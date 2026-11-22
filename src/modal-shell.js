@@ -10,6 +10,11 @@ export function mountDialogControls({overlay,panel,close,language='en'}={}){
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  const top=document.createElement('header');top.className='rivo-modal-top';
  const title=panel.querySelector(':scope > h2');if(title)top.append(title);
+ // Same true rounded-square launcher silhouette in every feature dialog.
+ const brand=document.createElement('img');
+ brand.className='rivo-modal-app-icon';brand.src='/rivoscan-header-mark.png';
+ brand.alt='';brand.setAttribute('aria-hidden','true');brand.decoding='async';
+ top.prepend(brand);
  const x=document.createElement('button');x.type='button';x.dataset.rivoModalClose='true';x.className='rivo-modal-dismiss';
  x.setAttribute('aria-label',labels[language]||labels.en);x.textContent='×';
  const previous=document.activeElement;
