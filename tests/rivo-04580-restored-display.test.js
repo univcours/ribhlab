@@ -33,3 +33,20 @@ test('0.45.80 code 195 is monotonically newer than published 0.45.79',()=>{
  assert.match(read('rivoscan-version.properties'),/^versionCode=195$/m);
  assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.80$/m);
 });
+
+test('My Documents uses exactly the 0.45.44 horizontal file row, not the 0.45.78 grid',()=>{
+ const docs=main.slice(main.indexOf('function renderLibraryRows('),main.indexOf('function libraryWorkspace('));
+ const css=read('src/rivo-mydocs-04544-layout-04580.css');
+ assert.match(docs,/class="document-entry \$\{bulkUI\.chosen\(item\)/);
+ assert.match(docs,/class="document-description"/);
+ assert.match(docs,/class="document-buttons rivo-file-quick-actions"/);
+ assert.doesNotMatch(docs,/rivo-list-open-glyph|rivo-file-kind-badge|rivo-row-inline-actions/);
+ assert.match(css,/display:flex!important;flex-direction:row!important/);
+ assert.match(css,/grid-template-columns:none!important/);
+ assert.match(css,/flex-wrap:wrap!important/);
+ assert.match(css,/overflow:hidden!important/);
+ assert.match(css,/width:58px!important/);
+ assert.match(css,/height:72px!important/);
+ assert.match(css,/object-fit:contain!important/);
+ assert.match(main,/import '\.\/rivo-mydocs-04544-layout-04580\.css'/);
+});
