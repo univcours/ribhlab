@@ -5,14 +5,14 @@ import {calculateAdLayout} from '../src/rivo-native-ad-geometry.js';
 
 const source=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
 
-test('0.45.70 source and Android release metadata agree',()=>{
+test('0.45.71 source and Android release metadata agree',()=>{
  const meta=source('rivoscan-version.properties');
  const pkg=JSON.parse(source('package.json'));
- assert.match(meta,/^versionCode=185$/m);
- assert.match(meta,/^versionName=0\.45\.70$/m);
- assert.equal(pkg.version,'0.45.70');
+ assert.match(meta,/^versionCode=186$/m);
+ assert.match(meta,/^versionName=0\.45\.71$/m);
+ assert.equal(pkg.version,'0.45.71');
 });
-test('QR and barcode keep the two-column camera/result layout, save state and timestamps',()=>{
+test('QR and barcode keep vertically stacked camera/result layout, save state and timestamps',()=>{
  const js=source('src/barcode-scanner.js');
  assert.match(js,/stage\.append\(camera,resultsPane\)/);
  assert.match(js,/resultsPane\.append\(resultsHeading,status,resultsEmpty,result\)/);
@@ -23,7 +23,7 @@ test('QR and barcode keep the two-column camera/result layout, save state and ti
  assert.match(js,/setAttribute\('aria-label','Zoom out'\)/);
  assert.match(js,/caps\.focusMode\.includes\('continuous'\)/);
 });
-test('Plate history is alongside camera, offers Copy and time per record',()=>{
+test('Plate history is below camera, offers Copy and time per record',()=>{
  const js=source('src/plate-scanner.js');
  assert.match(js,/stage\.append\(view,resultsPane\)/);
  assert.match(js,/lastTime\.textContent=new Date\(\)\.toLocaleTimeString\(language\)/);
