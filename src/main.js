@@ -67,6 +67,8 @@ import './rivo-ui-04569.css';
 import './rivo-qa-04570.css';
 // Preserve all later feature fixes; restore 0.45.44 palette in the final CSS layer.
 import './rivo-classic-04572.css';
+// Latest visual layer: minimal cards, inline glyphs, neon text and revolving accent edge.
+import './rivo-visual-04574.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -555,7 +557,7 @@ function home(){
    <span>${ico('shield',16)} ${escapeHTML(featureText('hero'))}</span>
   </div>
   <nav class="rivo-feature-rail" aria-label="${escapeHTML(featureText('short'))}">
-   ${featureTiles.map((f,i)=>`<button type="button" class="rivo-feature-tile" style="--rivo-card-hue:${Math.round((204+i*137.508)%360)}" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
+   ${featureTiles.map((f,i)=>`<button type="button" class="rivo-feature-tile" style="--rivo-card-hue:${[210,335,33,266][i]}" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
     <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(compactFeatureLabel(f.id))}</strong></button>`).join('')}
   </nav>
   <div class="rivo-search-title-row rivo-home-search-title-row">
@@ -578,7 +580,7 @@ function toolsWorkspace(){
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
     const hue=Math.round((204+toolGroups.flatMap(group=>group.entries).indexOf(id)*137.508)%360);
-    return `<button class="mobile-tool-tile rivo-hub-tile" style="--rivo-card-hue:${hue};background:linear-gradient(145deg,hsl(${hue} 100% 94%),hsl(${hue} 91% 80%)) padding-box,linear-gradient(112deg,hsl(${hue} 100% 47%),#ffffff,hsl(${hue} 93% 40%)) border-box!important;border:2px solid hsl(${hue} 96% 53%)!important" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
+    return `<button class="mobile-tool-tile rivo-hub-tile" style="--rivo-card-hue:${hue}" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>${escapeHTML(({en:'No matching tools',fr:'Aucun outil correspondant',ar:'ما لقيت حتى أداة بهاد الاسم',es:'No se encontraron herramientas',de:'Keine passenden Werkzeuge',pt:'Nenhuma ferramenta encontrada',it:'Nessuno strumento trovato'})[language]||'No matching tools')}</p></div></section>`;
 }
