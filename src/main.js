@@ -68,6 +68,8 @@ import './rivo-qa-04570.css';
 // Preserve all later feature fixes; restore 0.45.44 palette in the final CSS layer.
 import './rivo-classic-04572.css';
 import './rivo-layout-04573.css';
+// Responsive constraints are last so locale and cards never clip each other.
+import './rivo-responsive-04573.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -399,7 +401,7 @@ function render(){
     <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-header-mark.png" alt="RivoScan blue scan icon"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
     <div class="rivo-top-controls" role="group" aria-label="Language and sound">
       <label class="rivo-top-locale" aria-label="Language">${ico('globe',15)}
-        <select id="header-language" aria-label="Language"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>${({en:'AUTO',ar:'تلقائي',fr:'AUTO',es:'AUTO',de:'AUTO',pt:'AUTO',it:'AUTO'})[language]||'AUTO'}</option>${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${!isAutoLanguage(localStorage)&&language===code?'selected':''}>${label}</option>`).join('')}</select>
+        <select id="header-language" aria-label="Language"><option value="auto" ${isAutoLanguage(localStorage)?'selected':''}>AUTO</option>${[['en','EN'],['fr','FR'],['ar','AR'],['es','ES'],['de','DE'],['pt','PT'],['it','IT']].map(([code,label])=>`<option value="${code}" ${!isAutoLanguage(localStorage)&&language===code?'selected':''}>${label}</option>`).join('')}</select>
       </label>
       <button type="button" id="header-sound-toggle" class="rivo-top-sound" aria-label="${soundsEnabled?'Mute button sounds':'Unmute button sounds'}" aria-pressed="${soundsEnabled}">${ico(soundsEnabled?'volume':'muted',18)}</button>
     </div>
