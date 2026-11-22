@@ -70,9 +70,11 @@ try{
     scrollTop:viewport.scrollTop,scrollBottom:bound.bottom,lastBottom:last?.bottom,lastTop:last?.top};
   });
   assert(!tools.error&&tools.count>10,'Tools list not mounted at '+width);
-  assert(tools.lastBottom<=tools.scrollBottom+3,'Last Tools card hidden by clipping at '+width);
+  assert(tools.lastBottom<=tools.scrollBottom+3&&tools.lastBottom>=tools.scrollBottom-180,'Last Tools card is not visible after scrolling to end at '+width+' '+JSON.stringify(tools));
   await page.screenshot({path:path.join(out,'browser-'+width+'-tools-end.png')});
-  await page.evaluate(()=>document.querySelector('.mobilebar [data-tab="home"]')?.click());
+  report.sizes.push({width,height,home:{railBottom:home.rail.bottom,lastCardBottom:bottom,searchTop:home.search.top,distinctColors:new Set(home.cards.map(c=>c.background)).size},tools});
+  await page.evaluate(()=>document.querySelector('.mobilebar [data-go="home"]')?.click());
+  await page.waitForSelector('.rivo-home .rivo-feature-rail',{timeout:12000});
   await pause(200);
   await page.evaluate(()=>document.querySelector('[data-rivo-feature="plateScanner"]')?.click());
   await page.waitForSelector('.rivo-plate-overlay .rivo-live-split-stage',{timeout:12000});
@@ -103,8 +105,8 @@ try{
   assert(qr.camera&&qr.results,'QR scanner did not mount');
   assert(qr.camera.right<=qr.results.left+2,'QR side-by-side layout was unintentionally changed at '+width);
   await page.screenshot({path:path.join(out,'browser-'+width+'-qr.png')});
-  report.sizes.push({width,height,home:{railBottom:home.rail.bottom,lastCardBottom:bottom,searchTop:home.search.top,
-   distinctColors:new Set(home.cards.map(c=>c.background)).size},tools,plate,qr});
+  report.sizes[report.sizes.length-1].plate=plate;
+  report.sizes[report.sizes.length-1].qr=qr;
   await page.close();
  }
 }finally{fs.writeFileSync(path.join(out,'visual-qa-report.json'),JSON.stringify(report,null,2));await browser.close()}
