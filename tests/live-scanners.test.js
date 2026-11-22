@@ -155,7 +155,7 @@ test('Native scanner accepts only permanent TXT appends and never creates scanne
  assert.ok(!java.includes('RivoScan_Plates.xlsx'));
  assert.ok(main.includes("onSuccess:()=>soundFeedback('codeSuccess')"));
  assert.ok(sounds.includes('"codeSuccess".equals(event)'));
- assert.ok(main.includes("onPreview:doc=>RivoDocuments.openFile({uri:doc.uri})"));
+ assert.ok(main.includes("onPreview:doc=>previewSavedDocument(doc)"));
  assert.ok(main.includes("onEdit:doc=>RivoDocuments.openFile({uri:doc.uri})"));
  assert.ok(main.includes("} else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});"));
 });
