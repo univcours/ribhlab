@@ -74,6 +74,7 @@ import './rivo-icon-identity-04575.css';
 // User-approved CamScanner-like file view and static icons; camera keeps its orbit.
 import './rivo-camscanner-static-04576.css';
 import './rivo-mlkit-04577.css';
+import './rivo-list-04578.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -307,7 +308,7 @@ const bulkUI=createLibraryBulk({
     await loadLibrary(false);refreshVisibleLibrary();
     const recents=document.getElementById('home-recents');if(recents)recents.innerHTML=recentDocuments();
   },
-  onPreview:doc=>RivoDocuments.openFile({uri:doc.uri}),
+  onPreview:doc=>previewSavedDocument(doc),
   onOpenLibrary:()=>openLibrary(),
   onDirectTransfer:async docs=>{
     openTool('peerTransfer');
@@ -454,7 +455,7 @@ function hydrateDocumentThumbnails(){
   if(documentThumbnailPending.has(uri))continue;
   if(documentThumbnailPending.size>=6)break;
   documentThumbnailPending.add(uri);
-  void RivoDocuments.getThumbnail({uri,width:110,height:150}).then(data=>{
+  void RivoDocuments.getThumbnail({uri,width:136,height:184}).then(data=>{
    if(!data?.base64)return;
    if(documentThumbnailCache.size>110)documentThumbnailCache.clear();
    documentThumbnailCache.set(uri,data.base64);install(uri,data.base64);
@@ -527,6 +528,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
    </div>`:''}
+   <span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span>
   </article>`;
  }).join('');
 }
@@ -715,7 +717,7 @@ function renderLibraryRows(needle=''){
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''}</article>`;
+   </div>`:''}<span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span></article>`;
  }).join('');
 }
 function libraryWorkspace(){
@@ -851,6 +853,15 @@ async function launchReadjustEdges(doc){
   });
  }catch(error){console.error('Readjust document edges:',error);toast(error?.message||'Could not adjust document edges',true)}
 }
+/** Preview saved PDFs and images inside RivoScan; other formats use Android. */
+async function previewSavedDocument(doc){
+  const type=String(doc?.mimeType||'').toLowerCase();
+  const name=String(doc?.name||'');
+  if(type.includes('pdf')||type.startsWith('image/')||/\.(pdf|png|jpe?g|webp)$/i.test(name))
+    return docViewerUI.open(doc);
+  return RivoDocuments.openFile({uri:doc.uri});
+}
+
 async function handleLibraryAction(type,index){
   const selected=libraryItems[index];if(!selected)return;
   try{
@@ -858,7 +869,7 @@ async function handleLibraryAction(type,index){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
       toast((({ar:'تم حذف الملف',en:'File deleted',fr:'Fichier supprimé',es:'Archivo eliminado',de:'Datei gelöscht',pt:'Ficheiro eliminado',it:'File eliminato'})[language]||'File deleted')+' ✓');
-    } else if(type==='open')await RivoDocuments.openFile({uri:selected.uri});
+    } else if(type==='open')await previewSavedDocument(selected);
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
