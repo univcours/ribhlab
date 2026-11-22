@@ -1,0 +1,142 @@
+/* RivoScan 0.45.79 — Same My Documents file list in Home and Documents.
+   Name and action buttons on one horizontal line. External Android file preview.
+   Preserves the 0.45.78 transparent cards and uniform 28-second soft glow. */
+
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+.rivo-document-list-row{
+ display:grid!important;
+ grid-template-columns:18px 60px minmax(0,1fr)!important;
+ grid-template-rows:auto!important;
+ width:100%!important;min-height:80px!important;
+ gap:8px!important;padding:7px 8px!important;
+ align-items:center!important;
+ overflow:visible!important;
+ background:transparent!important;
+ border-radius:11px!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+.rivo-document-list-row:has(.rivo-row-more[open]){z-index:45!important}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+.rivo-document-list-row .doc-select-box{
+ grid-column:1!important;grid-row:1!important;align-self:center!important;
+ margin:0!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+.rivo-document-list-row .rivo-file-thumb{
+ grid-column:2!important;grid-row:1!important;
+ width:58px!important;min-width:58px!important;max-width:58px!important;
+ height:72px!important;min-height:72px!important;max-height:72px!important;
+ border-radius:5px!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+.rivo-document-list-row .rivo-file-line{
+ grid-column:3!important;grid-row:1!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;gap:5px!important;
+ padding:0!important;margin:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-file-line-heading{
+ display:flex!important;flex-direction:row!important;
+ align-items:center!important;justify-content:space-between!important;
+ flex-wrap:nowrap!important;gap:4px!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-file-line-heading>strong{
+ display:block!important;min-width:0!important;flex:1 1 auto!important;
+ max-width:none!important;width:auto!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;
+ white-space:nowrap!important;
+ line-height:1.35!important;font-size:13px!important;font-weight:800!important;
+ color:#123c69!important;-webkit-text-fill-color:#123c69!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-file-line>small{
+ display:block!important;white-space:normal!important;
+ max-width:100%!important;overflow-wrap:anywhere!important;
+ font-size:10.5px!important;font-weight:650!important;
+ line-height:1.4!important;opacity:1!important;
+ color:#355b80!important;-webkit-text-fill-color:#355b80!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-inline-actions{
+ display:flex!important;flex:0 0 auto!important;
+ align-items:center!important;justify-content:flex-end!important;
+ flex-direction:row!important;gap:2px!important;
+ width:auto!important;min-width:0!important;
+ position:relative!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-inline-actions>button,
+html body #app .shell.rivo-dark-ui .rivo-row-more>summary{
+ display:grid!important;place-items:center!important;
+ box-sizing:border-box!important;
+ padding:0!important;margin:0!important;
+ width:30px!important;min-width:30px!important;max-width:30px!important;
+ height:30px!important;min-height:30px!important;
+ border:1px solid #87b1d261!important;border-radius:8px!important;
+ background:#1175c10d!important;
+ color:#1264ae!important;-webkit-text-fill-color:#1264ae!important;
+ box-shadow:none!important;cursor:pointer!important;
+ opacity:1!important;animation:none!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-inline-actions>button:focus-visible,
+html body #app .shell.rivo-dark-ui .rivo-row-more>summary:focus-visible{
+ outline:2px solid #1474c5!important;outline-offset:2px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-inline-actions>button svg{
+ width:17px!important;height:17px!important;stroke-width:2!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more{
+ position:relative!important;flex:0 0 auto!important;
+ min-width:30px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more>summary{
+ list-style:none!important;font-size:24px!important;line-height:1!important;
+ padding-bottom:7px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more>summary::-webkit-details-marker{display:none!important}
+html body #app .shell.rivo-dark-ui .rivo-row-more-panel{
+ position:absolute!important;right:0!important;top:calc(100% + 6px)!important;
+ display:flex!important;flex-direction:column!important;
+ width:max-content!important;min-width:168px!important;max-width:calc(100vw - 36px)!important;
+ box-sizing:border-box!important;padding:5px!important;gap:3px!important;
+ border-radius:12px!important;border:1px solid #2b679a!important;
+ background:#0b3153f5!important;color:#fff!important;
+ box-shadow:0 9px 22px #09264448!important;
+ z-index:100!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more-panel>button{
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ gap:7px!important;width:100%!important;min-height:35px!important;
+ padding:7px 9px!important;margin:0!important;
+ border:0!important;border-radius:7px!important;
+ background:transparent!important;color:#f3f9ff!important;
+ -webkit-text-fill-color:#f3f9ff!important;
+ font-size:12px!important;line-height:1.25!important;
+ font-weight:700!important;text-align:start!important;
+ box-shadow:none!important;white-space:normal!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more-panel>button:is(:hover,:focus-visible){
+ background:#1a6ba6!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-row-more-panel>button svg{
+ flex:0 0 15px!important;width:15px!important;height:15px!important;
+ stroke:#f3f9ff!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+ .rivo-document-list-row{
+  grid-template-columns:17px 52px minmax(0,1fr)!important;
+  gap:5px!important;padding:6px!important;
+ }
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+ .rivo-document-list-row .rivo-file-thumb{
+  width:50px!important;min-width:50px!important;max-width:50px!important;
+  height:66px!important;min-height:66px!important;max-height:66px!important;
+ }
+ html body #app .shell.rivo-dark-ui .rivo-file-line-heading>strong{font-size:12px!important}
+ html body #app .shell.rivo-dark-ui .rivo-row-inline-actions>button,
+ html body #app .shell.rivo-dark-ui .rivo-row-more>summary{
+  width:28px!important;min-width:28px!important;max-width:28px!important;
+  height:29px!important;min-height:29px!important;
+ }
+}
+/* Motion accessibility: inherit the previous iteration's reduced motion rule. */
