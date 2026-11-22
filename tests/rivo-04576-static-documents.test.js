@@ -42,7 +42,7 @@ test('Document preview has selected large page and actual lazy rendered PDF thum
  assert.match(viewer,/const renderThumbnails=\(\)=>/);
  assert.match(viewer,/IntersectionObserver/);
  assert.match(viewer,/pdfPage\.render/);
- assert.match(viewer,/data\.page/);
+ assert.match(viewer,/dataset\.page/);
  assert.match(viewer,/doc-page-thumbnails/);
  assert.match(viewer,/doc-page-thumb/);
  assert.match(viewer,/highlightThumbnail/);
