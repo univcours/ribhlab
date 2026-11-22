@@ -137,6 +137,15 @@ async function jpegBytes(canvas){
  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Image capture failed')),'image/jpeg',0.88));
  return new Uint8Array(await blob.arrayBuffer());
 }
+function plateCopyGlyph(){
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');
+ svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+ svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+ const rect=document.createElementNS(ns,'rect');for(const [k,v] of Object.entries({x:8,y:8,width:12,height:12,rx:2}))rect.setAttribute(k,String(v));
+ const path=document.createElementNS(ns,'path');path.setAttribute('d','M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2');
+ svg.append(rect,path);svg.setAttribute('aria-hidden','true');return svg;
+}
 export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null,onMatchAlert=async()=>false,onClose=()=>{}}={}){
  const L=labels[language]||labels.en;
  const layer=document.createElement('div');layer.className='rivo-plate-overlay rivo-live-overlay';
@@ -192,7 +201,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   const lastTime=document.createElement('time');lastTime.className='rivo-plate-result-time';
   lastTime.hidden=true;
   const lastCopy=document.createElement('button');lastCopy.type='button';
-  lastCopy.className='rivo-plate-copy';lastCopy.textContent=({ar:'نسخ اللوحة',fr:'Copier',en:'Copy plate'})[language]||'Copy plate';
+  lastCopy.className='rivo-plate-copy';lastCopy.setAttribute('aria-label',({ar:'نسخ اللوحة',fr:'Copier',en:'Copy plate'})[language]||'Copy plate');lastCopy.title=lastCopy.getAttribute('aria-label');lastCopy.append(plateCopyGlyph());
   lastCopy.hidden=true;lastCopy.disabled=true;
   const copyPlate=async value=>{
    try{
@@ -223,7 +232,8 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  zoomButton.setAttribute('aria-pressed','true');
  const torch=btn('⚡',()=>toggleTorch());foot.append(count,zoomButton,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
-   resultsPane.append(resultsHeading,status,resultsEmpty,last,lastTime,lastCopy,plateHistory);
+   const currentLine=document.createElement('div');currentLine.className='rivo-plate-current-line';currentLine.hidden=true;currentLine.append(last,lastCopy);
+   resultsPane.append(resultsHeading,status,resultsEmpty,currentLine,lastTime,plateHistory);
   stage.append(view,resultsPane);
  panel.append(header,pinned,stage,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
@@ -315,15 +325,15 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
      const old=document.createElement('div');old.className='rivo-plate-result-row';old.setAttribute('role','listitem');
      const value=document.createElement('span');value.textContent=lastPlate;value.dir='auto';
      const btnCopy=document.createElement('button');btnCopy.type='button';
-     btnCopy.textContent=({ar:'نسخ',fr:'Copier',en:'Copy'})[language]||'Copy';
+     btnCopy.textContent='';btnCopy.title=({ar:'نسخ',fr:'Copier',en:'Copy'})[language]||'Copy';btnCopy.append(plateCopyGlyph());
      btnCopy.setAttribute('aria-label','Copy '+lastPlate);
      btnCopy.addEventListener('click',()=>{void copyPlate(value.textContent)});
      const stamped=document.createElement('time');stamped.textContent=lastTime.textContent;
      stamped.dateTime=lastTime.dateTime;stamped.className='rivo-plate-result-time';
-     old.append(value,stamped,btnCopy);plateHistory.prepend(old);
+     const valueLine=document.createElement('div');valueLine.className='rivo-plate-value-line';valueLine.append(value,btnCopy);old.append(valueLine,stamped);plateHistory.prepend(old);
      while(plateHistory.childElementCount>30)plateHistory.lastElementChild.remove();
     }
-    lastPlate=plate;last.hidden=false;last.textContent=plate;
+    lastPlate=plate;last.hidden=false;last.textContent=plate;currentLine.hidden=false;
     lastTime.hidden=false;lastTime.dateTime=new Date().toISOString();
     lastTime.textContent=new Date().toLocaleTimeString(language);
     lastCopy.hidden=false;lastCopy.disabled=false;
