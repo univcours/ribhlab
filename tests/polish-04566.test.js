@@ -47,6 +47,6 @@ test('ID Photo Maker offers actual camera and preview-based image picker',()=>{
 test('book scan empty preview has functional photo/import actions',()=>{
  const book=get('src/book-split.js');
  assert.match(book,/rivo-book-empty-actions/);
- assert.match(book,/if\(photo\)await load\(photo\)/);
+ assert.match(book,/if\(photos\)await loadCaptured\(photos\)/);
  assert.match(book,/emptyActions\.hidden=true/);
 });
