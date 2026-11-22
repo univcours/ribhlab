@@ -6,6 +6,6 @@ test('ID Photo does not open a redundant blank Photo settings pane',()=>{
  assert.doesNotMatch(source,/\{id:'source',label:[^\n]*nodes:\[\]\}/);
  assert.match(source,/defaultSection:'adjust'/);
  assert.match(source,/workspace\.show\(false\)/);
- assert.match(source,/workspace\.dock\.append\(previewImport,leftRail,rightRail,input\)/);
+ assert.match(source,/workspace\.dock\.append\(leftRail,rightRail,input\)/);
  assert.match(source,/Camera\.getPhoto\(/);
 });
