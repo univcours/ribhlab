@@ -24,5 +24,5 @@ export function calculateAdLayout({viewportWidth,viewportHeight,navTop=null,navB
 }
 export function nativeAdFits(size){
  const w=Number(size?.width??0),h=Number(size?.height??0);
- return Number.isFinite(w)&&Number.isFinite(h)&&w>=0&&h>=0&&w<=322&&h<=52;
+ return Number.isFinite(w)&&Number.isFinite(h)&&w>=0&&h>=0&&w<=AD_WIDTH&&h<=AD_HEIGHT;
 }
