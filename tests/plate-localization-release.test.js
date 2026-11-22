@@ -21,9 +21,9 @@ test('Plate Scanner labels and camera messages follow all seven app locales',()=
 });
 test('New release only increases 0.45.43 original Play version without removing local files',()=>{
  const version=get('rivoscan-version.properties');
- assert.match(version,/^versionCode=189$/m);
- assert.match(version,/^versionName=0\.45\.74$/m);
- assert.equal(JSON.parse(get('package.json')).version,'0.45.74');
+ assert.match(version,/^versionCode=190$/m);
+ assert.match(version,/^versionName=0\.45\.75$/m);
+ assert.equal(JSON.parse(get('package.json')).version,'0.45.75');
  const main=get('src/main.js');
  assert.ok(main.includes('createScanLedger'));
  assert.ok(main.includes('loadLibrary'));
