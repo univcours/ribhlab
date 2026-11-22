@@ -77,8 +77,8 @@ try{
     return {valid:separated&&contained&&a.width>=23&&b.width>18&&
        styles.backgroundImage.includes('linear-gradient')&&
        styles.color==='rgb(236, 251, 255)',
-       animated:styles.animationName.includes('rivoIconNeonBreath')&&
-         getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit'),
+       animated:styles.animationName==='none'&&
+         getComputedStyle(icon,'::before').animationName==='none',
          diagnostic:{id:tile.dataset.rivoFeature,separated,contained,width:a.width,labelWidth:b.width,
            color:styles.color,bg:styles.backgroundImage.slice(0,100),
            icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
@@ -90,10 +90,15 @@ try{
   });
   check(id+' Home icons look like approved cobalt/cyan launcher artwork and fit beside labels',
     homeIcons.count===4&&homeIcons.valid);
-  check(id+' Home icon neon orbit and glow animations are actually computed',
+  check(id+' Home icons have no decorative glow motion',
     homeIcons.animated);
   check(id+' Navbar retains four semantic glossy icon badges plus center Scan',
     homeIcons.navCount===4&&homeIcons.navSVG);
+  const cameraOrbit=await page.evaluate(()=>{
+   const ring=document.querySelector('.rivo-nav-scan-ring');
+   return ring&&getComputedStyle(ring,'::before').animationName==='rivo-orbit-border';
+  });
+  check(id+' only central Smart Scan camera keeps original rotating ring',cameraOrbit);
   check(id+' Home card/search/recents do not overlap',home.noOverlap);
   check(id+' Home cards contained and no page horizontal overflow',home.textFits);
   check(id+' Home 2 or 4 columns by width',home.railRows===(width<=420?2:1));
@@ -135,7 +140,8 @@ try{
                  b.left>=c.left-1&&b.right<=c.right+1&&
                  a.top>=c.top-1&&a.bottom<=c.bottom+1;
     return {okay:inside&&!overlap,
-            glow:getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit'),
+            glow:getComputedStyle(icon,'::before').animationName==='none'&&
+            getComputedStyle(icon).animationName==='none',
             diagnostic:{id:tile.dataset.hubAction,inside,overlap,icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
    });
    return {count:rows.length,okay:rows.every(x=>x.okay),glow:rows.every(x=>x.glow),
@@ -143,7 +149,7 @@ try{
   });
   check(id+' All Tools icon badges fit beside feature names without overlap',
     toolIcons.count===18&&toolIcons.okay);
-  check(id+' Tools icons have the same animated cyan orbit',
+  check(id+' Tools icon halo and glow animation are disabled',
     toolIcons.glow);
   if(width===320&&lang==='auto')console.warn('RIVO_ICON_LAYOUT_DIAGNOSTICS',
     JSON.stringify({home:homeIcons.bad,tools:toolIcons.bad,count:toolIcons.count}).slice(0,14000));
@@ -166,13 +172,13 @@ try{
    const settings=await page.evaluate(()=>{
     const nodes=[...document.querySelectorAll('.app-settings .settings-row-icon')].filter(node=>node.getClientRects().length>0);
     const okay=nodes.every(n=>getComputedStyle(n).backgroundImage.includes('linear-gradient')&&
-      getComputedStyle(n,'::before').animationName.includes('rivoIconNeonOrbit'));
+      getComputedStyle(n,'::before').animationName==='none'&&getComputedStyle(n).animationName==='none');
     return {count:nodes.length,okay};
    });
-   check(id+' Settings glyphs also share glossy animated RivoScan icon system',
+   check(id+' Settings glyphs preserve blue identity without glow motion',
       settings.count>=3&&settings.okay);
-   await page.screenshot({path:out+'/'+id+'-settings-glossy-icons.png'});
-   report.screens.push(id+'-settings-glossy-icons.png');
+   await page.screenshot({path:out+'/'+id+'-settings-static-icons.png'});
+   report.screens.push(id+'-settings-static-icons.png');
    await page.evaluate(()=>document.querySelector('.mobilebar [data-go="home"]')?.click());
   }
   if(width===393&&lang==='auto'){
