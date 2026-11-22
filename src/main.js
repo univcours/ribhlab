@@ -59,6 +59,7 @@ import './rivo-top-corner-loupe.css';
 import './rivo-blue-editor-layout.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
+import './rivo-personalized-cards.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -69,7 +70,7 @@ import {openPhotoTranslation} from './photo-translation.js';
 import {openFormulaReader} from './formula-ocr.js';
 import {openDocumentAI} from './document-ai.js';
 import {openWhatsNew,shouldShowReleaseNotes} from './whats-new.js';
-import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus,refreshBannerPosition} from './monetization.js';
+import {configureAds,initializeAds,startAdsAtLaunch,isPremiumFeature,requestPremium,onDocumentSaved,atNaturalNavigation,onAppForeground,showTestInterstitial,openAdPrivacyOptions,getPremiumStatus,refreshBannerPosition,atPremiumExit} from './monetization.js';
 import { toolGroups,hubSpecial,hubGroupLabel,hubLabel } from './tools-hub.js';
 import {openMergedToolDialog} from './merged-tools.js';
 import { localizeStaticUI, translateStatus } from './i18n-extra.js';
@@ -538,7 +539,7 @@ function home(){
    <span>${ico('shield',16)} ${escapeHTML(featureText('hero'))}</span>
   </div>
   <nav class="rivo-feature-rail" aria-label="${escapeHTML(featureText('short'))}">
-   ${featureTiles.map(f=>`<button type="button" class="rivo-feature-tile" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
+   ${featureTiles.map((f,i)=>`<button type="button" class="rivo-feature-tile" style="--rivo-card-hue:${Math.round((204+i*137.508)%360)}" data-rivo-feature="${f.id}" aria-label="${escapeHTML(featureText(f.label))}">
     <span class="rivo-feature-icon">${ico(f.icon,21)}</span><strong>${escapeHTML(compactFeatureLabel(f.id))}</strong></button>`).join('')}
   </nav>
   <div class="rivo-search-title-row rivo-home-search-title-row">
@@ -560,7 +561,8 @@ function toolsWorkspace(){
  <div class="rivo-tools-scroll" tabindex="0">${toolGroups.map(g=>`<section class="tools-section rivo-tools-section" id="section-${g.id}"><h2>${hubGroupLabel(language,g.id)}</h2><div class="mobile-tools-grid rivo-hub-grid">
    ${g.entries.map(id=>{const item=tools.find(x=>x.id===id),spec=hubSpecial[id];const icon=spec?.icon||item?.icon||'file';const color=spec?.color||item?.color||'blue';
     const label=hubLabel(language,id,item?tn(item):id);
-    return `<button class="mobile-tool-tile rivo-hub-tile" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
+    const hue=Math.round((204+toolGroups.flatMap(group=>group.entries).indexOf(id)*137.508)%360);
+    return `<button class="mobile-tool-tile rivo-hub-tile" style="--rivo-card-hue:${hue}" data-hub-action="${id}" data-hub-label="${escapeHTML(label.toLocaleLowerCase())}"><span class="tool-icon ${color}">${ico(icon,26)}</span><strong>${escapeHTML(label)}</strong></button>`}).join('')}
  </div></section>`).join('')}
  <p class="rivo-tools-no-results" id="tools-no-results" hidden>${escapeHTML(({en:'No matching tools',fr:'Aucun outil correspondant',ar:'ما لقيت حتى أداة بهاد الاسم',es:'No se encontraron herramientas',de:'Keine passenden Werkzeuge',pt:'Nenhuma ferramenta encontrada',it:'Nessuno strumento trovato'})[language]||'No matching tools')}</p></div></section>`;
 }
@@ -1169,7 +1171,7 @@ async function openHubAction(id){
    return;
  }
  if(spec.type==='idPhoto'){
-   await openIDPhotoMaker({language,save:saveOut,notify:toast});
+   await openIDPhotoMaker({language,save:saveOut,notify:toast,onClose:()=>void atPremiumExit()});
    return;
  }
  if(spec.type==='libraryPrint'){openLibrary();toast('Select a PDF and tap its print icon to open Android printing.');return}

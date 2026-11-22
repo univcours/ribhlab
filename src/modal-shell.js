@@ -1,3 +1,5 @@
+// Rewarded offers are displayed AFTER an opted-in premium tool's modal closes.
+import {atPremiumExit} from './monetization.js';
 // Shared modal header, lifecycle-safe dismiss, keyboard and right-to-left gesture.
 const labels={en:'Close',ar:'إغلاق',fr:'Fermer',es:'Cerrar',de:'Schließen',pt:'Fechar',it:'Chiudi'};
 let bound=false;
@@ -11,7 +13,7 @@ export function mountDialogControls({overlay,panel,close,language='en'}={}){
  const x=document.createElement('button');x.type='button';x.dataset.rivoModalClose='true';x.className='rivo-modal-dismiss';
  x.setAttribute('aria-label',labels[language]||labels.en);x.textContent='×';
  const previous=document.activeElement;
- const dismiss=()=>{close();if(!overlay.isConnected&&previous?.isConnected)previous.focus?.({preventScroll:true})};
+ const dismiss=()=>{close();if(!overlay.isConnected){if(previous?.isConnected)previous.focus?.({preventScroll:true});queueMicrotask(()=>void atPremiumExit());}};
  x.addEventListener('click',dismiss);top.append(x);panel.prepend(top);
  let touch=null;
  overlay.addEventListener('touchstart',e=>{

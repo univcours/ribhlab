@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,
- FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH} from '../src/monetization.js';
+ FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH,isRewardOfferDue} from '../src/monetization.js';
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
- assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,false);
- for(const id of ['interstitial','banner'])
+ assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,true);
+ for(const id of ['interstitial','banner','rewarded'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -14,7 +14,7 @@ test('basic scanning, reading and existing files never need reward ads',()=>{
  for(const name of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])
   assert.equal(isPremiumFeature(name),true);
 });
-test('legacy premium timer does not enable rewarded ads',()=>{
+test('rewarded bonus timer is measured in real milliseconds',()=>{
  assert.equal(remainingPremiumMs(600000,0),600000);
  assert.equal(remainingPremiumMs(600000,600001),0);
 });
@@ -23,7 +23,7 @@ test('interstitial requires consent, saved work, natural break, cooldown, sessio
   now:900000,lastShownAt:0,savedCount:2,shownCount:0,premiumUntil:0,launchCount:3};
  assert.equal(shouldShowInterstitial(state),true);
  for(const override of [{native:false},{consent:false},{ready:false},{savedCount:0},
-  {launchCount:2},{shownCount:8},{premiumUntil:1000000},{now:45000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
+  {launchCount:0},{shownCount:8},{premiumUntil:1000000},{now:30000},{lastShownAt:900000-FULLSCREEN_COOLDOWN_MS+1}])
   assert.equal(shouldShowInterstitial({...state,...override}),false);
 });
 test('Back ads only after completed work or two tool-to-Home transitions, never app-exit or overlays',()=>{
@@ -35,11 +35,11 @@ test('Back ads only after completed work or two tool-to-Home transitions, never 
  assert.equal(shouldShowInterstitial({...base,savedCount:1,trigger:'regular'}),true);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,shownCount:8}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,premiumUntil:1000000}),false);
- assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:45000}),false);
+ assert.equal(shouldShowInterstitial({...base,backTransitions:2,now:29000}),false);
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,lastShownAt:899000}),false);
 });
 test('production cannot use Google test IDs or mismatched publishers',()=>{
- const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',appOpen:'',banner:'ca-app-pub-1234567890123456/1234567890'};
+ const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',rewarded:'ca-app-pub-1234567890123456/1234567890',banner:'ca-app-pub-1234567890123456/1234567890'};
  assert.equal(productionAdsConfigured(),false);
  assert.equal(productionAdsConfigured(real),true);
  assert.equal(productionAdsConfigured({...real,banner:''}),true); // missing Banner never blocks Interstitial/App Open
@@ -49,7 +49,7 @@ test('production cannot use Google test IDs or mismatched publishers',()=>{
  assert.equal(productionAdsConfigured({...real,androidAppId:'ca-app-pub-3940256099942544~3347511713'}),false);
 });
 
-test('first 2 launches are free; third and later eligible at a safe break',()=>{
+test('first launch remains ad-free until real work is complete; later launches require the same safe break',()=>{
  const storage=new Map();
  const facade={getItem:key=>storage.get(key)||null,setItem:(key,v)=>storage.set(key,v)};
  for(let i=1;i<=6;i++){
@@ -90,7 +90,7 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
 test('Native ad no-fill conditions retry with bounded 1/2/4/8 minute backoff',async()=>{
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- assert.match(code,/const retryCounts=\{banner:0,interstitial:0\}/);
+ assert.match(code,/const retryCounts=\{banner:0,interstitial:0,rewarded:0\}/);
  assert.match(code,/if\(retryCounts\[type\]>=4\)return/);
  assert.match(code,/\[60000,120000,240000,480000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
@@ -108,4 +108,22 @@ test('AdMob recovers NO_FILL inventory after a background/foreground cycle witho
  assert.match(code,/scheduleBannerRelayout\(\)/);
  assert.match(code,/if\(!retryTimers\.interstitial&&!state\.interstitialReady&&!state\.busy\)/);
  assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen)/);
+});
+
+test('Rewarded offer appears after PRO usages 1, 4, 7, 10 (never on every tap)',()=>{
+ for(let n=1;n<=16;n++)assert.equal(isRewardOfferDue(n),n%3===1);
+ assert.equal(isRewardOfferDue(0),false);
+ assert.equal(isRewardOfferDue(-2),false);
+ assert.equal(isRewardOfferDue(2.5),false);
+});
+test('Rewarded requires per-ad opt-in and grants an actual fullscreen-free interval',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
+ assert.match(source,/export function atPremiumExit\(\)/);
+ assert.match(source,/AdMob\.prepareRewardVideoAd/);
+ assert.match(source,/AdMob\.showRewardVideoAd/);
+ assert.match(source,/watch\.addEventListener\('click'/);
+ assert.match(source,/cancel\.addEventListener\('click'/);
+ assert.match(source,/state\.unlockedUntil=Math\.max/);
+ assert.match(source,/if\(atPremiumExit\(\)\)return false/);
 });

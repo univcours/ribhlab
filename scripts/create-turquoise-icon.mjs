@@ -9,7 +9,8 @@ import pngjs from 'pngjs';
 const {PNG}=pngjs,root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const remote='https://gcdn.picsart.com/picsart-mcp/ce5d87c2-dc15-45ff-8b58-16e8d5ac8fd7.png';
 const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7';
-const sizes={play:504,adaptive:360,header:456};
+// Existing approved symbol, scaled to fit within safe Google icon masks.
+const sizes={play:430,adaptive:354,header:430};
 const sourcePath=join(root,'assets/branding/rivoscan-ai-icon-source.png');
 const fullLogo=readFileSync(join(root,'assets/branding/rivoscan-logo-original.png'));
 let bytes;
@@ -37,8 +38,12 @@ function pixel(x,y,c){
  return v(x0,y0)*(1-tx)*(1-ty)+v(x1,y0)*tx*(1-ty)+v(x0,y1)*(1-tx)*ty+v(x1,y1)*tx*ty;
 }
 for(let y=0;y<512;y++)for(let x=0;x<512;x++){
- const i=(y*512+x)*4,colors=[pixel(x,y,0),pixel(x,y,1),pixel(x,y,2)];
- const opacity=lim((Math.max(...colors)-18)/65,0,1);
+ const i=(y*512+x)*4;
+ const padding=(512-sizes.play)/2;
+ const inside=x>=padding&&x<512-padding&&y>=padding&&y<512-padding;
+ const sampleX=(x-padding)*512/sizes.play,sampleY=(y-padding)*512/sizes.play;
+ const colors=inside?[pixel(sampleX,sampleY,0),pixel(sampleX,sampleY,1),pixel(sampleX,sampleY,2)]:[0,0,0];
+ const opacity=inside?lim((Math.max(...colors)-18)/65,0,1):0;
  const background=[5+6*x/511,49+82*x/511,178+50*x/511];
  for(let c=0;c<3;c++)flat.data[i+c]=Math.round(opacity*colors[c]+(1-opacity)*background[c]);
  flat.data[i+3]=255;

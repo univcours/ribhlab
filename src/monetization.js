@@ -1,7 +1,7 @@
 // RivoScan AdMob: QA builds use demo inventory; production needs real app-specific IDs.
 // Never interrupt scanning or document saving with a full-screen advertisement.
 import { Capacitor } from '@capacitor/core';
-import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, RewardAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
 
 const adEnv=import.meta.env||{};
@@ -12,20 +12,22 @@ export const AD_CONFIG=Object.freeze({
  androidAppId:liveAds?(adEnv.VITE_RIVO_ADMOB_APP_ID||''):demoPublisher+'~3347511713',
  banner:liveAds?(adEnv.VITE_RIVO_ADMOB_BANNER_ID||''):demoPublisher+'/6300978111',
  interstitial:liveAds?(adEnv.VITE_RIVO_ADMOB_INTERSTITIAL_ID||''):demoPublisher+'/1033173712',
+ rewarded:liveAds?(adEnv.VITE_RIVO_ADMOB_REWARDED_ID||''):demoPublisher+'/5224354917',
  bannerEnabled:!liveAds||/^ca-app-pub-\d{16}\/\d+$/.test(adEnv.VITE_RIVO_ADMOB_BANNER_ID||'')
 });
 export function productionAdsConfigured(config=AD_CONFIG){
  const appOk=/^ca-app-pub-\d{16}~\d+$/.test(config.androidAppId||'');
  const interOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.interstitial||'');
+ const rewardedOk=/^ca-app-pub-\d{16}\/\d+$/.test(config.rewarded||'');
  const bannerOk=!config.banner||/^ca-app-pub-\d{16}\/\d+$/.test(config.banner);
  const owner=id=>String(id||'').split(/[~/]/)[0];
- return appOk&&interOk&&bannerOk&&owner(config.androidAppId)!==demoPublisher&&
-    owner(config.androidAppId)===owner(config.interstitial)&&
+ return appOk&&interOk&&rewardedOk&&bannerOk&&owner(config.androidAppId)!==demoPublisher&&
+    owner(config.androidAppId)===owner(config.interstitial)&&owner(config.androidAppId)===owner(config.rewarded)&&
     (!config.banner||owner(config.banner)===owner(config.androidAppId));
 }
 // Onboarding protects first-time users from full-screen ads. One use = one
 // process/cold launch, not button taps or foreground resume events.
-export const FULLSCREEN_START_LAUNCH=3; // protect first two sessions
+export const FULLSCREEN_START_LAUNCH=1; // ads only after real task completion, never at launch
 export const APP_LAUNCH_KEY='rivo-ad-launch-count-v1';
 export const FULLSCREEN_LAST_SHOWN_KEY='rivo-ad-last-fullscreen-v1';
 export function registerLaunch(storage){
@@ -51,7 +53,7 @@ function recordFullscreenTime(now=Date.now()){
  try{localStorage.setItem(FULLSCREEN_LAST_SHOWN_KEY,String(now))}catch{}
 }
 export const PREMIUM_MINUTES=10;
-export const FULLSCREEN_COOLDOWN_MS=2*60*1000; // 2+ actual actions and a completed-task break still required
+export const FULLSCREEN_COOLDOWN_MS=90*1000; // policy-compliant natural breaks; never every tap
 export const MIN_BACKGROUND_MS=60*1000;
 const PREMIUM_IDS=new Set([
  'bookScan','documentFlatten','formulaOcr','photoTranslation','aiChat','solverAI',
@@ -71,13 +73,14 @@ export function shouldShowInterstitial({native,consent,startedAt,now,lastShownAt
   ?(savedCount>=1||backTransitions>=2)
   :savedCount>=1;
  return !!(native&&consent&&ready&&launchEligible(launchCount)&&meaningfulBreak&&shownCount<8&&
-  now-startedAt>=60000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
+  now-startedAt>=30000&&(!lastShownAt||now-lastShownAt>=FULLSCREEN_COOLDOWN_MS)&&
   now>=premiumUntil);
 }
 const isAndroid=Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android';
 // SDK-measured diagnostic counters, not estimates of money earned.
 const adStats={bannerRequests:0,bannerLoads:0,bannerImpressions:0,
  interstitialRequests:0,interstitialLoads:0,interstitialImpressions:0,
+ rewardedRequests:0,rewardedLoads:0,rewardedImpressions:0,
  lastBannerError:'',lastInterstitialError:''};
 let impressionListenersAttached=false;
 async function trackNativeAdEvents(){
@@ -86,6 +89,7 @@ async function trackNativeAdEvents(){
   for(const [event,handle] of [
    [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;state.onChange()}],
    [InterstitialAdPluginEvents.AdImpression,()=>{adStats.interstitialImpressions++;state.onChange()}],
+   [RewardAdPluginEvents.AdImpression,()=>{adStats.rewardedImpressions++;state.onChange()}],
    [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=String(e?.message||e||'No fill');state.onChange()}],
    [InterstitialAdPluginEvents.FailedToLoad,e=>{adStats.lastInterstitialError=String(e?.message||e||'No fill');state.onChange()}]
   ]) await AdMob.addListener(event,handle);
@@ -95,13 +99,14 @@ async function trackNativeAdEvents(){
 const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
  launchCount:registerLaunch(isAndroid&&typeof localStorage!=='undefined'?localStorage:null),
  unlockedUntil:0,savedCount:0,backTransitions:0,shownCount:0,lastFullscreenAt:storedTime(FULLSCREEN_LAST_SHOWN_KEY),busy:false,
- interstitialReady:false,bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
+ interstitialReady:false,rewardedReady:false,premiumUses:0,premiumOfferDue:false,lastPremiumTapAt:0,lastPremiumId:'',
+ bannerReady:false,bannerLoading:false,bannerListenersAttached:false,bannerHidden:false,
  bannerError:'',status:'Not initialized',lastError:'',
  getLanguage:()=> 'en',notify:()=>{},onChange:()=>{}};
 // AdMob can return NO_FILL even when configured correctly. Retry with bounded
 // backoff while the app is foregrounded; never hammer the network or UMP.
-const retryCounts={banner:0,interstitial:0};
-const retryTimers={banner:null,interstitial:null};
+const retryCounts={banner:0,interstitial:0,rewarded:0};
+const retryTimers={banner:null,interstitial:null,rewarded:null};
 let adVisibilityRecoveryAttached=false;
 function installAdVisibilityRecovery(){
  if(adVisibilityRecoveryAttached||typeof document==='undefined')return;
@@ -117,6 +122,7 @@ function installAdVisibilityRecovery(){
    retryCounts.interstitial=0;
    void loadInterstitial();
   }
+  if(!retryTimers.rewarded&&!state.rewardedReady&&!state.busy){retryCounts.rewarded=0;void loadRewarded();}
  });
 }
 function scheduleAdRetry(type){
@@ -128,6 +134,7 @@ function scheduleAdRetry(type){
   if(document.visibilityState==='hidden'){retryCounts[type]=Math.max(0,retryCounts[type]-1);return;}
   if(type==='banner')void loadBanner();
   else if(type==='interstitial')void loadInterstitial();
+  else if(type==='rewarded')void loadRewarded();
  },delay);
 }
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
@@ -139,7 +146,8 @@ export function configureAds({getLanguage,notify,onChange}={}){
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,remainingMs:remainingPremiumMs(state.unlockedUntil),
- interstitialReady:state.interstitialReady,bannerReady:state.bannerReady,bannerError:state.bannerError,
+ interstitialReady:state.interstitialReady,rewardedReady:state.rewardedReady,
+ premiumUses:state.premiumUses,bannerReady:state.bannerReady,bannerError:state.bannerError,
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
   adStats:{...adStats},liveAds};
 }
@@ -299,14 +307,27 @@ async function loadInterstitial(){
   adStats.interstitialLoads++;retryCounts.interstitial=0;state.interstitialReady=true;status('Interstitial ready');return true;
  }catch(error){status('Interstitial unavailable',String(error?.message||error));scheduleAdRetry('interstitial');return false;}
 }
+async function loadRewarded(){
+ if(!state.ready||state.rewardedReady||state.busy||!AD_CONFIG.rewarded)return false;
+ try{
+  adStats.rewardedRequests++;
+  await AdMob.prepareRewardVideoAd({adId:AD_CONFIG.rewarded,isTesting:AD_CONFIG.testMode});
+  adStats.rewardedLoads++;retryCounts.rewarded=0;state.rewardedReady=true;
+  status('Rewarded ready');return true;
+ }catch(error){
+  status('Rewarded unavailable',String(error?.message||error));
+  scheduleAdRetry('rewarded');return false;
+ }
+}
 export async function initializeAds({retry=false,deferBanner=false}={}){
  if(!isAndroid){status('Ads need the Android app');return false;}
  if(liveAds&&!productionAdsConfigured()){status('Real AdMob publisher IDs missing; ads disabled');return false;}
  if(state.ready){
   installAdVisibilityRecovery();
   if(retry){
-   retryCounts.banner=0;retryCounts.interstitial=0;
+   retryCounts.banner=0;retryCounts.interstitial=0;retryCounts.rewarded=0;
    if(!state.interstitialReady&&!state.busy)void loadInterstitial();
+   if(!state.rewardedReady&&!state.busy)void loadRewarded();
    if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}
   }
   return true;
@@ -331,6 +352,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
+   void loadRewarded();
    if(!deferBanner)void loadBanner();
    return true;
   }catch(error){
@@ -343,9 +365,71 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  })();
  return state.initializing;
 }
-// Rewarded videos and App Open ads are not used or requested.
- // All tools remain available; only native Banner and Interstitial are loaded.
-export async function requestPremium(_id){return true;}
+// Each real PRO invocation counts once; exits 1,4,7,10... offer a reward.
+// The reward is 10 minutes without interruption by fullscreen interstitials.
+// A rejected or unavailable reward NEVER blocks app navigation or basic use.
+const PRO_USE_KEY='rivo-pro-usage-v2';
+function countProUse(){
+ try{const n=Math.min(1000000,Math.max(0,Number(localStorage.getItem(PRO_USE_KEY))||0)+1);
+  localStorage.setItem(PRO_USE_KEY,String(n));return n;
+ }catch{return ++state.premiumUses}
+}
+export function isRewardOfferDue(n){return Number.isInteger(n)&&n>=1&&(n-1)%3===0;}
+export async function requestPremium(id){
+ if(!isPremiumFeature(id))return true;
+ const now=Date.now();
+ if(state.lastPremiumId===id&&now-state.lastPremiumTapAt<1200)return true;
+ state.lastPremiumId=id;state.lastPremiumTapAt=now;
+ state.premiumUses=countProUse();
+ // Do not discard an unoffered exit if another nested route invokes the gate.
+ state.premiumOfferDue=state.premiumOfferDue||isRewardOfferDue(state.premiumUses);
+ state.onChange();
+ return true;
+}
+export function atPremiumExit(){
+ if(!state.premiumOfferDue)return false;
+ state.premiumOfferDue=false;
+ if(!isAndroid||!state.ready||!state.consent||typeof document==='undefined')return false;
+ if(document.querySelector('.rivo-reward-overlay'))return true;
+ const language=state.getLanguage();
+ const copy=({
+  ar:['مكافأة بعد استعمال PRO','شاهد إعلاناً اختيارياً لتحصل على 10 دقائق بدون إعلانات ملء الشاشة. الخروج متاح بدون مشاهدة.','شاهد الإعلان','ليس الآن','الإعلان غير متوفر حالياً، يمكنك المتابعة عادي.','تم تفعيل 10 دقائق بدون إعلانات ملء الشاشة'],
+  fr:['Bonus après PRO','Regardez une publicité facultative pour 10 minutes sans publicité plein écran. Vous pouvez continuer sans la regarder.','Regarder','Pas maintenant','Publicité indisponible, continuez normalement.','10 minutes sans publicité plein écran activées'],
+  en:['PRO usage bonus','Optionally watch an ad for 10 minutes without fullscreen ads. You can continue without watching.','Watch ad','Not now','No ad available. Continue normally.','10 minutes without fullscreen ads activated']
+ })[language]||['PRO usage bonus','Optionally watch an ad for 10 minutes without fullscreen ads. You can continue without watching.','Watch ad','Not now','No ad available. Continue normally.','10 minutes without fullscreen ads activated'];
+ const overlay=document.createElement('div');overlay.className='rivo-reward-overlay';
+ const dialog=document.createElement('section');dialog.className='rivo-reward-dialog';
+ dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label',copy[0]);
+ const title=document.createElement('h2');title.textContent=copy[0];
+ const message=document.createElement('p');message.textContent=copy[1];
+ const actions=document.createElement('div');actions.className='rivo-reward-actions';
+ const watch=document.createElement('button');watch.type='button';watch.className='rivo-reward-watch';watch.textContent=copy[2];
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='rivo-reward-cancel';cancel.textContent=copy[3];
+ const remove=()=>overlay.remove();
+ cancel.addEventListener('click',remove);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)remove()});
+ watch.addEventListener('click',async()=>{
+  if(state.busy)return;
+  watch.disabled=true;
+  if(!state.rewardedReady&&!(await loadRewarded())){
+   message.textContent=copy[4];watch.disabled=false;return;
+  }
+  remove();
+  state.busy=true;state.rewardedReady=false;
+  try{
+   await pauseBannerForFullscreen();
+   const earned=await AdMob.showRewardVideoAd({adId:AD_CONFIG.rewarded});
+   if(earned&&Number(earned.amount)>0){
+    state.unlockedUntil=Math.max(state.unlockedUntil,Date.now()+PREMIUM_MINUTES*60000);
+    state.notify(copy[5]);status('Reward earned: fullscreen ad-free bonus');
+   }
+  }catch(error){status('Rewarded dismissed or failed',String(error?.message||error));}
+  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadRewarded();}
+ });
+ actions.append(watch,cancel);dialog.append(title,message,actions);overlay.append(dialog);
+ document.body.append(overlay);cancel.focus({preventScroll:true});
+ return true;
+}
 // Hide a loaded banner while full-screen content is shown; never layer ads.
 async function pauseBannerForFullscreen(){
  if(!state.bannerReady)return;
@@ -366,6 +450,8 @@ export async function startAdsAtLaunch(){
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;
+ // Prompt after a PRO feature closes, not at app exit. Do not stack an interstitial.
+ if(atPremiumExit())return false;
  // Count actual tool -> Home transitions, not button taps, gesture duplicates
  // or app-exit presses. A first Back without work remains advertisement-free.
  if(trigger==='back')state.backTransitions++;

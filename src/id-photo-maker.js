@@ -61,7 +61,7 @@ function cropImage(ctx,image,rect,offsetX,offsetY){
     Math.max(0,Math.min(ih-sh,vertical)),sw,sh,
     rect.x,rect.y,rect.w,rect.h);
 }
-export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
+export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose=()=>{}}={}){
  const L=strings[language]||strings.en;
  const overlay=document.createElement('div');overlay.className='rivo-id-overlay';
  const panel=document.createElement('section');panel.className='rivo-id-dialog';panel.setAttribute('role','dialog');
@@ -100,7 +100,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{}}={}){
   }
   status.textContent=dims.positions.length+' × '+photoSizes[select.value].label;
  };
- const close=()=>{closed=true;overlay.remove();if(blobURL)URL.revokeObjectURL(blobURL)};
+ const close=()=>{if(closed)return;closed=true;overlay.remove();if(blobURL)URL.revokeObjectURL(blobURL);onClose()};
  const button=(name,callback)=>{
   const b=document.createElement('button');b.type='button';b.textContent=name;b.addEventListener('click',callback);actions.append(b);
  };
