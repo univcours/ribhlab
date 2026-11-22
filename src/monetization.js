@@ -173,9 +173,23 @@ function bannerObstructed(){
   '.doc-detail-overlay','.bulk-overlay','.rivo-edge-adjust-overlay','.busy',
   'dialog[open]','[role="dialog"][aria-modal="true"]'
  ].join(',');
+ // Windows already clipped to the native banner-safe WebView area must not
+ // trigger banner hiding merely because they are modal overlays.
+ const safeTool='.rivo-id-overlay,.rivo-code-overlay,.rivo-plate-overlay,'+
+  '.rivo-perfectscan-overlay,.rivo-perfect-capture-overlay,.rivo-editor-overlay,'+
+  '.rivo-pages-overlay,.rivo-page-manager-overlay,.rivo-shield-overlay,.rivo-merged-overlay,'+
+  '.rivo-release-overlay,.rivo-edge-adjust-overlay,.rivo-update-gate,'+
+  '.rivo-reward-overlay,.doc-detail-overlay,.bulk-overlay,.busy';
  return [...document.querySelectorAll(selector)].some(el=>{
   const b=el.getBoundingClientRect(),style=getComputedStyle(el);
-  return b.width>0&&b.height>0&&style.visibility!=='hidden'&&style.display!=='none';
+  if(!(b.width>0&&b.height>0&&style.visibility!=='hidden'&&style.display!=='none'))return false;
+  const host=el.closest?.(safeTool);
+  if(host){
+   const hostBox=host.getBoundingClientRect();
+   const reserved=parseFloat(document.documentElement.style.getPropertyValue('--rivo-content-bottom'))||98;
+   if(hostBox.bottom<=window.innerHeight-reserved+2)return false;
+  }
+  return true;
  });
 }
 function currentBannerLayout(){

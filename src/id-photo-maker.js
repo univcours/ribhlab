@@ -1,4 +1,5 @@
 import {mountDialogControls} from './modal-shell.js';
+import {Camera,CameraResultType,CameraSource} from '@capacitor/camera';
 import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 /** Optional on-device portrait cutout for printable ID sheets. */
 import {segmentPortrait} from './photo-background.js';
@@ -68,15 +69,20 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const title=document.createElement('h2');title.textContent=L[0];panel.append(title);
  const select=document.createElement('select');for(const [key,size] of Object.entries(photoSizes)){const opt=document.createElement('option');opt.value=key;opt.textContent=size.label;select.append(opt)}
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label',L[1]);
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('aria-label',L[1]);input.className='rivo-id-native-file-picker';input.hidden=true;
  const x=document.createElement('input');x.type='range';x.min='-100';x.max='100';x.value='0';
  const y=document.createElement('input');y.type='range';y.min='-100';y.max='100';y.value='0';
  const canvas=document.createElement('canvas');canvas.className='rivo-id-preview';canvas.hidden=true;
  const hint=document.createElement('p');hint.textContent=L[8];hint.className='rivo-id-hint';
  const status=document.createElement('p');status.setAttribute('role','status');
  const actions=document.createElement('div');actions.className='rivo-code-actions';
- const row=(caption,control)=>{const label=document.createElement('label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
- row(L[1],input);row(L[2],select);row(L[3],y);row(L[4],x);
+ const row=(caption,control)=>{const label=document.createElement(control.tagName==='BUTTON'?'div':'label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
+ const importButton=document.createElement('button');importButton.type='button';importButton.className='rivo-id-import-setting';importButton.textContent=({ar:'استيراد صورة',fr:'Importer une photo',en:'Import Photo'})[language]||L[1];
+ importButton.addEventListener('click',()=>{input.value='';input.click()});
+ const cameraButton=document.createElement('button');cameraButton.type='button';cameraButton.className='rivo-id-take-photo';
+ cameraButton.textContent=({ar:'التقاط صورة',fr:'Prendre une photo',en:'Take Photo'})[language]||'Take Photo';
+ cameraButton.addEventListener('click',()=>{void capture()});
+ row(L[1],importButton);row(L[2],select);row(L[3],y);row(L[4],x);
  const bgSelect=document.createElement('select');
  const names=({ar:['الأصلية','بيضاء','زرقاء','رمادية'],fr:['Original','Blanc','Bleu','Gris'],es:['Original','Blanco','Azul','Gris'],de:['Original','Weiß','Blau','Grau'],pt:['Original','Branco','Azul','Cinzento'],it:['Originale','Bianco','Blu','Grigio'],en:['Original','White','Light blue','Gray']})[language]||['Original','White','Light blue','Gray'];
  for(const [i,key] of ['original','white','blue','gray'].entries()){
@@ -130,21 +136,39 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   }catch(error){if(!closed)status.textContent=error?.message||L[9]}
  });
  button(L[7],close);
+ const applyNewImage=async(src,objectURL=null)=>{
+  try{
+   const next=new Image();next.src=src;
+   await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
+   if(closed){if(objectURL)URL.revokeObjectURL(objectURL);return}
+   const previous=blobURL;blobURL=objectURL;
+   image=next;cutout=null;x.value='0';y.value='0';
+   workspace?.loaded();if(saveButton)saveButton.disabled=false;
+   if(previous)URL.revokeObjectURL(previous);
+   if(bgSelect.value!=='original')await applyBackground();else update();
+  }catch{if(objectURL)URL.revokeObjectURL(objectURL);if(!closed)status.textContent=L[9]}
+ };
+ const capture=async()=>{
+  if(closed||processing)return;
+  try{
+   const result=await Camera.getPhoto({quality:92,resultType:CameraResultType.Uri,
+    source:CameraSource.Camera,correctOrientation:true});
+   if(result?.webPath)await applyNewImage(result.webPath);
+  }catch(error){
+   if(/cancel/i.test(String(error?.message||'')))return;
+   if(!closed)status.textContent=error?.message||L[9];
+  }
+ };
  const load=async()=>{
   const file=input.files?.[0];if(!file)return;
-  if(blobURL)URL.revokeObjectURL(blobURL);
-  blobURL=URL.createObjectURL(file);
-  try{
-   const next=new Image();next.src=blobURL;
-   await new Promise((ok,bad)=>{next.onload=ok;next.onerror=bad});
-   if(closed)return;image=next;cutout=null;workspace?.loaded();if(saveButton)saveButton.disabled=false;
-    if(bgSelect.value!=='original')await applyBackground();else update();
-  }catch{status.textContent=L[9]}
+  const url=URL.createObjectURL(file);
+  await applyNewImage(url,url);
  };
- input.addEventListener('change',load);select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
+ input.addEventListener('change',()=>{void load()});select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
  mountDialogControls({overlay,panel,close,language});
  const rows=[...panel.querySelectorAll(':scope > .rivo-id-row')];
  if(rows.length!==5)throw Error('ID Photo controls unexpectedly changed');
+ rows[0].classList.add('rivo-id-source-controls');rows[0].append(cameraButton,input);
  const [makeSheet,saveControl]=actions.querySelectorAll('button');
  saveButton=saveControl;saveButton.disabled=true;
  // Two compact sliders share one line, freeing space for the portrait preview.
@@ -184,6 +208,8 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
   b.addEventListener('click',fn);rail.append(b);
  };
+ // The first left-side camera icon now opens the actual device camera.
+ railButton(leftRail,'photo',cameraButton.textContent,()=>{void capture()});
  [['source','photo'],['adjust','crop'],['background','background']].forEach(([section,icon],i)=>{
   railButton(leftRail,icon,namesForLang[i],()=>{
    workspace.choose(section);workspace.show(true);
@@ -198,7 +224,11 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  railButton(rightRail,'left',namesForLang[5],()=>move(x,-10));
  railButton(rightRail,'right',namesForLang[6],()=>move(x,10));
  railButton(rightRail,'reset',namesForLang[7],()=>{x.value='0';y.value='0';if(image)update()});
- workspace.dock.append(leftRail,rightRail);
+ const previewImport=document.createElement('button');previewImport.type='button';
+ previewImport.className='rivo-id-preview-import';previewImport.textContent=({ar:'＋ استيراد صورة',fr:'＋ Importer une photo',en:'＋ Import Photo'})[language]||'＋ Import Photo';
+ previewImport.setAttribute('aria-label',L[1]);
+ previewImport.addEventListener('click',()=>{input.value='';input.click()});
+ workspace.dock.append(previewImport,leftRail,rightRail);
  status.classList.add('rivo-workspace-status');
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
  return close;

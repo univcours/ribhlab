@@ -47,7 +47,19 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  const previewBox=document.createElement('div');previewBox.className='rivo-book-preview rivo-book-preview-empty';
  const emptyNote=document.createElement('p');emptyNote.className='rivo-book-empty';
  emptyNote.textContent=({ar:'صوّر أو استورد صفحة كتاب باش تبان هنا.',en:'Take or import a book photo to preview its pages.',fr:'Photographiez ou importez une page pour la prévisualiser.'})[language]||'Add a book photo';
- previewBox.append(preview,emptyNote);panel.append(previewBox);
+ // Empty preview is an actionable entry point, not a blank oversized canvas.
+ const emptyActions=document.createElement('div');emptyActions.className='rivo-book-empty-actions';
+ const emptyCamera=document.createElement('button');emptyCamera.type='button';emptyCamera.textContent=L[1];
+ emptyCamera.disabled=typeof capture!=='function';
+ emptyCamera.addEventListener('click',async()=>{
+  if(!capture||closed||busy)return;
+  try{const photo=await capture();if(photo)await load(photo)}
+  catch(error){status.textContent=error?.message||String(error)}
+ });
+ const emptyImport=document.createElement('button');emptyImport.type='button';emptyImport.textContent=L[2];
+ emptyImport.addEventListener('click',()=>fileInput.click());
+ emptyActions.append(emptyCamera,emptyImport);
+ previewBox.append(preview,emptyNote,emptyActions);panel.append(previewBox);
  const location=document.createElement('label');location.className='rivo-id-row';location.textContent=L[3];
  const slider=document.createElement('input');slider.type='range';slider.min='25';slider.max='75';slider.value='50';location.append(slider);panel.append(location);
  const autoSpine=document.createElement('button');autoSpine.type='button';autoSpine.className='rivo-auto-spine';
@@ -109,7 +121,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    image,spine:+slider.value,curvature:+warpSlider.value,
    autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
-  image=img;previewBox.classList.remove('rivo-book-preview-empty');emptyNote.hidden=true;
+  image=img;previewBox.classList.remove('rivo-book-preview-empty');emptyNote.hidden=true;emptyActions.hidden=true;
   for(const button of [autoSpine,autoButton,lineButton,autoAll,compare,saveButton])button.disabled=false;
   currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix(true);countSpreads();

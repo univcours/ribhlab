@@ -23,7 +23,7 @@ export const hubSpecial={
  idcard:{icon:'idcard',color:'green',type:'idcard'},
  idPhotoMaker:{icon:'user',color:'sky',type:'idPhoto'},
  scanCode:{icon:'qr',color:'green',type:'barcode'},
- plateScanner:{icon:'scan',color:'green',type:'plates'},
+ plateScanner:{icon:'plate',color:'green',type:'plates'},
  aiChat:{icon:'text',color:'violet',type:'aiDocument'},
  solverAI:{icon:'image',color:'blue',type:'aiSolver'},
  countCam:{icon:'camera',color:'green',type:'countCam'},

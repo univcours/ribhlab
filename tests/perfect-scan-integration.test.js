@@ -11,7 +11,7 @@ test('One scanner entry and Plate Scanner replace user-facing PerfectScan',()=>{
  assert.ok(!main.includes('onPerfectScan:d=>launchPerfectScan(d)'));
  assert.ok(!hub.includes("type:'perfectScan'"));
  assert.ok(!hub.includes("'scanCode','perfectScanQuality'"));
- assert.ok(main.includes("{id:'plateScanner',icon:'scan'"));
+ assert.ok(main.includes("{id:'plateScanner',icon:'plate'"));
  assert.ok(editor.includes("filter==='crease'"));
 });
 test('Advanced correction retains source in session and saves ONE user-confirmed PDF only',()=>{

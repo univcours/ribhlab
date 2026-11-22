@@ -1,0 +1,224 @@
+/* RivoScan 0.45.66: global modal-safe-zone, visible file badges, and back-button feedback.
+   Imported last so older tool-specific 94dvh/100dvh rules cannot cover native AdMob.
+   The native 320x50 banner and its SDK positioning are NOT changed. */
+:root{--rivo-polish-ink:#143555;--rivo-polish-blue:#1267c8;}
+body.rivo-native-android :is(
+ .rivo-id-overlay,.rivo-code-overlay,.rivo-plate-overlay,
+ .rivo-release-overlay,.rivo-merged-overlay,.rivo-edge-adjust-overlay,
+ .rivo-page-manager-overlay,
+ .rivo-editor-overlay,.rivo-pages-overlay,.rivo-shield-overlay,
+ .rivo-perfectscan-overlay,.rivo-perfect-capture-overlay,
+ .rivo-viewer-layer,.doc-detail-overlay,.bulk-overlay,
+ .rivo-reward-overlay,.rivo-update-gate,.rivo-ad-launch-loading,
+ .busy
+){
+ top:0!important;bottom:var(--rivo-content-bottom,98px)!important;
+ height:auto!important;min-height:0!important;
+ max-height:calc(100dvh - var(--rivo-content-bottom,98px))!important;
+ box-sizing:border-box!important;overflow-y:auto!important;
+ overscroll-behavior:contain!important;
+}
+body.rivo-native-android .rivo-id-overlay .rivo-id-dialog,
+body.rivo-native-android .rivo-code-overlay .rivo-code-dialog,
+body.rivo-native-android .rivo-release-overlay .rivo-release-dialog,
+body.rivo-native-android .rivo-perfectscan-overlay .rivo-perfectscan-modal,
+body.rivo-native-android .rivo-editor-overlay .rivo-editor-window,
+body.rivo-native-android .rivo-pages-overlay .rivo-pages-modal{
+ box-sizing:border-box!important;
+ max-height:calc(100dvh - var(--rivo-content-bottom,98px) - 20px)!important;
+ min-height:0!important;
+}
+body.rivo-native-android .rivo-id-overlay .rivo-id-dialog.rivo-preview-first-dialog,
+body.rivo-native-android .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog{
+ height:min(850px,calc(100dvh - var(--rivo-content-bottom,98px) - 20px))!important;
+ max-height:calc(100dvh - var(--rivo-content-bottom,98px) - 20px)!important;
+}
+body.rivo-native-android .rivo-perfectscan-overlay .rivo-perfectscan-modal,
+body.rivo-native-android .rivo-editor-overlay .rivo-editor-window,
+body.rivo-native-android .rivo-pages-overlay .rivo-pages-modal{
+ height:100%!important;max-height:100%!important;
+}
+@media(max-height:630px){
+ body.rivo-native-android .rivo-id-overlay .rivo-id-dialog.rivo-preview-first-dialog,
+ body.rivo-native-android .rivo-id-overlay .rivo-id-dialog.rivo-shared-preview-dialog{
+  height:calc(100dvh - var(--rivo-content-bottom,98px) - 20px)!important;
+  max-height:calc(100dvh - var(--rivo-content-bottom,98px) - 20px)!important;
+ }
+ body.rivo-native-android .rivo-id-overlay .rivo-id-dialog .rivo-shared-preview-dock{
+  min-height:76px!important;height:clamp(76px,17dvh,120px)!important;
+ }
+}
+/* Every navigational back and dialog-dismiss button has the same animated glow. */
+body :is(
+ button[data-inapp-back],button.back,.rivo-header-back,.rivo-modal-dismiss,
+ button[data-rivo-modal-close],.rivo-viewer-back,.rivo-pages-back,
+ button[data-back],button[aria-label="Back" i],button[aria-label="Retour" i],
+ button[aria-label="رجوع"],button[aria-label="عودة"],
+ button[data-perfect="close"]
+){
+ position:relative!important;isolation:isolate!important;
+ border:1.5px solid #3e9de8!important;border-radius:12px!important;
+ color:#114b88!important;-webkit-text-fill-color:#114b88!important;
+ background:linear-gradient(145deg,#fff,#e8f5ff)!important;
+ animation:rivo-back-soft-glow 2.6s ease-in-out infinite!important;
+}
+@keyframes rivo-back-soft-glow{
+ 0%,100%{box-shadow:0 0 3px #18aaff66,0 2px 8px #0c4c9233;}
+ 50%{box-shadow:0 0 15px #19b5ffe6,0 0 24px #1480dc88,0 4px 13px #0c4c9255;}
+}
+body :is(button[data-inapp-back],.rivo-modal-dismiss,button[data-back],
+ button[aria-label="Back" i],button[aria-label="رجوع"]):focus-visible{
+ outline:3px solid #067cde!important;outline-offset:3px!important;
+}
+/* No faded text in progress and alert dialogs. */
+body .busy-inner{
+ width:min(94vw,390px)!important;min-width:0!important;
+ padding:26px 22px!important;border:1px solid #b2d7f6!important;
+ background:linear-gradient(150deg,#ffffff,#eaf5ff)!important;
+ box-shadow:0 14px 38px #0827524d!important;
+ color:#123e70!important;border-radius:20px!important;
+}
+body .busy-inner strong{color:#0c3c71!important;font-size:16px!important;line-height:1.4!important;}
+body .busy-inner p{color:#345779!important;opacity:1!important;font-size:13px!important;line-height:1.5!important;}
+body .busy-inner .spinner{
+ width:46px!important;height:46px!important;border:4px solid #bddcf4!important;
+ border-top-color:#0875d7!important;border-right-color:#167fdc!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-release-dialog)
+ :is(p,small,.rivo-id-hint,.rivo-workspace-empty,.rivo-workspace-status){
+ color:#2b5279;opacity:1;
+}
+/* Source photo is chosen inside the preview, never with the browser's old file-picker row. */
+.rivo-id-overlay input.rivo-id-native-file-picker{display:none!important;}
+.rivo-id-overlay .rivo-id-source-controls{display:flex;flex-wrap:wrap;gap:9px;min-width:0;}
+.rivo-id-overlay .rivo-id-source-controls button{
+ flex:1 1 120px;min-height:44px;padding:10px 12px;
+ border:1px solid #267fd0;border-radius:12px;color:#fff;
+ background:linear-gradient(135deg,#0a7bda,#1559be);font-weight:750;
+}
+.rivo-id-overlay .rivo-shared-preview-dock{position:relative!important;}
+.rivo-id-overlay .rivo-id-preview-import{
+ position:absolute;z-index:4;top:50%;left:50%;transform:translate(-50%,-50%);
+ display:flex;align-items:center;justify-content:center;gap:8px;
+ min-height:48px;max-width:75%;padding:11px 18px;
+ color:#fff;background:linear-gradient(125deg,#087de5,#1557bd);
+ border:2px solid #fff;border-radius:14px;font-size:13px;font-weight:800;
+ box-shadow:0 4px 16px #073f8299;
+}
+.rivo-id-overlay .rivo-workspace-has-image .rivo-id-preview-import{
+ left:auto;right:8px;top:7px;transform:none;
+ min-height:34px;padding:6px 9px;font-size:11px;
+ max-width:45%;
+}
+.rivo-id-overlay .rivo-id-preview-import:focus-visible{
+ outline:3px solid #0a88e7;outline-offset:3px;
+}
+.rivo-id-overlay .rivo-id-preview-import:active{filter:brightness(.94);}
+/* File icon remains legible EVEN when a real first-page thumbnail replaces fallback. */
+html body #app .rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb{
+ position:relative!important;isolation:isolate!important;
+ overflow:hidden!important;border-width:1.5px!important;
+ box-shadow:0 2px 8px #20496f29!important;
+}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-type-icon svg{
+ width:29px!important;height:29px!important;stroke-width:2.15!important;
+}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-kind-badge{
+ position:absolute!important;bottom:2px;left:3px;right:3px;
+ display:block!important;box-sizing:border-box;
+ border-radius:5px!important;padding:2px 1px!important;
+ font-size:9.5px!important;line-height:1.25!important;
+ font-weight:900!important;letter-spacing:.15px!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ background:#174c80!important;box-shadow:0 1px 3px #00193466;
+ text-align:center;white-space:nowrap;z-index:3;
+}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-pdf .rivo-file-kind-badge{background:#c12d3c!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-image .rivo-file-kind-badge{background:#0968ba!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-xls .rivo-file-kind-badge{background:#168048!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-doc .rivo-file-kind-badge{background:#1a5bb5!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-qr .rivo-file-kind-badge{background:#743fba!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-barcode .rivo-file-kind-badge{background:#a25b10!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-plate .rivo-file-kind-badge{background:#087e7d!important;}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-thumb img{object-fit:contain!important;}
+@media(prefers-reduced-motion:reduce){
+ body :is(button[data-inapp-back],button.back,.rivo-header-back,.rivo-modal-dismiss,
+ button[data-rivo-modal-close],.rivo-viewer-back,.rivo-pages-back,
+ button[data-back],button[aria-label="Back" i],button[aria-label="Retour" i],
+ button[aria-label="رجوع"],button[data-perfect="close"]){animation:none!important;}
+}
+
+/* Book Scan: readable, actionable empty preview without burying Save. */
+.rivo-id-overlay .rivo-book-preview.rivo-book-preview-empty{
+ min-height:155px!important;display:flex!important;flex-direction:column!important;
+ justify-content:center!important;align-items:center!important;gap:9px!important;
+ padding:10px!important;
+}
+.rivo-id-overlay .rivo-book-preview-empty .rivo-book-empty{
+ padding:0 5px!important;margin:0!important;font-size:12px!important;
+ line-height:1.45!important;color:#214c78!important;opacity:1!important;
+}
+.rivo-id-overlay .rivo-book-empty-actions{
+ display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
+ gap:9px!important;width:100%!important;padding:2px 0!important;
+}
+.rivo-id-overlay .rivo-book-empty-actions[hidden]{display:none!important;}
+.rivo-id-overlay .rivo-book-empty-actions button{
+ min-height:42px!important;flex:1 1 114px!important;max-width:225px!important;
+ padding:7px 11px!important;background:#126cc7!important;
+ color:#fff!important;border:1.5px solid #3b9deb!important;
+ border-radius:12px!important;font-size:12px!important;font-weight:800!important;
+ box-shadow:0 3px 8px #0b4b8233!important;
+}
+.rivo-id-overlay .rivo-book-empty-actions button:last-child{background:#7643b8!important;border-color:#9f78d6!important;}
+.rivo-id-overlay .rivo-book-empty-actions button:disabled{background:#d7e2ed!important;color:#4b6176!important;opacity:1!important;}
+.rivo-id-overlay .rivo-id-dialog .rivo-id-row.rivo-id-source-controls{
+ flex-direction:row!important;flex-wrap:wrap!important;gap:8px!important;
+}
+.rivo-id-overlay .rivo-id-dialog .rivo-id-source-controls button{
+ min-width:110px!important;flex:1 1 135px!important;
+}
+html body #app .rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-thumb.rivo-file-plate:not(:has(img)){
+ background:#e3faf7!important;border-color:#93d9d2!important;color:#097f7b!important;
+}
+
+/* Readable controls across all light-background tool sheets. */
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-shield-dialog,.rivo-merged-dialog)
+ :is(.rivo-id-hint,.rivo-workspace-status,.rivo-book-empty,.rivo-id-row,.rivo-workspace-empty,small,summary){
+ color:#214a73!important;-webkit-text-fill-color:#214a73!important;opacity:1!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-shield-dialog,.rivo-merged-dialog)
+ :is(input:not([type=range]),select,textarea){
+ border:1.5px solid #8bb7df!important;background:#fff!important;
+ color:#153b66!important;-webkit-text-fill-color:#153b66!important;
+}
+body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-perfectscan-modal,.rivo-shield-dialog,.rivo-merged-dialog)
+ :is(input,select,textarea,button):focus-visible{
+ outline:3px solid #087be0!important;outline-offset:2px!important;
+}
+body .rivo-id-overlay .rivo-id-dialog :is(.rivo-workspace-bottom,.rivo-edit-bottom-bar)>button:not(:disabled){
+ background:linear-gradient(135deg,#069f72,#057954)!important;color:#fff!important;
+ border:1.5px solid #27af85!important;border-radius:13px!important;
+ box-shadow:0 3px 11px #006e5366!important;font-weight:800!important;
+}
+body .rivo-id-overlay .rivo-id-dialog .rivo-code-actions>button:not(:disabled){
+ background:linear-gradient(135deg,#1789ed,#1254b1)!important;
+ border:1.5px solid #3a92df!important;color:#fff!important;
+ border-radius:12px!important;font-weight:750!important;
+ box-shadow:0 2px 8px #0f58953f!important;
+}
+body .rivo-id-overlay .rivo-id-dialog button:disabled,
+body .rivo-code-overlay .rivo-code-dialog button:disabled{
+ opacity:1!important;background:#d8e3ed!important;
+ border-color:#becfe0!important;color:#485f79!important;
+ -webkit-text-fill-color:#485f79!important;box-shadow:none!important;
+}

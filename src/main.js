@@ -60,6 +60,8 @@ import './rivo-blue-editor-layout.css';
 // Visual and accessibility polish wins over legacy pale controls.
 import './rivo-controls-clarity.css';
 import './rivo-personalized-cards.css';
+// Last global safety layer: app-wide modal/banner boundaries and file-type badges.
+import './rivo-polish-04566.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -129,6 +131,7 @@ const icons = {
   folder:'<path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
   qr:'<path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/><path d="M6 6h2v2H6zm10 0h2v2h-2zM6 16h2v2H6zm6-4h2v2h-2zm4 4h2v2h-2z" fill="currentColor" stroke="none"/>',
+  plate:'<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 10v4m4-4v4m4-4v4m3-4h1m-1 4h1M3 5V3h4m10 0h4v2M3 19v2h4m10 0h4v-2"/>',
   volume:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM15 9c2 1.5 2 4.5 0 6M18 6c4 3.5 4 8.5 0 12"/>',
   muted:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM16 9l6 6m0-6-6 6"/>',
   globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c-5 5-5 15 0 20 5-5 5-15 0-20"/>',
@@ -419,7 +422,10 @@ function hydrateDocumentThumbnails(){
   for(const el of document.querySelectorAll('[data-thumb-uri]')){
    if(el.dataset.thumbUri!==uri)continue;
    const img=document.createElement('img');img.src='data:image/jpeg;base64,'+b64;img.alt='';
-   img.decoding='async';el.replaceChildren(img);el.removeAttribute('data-thumb-uri');
+   img.decoding='async';
+    const typeBadge=el.querySelector('.rivo-file-kind-badge');
+    el.replaceChildren(img);if(typeBadge)el.append(typeBadge);
+    el.removeAttribute('data-thumb-uri');
   }
  };
  for(const el of [...document.querySelectorAll('[data-thumb-uri]')].slice(0,72)){
@@ -457,6 +463,7 @@ function visualFileType(doc){
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',symbol:'image'};
  if(/^(?:rs|rivoscan)_qr(?:_|\.)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
  if(/^(?:rs_bar(?:_|\.)|rivoscan_barcode_)/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
+  if(/^(?:rivoscan_plates(?:_|\.)|rs_plates(?:_|\.))/.test(name))return {code:'PLATE',klass:'plate',symbol:'plate'};
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',symbol:'sheet'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',symbol:'filelines'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',symbol:'archive'};
@@ -464,7 +471,7 @@ function visualFileType(doc){
  return {code:'FILE',klass:'generic',symbol:'file'};
 }
 function documentMeta(doc){
- const fields=[formatSize(doc.size||0)];
+ const fields=[visualFileType(doc).code,formatSize(doc.size||0)];
  if(Number.isFinite(doc.created)&&doc.created>0){
   try{fields.push(new Intl.DateTimeFormat(language,{year:'numeric',month:'short',day:'numeric'}).format(new Date(doc.created)))}catch{}
  }
@@ -492,7 +499,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
   const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
   return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
    <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
-   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
+   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
    <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${documentMeta(doc)}</small></div>
    ${single?`<div class="rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
@@ -529,7 +536,7 @@ const compactFeatureLabel=id=>(RIVO_COMPACT_FEATURE_LABELS[language]||RIVO_COMPA
 const featureTiles=[
  {id:'smartAutoCapture',icon:'scan',label:'auto',detail:'autoSub'},
  {id:'scanCode',icon:'qr',label:'qr',detail:'qrSub'},
- {id:'plateScanner',icon:'scan',label:'plates',detail:'plateSub'},
+ {id:'plateScanner',icon:'plate',label:'plates',detail:'plateSub'},
  {id:'privacyShield',icon:'shield',label:'privacy',detail:'privacySub'}
 ];
 function home(){
@@ -681,7 +688,7 @@ function renderLibraryRows(needle=''){
   const file=visualFileType(item);
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
-   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
+   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>

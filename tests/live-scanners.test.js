@@ -164,7 +164,7 @@ test('Tools are wired and camera overlays stop streaming on close or Android Bac
  const tools=readFileSync(new URL('../src/tools-hub.js',import.meta.url),'utf8');
  const qr=readFileSync(new URL('../src/barcode-scanner.js',import.meta.url),'utf8');
  const plates=readFileSync(new URL('../src/plate-scanner.js',import.meta.url),'utf8');
- assert.ok(tools.includes("plateScanner:{icon:'scan'"));
+ assert.ok(tools.includes("plateScanner:{icon:'plate'"));
  assert.ok(main.includes("spec.type==='plates'"));
  assert.ok(main.includes("scanLedger.append('plates'"));
  assert.ok(main.includes("scanLedger.append('codes'"));
