@@ -729,6 +729,7 @@ function libraryWorkspace(){
       </div>
       <div class="library-heading-actions" role="group" aria-label="Document actions">
         <button type="button" class="btn btn-outline" data-import="file" title="${escapeHTML(ut('import'))}" aria-label="${escapeHTML(ut('import'))}">${ico('image',16)}<span class="rivo-action-full">${ut('import')}</span><span class="rivo-action-compact">${({en:'Import',fr:'Importer',ar:'استيراد',es:'Importar',de:'Import',pt:'Importar',it:'Importa'})[language]||'Import'}</span></button>
+        <button type="button" class="btn btn-outline rivo-import-images" data-import-images title="${escapeHTML(({en:'Import Images',fr:'Importer des images',ar:'استيراد الصور'})[language]||'Import Images')}" aria-label="${escapeHTML(({en:'Import Images',fr:'Importer des images',ar:'استيراد الصور'})[language]||'Import Images')}">${ico('image',17)}<span class="rivo-action-full">${({en:'Import Images',fr:'Importer images',ar:'استيراد الصور'})[language]||'Import Images'}</span></button>
         <button id="open-storage-folder" type="button" class="btn btn-outline" title="${escapeHTML(vivoFolderLabel())}" aria-label="${escapeHTML(vivoFolderLabel())}">${ico('folder',16)}<span class="rivo-action-full">${vivoFolderLabel()}</span><span class="rivo-action-compact">${({en:'Folder',fr:'Dossier',ar:'مجلد',es:'Carpeta',de:'Ordner',pt:'Pasta',it:'Cartella'})[language]||'Folder'}</span></button>
         <button id="refresh-documents" class="btn btn-outline" type="button" aria-label="${escapeHTML(lt('refresh'))}" title="${escapeHTML(lt('refresh'))}">${ico('rotate',17)}</button>
       </div>
@@ -916,6 +917,7 @@ function wire(){
     else openTool('scan');
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
+  document.querySelectorAll('[data-import-images]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles('image')));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
   document.getElementById('open-storage-folder')?.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments')){toast(dl('folder'),true);return;}
