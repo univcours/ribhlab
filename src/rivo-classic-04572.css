@@ -283,3 +283,60 @@ html body.rivo-native-android #app .shell.rivo-dark-ui .rivo-ad-banner-frame{
   animation:none!important;
  }
 }
+
+/* Home feature cards: colorful, distinct, and kept in normal document flow. */
+html body #app .shell.rivo-dark-ui .rivo-feature-rail {
+  grid-auto-rows:minmax(112px,auto)!important;
+  margin-bottom:20px!important;
+  isolation:isolate;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile{
+  min-height:110px!important;
+  gap:9px!important;
+  border-width:2px!important;
+  box-shadow:0 4px 12px #11407F20!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile:nth-child(1){
+  background:linear-gradient(145deg,#EAF8FF,#BCE9FF)!important;border-color:#23A8EF!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile:nth-child(2){
+  background:linear-gradient(145deg,#FFF0F5,#FFC3DA)!important;border-color:#F23B82!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"]{
+  background:linear-gradient(145deg,#FFF5E6,#FFD49C)!important;border-color:#F49A25!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile:nth-child(4){
+  background:linear-gradient(145deg,#F5F0FF,#D8C3FF)!important;border-color:#9259F5!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon{
+  width:43px!important;height:43px!important;min-width:43px!important;min-height:43px!important;
+  flex-basis:43px!important;padding:7px!important;background:#FFFFFFCC!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile:nth-child(2) .rivo-feature-icon svg{stroke:#D92367!important}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"] .rivo-feature-icon svg{stroke:#B75D08!important}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile:nth-child(4) .rivo-feature-icon svg{stroke:#7040C9!important}
+html body #app .shell.rivo-dark-ui .rivo-home-search-title-row{
+  position:relative!important;z-index:2!important;clear:both!important;
+  margin-top:3px!important;
+}
+/* Plate Scanner only: camera on top, results below; QR layout remains unchanged. */
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:9px!important;min-height:0!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-live-preview{
+  grid-column:1!important;grid-row:1!important;min-height:0!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-live-results-pane{
+  grid-column:1!important;grid-row:2!important;min-height:0!important;
+  overflow-y:auto!important;overscroll-behavior:contain;
+}
+@media(max-width:380px){
+ html body #app .shell.rivo-dark-ui .rivo-feature-rail{gap:5px!important}
+ html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile strong{font-size:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile::before{animation:none!important}
+}
