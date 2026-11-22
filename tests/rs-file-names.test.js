@@ -35,14 +35,14 @@ test('QR and barcodes append to two permanent RS TXT journals',()=>{
  assert.ok(java.includes('RS_QR.txt')&&java.includes('RS_Bar.txt'));
 });
 
-test('inline preview/share and overflow rename/delete buttons keep native thumbnails',()=>{
+test('in-place actions are eye/share/pencil/trash, thumbnails stay enabled',()=>{
  const main=read('src/main.js');
- for(const id of ['data-doc-external','data-doc-share','data-doc-rename','data-doc-delete']){
+ for(const id of ['data-doc-open','data-doc-share','data-doc-rename','data-doc-delete']){
   assert.ok(main.includes(id));
  }
- assert.equal(main.split("ico('share',16)").length-1,1);
- assert.equal(main.split("ico('pencil',15)").length-1,1);
- assert.equal(main.split("ico('trash',15)").length-1,1);
+ assert.equal(main.split("ico('share',17)").length-1,2);
+ assert.equal(main.split("ico('pencil',17)").length-1,2);
+ assert.equal(main.split("ico('trash',17)").length-1,2);
  assert.equal(main.split('data-thumb-uri=').length-1,2);
  assert.ok(main.includes('RivoDocuments.getThumbnail'));
  assert.ok(main.includes('rivo-file-type-icon'));
