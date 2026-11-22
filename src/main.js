@@ -73,6 +73,7 @@ import './rivo-visual-04574.css';
 import './rivo-icon-identity-04575.css';
 // User-approved CamScanner-like file view and static icons; camera keeps its orbit.
 import './rivo-camscanner-static-04576.css';
+import './rivo-mlkit-04577.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -1190,6 +1191,15 @@ async function openHubAction(id){
       return output;
     },
     capture:async()=>{
+     // Google's ML Kit camera detects the book/page boundaries and offers crop review.
+     if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+       const scanned=await DocumentScanner.scanDocument({galleryImportAllowed:false,
+         pageLimit:spec.type==='flatten'?1:6,resultFormats:'JPEG',scannerMode:'FULL'});
+       const uris=Array.isArray(scanned?.scannedImages)?scanned.scannedImages:[];
+       const pages=[];
+       for(let i=0;i<uris.length;i++)pages.push(await readScannedImage(uris[i],i));
+       return pages;
+     }
      const photo=await Camera.getPhoto({quality:92,allowEditing:false,
        resultType:CameraResultType.Uri,source:CameraSource.Camera});
      return photo.webPath||photo.path;
