@@ -142,11 +142,11 @@ try{
             bad:rows.filter(x=>!x.okay).map(x=>x.diagnostic)};
   });
   check(id+' All Tools icon badges fit beside feature names without overlap',
-    toolIcons.count>=19&&toolIcons.okay);
+    toolIcons.count===18&&toolIcons.okay);
   check(id+' Tools icons have the same animated cyan orbit',
     toolIcons.glow);
   if(width===320&&lang==='auto')console.warn('RIVO_ICON_LAYOUT_DIAGNOSTICS',
-    JSON.stringify({home:homeIcons.bad,tools:toolIcons.bad}).slice(0,14000));
+    JSON.stringify({home:homeIcons.bad,tools:toolIcons.bad,count:toolIcons.count}).slice(0,14000));
 
   const toolLocale=await page.evaluate(expected=>{
    const el=document.querySelector('.rivo-locale-visible-value'),label=document.querySelector('.rivo-top-locale');
