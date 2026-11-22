@@ -91,14 +91,14 @@ try{
   });
   check(id+' Tools last card fully reachable above ad safe band',tools.ok);
   check(id+' Tools scrolls independently',tools.overflow==='auto');
-  const toolLocale=await page.evaluate(()=>{
+  const toolLocale=await page.evaluate(expected=>{
    const el=document.querySelector('.rivo-locale-visible-value'),label=document.querySelector('.rivo-top-locale');
    if(!el||!label)return false;
    const a=el.getBoundingClientRect(),b=label.getBoundingClientRect();
    return a.width>24&&a.left>=b.left-1&&a.right<=b.right+1&&
      el.scrollWidth<=el.clientWidth+2&&
-     el.textContent.trim()==='${lang==='auto'?'AUTO':lang.toUpperCase()}';
-  });
+     el.textContent.trim()===expected;
+  },lang==='auto'?'AUTO':lang.toUpperCase());
   check(id+' AUTO fully displayed on Tools header (with back button)',toolLocale);
 
   await page.screenshot({path:out+'/'+id+'-tools-bottom.png'});report.screens.push(id+'-tools-bottom.png');
