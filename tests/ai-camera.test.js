@@ -9,7 +9,7 @@ test('AI Solver camera photo is locally resized and selected, then upload requir
  assert.ok(src.includes("canvas.toBlob(b=>b?ok(b)"));
  assert.ok(src.includes("lastFile=new File([optimized]"));
  assert.ok(src.includes('window.confirm(L[13])'));
- assert.ok(main.includes("openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:async()=>"));
+ assert.ok(main.includes("openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:()=>captureMlkitDocumentPhoto()"));
  assert.ok(src.indexOf("lastFile=new File([optimized]")<src.indexOf('requestUserAI({apiKey:key.value,request})'));
  assert.ok(src.includes("key.value=''"));
 });
