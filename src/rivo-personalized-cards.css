@@ -398,3 +398,30 @@ body #app .shell.rivo-dark-ui button.rivo-hub-tile {
   animation:none!important;
  }
 }
+
+/* Home shortcut strip has a fixed slot in the legacy Home header.
+   Keep icons + labels INSIDE that slot instead of covering My Files. */
+body #app .shell.rivo-dark-ui button.rivo-feature-tile{
+ box-sizing:border-box!important;
+ height:65px!important;min-height:65px!important;max-height:65px!important;
+ padding:4px 2px!important;gap:2px!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-feature-tile .rivo-feature-icon{
+ box-sizing:border-box!important;flex:0 0 31px!important;
+ width:31px!important;height:31px!important;min-width:31px!important;
+ min-height:31px!important;max-width:31px!important;max-height:31px!important;
+ padding:4px!important;margin:0 auto!important;border-radius:10px!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-feature-tile .rivo-feature-icon svg{
+ display:block!important;box-sizing:border-box!important;
+ width:21px!important;height:21px!important;max-width:100%!important;
+ max-height:100%!important;overflow:visible!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-feature-tile strong{
+ flex:0 0 auto!important;line-height:1.08!important;
+ font-size:clamp(9px,2.55vw,11px)!important;
+ min-height:0!important;max-height:23px!important;
+ white-space:normal!important;margin:0!important;padding:0!important;
+}
