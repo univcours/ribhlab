@@ -81,6 +81,23 @@ jobs:
           name: RivoScan-0.45.68-AuditFixes-SIGNED
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+      - name: Reassemble and verify complete audit evidence ZIP
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile
+          root=Path('audit/archive_parts')
+          meta=json.loads((root/'manifest.json').read_text())
+          assert len(meta['parts'])==5
+          data=b''.join((root/name).read_bytes() for name in meta['parts'])
+          assert len(data)==meta['bytes']
+          assert hashlib.sha256(data).hexdigest()==meta['sha256']
+          target=Path('audit')/meta['name']
+          target.write_bytes(data)
+          with zipfile.ZipFile(target) as z:
+              assert z.testzip() is None
+              assert 'audit/AUDIT_MASTER_CHECKLIST.csv' in z.namelist()
+          PY
       - name: Save audit checklist and evidence as workflow artifact
         if: always()
         uses: actions/upload-artifact@v4

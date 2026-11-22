@@ -1,0 +1,20 @@
+{
+  "name": "RivoScan-UltraDeep-Audit-0.45.68.zip",
+  "sha256": "81573023a106b3f40271410ecce412af425ef9c72558b7e6d0e126e2e5d32f10",
+  "bytes": 2887199,
+  "parts": [
+    "part-01.bin",
+    "part-02.bin",
+    "part-03.bin",
+    "part-04.bin",
+    "part-05.bin"
+  ],
+  "partSha256": [
+    "b4936c01a926f12f5a2e7c65235588fe7a93e6ff711b4fe49cbb4dae83824283",
+    "edc4b34645ac6996f4c3f5fee58a664791df2ab98feeb0c6d6d43227e7875d25",
+    "5bbc172ca11d7d158cf9fe492717e4e64839bd7fafa7a4f3e6a7d6a8c3fa8441",
+    "64b9c26c455cff29be4174daed627b1b16be4a09c67c2d26a912ad0b8c9b39e3",
+    "0279eaad6fba9e5245a4a53edc492970803f3899fdc2d079aeb816e9333e2a3d"
+  ],
+  "sourceCodeCommit": "f476783cc4ee281295d5237fa93772e66e6f32f9"
+}

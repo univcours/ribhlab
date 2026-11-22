@@ -1,0 +1,58 @@
+{
+  "generated_utc": "2026-11-22T13:26:06.804856+00:00",
+  "source_commit": "f476783cc4ee281295d5237fa93772e66e6f32f9",
+  "project_files": 296,
+  "inventory_entries": 13960,
+  "categories": {
+    "project_file": 296,
+    "ci_step": 407,
+    "error_path": 1008,
+    "state_condition": 429,
+    "save_export": 534,
+    "function_path": 487,
+    "dialog_overlay": 372,
+    "advertising": 113,
+    "background_service": 180,
+    "ui_control": 244,
+    "icon": 156,
+    "dependency": 35,
+    "interaction": 217,
+    "navigation": 31,
+    "message": 207,
+    "css_selector": 3053,
+    "colors": 2082,
+    "spacing_layout": 3270,
+    "typography": 703,
+    "animation": 79,
+    "screen_route": 26,
+    "menu_card": 31
+  },
+  "file_groups": {
+    "Project config/docs": 34,
+    "CI workflows": 23,
+    "Resources": 14,
+    "Android native": 14,
+    "Build scripts": 21,
+    "App source": 97,
+    "Automated tests": 93
+  },
+  "source_inventory": "DISCOVERED NOT VALIDATED",
+  "runtime_navigation_crosschecked": false,
+  "device_attached": false,
+  "emulator_available": false,
+  "status": {
+    "UNVERIFIED": 13960,
+    "PASS": 0,
+    "FAIL": 0
+  },
+  "exclusions": [
+    "Vendor node_modules, compiled dist, .git and ignored build output",
+    "Six untracked temporary patch scripts"
+  ],
+  "limitations": [
+    "Regex/static discovery cannot enumerate every dynamically created element or state",
+    "No Android phone attached or configured AVD",
+    "No physical camera, AdMob, rotation or memory tests",
+    "No automatic promotion of aggregate test-suite results to individual element PASS"
+  ]
+}

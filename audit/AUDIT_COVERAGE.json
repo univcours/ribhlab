@@ -1,0 +1,160 @@
+{
+  "generated": "2026-11-22T13:26:06.898610+00:00",
+  "files": 296,
+  "sourceItems": 13960,
+  "fullyVerifiedSourceItems": 0,
+  "runtimeRows": 428,
+  "browserScreens": 14,
+  "browserToolActivations": 36,
+  "browserOpenedDialogs": 19,
+  "browserNoModal": 17,
+  "browserBannerOverlaps": 0,
+  "browserCycles": 50,
+  "browserCycleFailures": 0,
+  "codeParsingProblems": 0,
+  "passes": {
+    "PASS1 CODE": {
+      "status": "PARTIAL",
+      "evidence": "audit/PASS1_STATIC_CODE_EVIDENCE.json",
+      "detail": "68 JS and 29 CSS parsed; no syntax or relative import errors"
+    },
+    "PASS2 UI": {
+      "status": "PARTIAL",
+      "evidence": "audit/browser/browser_navigation_audit.json",
+      "detail": "14 Chrome captures, simulated banner safe area; no Android"
+    },
+    "PASS3 UX": {
+      "status": "PARTIAL",
+      "evidence": "audit/browser/08_book_scan.png, 04_id_photo_simulated_native.png",
+      "detail": "2 duplicate/empty-control issues tested and fixed"
+    },
+    "PASS4 FUNCTIONAL": {
+      "status": "PARTIAL",
+      "evidence": "tests/ directory, source test output",
+      "detail": "Existing unit tests, no native camera/AdMob/real file picker"
+    },
+    "PASS5 REGRESSION": {
+      "status": "PARTIAL",
+      "evidence": "npm test and npm run build",
+      "detail": "Aggregate checks passed but no per-element Android regression"
+    },
+    "PASS6 ADVERSARIAL": {
+      "status": "PARTIAL",
+      "evidence": "audit/browser/adversarial_open_close.json",
+      "detail": "50 open-close cycles and 36 tool activations in Chrome"
+    }
+  },
+  "fixes": [
+    {
+      "id": "FIX-001",
+      "name": "Book Scan duplicate photo and import actions",
+      "status": "PASS CODE + CHROME ONLY",
+      "before": "Two visible pairs, 4 buttons",
+      "after": "One visible pair, 2 buttons",
+      "evidence": "tests/audit-book-preview.test.js and audit/browser/08_book_scan.png"
+    },
+    {
+      "id": "FIX-002",
+      "name": "ID Photo empty Photo tab",
+      "status": "PASS CODE + CHROME ONLY",
+      "before": "Empty Photo tab and unused blank drawer",
+      "after": "Photo tab removed and drawer initially collapsed",
+      "evidence": "tests/audit-id-photo-empty-tab.test.js and audit/browser/04_id_photo_simulated_native.png"
+    },
+    {
+      "id": "FIX-003",
+      "name": "ZXing ESM named export instead of absent default export",
+      "status": "PASS CODE + REAL GENERATED PIXELS (NOT CAMERA)",
+      "before": "Rollup warning about non-existent ZXing default export",
+      "after": "Named ESM import; QR and Code39 pixel decoding tested; blank frame rejected",
+      "evidence": "tests/audit-zxing-esm.test.js and audit/PASS5_REGRESSION.txt"
+    }
+  ],
+  "openFindings": [
+    {
+      "id": "OPEN-001",
+      "priority": "HIGH",
+      "name": "No connected Android device or AVD",
+      "reason": "Native camera, AdMob, Storage and lifecycle unverified"
+    },
+    {
+      "id": "OPEN-002",
+      "priority": "HIGH",
+      "name": "Banner / Interstitial real inventory",
+      "reason": "No real creative / No Fill / native overlay data"
+    },
+    {
+      "id": "OPEN-003",
+      "priority": "HIGH",
+      "name": "QR/barcode auto-zoom & autofocus",
+      "reason": "Device zoom hardware and detection not verified"
+    },
+    {
+      "id": "OPEN-004",
+      "priority": "HIGH",
+      "name": "3 TXT files and migration",
+      "reason": "External storage old-file preservation not verified"
+    },
+    {
+      "id": "OPEN-005",
+      "priority": "MEDIUM",
+      "name": "PDF save true progress",
+      "reason": "Stage-by-stage measurable progress still missing"
+    },
+    {
+      "id": "OPEN-006",
+      "priority": "MEDIUM",
+      "name": "APK size",
+      "reason": "Native size optimization not verified"
+    },
+    {
+      "id": "OPEN-007",
+      "priority": "HIGH",
+      "name": "All 18 states per item",
+      "reason": "Source inventory rows not all runtime matched"
+    },
+    {
+      "id": "OPEN-008",
+      "priority": "MEDIUM",
+      "name": "7 locales and RTL",
+      "reason": "Chrome screenshots do not cover all locales"
+    },
+    {
+      "id": "OPEN-009",
+      "priority": "MEDIUM",
+      "name": "Rotation and keyboard",
+      "reason": "Native keyboard/insets and rotation not tested"
+    },
+    {
+      "id": "OPEN-010",
+      "priority": "MEDIUM",
+      "name": "Browser-only tool results",
+      "reason": "17/36 activations had no browser-testable modal"
+    },
+    {
+      "id": "OPEN-011",
+      "priority": "MEDIUM",
+      "name": "Memory lifecycle",
+      "reason": "50 browser cycles; Android heap/foreground untested"
+    },
+    {
+      "id": "OPEN-012",
+      "priority": "MEDIUM",
+      "name": "Output quality",
+      "reason": "No golden OCR/translation results or physical print"
+    },
+    {
+      "id": "OPEN-013",
+      "priority": "LOW",
+      "name": "Chrome warnings",
+      "reason": "User activation and password field advisory; not crashes"
+    },
+    {
+      "id": "OPEN-014",
+      "priority": "LOW",
+      "name": "UI pixel reference",
+      "reason": "14 screenshots but not reference goldens for all elements"
+    }
+  ],
+  "qualityGate": "BLOCKED - no 100 percent or real Android proof"
+}
