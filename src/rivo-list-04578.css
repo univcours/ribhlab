@@ -191,3 +191,28 @@ html body .doc-detail-overlay .doc-detail-actions>.doc-action{
   height:75px!important;min-height:75px!important;max-height:75px!important;
  }
 }
+
+/* Empty-state is a card too: it must not reintroduce a solid white panel. */
+html body #app .shell.rivo-dark-ui :is(
+ #home-recents>.recent-empty,
+ #home-recents>.rivo-onboarding,
+ #library-list>.doc-empty,
+ .rivo-home-trust
+){
+ background:transparent!important;background-image:none!important;
+ background-color:transparent!important;
+ box-shadow:none!important;border-color:#9cbbd75c!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home-trust,
+html body #app .shell.rivo-dark-ui .rivo-home-trust :is(span,svg,strong,small){
+ color:#174a7c!important;-webkit-text-fill-color:#174a7c!important;
+ opacity:1!important;text-shadow:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ #home-recents>.recent-empty,
+ #home-recents>.rivo-onboarding,
+ #library-list>.doc-empty
+) :is(span,strong,small,p){
+ color:#234d75!important;-webkit-text-fill-color:#234d75!important;
+ opacity:1!important;
+}
