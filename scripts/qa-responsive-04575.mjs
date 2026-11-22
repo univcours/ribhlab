@@ -78,10 +78,14 @@ try{
        styles.backgroundImage.includes('linear-gradient')&&
        styles.color==='rgb(236, 251, 255)',
        animated:styles.animationName.includes('rivoIconNeonBreath')&&
-         getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit')};
+         getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit'),
+         diagnostic:{id:tile.dataset.rivoFeature,separated,contained,width:a.width,labelWidth:b.width,
+           color:styles.color,bg:styles.backgroundImage.slice(0,100),
+           icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
    });
    const nav=[...document.querySelectorAll('.mobilebar .rivo-nav-icon')];
    return {count:boxes.length,valid:boxes.every(x=>x.valid),animated:boxes.every(x=>x.animated),
+           bad:boxes.filter(x=>!x.valid).map(x=>x.diagnostic),
            navCount:nav.length,navSVG:nav.every(x=>!!x.querySelector('svg'))};
   });
   check(id+' Home icons look like approved cobalt/cyan launcher artwork and fit beside labels',
@@ -131,14 +135,18 @@ try{
                  b.left>=c.left-1&&b.right<=c.right+1&&
                  a.top>=c.top-1&&a.bottom<=c.bottom+1;
     return {okay:inside&&!overlap,
-            glow:getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit')};
+            glow:getComputedStyle(icon,'::before').animationName.includes('rivoIconNeonOrbit'),
+            diagnostic:{id:tile.dataset.hubAction,inside,overlap,icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
    });
-   return {count:rows.length,okay:rows.every(x=>x.okay),glow:rows.every(x=>x.glow)};
+   return {count:rows.length,okay:rows.every(x=>x.okay),glow:rows.every(x=>x.glow),
+            bad:rows.filter(x=>!x.okay).map(x=>x.diagnostic)};
   });
   check(id+' All Tools icon badges fit beside feature names without overlap',
     toolIcons.count>=19&&toolIcons.okay);
   check(id+' Tools icons have the same animated cyan orbit',
     toolIcons.glow);
+  if(width===320&&lang==='auto')console.warn('RIVO_ICON_LAYOUT_DIAGNOSTICS',
+    JSON.stringify({home:homeIcons.bad,tools:toolIcons.bad}).slice(0,14000));
 
   const toolLocale=await page.evaluate(expected=>{
    const el=document.querySelector('.rivo-locale-visible-value'),label=document.querySelector('.rivo-top-locale');
