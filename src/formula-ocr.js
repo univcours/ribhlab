@@ -1,6 +1,7 @@
 import {mountDialogControls} from './modal-shell.js';
 import {mountPreviewFirstWorkspace} from './preview-workspace.js';
 import Tesseract from 'tesseract.js';
+import {recognizeMlkitLatin} from './rivo-mlkit-vision.js';
 import {buildAIRequest,requestUserAI} from './ai-provider.js';
 import {findFormulaRegions,formulaRegionLayout} from './formula-regions.js';
 import {suggestPrintedMathLayout} from './math-layout.js';
@@ -121,7 +122,10 @@ export function openFormulaReader({language='en',capture,save,notify=()=>{}}={})
    try{result=await worker.recognize(selected,{}, {blocks:true})}
    finally{await worker.terminate()}
    if(closed)return;
-   original.value=(result.data.text||'').trim().slice(0,5000);
+   // Google ML Kit reads Latin characters on Android; Tesseract retains
+   // geometry/blocks for the specialist two-dimensional formula analysis.
+   const mlkitText=await recognizeMlkitLatin(selected,{language:'en'}).catch(()=>null);
+   original.value=(mlkitText?.trim()||result.data.text||'').trim().slice(0,5000);
    const layout=suggestPrintedMathLayout(result.data.blocks||[]);
    latex.value=layout?.latex||linearMathToLatex(original.value);
    const geometry=await new Promise((ok,bad)=>{
