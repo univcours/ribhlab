@@ -81,7 +81,7 @@ try{
   await page.evaluate(()=>document.querySelector('.mobilebar [data-tab="tools"]')?.click());
   await page.locator('.rivo-tools-scroll').waitFor({timeout:12000});
   const tools=await page.evaluate(()=>{
-   const scroll=document.querySelector('.rivo-tools-scroll'),last=scroll?.querySelector('.rivo-hub-tile:last-of-type');
+   const scroll=document.querySelector('.rivo-tools-scroll'),last=[...(scroll?.querySelectorAll('.rivo-hub-tile')||[])].at(-1);
    if(!scroll||!last)return {ok:false};
    scroll.scrollTop=scroll.scrollHeight;last.scrollIntoView({block:'end'});
    const a=scroll.getBoundingClientRect(),b=last.getBoundingClientRect();
@@ -91,6 +91,16 @@ try{
   });
   check(id+' Tools last card fully reachable above ad safe band',tools.ok);
   check(id+' Tools scrolls independently',tools.overflow==='auto');
+  const toolLocale=await page.evaluate(()=>{
+   const el=document.querySelector('.rivo-locale-visible-value'),label=document.querySelector('.rivo-top-locale');
+   if(!el||!label)return false;
+   const a=el.getBoundingClientRect(),b=label.getBoundingClientRect();
+   return a.width>24&&a.left>=b.left-1&&a.right<=b.right+1&&
+     el.scrollWidth<=el.clientWidth+2&&
+     el.textContent.trim()==='${lang==='auto'?'AUTO':lang.toUpperCase()}';
+  });
+  check(id+' AUTO fully displayed on Tools header (with back button)',toolLocale);
+
   await page.screenshot({path:out+'/'+id+'-tools-bottom.png'});report.screens.push(id+'-tools-bottom.png');
   if(width===393&&lang==='auto'){
    await page.evaluate(()=>document.querySelector('.mobilebar [data-go="home"]')?.click());
