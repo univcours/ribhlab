@@ -13,9 +13,10 @@ test('approved RivoScan launcher art remains unchanged and contains glossy blue 
   assert.ok(css.toLowerCase().includes(c.toLowerCase()),'missing icon palette '+c);
  }
 });
-test('glossy icon stylesheet is the last UI layer and preserves semantic SVG',()=>{
+test('glossy icon stylesheet precedes the user-requested static override and preserves semantic SVG',()=>{
  const last=main.lastIndexOf("import './rivo-icon-identity-04575.css';");
  assert.ok(last>main.indexOf("import './rivo-visual-04574.css';"));
+ assert.ok(main.indexOf("import './rivo-camscanner-static-04576.css';")>last);
  assert.match(css,/Every operation retains its own meaningful SVG/);
  assert.match(css,/file-type thumbnails and actionable scanner controls/);
  assert.match(main,/class="rivo-feature-icon">\$\{ico\(f.icon,21\)\}/);
