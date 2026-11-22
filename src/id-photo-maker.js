@@ -142,7 +142,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
    const previous=blobURL;blobURL=objectURL;
    image=next;cutout=null;x.value='0';y.value='0';
    workspace?.loaded();if(saveButton)saveButton.disabled=false;
-   for(const b of moveButtons)b.disabled=false;
+   for(const b of moveButtons){b.disabled=false;b.setAttribute('aria-disabled','false');}
    if(previewImport)previewImport.textContent=({ar:'تغيير الصورة',fr:'Changer la photo',en:'Change Photo'})[language]||'Change Photo';
    if(previous)URL.revokeObjectURL(previous);
    if(bgSelect.value!=='original')await applyBackground();else update();
@@ -224,7 +224,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  moveButtons.push(railButton(rightRail,'left',namesForLang[5],()=>move(x,-10)));
  moveButtons.push(railButton(rightRail,'right',namesForLang[6],()=>move(x,10)));
  moveButtons.push(railButton(rightRail,'reset',namesForLang[7],()=>{if(!image)return;x.value='0';y.value='0';update()}));
- for(const b of moveButtons)b.disabled=!image;
+  for(const b of moveButtons){b.disabled=!image;b.setAttribute('aria-disabled',String(!image));}
  previewImport=document.createElement('button');previewImport.type='button';
  previewImport.className='rivo-id-preview-import';previewImport.textContent=({ar:'＋ استيراد صورة',fr:'＋ Importer une photo',en:'＋ Import Photo'})[language]||'＋ Import Photo';
  previewImport.setAttribute('aria-label',L[1]);

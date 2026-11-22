@@ -13,9 +13,9 @@ test('ID Photo preview is the only photo import entry, with one camera rail butt
 });
 test('movement controls cannot act before a photo is available',()=>{
  assert.match(s,/const moveButtons=\[\]/);
- assert.match(s,/for\(const b of moveButtons\)b\.disabled=!image/);
+ assert.match(s,/for\(const b of moveButtons\)\{b\.disabled=!image/);
  assert.match(s,/if\(!image\)return;/);
- assert.match(s,/for\(const b of moveButtons\)b\.disabled=false/);
+ assert.match(s,/for\(const b of moveButtons\)\{b\.disabled=false/);
 });
 test('ID Photo uses genuine native camera and keeps original 300 DPI saved format',()=>{
  assert.match(s,/Camera\.getPhoto\(/);

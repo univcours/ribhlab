@@ -100,7 +100,8 @@ test('every top-level search is inline with its page label on phones and tablets
 
 test('live license-plate search shares the modal title and close row',()=>{
  assert.match(plate,/header\.append\(title,searchRow,close\)/);
- assert.match(plate,/panel\.append\(header,pinned,view,status,last,foot,hint\)/);
+ assert.match(plate,/panel\.append\(header,pinned,stage,foot,hint\)/);
+ assert.match(plate,/stage\.append\(view,resultsPane\)/);
  assert.doesNotMatch(plate,/panel\.append\(header,searchRow,/);
  assert.match(css,/body \.rivo-plate-overlay \.rivo-live-dialog \.rivo-live-head/);
  assert.match(css,/body \.rivo-plate-overlay \.rivo-live-head > \.rivo-plate-search-row/);

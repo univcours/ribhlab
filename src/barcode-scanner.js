@@ -127,6 +127,13 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
  const result=document.createElement('div');result.className='rivo-live-result rivo-code-results';
  result.setAttribute('role','list');result.setAttribute('aria-label',L[3]);result.hidden=true;
+  const stage=document.createElement('div');stage.className='rivo-live-split-stage';
+  const resultsPane=document.createElement('aside');resultsPane.className='rivo-live-results-pane';
+  resultsPane.setAttribute('aria-label',L[17]);
+  const resultsHeading=document.createElement('strong');resultsHeading.className='rivo-live-results-heading';
+  resultsHeading.textContent=({ar:'النتائج',fr:'Résultats',en:'Results',es:'Resultados',de:'Ergebnisse',pt:'Resultados',it:'Risultati'})[language]||'Results';
+  const resultsEmpty=document.createElement('p');resultsEmpty.className='rivo-live-results-empty';
+  resultsEmpty.textContent=({ar:'النتائج ستظهر هنا بعد المسح',fr:'Les résultats apparaîtront ici',en:'Scanned codes appear here',es:'Los códigos aparecerán aquí',de:'Gescannte Codes erscheinen hier',pt:'Os códigos aparecem aqui',it:'I codici appaiono qui'})[language]||'Scanned codes appear here';
  const actions=document.createElement('div');actions.className='rivo-live-actions';
  const torch=iconButton('⚡ '+L[6],()=>toggleTorch());
  const file=iconButton(L[5],()=>picker.click());
@@ -139,7 +146,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  zoomActions.append(zoomMinus,zoomLabel,zoomPlus,autoZoom);
  actions.append(torch,file);
  const picker=document.createElement('input');picker.type='file';picker.accept='image/*';picker.hidden=true;
- box.append(head,help,camera,status,result,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
+  resultsPane.append(resultsHeading,status,resultsEmpty,result);
+  stage.append(camera,resultsPane);
+ box.append(head,help,stage,zoomActions,actions,picker);overlay.append(box);document.body.append(overlay);
  const reader=new BrowserMultiFormatReader();
  const dedup=newScanDeduplicator({gapMs:4200}),streams=[],temporaryURLs=[];
  let control=null,closed=false,light=false,lastDetectionAt=0;
@@ -191,7 +200,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    row.append(info,buttons);fragment.append(row);
   }
   result.replaceChildren(fragment);
-  result.hidden=codeHistory.size===0;
+  result.hidden=codeHistory.size===0;resultsEmpty.hidden=codeHistory.size>0;
  };
  const duplicateMessage=identity=>{
   const now=Date.now();

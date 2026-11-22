@@ -182,7 +182,16 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  detection.setAttribute('aria-hidden','true');
  view.append(video,guide,detection);
  const status=document.createElement('p');status.className='rivo-live-status';status.setAttribute('role','status');status.textContent=L[2];
- const last=document.createElement('strong');last.className='rivo-live-result';last.hidden=true;
+ const last=document.createElement('strong');last.className='rivo-live-result rivo-plate-current';last.hidden=true;
+  const stage=document.createElement('div');stage.className='rivo-live-split-stage';
+  const resultsPane=document.createElement('aside');resultsPane.className='rivo-live-results-pane';
+  const resultsHeading=document.createElement('strong');resultsHeading.className='rivo-live-results-heading';
+  resultsHeading.textContent=({ar:'لوحات السيارات',fr:'Plaques détectées',en:'Detected plates',es:'Matrículas detectadas',de:'Erkannte Kennzeichen',pt:'Matrículas detetadas',it:'Targhe rilevate'})[language]||'Detected plates';
+  const resultsEmpty=document.createElement('p');resultsEmpty.className='rivo-live-results-empty';
+  resultsEmpty.textContent=({ar:'اللوحات المقروءة ستظهر هنا',fr:'Les plaques apparaîtront ici',en:'Detected plates appear here'})[language]||'Detected plates appear here';
+  const plateHistory=document.createElement('div');plateHistory.className='rivo-plate-results-history';
+  plateHistory.setAttribute('role','list');
+  let lastPlate='';
  const foot=document.createElement('div');foot.className='rivo-live-actions';
  const count=document.createElement('span');count.className='rivo-plate-count';count.textContent='0';
  const Z=zoomCopy[language]||zoomCopy.en;
@@ -196,7 +205,9 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  zoomButton.setAttribute('aria-pressed','true');
  const torch=btn('⚡',()=>toggleTorch());foot.append(count,zoomButton,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
- panel.append(header,pinned,view,status,last,foot,hint);layer.append(panel);document.body.append(layer);
+  resultsPane.append(resultsHeading,status,resultsEmpty,last,plateHistory);
+  stage.append(view,resultsPane);
+ panel.append(header,pinned,stage,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
  let worker=null,stream=null,closed=false,working=false,foundCount=0,light=false,nextTimer=0,processing=false;
  let zoomRange=null,zoomCurrent=1,zoomBusy=false,autoZoomEnabled=true,missedFrames=0,searchPass=0,verifyRegion=null,lastZoomAt=0;
@@ -284,7 +295,14 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    const result=await onPlate({value:plate,format:'LICENSE_PLATE',match,photoName});
    if(closed)return;
    foundCount++;count.textContent=String(foundCount);
-   last.hidden=false;last.textContent=plate;
+    resultsEmpty.hidden=true;
+    if(lastPlate){
+     const old=document.createElement('div');old.className='rivo-plate-result-row';old.setAttribute('role','listitem');
+     old.textContent=lastPlate;plateHistory.prepend(old);
+     while(plateHistory.childElementCount>30)plateHistory.lastElementChild.remove();
+    }
+    lastPlate=plate;last.hidden=false;last.textContent=plate;
+    last.classList.toggle('rivo-plate-match',match);
    status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · '+Z.logUnavailable);
    guide.classList.toggle('matched',match);
   }catch(error){if(!closed)status.textContent=Z.saveFailed+': '+String(error?.message||error);}
