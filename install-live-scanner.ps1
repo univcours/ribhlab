@@ -174,6 +174,13 @@ if($oldActivity -match 'android:theme\s*=\s*"[^"]*"'){
 }else{
   $newActivity=$oldActivity.Substring(0,$oldActivity.Length-1)+' android:theme="@style/RivoScanNoActionBar">'
 }
+# Native portrait lock applies to all RivoScan screens on every phone rotation.
+# Keep it in both the full Android build and the compact Google ML Kit release.
+if($newActivity -match 'android:screenOrientation\\s*=\\s*"[^"]*"'){
+  $newActivity=[regex]::Replace($newActivity,'android:screenOrientation\\s*=\\s*"[^"]*"','android:screenOrientation="portrait"')
+}else{
+  $newActivity=$newActivity.Substring(0,$newActivity.Length-1)+' android:screenOrientation="portrait">'
+}
 $m=$m.Replace($oldActivity,$newActivity)
 [System.IO.File]::WriteAllText($manifest,$m,[System.Text.UTF8Encoding]::new($false))
 & (Join-Path $root 'apply-rivoscan-branding.ps1')
