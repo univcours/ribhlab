@@ -18,7 +18,7 @@ test('Android build uses the original signature and strictly increasing version'
  assert.ok(workflow.includes('0.45.63'));
  assert.ok(workflow.includes('assembleRelease'));
  assert.ok(!workflow.includes('publish-rivoscan-play-aab'));
- assert.ok(workflow.includes('e9b3e2779575ba08a91372fc3885eba01dd3e7e3'));
+ assert.ok(workflow.includes('e9b3e2779575ba08a91372fc3885eba01dd3e73e'));
  const versions=read('rivoscan-version.properties');
  assert.match(versions,/versionCode=178/);
  assert.match(versions,/versionName=0\.45\.63/);
