@@ -63,14 +63,14 @@ assert count==1, f"Expected one legacy camera activity, found {count}"
 # launcher activity, not merely the responsive WebView CSS. The ML Kit scanner
 # is provided by Google Play services and is not a RivoScan activity.
 main_activity=re.compile(
-    r'<activity\\b[^>]*android:name\\s*=\\s*["\\'](?:\\.MainActivity|com\\.ribhlab\\.rivoscan\\.MainActivity)["\\'][^>]*>',
+    r'<activity\b[^>]*android:name\s*=\s*"(?:\.MainActivity|com\.ribhlab\.rivoscan\.MainActivity)"[^>]*>',
     re.S
 )
 activities=list(main_activity.finditer(xml))
 assert len(activities)==1, "Expected one Android launcher MainActivity"
 tag=activities[0].group()
-if re.search(r'android:screenOrientation\\s*=',tag):
-    tag=re.sub(r'android:screenOrientation\\s*=\\s*["\\'][^"\\']*["\\']',
+if re.search(r'android:screenOrientation\s*=',tag):
+    tag=re.sub(r'android:screenOrientation\s*=\s*"[^"]*"',
                'android:screenOrientation="portrait"',tag)
 else:
     tag=tag[:-1]+' android:screenOrientation="portrait">'
