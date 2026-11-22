@@ -68,7 +68,7 @@ test('Banner stays native 320 x 50 with 3dp navigation gap and 5dp content prote
 });
 test('ID Photo has exactly one camera, one adjacent image import and disabled direction controls initially',()=>{
  const js=source('src/id-photo-maker.js');
- assert.match(js,/Keep exactly one camera and one Import/Change Photo control together/);
+ assert.ok(js.includes('Keep exactly one camera and one Import/Change Photo control together'));
  assert.match(js,/workspace\.dock\.append\(leftRail,rightRail,input\)/);
  assert.match(js,/for\(const b of moveButtons\)\{b\.disabled=!image/);
  assert.match(js,/Camera\.getPhoto/);
