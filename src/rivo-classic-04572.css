@@ -342,90 +342,215 @@ html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-liv
 }
 
 
-/* Responsive layout contract: prevent overlapping sections and clipped language selector. */
-html body #app .shell.rivo-dark-ui .rivo-home{
-  min-width:0!important;min-height:0!important;box-sizing:border-box!important;
+/* 0.45.73 responsive layout contract.
+ * A single normal-flow section stack, without absolute card/search positioning.
+ * The Android content viewport is clipped ABOVE the native banner and scrolls
+ * internally; mobile search rows, tools and file lists cannot sit over cards. */
+html body #app .shell.rivo-dark-ui .content{
+  min-width:0!important;box-sizing:border-box!important;
+}
+html body #app .shell.rivo-dark-ui .app-home.rivo-home.rivo-compact-home{
+  display:flex!important;flex-direction:column!important;
+  box-sizing:border-box!important;position:relative!important;
+  min-width:0!important;width:100%!important;
+  gap:0!important;padding:9px 11px 24px!important;
+  align-items:stretch!important;
+}
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-home.rivo-home.rivo-compact-home{
+  flex:1 1 0!important;height:100%!important;max-height:100%!important;
+  min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;scroll-padding-bottom:24px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-trust{
+  position:relative!important;flex:0 0 auto!important;
+  height:auto!important;min-height:44px!important;
+  margin:0 0 14px!important;
 }
 html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail{
-  position:static!important;z-index:auto!important;
+  box-sizing:border-box!important;position:relative!important;z-index:auto!important;
   display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  grid-auto-rows:auto!important;align-items:stretch!important;
-  height:auto!important;min-height:0!important;max-height:none!important;
+  grid-auto-rows:minmax(112px,auto)!important;align-items:stretch!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  max-height:none!important;flex:0 0 auto!important;
   margin:0 0 16px!important;padding:3px 1px 5px!important;
-  flex:none!important;overflow:visible!important;
+  gap:8px!important;overflow:visible!important;isolation:isolate!important;
 }
 html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
-  position:relative!important;transform:none!important;
-  height:auto!important;min-height:112px!important;max-height:none!important;
-  min-width:0!important;overflow:hidden!important;
-  padding:9px 3px!important;align-self:stretch!important;
+  box-sizing:border-box!important;position:relative!important;
+  flex:none!important;align-self:stretch!important;justify-self:stretch!important;
+  width:100%!important;height:auto!important;min-width:0!important;
+  min-height:112px!important;max-height:none!important;
+  margin:0!important;padding:8px 3px 10px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:8px!important;
+  transform:none!important;overflow:hidden!important;
+  box-shadow:inset 0 0 10px #0e61c20d!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile strong{
+  flex:none!important;display:block!important;max-width:100%!important;
+  overflow-wrap:anywhere!important;white-space:normal!important;
+  line-height:1.25!important;text-align:center!important;
+  font-size:clamp(10px,2.75vw,13px)!important;
 }
 html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row{
-  position:relative!important;z-index:auto!important;flex:none!important;
-  clear:both!important;min-width:0!important;min-height:46px!important;
-  margin:0 0 12px!important;padding:0!important;
+  box-sizing:border-box!important;display:flex!important;flex-direction:row!important;
+  position:relative!important;z-index:auto!important;clear:both!important;
+  align-items:center!important;justify-content:flex-start!important;
+  flex:0 0 auto!important;width:100%!important;min-width:0!important;
+  min-height:44px!important;height:auto!important;
+  padding:0!important;margin:0 0 12px!important;gap:9px!important;
+  isolation:isolate!important;
 }
-html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row>*{
-  min-width:0!important;max-width:100%!important;
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row .rivo-home-intro{
+  flex:0 0 auto!important;min-width:0!important;max-width:45%!important;
+  height:auto!important;margin:0!important;padding:0!important;
 }
-html body #app .shell.rivo-dark-ui .topbar{
-  display:flex!important;align-items:center!important;min-width:0!important;
-  gap:clamp(4px,1vw,9px)!important;
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row .rivo-premium-search{
+  flex:1 1 0!important;width:auto!important;min-width:0!important;
+  max-width:none!important;height:44px!important;min-height:44px!important;
+  margin:0!important;box-sizing:border-box!important;overflow:hidden!important;
 }
-html body #app .shell.rivo-dark-ui .topbar .crumb{
-  flex:1 1 0!important;min-width:0!important;gap:clamp(3px,1vw,8px)!important;
+html body #app .shell.rivo-dark-ui .rivo-home #home-select-banner,
+html body #app .shell.rivo-dark-ui .rivo-home #home-selection-root{
+  position:relative!important;flex:0 0 auto!important;
+  min-height:0!important;max-width:100%!important;
 }
-html body #app .shell.rivo-dark-ui .topbar .crumb strong{
-  font-size:clamp(11px,3.3vw,18px)!important;
-  overflow:hidden!important;text-overflow:ellipsis!important;
-}
-html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{
-  font-size:clamp(9px,2.2vw,12px)!important;
-}
-html body #app .shell.rivo-dark-ui .topbar .rivo-top-controls{
-  display:flex!important;align-items:center!important;
-  flex:0 0 auto!important;min-width:0!important;gap:5px!important;
-}
-html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  flex:0 0 auto!important;box-sizing:border-box!important;
-  min-width:clamp(87px,23vw,112px)!important;width:clamp(87px,23vw,112px)!important;
-  max-width:112px!important;gap:4px!important;padding:0 7px!important;
+html body #app .shell.rivo-dark-ui .rivo-home #home-recents{
+  box-sizing:border-box!important;position:relative!important;
+  flex:0 0 auto!important;width:100%!important;max-width:100%!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  margin:0!important;padding:2px 2px 18px!important;
   overflow:visible!important;
 }
-html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale svg{
-  flex:0 0 17px!important;width:17px!important;height:17px!important;
+/* Tools: the list alone scrolls in the safe viewport, including its LAST tile. */
+html body.rivo-native-android #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub{
+  display:flex!important;flex-direction:column!important;
+  flex:1 1 0!important;height:100%!important;min-height:0!important;max-height:100%!important;
+  overflow:hidden!important;
 }
-html body #app .shell.rivo-dark-ui .topbar #header-language{
-  display:block!important;box-sizing:border-box!important;flex:1 1 auto!important;
-  width:100%!important;min-width:0!important;max-width:100%!important;
-  font-size:clamp(11px,2.9vw,14px)!important;font-weight:750!important;
-  padding:0!important;margin:0!important;text-overflow:clip!important;
-  background:transparent!important;
+html body #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub .rivo-tools-search-title-row{
+  box-sizing:border-box!important;flex:0 0 auto!important;
+  position:relative!important;width:100%!important;
+  margin:0 0 12px!important;min-height:44px!important;
+}
+html body #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub .rivo-tools-scroll{
+  box-sizing:border-box!important;flex:1 1 0!important;min-width:0!important;
+  min-height:0!important;max-height:none!important;
+  width:100%!important;padding:2px 2px 32px!important;margin:0!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  scroll-padding-bottom:32px!important;overscroll-behavior-y:contain!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-scroll .rivo-hub-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;width:100%!important;min-width:0!important;
+  grid-auto-rows:minmax(110px,auto)!important;overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;height:auto!important;min-height:110px!important;
+  min-width:0!important;padding:10px 5px!important;gap:8px!important;
+  overflow:hidden!important;box-shadow:inset 0 0 10px #0e61c20c!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile strong{
+  width:100%!important;max-width:100%!important;min-height:0!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+  line-height:1.23!important;text-align:center!important;
+}
+/* Never use native <select> text rendering to determine visible AUTO width:
+ * some Android spinners reserve 20+px for an arrow and clip the label to AUT. */
+html body #app .shell.rivo-dark-ui .topbar{
+  box-sizing:border-box!important;display:flex!important;
+  align-items:center!important;gap:clamp(3px,1vw,8px)!important;
+  min-width:0!important;width:100%!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb{
+  display:flex!important;flex:1 1 0!important;
+  min-width:0!important;max-width:100%!important;
+  gap:clamp(3px,1vw,8px)!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb strong{
+  min-width:0!important;font-size:clamp(11px,3.1vw,18px)!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-controls{
+  display:flex!important;flex:0 0 auto!important;
+  align-items:center!important;min-width:0!important;gap:5px!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
+  box-sizing:border-box!important;position:relative!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;width:clamp(92px,24vw,118px)!important;
+  min-width:92px!important;max-width:118px!important;
+  gap:5px!important;padding:0 9px!important;overflow:hidden!important;
+  white-space:nowrap!important;cursor:pointer;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale>svg{
+  width:16px!important;height:16px!important;flex:0 0 16px!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-locale-visible-value{
+  display:inline-block!important;flex:0 0 auto!important;
+  min-width:4ch!important;width:auto!important;max-width:none!important;
+  font-weight:800!important;font-size:clamp(11px,3vw,14px)!important;
+  line-height:1!important;letter-spacing:0!important;
+  text-align:center!important;white-space:nowrap!important;overflow:visible!important;
+  color:#082752!important;-webkit-text-fill-color:#082752!important;
+  pointer-events:none!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale::after{
+  content:'⌄';display:block;flex:0 0 10px;
+  color:#082752;font-size:16px;font-weight:800;line-height:1;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale #header-language{
+  appearance:none!important;-webkit-appearance:none!important;
+  display:block!important;position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;max-width:none!important;
+  min-width:0!important;margin:0!important;padding:0!important;
+  opacity:0!important;cursor:pointer!important;z-index:2!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale:focus-within{
+  outline:2px solid #26A6F5!important;outline-offset:2px!important;
 }
 html body #app .shell.rivo-dark-ui .topbar .rivo-top-sound{
   flex:0 0 38px!important;min-width:38px!important;
 }
-@media(max-width:390px){
- html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
-   min-width:85px!important;width:85px!important;padding-inline:4px!important;
- }
- html body #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{
-   width:32px!important;height:32px!important;
- }
- html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail{
-   grid-template-columns:repeat(2,minmax(0,1fr))!important;
- }
- html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
-   min-height:98px!important;
- }
+/* Responsive widths and heights: content rearranges instead of overlapping. */
+@media(max-width:420px){
+  html body #app .shell.rivo-dark-ui .topbar:has(.rivo-header-back) .rivo-build-version{
+    display:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(100px,auto)!important;gap:10px!important;
+  }
+  html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
+    min-height:100px!important;
+  }
 }
-@media(max-width:320px){
- html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{display:none!important}
- html body #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:11px!important}
+@media(max-width:350px){
+  html body #app .shell.rivo-dark-ui .topbar{padding-inline:6px!important;}
+  html body #app .shell.rivo-dark-ui .topbar .crumb{gap:3px!important;}
+  html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{display:none!important;}
+  html body #app .shell.rivo-dark-ui .topbar:has(.rivo-header-back) .crumb strong{
+    display:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{
+    width:30px!important;height:30px!important;flex:0 0 30px!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
+    width:93px!important;min-width:93px!important;padding:0 5px!important;gap:3px!important;
+  }
+  html body #app .shell.rivo-dark-ui .rivo-tools-scroll .rivo-hub-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
 }
-@media(max-height:650px){
- html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
-   min-height:90px!important;
- }
+@media(max-height:620px){
+  html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
+    min-height:90px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile::before{
+    animation:none!important;
+  }
 }
