@@ -70,6 +70,9 @@ try{
     scrollTop:viewport.scrollTop,scrollBottom:bound.bottom,lastBottom:last?.bottom,lastTop:last?.top};
   });
   assert(!tools.error&&tools.count>10,'Tools list not mounted at '+width);
+  assert(tools.clientHeight>=Math.max(200,height*.35),'Tools scroll region collapsed at '+width+': '+JSON.stringify(tools));
+  assert(tools.lastTop<=tools.scrollBottom-28&&tools.lastBottom>tools.scrollBottom-100,
+   'Last Tools card is outside the visible scroll viewport at '+width+': '+JSON.stringify(tools));
   assert(tools.lastBottom<=tools.scrollBottom+3&&tools.lastBottom>=tools.scrollBottom-180,'Last Tools card is not visible after scrolling to end at '+width+' '+JSON.stringify(tools));
   await page.screenshot({path:path.join(out,'browser-'+width+'-tools-end.png')});
   report.sizes.push({width,height,home:{railBottom:home.rail.bottom,lastCardBottom:bottom,searchTop:home.search.top,distinctColors:new Set(home.cards.map(c=>c.background)).size},tools});
