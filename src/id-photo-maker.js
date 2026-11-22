@@ -147,15 +147,58 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  if(rows.length!==5)throw Error('ID Photo controls unexpectedly changed');
  const [makeSheet,saveControl]=actions.querySelectorAll('button');
  saveButton=saveControl;saveButton.disabled=true;
+ // Two compact sliders share one line, freeing space for the portrait preview.
+ const compactAdjust=document.createElement('div');compactAdjust.className='rivo-id-compact-adjust';
+ compactAdjust.append(rows[2],rows[3]);
  workspace=mountPreviewFirstWorkspace({
   panel,preview:canvas,language,defaultSection:'source',
   sections:[
    {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[rows[0]]},
    {id:'adjust',label:({ar:'المقاس والتأطير',fr:'Cadrage',en:'Size & crop'})[language]||'Size & crop',
-    nodes:[rows[1],rows[2],rows[3],makeSheet]},
+    nodes:[rows[1],compactAdjust,makeSheet]},
    {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[4],hint]}
   ],alwaysVisible:[status],footer:[saveButton]
  });
+ // Use the empty margins on BOTH sides of the actual photo, not a second
+ // row of controls below it. Keep every icon wholly inside its button.
+ const icons={
+  photo:'<rect x="3" y="6" width="18" height="15" rx="2"/><circle cx="12" cy="13" r="3.3"/><path d="M8 6l1.5-3h5L16 6"/>',
+  crop:'<path d="M7 3v14a3 3 0 0 0 3 3h11M3 7h14a3 3 0 0 1 3 3v11"/>',
+  background:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M4 16l5-5 4 3 3-4 4 5"/>',
+  up:'<path d="m6 14 6-6 6 6"/>',down:'<path d="m6 10 6 6 6-6"/>',
+  left:'<path d="m14 6-6 6 6 6"/>',right:'<path d="m10 6 6 6-6 6"/>',
+  reset:'<path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/>'
+ };
+ const names={
+  en:['Photo','Size & crop','Background','Move up','Move down','Move left','Move right','Reset position'],
+  ar:['الصورة','المقاس والتأطير','الخلفية','فوق','تحت','يسار','يمين','إرجاع الوسط'],
+  fr:['Photo','Cadrage','Fond','Haut','Bas','Gauche','Droite','Centrer']
+ };
+ const namesForLang=names[language]||names.en;
+ const leftRail=document.createElement('div'),rightRail=document.createElement('div');
+ leftRail.className='rivo-id-side-rail rivo-id-side-left';
+ rightRail.className='rivo-id-side-rail rivo-id-side-right';
+ const railButton=(rail,icon,label,fn)=>{
+  const b=document.createElement('button');b.type='button';b.className='rivo-id-side-action';
+  b.title=label;b.setAttribute('aria-label',label);
+  b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
+  b.addEventListener('click',fn);rail.append(b);
+ };
+ [['source','photo'],['adjust','crop'],['background','background']].forEach(([section,icon],i)=>{
+  railButton(leftRail,icon,namesForLang[i],()=>{
+   workspace.choose(section);workspace.show(true);
+  });
+ });
+ const move=(control,step)=>{
+  control.value=String(Math.max(Number(control.min),Math.min(Number(control.max),Number(control.value)+step)));
+  if(image)update();
+ };
+ railButton(rightRail,'up',namesForLang[3],()=>move(y,-10));
+ railButton(rightRail,'down',namesForLang[4],()=>move(y,10));
+ railButton(rightRail,'left',namesForLang[5],()=>move(x,-10));
+ railButton(rightRail,'right',namesForLang[6],()=>move(x,10));
+ railButton(rightRail,'reset',namesForLang[7],()=>{x.value='0';y.value='0';if(image)update()});
+ workspace.dock.append(leftRail,rightRail);
  status.classList.add('rivo-workspace-status');
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
  return close;
