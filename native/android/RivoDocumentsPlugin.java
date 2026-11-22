@@ -579,6 +579,26 @@ public class RivoDocumentsPlugin extends Plugin {
                     size=cursor.isNull(1)?0:cursor.getLong(1);
                 }
             }
+            // Reuse an app-owned legacy RS_QR (1).txt / RS_Bar (1).txt
+            // when the canonical original is not visible to MediaStore. No
+            // user data is deleted or implicitly merged.
+            if(target==null){
+                final String stem=name.substring(0,name.length()-4);
+                try(Cursor existing=resolver.query(documentsCollection(),
+                    new String[]{MediaStore.MediaColumns._ID,MediaStore.MediaColumns.DISPLAY_NAME,MediaStore.MediaColumns.SIZE},
+                    MediaStore.MediaColumns.RELATIVE_PATH+" = ?",new String[]{FOLDER},null)){
+                    if(existing!=null){
+                        while(existing.moveToNext()){
+                            final String candidate=existing.getString(1);
+                            if(candidate!=null&&candidate.matches(java.util.regex.Pattern.quote(stem)+" \\([0-9]+\\)\\.txt")){
+                                target=ContentUris.withAppendedId(documentsCollection(),existing.getLong(0));
+                                size=existing.isNull(2)?0:existing.getLong(2);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             if(size+incoming.length+80>24*1024*1024){
                 call.reject("Scanner journal reached the 24 MB limit; archive it before adding more codes.");return;
             }
@@ -591,6 +611,16 @@ public class RivoDocumentsPlugin extends Plugin {
                 target=resolver.insert(documentsCollection(),values);
                 if(target==null)throw new IllegalStateException("Cannot create daily scan file.");
                 created=true;
+                // A MediaStore collision can silently change the name to (1).
+                // Refuse it before writing, rather than creating more TXT files.
+                try(Cursor inserted=resolver.query(target,
+                    new String[]{MediaStore.MediaColumns.DISPLAY_NAME},null,null,null)){
+                    if(inserted!=null&&inserted.moveToFirst()&&!name.equals(inserted.getString(0))){
+                        try{resolver.delete(target,null,null);}catch(Exception ignored){}
+                        target=null;created=false;
+                        throw new IllegalStateException("Scanner journal already exists but is not accessible; duplicate TXT refused.");
+                    }
+                }
             } else if(size>0){
                 try(InputStream input=resolver.openInputStream(target)){
                     if(input==null)throw new IllegalStateException("Cannot read permanent scanner journal.");
