@@ -71,6 +71,8 @@ import './rivo-classic-04572.css';
 import './rivo-visual-04574.css';
 // Final icon identity: use the approved glossy cobalt/cyan RivoScan launcher palette.
 import './rivo-icon-identity-04575.css';
+// User-approved CamScanner-like file view and static icons; camera keeps its orbit.
+import './rivo-camscanner-static-04576.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -295,7 +297,8 @@ const docViewerUI=createDocumentViewer({
   },
   onError:message=>toast(message,true),
   getImageItems:()=>libraryItems.filter(item=>/^image\//i.test(item.mimeType||'')||/\.(jpg|jpeg|png|webp)$/i.test(item.name||'')),
-  onShare:doc=>bulkUI.share([doc])
+  onShare:doc=>bulkUI.share([doc]),
+  onAddScan:()=>openSmartScanner()
 });
 const bulkUI=createLibraryBulk({
   bridge:RivoDocuments,getLanguage:()=>language,getItems:()=>libraryItems,
