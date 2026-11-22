@@ -1,0 +1,103 @@
+/* RivoScan 0.45.77 — soft white cards, readable labels, clean vector controls.
+   Smart Scan's existing camera orbit is the only decorative animation. */
+
+/* Soft-white surfaces for Home and Documents, including saved-file rows. */
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-home .rivo-premium-tile,
+ .rivo-home .rivo-recent-card,
+ #home-recents>.rivo-recent-card,
+ #library-list>.document-entry,
+ .library-workspace .document-entry
+){
+ background:linear-gradient(145deg,#fff,#f1f6fd)!important;
+ border:1px solid #bfd2e6!important;
+ box-shadow:0 3px 11px #0c386b15!important;
+ color:#183d68!important;
+ -webkit-text-fill-color:initial!important;
+ filter:none!important;
+ animation:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-home .rivo-premium-tile,
+ #home-recents>.rivo-recent-card,
+ #library-list>.document-entry
+)::before,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-home .rivo-premium-tile,
+ #home-recents>.rivo-recent-card,
+ #library-list>.document-entry
+)::after{animation:none!important;}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-feature-tile,.rivo-premium-tile,.rivo-recent-card,.document-entry
+) :is(strong,b,small,p,.recent-file-meta,.document-description){
+ color:#193e68!important;-webkit-text-fill-color:#193e68!important;
+ opacity:1!important;text-shadow:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ #home-recents,#library-list
+) :is(.recent-file-meta,.document-description)>small{
+ color:#355c81!important;-webkit-text-fill-color:#355c81!important;
+ opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-premium-tile) .rivo-feature-icon{
+ background:#e1f1ff!important;color:#12599c!important;
+ border:1px solid #a5c9e7!important;box-shadow:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-premium-tile) .rivo-feature-icon svg{
+ stroke:#12599c!important;stroke-width:2.3!important;opacity:1!important;
+}
+
+/* QR scanner: zoom ratio between minus and plus MUST be legible on a light panel. */
+html body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-controls{
+ background:#eaf3fc!important;border:1px solid #b8d3eb!important;
+ border-radius:12px!important;padding:3px 5px!important;
+}
+html body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-label{
+ color:#123e6c!important;-webkit-text-fill-color:#123e6c!important;
+ opacity:1!important;font-size:clamp(12px,3.2vw,14px)!important;
+ font-weight:900!important;text-shadow:none!important;white-space:nowrap!important;
+ flex-basis:85px!important;
+}
+/* No washed-out decorative microcopy in scanner overlays or image tools. */
+html body :is(.rivo-code-overlay,.rivo-plate-overlay) :is(
+ .rivo-live-help,.rivo-live-status,.rivo-live-results-empty,
+ .rivo-live-results-heading,.rivo-live-result
+),html body .rivo-book-dialog :is(
+ .rivo-book-empty,.rivo-id-hint,.rivo-workspace-status,.rivo-id-row,
+ .rivo-workspace-task,.rivo-book-preview p
+){
+ color:#20476f!important;-webkit-text-fill-color:#20476f!important;
+ opacity:1!important;text-shadow:none!important;
+}
+html body .rivo-code-overlay .rivo-live-results-empty{
+ color:#315b83!important;-webkit-text-fill-color:#315b83!important;
+}
+html body .rivo-code-overlay :is(button:disabled,button[disabled]),
+html body .rivo-book-dialog :is(button:disabled,button[disabled]){
+ opacity:1!important;color:#425c75!important;
+ -webkit-text-fill-color:#425c75!important;background:#e4edf6!important;
+ border-color:#a6bdcf!important;
+}
+html body .rivo-book-dialog .rivo-book-preview-empty{
+ background:#edf5fc!important;
+}
+html body .rivo-book-dialog .rivo-workspace-task svg,
+html body .rivo-book-dialog .rivo-workspace-settings-toggle svg{
+ width:19px!important;height:19px!important;flex:0 0 19px!important;
+ stroke:currentColor!important;fill:none!important;vertical-align:middle!important;
+}
+html body .rivo-book-dialog .rivo-workspace-task{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:7px!important;min-height:42px!important;
+}
+html body .rivo-book-dialog .rivo-workspace-settings-toggle{
+ display:grid!important;place-items:center!important;
+}
+@media(max-width:360px){
+ html body .rivo-code-overlay.rivo-live-overlay .rivo-code-zoom-label{
+  flex-basis:75px!important;font-size:12px!important;
+ }
+}
