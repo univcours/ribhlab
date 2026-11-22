@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {calculateAdLayout} from '../src/rivo-native-ad-geometry.js';
 const read=rel=>readFileSync(new URL('../'+rel,import.meta.url),'utf8');
-test('QR scanner permanently mounts camera and list in separate horizontal columns',()=>{
+test('QR scanner mounts camera above an independently scrollable results panel',()=>{
  const src=read('src/barcode-scanner.js');
  const css=read('src/rivo-ui-04569.css');
  assert.match(src,/const stage=document\.createElement\('div'\);stage\.className='rivo-live-split-stage'/);
@@ -11,16 +11,19 @@ test('QR scanner permanently mounts camera and list in separate horizontal colum
  assert.match(src,/stage\.append\(camera,resultsPane\)/);
  assert.doesNotMatch(src,/box\.append\(head,help,camera,status,result/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
+ const neon=read('src/rivo-neon-04571.css');
+ assert.match(neon,/grid-template-rows:minmax\(0,0\.94fr\) minmax\(0,1\.06fr\)!important/);
  assert.match(css,/\.rivo-live-results-pane \.(?:rivo-code-results|rivo-live-status)/);
  assert.match(css,/overflow-y:auto!important/);
 });
-test('License Plate scanner shares exact side-by-side layout and shows a scrollable history',()=>{
+test('License Plate scanner shares vertical camera/results layout and shows a scrollable history',()=>{
  const src=read('src/plate-scanner.js'),css=read('src/rivo-ui-04569.css');
  assert.match(src,/stage\.append\(view,resultsPane\)/);
  assert.match(src,/resultsPane\.append\(resultsHeading,status,resultsEmpty,last,lastTime,lastCopy,plateHistory\)/);
  assert.match(src,/plateHistory\.prepend\(old\)/);
  assert.match(src,/while\(plateHistory\.childElementCount>30\)/);
  assert.match(css,/\.rivo-plate-results-history\{/);
+ assert.match(read('src/rivo-neon-04571.css'),/grid-row:2!important;grid-column:1!important/);
  assert.match(css,/\.rivo-plate-current\.rivo-plate-match/);
  assert.doesNotMatch(src,/panel\.append\(header,pinned,view,status,last/);
 });
