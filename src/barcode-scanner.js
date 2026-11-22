@@ -108,6 +108,16 @@ function drawMultipleOutlines(canvas,video,decoded){
  }
  return count>0;
 }
+const scannerResultIcon=kind=>{
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','18');svg.setAttribute('height','18');
+ svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+ svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+ const add=(tag,attrs)=>{const el=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));svg.append(el);};
+ if(kind==='copy'){add('rect',{x:8,y:8,width:12,height:12,rx:2});add('path',{d:'M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2'});}
+ else{add('path',{d:'M14 4h6v6M20 4l-9 9'});add('path',{d:'M20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5'});}
+ svg.setAttribute('aria-hidden','true');return svg;
+};
 export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onSuccess=()=>{},onClose=()=>{}}={}){
  const L=I18N[language]||I18N.en;
  const overlay=document.createElement('div');overlay.className='rivo-code-overlay rivo-live-overlay';
@@ -186,25 +196,26 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const info=document.createElement('div');info.className='rivo-code-result-info';
    const format=document.createElement('strong');format.textContent=item.format;
    const value=document.createElement('span');value.className='rivo-code-result-value';value.textContent=item.value;
-   value.dir='auto';info.append(format,value);
+   value.dir='auto';
     const stamped=document.createElement('time');stamped.className='rivo-code-result-time';
     stamped.dateTime=new Date(item.scannedAt).toISOString();
     stamped.textContent=new Date(item.scannedAt).toLocaleTimeString(language);
     const saved=document.createElement('small');saved.className='rivo-code-result-save-state';
     saved.dataset.saveState=item.saveState;
     saved.textContent=item.saveState==='saved'?'Saved':item.saveState==='already'?'Already saved':item.saveState==='failed'?'Save failed':'Saving...';
-    info.append(stamped,saved);
+    // The code, copy and link buttons share one compact row.
    const buttons=document.createElement('div');buttons.className='rivo-code-result-buttons';
    const copyButton=iconButton(L[4],async()=>{
     try{await writeClipboard(item.value);status.textContent=L[13];}
     catch(error){status.textContent=L[14];console.warn('Copy code:',error);}
    });
-   copyButton.className='rivo-code-copy';buttons.append(copyButton);
+   copyButton.className='rivo-code-copy';copyButton.setAttribute('aria-label',L[4]);copyButton.title=L[4];copyButton.replaceChildren(scannerResultIcon('copy'));buttons.append(copyButton);
    if(safeScannedUrl(item.value)){
     const linkButton=iconButton(L[15],()=>{void openScannedLink(item.value);});
-    linkButton.className='rivo-code-open-link';buttons.append(linkButton);
+    linkButton.className='rivo-code-open-link';linkButton.setAttribute('aria-label',L[15]);linkButton.title=L[15];linkButton.replaceChildren(scannerResultIcon('link'));buttons.append(linkButton);
    }
-   row.append(info,buttons);fragment.append(row);
+   const valueLine=document.createElement('div');valueLine.className='rivo-code-value-line';valueLine.append(value,buttons);
+    info.replaceChildren(format,valueLine,stamped,saved);row.append(info);fragment.append(row);
   }
   result.replaceChildren(fragment);
   result.hidden=codeHistory.size===0;resultsEmpty.hidden=codeHistory.size>0;
