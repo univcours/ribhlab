@@ -340,3 +340,92 @@ html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-split-stage>.rivo-liv
 @media(prefers-reduced-motion:reduce){
  html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile::before{animation:none!important}
 }
+
+
+/* Responsive layout contract: prevent overlapping sections and clipped language selector. */
+html body #app .shell.rivo-dark-ui .rivo-home{
+  min-width:0!important;min-height:0!important;box-sizing:border-box!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail{
+  position:static!important;z-index:auto!important;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-auto-rows:auto!important;align-items:stretch!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  margin:0 0 16px!important;padding:3px 1px 5px!important;
+  flex:none!important;overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
+  position:relative!important;transform:none!important;
+  height:auto!important;min-height:112px!important;max-height:none!important;
+  min-width:0!important;overflow:hidden!important;
+  padding:9px 3px!important;align-self:stretch!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row{
+  position:relative!important;z-index:auto!important;flex:none!important;
+  clear:both!important;min-width:0!important;min-height:46px!important;
+  margin:0 0 12px!important;padding:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-search-title-row>*{
+  min-width:0!important;max-width:100%!important;
+}
+html body #app .shell.rivo-dark-ui .topbar{
+  display:flex!important;align-items:center!important;min-width:0!important;
+  gap:clamp(4px,1vw,9px)!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb{
+  flex:1 1 0!important;min-width:0!important;gap:clamp(3px,1vw,8px)!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .crumb strong{
+  font-size:clamp(11px,3.3vw,18px)!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{
+  font-size:clamp(9px,2.2vw,12px)!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-controls{
+  display:flex!important;align-items:center!important;
+  flex:0 0 auto!important;min-width:0!important;gap:5px!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;box-sizing:border-box!important;
+  min-width:clamp(87px,23vw,112px)!important;width:clamp(87px,23vw,112px)!important;
+  max-width:112px!important;gap:4px!important;padding:0 7px!important;
+  overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale svg{
+  flex:0 0 17px!important;width:17px!important;height:17px!important;
+}
+html body #app .shell.rivo-dark-ui .topbar #header-language{
+  display:block!important;box-sizing:border-box!important;flex:1 1 auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  font-size:clamp(11px,2.9vw,14px)!important;font-weight:750!important;
+  padding:0!important;margin:0!important;text-overflow:clip!important;
+  background:transparent!important;
+}
+html body #app .shell.rivo-dark-ui .topbar .rivo-top-sound{
+  flex:0 0 38px!important;min-width:38px!important;
+}
+@media(max-width:390px){
+ html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale{
+   min-width:85px!important;width:85px!important;padding-inline:4px!important;
+ }
+ html body #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{
+   width:32px!important;height:32px!important;
+ }
+ html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
+   min-height:98px!important;
+ }
+}
+@media(max-width:320px){
+ html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{display:none!important}
+ html body #app .shell.rivo-dark-ui .topbar .crumb strong{font-size:11px!important}
+}
+@media(max-height:650px){
+ html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>.rivo-feature-tile{
+   min-height:90px!important;
+ }
+}
