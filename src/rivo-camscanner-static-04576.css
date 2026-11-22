@@ -311,3 +311,18 @@ html body #app .shell.rivo-dark-ui :is(
  animation:none!important;animation-name:none!important;
  animation-delay:0s!important;
 }
+
+/* Other legacy glow animations: back/dismiss halos and decorative hero sheen.
+   One-shot success feedback and true loading indicators remain functional. */
+html body :is(
+ button[data-inapp-back],button.back,.rivo-header-back,.rivo-modal-dismiss,
+ button[data-rivo-modal-close],.rivo-viewer-back,.rivo-pages-back,
+ button[data-back],button[aria-label="Back" i],button[aria-label="Retour" i],
+ button[aria-label="رجوع"],button[aria-label="عودة"],
+ button[data-perfect="close"],.rivo-update-close,.rivo-tool-back
+){
+ animation:none!important;animation-name:none!important;
+ will-change:auto!important;
+ box-shadow:0 2px 5px #11407f25!important;
+}
+html body .hero-art-shine{animation:none!important;display:none!important}
