@@ -6,7 +6,7 @@ const puppeteer=require('puppeteer-core');
 const fs=require('node:fs'),path=require('node:path');
 const out=path.join(process.cwd(),'qa','04573');
 fs.mkdirSync(out,{recursive:true});
-const sizes=[[320,700],[360,780],[393,852],[412,915]];
+const sizes=[[320,700],[360,780],[393,852],[412,915],[540,960],[768,1024]];
 const report={appVersion:'0.45.73',source:'actual RivoScan Vite preview in headless Chrome; camera video simulated',sizes:[],errors:[]};
 const pause=t=>new Promise(r=>setTimeout(r,t));
 const assert=(condition,message)=>{if(!condition)throw new Error(message)};
@@ -24,7 +24,7 @@ try{
   await page.setViewport({width,height,isMobile:true,hasTouch:true,deviceScaleFactor:1});
   page.on('pageerror',e=>report.errors.push({width,error:e.message}));
   await page.evaluateOnNewDocument(()=>{
-   localStorage.setItem('rivo-language','en');
+   localStorage.removeItem('rivo-language');
    localStorage.setItem('rivo-release-notes-read','0.45.73');
   });
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'domcontentloaded',timeout:45000});
@@ -47,7 +47,12 @@ try{
     .map(el=>{let r=el.getBoundingClientRect();
       return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,background:getComputedStyle(el).backgroundImage,
        label:el.textContent.trim()};});
-   return{rail,search,cards,overflow:document.documentElement.scrollWidth>innerWidth+2};
+   const topbar=document.querySelector('.topbar'),locale=document.querySelector('.rivo-top-locale');
+    const lang=document.querySelector('#header-language'),brand=document.querySelector('.topbar .crumb'),controls=document.querySelector('.rivo-top-controls');
+    const box=e=>{if(!e)return null;const r=e.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width,top:r.top,bottom:r.bottom};};
+    return{rail,search,cards,overflow:document.documentElement.scrollWidth>innerWidth+2,
+      header:{topbar:box(topbar),locale:box(locale),lang:box(lang),brand:box(brand),controls:box(controls),
+        value:lang?.value,text:lang?.selectedOptions?.[0]?.text,langWidth:lang?.clientWidth,langScrollWidth:lang?.scrollWidth}};
   });
   assert(home.rail&&home.search&&home.cards.length===4,'Home missing cards/search at '+width);
   const bottom=Math.max(...home.cards.map(c=>c.bottom));
@@ -55,6 +60,12 @@ try{
   assert(home.rail.bottom+5<=home.search.top,'Home card/search overlap at '+width+': '+home.rail.bottom+' vs '+home.search.top);
   assert(bottom+5<=home.search.top,'My Files obscured by Home cards at '+width);
   assert(!home.overflow,'Horizontal Home viewport overflow at '+width);
+  assert(home.header.text==='AUTO','Language is not AUTO at '+width+': '+JSON.stringify(home.header));
+  assert(home.header.value==='auto','Automatic language mode is not selected at '+width);
+  assert(home.header.locale.width>=105,'Language selector cropped at '+width);
+  assert(home.header.locale.right<=home.header.topbar.right+1,'Locale control outside topbar at '+width);
+  assert(home.header.brand.right<=home.header.controls.left+1,'Brand and locale buttons overlap at '+width);
+  assert(home.header.langScrollWidth<=home.header.langWidth+3,'AUTO text overflows select at '+width);
   assert(new Set(home.cards.map(c=>c.background)).size===4,'Home color styles not distinct');
   await page.screenshot({path:path.join(out,'browser-'+width+'-home.png')});
   await page.evaluate(()=>document.querySelector('.mobilebar [data-tab="tools"]')?.click());
@@ -75,7 +86,7 @@ try{
    'Last Tools card is outside the visible scroll viewport at '+width+': '+JSON.stringify(tools));
   assert(tools.lastBottom<=tools.scrollBottom+3&&tools.lastBottom>=tools.scrollBottom-180,'Last Tools card is not visible after scrolling to end at '+width+' '+JSON.stringify(tools));
   await page.screenshot({path:path.join(out,'browser-'+width+'-tools-end.png')});
-  report.sizes.push({width,height,home:{railBottom:home.rail.bottom,lastCardBottom:bottom,searchTop:home.search.top,distinctColors:new Set(home.cards.map(c=>c.background)).size},tools});
+  report.sizes.push({width,height,home:{railBottom:home.rail.bottom,lastCardBottom:bottom,searchTop:home.search.top,distinctColors:new Set(home.cards.map(c=>c.background)).size,header:home.header},tools});
   await page.evaluate(()=>document.querySelector('.mobilebar [data-go="home"]')?.click());
   await page.waitForSelector('.rivo-home .rivo-feature-rail',{timeout:12000});
   await pause(200);
@@ -114,5 +125,5 @@ try{
  }
 }finally{fs.writeFileSync(path.join(out,'visual-qa-report.json'),JSON.stringify(report,null,2));await browser.close()}
 assert(report.errors.length===0,'Page errors: '+JSON.stringify(report.errors));
-console.log('PASS 0.45.73: 4 viewports, nonoverlap Home, Tools scrolling, vertical Plate 50/50, QR horizontal');
+console.log('PASS 0.45.73: six viewports, full AUTO header, nonoverlap Home, Tools scrolling, vertical Plate 50/50, QR horizontal');
 })().catch(e=>{report.errors.push({fatal:e.message});fs.writeFileSync(path.join(out,'visual-qa-report.json'),JSON.stringify(report,null,2));console.error(e);process.exit(1)});
