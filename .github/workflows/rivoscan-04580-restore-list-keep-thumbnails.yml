@@ -33,8 +33,7 @@ jobs:
           set -euo pipefail
           grep -Fx 'versionCode=195' rivoscan-version.properties
           grep -Fx 'versionName=0.45.80' rivoscan-version.properties
-          node scripts/prepare-rivoscan-admob-release.mjs
-          python3 scripts/verify-rivoscan-portrait.py --check-only
+          node scripts/prepare-rivoscan-admob-release.mjs --check-only
       - name: Install and run source checks
         run: |
           npm install --no-audit --no-fund
@@ -69,6 +68,7 @@ jobs:
           npx cap add android
           npx cap sync android
           python3 scripts/prepare-rivoscan-compact.py
+          python3 scripts/verify-rivoscan-portrait.py
           node scripts/prepare-rivoscan-admob-release.mjs
       - name: Sign with original Google Play upload key
         env:
