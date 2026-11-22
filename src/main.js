@@ -65,7 +65,8 @@ import './rivo-polish-04566.css';
 import './rivo-ui-04567.css';
 import './rivo-ui-04569.css';
 import './rivo-qa-04570.css';
-import './rivo-neon-04571.css';
+// Preserve all later feature fixes; restore 0.45.44 palette in the final CSS layer.
+import './rivo-classic-04572.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -467,9 +468,9 @@ function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
  if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',symbol:'filelines'};
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',symbol:'image'};
- if(/^(?:rs|rivoscan)_qr(?:_|\.)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
- if(/^(?:rs_bar(?:_|\.)|rivoscan_barcode_)/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
-  if(/^(?:rivoscan_plates(?:_|\.)|rs_plates(?:_|\.))/.test(name))return {code:'PLATE',klass:'plate',symbol:'plate'};
+ if(/^(?:rs|rivoscan)_qr(?:\s*\(\d+\))?(?:[._-]|$)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
+ if(/^(?:rs_bar(?:\s*\(\d+\))?(?:[._-]|$)|rivoscan_barcode(?:\s*\(\d+\))?(?:[._-]|$))/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
+  if(/^(?:rivoscan_plates|rs_plates)(?:\s*\(\d+\))?(?:[._-]|$)/.test(name))return {code:'PLATE',klass:'plate',symbol:'plate'};
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',symbol:'sheet'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',symbol:'filelines'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',symbol:'archive'};
