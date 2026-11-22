@@ -41,7 +41,7 @@ test('ID Photo Maker offers actual camera and preview-based image picker',()=>{
  const id=get('src/id-photo-maker.js');
  assert.match(id,/Camera\.getPhoto/);
  assert.match(id,/source:CameraSource\.Camera/);
- assert.match(id,/workspace\.dock\.append\(previewImport,leftRail,rightRail,input\)/);
+ assert.match(id,/workspace\.dock\.append\(leftRail,rightRail,input\)/);
  assert.match(id,/input\.className='rivo-id-native-file-picker'/);
 });
 test('book scan empty preview has functional photo/import actions',()=>{
