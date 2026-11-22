@@ -1,0 +1,176 @@
+/* 0.45.70: focused corrections verified against the rendered RivoScan UI.
+   Preserve the approved native 320x50 AdMob view and original signing key. */
+
+/* The previous 65px fixed Home tile clipped the second line of QR and
+   Plate Scanner at 320/360/393dp. Reserve enough space for both lines. */
+html body #app .shell.rivo-dark-ui button.rivo-feature-tile {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  height:84px!important;
+  min-height:84px!important;
+  max-height:none!important;
+  padding:6px 3px 7px!important;
+  gap:4px!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-feature-tile .rivo-feature-icon {
+  flex:0 0 34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  margin:0 auto!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-feature-tile strong {
+  display:block!important;
+  flex:none!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  font-size:clamp(10.5px,2.9vw,12px)!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  text-align:center!important;
+  text-wrap:balance;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-feature-tile[data-rivo-feature="plateScanner"]{
+  background:
+    linear-gradient(155deg,#fff7e4,#ffd3ad 67%,#ffecd2) padding-box,
+    linear-gradient(110deg,#df6c24,#ffc66d,#cc4b21,#ffcb74) border-box!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-feature-tile[data-rivo-feature="plateScanner"] strong {
+  color:#703007!important;
+  -webkit-text-fill-color:#703007!important;
+  font-size:clamp(10.5px,2.9vw,12px)!important;
+}
+
+/* Book Scan: the fixed-height settings panel formerly pushed Save PDF below
+   the bottom edge. The preview owns the flexible space, Save owns its row. */
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog {
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  height:calc(100dvh - 8px)!important;
+  max-height:calc(100dvh - 8px)!important;
+  overflow:hidden!important;
+  padding:0!important;
+}
+body.rivo-native-android .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog{
+  height:calc(100dvh - var(--rivo-content-bottom,98px) - 10px)!important;
+  max-height:calc(100dvh - var(--rivo-content-bottom,98px) - 10px)!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-book-preview-dock{
+  display:flex!important;
+  flex:1 1 0!important;
+  min-height:95px!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  padding:7px 8px!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-workspace-status{
+  flex:0 0 auto!important;
+  min-height:0!important;
+  max-height:32px!important;
+  margin:0!important;
+  padding:2px 10px!important;
+  overflow:hidden!important;
+  color:#285374!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-workspace-settings:not([hidden]){
+  display:block!important;
+  flex:0 0 auto!important;
+  max-height:min(27dvh,200px)!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:4px 9px!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-workspace-settings[hidden]{
+  display:none!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-code-actions.rivo-edit-bottom-bar{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:flex!important;
+  flex:0 0 54px!important;
+  width:100%!important;
+  min-height:54px!important;
+  max-height:54px!important;
+  padding:5px 10px 7px!important;
+  margin:0!important;
+  align-items:center!important;
+  background:#edf6ff!important;
+  border-top:1px solid #d3e3f2!important;
+  z-index:5!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-code-actions.rivo-edit-bottom-bar button{
+  box-sizing:border-box!important;
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:42px!important;
+  min-height:42px!important;
+  padding:6px 12px!important;
+  margin:0!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  text-align:center!important;
+  overflow:visible!important;
+}
+body .rivo-id-overlay .rivo-id-dialog.rivo-book-dialog .rivo-code-actions.rivo-edit-bottom-bar button:disabled{
+  color:#46637e!important;
+  -webkit-text-fill-color:#46637e!important;
+  opacity:1!important;
+}
+
+/* The 50/50 result panes show the timestamp and disk status for EACH code. */
+.rivo-code-overlay .rivo-code-result-time{
+  font-size:10px!important;
+  line-height:1.3!important;
+  color:#d0ebfc!important;
+  font-weight:650!important;
+}
+.rivo-code-overlay .rivo-code-result-save-state{
+  font-size:10px!important;
+  color:#d0ebfc!important;
+  line-height:1.25!important;
+  font-weight:800!important;
+}
+.rivo-code-overlay .rivo-code-result-save-state[data-save-state="saved"]{color:#6ff5b8!important}
+.rivo-code-overlay .rivo-code-result-save-state[data-save-state="already"]{color:#fce4ab!important}
+.rivo-code-overlay .rivo-code-result-save-state[data-save-state="failed"]{color:#ffc5c5!important}
+.rivo-plate-overlay .rivo-live-results-pane .rivo-plate-copy{
+  display:block!important;
+  width:100%!important;
+  flex:0 0 auto!important;
+  min-height:34px!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  color:#fff!important;
+  background:#0c75c2!important;
+  border:1px solid #69bcff!important;
+  border-radius:8px!important;
+}
+.rivo-plate-overlay .rivo-live-results-pane .rivo-plate-copy[hidden]{display:none!important}
+.rivo-plate-overlay .rivo-live-results-pane .rivo-plate-results-history .rivo-plate-result-row{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:4px!important;
+}
+.rivo-plate-overlay .rivo-plate-results-history .rivo-plate-result-row button{
+  flex:0 0 auto!important;
+  min-height:29px!important;
+  border-radius:7px!important;
+  color:#fff!important;
+  font-size:10px!important;
+  background:#0b6cb3!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui button.rivo-feature-tile{animation:none!important;}
+}

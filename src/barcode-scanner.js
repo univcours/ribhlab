@@ -187,6 +187,13 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const format=document.createElement('strong');format.textContent=item.format;
    const value=document.createElement('span');value.className='rivo-code-result-value';value.textContent=item.value;
    value.dir='auto';info.append(format,value);
+    const stamped=document.createElement('time');stamped.className='rivo-code-result-time';
+    stamped.dateTime=new Date(item.scannedAt).toISOString();
+    stamped.textContent=new Date(item.scannedAt).toLocaleTimeString(language);
+    const saved=document.createElement('small');saved.className='rivo-code-result-save-state';
+    saved.dataset.saveState=item.saveState;
+    saved.textContent=item.saveState==='saved'?'Saved':item.saveState==='already'?'Already saved':item.saveState==='failed'?'Save failed':'Saving...';
+    info.append(stamped,saved);
    const buttons=document.createElement('div');buttons.className='rivo-code-result-buttons';
    const copyButton=iconButton(L[4],async()=>{
     try{await writeClipboard(item.value);status.textContent=L[13];}
@@ -297,26 +304,31 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    lastDetectionAt=Date.now();
    if(drawOutline(outline,video,decoded.getResultPoints?.()||[]))playDetectedAnimation();
   }
-  codeHistory.set(identity,entry);
+  const current={...entry,scannedAt:Date.now(),saveState:'pending'};
+  codeHistory.set(identity,current);
   renderCodeResults();
   status.textContent=L[3]+' · '+entry.format;
   try{
    const saved=await onScan(entry);
    if(closed)return;
    if(saved?.duplicate||saved?.alreadySaved){
+    current.saveState='already';renderCodeResults();
     status.textContent=L[12];
     duplicateNotices.set(identity,Date.now());
     return;
    }
    if(saved?.saved){
+    current.saveState='saved';renderCodeResults();
     successful++;updateCount();
     try{onSuccess(entry);}catch(error){console.warn('Scan success feedback:',error);}
     try{navigator.vibrate?.(55);}catch{}
     status.textContent=L[8]+' · '+entry.format;
    }else{
+    current.saveState='failed';renderCodeResults();
     status.textContent=L[9]+(saved?.reason||'');
    }
   }catch(error){
+   current.saveState='failed';renderCodeResults();
    if(!closed){status.textContent=L[9]+String(error?.message||error);notify(status.textContent,true);}
   }
  }

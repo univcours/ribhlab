@@ -2,13 +2,13 @@ import {createWorker} from 'tesseract.js';
 import {readPlateZoomRange,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from './plate-distance.js';
 
 const labels={
- en:['Plate Scanner','Search for a plate (e.g. 12345 A 7)','Point the camera at the whole plate','Plate saved','Match found · photo captured','Camera unavailable','OCR model may download on first use','No target'],
- ar:['قارئ اللوحات','ابحث عن لوحة (مثال 12345 أ 7)','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','تلقات مطابقة · تصوّرات السيارة','الكاميرا غير متاحة','أول استعمال يمكن يحتاج تحميل نموذج القراءة','ما كاين حتى رقم للبحث'],
- fr:['Lecteur de plaques','Rechercher une plaque (ex. 12345 A 7)','Cadrez la plaque entière','Plaque enregistrée','Correspondance · photo enregistrée','Caméra indisponible','Le modèle OCR peut être téléchargé au premier usage','Aucune cible'],
- es:['Lector de matrículas','Buscar matrícula (ej. 12345 A 7)','Enfoca la matrícula completa','Matrícula guardada','Coincidencia · foto capturada','Cámara no disponible','El modelo OCR puede descargarse en el primer uso','Sin objetivo'],
- de:['Kennzeichenleser','Kennzeichen suchen (z. B. 12345 A 7)','Ganzes Kennzeichen erfassen','Kennzeichen gespeichert','Übereinstimmung · Foto aufgenommen','Kamera nicht verfügbar','OCR-Modell wird eventuell beim ersten Mal geladen','Kein Suchziel'],
- pt:['Leitor de matrículas','Procurar matrícula (ex. 12345 A 7)','Aponte a câmara para toda a matrícula','Matrícula guardada','Correspondência · fotografia capturada','Câmara indisponível','O modelo OCR poderá ser descarregado no primeiro uso','Sem alvo'],
- it:['Lettore targhe','Cerca targa (es. 12345 A 7)','Inquadra tutta la targa','Targa salvata','Corrispondenza · foto acquisita','Fotocamera non disponibile','Il modello OCR potrebbe essere scaricato al primo uso','Nessun obiettivo']
+ en:['Plate Scanner','Search for a plate (e.g. 12345 A 7)','Point the camera at the whole plate','Plate saved','Watchlisted plate detected','Camera unavailable','OCR model may download on first use','No target'],
+ ar:['قارئ اللوحات','ابحث عن لوحة (مثال 12345 أ 7)','وجّه الكاميرا نحو اللوحة كاملة','تسجلات اللوحة','تم التعرف على لوحة مراقبة','الكاميرا غير متاحة','أول استعمال يمكن يحتاج تحميل نموذج القراءة','ما كاين حتى رقم للبحث'],
+ fr:['Lecteur de plaques','Rechercher une plaque (ex. 12345 A 7)','Cadrez la plaque entière','Plaque enregistrée','Plaque surveillée détectée','Caméra indisponible','Le modèle OCR peut être téléchargé au premier usage','Aucune cible'],
+ es:['Lector de matrículas','Buscar matrícula (ej. 12345 A 7)','Enfoca la matrícula completa','Matrícula guardada','Matrícula vigilada detectada','Cámara no disponible','El modelo OCR puede descargarse en el primer uso','Sin objetivo'],
+ de:['Kennzeichenleser','Kennzeichen suchen (z. B. 12345 A 7)','Ganzes Kennzeichen erfassen','Kennzeichen gespeichert','Überwachtes Kennzeichen erkannt','Kamera nicht verfügbar','OCR-Modell wird eventuell beim ersten Mal geladen','Kein Suchziel'],
+ pt:['Leitor de matrículas','Procurar matrícula (ex. 12345 A 7)','Aponte a câmara para toda a matrícula','Matrícula guardada','Matrícula monitorizada detetada','Câmara indisponível','O modelo OCR poderá ser descarregado no primeiro uso','Sem alvo'],
+ it:['Lettore targhe','Cerca targa (es. 12345 A 7)','Inquadra tutta la targa','Targa salvata','Targa monitorata rilevata','Fotocamera non disponibile','Il modello OCR potrebbe essere scaricato al primo uso','Nessun obiettivo']
 };
 // Standard Morocco registration: serial 1–99999 · one official series letter · province 1–99.
 // Since August 2026, Arabic and Latin equivalents may appear together with the MA emblem.
@@ -189,6 +189,24 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   resultsHeading.textContent=({ar:'لوحات السيارات',fr:'Plaques détectées',en:'Detected plates',es:'Matrículas detectadas',de:'Erkannte Kennzeichen',pt:'Matrículas detetadas',it:'Targhe rilevate'})[language]||'Detected plates';
   const resultsEmpty=document.createElement('p');resultsEmpty.className='rivo-live-results-empty';
   resultsEmpty.textContent=({ar:'اللوحات المقروءة ستظهر هنا',fr:'Les plaques apparaîtront ici',en:'Detected plates appear here'})[language]||'Detected plates appear here';
+  const lastTime=document.createElement('time');lastTime.className='rivo-plate-result-time';
+  lastTime.hidden=true;
+  const lastCopy=document.createElement('button');lastCopy.type='button';
+  lastCopy.className='rivo-plate-copy';lastCopy.textContent=({ar:'نسخ اللوحة',fr:'Copier',en:'Copy plate'})[language]||'Copy plate';
+  lastCopy.hidden=true;lastCopy.disabled=true;
+  const copyPlate=async value=>{
+   try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
+    else{
+     const field=document.createElement('textarea');field.value=value;
+     field.style.cssText='position:fixed;opacity:0;left:-9999px';document.body.append(field);field.select();
+     const ok=document.execCommand?.('copy');field.remove();
+     if(!ok)throw Error('Clipboard unavailable');
+    }
+    status.textContent=({ar:'تم نسخ رقم اللوحة',fr:'Plaque copiée',en:'Plate copied'})[language]||'Plate copied';
+   }catch(error){status.textContent=String(error?.message||error)}
+  };
+  lastCopy.addEventListener('click',()=>{if(lastPlate)void copyPlate(lastPlate)});
   const plateHistory=document.createElement('div');plateHistory.className='rivo-plate-results-history';
   plateHistory.setAttribute('role','list');
   let lastPlate='';
@@ -205,7 +223,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  zoomButton.setAttribute('aria-pressed','true');
  const torch=btn('⚡',()=>toggleTorch());foot.append(count,zoomButton,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
-  resultsPane.append(resultsHeading,status,resultsEmpty,last,plateHistory);
+   resultsPane.append(resultsHeading,status,resultsEmpty,last,lastTime,lastCopy,plateHistory);
   stage.append(view,resultsPane);
  panel.append(header,pinned,stage,foot,hint);layer.append(panel);document.body.append(layer);
  const observed=new Map(),confirmed=new Map();
@@ -279,17 +297,14 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   const match=matchingPlateTargets(plate,[search.value,...watch]).length>0;
   // A brief second OCR confirmation suppresses false alarms/captures.
   confirmed.set(key,now);
-  let photoName='';
+  // A match can alert the user, but must NEVER generate a new photo file.
+  // The plate scanner writes to its ONE persistent TXT ledger only.
+  const photoName='';
   if(match){
-   // Native alert is reliable after asynchronous OCR when WebAudio autoplay is blocked.
    let alerted=false;
    try{alerted=(await onMatchAlert(plate))===true;}
    catch(error){console.warn('License plate alert fallback:',error);}
    if(!alerted)beep();
-   try{
-    const bytes=await jpegBytes(snapshot());
-    photoName=await onMatchPhoto({plate,bytes})||'';
-   }catch(error){notify('Vehicle photo failed: '+String(error?.message||error),true);}
   }
   try{
    const result=await onPlate({value:plate,format:'LICENSE_PLATE',match,photoName});
@@ -298,12 +313,22 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
     resultsEmpty.hidden=true;
     if(lastPlate){
      const old=document.createElement('div');old.className='rivo-plate-result-row';old.setAttribute('role','listitem');
-     old.textContent=lastPlate;plateHistory.prepend(old);
+     const value=document.createElement('span');value.textContent=lastPlate;value.dir='auto';
+     const btnCopy=document.createElement('button');btnCopy.type='button';
+     btnCopy.textContent=({ar:'نسخ',fr:'Copier',en:'Copy'})[language]||'Copy';
+     btnCopy.setAttribute('aria-label','Copy '+lastPlate);
+     btnCopy.addEventListener('click',()=>{void copyPlate(value.textContent)});
+     const stamped=document.createElement('time');stamped.textContent=lastTime.textContent;
+     stamped.dateTime=lastTime.dateTime;stamped.className='rivo-plate-result-time';
+     old.append(value,stamped,btnCopy);plateHistory.prepend(old);
      while(plateHistory.childElementCount>30)plateHistory.lastElementChild.remove();
     }
     lastPlate=plate;last.hidden=false;last.textContent=plate;
+    lastTime.hidden=false;lastTime.dateTime=new Date().toISOString();
+    lastTime.textContent=new Date().toLocaleTimeString(language);
+    lastCopy.hidden=false;lastCopy.disabled=false;
     last.classList.toggle('rivo-plate-match',match);
-   status.textContent=(match&&photoName?L[4]:L[3])+(result?.saved?' ✓':' · '+Z.logUnavailable);
+   status.textContent=(match?L[4]:L[3])+(result?.saved?' ✓':' · '+Z.logUnavailable);
    guide.classList.toggle('matched',match);
   }catch(error){if(!closed)status.textContent=Z.saveFailed+': '+String(error?.message||error);}
  }

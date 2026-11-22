@@ -17,7 +17,7 @@ test('QR scanner permanently mounts camera and list in separate horizontal colum
 test('License Plate scanner shares exact side-by-side layout and shows a scrollable history',()=>{
  const src=read('src/plate-scanner.js'),css=read('src/rivo-ui-04569.css');
  assert.match(src,/stage\.append\(view,resultsPane\)/);
- assert.match(src,/resultsPane\.append\(resultsHeading,status,resultsEmpty,last,plateHistory\)/);
+ assert.match(src,/resultsPane\.append\(resultsHeading,status,resultsEmpty,last,lastTime,lastCopy,plateHistory\)/);
  assert.match(src,/plateHistory\.prepend\(old\)/);
  assert.match(src,/while\(plateHistory\.childElementCount>30\)/);
  assert.match(css,/\.rivo-plate-results-history\{/);

@@ -64,6 +64,7 @@ import './rivo-personalized-cards.css';
 import './rivo-polish-04566.css';
 import './rivo-ui-04567.css';
 import './rivo-ui-04569.css';
+import './rivo-qa-04570.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
