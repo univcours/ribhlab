@@ -263,3 +263,51 @@ html body .doc-external-open{
  html body .doc-page-thumb{height:65px!important;flex-basis:54px!important;min-width:54px!important}
  html body .doc-detail-actions{max-height:105px!important}
 }
+
+/* Exact-specificity overrides: old glow styles had deeply nested selectors;
+ * late generic animation:none was not sufficient in WebView. */
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+),
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+)::before,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+)::after,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+),
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+)::before,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+)::after{
+ animation:none!important;animation-name:none!important;
+ animation-delay:0s!important;
+}
