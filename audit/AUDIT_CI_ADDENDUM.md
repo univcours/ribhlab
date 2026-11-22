@@ -17,3 +17,9 @@ A fresh GitHub Actions run on Ubuntu [45028354849](https://github.com/univcours/
 The audit remains **PARTIAL**. Android hardware, camera auto-focus/zoom, real AdMob banner/interstitial, storage migration, all applicable 18 states, physical printed ID sheets, and comprehensive locale/rotation/keyboard testing are **NOT TESTED** on an actual Android device.
 
 No Google Play or external store publication is performed.
+
+## Additional CI release-pipeline finding — CI-002
+
+GitHub Actions run [45028685063](https://github.com/univcours/ribhlab/actions/runs/45028685063) confirmed **success** for Ubuntu source tests, the original-signed Android APK, versionCode 183 signature validation, audit ZIP SHA-256 reassembly, and both uploaded workflow artifacts. The final GitHub Release publication step failed on Bash syntax: a missing `fi` closing an `if/else` block. The workflow has been corrected, and the release shell block was independently checked by `bash -n` on Windows Git Bash. The next GitHub Actions run must confirm publication.
+
+This is an independent CI packaging issue, not proof of any untested Android runtime functionality.

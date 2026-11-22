@@ -16,4 +16,9 @@ test('audited tester release increments Android version and keeps original banne
  assert.match(flow,/e9b3e2779575ba08a91372fc3885eba01dd3e73e/);
  assert.match(flow,/No Google Play upload/);
  assert.match(flow,/AUDIT|audit|Audit/);
+ const releaseScript=flow.split('Publish tester APK on GitHub releases (NOT Google Play)')[1];
+ assert.match(releaseScript,/if gh release view/);
+ assert.match(releaseScript,/^\s+else\s*$/m);
+ assert.match(releaseScript,/^\s+fi\s*$/m);
+ assert.match(flow,/\n\s+fi\s*$/);
 });
