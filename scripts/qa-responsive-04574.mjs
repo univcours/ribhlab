@@ -119,6 +119,7 @@ try{
   }
 
   if(width===393&&lang==='auto'){
+   await page.locator('.rivo-plate-overlay [data-scan-overlay-close]').click({timeout:6000});
    await page.evaluate(()=>document.querySelector('.mobilebar [data-go="home"]')?.click());
    await page.locator('.rivo-feature-tile[data-rivo-feature="scanCode"]').click({timeout:8000});
    const qr=page.locator('.rivo-code-overlay .rivo-live-split-stage');
