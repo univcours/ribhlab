@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: rivoscan-04576-mlkit-vision-${{ github.ref }}
+  group: rivoscan-04577-verified-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   signed-tester:
