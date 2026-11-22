@@ -13,7 +13,7 @@ test('Home and My Documents use same compact list row + inline file actions',()=
  assert.match(main,/class="recent-entry rivo-recent-card rivo-document-list-row/);
  assert.match(main,/class="document-entry rivo-document-list-row/);
  assert.match(main,/function rowDocumentActions\(doc,index\)/);
- assert.equal((main.match(/rowDocumentActions\((?:doc|item),index\)/g)||[]).length,2);
+ assert.equal((main.match(/rowDocumentActions\((?:doc|item),index\)/g)||[]).length,3); // function + Home + Documents
  assert.match(main,/class="rivo-file-line-heading"/);
  assert.match(inline,/grid-template-columns:18px 60px minmax\(0,1fr\)/);
  assert.match(inline,/flex-direction:row!important/);
