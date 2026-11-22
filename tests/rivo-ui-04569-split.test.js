@@ -16,14 +16,14 @@ test('QR scanner mounts camera beside an independently scrollable results panel'
  assert.match(css,/\.rivo-live-results-pane \.(?:rivo-code-results|rivo-live-status)/);
  assert.match(css,/overflow-y:auto!important/);
 });
-test('License Plate scanner shares horizontal 50/50 camera/results layout and shows a scrollable history',()=>{
+test('License Plate scanner shows a vertical 50/50 camera/results layout and scrollable history',()=>{
  const src=read('src/plate-scanner.js'),css=read('src/rivo-ui-04569.css');
  assert.match(src,/stage\.append\(view,resultsPane\)/);
  assert.match(src,/resultsPane\.append\(resultsHeading,status,resultsEmpty,currentLine,lastTime,plateHistory\)/);
  assert.match(src,/plateHistory\.prepend\(old\)/);
  assert.match(src,/while\(plateHistory\.childElementCount>30\)/);
  assert.match(css,/\.rivo-plate-results-history\{/);
- assert.match(read('src/rivo-classic-04572.css'),/grid-column:2!important;grid-row:1!important/);
+ assert.match(read('src/rivo-layout-04573.css'),/grid-column:1!important;grid-row:2!important/);
  assert.match(css,/\.rivo-plate-current\.rivo-plate-match/);
  assert.doesNotMatch(src,/panel\.append\(header,pinned,view,status,last/);
 });
