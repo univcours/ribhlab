@@ -99,9 +99,16 @@ try{
    return{stage:get('.rivo-plate-overlay .rivo-live-split-stage'),
     camera:get('.rivo-plate-overlay .rivo-live-preview'),
     results:get('.rivo-plate-overlay .rivo-live-results-pane'),
+    headerTitle:get('.rivo-plate-overlay .rivo-live-head>strong'),
+    searchRow:get('.rivo-plate-overlay .rivo-plate-search-row'),
+    searchInput:get('.rivo-plate-overlay .rivo-plate-search'),
     banner:get('.rivo-ad-banner-slot')};
   });
   assert(plate.stage&&plate.camera&&plate.results,'Plate layout missing '+width);
+  assert(plate.headerTitle&&plate.searchRow&&plate.searchInput,'Plate search controls missing at '+width);
+  assert(plate.headerTitle.bottom<=plate.searchRow.top+1,'Plate search overlaps heading at '+width);
+  assert(plate.searchInput.width>=190,'Plate number field too narrow at '+width);
+  assert(plate.searchRow.bottom<=plate.camera.top+2,'Plate input overlaps camera viewport at '+width);
   assert(plate.camera.bottom<=plate.results.top+1,'Plate camera must be ABOVE results, not next to them '+width);
   assert(Math.abs(plate.camera.width-plate.results.width)<6,'Plate panes must share full stage width '+width);
   assert(Math.abs(plate.camera.height-plate.results.height)<20,'Plate panes must be close to 50/50 '+width);
