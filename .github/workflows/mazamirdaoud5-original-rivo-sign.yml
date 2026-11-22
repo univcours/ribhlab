@@ -26,13 +26,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
       - name: Install Android API 36
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager --install 'platforms;android-36' 'build-tools;36.0.0'
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
       - name: Prepare Capacitor Android wrapper preserving Mazamir branding
         shell: bash
         run: |
