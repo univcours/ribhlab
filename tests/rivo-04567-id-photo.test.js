@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const s=readFileSync(new URL('../src/id-photo-maker.js',import.meta.url),'utf8');
-test('ID Photo preview is the only photo import entry, with one camera rail button',()=>{
- assert.ok(s.includes("previewImport.className='rivo-id-preview-import'"));
- assert.ok(s.includes('workspace.dock.append(previewImport,leftRail,rightRail,input)'));
+test('ID Photo keeps one camera and one gallery import side-by-side with no floating duplicate',()=>{
+ assert.ok(s.includes("railButton(leftRail,'gallery',L[1]"));
+ assert.ok(s.includes('workspace.dock.append(leftRail,rightRail,input)'));
  assert.ok(s.includes('workspace.empty.hidden=true'));
+ assert.doesNotMatch(s,/previewImport=document\.createElement/);
  assert.doesNotMatch(s,/const importButton=document\.createElement/);
  assert.doesNotMatch(s,/const cameraButton=document\.createElement/);
  assert.ok(s.includes("railButton(leftRail,'photo',takePhotoLabel"));
