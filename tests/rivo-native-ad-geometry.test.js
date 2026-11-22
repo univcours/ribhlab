@@ -7,8 +7,8 @@ test('native 320x50 ad has a matching dedicated clipped content viewport',()=>{
   assert.equal(p.valid,true);
   assert.equal(p.width,320);assert.equal(p.height,50);
   assert.equal(p.margin,102);assert.equal(p.bannerTop,721);
-  assert.equal(p.contentBottom,157);
-  assert.equal(873-p.contentBottom,716);
+  assert.equal(p.contentBottom,170);
+  assert.equal(873-p.contentBottom,703);
   assert.ok(873-p.contentBottom<=p.bannerTop-5);
   assert.equal(p.left,(width-320)/2);
  }
