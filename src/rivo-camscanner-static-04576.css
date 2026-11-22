@@ -1,0 +1,265 @@
+/* RivoScan 0.45.76 — user-approved, static premium styling.
+   Eliminate ALL decorative glow-orbit/pulse on cards, logos, tools and modal
+   buttons. Only the original central Smart Scan camera ring keeps its orbit.
+   Scanner functionality, processing progress and native AdMob remain untouched. */
+:root { --rivo-icon-glow-alpha:.12; --rivo-icon-turn:0deg; --rivo-edge-turn:0deg;
+  --rivo-outline-angle:0deg; --rivo-orbit-angle:300deg; }
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-feature-tile,.rivo-hub-tile,.rivo-premium-tile,
+ .rivo-feature-icon,.tool-icon,.rivo-nav-icon,.rivo-home-trust,
+ .rivo-premium-search,.rivo-tools-search,.rivo-modal-app-icon,
+ .topbar-brand-icon,.rivo-build-version,.settings-row-icon,
+ .rivo-pref-summary-icon,.rivo-file-thumb,.rivo-recent-card,
+ .document-entry,.rivo-id-side-action,.rivo-premium-hero,
+ .rivo-page-tile,.rivo-code-result-row
+),
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-feature-tile,.rivo-hub-tile,.rivo-premium-tile,
+ .rivo-feature-icon,.tool-icon,.rivo-nav-icon,.rivo-home-trust,
+ .rivo-premium-search,.rivo-tools-search,.rivo-modal-app-icon,
+ .topbar-brand-icon,.settings-row-icon,.rivo-pref-summary-icon
+)::before,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-feature-tile,.rivo-hub-tile,.rivo-premium-tile,
+ .rivo-feature-icon,.tool-icon,.rivo-nav-icon,.rivo-home-trust,
+ .rivo-premium-search,.rivo-tools-search,.rivo-modal-app-icon,
+ .topbar-brand-icon,.settings-row-icon,.rivo-pref-summary-icon
+)::after,
+html body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-plate-dialog,
+ .rivo-book-dialog,.rivo-perfectscan-modal,.doc-detail-overlay)
+ :is(button,.rivo-modal-app-icon)::before,
+html body :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-plate-dialog,
+ .rivo-book-dialog,.rivo-perfectscan-modal,.doc-detail-overlay)
+ :is(button,.rivo-modal-app-icon)::after{
+ animation:none!important;animation-delay:0s!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-hub-tile,.rivo-premium-tile)::before{
+ background:linear-gradient(140deg,#19A8FF,#5FE3FA,#1882E5)!important;
+ opacity:.66!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-hub-tile,.rivo-premium-tile),
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-icon,.tool-icon,.rivo-nav-icon){
+ filter:none!important;animation:none!important;
+}
+/* Original center camera ring remains animated — do not freeze the camera. */
+html body #app .shell.rivo-dark-ui .rivo-nav-scan-ring::before{
+ animation:rivo-orbit-border 3.8s linear infinite!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-nav-scan-ring,
+html body #app .shell.rivo-dark-ui .rivo-nav-scan{
+ animation:none!important;
+}
+html body #app .shell.rivo-dark-ui .floating-scan.rivo-camera-fab::before{
+ animation:rivo-orbit-border 3.8s linear infinite!important;
+}
+/* Brand uses the same rounded-square silhouette as the Android launcher.
+   Do not apply the legacy square blue background behind the image. */
+html body #app .shell.rivo-dark-ui .topbar .topbar-brand-icon,
+html body .rivo-modal-top .rivo-modal-app-icon{
+ box-sizing:border-box!important;display:block!important;
+ width:clamp(31px,8vw,43px)!important;height:clamp(31px,8vw,43px)!important;
+ min-width:31px!important;flex:0 0 auto!important;
+ border-radius:24%!important;object-fit:cover!important;
+ border:1px solid #6bd8ff66!important;
+ background:transparent!important;overflow:hidden!important;
+ box-shadow:0 2px 5px #061d4d28!important;
+ animation:none!important;
+}
+html body .rivo-modal-top .rivo-modal-app-icon{
+ width:33px!important;height:33px!important;min-width:33px!important;
+ order:-1!important;
+}
+html body .rivo-modal-top{
+ display:flex!important;align-items:center!important;gap:8px!important;
+ min-width:0!important;
+}
+html body .rivo-modal-top>h2{
+ min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+/* In ID Photo Maker the Change/Import control is now ONE actual gallery icon
+   beside the camera. Remove old floating geometry if legacy CSS still expects it. */
+html body .rivo-id-overlay .rivo-id-preview-import{display:none!important}
+html body .rivo-id-overlay .rivo-id-side-left{
+ display:flex!important;flex-direction:column!important;
+ gap:8px!important;min-width:0!important;
+}
+html body .rivo-id-overlay .rivo-id-side-action{
+ animation:none!important;filter:none!important;
+}
+html body .rivo-id-overlay .rivo-id-side-action::before,
+html body .rivo-id-overlay .rivo-id-side-action::after{animation:none!important;}
+
+/* CamScanner-style clear file list (real saved documents, not sample data).
+   Original file-type graphics and clickable row behavior are preserved. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list){
+ gap:7px!important;min-width:0!important;max-width:100%!important;
+ scroll-padding-bottom:16px!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+ :is(.rivo-recent-card,.document-entry){
+ box-sizing:border-box!important;display:flex!important;flex-direction:row!important;
+ align-items:center!important;min-width:0!important;width:100%!important;
+ min-height:67px!important;height:auto!important;
+ padding:9px 11px!important;margin:0!important;gap:10px!important;
+ border:1px solid #304e71!important;border-radius:11px!important;
+ background:linear-gradient(145deg,#172b47,#12223c)!important;
+ color:#f4f9ff!important;box-shadow:0 2px 5px #06142718!important;
+ animation:none!important;filter:none!important;transform:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.recent-file-meta,.document-description){
+ display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+ min-width:0!important;width:auto!important;gap:4px!important;
+ overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.recent-file-meta,.document-description)>strong{
+ color:#f5faff!important;-webkit-text-fill-color:#f5faff!important;
+ font-size:clamp(12px,3.5vw,15px)!important;line-height:1.25!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.recent-file-meta,.document-description)>small{
+ color:#b9cbde!important;-webkit-text-fill-color:#b9cbde!important;
+ font-size:11px!important;line-height:1.25!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb{
+ box-sizing:border-box!important;flex:0 0 43px!important;width:43px!important;
+ min-width:43px!important;max-width:43px!important;
+ min-height:49px!important;height:54px!important;
+ border-radius:9px!important;overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .doc-select-box{
+ flex:0 0 20px!important;width:20px!important;height:20px!important;
+ margin:0!important;accent-color:#0fa4d8!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ >:is(.rivo-recent-card,.document-entry):focus-visible{
+ outline:2px solid #00d8ff!important;outline-offset:2px!important;
+}
+/* Do not create new/fake storage folders; the existing phone-folder action is real.
+   Images are imported with image/* filter as a separate working quick action. */
+html body #app .shell.rivo-dark-ui .library-heading-actions{
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr)) 38px!important;
+ gap:7px!important;align-items:stretch!important;
+}
+html body #app .shell.rivo-dark-ui .library-heading-actions>:is(button){
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ min-height:62px!important;height:auto!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:4px!important;
+ border-radius:12px!important;border:1px solid #b6d4e8!important;
+ background:linear-gradient(145deg,#f9fcff,#e9f5fb)!important;
+ color:#0b3164!important;animation:none!important;
+ padding:7px 3px!important;
+}
+html body #app .shell.rivo-dark-ui .library-heading-actions .rivo-action-full{
+ display:block!important;text-align:center!important;white-space:normal!important;
+ font-size:clamp(10px,2.8vw,12px)!important;line-height:1.18!important;
+}
+html body #app .shell.rivo-dark-ui .library-heading-actions .rivo-action-compact{display:none!important}
+html body #app .shell.rivo-dark-ui .library-heading-actions #refresh-documents{
+ min-height:44px!important;align-self:stretch!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui .library-heading-actions{gap:4px!important;grid-template-columns:repeat(3,minmax(0,1fr)) 30px!important}
+ html body #app .shell.rivo-dark-ui .library-heading-actions>:is(button){padding:5px 2px!important}
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)>
+ :is(.rivo-recent-card,.document-entry){padding:7px!important;gap:6px!important}
+}
+/* Dedicated PDF/file preview: selected page large, all pages as miniatures
+   below; one scrollable horizontal strip, fixed bottom actions. */
+html body .doc-detail-overlay{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+ background:#08182d!important;color:#f5faff!important;
+ padding:0!important;overflow:hidden!important;
+}
+html body.rivo-native-android.rivo-has-ad-banner .doc-detail-overlay{
+ bottom:var(--rivo-content-bottom,155px)!important;
+}
+html body .doc-viewer-header{
+ box-sizing:border-box!important;flex:0 0 auto!important;min-height:49px!important;
+ padding:6px 10px!important;gap:8px!important;
+ background:linear-gradient(125deg,#082752,#0b3768)!important;
+ color:#fff!important;border-color:#265589!important;
+}
+html body .doc-viewer-title{color:#fff!important;-webkit-text-fill-color:#fff!important;}
+html body .doc-viewer-subtitle{background:#08182d!important;color:#a9c9e7!important;padding:5px 11px!important}
+html body .doc-detail-preview{
+ box-sizing:border-box!important;flex:1 1 0!important;min-height:0!important;
+ padding:7px 9px 3px!important;display:flex!important;flex-direction:column!important;
+ gap:6px!important;overflow:hidden!important;
+}
+html body .doc-detail-paper{
+ box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;
+ min-width:0!important;min-height:110px!important;max-height:none!important;
+ border-radius:10px!important;background:#f5faff!important;
+ overflow:hidden!important;
+}
+html body .doc-page-navigation{
+ box-sizing:border-box!important;flex:0 0 auto!important;
+ min-height:30px!important;padding:0!important;gap:12px!important;
+ color:#fff!important;
+}
+html body .doc-page-thumbnails{
+ box-sizing:border-box!important;flex:0 0 auto!important;
+ width:100%!important;min-width:0!important;min-height:0!important;
+ max-height:min(115px,21dvh)!important;padding:5px!important;
+ display:flex!important;flex-direction:row!important;align-items:stretch!important;
+ gap:9px!important;overflow-x:auto!important;overflow-y:hidden!important;
+ overscroll-behavior-x:contain!important;
+ border:1px solid #244f7b!important;border-radius:11px!important;
+ background:#0d294c!important;
+}
+html body .doc-page-thumbnails[hidden]{display:none!important}
+html body .doc-page-thumb{
+ box-sizing:border-box!important;flex:0 0 73px!important;
+ width:73px!important;min-width:73px!important;height:94px!important;
+ padding:4px!important;display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;gap:3px!important;
+ border:2px solid #536f90!important;border-radius:8px!important;
+ background:#f7fbff!important;color:#163b69!important;
+ animation:none!important;overflow:hidden!important;
+}
+html body .doc-page-thumb.active,
+html body .doc-page-thumb[aria-current="page"]{
+ border-color:#00d8ff!important;background:#ddf5ff!important;
+ box-shadow:0 0 0 2px #00d8ff35!important;
+}
+html body .doc-thumb-sheet{
+ display:grid!important;place-items:center!important;flex:1 1 auto!important;
+ min-height:0!important;width:100%!important;overflow:hidden!important;
+ color:#216cbd!important;
+}
+html body .doc-thumb-sheet canvas{width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important}
+html body .doc-thumb-number{display:block!important;flex:0 0 auto!important;font-size:10px!important;font-weight:900!important}
+html body .doc-detail-actions{
+ box-sizing:border-box!important;display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ flex:0 0 auto!important;gap:5px!important;
+ padding:7px 8px!important;background:#082752!important;border-color:#174a7a!important;
+ max-height:min(140px,24dvh)!important;overflow-y:auto!important;
+}
+html body .doc-detail-actions>.doc-action{
+ box-sizing:border-box!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;gap:4px!important;min-width:0!important;
+ min-height:38px!important;height:auto!important;padding:6px 3px!important;
+ border-radius:9px!important;background:#154d86!important;color:#fff!important;
+ border:1px solid #2d79b1!important;box-shadow:none!important;
+ font-size:clamp(10px,2.7vw,12px)!important;white-space:normal!important;
+}
+html body .doc-detail-actions>.doc-action.doc-action-danger{background:#4e2639!important;color:#ffe1e1!important}
+html body .doc-detail-actions>.doc-action.doc-action-scan,
+html body .doc-detail-actions>.doc-action.doc-action-convert{background:#0e61c2!important;color:#fff!important}
+html body .doc-external-open{
+ box-sizing:border-box!important;min-height:31px!important;margin:0 8px 6px!important;
+ padding:4px!important;background:#e9f5fb!important;color:#11407f!important;
+}
+@media(min-width:430px){
+ html body .doc-detail-actions{grid-template-columns:repeat(6,minmax(0,1fr))!important;max-height:none!important}
+}
+@media(max-height:680px){
+ html body .doc-page-thumbnails{max-height:75px!important}
+ html body .doc-page-thumb{height:65px!important;flex-basis:54px!important;min-width:54px!important}
+ html body .doc-detail-actions{max-height:105px!important}
+}
