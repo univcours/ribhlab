@@ -67,6 +67,7 @@ import './rivo-ui-04569.css';
 import './rivo-qa-04570.css';
 // Preserve all later feature fixes; restore 0.45.44 palette in the final CSS layer.
 import './rivo-classic-04572.css';
+import './rivo-layout-04573.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
