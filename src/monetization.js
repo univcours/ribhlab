@@ -126,6 +126,7 @@ function installAdVisibilityRecovery(){
    retryCounts.interstitial=0;
    void loadInterstitial();
   }
+  if(!state.rewardedReady&&!state.busy)void loadRewarded();
   if(!state.rewardedInterstitialReady&&!state.busy)void loadRewardedInterstitial();
  });
 }
@@ -346,6 +347,7 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
   if(retry){
    retryCounts.banner=0;retryCounts.interstitial=0;retryCounts.rewarded=0;
    if(!state.interstitialReady&&!state.busy)void loadInterstitial();
+   if(!state.rewardedReady&&!state.busy)void loadRewarded();
    if(!state.rewardedInterstitialReady&&!state.busy)void loadRewardedInterstitial();
    if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}
   }
@@ -371,6 +373,9 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    status('AdMob initialized');
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
+   // Preload the user's existing STANDARD Rewarded ad unit, not only the
+   // optional separate Rewarded Interstitial unit.
+   void loadRewarded();
    void loadRewardedInterstitial();
    if(!deferBanner)void loadBanner();
    return true;
@@ -408,26 +413,47 @@ export async function requestPremium(id){
 // Premium exits 1,4,7... are natural completion breaks. Never show an ad
 // on launch, while editing/saving, or when exiting the Android application.
 // Google requires an INTRO + SKIP before automatic rewarded interstitials.
-// For installations without a dedicated Rewarded Interstitial unit, use the
-// preloaded REGULAR interstitial at the same natural break; no fake reward.
-async function showCompletionInterstitial(){
- if(!isAndroid||!state.ready||!state.consent||state.busy||!state.interstitialReady)return false;
- const now=Date.now();
- if(state.lastFullscreenAt&&now-state.lastFullscreenAt<FULLSCREEN_COOLDOWN_MS)return false;
- state.busy=true;state.interstitialReady=false;
- try{
-  await pauseBannerForFullscreen();
-  await AdMob.showInterstitial({adId:AD_CONFIG.interstitial});
-  recordFullscreenTime();state.shownCount++;status('PRO completion interstitial shown');
-  return true;
- }catch(error){
-  status('PRO completion interstitial unavailable',String(error?.message||error));
-  return false;
- }finally{
-  state.busy=false;
-  void restoreBannerAfterFullscreen();
-  void loadInterstitial();
- }
+// The configured /4148993879 unit is STANDARD Rewarded: load it via
+// prepareRewardVideoAd and display only after the user's explicit one-tap opt-in.
+// Rewarded Interstitial requires a distinct AdMob unit ID and intro + skip.
+function offerStandardReward(){
+ if(document.querySelector('.rivo-reward-overlay'))return true;
+ const copy=({
+  ar:['مكافأة ميزة PRO','شاهد الإعلان لتحصل على 10 دقائق بدون إعلانات ملء الشاشة. يمكنك التخطي والمتابعة عادي.','شاهد الإعلان','تخطي','الإعلان غير متاح دابا؛ كمل استعمال التطبيق عادي.','تم تفعيل 10 دقائق بدون إعلانات ملء الشاشة'],
+  fr:['Bonus PRO','Regardez une publicité et profitez de 10 minutes sans publicité plein écran. Vous pouvez ignorer.','Voir la publicité','Ignorer','Publicité indisponible, vous pouvez continuer.','10 minutes sans publicité plein écran activées'],
+  en:['PRO bonus','Watch an ad for 10 minutes without fullscreen ads. You can skip and continue normally.','Watch ad','Skip','No ad available; continue normally.','10 minutes without fullscreen ads activated']
+ })[state.getLanguage()]||['PRO bonus','Watch an ad for 10 minutes without fullscreen ads. You can skip and continue normally.','Watch ad','Skip','No ad available; continue normally.','10 minutes without fullscreen ads activated'];
+ const overlay=document.createElement('div');overlay.className='rivo-reward-overlay';
+ const dialog=document.createElement('section');dialog.className='rivo-reward-dialog';
+ dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label',copy[0]);
+ const title=document.createElement('h2');title.textContent=copy[0];
+ const message=document.createElement('p');message.textContent=copy[1];
+ const actions=document.createElement('div');actions.className='rivo-reward-actions';
+ const watch=document.createElement('button');watch.type='button';watch.className='rivo-reward-watch';watch.textContent=copy[2];
+ const skip=document.createElement('button');skip.type='button';skip.className='rivo-reward-cancel';skip.textContent=copy[3];
+ skip.addEventListener('click',()=>overlay.remove());
+ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+ watch.addEventListener('click',async()=>{
+  if(state.busy)return;
+  watch.disabled=true;
+  if(!state.rewardedReady&&!(await loadRewarded())){
+   message.textContent=copy[4];watch.disabled=false;return;
+  }
+  overlay.remove();
+  state.busy=true;state.rewardedReady=false;
+  try{
+   await pauseBannerForFullscreen();
+   const earned=await AdMob.showRewardVideoAd({adId:AD_CONFIG.rewarded});
+   if(earned&&Number(earned.amount)>0){
+    state.unlockedUntil=Math.max(state.unlockedUntil,Date.now()+PREMIUM_MINUTES*60000);
+    state.notify(copy[5]);status('Rewarded completed from configured AdMob ID');
+   }
+  }catch(error){status('Standard Rewarded skipped or failed',String(error?.message||error));}
+  finally{state.busy=false;void restoreBannerAfterFullscreen();void loadRewarded();}
+ });
+ actions.append(watch,skip);dialog.append(title,message,actions);overlay.append(dialog);
+ document.body.append(overlay);watch.focus({preventScroll:true});
+ return true;
 }
 export function atPremiumExit(){
  if(!state.premiumOfferDue)return false;
@@ -435,9 +461,9 @@ export function atPremiumExit(){
  if(!isAndroid||!state.ready||!state.consent||state.busy||typeof document==='undefined')return false;
  // We must NOT pass a standard Rewarded unit into rewarded-interstitial APIs.
  if(!state.rewardedInterstitialReady){
-  if(!state.interstitialReady)return false;
-  void showCompletionInterstitial();
-  return true;
+  // Never substitute a non-rewarded fullscreen ad for the Rewarded unit
+  // already supplied. Google's STANDARD Rewarded format is opt-in.
+  return offerStandardReward();
  }
  if(document.querySelector('.rivo-reward-overlay'))return true;
  const copy=({
