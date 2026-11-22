@@ -1,0 +1,203 @@
+/* RivoScan 0.45.75 — glossy blue icon system inspired by the actual
+   approved launcher art (bright cyan R on royal/cobalt blue).
+   Every operation retains its own meaningful SVG; only its chassis changes.
+   Generated PDF file-type thumbnails and actionable scanner controls are
+   intentionally NOT reskinned into a logo (their meaning is essential). */
+
+@property --rivo-icon-turn {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes rivoIconNeonOrbit {
+  to { --rivo-icon-turn: 360deg; }
+}
+@keyframes rivoIconNeonBreath {
+  0%,100% {
+    box-shadow: inset 0 1px 1px #ffffff6a,
+                inset 0 -4px 9px #051b615c,
+                0 0 0 1px #39dfff54,
+                0 0 6px #13d8ff46 !important;
+  }
+  50% {
+    box-shadow: inset 0 1px 2px #ffffff80,
+                inset 0 -4px 9px #051b615c,
+                0 0 0 1px #72f4ff8f,
+                0 0 12px #00d8ff8a !important;
+  }
+}
+
+/* Main feature icons across Home, Tools, PDF tool headers, Settings and
+   traditional feature cards share one small glass/gloss shell. */
+html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon,
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+  .mobilebar.rivo-nav-five .rivo-nav-icon
+){
+  --rivo-icon-dark:#061b58;
+  --rivo-icon-royal:#0E61C2;
+  --rivo-icon-cyan:#00D8FF;
+  box-sizing:border-box!important;
+  display:grid!important;place-items:center!important;
+  position:relative!important;isolation:isolate!important;
+  flex:0 0 auto!important;
+  width:var(--rivo-icon-size,30px)!important;
+  min-width:var(--rivo-icon-size,30px)!important;
+  max-width:var(--rivo-icon-size,30px)!important;
+  height:var(--rivo-icon-size,30px)!important;
+  min-height:var(--rivo-icon-size,30px)!important;
+  max-height:var(--rivo-icon-size,30px)!important;
+  padding:var(--rivo-icon-padding,4px)!important;
+  margin:0!important;
+  border:1px solid #83efffb5!important;
+  border-radius:var(--rivo-icon-radius,9px)!important;
+  background:
+    radial-gradient(ellipse at 24% 11%,#e4feff8c,transparent 50%),
+    linear-gradient(148deg,#187DEB 0%,#0E61C2 40%,#073985 76%,#061B58 100%)!important;
+  color:#ECFBFF!important;
+  -webkit-text-fill-color:#ECFBFF!important;
+  overflow:hidden!important;
+  transform:none!important;
+  animation:rivoIconNeonBreath 5.4s ease-in-out infinite!important;
+}
+/* Single tiny arc rolls INSIDE each icon, never outside the tile's
+   dimensions; its halo never occludes another card or touch target. */
+html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon,
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+  .mobilebar.rivo-nav-five .rivo-nav-icon
+)::before{
+  content:''!important;
+  position:absolute!important;inset:0!important;z-index:1!important;
+  padding:1.5px!important;border-radius:inherit!important;
+  background:conic-gradient(from var(--rivo-icon-turn),
+    transparent 0deg,#06b9ff3b 63deg,#6af3ff 90deg,
+    #ffffff 103deg,#18d6ff 114deg,#00d8ff36 145deg,
+    transparent 210deg,transparent 360deg)!important;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
+  -webkit-mask-composite:xor!important;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;
+  mask-composite:exclude!important;
+  pointer-events:none!important;opacity:1!important;
+  animation:rivoIconNeonOrbit 4.6s linear infinite!important;
+}
+/* Glass highlight of the launch icon, subtle enough not to hide the glyph. */
+html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon,
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+  .mobilebar.rivo-nav-five .rivo-nav-icon
+)::after{
+  content:''!important;display:block!important;
+  position:absolute!important;left:15%!important;right:15%!important;
+  top:9%!important;height:25%!important;border-radius:100%!important;
+  background:linear-gradient(to bottom,#ffffff70,#ffffff00)!important;
+  pointer-events:none!important;z-index:1!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon,
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+  .mobilebar.rivo-nav-five .rivo-nav-icon
+)>svg{
+  position:relative!important;z-index:2!important;
+  display:block!important;max-width:100%!important;max-height:100%!important;
+  width:100%!important;height:100%!important;
+  flex:none!important;
+  color:#F0FBFF!important;stroke:#E9FCFF!important;
+  stroke-width:2!important;
+  fill:none;
+  filter:drop-shadow(0 0 2px #7beeffbb)!important;
+  pointer-events:none!important;
+}
+/* QR glyph deliberately uses fill in certain paths. Preserve SVG authoring
+   per-path fill; don't blanket all paths with fill:none. */
+html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon
+){--rivo-icon-size:30px;--rivo-icon-padding:4px;--rivo-icon-radius:9px;}
+html body #app .shell.rivo-dark-ui :is(
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon
+){--rivo-icon-size:43px;--rivo-icon-padding:8px;--rivo-icon-radius:13px;}
+html body #app .shell.rivo-dark-ui :is(
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon
+){--rivo-icon-size:36px;--rivo-icon-padding:7px;--rivo-icon-radius:11px;}
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five .rivo-nav-icon{
+ --rivo-icon-size:27px;--rivo-icon-padding:5px;--rivo-icon-radius:8px;
+}
+/* The central Scan button already has a 3.8s orbit around the ring. Keep its
+   working hit target and nav height, but harmonize with the approved glossy R. */
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five .rivo-nav-scan-ring{
+ background:
+   radial-gradient(ellipse at 24% 13%,#e4feff91,transparent 47%),
+   linear-gradient(148deg,#1779E8,#0E61C2 48%,#06265F)!important;
+ border:2px solid #90ECFF!important;
+ box-shadow:inset 0 1px 2px #FFFFFF70,0 0 13px #00D8FF68!important;
+}
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five .rivo-nav-scan-ring>svg{
+ stroke:#F0FBFF!important;filter:drop-shadow(0 0 3px #98F9FF)!important;
+}
+
+/* Stagger the ring phases so 19 tool icons don't visibly pulse together. */
+html body #app .shell.rivo-dark-ui .rivo-feature-tile:nth-child(2)>.rivo-feature-icon,
+html body #app .shell.rivo-dark-ui .rivo-hub-tile:nth-child(2n)>.tool-icon{
+ animation-delay:-1.4s!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-tile:nth-child(3)>.rivo-feature-icon,
+html body #app .shell.rivo-dark-ui .rivo-hub-tile:nth-child(3n)>.tool-icon{
+ animation-delay:-2.9s!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-tile:nth-child(4n)>.tool-icon{
+ animation-delay:-4s!important;
+}
+@media(max-width:350px){
+ html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon
+ ){--rivo-icon-size:27px;--rivo-icon-padding:3px;}
+}
+@media(max-height:430px) and (orientation:landscape){
+ html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon
+ ){--rivo-icon-size:24px;--rivo-icon-padding:3px;--rivo-icon-radius:7px;}
+}
+/* Required for motion accessibility and longer battery life when requested. */
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui :is(
+  .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+  .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+  .workspace .work-title>.tool-icon,
+  .library-workspace .library-heading .tool-icon,
+  .tool-card .tool-icon,
+  .settings-row>.settings-row-icon,
+  .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+  .mobilebar.rivo-nav-five .rivo-nav-icon
+ ),
+ html body #app .shell.rivo-dark-ui :is(
+  .rivo-feature-icon,.rivo-hub-tile>.tool-icon,.rivo-nav-icon
+ )::before{
+   animation:none!important;
+ }
+}
