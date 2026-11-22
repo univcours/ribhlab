@@ -156,7 +156,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const close=btn('✕',()=>stop());close.dataset.scanOverlayClose='true';
  const searchRow=document.createElement('div');searchRow.className='rivo-plate-search-row';
  const search=document.createElement('input');search.type='search';search.className='rivo-plate-search';
- search.placeholder=L[1];search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
+ search.placeholder=({en:'Plate number',ar:'رقم اللوحة',fr:'N° de plaque',es:'Matrícula',de:'Kennzeichen',pt:'Matrícula',it:'Targa'})[language]||'Plate number';search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
  const pinned=document.createElement('div');pinned.className='rivo-plate-watchlist';pinned.hidden=true;
  const watchKey='rivo-plate-watchlist-v1';
  let watch=[];
@@ -172,7 +172,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
    chip.title=number;pinned.append(chip);
   }
  };
- const addTarget=btn('＋',()=>{
+ const addTarget=btn('+',()=>{
   const value=normalizePlate(search.value);
   if(value.length<3){search.focus();return;}
   if(!watch.includes(value)&&watch.length<20){watch.push(value);persistWatch();renderWatch();}
