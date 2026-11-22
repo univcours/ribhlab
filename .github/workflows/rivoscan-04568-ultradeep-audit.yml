@@ -116,7 +116,7 @@ jobs:
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Test release already exists; preserving it." >> "$GITHUB_STEP_SUMMARY"
           else
-            gh release create "$TAG" /tmp/RivoScan-0.45.68-AuditFixes-SIGNED.apk "$GITHUB_WORKSPACE/audit/RivoScan-UltraDeep-Audit-0.45.68.zip" \
+            gh release create "$TAG" /tmp/RivoScan-0.45.68-AuditFixes-SIGNED.apk "$GITHUB_WORKSPACE/audit/RivoScan-UltraDeep-Audit-0.45.68.zip" "$GITHUB_WORKSPACE/audit/AUDIT_CI_ADDENDUM.md" \
               --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title 'RivoScan 0.45.68 - Audit fixes tester' \
               --notes 'Three audited source fixes: Book Scan no longer duplicates photo/import controls; ID Photo no longer has an empty Photo tab; ZXing ESM imports corrected and real generated QR/Code39 pixel decoding tested. Preserves banner safe area, colored controls and interstitial-only monetization from 0.45.67. Source audit matrix and browser evidence are on the audit branch. WARNING: full 100 percent audit is not complete, Android device, live ads and camera testing remain pending. Tester only; not published to Google Play.'

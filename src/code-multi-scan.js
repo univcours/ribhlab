@@ -4,9 +4,14 @@
  * verified result and mapping actual detector points back to the image.
  * This never invents a barcode when no decoder has verified its contents.
  */
-// Import actual ESM named exports. ZXing 0.23 has no default export;
-// referencing ZXing.default caused a Rollup warning and fragile bundling.
-import {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType} from '@zxing/library';
+// Bundler uses the true ESM namespace; Node/Linux may expose the same library
+// as a CommonJS object inside the namespace. Avoid a static nonexistent
+// default-export reference, which Rollup warns about with the ESM build.
+import * as ZXing from '@zxing/library';
+const ZXingRuntime=typeof ZXing.BinaryBitmap==='function'?ZXing:
+ Object.values(ZXing).find(x=>x&&typeof x.BinaryBitmap==='function');
+if(!ZXingRuntime)throw Error('ZXing barcode decoder exports unavailable');
+const {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType}=ZXingRuntime;
 
 const KEY=result=>String(result.getBarcodeFormat())+'\u0000'+String(result.getText());
 const QUIET_LIMIT=24;

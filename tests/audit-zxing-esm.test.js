@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {QRCodeWriter,Code39Reader,BarcodeFormat} from '@zxing/library';
+import * as ZXing from '@zxing/library';
+const ZXingRuntime=typeof ZXing.QRCodeWriter==='function'?ZXing:
+ Object.values(ZXing).find(x=>x&&typeof x.QRCodeWriter==='function');
+assert.ok(ZXingRuntime,'ZXing ESM/CommonJS module unavailable');
+const {QRCodeWriter,Code39Reader,BarcodeFormat}=ZXingRuntime;
 import {scanMultiplePixels} from '../src/code-multi-scan.js';
 
 function rasterize(matrix){
@@ -37,7 +41,8 @@ function code39Raster(value){
 test('ZXing ESM named import and real QR pixel decoding',()=>{
  const source=readFileSync(new URL('../src/code-multi-scan.js',import.meta.url),'utf8');
  assert.doesNotMatch(source,/^\s*const.*ZXing\.default/m);
- assert.match(source,/import \{BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType\} from '@zxing\/library'/);
+ assert.match(source,/import \* as ZXing from '@zxing\/library'/);
+ assert.match(source,/Object\.values\(ZXing\)/);
  const payload='RIVOLAB_AUDIT_QR_04568';
  const {rgba,w,h}=rasterize(new QRCodeWriter().encode(payload,BarcodeFormat.QR_CODE,280,280,new Map()));
  const data=scanMultiplePixels(rgba,w,h,{maxResults:8});
@@ -51,4 +56,14 @@ test('ZXing recognizes independently rendered Code39 barcode pattern from pixels
 test('Blank pixels do not produce false codes',()=>{
  const w=160,h=160,rgba=new Uint8ClampedArray(w*h*4).fill(255);
  assert.deepEqual(scanMultiplePixels(rgba,w,h),[]);
+});
+
+test('Linux CommonJS-style namespace fallback resolves real barcode classes',async()=>{
+ const {createRequire}=await import('node:module');
+ const legacy=createRequire(import.meta.url)('@zxing/library');
+ const cjsNamespace={default:legacy};
+ const decoded=typeof cjsNamespace.BinaryBitmap==='function'?cjsNamespace:
+  Object.values(cjsNamespace).find(x=>x&&typeof x.BinaryBitmap==='function');
+ assert.equal(typeof decoded?.MultiFormatReader,'function');
+ assert.equal(typeof decoded?.QRCodeWriter,'function');
 });
