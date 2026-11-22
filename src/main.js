@@ -1103,6 +1103,19 @@ function pickHubFile(accept,cb){
  input.onchange=()=>{const file=input.files?.[0];input.remove();if(file)Promise.resolve(cb(file)).catch(e=>{console.error(e);toast(e?.message||String(e),true)});};
  document.body.appendChild(input);input.click();
 }
+async function captureMlkitDocumentPhoto(){
+  if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
+    const scan=await DocumentScanner.scanDocument({galleryImportAllowed:false,
+      pageLimit:1,resultFormats:'JPEG',scannerMode:'FULL'});
+    const uri=scan?.scannedImages?.[0];
+    if(!uri)return null;
+    const file=await readScannedImage(uri,0);
+    return 'data:image/jpeg;base64,'+toBase64(new Uint8Array(await file.arrayBuffer()));
+  }
+  const photo=await Camera.getPhoto({quality:92,allowEditing:false,
+    resultType:CameraResultType.Uri,source:CameraSource.Camera});
+  return photo.webPath||photo.path;
+}
 async function openHubAction(id){
  const spec=hubSpecial[id];
  if(!spec){await openTool(id);return;}
@@ -1116,28 +1129,16 @@ async function openHubAction(id){
  }
  if(spec.type==='legacyTool'){await openTool(spec.toolId);return;}
  if(spec.type==='aiDocument'||spec.type==='aiSolver'){
-   openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:async()=>{
-     const photo=await Camera.getPhoto({quality:92,allowEditing:false,
-       resultType:CameraResultType.Uri,source:CameraSource.Camera});
-     return photo.webPath||photo.path;
-   }});
+   openDocumentAI({mode:spec.type==='aiDocument'?'chat':'solver',language,capture:()=>captureMlkitDocumentPhoto()});
    return;
  }
  if(spec.type==='mlkitFull'){await openSmartScanner();return;}
  if(spec.type==='formulaOcr'){
-   openFormulaReader({language,save:saveOut,notify:toast,capture:async()=>{
-     const photo=await Camera.getPhoto({quality:92,allowEditing:false,
-       resultType:CameraResultType.Uri,source:CameraSource.Camera});
-     return photo.webPath||photo.path;
-   }});
+   openFormulaReader({language,save:saveOut,notify:toast,capture:()=>captureMlkitDocumentPhoto()});
    return;
  }
  if(spec.type==='photoTranslation'){
-   openPhotoTranslation({language,save:saveOut,notify:toast,capture:async()=>{
-     const photo=await Camera.getPhoto({quality:92,allowEditing:false,
-       resultType:CameraResultType.Uri,source:CameraSource.Camera});
-     return photo.webPath||photo.path;
-   }});
+   openPhotoTranslation({language,save:saveOut,notify:toast,capture:()=>captureMlkitDocumentPhoto()});
    return;
  }
  if(spec.type==='pdfLock'){
