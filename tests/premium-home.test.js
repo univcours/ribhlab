@@ -15,10 +15,10 @@ test('Files-first Home keeps camera, search, selection and a large document area
  assert.ok(main.includes('data-live-camera'));
  assert.ok(main.includes('data-doc-select'));
 });
-test('File rows always show external preview/share/more beside filename; bulk toolbar remains',()=>{
+test('File library uses a short icon row only when exactly one file is selected',()=>{
  const main=file('src/main.js'),bulk=file('src/library-bulk.js');
- assert.ok(main.includes('rowDocumentActions(doc,index)'));
- for(const action of ['data-doc-external','data-doc-share','data-doc-rename','data-doc-delete'])
+ assert.ok(main.includes('bulkUI.count()===1'));
+ for(const action of ['data-doc-open','data-doc-share','data-doc-rename','data-doc-delete'])
   assert.ok(main.includes(action));
  assert.ok(bulk.includes('rivo-compact-selection'));
  assert.ok(bulk.includes('rivo-inline-bulk'));
