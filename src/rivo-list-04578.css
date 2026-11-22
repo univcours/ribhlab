@@ -216,3 +216,16 @@ html body #app .shell.rivo-dark-ui :is(
  color:#234d75!important;-webkit-text-fill-color:#234d75!important;
  opacity:1!important;
 }
+
+/* The list CONTAINER itself inherited a legacy solid-white panel. */
+html body #app .shell.rivo-dark-ui :is(
+ #home-recents.recent-panel,
+ #home-recents.rivo-premium-recent,
+ #library-list.library-list,
+ #home-recents>.recent-empty,
+ #home-recents>.recent-empty.rivo-onboarding
+){
+ background:transparent!important;
+ background-image:none!important;background-color:transparent!important;
+ box-shadow:none!important;
+}
