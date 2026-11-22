@@ -1,0 +1,54 @@
+name: Mazamir Daoud 5 - Google Play publishing access and app preflight
+on:
+  push:
+    branches:
+      - build/mazamirdaoud5-original-rivo-sign-20261122
+    paths:
+      - .github/workflows/mazamirdaoud5-play-preflight.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  play-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check Play service-account access to new Mazamir app (NO publication)
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet google-auth google-api-python-client
+          python - <<'PY'
+          import os,json,base64
+          from google.oauth2.service_account import Credentials
+          from googleapiclient.discovery import build
+          from googleapiclient.errors import HttpError
+          val=os.environ.get('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON','').strip()
+          if not val:
+              print('PREFLIGHT: Google Play service account is not available to this workflow. No publish attempted.')
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('No Google Play service-account secret configured. Nothing published.\n')
+              raise SystemExit(0)
+          try:
+              obj=json.loads(val if val.startswith('{') else base64.b64decode(val).decode('utf-8'))
+              creds=Credentials.from_service_account_info(obj,scopes=['https://www.googleapis.com/auth/androidpublisher'])
+              svc=build('androidpublisher','v3',credentials=creds,cache_discovery=False)
+              app='com.ribhlab.mazamirdaoud'
+              edit=svc.edits().insert(packageName=app,body={}).execute()
+              try:
+                  tracks=svc.edits().tracks().list(packageName=app,editId=edit['id']).execute().get('tracks',[])
+                  print('PREFLIGHT: authorized to access Mazamir app. Tracks:',[x.get('track') for x in tracks])
+                  with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('Google Play app access OK. No bundle uploaded and nothing published.\n')
+              finally:
+                  svc.edits().delete(packageName=app,editId=edit['id']).execute()
+          except HttpError as e:
+              print('PREFLIGHT: Play API cannot access or modify Mazamir app:', e.resp.status)
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('Play API check unavailable, status '+str(e.resp.status)+'. App creation, API permission, or initial setup may be needed. Nothing published.\n')
+          except Exception as e:
+              print('PREFLIGHT: configuration error:',type(e).__name__)
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('Play API credential not usable ('+type(e).__name__+'). Nothing published.\n')
+          PY
