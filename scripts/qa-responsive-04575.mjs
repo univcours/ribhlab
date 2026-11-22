@@ -154,9 +154,9 @@ try{
 
   if(width===393&&lang==='auto'){
    await page.evaluate(()=>document.querySelector('.mobilebar [data-tab="me"]')?.click());
-   await page.locator('.settings-row-icon').first().waitFor({timeout:9000});
+   await page.locator('.app-settings .settings-lang .settings-row-icon').waitFor({state:'visible',timeout:9000});
    const settings=await page.evaluate(()=>{
-    const nodes=[...document.querySelectorAll('.settings-row-icon')];
+    const nodes=[...document.querySelectorAll('.app-settings .settings-row-icon')].filter(node=>node.getClientRects().length>0);
     const okay=nodes.every(n=>getComputedStyle(n).backgroundImage.includes('linear-gradient')&&
       getComputedStyle(n,'::before').animationName.includes('rivoIconNeonOrbit'));
     return {count:nodes.length,okay};
