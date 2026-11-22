@@ -59,6 +59,23 @@ manifest=SOURCE/"AndroidManifest.xml"
 xml=manifest.read_text(encoding="utf-8")
 xml,count=re.subn(r'\s*<activity\b[^>]*android:name="\.RivoLiveScannerActivity"[^>]*/>',"",xml)
 assert count==1, f"Expected one legacy camera activity, found {count}"
+# Portrait is mandatory on ALL device rotations: lock the actual Android
+# launcher activity, not merely the responsive WebView CSS. The ML Kit scanner
+# is provided by Google Play services and is not a RivoScan activity.
+main_activity=re.compile(
+    r'<activity\\b[^>]*android:name\\s*=\\s*["\\'](?:\\.MainActivity|com\\.ribhlab\\.rivoscan\\.MainActivity)["\\'][^>]*>',
+    re.S
+)
+activities=list(main_activity.finditer(xml))
+assert len(activities)==1, "Expected one Android launcher MainActivity"
+tag=activities[0].group()
+if re.search(r'android:screenOrientation\\s*=',tag):
+    tag=re.sub(r'android:screenOrientation\\s*=\\s*["\\'][^"\\']*["\\']',
+               'android:screenOrientation="portrait"',tag)
+else:
+    tag=tag[:-1]+' android:screenOrientation="portrait">'
+xml=xml[:activities[0].start()]+tag+xml[activities[0].end():]
+assert len(main_activity.findall(xml))==1 and 'android:screenOrientation="portrait"' in tag
 manifest.write_text(xml,encoding="utf-8")
 gradle=ANDROID/"build.gradle"
 s=gradle.read_text(encoding="utf-8")
