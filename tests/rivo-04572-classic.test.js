@@ -11,7 +11,7 @@ test('Original 0.45.44 ice/royal-blue palette is the last imported visual layer'
   assert.ok(original.includes(hex),'missing original color '+hex);
   assert.ok(css.includes(hex),'classic style lacks '+hex);
  }
- assert.ok(main.indexOf("import './rivo-classic-04572.css';")>main.indexOf("import './rivo-qa-04570.css';"));
+ assert.ok(main.indexOf("import './rivo-layout-04573.css';")>main.indexOf("import './rivo-classic-04572.css';"));
  assert.doesNotMatch(main,/import '\.\/rivo-neon-04571\.css'/);
 });
 test('Home tiles and My Files header are in separate nonoverlapping layout rows',()=>{
@@ -63,8 +63,8 @@ test('No rewarded prompt, original Google Play upload signature preserved',()=>{
  const ads=read('src/monetization.js');
  assert.doesNotMatch(ads,/PRO bonus|RewardedAd|showRewardVideoAd/);
  assert.match(ads,/AdMob\.showInterstitial/);
- assert.match(read('rivoscan-version.properties'),/^versionCode=187$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.72$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=188$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.73$/m);
 });
 test('Reduced motion is respected',()=>{
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
