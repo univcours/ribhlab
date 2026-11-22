@@ -77,6 +77,8 @@ import './rivo-mlkit-04577.css';
 import './rivo-list-04578.css';
 // Preserve the enlarged 0.45.79 real thumbnails with the previous 0.45.78 list controls.
 import './rivo-thumbnail-restore-04580.css';
+// Exact 0.45.44 My Documents flex rows; thumbnail stays current size and clipped.
+import './rivo-mydocs-04544-layout-04580.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -710,7 +712,7 @@ function renderLibraryRows(needle=''){
   const file=visualFileType(item);
   return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
-   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
+   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
@@ -719,7 +721,7 @@ function renderLibraryRows(needle=''){
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
     <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
     <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''}<span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span></article>`;
+   </div>`:''} </article>`;
  }).join('');
 }
 function libraryWorkspace(){
