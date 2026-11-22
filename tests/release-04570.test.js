@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const get=x=>readFileSync(new URL('../'+x,import.meta.url),'utf8');
 test('audited tester release increments Android version and keeps original banner + signing',()=>{
- const flow=get('.github/workflows/rivoscan-04573-layout-and-plate.yml');
+ const flow=get('.github/workflows/rivoscan-04574-responsive-final.yml');
  const meta=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
- assert.equal(pkg.version,'0.45.73');
- assert.match(meta,/^versionCode=188$/m);assert.match(meta,/^versionName=0\.45\.73$/m);
- assert.match(flow,/branches: \[fix\/rivoscan-04573-layout-and-plate\]/);
- assert.match(flow,/versionCode='188' versionName='0\.45\.73'/);
+ assert.equal(pkg.version,'0.45.74');
+ assert.match(meta,/^versionCode=189$/m);assert.match(meta,/^versionName=0\.45\.74$/m);
+ assert.match(flow,/branches: \[fix\/rivoscan-04574-responsive-final\]/);
+ assert.match(flow,/versionCode='189' versionName='0\.45\.74'/);
  assert.match(flow,/4841809190/);
  assert.doesNotMatch(flow,/4841819190/);
  assert.match(flow,/5608742752/);
