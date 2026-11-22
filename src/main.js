@@ -69,6 +69,7 @@ import './rivo-qa-04570.css';
 import './rivo-classic-04572.css';
 // Latest visual layer: minimal cards, inline glyphs, neon text and revolving accent edge.
 import './rivo-visual-04574.css';
+import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -1860,6 +1861,29 @@ document.addEventListener('touchend',event=>{
  if(Math.abs(dy)<60&&((start.side==='left'&&dx>=84)||(start.side==='right'&&dx<=-84)))navigateRivoBack();
 },{passive:true});
 document.addEventListener('touchcancel',()=>{edgeSwipeStart=null},{passive:true});
+
+// Modal pull-down gesture: only the title/header (or an explicit drag handle)
+// can initiate dismissal. Results, inputs, canvas and camera never close a
+// dialog when the user scrolls, scans, zooms or selects text.
+let modalPullStart=null;
+document.addEventListener('touchstart',event=>{
+ modalPullStart=null;
+ if(event.touches.length!==1||!canStartModalSwipe(event.target))return;
+ const dialog=event.target.closest('[role="dialog"],.rivo-live-overlay,[data-rivo-managed-modal="true"],.rivo-release-overlay,.doc-detail-overlay');
+ if(!dialog)return;
+ const t=event.touches[0];
+ modalPullStart={dialog,x:t.clientX,y:t.clientY,id:t.identifier,at:Date.now()};
+},{passive:true});
+document.addEventListener('touchend',event=>{
+ const start=modalPullStart;modalPullStart=null;
+ if(!start||event.changedTouches.length!==1||!start.dialog.isConnected)return;
+ const t=event.changedTouches[0];
+ if(t.identifier!==start.id)return;
+ if(isDismissSwipe({dx:t.clientX-start.x,dy:t.clientY-start.y,elapsedMs:Date.now()-start.at}))
+  navigateRivoBack();
+},{passive:true});
+document.addEventListener('touchcancel',()=>{modalPullStart=null},{passive:true});
+
 
 render();
 void refreshSystemLanguage();
