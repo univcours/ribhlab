@@ -18,7 +18,8 @@ test('global native safe zone covers every RivoScan modal category',()=>{
  const main=get('src/main.js');
  assert.ok(main.includes("import './rivo-polish-04566.css';"));
  const ads=get('src/monetization.js');
- assert.match(ads,/hostBox\.bottom<=window\.innerHeight-reserved\+2/);
+ assert.match(ads,/function bannerObstructed\(\)\{[\s\S]*?return false;/);
+ assert.match(get('src/rivo-ui-04567.css'),/\.rivo-id-overlay/);
 });
 
 test('back buttons animate with reduced-motion support and save dialog contrast',()=>{
@@ -40,7 +41,7 @@ test('ID Photo Maker offers actual camera and preview-based image picker',()=>{
  const id=get('src/id-photo-maker.js');
  assert.match(id,/Camera\.getPhoto/);
  assert.match(id,/source:CameraSource\.Camera/);
- assert.match(id,/workspace\.dock\.append\(previewImport,leftRail,rightRail\)/);
+ assert.match(id,/workspace\.dock\.append\(previewImport,leftRail,rightRail,input\)/);
  assert.match(id,/input\.className='rivo-id-native-file-picker'/);
 });
 test('book scan empty preview has functional photo/import actions',()=>{

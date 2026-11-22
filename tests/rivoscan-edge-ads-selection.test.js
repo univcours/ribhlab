@@ -63,14 +63,12 @@ test('PDF adjustment saves a new PDF with all other original pages unchanged',()
  assert.ok(edges.includes("await onSave(correctedBytes"));
  assert.doesNotMatch(edges,/bridge\.deleteFile|bridge\.renameFile/);
 });
-test('native Banner, Interstitial and opt-in Rewarded respect editor overlay without app-open ads',()=>{
+test('native Banner and regular Interstitial respect editor overlay without Rewarded or app-open ads',()=>{
  const ads=read('src/monetization.js');
  assert.match(ads,/AdMob\.showBanner\(/);
  assert.match(ads,/AdMob\.prepareInterstitial\(/);
  assert.match(ads,/AdMob\.showInterstitial\(/);
- assert.match(ads,/\.rivo-edge-adjust-overlay/);
- assert.match(ads,/AdMob\.prepareRewardVideoAd/);
- assert.match(ads,/AdMob\.showRewardInterstitialAd/);
- assert.match(ads,/RewardAdPluginEvents|rivo-reward-watch/);
+ assert.match(read('src/rivo-ui-04567.css'),/\.rivo-edge-adjust-overlay/);
+ assert.doesNotMatch(ads,/(?:prepareReward|showReward|RewardAdPluginEvents|rivo-reward-watch)/);
  assert.doesNotMatch(ads,/AdMob\.(?:loadAppOpen|showAppOpen)/);
 });

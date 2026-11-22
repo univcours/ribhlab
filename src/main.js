@@ -62,6 +62,7 @@ import './rivo-controls-clarity.css';
 import './rivo-personalized-cards.css';
 // Last global safety layer: app-wide modal/banner boundaries and file-type badges.
 import './rivo-polish-04566.css';
+import './rivo-ui-04567.css';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
 import {openIDPhotoMaker} from './id-photo-maker.js';
@@ -132,6 +133,8 @@ const icons = {
   grid:'<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
   qr:'<path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/><path d="M6 6h2v2H6zm10 0h2v2h-2zM6 16h2v2H6zm6-4h2v2h-2zm4 4h2v2h-2z" fill="currentColor" stroke="none"/>',
   plate:'<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 10v4m4-4v4m4-4v4m3-4h1m-1 4h1M3 5V3h4m10 0h4v2M3 19v2h4m10 0h4v-2"/>',
+   translate:'<path d="M3 5h11M8.5 3v3m3.5 2c-2 5-5 7-8 8m1-8c1.3 3 3.7 5.2 6 6"/><path d="m13 19 4-11 4 11m-6.5-3h5"/>',
+   math:'<path d="M4 5h8M8 5v14m-4 0h8"/><path d="M16 6h5m-2.5-2.5v5M15 15h7m-7 4h7"/>',
   volume:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM15 9c2 1.5 2 4.5 0 6M18 6c4 3.5 4 8.5 0 12"/>',
   muted:'<path d="M11 5 6.7 9H3v6h3.7L11 19V5ZM16 9l6 6m0-6-6 6"/>',
   globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c-5 5-5 15 0 20 5-5 5-15 0-20"/>',
@@ -1815,7 +1818,7 @@ function navigateRivoBack(){
   lastBackHandled=now;
   backNavigationPending=true;
   const safeToShow=!busy&&nativeCaptureDepth===0&&
-    !document.querySelector('.rivo-reward-overlay,.doc-detail-overlay,.busy');
+    !document.querySelector('.doc-detail-overlay,.busy');
   // Only internal tool -> Home transitions can display an ad; on Home,
   // Android Back still exits/minimizes normally, without any advertisement.
   void (async()=>{
@@ -1894,7 +1897,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
       // App-open ad only on a genuine foreground return and only if preloaded.
       if(secondsAway>=60000)void onAppForeground({
        backgroundMs:secondsAway,
-       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-live-overlay,.rivo-reward-overlay,.doc-detail-overlay,.busy')
+       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-live-overlay,.doc-detail-overlay,.busy')
       });
     }else{
       backgroundStartedAt=Date.now();

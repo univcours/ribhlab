@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,remainingPremiumMs,shouldShowInterstitial,
- FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH,isRewardOfferDue} from '../src/monetization.js';
+import {AD_CONFIG,productionAdsConfigured,isPremiumFeature,shouldShowInterstitial,
+ FULLSCREEN_COOLDOWN_MS,MIN_BACKGROUND_MS,registerLaunch,launchEligible,shouldCountWarmSession,FULLSCREEN_START_LAUNCH,isPremiumBreakDue} from '../src/monetization.js';
 test('test-mode banner uses official 320x50 test unit; production requires real Banner ID',()=>{
  assert.equal(AD_CONFIG.bannerEnabled,true);assert.match(AD_CONFIG.banner,/^ca-app-pub-3940256099942544\/\d+$/);
- assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,true);
- for(const id of ['interstitial','banner','rewarded'])
+ assert.equal(AD_CONFIG.testMode,true);assert.equal('rewarded' in AD_CONFIG,false);
+ for(const id of ['interstitial','banner'])
   assert.match(AD_CONFIG[id],/^ca-app-pub-3940256099942544\/\d+$/);
 });
 test('basic scanning, reading and existing files never need reward ads',()=>{
@@ -14,9 +14,9 @@ test('basic scanning, reading and existing files never need reward ads',()=>{
  for(const name of ['bookScan','documentFlatten','formulaOcr','toExcel','toWord','ocr','aiChat'])
   assert.equal(isPremiumFeature(name),true);
 });
-test('rewarded bonus timer is measured in real milliseconds',()=>{
- assert.equal(remainingPremiumMs(600000,0),600000);
- assert.equal(remainingPremiumMs(600000,600001),0);
+test('PRO tools use normal interstitial breaks without reward timers',()=>{
+ assert.equal('rewarded' in AD_CONFIG,false);
+ assert.equal('rewardedInterstitial' in AD_CONFIG,false);
 });
 test('interstitial requires consent, saved work, natural break, cooldown, session cap',()=>{
  const state={native:true,consent:true,ready:true,startedAt:1000,
@@ -39,7 +39,7 @@ test('Back ads only after completed work or two tool-to-Home transitions, never 
  assert.equal(shouldShowInterstitial({...base,backTransitions:2,lastShownAt:899000}),false);
 });
 test('production cannot use Google test IDs or mismatched publishers',()=>{
- const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',rewarded:'ca-app-pub-1234567890123456/1234567890',banner:'ca-app-pub-1234567890123456/1234567890'};
+ const real={androidAppId:'ca-app-pub-1234567890123456~1234567890',interstitial:'ca-app-pub-1234567890123456/1234567890',banner:'ca-app-pub-1234567890123456/1234567890'};
  assert.equal(productionAdsConfigured(),false);
  assert.equal(productionAdsConfigured(real),true);
  assert.equal(productionAdsConfigured({...real,banner:''}),true); // missing Banner never blocks Interstitial/App Open
@@ -73,7 +73,7 @@ test('App Open is entirely disabled; startup only initializes inventory',async()
 test('native banner stays hidden while any full-screen ad is active',async()=>{
  const fs=await import('node:fs');
  const source=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- assert.match(source,/if\(state\.busy\|\|keyboard\)return true/);
+ assert.match(source,/function bannerObstructed\(\)\{[\s\S]*?return false;/);
  assert.match(source,/pauseBannerForFullscreen\(\)/);
  assert.match(source,/restoreBannerAfterFullscreen\(\)/);
  assert.match(source,/BannerAdPluginEvents.AdImpression/);
@@ -90,7 +90,7 @@ test('returning to an app kept alive counts as a new usage after a real backgrou
 test('Native ad no-fill conditions retry with bounded 1/2/4/8 minute backoff',async()=>{
  const fs=await import('node:fs');
  const code=fs.readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
- assert.match(code,/const retryCounts=\{banner:0,interstitial:0,rewarded:0\}/);
+ assert.match(code,/const retryCounts=\{banner:0,interstitial:0\}/);
  assert.match(code,/if\(retryCounts\[type\]>=4\)return/);
  assert.match(code,/\[60000,120000,240000,480000\]/);
  assert.match(code,/scheduleAdRetry\('banner'\)/);
@@ -110,26 +110,17 @@ test('AdMob recovers NO_FILL inventory after a background/foreground cycle witho
  assert.doesNotMatch(code,/AdMob\.(?:showAppOpen|loadAppOpen)/);
 });
 
-test('Rewarded offer appears after PRO usages 1, 4, 7, 10 (never on every tap)',()=>{
- for(let n=1;n<=16;n++)assert.equal(isRewardOfferDue(n),n%3===1);
- assert.equal(isRewardOfferDue(0),false);
- assert.equal(isRewardOfferDue(-2),false);
- assert.equal(isRewardOfferDue(2.5),false);
+test('PRO navigation break cadence remains 1, 4, 7, 10 (without bonus ads)',()=>{
+ for(let n=1;n<=16;n++)assert.equal(isPremiumBreakDue(n),n%3===1);
+ assert.equal(isPremiumBreakDue(0),false);
+ assert.equal(isPremiumBreakDue(-2),false);
+ assert.equal(isPremiumBreakDue(2.5),false);
 });
-test('Actual configured standard Rewarded ad is preloaded and opt-in; optional rewarded interstitial remains separate',async()=>{
+test('PRO exit uses the regular Interstitial, never a rewarded popup',async()=>{
  const {readFileSync}=await import('node:fs');
  const source=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  assert.match(source,/export function atPremiumExit\(\)/);
- assert.match(source,/AdMob\.prepareRewardVideoAd/);
- assert.match(source,/AdMob\.prepareRewardInterstitialAd/);
- assert.match(source,/AdMob\.showRewardInterstitialAd/);
- assert.match(source,/AdMob\.showRewardVideoAd/);
- assert.match(source,/watch\.addEventListener\('click'/);
- assert.match(source,/return offerStandardReward\(\)/);
- assert.doesNotMatch(source,/showCompletionInterstitial\(\)/);
- assert.match(source,/skip\.addEventListener\('click'/);
- assert.match(source,/setTimeout\(async\(\)=>/);
-
- assert.match(source,/state\.unlockedUntil=Math\.max/);
- assert.match(source,/if\(atPremiumExit\(\)\)return false/);
+ assert.match(source,/void atNaturalNavigation\(\{trigger:'regular'\}\)/);
+ assert.match(source,/AdMob\.showInterstitial/);
+ assert.doesNotMatch(source,/(?:prepareReward|showReward|RewardAdPluginEvents|RewardInterstitialAdPluginEvents|rivo-reward-overlay|PRO bonus)/);
 });

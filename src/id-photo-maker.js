@@ -77,12 +77,9 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  const status=document.createElement('p');status.setAttribute('role','status');
  const actions=document.createElement('div');actions.className='rivo-code-actions';
  const row=(caption,control)=>{const label=document.createElement(control.tagName==='BUTTON'?'div':'label');label.className='rivo-id-row';label.textContent=caption;label.append(control);panel.append(label)};
- const importButton=document.createElement('button');importButton.type='button';importButton.className='rivo-id-import-setting';importButton.textContent=({ar:'استيراد صورة',fr:'Importer une photo',en:'Import Photo'})[language]||L[1];
- importButton.addEventListener('click',()=>{input.value='';input.click()});
- const cameraButton=document.createElement('button');cameraButton.type='button';cameraButton.className='rivo-id-take-photo';
- cameraButton.textContent=({ar:'التقاط صورة',fr:'Prendre une photo',en:'Take Photo'})[language]||'Take Photo';
- cameraButton.addEventListener('click',()=>{void capture()});
- row(L[1],importButton);row(L[2],select);row(L[3],y);row(L[4],x);
+ // The preview itself is the ONLY photo picker; remove redundant settings buttons.
+ const takePhotoLabel=({ar:'التقاط صورة',fr:'Prendre une photo',en:'Take Photo'})[language]||'Take Photo';
+ row(L[2],select);row(L[3],y);row(L[4],x);
  const bgSelect=document.createElement('select');
  const names=({ar:['الأصلية','بيضاء','زرقاء','رمادية'],fr:['Original','Blanc','Bleu','Gris'],es:['Original','Blanco','Azul','Gris'],de:['Original','Weiß','Blau','Grau'],pt:['Original','Branco','Azul','Cinzento'],it:['Originale','Bianco','Blu','Grigio'],en:['Original','White','Light blue','Gray']})[language]||['Original','White','Light blue','Gray'];
  for(const [i,key] of ['original','white','blue','gray'].entries()){
@@ -90,7 +87,8 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  }
  row(({ar:'الخلفية (النموذج يتحمل أول مرة)',en:'Background (first-use model download)',fr:'Fond (premier téléchargement)'})[language]||'Background / downloaded model',bgSelect);
  panel.append(canvas,hint,status,actions);overlay.append(panel);document.body.append(overlay);
- let image=null,cutout=null,blobURL=null,closed=false,processing=false,workspace=null,saveButton=null;
+ let image=null,cutout=null,blobURL=null,closed=false,processing=false,workspace=null,saveButton=null,previewImport=null;
+ const moveButtons=[];
  const update=()=>{
   if(!image)return;
   canvas.hidden=false;
@@ -144,6 +142,8 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
    const previous=blobURL;blobURL=objectURL;
    image=next;cutout=null;x.value='0';y.value='0';
    workspace?.loaded();if(saveButton)saveButton.disabled=false;
+   for(const b of moveButtons)b.disabled=false;
+   if(previewImport)previewImport.textContent=({ar:'تغيير الصورة',fr:'Changer la photo',en:'Change Photo'})[language]||'Change Photo';
    if(previous)URL.revokeObjectURL(previous);
    if(bgSelect.value!=='original')await applyBackground();else update();
   }catch{if(objectURL)URL.revokeObjectURL(objectURL);if(!closed)status.textContent=L[9]}
@@ -167,20 +167,19 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  input.addEventListener('change',()=>{void load()});select.addEventListener('change',update);x.addEventListener('input',update);y.addEventListener('input',update);
  mountDialogControls({overlay,panel,close,language});
  const rows=[...panel.querySelectorAll(':scope > .rivo-id-row')];
- if(rows.length!==5)throw Error('ID Photo controls unexpectedly changed');
- rows[0].classList.add('rivo-id-source-controls');rows[0].append(cameraButton,input);
+ if(rows.length!==4)throw Error('ID Photo controls unexpectedly changed');
  const [makeSheet,saveControl]=actions.querySelectorAll('button');
  saveButton=saveControl;saveButton.disabled=true;
  // Two compact sliders share one line, freeing space for the portrait preview.
  const compactAdjust=document.createElement('div');compactAdjust.className='rivo-id-compact-adjust';
- compactAdjust.append(rows[2],rows[3]);
+ compactAdjust.append(rows[1],rows[2]);
  workspace=mountPreviewFirstWorkspace({
   panel,preview:canvas,language,defaultSection:'source',
   sections:[
-   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[rows[0]]},
+   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[]},
    {id:'adjust',label:({ar:'المقاس والتأطير',fr:'Cadrage',en:'Size & crop'})[language]||'Size & crop',
-    nodes:[rows[1],compactAdjust,makeSheet]},
-   {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[4],hint]}
+    nodes:[rows[0],compactAdjust,makeSheet]},
+   {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[3],hint]}
   ],alwaysVisible:[status],footer:[saveButton]
  });
  // Use the empty margins on BOTH sides of the actual photo, not a second
@@ -206,29 +205,32 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   const b=document.createElement('button');b.type='button';b.className='rivo-id-side-action';
   b.title=label;b.setAttribute('aria-label',label);
   b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
-  b.addEventListener('click',fn);rail.append(b);
+  b.addEventListener('click',fn);rail.append(b);return b;
  };
- // The first left-side camera icon now opens the actual device camera.
- railButton(leftRail,'photo',cameraButton.textContent,()=>{void capture()});
- [['source','photo'],['adjust','crop'],['background','background']].forEach(([section,icon],i)=>{
-  railButton(leftRail,icon,namesForLang[i],()=>{
-   workspace.choose(section);workspace.show(true);
-  });
- });
+ // Only one camera on the rail. The image import stays in the preview.
+ railButton(leftRail,'photo',takePhotoLabel,()=>{void capture()});
+ for(const [section,icon,label] of [
+  ['adjust','crop',namesForLang[1]],['background','background',namesForLang[2]]
+ ]){
+  railButton(leftRail,icon,label,()=>{workspace.choose(section);workspace.show(true)});
+ }
  const move=(control,step)=>{
+  if(!image)return;
   control.value=String(Math.max(Number(control.min),Math.min(Number(control.max),Number(control.value)+step)));
-  if(image)update();
+  update();
  };
- railButton(rightRail,'up',namesForLang[3],()=>move(y,-10));
- railButton(rightRail,'down',namesForLang[4],()=>move(y,10));
- railButton(rightRail,'left',namesForLang[5],()=>move(x,-10));
- railButton(rightRail,'right',namesForLang[6],()=>move(x,10));
- railButton(rightRail,'reset',namesForLang[7],()=>{x.value='0';y.value='0';if(image)update()});
- const previewImport=document.createElement('button');previewImport.type='button';
+ moveButtons.push(railButton(rightRail,'up',namesForLang[3],()=>move(y,-10)));
+ moveButtons.push(railButton(rightRail,'down',namesForLang[4],()=>move(y,10)));
+ moveButtons.push(railButton(rightRail,'left',namesForLang[5],()=>move(x,-10)));
+ moveButtons.push(railButton(rightRail,'right',namesForLang[6],()=>move(x,10)));
+ moveButtons.push(railButton(rightRail,'reset',namesForLang[7],()=>{if(!image)return;x.value='0';y.value='0';update()}));
+ for(const b of moveButtons)b.disabled=!image;
+ previewImport=document.createElement('button');previewImport.type='button';
  previewImport.className='rivo-id-preview-import';previewImport.textContent=({ar:'＋ استيراد صورة',fr:'＋ Importer une photo',en:'＋ Import Photo'})[language]||'＋ Import Photo';
  previewImport.setAttribute('aria-label',L[1]);
  previewImport.addEventListener('click',()=>{input.value='';input.click()});
- workspace.dock.append(previewImport,leftRail,rightRail);
+ workspace.dock.append(previewImport,leftRail,rightRail,input);
+ workspace.empty.hidden=true; // No text behind the central Import Photo button.
  status.classList.add('rivo-workspace-status');
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
  return close;

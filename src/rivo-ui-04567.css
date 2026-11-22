@@ -1,0 +1,297 @@
+/* RivoScan 0.45.67 — stage 1: banners stay visible; every native tool
+   window gets a safe edge above the SDK's separate 320x50 native View. */
+body.rivo-native-android :is(
+ .rivo-id-overlay,.rivo-code-overlay,.rivo-live-overlay,.rivo-plate-overlay,
+ .rivo-merged-overlay,.rivo-shield-overlay,.rivo-edge-adjust-overlay,
+ .rivo-editor-overlay,.rivo-pages-overlay,.rivo-page-manager-overlay,
+ .rivo-perfectscan-overlay,.rivo-perfect-capture-overlay,
+ .rivo-release-overlay,.rivo-update-gate,.rivo-ad-launch-loading,
+ .rivo-viewer-layer,.doc-detail-overlay,.bulk-overlay,.busy
+){
+ position:fixed!important;
+ top:0!important;
+ bottom:var(--rivo-content-bottom,98px)!important;
+ height:auto!important;
+ min-height:0!important;
+ max-height:calc(100dvh - var(--rivo-content-bottom,98px))!important;
+ box-sizing:border-box!important;
+ overflow-x:hidden!important;
+ overflow-y:auto!important;
+ overscroll-behavior:contain!important;
+}
+/* A native banner which hasn't loaded must never display an empty white
+   fake advertisement rectangle; the native SDK renders the actual creative. */
+body.rivo-native-android:not(.rivo-has-ad-banner) #app .rivo-ad-banner-slot{
+ display:none!important;
+}
+body.rivo-native-android:not(.rivo-has-ad-banner) #app .rivo-ad-banner-frame{
+ background:transparent!important;
+}
+/* Rounded, outlined, visually distinct edges on EVERY tool panel. */
+body.rivo-native-android :is(
+ .rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-release-dialog,
+ .rivo-update-dialog,.rivo-editor-window,.rivo-pages-modal,
+ .rivo-perfectscan-modal,.bulk-sheet,.rivo-reward-dialog,
+ .rivo-page-manager-dialog,.rivo-viewer-window,
+ .rivo-perfect-capture-dialog,
+ [role="dialog"][aria-modal="true"]
+){
+ box-sizing:border-box!important;
+ max-height:calc(100dvh - var(--rivo-content-bottom,98px) - 16px)!important;
+ border:1.5px solid #85bce9!important;
+ border-radius:20px!important;
+ box-shadow:0 10px 24px rgba(7,40,86,.30),0 0 0 1px rgba(255,255,255,.75)!important;
+ overflow-x:hidden!important;
+}
+/* Dialogs must not hide their actions below the banner even with a large
+   phone font setting; inner content scrolls instead of expanding the shell. */
+body.rivo-native-android :is(
+ .rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-editor-window,
+ .rivo-pages-modal,.rivo-perfectscan-modal
+){
+ min-height:0!important;
+}
+@media(max-width:410px){
+ body.rivo-native-android :is(.rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-release-dialog,
+ .rivo-editor-window,.rivo-pages-modal,.rivo-perfectscan-modal){
+  border-radius:16px!important;
+ }
+}
+
+/* STAGE 2 — all Back/Return and tool-close controls: animated luminous
+   outline; original button fill, meaning and contrast are preserved. */
+body button:is(
+ [data-inapp-back],[data-rivo-modal-close],[data-scan-overlay-close],
+ [data-merged-close],[data-edge="close"],[data-page-action="close"],
+ [data-perfect="close"],[data-shield="close"],[data-close-sheet],
+ [data-rivo-back],[data-back],
+ [aria-label="Back" i],[aria-label="Retour" i],
+ [aria-label="رجوع"],[aria-label="عودة"],
+ [aria-label="Return" i],[title="Back" i]
+),body :is(.rivo-header-back,.rivo-modal-dismiss,.rivo-pages-back,
+ .rivo-viewer-back,.rivo-update-close,.rivo-tool-back){
+ position:relative!important;
+ isolation:isolate!important;
+ border:2px solid #56baff!important;
+ border-radius:13px!important;
+ animation:rivo-04567-back-halo 2.35s ease-in-out infinite!important;
+ will-change:box-shadow;
+ transition:transform .16s ease,border-color .16s ease!important;
+}
+@keyframes rivo-04567-back-halo{
+ 0%,100%{
+  box-shadow:0 0 4px rgba(15,134,244,.48),0 3px 8px rgba(12,66,125,.24);
+  border-color:#72bbec;
+ }
+ 50%{
+  box-shadow:0 0 12px 3px rgba(35,182,255,.85),0 0 21px 6px rgba(0,121,250,.43),0 4px 12px rgba(12,66,125,.30);
+  border-color:#00b4ff;
+ }
+}
+body button:is([data-inapp-back],[data-rivo-modal-close],
+ [data-scan-overlay-close],[data-merged-close],[data-edge="close"],
+ [data-page-action="close"],[data-perfect="close"],[data-shield="close"],
+ [data-close-sheet],[data-rivo-back],[data-back]):active{
+ transform:scale(.96)!important;
+}
+body button:is([data-inapp-back],[data-rivo-modal-close],
+ [data-scan-overlay-close],[data-merged-close],[data-edge="close"],
+ [data-page-action="close"],[data-perfect="close"],[data-shield="close"],
+ [data-close-sheet],[data-rivo-back],[data-back]):focus-visible{
+ outline:3px solid #007bdf!important;
+ outline-offset:3px!important;
+}
+@media(prefers-reduced-motion:reduce){
+ body button:is([data-inapp-back],[data-rivo-modal-close],
+  [data-scan-overlay-close],[data-merged-close],[data-edge="close"],
+  [data-page-action="close"],[data-perfect="close"],[data-shield="close"],
+  [data-close-sheet],[data-rivo-back],[data-back]),
+ body :is(.rivo-header-back,.rivo-modal-dismiss,.rivo-pages-back,
+ .rivo-viewer-back,.rivo-update-close,.rivo-tool-back){
+  animation:none!important;
+  will-change:auto!important;
+  box-shadow:0 0 0 2px rgba(20,128,216,.25),0 3px 9px rgba(6,58,117,.2)!important;
+ }
+}
+
+/* STAGE 3 — shared semantic color system for ALL tool action buttons.
+   Home tiles keep their independently colored cards and moving borders.
+   Buttons remain vivid, differentiated and readable at small font sizes. */
+body{
+ --rivo-action-start:#1188e7;--rivo-action-end:#1657ba;
+ --rivo-action-border:#69beff;
+}
+body.rivo-native-android :is(
+ .rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-editor-window,
+ .rivo-pages-modal,.rivo-perfectscan-modal,.rivo-release-dialog,
+ .rivo-update-dialog,.rivo-perfect-capture-dialog,.bulk-sheet,
+ .rivo-reward-dialog
+) button:not(:disabled):not([data-inapp-back]):not([data-rivo-modal-close]){
+ box-sizing:border-box!important;
+ background:linear-gradient(135deg,var(--rivo-action-start),var(--rivo-action-end))!important;
+ border:1.5px solid var(--rivo-action-border)!important;
+ border-radius:12px!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ font-weight:750!important;
+ text-shadow:0 1px 1px rgba(0,0,0,.15)!important;
+ box-shadow:0 2px 7px rgba(6,56,116,.24)!important;
+ min-height:36px;
+ transition:filter .15s ease,transform .15s ease!important;
+}
+body.rivo-native-android :is(
+ .rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-editor-window,
+ .rivo-pages-modal,.rivo-perfectscan-modal,.rivo-release-dialog,
+ .rivo-update-dialog,.rivo-perfect-capture-dialog,.bulk-sheet
+) button:not(:disabled):active{
+ filter:brightness(.91)!important;
+ transform:scale(.985);
+}
+body.rivo-native-android :is(
+ .rivo-id-dialog,.rivo-code-dialog,.rivo-live-dialog,
+ .rivo-merged-dialog,.rivo-shield-dialog,.rivo-editor-window,
+ .rivo-pages-modal,.rivo-perfectscan-modal,.rivo-release-dialog,
+ .rivo-update-dialog,.rivo-perfect-capture-dialog,.bulk-sheet
+) button:is(:disabled,[aria-disabled="true"]){
+ color:#415b73!important;-webkit-text-fill-color:#415b73!important;
+ background:#dce8f3!important;
+ border:1.5px solid #b6c9dd!important;
+ opacity:1!important;text-shadow:none!important;box-shadow:none!important;
+}
+/* Import / choose / gallery: purple */
+body.rivo-native-android button:is(
+ [class*="import"],[class*="upload"],[class*="gallery"],
+ [data-action="import"],[data-action="upload"],[data-action="choose"]
+){
+ --rivo-action-start:#9160ec;--rivo-action-end:#673dbd;
+ --rivo-action-border:#bda1f8;
+}
+/* Take photo / capture / scan: clear bright blue */
+body.rivo-native-android button:is(
+ [class*="camera"],[class*="capture"],[class*="take-photo"],
+ [data-action="capture"],[data-scan-capture]
+){
+ --rivo-action-start:#149aef;--rivo-action-end:#056bc2;
+ --rivo-action-border:#7bcbf7;
+}
+/* Editing / crop / rotate / split / page alignment: cyan */
+body.rivo-native-android button:is(
+ [class*="crop"],[class*="rotate"],[class*="split"],[class*="flatten"],
+ [class*="adjust"],[class*="workspace-task"],[class*="side-action"],
+ [data-page-action="rotate"],[data-page-action="split"]
+){
+ --rivo-action-start:#16b4cf;--rivo-action-end:#087caa;
+ --rivo-action-border:#78d9ee;
+}
+/* AI / automatic correction: amber-orange */
+body.rivo-native-android button:is(
+ [class*="auto-"],[class*="ai-"],[class*="enhanc"],[class*="clean"],
+ [class*="magic"],[data-action="enhance"]
+){
+ --rivo-action-start:#f3a436;--rivo-action-end:#c7780c;
+ --rivo-action-border:#f9c977;
+}
+/* Save / export / done: green. */
+body.rivo-native-android button:is(
+ [class*="save"],[class*="export"],[class*="download"],
+ [class*="generate"],[data-page-action="save"],
+ [data-action="save"],[data-action="export"]
+){
+ --rivo-action-start:#12b88b;--rivo-action-end:#078461;
+ --rivo-action-border:#74ddba;
+}
+/* Destructive and reset actions: red, never confused with Save. */
+body.rivo-native-android button:is(
+ [class*="delete"],[class*="trash"],[class*="remove"],
+ [class*="reset"],[data-page-action="delete"],[data-doc-delete]
+){
+ --rivo-action-start:#ed6070;--rivo-action-end:#bf344c;
+ --rivo-action-border:#ffacb7;
+}
+/* Active tool selector conveys state, not only color. */
+body.rivo-native-android button:is(.rivo-workspace-task,.rivo-filter-choice)[aria-pressed="true"],
+body.rivo-native-android button:is(.rivo-workspace-task,.rivo-filter-choice).active{
+ box-shadow:0 0 0 2px #fff,0 0 0 4px #0a82d2,0 3px 10px rgba(6,89,153,.24)!important;
+}
+/* Close and Back use their own high-contrast pale surface so the animated
+   halo is readable against modal titles, never blue text on blue fill. */
+body.rivo-native-android button:is(
+ [data-inapp-back],[data-rivo-modal-close],[data-scan-overlay-close],
+ [data-merged-close],[data-edge="close"],[data-page-action="close"],
+ [data-perfect="close"],[data-shield="close"],[data-close-sheet]
+){
+ background:linear-gradient(135deg,#ffffff,#e3f2ff)!important;
+ color:#0958a8!important;-webkit-text-fill-color:#0958a8!important;
+ text-shadow:none!important;
+}
+
+/* STAGE 6 — crisp home/tools icons and files recognized before opening. */
+body #app .shell.rivo-dark-ui button.rivo-feature-tile .rivo-feature-icon{
+ width:35px!important;height:35px!important;
+ min-width:35px!important;min-height:35px!important;
+ max-width:35px!important;max-height:35px!important;
+ flex:0 0 35px!important;padding:3px!important;
+ border-radius:11px!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-feature-tile .rivo-feature-icon svg{
+ width:28px!important;height:28px!important;
+ min-width:28px!important;min-height:28px!important;
+ stroke:#ffffff!important;stroke-width:2.6!important;
+ opacity:1!important;filter:none!important;
+ shape-rendering:geometricPrecision!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-feature-tile strong{
+ font-size:clamp(9px,2.65vw,11.5px)!important;
+ color:#103557!important;-webkit-text-fill-color:#103557!important;
+ text-shadow:none!important;
+}
+body #app .shell.rivo-dark-ui button.rivo-hub-tile :is(.tool-icon,.rivo-hub-icon) svg{
+ width:28px!important;height:28px!important;
+ stroke-width:2.5!important;
+ opacity:1!important;filter:none!important;
+}
+body #app .rivo-empty-scan svg{
+ width:23px!important;height:23px!important;
+ stroke:#0877cf!important;stroke-width:2.7!important;
+ opacity:1!important;
+}
+/* A real file gets a larger native thumbnail and an always-legible format tag;
+   the fallback icon stays visible for non-image documents. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb{
+ width:51px!important;min-width:51px!important;max-width:51px!important;
+ height:61px!important;min-height:61px!important;max-height:61px!important;
+ flex:0 0 51px!important;
+ border-radius:11px!important;border:1.5px solid #79b2e5!important;
+ box-shadow:0 2px 8px rgba(12,64,115,.26)!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-type-icon svg{
+ width:33px!important;height:33px!important;
+ stroke-width:2.4!important;opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-kind-badge{
+ font-size:10px!important;font-weight:900!important;
+ line-height:1.25!important;letter-spacing:.15px!important;
+ bottom:2px!important;
+ border-radius:5px!important;
+ box-shadow:0 1px 4px rgba(0,0,0,.3)!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.recent-file-meta,.document-description) strong{
+ color:#163d65!important;-webkit-text-fill-color:#163d65!important;
+ font-size:13px!important;line-height:1.35!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ :is(.recent-file-meta,.document-description) small{
+ color:#3c5e7e!important;-webkit-text-fill-color:#3c5e7e!important;
+ font-size:11px!important;opacity:1!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb{
+  width:47px!important;min-width:47px!important;max-width:47px!important;
+  flex:0 0 47px!important;
+ }
+}

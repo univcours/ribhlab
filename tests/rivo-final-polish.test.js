@@ -16,8 +16,8 @@ test('all Android app pages clip actual scrolling content before the native ad',
  assert.ok(ad.includes('calculateAdLayout('));
  assert.ok(ad.includes('state.bannerHidden=true'));
  assert.ok(ad.includes('margin:bannerLastMargin'));
- assert.ok(ad.includes('.rivo-shield-overlay'));
- assert.ok(ad.includes('.rivo-merged-overlay'));
+ assert.ok(read('src/rivo-ui-04567.css').includes('.rivo-shield-overlay'));
+ assert.ok(read('src/rivo-ui-04567.css').includes('.rivo-merged-overlay'));
 });
 test('all info controls have fixed circular dimensions and simple i glyph',()=>{
  const style=read('src/rivo-native-banner-layout.css');

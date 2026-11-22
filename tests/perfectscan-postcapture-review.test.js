@@ -53,7 +53,7 @@ test('PerfectScan review is an independent after-shutter step, before processing
  assert.match(capture,/perspectiveCropImageData\(pixels,corners\)/);
  assert.match(main,/import '.\/perfectscan-capture-review.css'/);
  assert.match(main,/await DocumentScanner.scanDocument\(mlkitFullOptions\(mode,pageLimit\)\)/);
- assert.match(ads,/\.rivo-perfect-capture-overlay/);
+ assert.match(readFileSync(new URL('../src/rivo-ui-04567.css',import.meta.url),'utf8'),/\.rivo-perfect-capture-overlay/);
  const captureCSS=readFileSync(new URL('../src/perfectscan-capture-review.css',import.meta.url),'utf8');
  const parentCSS=readFileSync(new URL('../src/theme-brand.css',import.meta.url),'utf8');
  const captureZ=Number(captureCSS.match(/z-index:(\d+)/)?.[1]);

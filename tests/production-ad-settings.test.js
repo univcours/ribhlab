@@ -14,7 +14,7 @@ test('production settings hide AdMob diagnostics behind a dev-only gate',()=>{
  assert.ok(settings.includes('</div>` : \'\'}'),'Diagnostics markup must close before About section');
 });
 
-test('rewarded-ad unavailability does not direct consumers to internal debugging',()=>{
+test('AdMob unavailability does not direct consumers to internal debugging',()=>{
  for(const text of ['Open Me → Ad diagnostics','Diagnostics publicitaires','تشخيص الإشهارات'])
   assert.equal(monetization.includes(text),false,'Private debugging reference leaked to users');
 });
