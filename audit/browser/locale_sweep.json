@@ -1,0 +1,372 @@
+{
+  "cases": [
+    {
+      "lang": "en",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scan QR / Barcodes",
+        "ID Cards",
+        "ID Photos for Print",
+        "Plate Scanner",
+        "Translate a Photo",
+        "Read Math Formulas",
+        "OCR Text Reader",
+        "Scan Book Pages"
+      ],
+      "requested": "en",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "fr",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scanner QR / codes-barres",
+        "Cartes d’identité",
+        "Photos d’identité à imprimer",
+        "Lecteur de plaques",
+        "Traduire une photo",
+        "Lire les formules",
+        "Reconnaissance OCR",
+        "Scanner des livres"
+      ],
+      "requested": "fr",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "ar",
+      "dir": "rtl",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "مسح QR والباركود",
+        "البطاقة الوطنية",
+        "صور شخصية للطباعة",
+        "قارئ اللوحات",
+        "ترجمة الصور",
+        "قراءة المعادلات",
+        "قراءة النص OCR",
+        "مسح صفحات الكتب"
+      ],
+      "requested": "ar",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "es",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Escanear QR y códigos",
+        "Documentos de identidad",
+        "Fotos de carné",
+        "Lector de matrículas",
+        "Traducir una foto",
+        "Leer fórmulas",
+        "Lector OCR",
+        "Escanear libros"
+      ],
+      "requested": "es",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "de",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "QR / Barcodes scannen",
+        "Ausweise",
+        "Passfotos drucken",
+        "Kennzeichenleser",
+        "Foto übersetzen",
+        "Formeln lesen",
+        "OCR Texterkennung",
+        "Buchseiten scannen"
+      ],
+      "requested": "de",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "pt",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Ler QR e códigos",
+        "Cartões de identidade",
+        "Fotos tipo passe",
+        "Leitor de matrículas",
+        "Traduzir foto",
+        "Ler fórmulas",
+        "Leitor OCR",
+        "Digitalizar livros"
+      ],
+      "requested": "pt",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "it",
+      "dir": "ltr",
+      "viewport": [
+        390,
+        844
+      ],
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scansiona QR e codici",
+        "Carte d’identità",
+        "Fototessere da stampare",
+        "Lettore targhe",
+        "Traduci una foto",
+        "Leggi formule",
+        "Lettore OCR",
+        "Scansiona libri"
+      ],
+      "requested": "it",
+      "width": 390,
+      "height": 844,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "en",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scan QR / Barcodes",
+        "ID Cards",
+        "ID Photos for Print",
+        "Plate Scanner",
+        "Translate a Photo",
+        "Read Math Formulas",
+        "OCR Text Reader",
+        "Scan Book Pages"
+      ],
+      "requested": "en",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "fr",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scanner QR / codes-barres",
+        "Cartes d’identité",
+        "Photos d’identité à imprimer",
+        "Lecteur de plaques",
+        "Traduire une photo",
+        "Lire les formules",
+        "Reconnaissance OCR",
+        "Scanner des livres"
+      ],
+      "requested": "fr",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "ar",
+      "dir": "rtl",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "مسح QR والباركود",
+        "البطاقة الوطنية",
+        "صور شخصية للطباعة",
+        "قارئ اللوحات",
+        "ترجمة الصور",
+        "قراءة المعادلات",
+        "قراءة النص OCR",
+        "مسح صفحات الكتب"
+      ],
+      "requested": "ar",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "es",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Escanear QR y códigos",
+        "Documentos de identidad",
+        "Fotos de carné",
+        "Lector de matrículas",
+        "Traducir una foto",
+        "Leer fórmulas",
+        "Lector OCR",
+        "Escanear libros"
+      ],
+      "requested": "es",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "de",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "QR / Barcodes scannen",
+        "Ausweise",
+        "Passfotos drucken",
+        "Kennzeichenleser",
+        "Foto übersetzen",
+        "Formeln lesen",
+        "OCR Texterkennung",
+        "Buchseiten scannen"
+      ],
+      "requested": "de",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "pt",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Ler QR e códigos",
+        "Cartões de identidade",
+        "Fotos tipo passe",
+        "Leitor de matrículas",
+        "Traduzir foto",
+        "Ler fórmulas",
+        "Leitor OCR",
+        "Digitalizar livros"
+      ],
+      "requested": "pt",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    },
+    {
+      "lang": "it",
+      "dir": "ltr",
+      "viewport": [
+        320,
+        640
+      ],
+      "documentWidth": 320,
+      "horizontalOverflow": false,
+      "elementsVisible": 27,
+      "outOfBounds": [],
+      "toolTitles": [
+        "Scansiona QR e codici",
+        "Carte d’identità",
+        "Fototessere da stampare",
+        "Lettore targhe",
+        "Traduci una foto",
+        "Leggi formule",
+        "Lettore OCR",
+        "Scansiona libri"
+      ],
+      "requested": "it",
+      "width": 320,
+      "height": 640,
+      "environment": "Chrome emulation, no native Android"
+    }
+  ],
+  "chromeExceptions": [],
+  "source": "production dist from audit version 0.45.68; Chrome localized route smoke test",
+  "notTested": "Native Android keyboard, camera, AdMob, Live dialogs and native RTL keyboard",
+  "allLocaleDirectionsCorrect": true
+}
