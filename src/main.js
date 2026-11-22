@@ -75,6 +75,7 @@ import './rivo-icon-identity-04575.css';
 import './rivo-camscanner-static-04576.css';
 import './rivo-mlkit-04577.css';
 import './rivo-list-04578.css';
+import './rivo-inline-actions-04579.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -331,7 +332,10 @@ const bulkUI=createLibraryBulk({
     if(staged.files.length)toast(staged.files.length+' '+dl('files')+' ✓');
   },
   onEdit:doc=>RivoDocuments.openFile({uri:doc.uri}),
-  onRename:async doc=>{
+  onRename:doc=>renameSavedDocument(doc),
+  showBusy,progress,clearBusy,saveOut,toast
+});
+async function renameSavedDocument(doc){
     if(!Capacitor.isPluginAvailable('RivoDocuments')){toast('Renaming requires the Android app.',true);return;}
     const proposed=window.prompt(language==='ar'?'اسم الملف الجديد':language==='fr'?'Nouveau nom':'Rename file',doc.name);
     if(proposed===null)return;
@@ -346,9 +350,7 @@ const bulkUI=createLibraryBulk({
       const home=document.getElementById('home-recents');if(home)home.innerHTML=recentDocuments(14);
       toast(language==='ar'?'تم تغيير اسم الملف':'File renamed');
     }catch(error){toast(error?.message||'Could not rename file',true);}
-  },
-  showBusy,progress,clearBusy,saveOut,toast
-});
+  }
 let libraryFilter = 'all', librarySort = 'newest';
 const uiText={
  en:{home:'Home',documents:'Documents',tools:'Tools',me:'Me',search:'Search your saved documents',recent:'Recent documents',seeAll:'See all',quick:'Quick tools',safe:'Private, saved on your phone',scan:'Smart Scan',pdf:'PDF Tools',import:'Import images',merge:'Merge documents',welcome:'Scan it. Find it. Share it.',myFiles:'My files',settings:'Settings',device:'Saved in Documents/RivoScan',privacy:'Your documents stay on your phone',noAccount:'No account needed',general:'General',language:'App language',about:'About RivoScan',help:'Help & support',storage:'Storage',openDocuments:'Open My Documents',allFiles:'All files',pdfFiles:'PDF',images:'Images',sort:'Sort',newest:'Newest first',oldest:'Oldest first',name:'Name',size:'Size',list:'List',grid:'Grid',noRecent:'Your saved documents appear here after your first scan.'},
@@ -502,6 +504,24 @@ function edgeAdjustLabel(){
  es:'Ajustar bordes',de:'Kanten korrigieren',pt:'Ajustar limites',
  it:'Regola bordi'})[language]||'Readjust edges';
 }
+function rowDocumentActions(doc,index){
+ const more=({ar:'المزيد',fr:'Plus',en:'More',es:'Más',de:'Mehr',pt:'Mais',it:'Altro'})[language]||'More';
+ const view=({ar:'عرض ببرنامج خارجي',fr:'Ouvrir avec une autre application',en:'Open in another app',es:'Abrir con otra aplicación',de:'Mit anderer App öffnen',pt:'Abrir noutro aplicativo',it:'Apri con un’altra app'})[language]||'Open in another app';
+ const share=dl('share');
+ return `<div class="rivo-row-inline-actions" role="group" aria-label="${escapeHTML(doc.name)}">
+   <button type="button" data-doc-external="${index}" title="${escapeHTML(view)}" aria-label="${escapeHTML(view)}">${ico('eye',16)}</button>
+   <button type="button" data-doc-share="${index}" title="${share}" aria-label="${share}">${ico('share',16)}</button>
+   <details class="rivo-row-more">
+     <summary title="${escapeHTML(more)}" aria-label="${escapeHTML(more)}"><span aria-hidden="true">⋯</span></summary>
+     <div class="rivo-row-more-panel">
+       ${['pdf','image'].includes(visualFileType(doc).klass)?`<button type="button" data-doc-shield="${index}">${ico('shield',15)} Privacy Shield</button>`:''}
+       ${edgeAdjustableDocument(doc)?`<button type="button" data-doc-edges="${index}">${ico('edges',15)} ${escapeHTML(edgeAdjustLabel())}</button>`:''}
+       <button type="button" data-doc-rename="${index}">${ico('pencil',15)} ${lt('rename')}</button>
+       <button type="button" data-doc-delete="${index}">${ico('trash',15)} ${dl('remove')}</button>
+     </div>
+   </details>
+ </div>`;
+}
 function recentDocuments(limit=12,query=homeSearchQuery){
  const needle=String(query||'').trim().toLocaleLowerCase();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
@@ -515,20 +535,14 @@ function recentDocuments(limit=12,query=homeSearchQuery){
    <button type="button" class="rivo-empty-scan" data-empty-scan>${ico('scan',19)} ${escapeHTML(scanLabel)}</button></div>`;
  }
  return matched.map(({doc,index})=>{
-  const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
-  return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
-   <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
-   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
-   <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${documentMeta(doc)}</small></div>
-   ${single?`<div class="rivo-file-quick-actions">
-    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
-    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
-    ${edgeAdjustableDocument(doc)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
-    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
-    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
-    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''}
-   <span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span>
+  const file=visualFileType(doc),chosen=bulkUI.chosen(doc);
+  return `<article class="recent-entry rivo-recent-card rivo-document-list-row ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
+    <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
+    <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
+    <div class="recent-file-meta rivo-file-line">
+      <div class="rivo-file-line-heading"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong>${rowDocumentActions(doc,index)}</div>
+      <small>${documentMeta(doc)}</small>
+    </div>
   </article>`;
  }).join('');
 }
@@ -704,20 +718,15 @@ function renderLibraryRows(needle=''){
  if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
  if(!matched.length)return `<div class="doc-empty">${ico('file',24)} ${dl('empty')}</div>`;
  return matched.map(({item,index})=>{
-  const single=bulkUI.chosen(item)&&bulkUI.count()===1;
-  const file=visualFileType(item);
-  return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
-   ${bulkUI.checkbox(item,index)}
-   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
-   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
-   ${single?`<div class="document-buttons rivo-file-quick-actions">
-    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
-    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
-    ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
-    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
-    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
-    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''}<span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span></article>`;
+  const chosen=bulkUI.chosen(item),file=visualFileType(item);
+  return `<article class="document-entry rivo-document-list-row ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+    ${bulkUI.checkbox(item,index)}
+    <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
+    <div class="document-description rivo-file-line">
+      <div class="rivo-file-line-heading"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong>${rowDocumentActions(item,index)}</div>
+      <small>${documentMeta(item)}</small>
+    </div>
+  </article>`;
  }).join('');
 }
 function libraryWorkspace(){
@@ -853,12 +862,9 @@ async function launchReadjustEdges(doc){
   });
  }catch(error){console.error('Readjust document edges:',error);toast(error?.message||'Could not adjust document edges',true)}
 }
-/** Preview saved PDFs and images inside RivoScan; other formats use Android. */
+/** Reverted: preview opens with Android's external document viewer. */
 async function previewSavedDocument(doc){
-  const type=String(doc?.mimeType||'').toLowerCase();
-  const name=String(doc?.name||'');
-  if(type.includes('pdf')||type.startsWith('image/')||/\.(pdf|png|jpe?g|webp)$/i.test(name))
-    return docViewerUI.open(doc);
+  if(!doc?.uri)throw Error('Document link unavailable');
   return RivoDocuments.openFile({uri:doc.uri});
 }
 
@@ -980,10 +986,16 @@ function wire(){
     const el=document.getElementById(list);
     const activate=e=>{
       if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
+      if(e.target.closest('summary,.rivo-row-more-panel:not(:has(button))'))return;
+      const target=e.target.closest('[data-doc-select],[data-doc-external],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
+      if(target.hasAttribute('data-doc-external')){
+        const doc=libraryItems[Number(target.dataset.docExternal)];
+        if(doc)void previewSavedDocument(doc).catch(error=>toast(error?.message||'Could not open document',true));
+        return;
+      }
       if(target.hasAttribute('data-doc-select')){
         if(e.type==='click'){
           bulkUI.toggle(libraryItems[Number(target.dataset.docSelect)]);
@@ -1017,7 +1029,11 @@ function wire(){
         if(item&&edgeAdjustableDocument(item))void launchReadjustEdges(item);
         return;
       }
-      if(target.hasAttribute('data-doc-rename')){void bulkUI.action('rename');return;}
+      if(target.hasAttribute('data-doc-rename')){
+        const doc=libraryItems[Number(target.dataset.docRename)];
+        if(doc)void renameSavedDocument(doc);
+        return;
+      }
        if(target.hasAttribute('data-doc-print')){
         const doc=libraryItems[Number(target.dataset.docPrint)];
         if(doc&&Capacitor.isNativePlatform()&&Capacitor.isPluginAvailable('RivoDocuments')){
