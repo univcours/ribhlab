@@ -190,6 +190,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   background:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M4 16l5-5 4 3 3-4 4 5"/>',
   up:'<path d="m6 14 6-6 6 6"/>',down:'<path d="m6 10 6 6 6-6"/>',
   left:'<path d="m14 6-6 6 6 6"/>',right:'<path d="m10 6 6 6-6 6"/>',
+  gallery:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 3 3-4 4 5"/>',
   reset:'<path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/>'
  };
  const railNames={
@@ -207,8 +208,10 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
   b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
   b.addEventListener('click',fn);rail.append(b);return b;
  };
- // Only one camera on the rail. The image import stays in the preview.
+ // Keep exactly one camera and one Import/Change Photo control together.
+ // No floating button covering the page preview.
  railButton(leftRail,'photo',takePhotoLabel,()=>{void capture()});
+ railButton(leftRail,'gallery',L[1],()=>{input.value='';input.click()});
  for(const [section,icon,label] of [
   ['adjust','crop',namesForLang[1]],['background','background',namesForLang[2]]
  ]){
@@ -225,11 +228,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  moveButtons.push(railButton(rightRail,'right',namesForLang[6],()=>move(x,10)));
  moveButtons.push(railButton(rightRail,'reset',namesForLang[7],()=>{if(!image)return;x.value='0';y.value='0';update()}));
   for(const b of moveButtons){b.disabled=!image;b.setAttribute('aria-disabled',String(!image));}
- previewImport=document.createElement('button');previewImport.type='button';
- previewImport.className='rivo-id-preview-import';previewImport.textContent=({ar:'＋ استيراد صورة',fr:'＋ Importer une photo',en:'＋ Import Photo'})[language]||'＋ Import Photo';
- previewImport.setAttribute('aria-label',L[1]);
- previewImport.addEventListener('click',()=>{input.value='';input.click()});
- workspace.dock.append(previewImport,leftRail,rightRail,input);
+ workspace.dock.append(leftRail,rightRail,input);
  workspace.empty.hidden=true; // No text behind the central Import Photo button.
  status.classList.add('rivo-workspace-status');
  overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
