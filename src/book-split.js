@@ -53,7 +53,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  emptyCamera.disabled=typeof capture!=='function';
  emptyCamera.addEventListener('click',async()=>{
   if(!capture||closed||busy)return;
-  try{const photo=await capture();if(photo)await load(photo)}
+  try{const photos=await capture();if(photos)await loadCaptured(photos)}
   catch(error){status.textContent=error?.message||String(error)}
  });
  const emptyImport=document.createElement('button');emptyImport.type='button';emptyImport.textContent=L[2];
@@ -133,7 +133,14 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   location.hidden=singlePage||currentIsSinglePage;
   autoSpine.hidden=singlePage||currentIsSinglePage;
  };
- const draw=()=>{
+ const loadCaptured=async photos=>{
+   for(const photo of (Array.isArray(photos)?photos:[photos])){
+    if(!photo)continue;
+    const url=photo instanceof Blob?URL.createObjectURL(photo):photo;
+    try{await load(url)}finally{if(photo instanceof Blob)URL.revokeObjectURL(url)}
+   }
+  };
+  const draw=()=>{
   if(!image)return;
   const scale=Math.min(1,700/Math.max(image.naturalWidth,image.naturalHeight));
   preview.width=Math.round(image.naturalWidth*scale);preview.height=Math.round(image.naturalHeight*scale);
@@ -194,7 +201,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  compare.addEventListener('click',()=>{showOriginal=!showOriginal;draw()});
  secondaryPhotoAction=makeButton(actions,L[1],async()=>{
   if(!capture)return;
-  try{const photo=await capture();if(photo)await load(photo)}catch(error){status.textContent=error?.message||String(error)}
+  try{const photos=await capture();if(photos)await loadCaptured(photos)}catch(error){status.textContent=error?.message||String(error)}
  });
  secondaryPhotoAction.hidden=true;
   secondaryImportAction=makeButton(actions,L[2],()=>fileInput.click());
@@ -359,7 +366,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  title.classList.add('rivo-workspace-title');
  const toggle=document.createElement('button');toggle.type='button';
  toggle.className='rivo-workspace-settings-toggle';
- toggle.textContent='⚙';toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
+ toggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>';toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
  toggle.setAttribute('aria-expanded','false');
  header.insertBefore(toggle,header.lastElementChild);
  const previewDock=document.createElement('div');
@@ -374,10 +381,10 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
   split:({ar:'تقسيم',fr:'Séparer',en:'Split'})[language]||'Split',
   flatten:({ar:'تقويم',fr:'Aplatir',en:'Flatten'})[language]||'Flatten'
  };
- const icons={source:'▧',split:'◫',flatten:'⌁'};
+ const icons={source:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',split:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16"/>',flatten:'<path d="M3 17h18M5 7l3 4 4-5 4 5 3-4"/><path d="M5 13h14"/>'};
  for(const task of ['source',...(!singlePage?['split']:[]),'flatten']){
   const tab=document.createElement('button');tab.type='button';
-  tab.className='rivo-workspace-task';tab.textContent=icons[task]+' '+labels[task];
+  tab.className='rivo-workspace-task';tab.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[task]+'</svg><span>'+labels[task]+'</span>';
   tab.dataset.bookTask=task;
   tab.addEventListener('click',()=>setBookTask(task));
   taskBar.append(tab);
