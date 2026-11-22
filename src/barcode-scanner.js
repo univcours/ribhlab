@@ -2,6 +2,7 @@ import {BrowserMultiFormatReader} from '@zxing/browser';
 import {Capacitor,registerPlugin} from '@capacitor/core';
 const RivoDocuments=registerPlugin('RivoDocuments');
 import {scanMultipleCanvas,scanMultipleCanvasAsync,verifiedUniqueCodes} from './code-multi-scan.js';
+import {readMlkitBarcodes} from './rivo-mlkit-vision.js';
 
 const I18N={
  en:['QR / Barcode UltraScan','Live camera · automatic QR or barcode detection','Point at a QR or barcode…','Detected','Copy','Choose photo','Torch','Camera unavailable. Choose a photo.','Saved to the daily TXT file','Could not save: ','Close','No code detected','Already scanned and saved. No duplicate was created.','Code copied','Could not copy code','Open link','Could not open the link','Saved codes','codes found on page','codes detected'],
@@ -13,6 +14,20 @@ const I18N={
  it:['Lettore QR e codici a barre','Rilevamento automatico con fotocamera','Inquadra un QR o codice a barre…','Rilevato','Copia','Scegli foto','Torcia','Fotocamera non disponibile. Scegli una foto.','Salvato nel TXT giornaliero','Salvataggio non riuscito: ','Chiudi','Nessun codice trovato','Codice già acquisito e salvato. Nessun duplicato.','Codice copiato','Impossibile copiare','Apri link','Impossibile aprire il link','Codici salvati','codici nell’immagine','codici rilevati']
 };
 const FORMATS=['AZTEC','CODABAR','CODE39','CODE93','CODE128','DATA_MATRIX','EAN8','EAN13','ITF','MAXICODE','PDF417','QR','RSS14','RSS_EXPANDED','UPCA','UPCE','UPC_EXTENSION'];
+/** Adapt Google ML Kit barcode values to the existing ZXing-compatible result pipeline. */
+export function adaptMlkitBarcode(barcode){
+ const raw=String(barcode?.format||'').replace(/[^a-z0-9]/gi,'').toUpperCase();
+ const map={QRCODE:'QR',DATAMATRIX:'DATA_MATRIX',RSSEXPANDED:'RSS_EXPANDED'};
+ const format=map[raw]||raw;
+ const index=FORMATS.indexOf(format);
+ const points=Array.isArray(barcode?.cornerPoints)?barcode.cornerPoints:[];
+ return {
+  getText:()=>String(barcode?.rawValue??barcode?.displayValue??''),
+  getBarcodeFormat:()=>index,
+  getResultPoints:()=>points.filter(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y))
+    .map(p=>({getX:()=>p.x,getY:()=>p.y}))
+ };
+}
 export const safeScannedUrl=value=>{
  const raw=String(value??'').trim();
  if(raw.length>2048||!/^https?:\/\//i.test(raw))return null;
@@ -353,7 +368,13 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
    canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
    canvas.getContext('2d',{willReadFrequently:true}).drawImage(image,0,0,canvas.width,canvas.height);
-   const found=verifiedUniqueCodes(scanMultipleCanvas(canvas,{fine:true,maxResults:28}),recognizedCode);
+   // Prefer on-device Google ML Kit for saved photos on Android.
+    const native=await readMlkitBarcodes(item).catch(error=>{
+      console.warn('ML Kit photo decoder unavailable:',error);return null;
+    });
+    const found=verifiedUniqueCodes(native===null?
+      scanMultipleCanvas(canvas,{fine:true,maxResults:28}):
+      native.map(adaptMlkitBarcode),recognizedCode);
    if(found.length){
     const before=successful;
     for(const {result:decoded} of found){if(closed)break;await deliver(decoded,{fromPhoto:true});}
@@ -382,7 +403,14 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
    const z=cropped?zoom.current:1;
    const sw=vw/z,sh=vh/z,sx=(vw-sw)/2,sy=(vh-sh)/2;
    ctx.drawImage(video,sx,sy,sw,sh,0,0,cw,ch);
-   const decoded=await scanMultipleCanvasAsync(multiCanvas,{maxResults:22,shouldStop:()=>closed});
+   // Google ML Kit reads real frames in Android; ZXing remains a web fallback.
+    const frame=Capacitor.isNativePlatform()?await new Promise(ok=>multiCanvas.toBlob(ok,'image/jpeg',.83)):null;
+    const native=frame?await readMlkitBarcodes(frame).catch(error=>{
+      console.warn('ML Kit frame decoder unavailable:',error);return null;
+    }):null;
+    const decoded=native===null?
+      await scanMultipleCanvasAsync(multiCanvas,{maxResults:22,shouldStop:()=>closed}):
+      native.map(adaptMlkitBarcode);
    const mapped=decoded.map(found=>({
     getText:()=>found.getText(),
     getBarcodeFormat:()=>found.getBarcodeFormat(),
@@ -435,7 +463,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
     const next=zoom.current+(zoom.hardware?0.45:0.35)>zoom.max?zoom.min:zoom.current+(zoom.hardware?0.45:0.35);
     lastZoomAt=Date.now();void setZoom(next);
    },800);
-   control=await reader.decodeFromVideoElement(video,(decoded,error)=>{
+   // Avoid two simultaneous decoders in Android; native ML Kit handles frame scans.
+    if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('BarcodeScanner'))
+    control=await reader.decodeFromVideoElement(video,(decoded,error)=>{
     if(closed)return;
     if(decoded){void deliver(decoded);}
     else {
