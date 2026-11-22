@@ -116,14 +116,16 @@ test('Rewarded offer appears after PRO usages 1, 4, 7, 10 (never on every tap)',
  assert.equal(isRewardOfferDue(-2),false);
  assert.equal(isRewardOfferDue(2.5),false);
 });
-test('Rewarded requires per-ad opt-in and grants an actual fullscreen-free interval',async()=>{
+test('Automatic rewarded interstitial gives a clear skip before starting and grants a real bonus',async()=>{
  const {readFileSync}=await import('node:fs');
  const source=readFileSync(new URL('../src/monetization.js',import.meta.url),'utf8');
  assert.match(source,/export function atPremiumExit\(\)/);
  assert.match(source,/AdMob\.prepareRewardVideoAd/);
- assert.match(source,/AdMob\.showRewardVideoAd/);
- assert.match(source,/watch\.addEventListener\('click'/);
- assert.match(source,/cancel\.addEventListener\('click'/);
+ assert.match(source,/AdMob\.prepareRewardInterstitialAd/);
+ assert.match(source,/AdMob\.showRewardInterstitialAd/);
+ assert.match(source,/skip\.addEventListener\('click'/);
+ assert.match(source,/setTimeout\(async\(\)=>/);
+ assert.match(source,/showCompletionInterstitial\(\)/);
  assert.match(source,/state\.unlockedUntil=Math\.max/);
  assert.match(source,/if\(atPremiumExit\(\)\)return false/);
 });
