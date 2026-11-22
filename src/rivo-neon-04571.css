@@ -1,0 +1,381 @@
+/* RivoScan 0.45.71 — Neon / Cyberpunk design, portrait live-scanner vertical layout.
+   Source-of-truth banner geometry remains in rivo-native-ad-geometry.js.
+   Avoid absolute positioning of content/cards and keep Android's native AdMob
+   (which is outside WebView) separated from every app dialog. */
+:root {
+  --rivo-neon-bg:#060d20;
+  --rivo-neon-surface:#0b1732;
+  --rivo-neon-panel:#101f41;
+  --rivo-neon-cyan:#39e3ff;
+  --rivo-neon-magenta:#f25bff;
+  --rivo-neon-lime:#7cfdb1;
+  --rivo-neon-ink:#eff8ff;
+}
+@keyframes rivoNeonEdge {
+  0%,100%{background-position:0 0,0% 50%;box-shadow:0 0 8px hsl(var(--rivo-card-hue,198) 100% 59% / .32)}
+  50%{background-position:0 0,100% 50%;box-shadow:0 0 16px hsl(var(--rivo-card-hue,198) 100% 62% / .47)}
+}
+@keyframes rivoNeonPulse {
+  0%,100%{box-shadow:0 0 0 1px #29d8ff80,0 0 9px #00cfff45}
+  50%{box-shadow:0 0 0 1px #60ffff,0 0 17px #00cfff86}
+}
+/* Actual content stays in document flow; each home tile gets its own row.
+   Never let animated glow extend over search, other tiles, or the ad. */
+html body #app .shell.rivo-dark-ui .content:has(>.rivo-home),
+html body #app .shell.rivo-dark-ui .content:has(>.rivo-tools-hub){
+  background:linear-gradient(155deg,#07132c 0%,#0a1740 44%,#080f26 100%)!important;
+}
+html body #app .shell.rivo-dark-ui .app-home.rivo-home,
+html body #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;
+  height:auto!important;min-height:100%!important;
+  gap:0!important;padding:9px 10px 18px!important;
+  margin:0!important;overflow:visible!important;
+  background:transparent!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-home-trust{
+  flex:none!important;position:relative!important;
+  color:#dcfaff!important;background:linear-gradient(100deg,#091936,#153866)!important;
+  border:1px solid #3fdfff!important;border-radius:12px!important;
+  margin:0 0 10px!important;box-shadow:inset 0 0 16px #23caff19!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail{
+  box-sizing:border-box!important;position:relative!important;
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-auto-rows:minmax(91px,auto)!important;
+  align-items:stretch!important;justify-content:stretch!important;
+  width:100%!important;height:auto!important;min-height:91px!important;
+  max-height:none!important;flex:none!important;
+  gap:8px!important;padding:2px!important;margin:0 0 12px!important;
+  overflow:visible!important;z-index:1!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile{
+  box-sizing:border-box!important;position:relative!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;height:auto!important;min-height:89px!important;
+  max-height:none!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:8px 3px 9px!important;gap:6px!important;
+  flex:none!important;overflow:hidden!important;isolation:isolate!important;
+  border:2px solid transparent!important;border-radius:15px!important;
+  background:
+   linear-gradient(145deg,#101f42,#070e26) padding-box,
+   linear-gradient(130deg,hsl(var(--rivo-card-hue,197) 100% 54%),#e4ffff,
+      hsl(var(--rivo-card-hue,197) 100% 60%),#38478c) border-box!important;
+  background-size:100% 100%,280% 280%!important;
+  animation:rivoNeonEdge 5s ease-in-out infinite!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon{
+  box-sizing:border-box!important;display:grid!important;place-items:center!important;
+  width:37px!important;height:37px!important;min-width:37px!important;min-height:37px!important;
+  max-width:37px!important;max-height:37px!important;flex:0 0 37px!important;
+  margin:0!important;padding:5px!important;
+  background:linear-gradient(145deg,hsl(var(--rivo-card-hue,197) 96% 48%),#142452)!important;
+  border:1px solid hsl(var(--rivo-card-hue,197) 100% 70%)!important;
+  border-radius:11px!important;color:#fff!important;overflow:visible!important;
+  box-shadow:0 0 9px hsl(var(--rivo-card-hue,197) 100% 58% / .38)!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon svg{
+  display:block!important;box-sizing:border-box!important;overflow:visible!important;
+  width:26px!important;height:26px!important;max-width:100%!important;max-height:100%!important;
+  stroke:#fff!important;stroke-width:2.35!important;filter:none!important;opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile strong{
+  display:block!important;position:relative!important;flex:none!important;
+  width:100%!important;min-width:0!important;min-height:0!important;
+  height:auto!important;max-height:none!important;margin:0!important;padding:0 1px!important;
+  color:#f8fcff!important;-webkit-text-fill-color:#f8fcff!important;
+  font-size:clamp(10px,2.75vw,12px)!important;line-height:1.23!important;
+  font-weight:850!important;letter-spacing:.1px!important;
+  white-space:normal!important;overflow-wrap:break-word!important;word-break:normal!important;
+  text-wrap:balance!important;text-align:center!important;text-shadow:0 1px 5px #060c2c!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"]{
+  --rivo-card-hue:29!important;
+  background:
+   linear-gradient(150deg,#351a16,#170c20) padding-box,
+   linear-gradient(115deg,#ff962d,#ffe08b,#ff604e,#ffc96b) border-box!important;
+  background-size:100% 100%,250% 250%!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile[data-rivo-feature="plateScanner"] .rivo-feature-icon{
+  background:linear-gradient(145deg,#dd6d19,#8c3324)!important;
+  border-color:#ffd18c!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home-search-title-row{
+  position:relative!important;z-index:0!important;
+  display:flex!important;align-items:center!important;gap:8px!important;
+  min-width:0!important;width:100%!important;flex:none!important;
+  margin:2px 0 10px!important;padding:0!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home-intro :is(h1,h2),
+html body #app .shell.rivo-dark-ui .rivo-tools-heading h1{
+  color:#e7f7ff!important;-webkit-text-fill-color:#e7f7ff!important;
+  text-shadow:0 0 8px #1fd5f050!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-premium-search,
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-search{
+  min-width:0!important;max-width:100%!important;box-sizing:border-box!important;
+  background:#112243!important;border:1px solid #3885af!important;
+  border-radius:12px!important;box-shadow:inset 0 0 12px #00d6ff14!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-premium-search,.rivo-tools-search) input{
+  color:#ecfaff!important;-webkit-text-fill-color:#ecfaff!important;
+  background:transparent!important;min-width:0!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-premium-search,.rivo-tools-search) input::placeholder{
+  color:#b7d3e8!important;-webkit-text-fill-color:#b7d3e8!important;opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home :is(.recent-panel,.rivo-premium-recent){
+  min-height:0!important;max-width:100%!important;box-sizing:border-box!important;
+  border-radius:15px!important;overflow-x:hidden!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-scroll{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  flex:1 1 auto!important;overflow-y:auto!important;overflow-x:hidden!important;
+  padding:4px 3px 16px!important;overscroll-behavior:contain!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-section{
+  min-width:0!important;max-width:100%!important;margin:0 0 15px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-tools-section h2{
+  color:#bcf2ff!important;-webkit-text-fill-color:#bcf2ff!important;
+  text-shadow:0 0 9px #00c7ff50!important;
+  margin:3px 1px 9px!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-grid{
+  box-sizing:border-box!important;position:relative!important;
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:stretch!important;grid-auto-rows:minmax(108px,auto)!important;
+  gap:10px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;padding:3px!important;overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-grid>.rivo-hub-tile{
+  box-sizing:border-box!important;position:relative!important;
+  display:flex!important;flex-direction:column!important;justify-content:center!important;
+  align-items:center!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;min-height:106px!important;max-height:none!important;
+  margin:0!important;padding:9px 5px!important;gap:7px!important;overflow:hidden!important;
+  border:2px solid transparent!important;border-radius:16px!important;
+  background:
+   linear-gradient(150deg,#112349,#070f26) padding-box,
+   linear-gradient(120deg,hsl(var(--rivo-card-hue,195) 100% 55%),#dffbff,
+     hsl(var(--rivo-card-hue,195) 100% 58%)) border-box!important;
+  background-size:100% 100%,300% 300%!important;
+  animation:rivoNeonEdge 5.6s ease-in-out infinite!important;
+  box-shadow:0 0 9px hsl(var(--rivo-card-hue,195) 95% 55% / .26)!important;
+  isolation:isolate!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-grid>.rivo-hub-tile .tool-icon{
+  width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+  max-width:42px!important;max-height:42px!important;
+  flex:0 0 42px!important;margin:0!important;padding:6px!important;
+  border:1px solid hsl(var(--rivo-card-hue,195) 100% 73%)!important;
+  border-radius:12px!important;
+  background:linear-gradient(150deg,hsl(var(--rivo-card-hue,195) 90% 48%),#111c47)!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-grid>.rivo-hub-tile .tool-icon svg{
+  display:block!important;width:28px!important;height:28px!important;
+  max-width:100%!important;max-height:100%!important;
+  stroke:#fff!important;opacity:1!important;overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-hub-grid>.rivo-hub-tile strong{
+  display:block!important;width:100%!important;min-width:0!important;flex:none!important;
+  height:auto!important;max-height:none!important;margin:0!important;padding:0!important;
+  font-size:clamp(11px,2.95vw,13px)!important;line-height:1.24!important;
+  color:#f6fbff!important;-webkit-text-fill-color:#f6fbff!important;
+  font-weight:800!important;text-align:center!important;text-wrap:balance!important;
+  overflow-wrap:anywhere!important;white-space:normal!important;text-shadow:0 0 5px #00123c!important;
+}
+html body #app .shell.rivo-dark-ui :is(.rivo-feature-rail,.rivo-hub-grid)>button:focus-visible{
+  outline:3px solid #9df5ff!important;outline-offset:1px!important;
+}
+/* Vertical scanner: camera ABOVE; results BELOW. Results pane is ~52% of
+   actual SCANNER STAGE, and its contents scroll independently of camera. */
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay{
+  box-sizing:border-box!important;
+  background:linear-gradient(145deg,#030919,#101737 70%,#060e29)!important;
+  padding:4px 5px 6px!important;
+  overflow:hidden!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-dialog{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  height:100%!important;max-height:100%!important;min-height:0!important;
+  width:100%!important;max-width:760px!important;min-width:0!important;
+  gap:5px!important;margin:0 auto!important;padding:7px!important;
+  overflow:hidden!important;
+  color:var(--rivo-neon-ink)!important;
+  background:linear-gradient(155deg,#0b1735,#061024)!important;
+  border:1.5px solid #3ae2ff!important;border-radius:17px!important;
+  box-shadow:inset 0 0 18px #00cdff12,0 0 14px #19d9ff45!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-head{
+  flex:0 0 auto!important;position:relative!important;
+  min-width:0!important;max-width:100%!important;margin:0!important;padding:3px 5px!important;
+  gap:5px!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-head strong{
+  color:#f6fcff!important;-webkit-text-fill-color:#f6fcff!important;
+  line-height:1.2!important;font-size:clamp(13px,3.65vw,17px)!important;
+  text-shadow:0 0 7px #00caff70!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-head{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;align-items:center!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-head>.rivo-plate-search-row{
+  grid-column:1/-1!important;grid-row:2!important;width:100%!important;
+  min-width:0!important;max-width:100%!important;margin:0!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-head>[data-scan-overlay-close]{
+  grid-column:2!important;grid-row:1!important;justify-self:end!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-split-stage{
+  box-sizing:border-box!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,0.94fr) minmax(0,1.06fr)!important;
+  align-items:stretch!important;justify-items:stretch!important;
+  flex:1 1 0!important;min-height:0!important;max-height:none!important;
+  width:100%!important;height:auto!important;min-width:0!important;
+  row-gap:7px!important;column-gap:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-split-stage>.rivo-live-preview{
+  display:block!important;position:relative!important;grid-row:1!important;grid-column:1!important;
+  box-sizing:border-box!important;width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;max-height:none!important;
+  margin:0!important;overflow:hidden!important;
+  background:#030915!important;border:1.5px solid #39e6ff!important;
+  border-radius:13px!important;box-shadow:inset 0 0 13px #11caff26!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-preview video{
+  display:block!important;width:100%!important;height:100%!important;
+  object-fit:cover!important;max-width:100%!important;max-height:100%!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-results-pane{
+  display:flex!important;flex-direction:column!important;grid-row:2!important;grid-column:1!important;
+  box-sizing:border-box!important;width:100%!important;height:100%!important;
+  min-width:0!important;min-height:0!important;max-height:none!important;
+  margin:0!important;padding:8px 9px!important;gap:5px!important;
+  overflow:hidden!important;overscroll-behavior:contain!important;
+  background:linear-gradient(155deg,#0b2047,#09112d)!important;
+  border:1.5px solid #bb67ff!important;border-radius:13px!important;
+  box-shadow:inset 0 0 13px #8b3cff25!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-results-heading{
+  display:block!important;flex:0 0 auto!important;
+  padding:3px 4px 7px!important;margin:0!important;
+  text-align:start!important;font-size:14px!important;line-height:1.2!important;
+  color:#e1b9ff!important;-webkit-text-fill-color:#e1b9ff!important;
+  border-bottom:1px solid #9466e966!important;text-shadow:0 0 8px #b55aff77!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-results-pane .rivo-live-status{
+  display:block!important;flex:0 0 auto!important;
+  width:100%!important;max-height:43px!important;min-height:0!important;
+  margin:0!important;padding:3px 4px!important;overflow:auto!important;
+  color:#d6eaff!important;-webkit-text-fill-color:#d6eaff!important;
+  font-size:11px!important;line-height:1.35!important;
+  overflow-wrap:anywhere!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-results-empty{
+  display:grid!important;place-items:center!important;flex:1 1 auto!important;
+  margin:0!important;padding:6px!important;min-height:0!important;
+  color:#bad1e7!important;-webkit-text-fill-color:#bad1e7!important;
+  text-align:center!important;font-size:12px!important;line-height:1.3!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-results-empty[hidden],
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay [hidden]{
+  display:none!important;
+}
+html body .rivo-code-overlay.rivo-live-overlay .rivo-live-results-pane .rivo-code-results,
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-results-pane .rivo-plate-results-history{
+  display:flex!important;flex-direction:column!important;flex:1 1 auto!important;
+  width:100%!important;min-width:0!important;min-height:0!important;max-height:none!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  gap:7px!important;padding:4px 1px 8px!important;margin:0!important;
+  scrollbar-width:thin!important;scrollbar-color:#9771e6 #152148!important;
+  overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+}
+html body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-row,
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-result-row{
+  flex:0 0 auto!important;box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  padding:9px!important;margin:0!important;gap:6px!important;
+  border:1px solid #755bb9!important;border-radius:10px!important;
+  background:linear-gradient(140deg,#132c58,#111b3f)!important;
+  color:#f2f7ff!important;box-shadow:inset 0 0 7px #b469ff18!important;
+  overflow-wrap:anywhere!important;
+}
+html body .rivo-code-overlay.rivo-live-overlay .rivo-code-result-value{
+  min-width:0!important;width:100%!important;max-width:100%!important;
+  font-size:clamp(12px,3.3vw,15px)!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-current{
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  background:linear-gradient(120deg,#20366e,#123f70)!important;
+  border:1px solid #40e8ff!important;
+  border-radius:10px!important;min-width:0!important;max-width:100%!important;
+  overflow-wrap:anywhere!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-result-time{
+  font-size:11px!important;color:#a0f6ff!important;-webkit-text-fill-color:#a0f6ff!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay :is(
+ .rivo-live-actions button,.rivo-code-zoom-controls button,.rivo-code-result-buttons button,
+ .rivo-plate-copy,.rivo-plate-result-row button){
+  box-sizing:border-box!important;min-height:35px!important;max-width:100%!important;
+  color:#f6fcff!important;-webkit-text-fill-color:#f6fcff!important;
+  font-weight:800!important;border:1px solid #44cfff!important;
+  background:linear-gradient(135deg,#1168ba,#0c277c)!important;
+  border-radius:10px!important;
+  box-shadow:0 0 8px #189bff3d!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay button:disabled{
+  color:#a5bad3!important;-webkit-text-fill-color:#a5bad3!important;
+  background:#20304b!important;border-color:#445a7b!important;
+  opacity:.83!important;box-shadow:none!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-actions,
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-code-zoom-controls{
+  flex:0 0 auto!important;min-width:0!important;max-width:100%!important;
+  margin:0!important;gap:6px!important;padding:0!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-plate-watchlist{
+  flex:0 0 auto!important;max-height:38px!important;min-height:0!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+}
+html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-help{
+  flex:0 0 auto!important;min-height:0!important;max-height:28px!important;
+  overflow:auto!important;margin:0!important;
+  color:#bfd8ec!important;-webkit-text-fill-color:#bfd8ec!important;
+  font-size:11px!important;
+}
+@media(max-height:600px){
+  html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-dialog{
+    padding:4px!important;gap:3px!important;
+  }
+  html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-split-stage{
+    row-gap:4px!important;
+  }
+  html body :is(.rivo-code-overlay,.rivo-plate-overlay).rivo-live-overlay .rivo-live-help{
+    max-height:17px!important;font-size:10px!important;
+  }
+}
+@media(max-width:340px){
+  html body #app .shell.rivo-dark-ui .rivo-feature-rail{gap:5px!important;padding:1px!important}
+  html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile{
+    min-height:91px!important;padding:7px 2px!important;
+  }
+  html body #app .shell.rivo-dark-ui .rivo-feature-rail>.rivo-feature-tile strong{
+    font-size:10px!important;
+  }
+  html body #app .shell.rivo-dark-ui .rivo-hub-grid{gap:6px!important;padding:2px!important}
+  html body #app .shell.rivo-dark-ui .rivo-hub-grid>.rivo-hub-tile{min-height:115px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body #app .shell.rivo-dark-ui :is(.rivo-feature-tile,.rivo-hub-tile){
+    animation:none!important;transition:none!important;
+  }
+}
