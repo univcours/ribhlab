@@ -5,12 +5,12 @@ import {calculateAdLayout} from '../src/rivo-native-ad-geometry.js';
 
 const source=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
 
-test('0.45.71 source and Android release metadata agree',()=>{
+test('0.45.72 source and Android release metadata agree',()=>{
  const meta=source('rivoscan-version.properties');
  const pkg=JSON.parse(source('package.json'));
- assert.match(meta,/^versionCode=186$/m);
- assert.match(meta,/^versionName=0\.45\.71$/m);
- assert.equal(pkg.version,'0.45.71');
+ assert.match(meta,/^versionCode=187$/m);
+ assert.match(meta,/^versionName=0\.45\.72$/m);
+ assert.equal(pkg.version,'0.45.72');
 });
 test('QR and barcode keep vertically stacked camera/result layout, save state and timestamps',()=>{
  const js=source('src/barcode-scanner.js');
@@ -61,7 +61,7 @@ test('Banner stays native 320 x 50 with 3dp navigation gap and 5dp content prote
  assert.equal(layout.width,320);assert.equal(layout.height,50);
  assert.equal(layout.bannerTop,721);
  assert.equal(774-layout.bannerBottom,3);
- assert.equal(layout.bannerTop-(873-layout.contentBottom),5);
+ assert.equal(layout.bannerTop-(873-layout.contentBottom),18);
  const ads=source('src/monetization.js');
  assert.doesNotMatch(ads,/showRewardVideoAd|showRewardInterstitialAd|PRO bonus/);
  assert.match(ads,/AdMob\.showInterstitial/);
