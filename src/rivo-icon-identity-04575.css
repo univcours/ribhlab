@@ -12,19 +12,16 @@
 @keyframes rivoIconNeonOrbit {
   to { --rivo-icon-turn: 360deg; }
 }
+@property --rivo-icon-glow-alpha {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.35;
+}
+/* Animate a typed variable, not box-shadow itself. Important legacy
+ * component shadows otherwise outrank a CSS animation on box-shadow. */
 @keyframes rivoIconNeonBreath {
-  0%,100% {
-    box-shadow: inset 0 1px 1px #ffffff6a,
-                inset 0 -4px 9px #051b615c,
-                0 0 0 1px #39dfff54,
-                0 0 6px #13d8ff46;
-  }
-  50% {
-    box-shadow: inset 0 1px 2px #ffffff80,
-                inset 0 -4px 9px #051b615c,
-                0 0 0 1px #72f4ff8f,
-                0 0 12px #00d8ff8a;
-  }
+  0%,100% { --rivo-icon-glow-alpha: 0.35; }
+  50% { --rivo-icon-glow-alpha: 0.78; }
 }
 
 /* Main feature icons across Home, Tools, PDF tool headers, Settings and
@@ -64,7 +61,7 @@ html body #app .shell.rivo-dark-ui :is(
   box-shadow:inset 0 1px 1px #ffffff6a,
              inset 0 -4px 9px #051b615c,
              0 0 0 1px #39dfff54,
-             0 0 6px #13d8ff46!important;
+             0 0 12px rgba(0,216,255,var(--rivo-icon-glow-alpha))!important;
   overflow:hidden!important;
   transform:none!important;
   animation:rivoIconNeonBreath 5.4s ease-in-out infinite!important;
