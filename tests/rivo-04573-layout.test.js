@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const css=read('src/rivo-layout-04573.css');
 
-test('0.45.73 Home feature grid reserves a fixed row and cannot hide My Files',()=>{
+test('0.45.74 Home feature grid reserves a fixed row and cannot hide My Files',()=>{
  assert.match(css,/grid-template-rows:112px!important/);
  assert.match(css,/height:122px!important/);
  assert.match(css,/max-height:112px!important/);
@@ -43,9 +43,9 @@ test('QR inline actions, fixed scanner TXT files and 320x50 banner are preserved
  assert.match(read('src/scan-ledger.js'),/RS_Bar\.txt/);
 });
 test('Release build version increased, no Play upload enabled',()=>{
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.73$/m);
- assert.match(read('rivoscan-version.properties'),/^versionCode=188$/m);
- assert.equal(JSON.parse(read('package.json')).version,'0.45.73');
- const yml=read('.github/workflows/rivoscan-04573-layout-and-plate.yml');
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.74$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=189$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.74');
+ const yml=read('.github/workflows/rivoscan-04574-responsive-final.yml');
  assert.match(yml,/Never upload to Play|NEVER upload to Play/);
 });
