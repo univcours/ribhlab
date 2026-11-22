@@ -70,7 +70,7 @@ test('native Banner, Interstitial and opt-in Rewarded respect editor overlay wit
  assert.match(ads,/AdMob\.showInterstitial\(/);
  assert.match(ads,/\.rivo-edge-adjust-overlay/);
  assert.match(ads,/AdMob\.prepareRewardVideoAd/);
- assert.match(ads,/AdMob\.showRewardVideoAd/);
+ assert.match(ads,/AdMob\.showRewardInterstitialAd/);
  assert.match(ads,/RewardAdPluginEvents|rivo-reward-watch/);
  assert.doesNotMatch(ads,/AdMob\.(?:loadAppOpen|showAppOpen)/);
 });
