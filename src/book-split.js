@@ -95,6 +95,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  let image=null,objectURL=null,closed=false,busy=false,autoPageWarp=null,autoLineWarp=null,showOriginal=false,currentIsSinglePage=false;
  const previousSpreads=[],maxSpreads=6;
  let undoButton=null;
+  let secondaryPhotoAction=null,secondaryImportAction=null;
  const countSpreads=()=>{if(!singlePage)spreadCount.textContent=
   (({en:'Book spreads',ar:'صور صفحات الكتب',fr:'Doubles pages',es:'Páginas dobles',de:'Doppelseiten',pt:'Páginas duplas',it:'Pagine doppie'})[language]||'Book spreads')+': '+(previousSpreads.length+(image?1:0))+' / '+maxSpreads;
   if(undoButton)undoButton.disabled=previousSpreads.length===0;
@@ -122,6 +123,9 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
    autoPageWarp,autoLineWarp,alreadySingle:currentIsSinglePage
   });
   image=img;previewBox.classList.remove('rivo-book-preview-empty');emptyNote.hidden=true;emptyActions.hidden=true;
+   // Preview-only controls belong to the empty state; reveal editor actions after loading.
+   if(secondaryPhotoAction)secondaryPhotoAction.hidden=false;
+   if(secondaryImportAction)secondaryImportAction.hidden=false;
   for(const button of [autoSpine,autoButton,lineButton,autoAll,compare,saveButton])button.disabled=false;
   currentIsSinglePage=alreadySingle;slider.value='50';autoPageWarp=null;autoLineWarp=null;showOriginal=false;warpSlider.value='0';
   draw();autoFix(true);countSpreads();
@@ -188,11 +192,13 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  };
  autoAll.addEventListener('click',()=>autoFix());
  compare.addEventListener('click',()=>{showOriginal=!showOriginal;draw()});
- makeButton(actions,L[1],async()=>{
+ secondaryPhotoAction=makeButton(actions,L[1],async()=>{
   if(!capture)return;
   try{const photo=await capture();if(photo)await load(photo)}catch(error){status.textContent=error?.message||String(error)}
  });
- makeButton(actions,L[2],()=>fileInput.click());
+ secondaryPhotoAction.hidden=true;
+  secondaryImportAction=makeButton(actions,L[2],()=>fileInput.click());
+  secondaryImportAction.hidden=true;
  if(!singlePage&&typeof cleanPage==='function'){
   makeButton(actions,({en:'AI clean page (remove fingers/stains)',ar:'تنقية الصفحة بـAI (الأصابع والبقع)',fr:'Nettoyer page IA (doigts/taches)',es:'Limpiar página IA (dedos/manchas)',de:'KI-Seite säubern (Finger/Flecken)',pt:'Limpar página IA (dedos/manchas)',it:'Pulisci pagina IA (dita/macchie)'})[language]||'AI clean page',async()=>{
    if(busy)return;busy=true;

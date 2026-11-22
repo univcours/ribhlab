@@ -174,14 +174,14 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  const compactAdjust=document.createElement('div');compactAdjust.className='rivo-id-compact-adjust';
  compactAdjust.append(rows[1],rows[2]);
  workspace=mountPreviewFirstWorkspace({
-  panel,preview:canvas,language,defaultSection:'source',
+  panel,preview:canvas,language,defaultSection:'adjust',
   sections:[
-   {id:'source',label:({ar:'الصورة',fr:'Photo',en:'Photo'})[language]||'Photo',nodes:[]},
    {id:'adjust',label:({ar:'المقاس والتأطير',fr:'Cadrage',en:'Size & crop'})[language]||'Size & crop',
     nodes:[rows[0],compactAdjust,makeSheet]},
    {id:'background',label:({ar:'الخلفية',fr:'Fond',en:'Background'})[language]||'Background',nodes:[rows[3],hint]}
   ],alwaysVisible:[status],footer:[saveButton]
  });
+ workspace.show(false); // Only the preview is initially visible; settings open on demand.
  // Use the empty margins on BOTH sides of the actual photo, not a second
  // row of controls below it. Keep every icon wholly inside its button.
  const icons={

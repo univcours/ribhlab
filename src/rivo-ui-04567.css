@@ -295,3 +295,9 @@ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
   flex:0 0 47px!important;
  }
 }
+
+/* Book Scan: while empty, show ONE import and ONE capture pair in the preview.
+   The exact same actions in the source drawer appear only after an image loads. */
+.rivo-id-overlay .rivo-book-dialog .rivo-code-actions button[hidden]{
+ display:none!important;
+}

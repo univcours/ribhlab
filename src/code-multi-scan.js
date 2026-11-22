@@ -4,8 +4,9 @@
  * verified result and mapping actual detector points back to the image.
  * This never invents a barcode when no decoder has verified its contents.
  */
-import * as ZXing from '@zxing/library';
-const {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType}=ZXing.default||ZXing;
+// Import actual ESM named exports. ZXing 0.23 has no default export;
+// referencing ZXing.default caused a Rollup warning and fragile bundling.
+import {BinaryBitmap,HybridBinarizer,RGBLuminanceSource,MultiFormatReader,DecodeHintType} from '@zxing/library';
 
 const KEY=result=>String(result.getBarcodeFormat())+'\u0000'+String(result.getText());
 const QUIET_LIMIT=24;

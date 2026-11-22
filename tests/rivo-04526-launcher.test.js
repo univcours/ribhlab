@@ -12,14 +12,14 @@ test('the new launcher has no RivoScan wordmark and Play uses a full-bleed asset
  assert.match(script,/RivoScan approved icon fetch failed/);
 });
 test('Android build uses the original signature and strictly increasing version',()=>{
- const workflow=read('.github/workflows/rivoscan-04567-complete-ui.yml');
+ const workflow=read('.github/workflows/rivoscan-04568-ultradeep-audit.yml');
  assert.ok(workflow.includes('RIVO_CORRECT_KEYSTORE_BASE64'));
- assert.ok(workflow.includes('versionCode=182'));
- assert.ok(workflow.includes('0.45.67'));
+ assert.ok(workflow.includes('versionCode=183'));
+ assert.ok(workflow.includes('0.45.68'));
  assert.ok(workflow.includes('assembleRelease'));
  assert.ok(!workflow.includes('publish-rivoscan-play-aab'));
  assert.ok(workflow.includes('e9b3e2779575ba08a91372fc3885eba01dd3e73e'));
  const versions=read('rivoscan-version.properties');
- assert.match(versions,/versionCode=182/);
- assert.match(versions,/versionName=0\.45\.67/);
+ assert.match(versions,/versionCode=183/);
+ assert.match(versions,/versionName=0\.45\.68/);
 });
