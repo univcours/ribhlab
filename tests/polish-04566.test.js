@@ -31,7 +31,11 @@ test('back buttons animate with reduced-motion support and save dialog contrast'
 
 test('document file badges survive a native thumbnail replacing fallback icon',()=>{
  const main=get('src/main.js');
- assert.equal(main.split('class="rivo-file-kind-badge"').length-1,2);
+ // 0.45.44 My Documents hides the badge while Home retains its typed file badge.
+ assert.equal(main.split('class="rivo-file-kind-badge"').length-1,1);
+ const myDocs=main.slice(main.indexOf('function renderLibraryRows('),main.indexOf('function libraryWorkspace('));
+ assert.doesNotMatch(myDocs,/rivo-file-kind-badge/);
+ assert.match(myDocs,/data-thumb-uri=/);
  assert.match(main,/if\(typeBadge\)el\.append\(typeBadge\)/);
  assert.match(main,/code:'PLATE',klass:'plate'/);
  assert.match(main,/const fields=\[visualFileType\(doc\)\.code,formatSize/);
