@@ -54,6 +54,7 @@ jobs:
           done
           node scripts/qa-responsive-04576.mjs
           node scripts/qa-restore-list-04580.mjs
+          node scripts/qa-mydocs-04544-04580.mjs
       - name: Upload responsive browser screenshots and checks
         if: always()
         uses: actions/upload-artifact@v4
