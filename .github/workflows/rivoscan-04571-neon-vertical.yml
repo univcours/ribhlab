@@ -1,0 +1,166 @@
+name: RivoScan 0.45.71 - Neon vertical scanner and constrained banner
+on:
+  push:
+    branches: [fix/rivoscan-04571-neon-vertical]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivoscan-04571-neon-vertical-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  signed-tester:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      RIVO_COMPACT_BUILD: '1'
+      VITE_RIVO_COMPACT: '1'
+      VITE_RIVO_ADMOB_MODE: live
+      VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809190
+      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Validate version and real AdMob configuration
+        run: |
+          set -euo pipefail
+          grep -Fx 'versionCode=186' rivoscan-version.properties
+          grep -Fx 'versionName=0.45.71' rivoscan-version.properties
+          node scripts/prepare-rivoscan-admob-release.mjs --check-only
+      - name: Install and run source checks
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+      - name: Create Android project and sync plugins
+        run: |
+          npx cap add android
+          npx cap sync android
+          python3 scripts/prepare-rivoscan-compact.py
+          node scripts/prepare-rivoscan-admob-release.mjs
+      - name: Sign with original Google Play upload key
+        env:
+          RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: python3 scripts/prepare-rivoscan-signing.py
+      - name: Assemble signed Android APK only - NEVER upload to Play
+        env:
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew assembleRelease --no-daemon
+      - name: Verify APK version, signature and installation metadata
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -1)"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='186' versionName='0.45.71'"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$APKSIGNER" verify --print-certs "$APK" | tee "$RUNNER_TEMP/rivoscan-apk-certs.txt"
+          grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/rivoscan-apk-certs.txt"
+          echo 'APK signed with original upload key. No Google Play upload.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Save signed APK as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.71-NeonVertical-SIGNED
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+      - name: Publish tester APK on GitHub releases (NOT Google Play)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=rivoscan-0.45.71-neon-vertical
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          cp "$APK" /tmp/RivoScan-0.45.71-NeonVertical-SIGNED.apk
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Test release already exists; preserving it." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh release create "$TAG" /tmp/RivoScan-0.45.71-NeonVertical-SIGNED.apk \
+              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+              --title 'RivoScan 0.45.71 - Neon Vertical tester' \
+              --notes 'Signed test APK with Neon/Cyberpunk cards and vertical camera ABOVE independently scrollable results BELOW, each about half the stage. Exact native 320x50 banner bounds with reserved content; original keystore. Live camera/AdMob still require physical-device verification. NOT published to Google Play.'
+          fi
+
+      # Native emulator verification is deliberately after signed APK release.
+      # Emulator failure must not revoke a verified downloadable APK.
+      - name: Capture actual Android app UI on an emulator
+        id: android_capture
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -e
+            mkdir -p "$RUNNER_TEMP/rivo-android-screenshots"
+            adb wait-for-device
+            adb shell wm size 393x852
+            adb shell wm density 160
+            adb install -r android/app/build/outputs/apk/release/app-release.apk
+            adb shell pm grant com.ribhlab.rivoscan android.permission.CAMERA || true
+            adb shell monkey -p com.ribhlab.rivoscan -c android.intent.category.LAUNCHER 1
+            sleep 12
+            adb shell screencap -p /sdcard/rivo-00-start.png
+            adb pull /sdcard/rivo-00-start.png "$RUNNER_TEMP/rivo-android-screenshots/00-start.png"
+            # Some first launches display What's New; attempt to dismiss it.
+            adb shell input tap 188 730
+            sleep 3
+            adb shell screencap -p /sdcard/rivo-01-home.png
+            adb pull /sdcard/rivo-01-home.png "$RUNNER_TEMP/rivo-android-screenshots/01-home.png"
+            adb shell input tap 274 788
+            sleep 3
+            adb shell screencap -p /sdcard/rivo-02-tools.png
+            adb pull /sdcard/rivo-02-tools.png "$RUNNER_TEMP/rivo-android-screenshots/02-tools.png"
+            adb shell input tap 42 788
+            sleep 2
+            adb shell input tap 145 144
+            sleep 3
+            adb shell screencap -p /sdcard/rivo-03-qr.png
+            adb pull /sdcard/rivo-03-qr.png "$RUNNER_TEMP/rivo-android-screenshots/03-qr.png"
+            adb shell input tap 359 54
+            sleep 2
+            adb shell input tap 244 144
+            sleep 3
+            adb shell screencap -p /sdcard/rivo-04-plate.png
+            adb pull /sdcard/rivo-04-plate.png "$RUNNER_TEMP/rivo-android-screenshots/04-plate.png"
+      - name: Upload genuine Android emulator captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.71-ACTUAL-Android-Emulator-Captures
+          path: ${{ runner.temp }}/rivo-android-screenshots/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Attach emulator screenshots to the tester release
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=rivoscan-0.45.71-neon-vertical
+          if compgen -G "$RUNNER_TEMP/rivo-android-screenshots/*.png" > /dev/null; then
+            gh release upload "$TAG" "$RUNNER_TEMP"/rivo-android-screenshots/*.png --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            echo 'No Android emulator screenshots; browser UI captures remain separately labelled.' >> "$GITHUB_STEP_SUMMARY"
+          fi
