@@ -36,7 +36,11 @@ test('Home and Documents row grows around complete 66px file preview and type la
  assert.match(css,/\.rivo-file-thumb>\.rivo-file-type-icon\{/);
  const main=read('src/main.js');
  assert.match(main,/import '\.\/rivo-ui-04569\.css';/);
- assert.equal(main.split('class="rivo-file-kind-badge"').length-1,2);
+ // 0.45.44 My Documents hides the badge while Home retains its typed file badge.
+ assert.equal(main.split('class="rivo-file-kind-badge"').length-1,1);
+ const myDocs=main.slice(main.indexOf('function renderLibraryRows('),main.indexOf('function libraryWorkspace('));
+ assert.doesNotMatch(myDocs,/rivo-file-kind-badge/);
+ assert.match(myDocs,/data-thumb-uri=/);
 });
 test('Plate Scanner retains icon improvements while final palette restores 0.45.44 blues',()=>{
  const css=read('src/rivo-ui-04569.css');
