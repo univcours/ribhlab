@@ -239,3 +239,69 @@ html body #app .shell.rivo-dark-ui .rivo-tools-hub .rivo-hub-grid>.rivo-hub-tile
   animation:none!important;
  }
 }
+
+/* Desktop/browser preview previously inherited a 42px flex basis for the
+ * entire tools collection. Define an explicit viewport and a flexible child,
+ * rather than merely allowing the tiny child to scroll. Native Android uses
+ * its own already-clipped content viewport above the banner. */
+html body:not(.rivo-native-android) #app .shell.rivo-dark-ui .content:has(>.rivo-tools-hub){
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  height:calc(100dvh - 150px)!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 150px)!important;
+  padding:8px 10px 0!important;
+  overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui .content>.app-tools.rivo-tools-hub{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 0%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  width:100%!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+}
+html body #app .shell.rivo-dark-ui .content>.app-tools.rivo-tools-hub>.rivo-tools-search-title-row{
+  box-sizing:border-box!important;
+  flex:0 0 46px!important;
+  height:46px!important;
+  min-height:46px!important;
+  max-height:46px!important;
+  margin:0 0 8px!important;
+}
+html body #app .shell.rivo-dark-ui .content>.app-tools.rivo-tools-hub>.rivo-tools-scroll{
+  box-sizing:border-box!important;
+  display:block!important;
+  flex:1 1 0%!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:none!important;
+  width:100%!important;
+  padding:4px 4px 42px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;
+  scroll-padding-bottom:42px!important;
+}
+html body #app .shell.rivo-dark-ui .content>.app-tools.rivo-tools-hub>.rivo-tools-scroll>.rivo-tools-section:last-of-type{
+  margin-bottom:16px!important;
+}
+/* Keep action labels and secondary hints readable on the restored light blue
+ * surface, including when a dialog has little height above the real banner. */
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-help{
+  color:#315476!important;
+  -webkit-text-fill-color:#315476!important;
+  opacity:1!important;
+}
+html body .rivo-plate-overlay.rivo-live-overlay .rivo-live-results-empty{
+  color:#476B8E!important;
+  -webkit-text-fill-color:#476B8E!important;
+  opacity:1!important;
+}
