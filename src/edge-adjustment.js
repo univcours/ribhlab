@@ -1,3 +1,4 @@
+import {phosphorIcon} from './phosphor-icons.js';
 /** Four-corner document readjustment for saved local images and scanned PDFs.
  * Uses the original file as a read-only source; creates a NEW copy on Save.
  * PDFs retain all untouched pages; only the chosen page is raster-replaced.
@@ -172,12 +173,12 @@ export async function openEdgeAdjustment({doc,bridge,language='en',pdfjs,PDFDocu
  let points=initialCorners(),drag=-1,frame=null,previousFocus=document.activeElement;
  const overlay=document.createElement('div');overlay.className='rivo-edge-adjust-overlay';
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',tr.title);
- overlay.innerHTML='<div class="rivo-edge-adjust-panel"><header><strong>'+tr.title+'</strong><button type="button" data-edge="close" aria-label="'+tr.cancel+'">✕</button></header>'+
+ overlay.innerHTML='<div class="rivo-edge-adjust-panel"><header><strong>'+tr.title+'</strong><button type="button" data-edge="close" aria-label="'+tr.cancel+'">'+phosphorIcon('close',19)+'</button></header>'+
    '<p>'+tr.info+'</p><label class="rivo-edge-page" hidden>'+tr.page+' <select aria-label="'+tr.pageSelect+'"></select></label>'+
    '<div class="rivo-corner-loupe-dock" data-side="right" data-active="false" aria-hidden="true"><canvas class="rivo-corner-loupe-preview" width="320" height="320"></canvas><span class="rivo-corner-loupe-hint">×6</span></div>'+
    '<div class="rivo-edge-canvas-wrap"><canvas class="rivo-edge-canvas" aria-label="'+tr.info+'"></canvas></div>'+
    '<small class="rivo-edge-notice">'+tr.original+'</small><div class="rivo-edge-status" role="status"></div>'+
-   '<footer><button type="button" data-edge="reset">'+tr.reset+'</button><button type="button" data-edge="save">'+tr.save+'</button></footer></div>';
+   '<footer><button type="button" data-edge="reset">'+phosphorIcon('reset',17)+' '+tr.reset+'</button><button type="button" data-edge="save">'+phosphorIcon('save',17)+' '+tr.save+'</button></footer></div>';
  const canvas=overlay.querySelector('.rivo-edge-canvas'),status=overlay.querySelector('.rivo-edge-status'),select=overlay.querySelector('select');
  const dock=overlay.querySelector('.rivo-corner-loupe-dock'),loupeCanvas=dock.querySelector('canvas');
  const submit=overlay.querySelector('[data-edge="save"]');
