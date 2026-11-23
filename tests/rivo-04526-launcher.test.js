@@ -12,7 +12,7 @@ test('the new launcher has no RivoScan wordmark and Play uses a full-bleed asset
  assert.match(script,/RivoScan approved icon fetch failed/);
 });
 test('Android build uses the original signature and strictly increasing version',()=>{
- const workflow=read('.github/workflows/rivoscan-04581-phosphor-icon-system.yml');
+ const workflow=read('.github/workflows/rivoscan-04581-phosphor-unified.yml');
  assert.ok(workflow.includes('RIVO_CORRECT_KEYSTORE_BASE64'));
  assert.ok(workflow.includes('versionCode=196'));
  assert.ok(workflow.includes('0.45.81'));
