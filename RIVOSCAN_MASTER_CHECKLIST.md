@@ -1,4 +1,17 @@
 # RivoScan Master Checklist — persistent, evidence-driven
+
+> **LATEST OVERRIDE:** User now requires **Material 3 Expressive + Material Symbols Rounded** instead of earlier Phosphor/Minimal Premium. Read [RIVOSCAN_DESIGN_OVERRIDE.md](./RIVOSCAN_DESIGN_OVERRIDE.md) for the exact decision and current v0.45.87 branch, **not** the older 0.45.86 design requirement.
+
+## Material 3 Expressive migration (2026-11-23)
+- [x] Development branch `fix/rivoscan-04587-material3-expressive-rounded`; version `0.45.87`, versionCode `202`.
+- [x] Install self-hosted `@fontsource-variable/material-symbols-rounded` with full variable axes; no CDN/network.
+- [x] Material semantic icon renderer covers >120 app icon roles; shared Home/Tools/action icons and 13 scanner/editor modules migrated to it directly.
+- [x] Replace animated neon/gloss with Material 3 Expressive rounded shapes, tonal blue surfaces, responsive FAB/navigation and file actions.
+- [~] Browser QA for font rendering, icon clipping, RTL and all target viewport sizes — **CI not yet verified**.
+- [ ] Fully passing source tests, production build, real Android screenshots and signed APK release verified.
+- [ ] Confirm every remaining native/web icon path including Android system controls, avoid generic fallback/ligature text.
+- [ ] Confirm no regression to verified Home/My Documents thumbnails, external file viewer, original Scan and Import behavior.
+
 _Read [RIVOSCAN_MASTER_SPEC.md](./RIVOSCAN_MASTER_SPEC.md) for **all** 419 lines of the original user instructions; read [RIVOSCAN_HANDOFF.md](./RIVOSCAN_HANDOFF.md) for branch and CI pointers. This list is not a substitute for the full spec._
 
 Status legend: [x] code change confirmed, [ ] pending, [~] partly done / real-device verification missing. An unchecked requirement MUST NOT be reported as completed.
