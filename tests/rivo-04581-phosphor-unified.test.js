@@ -38,20 +38,19 @@ test('thumbnail and all selected actions stay inside SAME horizontal row',()=>{
  assert.match(file('src/library-bulk.js'),/phosphorIcon/);
  assert.doesNotMatch(file('src/library-bulk.js'),/if\(root\.id==='home-recents'\)onOpenLibrary/);
 });
-test('PDF viewer has active More, print, zoom, edit, share, rename and external chooser',()=>{
- const viewer=file('src/document-viewer.js');
- assert.match(viewer,/doc-viewer-menu-panel/);
- assert.match(viewer,/bridge\.openFile\(\{uri:current\.uri\}\)/);
- assert.match(viewer,/bridge\.printFile\(\{uri:current\.uri\}\)/);
- assert.match(viewer,/menuItem\('external'/);
- assert.match(viewer,/menuItem\('print(er)?'/);
- assert.match(viewer,/doc-action-share/);
- assert.match(viewer,/iconButton\('scan'/);
- assert.match(viewer,/phosphorIcon\('file'/);
+test('no in-app document preview, More, zoom or PDF viewer; external Android opening only',()=>{
+ const main=file('src/main.js'),native=file('native/android/RivoDocumentsPlugin.java');
+ assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|doc-detail-overlay/);
+ assert.match(main,/data-doc-external/);
+ assert.match(main,/ico\\('external',17\\)/);
+ assert.match(main,/openSavedDocumentExternally/);
+ assert.match(native,/Intent\\.ACTION_VIEW/);
+ assert.match(native,/Intent\\.createChooser\\(open/);
 });
-test('Android remains portrait and 0.45.84 has unique version code',()=>{
- assert.equal(JSON.parse(file('package.json')).version,'0.45.84');
- assert.match(file('rivoscan-version.properties'),/^versionCode=199$/m);
+
+test('Android remains portrait and 0.45.85 has unique version code',()=>{
+ assert.equal(JSON.parse(file('package.json')).version,'0.45.85');
+ assert.match(file('rivoscan-version.properties'),/^versionCode=200$/m);
  assert.match(file('scripts/prepare-rivoscan-compact.py'),/screenOrientation="portrait"/);
  assert.match(file('scripts/verify-rivoscan-portrait.py'),/direction!="portrait"/);
 });
