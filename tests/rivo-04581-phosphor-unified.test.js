@@ -49,9 +49,9 @@ test('PDF viewer has active More, print, zoom, edit, share, rename and external 
  assert.match(viewer,/iconButton\('scan'/);
  assert.match(viewer,/phosphorIcon\('file'/);
 });
-test('Android remains portrait and 0.45.81 has unique version code',()=>{
- assert.equal(JSON.parse(file('package.json')).version,'0.45.81');
- assert.match(file('rivoscan-version.properties'),/^versionCode=196$/m);
+test('Android remains portrait and 0.45.82 has unique version code',()=>{
+ assert.equal(JSON.parse(file('package.json')).version,'0.45.82');
+ assert.match(file('rivoscan-version.properties'),/^versionCode=197$/m);
  assert.match(file('scripts/prepare-rivoscan-compact.py'),/screenOrientation="portrait"/);
  assert.match(file('scripts/verify-rivoscan-portrait.py'),/direction!="portrait"/);
 });
