@@ -1852,7 +1852,7 @@ let modalPullStart=null;
 document.addEventListener('touchstart',event=>{
  modalPullStart=null;
  if(event.touches.length!==1||!canStartModalSwipe(event.target))return;
- const dialog=event.target.closest('[role="dialog"],.rivo-live-overlay,[data-rivo-managed-modal="true"],.rivo-release-overlay,.doc-detail-overlay');
+ const dialog=event.target.closest('[role="dialog"],.rivo-live-overlay,[data-rivo-managed-modal="true"],.rivo-release-overlay');
  if(!dialog)return;
  const t=event.touches[0];
  modalPullStart={dialog,x:t.clientX,y:t.clientY,id:t.identifier,at:Date.now()};
@@ -1912,7 +1912,7 @@ if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
       // App-open ad only on a genuine foreground return and only if preloaded.
       if(secondsAway>=60000)void onAppForeground({
        backgroundMs:secondsAway,
-       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-live-overlay,.doc-detail-overlay,.busy')
+       working:busy||nativeCaptureDepth>0||bulkUI.mode()||!!document.querySelector('.rivo-live-overlay,.busy')
       });
     }else{
       backgroundStartedAt=Date.now();
