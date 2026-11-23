@@ -2,13 +2,15 @@
 
 > READ THIS FILE AT THE START OF EVERY NEW CHAT. The full user-approved master specification is [RIVOSCAN_MASTER_SPEC.md](./RIVOSCAN_MASTER_SPEC.md) (419 original user-provided lines; preserved verbatim). Check GitHub branch, CI and Releases again before acting. This document is a checkpoint, not evidence that any test passed.
 
+> **LATEST USER OVERRIDE (2026-11-23): Use Material 3 Expressive with Material Symbols Rounded, NOT Phosphor. Read [RIVOSCAN_DESIGN_OVERRIDE.md](./RIVOSCAN_DESIGN_OVERRIDE.md) BEFORE applying the older spec. Current development branch is `fix/rivoscan-04587-material3-expressive-rounded`, planned app `0.45.87` / versionCode `202`. Verify GitHub Actions and signed Release assets before claiming readiness.**
+
 ## Repository and source of truth
 
 - GitHub: `univcours/ribhlab`. Default branch: `main`, **not** necessarily latest app source.
 - Last verified published signed GitHub tester release: `rivoscan-0.45.85-external-open-unclipped-actions`; version `0.45.85`, code `200`; ARM64, ARM32, Universal APKs and Play-compatible AAB. Released Nov 23, 2026. **Not published on Google Play**.
-- CURRENT development branch: `fix/rivoscan-04586-comprehensive-ui-fab-banner-audit`.
-- Target version: **0.45.86**, versionCode **201**. CI workflow: `.github/workflows/rivoscan-04586-comprehensive-ui-audit.yml`. Signed release tag planned: `rivoscan-0.45.86-minimal-premium-fab-banner`.
-- As of this handoff checkpoint, 0.45.86 is **IN DEVELOPMENT**, not independently verified as successful. Check latest Actions run before reporting a release.
+- CURRENT development branch: `fix/rivoscan-04587-material3-expressive-rounded` (supersedes 0.45.86).
+- Target version: **0.45.87**, versionCode **202**. CI workflow: `.github/workflows/rivoscan-04587-material3-rounded.yml`. Signed release tag planned: `rivoscan-0.45.87-material3-expressive-rounded`.
+- As of this handoff checkpoint, 0.45.87 is **IN DEVELOPMENT**, not independently verified as successful. Check latest Actions run before reporting a release.
 
 ## Most important user clarification (DO NOT MISINTERPRET)
 
