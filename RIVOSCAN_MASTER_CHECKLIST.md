@@ -1,6 +1,9 @@
 # RivoScan Master Checklist — persistent, evidence-driven
 
 ## Signed 0.45.91 single-camera milestone — 2026-11-23
+- [x] Independent real Android signed APK QR and Plate button smoke test PASSED: https://github.com/univcours/ribhlab/actions/runs/45291128570 , with authentic screenshots and pixel-diff evidence (QR 52.643%, Plate 42.233%).
+- [ ] Main center Smart Scan button actually opens document capture on phone: a native emulator tap after Plate returned visually to Home (changed content 0.004%). Do not mark this as functional until native capture or fallback is verified.
+
 
 - [x] Single centered `Smart Scan` camera button uses Material Symbols Rounded `photo_camera`; floating duplicate FAB fully removed from render tree.
 - [x] Smart Scan main navigation still calls `openSmartScanner()` on Android; no scanner features deliberately removed.
