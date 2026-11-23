@@ -1,3 +1,4 @@
+import {phosphorIcon} from './phosphor-icons.js';
 /**
  * Dense, single-entry tools replacing duplicated standalone tile workflows.
  * The options still route to their original, tested implementations.
@@ -67,7 +68,7 @@ export function openMergedToolDialog({id,language='en',onChoose,onError=console.
  dialog.setAttribute('aria-label',fallback(def.title,language));
  const header=document.createElement('header');
  const title=document.createElement('strong');title.textContent=fallback(def.title,language);
- const close=document.createElement('button');close.type='button';close.textContent='✕';
+ const close=document.createElement('button');close.type='button';close.innerHTML=phosphorIcon('close',20);
  close.dataset.mergedClose='true';close.setAttribute('aria-label',fallback({ar:'إغلاق',fr:'Fermer',en:'Close',es:'Cerrar',de:'Schließen',pt:'Fechar',it:'Chiudi'},language));
  header.append(title,close);
  const info=document.createElement('p');info.textContent=fallback(def.help,language);
