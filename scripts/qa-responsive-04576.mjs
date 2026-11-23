@@ -74,26 +74,34 @@ try{
     const contained=a.left>=c.left-1&&a.right<=c.right+1&&
                     a.top>=c.top-1&&a.bottom<=c.bottom+1&&
                     b.top>=c.top-1&&b.bottom<=c.bottom+1;
-    return {valid:separated&&contained&&a.width>=23&&b.width>18&&
-       styles.backgroundImage.includes('linear-gradient')&&
-       styles.color==='rgb(236, 251, 255)',
-       animated:styles.animationName==='none'&&
-         getComputedStyle(icon,'::before').animationName==='none',
-         diagnostic:{id:tile.dataset.rivoFeature,separated,contained,width:a.width,labelWidth:b.width,
-           color:styles.color,bg:styles.backgroundImage.slice(0,100),
-           icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
+    const symbol=icon.querySelector('.rivo-material-symbol[data-material-symbol]');
+     const p=symbol&&r(symbol);
+     const fs=symbol&&getComputedStyle(symbol);
+     const symbolFits=!!p&&p.width>=18&&p.height>=18&&
+       p.left>=a.left-1&&p.right<=a.right+1&&p.top>=a.top-1&&p.bottom<=a.bottom+1;
+     const materialFont=!!fs&&fs.fontFamily.toLowerCase().includes('material');
+     const contrast=styles.color!=='rgba(0, 0, 0, 0)'&&styles.color!=='rgb(255, 255, 255)';
+     return {valid:separated&&contained&&a.width>=23&&b.width>18&&symbolFits&&materialFont&&contrast,
+       animated:styles.animationName==='none'&&getComputedStyle(icon,'::before').animationName==='none',
+       diagnostic:{id:tile.dataset.rivoFeature,separated,contained,width:a.width,labelWidth:b.width,
+         color:styles.color,symbolFits,font:fs?.fontFamily,bg:styles.backgroundImage.slice(0,100),
+         icon:a.toJSON(),label:b.toJSON(),tile:c.toJSON()}};
    });
    const nav=[...document.querySelectorAll('.mobilebar .rivo-nav-icon')];
    return {count:boxes.length,valid:boxes.every(x=>x.valid),animated:boxes.every(x=>x.animated),
            bad:boxes.filter(x=>!x.valid).map(x=>x.diagnostic),
-           navCount:nav.length,navSVG:nav.every(x=>!!x.querySelector('svg'))};
+           navCount:nav.length,navMaterial:nav.every(x=>{
+              const m=x.querySelector('.rivo-material-symbol[data-material-symbol]');
+              return !!m&&m.getBoundingClientRect().width>15&&
+                getComputedStyle(m).fontFamily.toLowerCase().includes('material');
+            })};
   });
-  check(id+' Home icons look like approved cobalt/cyan launcher artwork and fit beside labels',
+  check(id+' Home Material Symbols Rounded fit and have sufficient contrast',
     homeIcons.count===4&&homeIcons.valid);
   check(id+' Home icons have no decorative glow motion',
     homeIcons.animated);
-  check(id+' Navbar retains four semantic glossy icon badges plus center Scan',
-    homeIcons.navCount===4&&homeIcons.navSVG);
+  check(id+' Navbar retains four Material Symbols Rounded icons plus center Scan',
+    homeIcons.navCount===4&&homeIcons.navMaterial);
   const cameraOrbit=await page.evaluate(()=>{
    const ring=document.querySelector('.rivo-nav-scan-ring');
    return ring&&getComputedStyle(ring,'::before').animationName==='rivo-orbit-border';
@@ -162,7 +170,7 @@ try{
      el.scrollWidth<=el.clientWidth+2&&
      el.textContent.trim()===expected;
   },lang==='auto'?'AUTO':lang.toUpperCase());
-  check(id+' AUTO fully displayed on Tools header (with back button)',toolLocale);
+  check(id+' AUTO fully displayed on Tools header',toolLocale);
 
   await page.screenshot({path:out+'/'+id+'-tools-bottom.png'});report.screens.push(id+'-tools-bottom.png');
 
@@ -171,11 +179,17 @@ try{
    await page.locator('.app-settings .settings-lang .settings-row-icon').waitFor({state:'visible',timeout:9000});
    const settings=await page.evaluate(()=>{
     const nodes=[...document.querySelectorAll('.app-settings .settings-row-icon')].filter(node=>node.getClientRects().length>0);
-    const okay=nodes.every(n=>getComputedStyle(n).backgroundImage.includes('linear-gradient')&&
-      getComputedStyle(n,'::before').animationName==='none'&&getComputedStyle(n).animationName==='none');
+    const okay=nodes.every(n=>{
+      const icon=n.querySelector('.rivo-material-symbol[data-material-symbol]');
+      if(!icon)return false;
+      const a=n.getBoundingClientRect(),b=icon.getBoundingClientRect();
+      return b.left>=a.left-1&&b.right<=a.right+1&&b.top>=a.top-1&&b.bottom<=a.bottom+1&&
+        getComputedStyle(icon).fontFamily.toLowerCase().includes('material')&&
+        getComputedStyle(n,'::before').animationName==='none'&&getComputedStyle(n).animationName==='none';
+    });
     return {count:nodes.length,okay};
    });
-   check(id+' Settings glyphs preserve blue identity without glow motion',
+   check(id+' Settings Material Symbols Rounded fit without animated glow',
       settings.count>=3&&settings.okay);
    await page.screenshot({path:out+'/'+id+'-settings-static-icons.png'});
    report.screens.push(id+'-settings-static-icons.png');
