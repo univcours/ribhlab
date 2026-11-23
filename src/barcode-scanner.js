@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {BrowserMultiFormatReader} from '@zxing/browser';
 import {Capacitor,registerPlugin} from '@capacitor/core';
 const RivoDocuments=registerPlugin('RivoDocuments');
@@ -126,7 +126,7 @@ function drawMultipleOutlines(canvas,video,decoded){
 }
 const scannerResultIcon=kind=>{
  const holder=document.createElement('span');
- holder.innerHTML=phosphorIcon(kind==='copy'?'copy':'external',18);
+ holder.innerHTML=materialSymbol(kind==='copy'?'copy':'external',18);
  return holder.firstElementChild;
 };
 export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>({saved:false}),onSuccess=()=>{},onClose=()=>{}}={}){
@@ -137,7 +137,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
  const head=document.createElement('header');head.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
  const counter=document.createElement('span');counter.className='rivo-code-count';counter.textContent='0';counter.setAttribute('aria-label',L[17]);
- const close=iconButton(L[10],()=>stop());close.innerHTML=phosphorIcon('close',22);close.setAttribute('aria-label',L[10]);close.dataset.scanOverlayClose='true';
+ const close=iconButton(L[10],()=>stop());close.innerHTML=materialSymbol('close',22);close.setAttribute('aria-label',L[10]);close.dataset.scanOverlayClose='true';
  head.append(title,counter,close);
  const camera=document.createElement('div');camera.className='rivo-live-preview';
  const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;
@@ -156,9 +156,9 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   const resultsEmpty=document.createElement('p');resultsEmpty.className='rivo-live-results-empty';
   resultsEmpty.textContent=({ar:'النتائج ستظهر هنا بعد المسح',fr:'Les résultats apparaîtront ici',en:'Scanned codes appear here',es:'Los códigos aparecerán aquí',de:'Gescannte Codes erscheinen hier',pt:'Os códigos aparecem aqui',it:'I codici appaiono qui'})[language]||'Scanned codes appear here';
  const actions=document.createElement('div');actions.className='rivo-live-actions';
- const torch=iconButton(L[6],()=>toggleTorch());torch.innerHTML=phosphorIcon('flash',18)+'<span>'+L[6]+'</span>';
- const file=iconButton(L[5],()=>picker.click());file.innerHTML=phosphorIcon('gallery',17)+'<span>'+L[5]+'</span>';
- const zoomMinus=iconButton('Zoom out',()=>manualZoom(-1)),zoomPlus=iconButton('Zoom in',()=>manualZoom(1));zoomMinus.innerHTML=phosphorIcon('minus',17);zoomPlus.innerHTML=phosphorIcon('plus',17);
+ const torch=iconButton(L[6],()=>toggleTorch());torch.innerHTML=materialSymbol('flash',18)+'<span>'+L[6]+'</span>';
+ const file=iconButton(L[5],()=>picker.click());file.innerHTML=materialSymbol('gallery',17)+'<span>'+L[5]+'</span>';
+ const zoomMinus=iconButton('Zoom out',()=>manualZoom(-1)),zoomPlus=iconButton('Zoom in',()=>manualZoom(1));zoomMinus.innerHTML=materialSymbol('minus',17);zoomPlus.innerHTML=materialSymbol('plus',17);
  const autoZoom=iconButton('AUTO',()=>{zoom.auto=!zoom.auto;lastCodeAt=Date.now()-2500;updateZoomUI();});
  const zoomLabel=document.createElement('span');zoomLabel.className='rivo-code-zoom-label';zoomLabel.setAttribute('aria-live','polite');
  const zoomActions=document.createElement('div');zoomActions.className='rivo-code-zoom-controls';
@@ -245,7 +245,7 @@ export function openBarcodeScanner({language='en',notify=()=>{},onScan=async()=>
   zoomMinus.disabled=zoom.pending||zoom.current<=zoom.min+0.01;
   zoomPlus.disabled=zoom.pending||zoom.current>=zoom.max-0.01;
   autoZoom.disabled=false;autoZoom.setAttribute('aria-pressed',String(zoom.auto));
-  autoZoom.innerHTML=zoom.auto?'AUTO '+phosphorIcon('check',15):'AUTO';
+  autoZoom.innerHTML=zoom.auto?'AUTO '+materialSymbol('check',15):'AUTO';
   zoomLabel.textContent=zoom.current.toFixed(1)+'×'+(zoom.hardware?'':' DIG');
  };
  async function setZoom(value){
