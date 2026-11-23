@@ -40,10 +40,11 @@ test('in-place actions are eye/share/pencil/trash, thumbnails stay enabled',()=>
  for(const id of ['data-doc-open','data-doc-share','data-doc-rename','data-doc-delete']){
   assert.ok(main.includes(id));
  }
- assert.equal(main.split("ico('share',17)").length-1,2);
- assert.equal(main.split("ico('pencil',17)").length-1,2);
- assert.equal(main.split("ico('trash',17)").length-1,2);
- assert.equal(main.split('data-thumb-uri=').length-1,2);
+ assert.equal(main.split("ico('share',17)").length-1,1);
+ assert.equal(main.split("ico('pencil',17)").length-1,1);
+ assert.equal(main.split("ico('trash',17)").length-1,1);
+ assert.equal(main.split('data-thumb-uri=').length-1,1);
+ assert.match(main,/function renderSavedFileRow\(item,index\)/);
  assert.ok(main.includes('RivoDocuments.getThumbnail'));
  assert.ok(main.includes('rivo-file-type-icon'));
  const css=read('src/rivo-file-icons.css');
