@@ -1,5 +1,24 @@
 # RivoScan Master Checklist — persistent, evidence-driven
 
+## Verified 0.45.88 milestone and outstanding QA — 2026-11-23
+
+- [x] Build 0.45.88 / code 203 with Material 3 Expressive and bundled Material Symbols Rounded source.
+- [x] Browser responsive screenshot and layout checks passed in the 0.45.88 GitHub Actions run (320, 360, 393, 480, 768 CSS px); test fixtures clearly labeled SAMPLE.
+- [x] Source checks, npm tests and Vite build passed in the same run.
+- [x] All five signed APK builds, ABI parity, manifest/version and original signer verified by CI.
+- [x] All-ABI signed AAB built and verified; saved to Actions and GitHub prerelease, not published to Play.
+- [x] GitHub signed tester prerelease: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.88-master-audit-camera-banner .
+- [~] Native Android emulator screenshot step still running at checkpoint; read https://github.com/univcours/ribhlab/actions/runs/45267424630 for final conclusion and evidence.
+- [ ] Physically verify AdMob Banner loaded AND visible/positioned outside controls, with SDK/logcat/impression evidence; source-level fixes do not prove ad delivery.
+- [ ] Physically test camera FAB transitions, native permissions, QR/barcode/ML Kit, file export, PDF, thumbnail display, and full Android back-stack/RTL/accessibility regression.
+- [ ] Inspect all authentic emulator screenshots, note every defect and resolve regressions without deleting features.
+- [ ] Refresh this list after actual device QA; never claim a store release because one has not occurred.
+
+This latest milestone supersedes only the historical **status** entries below, not their outstanding acceptance criteria. Latest explicit Material 3 directive overrides the previous Phosphor design instruction.
+
+---
+
+
 > **LATEST OVERRIDE:** User now requires **Material 3 Expressive + Material Symbols Rounded** instead of earlier Phosphor/Minimal Premium. Read [RIVOSCAN_DESIGN_OVERRIDE.md](./RIVOSCAN_DESIGN_OVERRIDE.md) for the exact decision and current v0.45.87 branch, **not** the older 0.45.86 design requirement.
 
 ## Material 3 Expressive migration (2026-11-23)
