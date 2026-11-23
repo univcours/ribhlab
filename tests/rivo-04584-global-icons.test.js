@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {hasPhosphorIcon,phosphorIcon} from '../src/phosphor-icons.js';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('RivoScan 0.45.85 bundles the official offline Phosphor Duotone set and aliases',()=>{
+test('RivoScan 0.45.86 bundles the official offline Phosphor Duotone set and aliases',()=>{
  const main=read('src/main.js'),icons=read('src/phosphor-icons.js'),extra=read('src/phosphor-icons-extra.js');
  assert.match(main,/import '\.\/rivo-phosphor-global-04584\.css'/);
  assert.match(main,/installPhosphorAutoIcons\(\)/);
@@ -49,10 +49,10 @@ test('Checkbox-only file selection and full thumbnail remain in both screens',()
  assert.match(css,/:is\(#home-recents,#library-list\)/);
 });
 test('Native device support, unchanged ML Kit features and signed release metadata',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.85');
- assert.match(read('rivoscan-version.properties'),/^versionCode=200$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.85$/m);
- const flow=read('.github/workflows/rivoscan-04585-no-eye-external-open.yml');
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.86');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=201$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.86$/m);
+ const flow=read('.github/workflows/rivoscan-04586-comprehensive-ui-audit.yml');
  for(const x of ['arm64-v8a','armeabi-v7a','x86','x86_64','universal',
   'verify-rivoscan-abi-content.py','bundleRelease','screenOrientation'])assert.ok(flow.includes(x),x);
 });
