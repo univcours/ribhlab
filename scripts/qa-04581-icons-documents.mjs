@@ -44,6 +44,8 @@ try{
     const a=actions?.getBoundingClientRect();
     const pad=1.7;
     return {
+      rowBox:{left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height},
+      thumbBox:{left:t.left,right:t.right,top:t.top,bottom:t.bottom,height:t.height},
       rowWithinScreen:r.left>=-pad&&r.right<=innerWidth+pad,
       thumbWithinRow:t.left>=r.left-pad&&t.right<=r.right+pad&&t.top>=r.top-pad&&t.bottom<=r.bottom+pad,
       imageWithinThumb:img.left>=t.left-pad&&img.right<=t.right+pad&&img.top>=t.top-pad&&img.bottom<=t.bottom+pad,
