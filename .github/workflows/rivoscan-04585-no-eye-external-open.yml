@@ -165,7 +165,7 @@ jobs:
               /tmp/RivoScan-0.45.85-UNIVERSAL-SIGNED.apk \
               --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title 'RivoScan 0.45.85 - External File Open and Unclipped Actions' \
-              --notes 'Signed trial build: eye button and in-app saved PDF/image viewer, zoom and More menus deleted. File row and external-open icon invoke Android ACTION_VIEW app chooser with URI read permission. All six professional file action icons fit fully within the card, in a compact grid beside unchanged thumbnails for Home and Documents, with no horizontal clipping or long-press file menu. Existing ML Kit, OCR, translation, PDF tools, signature and portrait mode are preserved. ARM64 / ARM32 / Universal signed with original upload key. NOT published to Google Play.'
+              --notes 'Signed trial build: eye button and in-app saved PDF/image viewer, zoom and More menus deleted. File row and external-open icon invoke Android ACTION_VIEW app chooser with URI read permission. All six professional file action icons fit fully within the card, in a compact grid beside unchanged thumbnails for Home and Documents, with no horizontal clipping or long-press file menu. Existing ML Kit, OCR, translation, PDF tools, signature and portrait mode are preserved. ARM64 / ARM32 / Universal signed using the original certificate. This GitHub prerelease is not deployed to any app store.'
           fi
           # Keep the original APKs; attach the verified AAB for Play per-device delivery.
           cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.85-ALL-SUPPORTED-ANDROID-PLAY.aab
