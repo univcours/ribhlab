@@ -22,13 +22,13 @@ test('real native first-page thumbnails, not fabricated file-type previews',()=>
  assert.match(style,/object-fit:contain!important/);
 });
 test('tapping a saved PDF or photo opens external Android chooser, with no RivoScan viewer',()=>{
- assert.match(main,/async function openSavedDocumentExternally\\(doc\\)/);
- assert.match(main,/type==='open'\\)await openSavedDocumentExternally\\(selected\\)/);
- assert.match(main,/return RivoDocuments\\.openFile\\(\\{uri:doc\\.uri\\}\\)/);
+ assert.match(main,/async function openSavedDocumentExternally\(doc\)/);
+ assert.match(main,/type==='open'\)await openSavedDocumentExternally\(selected\)/);
+ assert.match(main,/return RivoDocuments\.openFile\(\{uri:doc\.uri\}\)/);
  assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|previewSavedDocument/);
  assert.match(main,/data-doc-external/);
  const native=read('native/android/RivoDocumentsPlugin.java');
- assert.match(native,/Intent\\.createChooser\\(open/);
+ assert.match(native,/Intent\.createChooser\(open/);
 });
 
 test('all card faces transparent, glow subdued and same slow speed',()=>{
