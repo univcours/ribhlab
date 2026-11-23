@@ -4,7 +4,7 @@ import {makeLongImage,makeWordText} from './share-exports.js';
 import {generatedRsName} from './rs-file-names.js';
 import {phosphorIcon} from './phosphor-icons.js';
 
-export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
+export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onEdit,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
   const translations={
