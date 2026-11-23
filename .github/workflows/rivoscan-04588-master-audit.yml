@@ -75,8 +75,13 @@ jobs:
           npx cap add android
           npx cap sync android
           python3 scripts/prepare-rivoscan-compact.py
+          python3 scripts/configure-rivoscan-maven-mirror.py
           python3 scripts/verify-rivoscan-portrait.py
           node scripts/prepare-rivoscan-admob-release.mjs
+      - name: Cache verified Gradle dependencies and reduce Maven Central requests
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
       - name: Sign with original Google Play upload key
         env:
           RIVO_UPLOAD_KEYSTORE_BASE64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
@@ -94,7 +99,7 @@ jobs:
           cd android
           chmod +x gradlew
           sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --max-workers=2
       - name: Compare every feature, model, and shared class across all five APKs
         run: |
           set -euo pipefail
@@ -122,7 +127,7 @@ jobs:
         run: |
           set -euo pipefail
           cd android
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew bundleRelease --no-daemon --max-workers=2
       - name: Verify the AAB has all ABIs, unchanged models and original signing
         run: |
           set -euo pipefail
