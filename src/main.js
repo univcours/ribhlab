@@ -628,7 +628,7 @@ function settingsWorkspace(){
    <summary class="rivo-scan-pref-summary"><span class="rivo-pref-summary-icon">${ico('check',18)}</span>
     <span class="rivo-pref-summary-copy"><strong>${scanPrefsText(language).title}</strong>
      <small>${scanPrefsText(language).sub}</small></span>
-    <span class="rivo-pref-summary-chevron" aria-hidden="true">⌄</span></summary>
+    <span class="rivo-pref-summary-chevron" aria-hidden="true">${phosphorIcon('chevron-down',16)}</span></summary>
    <div class="rivo-scan-pref-body">
     ${scannerPreferenceRows()}
     <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p>
