@@ -30,9 +30,9 @@ test('ID Photo Maker has only ONE camera and ONE image import button on the same
  assert.match(id,/Camera\.getPhoto/);
  assert.match(id,/setPNGResolution/);
 });
-test('Files screen imports any file and images with separate functional controls',()=>{
+test('Documents keeps general Import, removes duplicate Import Images, preserves scanner gallery',()=>{
  assert.match(main,/data-import="file"/);
- assert.match(main,/data-import-images/);
+ assert.doesNotMatch(main,/data-import-images/); // user removed duplicate Import Images
  assert.match(main,/chooseLibraryFiles\('image'\)/);
  assert.match(main,/id="open-storage-folder"/);
  assert.match(ui,/\.library-heading-actions/);
@@ -53,8 +53,8 @@ test('external file opening and original document actions invoke real native hoo
   assert.ok(main.includes(action),'Missing real document action '+action);
 });
 
-test('Signed release is monotonic 0.45.85 code 192',()=>{
- assert.equal(JSON.parse(get('package.json')).version,'0.45.85');
- assert.match(get('rivoscan-version.properties'),/^versionCode=200$/m);
- assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.85$/m);
+test('Signed release is monotonic 0.45.86 code 192',()=>{
+ assert.equal(JSON.parse(get('package.json')).version,'0.45.86');
+ assert.match(get('rivoscan-version.properties'),/^versionCode=201$/m);
+ assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.86$/m);
 });
