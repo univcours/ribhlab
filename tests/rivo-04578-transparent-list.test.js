@@ -43,8 +43,8 @@ test('all card faces transparent, glow subdued and same slow speed',()=>{
  assert.doesNotMatch(style,/animation:rivoEdgeOrbit 5\.8s/);
 });
 test('new branch does not reuse older Play version code',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.81');
- assert.match(read('rivoscan-version.properties'),/^versionCode=196$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.82');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=197$/m);
  assert.match(main,/import '\.\/rivo-list-04578\.css'/);
  assert.match(main,/import '\.\/rivo-thumbnail-restore-04580\.css'/);
 });
