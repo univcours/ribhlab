@@ -33,7 +33,8 @@ test('Image editor offers crease mode and optional official ML Kit FULL photo cl
 
 test('Bulk delete uses the familiar trash-bin icon, not a backspace key',()=>{
  const b=read('src/library-bulk.js'),css=read('src/rivo-design-system.css');
- assert.ok(b.includes("trash:'<path d="),'actual trash can SVG');
+ assert.ok(b.includes('phosphorIcon('),'actual official Phosphor SVG');
+ assert.match(read('src/phosphor-icons.js'),/"trash":"trash"/);
  assert.ok(b.includes("compactAction('delete',t('delete'),'trash')"));
  assert.ok(!b.includes('data-bulk="rename"'),'disabled bulk rename was always unavailable');
  assert.ok(css.includes('.rivo-action-label'));
