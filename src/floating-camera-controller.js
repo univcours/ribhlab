@@ -8,7 +8,10 @@ export const CAMERA_BLOCKING_OVERLAYS=Object.freeze([
  '.rivo-editor-overlay','.rivo-shield-overlay','.rivo-perfectscan-overlay',
  '.rivo-perfect-capture-overlay','.rivo-edge-adjust-overlay',
  '.rivo-pages-overlay','.rivo-merged-overlay','.rivo-release-overlay',
- '.bulk-overlay','.busy','[data-rivo-managed-modal="true"]',
+ // Book Scan and ID Photo Maker both use the shared ID overlay, not code/modal classes.
+ '.rivo-id-overlay','.rivo-id-dialog',
+ '.bulk-overlay','.busy','.rivo-id-photo-overlay',
+ '[data-rivo-managed-modal="true"]',
  '[role="dialog"][aria-modal="true"]'
 ]);
 export const CAMERA_ALLOWED_ROUTES=Object.freeze(['home','library','tools']);
