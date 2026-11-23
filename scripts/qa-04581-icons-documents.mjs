@@ -67,7 +67,20 @@ try{
          const p=icon.getBoundingClientRect();
          return p.left>=b.left-pad&&p.right<=b.right+pad&&p.top>=b.top-pad&&p.bottom<=b.bottom+pad;
        }),
-       allButtonsVisible:!actions||actions.scrollWidth<=actions.clientWidth+2,
+       // Material glyph ink may add a few scrollWidth pixels even when
+       // overflow is VISIBLE (not scrollable). Validate actual button rectangles
+       // inside the action grid instead, plus reject true x-scrolling/clipping.
+       allButtonsVisible:!actions||(
+         !['auto','scroll','hidden','clip'].includes(getComputedStyle(actions).overflowX)&&
+         [...actions.querySelectorAll('button')].every(button=>{
+           const b=button.getBoundingClientRect();
+           return b.left>=a.left-pad&&b.right<=a.right+pad&&
+             b.top>=a.top-pad&&b.bottom<=a.bottom+pad&&
+             b.width>=26&&b.height>=28&&
+             getComputedStyle(button).display!=='none'&&
+             getComputedStyle(button).visibility!=='hidden';
+         })
+       ),
       width:Math.round(t.width),height:Math.round(t.height),
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
