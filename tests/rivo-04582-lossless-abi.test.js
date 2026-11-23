@@ -4,10 +4,10 @@ import {readFileSync} from 'node:fs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('0.45.88 upgrade stays on the same RivoScan package with a newer code',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.88');
- assert.match(read('rivoscan-version.properties'),/^versionCode=203$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.88$/m);
+test('0.45.89 upgrade stays on the same RivoScan package with a newer code',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.89');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=204$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.89$/m);
  assert.match(read('capacitor.config.json'),/com\.ribhlab\.rivoscan/);
 });
 test('lossless build keeps all device ABIs AND universal fallback',()=>{
@@ -30,7 +30,7 @@ test('signed APK release validates all variants, original signing cert and portr
  assert.match(workflow,/for ABI in universal arm64-v8a armeabi-v7a x86 x86_64/);
  assert.match(workflow,/screenOrientation/);
  assert.match(workflow,/e9b3e2779575ba08a91372fc3885eba01dd3e73e/);
- assert.match(workflow,/RivoScan-0\.45\.88-ARM64-SIGNED\.apk/);
- assert.match(workflow,/RivoScan-0\.45\.88-UNIVERSAL-SIGNED\.apk/);
+ assert.match(workflow,/RivoScan-0\.45\.89-ARM64-SIGNED\.apk/);
+ assert.match(workflow,/RivoScan-0\.45\.89-UNIVERSAL-SIGNED\.apk/);
  assert.doesNotMatch(workflow,/upload.*Google Play/i);
 });
