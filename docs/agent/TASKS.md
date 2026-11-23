@@ -1,3 +1,20 @@
+# Current 0.45.91 tasks (supersedes historical 0.45.89 checklist below)
+
+| Work | State | Evidence |
+|---|---|---|
+| Remove overlapping duplicate FAB; bottom camera icon is Material Symbols Rounded photo_camera | VERIFIED | 0.45.91 source/CI/native screenshots |
+| Signed original-key ARM64/ARM32/Universal APK and all-ABI AAB | VERIFIED | 45284073142, signed GitHub pre-release |
+| QR / Barcode opens from Home button | VERIFIED in Android emulator | 45291128570 content changed 52.643% |
+| Plate Scanner opens from Home button | VERIFIED in Android emulator | 45291128570 content changed 42.233% |
+| Primary Smart Scan opens ML Kit document scanner | NOT VERIFIED | emulator press returned Home visually, changed 0.004%; physical phone/logcat investigation needed |
+| AdMob Banner real visible physical impression and consent/no-fill | NOT VERIFIED | real-device SDK evidence required |
+| End-to-end capture → PDF save → external viewer → thumbnails | NOT VERIFIED | device scenarios required |
+| Google Play rollout | NOT AUTHORIZED | explicit user request required |
+
+Independent true-native QA: https://github.com/univcours/ribhlab/actions/runs/45291128570 . Release: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.91-single-camera .
+
+---
+
 # RivoScan 0.45.89 — verification tasks
 
 | Item | State | Evidence/criterion |
