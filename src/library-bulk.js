@@ -4,10 +4,9 @@ import {makeLongImage,makeWordText} from './share-exports.js';
 import {generatedRsName} from './rs-file-names.js';
 import {phosphorIcon} from './phosphor-icons.js';
 
-export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
+export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
   const selected=new Set();
-  let suppressUntil=0;
   const translations={
     en:['Select','selected','Select all','Invert','Cancel','Delete','Share','Merge PDF','Edit','Preview','Document actions','Share as','Quality','PDF','JPG images','Original / best','Balanced','Small file','Prepare and share','Processed on your phone. Converted copies are saved in Documents/RivoScan.','Reduced PDF quality converts text to images; original preserves editable text.','Delete {n} documents permanently?','Limit: 30 documents.','Limit: 30 image pages.','File exceeds the 16 MB conversion limit. Share the original instead.','Select documents first.','Completed','Stopped; remaining files are safe.','Select at least two documents.','Long-press any document for more actions.','Add to selection','Remove from selection','Preparing document','Pages limit exceeded.'],
     ar:['تحديد','مختارة','تحديد الكل','عكس الاختيار','إلغاء','مسح','مشاركة','جمع PDF','تعديل','معاينة','خيارات الوثيقة','شارك بصيغة','الجودة','PDF','صور JPG','أصلية / أعلى جودة','متوازنة','حجم صغير','تحضير ومشاركة','تتم عملية التحويل على هاتفك، وتُحفظ النسخ في Documents/RivoScan.','قد تحوّل الجودة المنخفضة نص PDF إلى صور، بينما تحافظ الجودة الأصلية على النص.','هل تريد حذف {n} مستندات نهائيًا؟','الحد الأقصى 30 وثيقة.','الحد الأقصى 30 صورة.','الوثيقة أكبر من 16 ميغا للتحويل. شارك الأصلية.','اختر المستندات أولًا.','اكتملت العملية','توقفت العملية، ولم تُحذف الملفات المتبقية.','اختر مستندين على الأقل.','اضغط مطولًا على مستند لتحديده وعرض الخيارات.','أضف إلى التحديد','أزل من التحديد','جارٍ إعداد المستند','تجاوز عدد الصفحات الحد المسموح به.'],
@@ -116,62 +115,8 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
     shade.querySelector('button')?.focus();
     return shade;
   }
-  function longPress(doc){
-    if(!doc)return;
-    if(!selected.has(doc.uri)){mode=true;selected.add(doc.uri);sync();}
-    const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const root=sheet(`<div class="bulk-sheet-title"><strong>${t('menu')}</strong><button data-close-sheet aria-label="${t('cancel')}">✕</button></div>
-      <p class="bulk-document-name">${escape(doc.name)}</p>
-      <div class="bulk-sheet-actions">
-        <button data-menu="preview">${t('preview')}</button>
-        <button data-menu="edit">${t('edit')}</button>
-        <button data-menu="share">${t('share')}</button>
-        <button data-menu="delete">${t('delete')}</button>
-        <button data-menu="rename">${t('rename')}</button>
-        <button data-menu="copy">${t('copy')}</button>
-        <button data-menu="select">${chosen(doc)?t('remove'):t('add')}</button>
-      </div>`);
-    root.addEventListener('click',async e=>{
-      const action=e.target.closest('[data-menu]')?.dataset.menu;if(!action)return;
-      closeSheet();
-      if(action==='select'){toggle(doc);return;}
-      if(action==='preview'){await onPreview(doc);return;}
-      if(action==='rename'){await onRename?.(doc);return;}
-      if(action==='copy'){organize([doc],'copy');return;}
-      if(action==='edit'){await onEdit(doc);return;}
-      if(action==='share'){share([doc]);return;}
-      if(action==='delete')await erase([doc]);
-    });
-  }
-  function wireLongPress(root){
-    if(!root)return;
-    let timer=null,startX=0,startY=0,pressed=null;
-    const stop=()=>{if(timer!==null){clearTimeout(timer);timer=null;}};
-    root.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='mouse'||e.target.closest('button,input,select'))return;
-      const row=e.target.closest('[data-doc-open]');if(!row||!root.contains(row))return;
-      pressed=getItems()[Number(row.dataset.docOpen)];
-      startX=e.clientX;startY=e.clientY;stop();
-      timer=setTimeout(()=>{
-        timer=null;suppressUntil=Date.now()+900;
-        // Selection stays in Home and exposes the same actions as My Documents.
-        longPress(pressed);
-        try{navigator.vibrate?.(25)}catch{}
-      },550);
-    });
-    root.addEventListener('pointermove',e=>{if(Math.hypot(e.clientX-startX,e.clientY-startY)>12)stop()});
-    for(const name of ['pointerup','pointercancel','pointerleave'])root.addEventListener(name,stop);
-    root.addEventListener('contextmenu',e=>{
-      const row=e.target.closest('[data-doc-open]');
-      if(row&&root.contains(row)){
-        e.preventDefault();suppressUntil=Date.now()+900;
-        const doc=getItems()[Number(row.dataset.docOpen)];
-        // Selection stays in Home and exposes the same actions as My Documents.
-        longPress(doc);
-      }
-    });
-  }
-  function suppressClick(){return Date.now()<suppressUntil}
+  // File actions are available only via the selection checkbox or inline buttons.
+  // No long-press timers, context-menu sheet or touch gesture overrides.
   async function erase(docs){
     if(!docs.length)return;
     if(!window.confirm(t('confirm').replace('{n}',String(docs.length))))return;
@@ -421,5 +366,5 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       const button=e.target.closest('[data-bulk]');if(button)action(button.dataset.bulk);
     });
   }
-  return {t,toolbar,selectBanner,checkbox,mode:()=>mode,chosen,count:()=>selected.size,toggle,clear,prune,sync,longPress,wireLongPress,suppressClick,share,savePdf,organize,action,wireToolbar};
+  return {t,toolbar,selectBanner,checkbox,mode:()=>mode,chosen,count:()=>selected.size,toggle,clear,prune,sync,share,savePdf,organize,action,wireToolbar};
 }
