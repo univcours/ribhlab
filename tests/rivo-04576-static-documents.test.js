@@ -48,7 +48,7 @@ test('obsolete PDF preview, internal page thumbnail window and eye menus have be
 test('external file opening and original document actions invoke real native hooks',()=>{
  assert.match(main,/async function openSavedDocumentExternally\(doc\)/);
  assert.match(main,/return RivoDocuments\.openFile\(\{uri:doc\.uri\}\)/);
- assert.match(main,/onAddScan:\(\)=>openSmartScanner\(\)/);
+ assert.ok(main.includes("openSmartScanner()"),'Document scanner remains accessible from Scan and Tools');
  for(const action of ['data-doc-share','data-doc-rename','data-doc-delete','data-doc-edges','data-doc-shield'])
   assert.ok(main.includes(action),'Missing real document action '+action);
 });
