@@ -172,7 +172,7 @@ jobs:
               /tmp/RivoScan-0.45.91-UNIVERSAL-SIGNED.apk \
               --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title 'RivoScan 0.45.91 - Single Camera and Material 3 Safe Layout' \
-               --notes 'Signed RivoScan 0.45.91 tester: a single Material Symbols Rounded photo_camera action in the central bottom navigation. Redundant overlapping floating camera removed, scanner flow retained. Material 3 Expressive, Android safe areas, Formula OCR empty-preview collapse and Save protection, native AdMob banner geometry, all PDF/ML Kit features and original signing key preserved. Browser and emulator screenshots are not evidence of physical AdMob impressions. Test on device before publishing. NOT uploaded to Google Play.'
+               --notes 'Signed RivoScan 0.45.91 tester: a single Material Symbols Rounded photo_camera action in the central bottom navigation. Redundant overlapping floating camera removed, scanner flow retained. Material 3 Expressive, Android safe areas, Formula OCR empty-preview collapse and Save protection, native AdMob banner geometry, all PDF/ML Kit features and original signing key preserved. Browser and emulator screenshots are not evidence of physical AdMob impressions. Test on device before publishing. No app store deployment performed.'
           fi
           # Keep the original APKs; attach the verified AAB for Play per-device delivery.
           cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.91-ALL-SUPPORTED-ANDROID-PLAY.aab
