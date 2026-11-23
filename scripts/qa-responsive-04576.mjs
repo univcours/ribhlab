@@ -145,8 +145,13 @@ try{
    const a=scroll.getBoundingClientRect(),b=last.getBoundingClientRect();
    const style=getComputedStyle(scroll);
    return {ok:b.top>=a.top-2&&b.bottom<=a.bottom+3&&b.left>=-1&&b.right<=innerWidth+1,
-    overflow:style.overflowY,hasScroll:scroll.scrollHeight>scroll.clientHeight};
+    overflow:style.overflowY,hasScroll:scroll.scrollHeight>scroll.clientHeight,
+    scrollTop:scroll.scrollTop,clientHeight:scroll.clientHeight,scrollHeight:scroll.scrollHeight,
+    scrollTopY:a.top,scrollBottom:a.bottom,lastTop:b.top,lastBottom:b.bottom,
+    lastLeft:b.left,lastRight:b.right,viewportHeight:innerHeight,
+    parentHeight:scroll.parentElement?.getBoundingClientRect().height};
   });
+  if(!tools.ok)console.log('RIVO_TOOLS_SCROLL_DIAGNOSTICS '+id,JSON.stringify(tools));
   check(id+' Tools last card fully reachable above ad safe band',tools.ok);
   check(id+' Tools scrolls independently',tools.overflow==='auto');
   const toolIcons=await page.evaluate(()=>{

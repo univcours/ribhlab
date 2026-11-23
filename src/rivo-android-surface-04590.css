@@ -127,3 +127,18 @@ html body.rivo-native-android #app .shell.rivo-dark-ui .main{
  max-height:var(--rivo-webview-height,100dvh)!important;
  min-height:0!important;
 }
+
+/* Keep the Tools list genuinely scrollable in short landscape (there is no
+   native 320x50 ad at this height); no last tool may be cut by its scroller. */
+@media(max-height:430px) and (orientation:landscape){
+ html body.rivo-native-android #app .shell.rivo-dark-ui .content > .app-tools.rivo-tools-hub{
+  display:flex!important;flex-direction:column!important;flex:1 1 auto!important;
+  height:100%!important;max-height:100%!important;min-height:0!important;
+  overflow:hidden!important;box-sizing:border-box!important;
+ }
+ html body.rivo-native-android #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub > .rivo-tools-scroll{
+  display:block!important;flex:1 1 0!important;min-height:0!important;
+  height:auto!important;max-height:none!important;overflow-y:auto!important;
+  overflow-x:hidden!important;scroll-padding-bottom:16px!important;
+ }
+}
