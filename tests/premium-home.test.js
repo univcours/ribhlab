@@ -11,7 +11,8 @@ test('Files-first Home keeps camera, search, selection and a large document area
   assert.ok(home.includes(token),token);
  assert.ok(!home.includes('homeTiles.map('),'all extra features belong under Tools');
  assert.ok(!home.includes('data-premium-unlock'),'no manual advertising buttons');
- assert.ok(main.includes('rivo-camera-fab'));
+ assert.ok(!main.includes('class="floating-scan rivo-camera-fab"'));
+ assert.ok(main.includes("rivo-nav-scan-ring">${ico('camera',29)}"));
  assert.ok(main.includes('data-live-camera'));
  assert.ok(main.includes('data-doc-select'));
 });
@@ -44,12 +45,13 @@ test('Home feature rail routes to shared tools, no second duplicated scanner or 
  assert.ok(main.includes("spec.type==='smartAutoCapture'"));
  assert.ok(main.includes("autoCapture:true"));
 });
-test('Scanner uses the fifth centered nav slot on phone, while desktop FAB remains',()=>{
+test('Single central camera action stays in the five-item bottom navigation',()=>{
  const main=file('src/main.js'),css=file('src/rivo-blue-theme.css');
- const nav=main.slice(main.indexOf('const mobile = '),main.indexOf('const showFab='));
+ const nav=main.slice(main.indexOf('const mobile = '),main.indexOf('app.innerHTML=',main.indexOf('const mobile = ')));
  assert.equal((nav.match(/<button\b/g)||[]).length,5);
  assert.ok(nav.includes('class="rivo-nav-scan" data-live-camera'));
- assert.ok(main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
+ assert.ok(!main.includes('class="floating-scan rivo-camera-fab" data-live-camera'));
+ assert.ok(nav.includes("ico('camera',29)"));
  assert.ok(nav.includes('repeat(5,minmax(0,1fr))'));
  assert.ok(css.includes('.floating-scan.rivo-camera-fab{display:none!important}'));
  assert.ok(css.includes('safe-area-inset-bottom'));
