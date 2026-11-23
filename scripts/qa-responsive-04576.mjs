@@ -115,13 +115,19 @@ try{
   check(id+' home scrolls on small viewports',home.scrolling==='auto');
   await page.screenshot({path:out+'/'+id+'-home.png'});report.screens.push(id+'-home.png');
   // Verify content scroll makes search/recents reachable regardless of height.
-  const reachable=await page.evaluate(()=>{
+  const reachability=await page.evaluate(()=>{
    const home=document.querySelector('.rivo-compact-home'),target=document.querySelector('.rivo-home-search-title-row');
    target.scrollIntoView({block:'end',behavior:'instant'});
    const b=target.getBoundingClientRect(),h=home.getBoundingClientRect();
-   return b.top>=h.top-2&&b.bottom<=h.bottom+2;
+   const status={reachable:b.top>=h.top-2&&b.bottom<=h.bottom+2,
+    homeTop:h.top,homeBottom:h.bottom,searchTop:b.top,searchBottom:b.bottom,
+    scrollTop:home.scrollTop,scrollHeight:home.scrollHeight,clientHeight:home.clientHeight,
+    overflow:getComputedStyle(home).overflowY,
+    contentBottom:document.querySelector('.content')?.getBoundingClientRect().bottom};
+   return status;
   });
-  check(id+' My Files search reachable by scrolling',reachable);
+  if(!reachability.reachable)console.log('RIVO_HOME_SCROLL_DIAGNOSTICS '+id,JSON.stringify(reachability));
+  check(id+' My Files search reachable by scrolling',reachability.reachable);
   // Open the real Tools view, scroll to final Edit/utility card.
   await page.evaluate(()=>document.querySelector('.mobilebar [data-tab="tools"]')?.click());
   await page.locator('.rivo-tools-scroll').waitFor({timeout:12000});

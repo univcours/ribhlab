@@ -92,3 +92,19 @@ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
   scroll-margin-bottom:10px!important;
  }
 }
+
+/* Short native landscape: Home uses ONE scroll container. The file list is
+   no longer a separate zero-height scroll region; search stays reachable. */
+@media(max-height:430px) and (orientation:landscape){
+ html body.rivo-native-android #app .shell.rivo-dark-ui .content > .app-home.rivo-home.rivo-compact-home{
+  display:flex!important;flex-direction:column!important;
+  flex:0 0 100%!important;height:100%!important;max-height:100%!important;
+  min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin!important;touch-action:pan-y!important;
+ }
+ html body.rivo-native-android #app .shell.rivo-dark-ui .app-home.rivo-home.rivo-compact-home > #home-recents{
+  display:flex!important;flex-direction:column!important;
+  flex:0 0 auto!important;min-height:0!important;max-height:none!important;
+  height:auto!important;overflow:visible!important;
+ }
+}
