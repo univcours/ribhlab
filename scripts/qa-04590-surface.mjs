@@ -11,16 +11,15 @@ const results=[];
 try{
  for(const width of [320,360,393,480,768]){
   const context=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1});
-  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.90'));
+  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.91'));
   const page=await context.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  const fab=page.locator('#app button.rivo-camera-fab');
-  await fab.waitFor();
-  await page.waitForFunction(()=>{const b=document.querySelector('#app .rivo-camera-fab');return b&&!b.hidden&&b.getClientRects().length>0;});
-  assert.equal(await fab.locator('[data-material-symbol="photo_camera"]').count(),1,'FAB must show camera, not document scanner');
-  assert.equal(await page.locator('.rivo-nav-scan-ring [data-material-symbol="document_scanner"]').count(),1,
-   'Bottom Smart Scan must remain independent of floating camera');
-  assert.equal(await fab.getAttribute('aria-label'),'Open camera');
+  const camera=page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]');
+  await camera.waitFor();
+  assert.ok(await camera.isVisible(),'Bottom navigation camera must be visible');
+  assert.equal(await camera.locator('[data-material-symbol="photo_camera"]').count(),1,
+   'Primary Scan action must have a real Material Symbols Rounded camera icon');
+  assert.equal(await page.locator('#app .rivo-camera-fab').count(),0,'Floating duplicate must be absent');
   // Only simulate native screen geometry; never simulate actual Google ads.
   const geometry=await page.evaluate(async()=>{
    const {calculateAdLayout}=await import('/src/rivo-native-ad-geometry.js');
@@ -40,14 +39,13 @@ try{
      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};
    };
    return {valid:true,p,slot:box('#app .rivo-ad-banner-slot'),
-      content:box('#app .content'),nav:box('#app nav.mobilebar'),fab:box('#app .rivo-camera-fab')};
+      content:box('#app .content'),nav:box('#app nav.mobilebar')};
   });
   assert.ok(geometry.valid,JSON.stringify(geometry));
   const g=geometry;
   assert.ok(Math.abs(g.slot.top-g.p.bannerTop)<=2,JSON.stringify(g));
   assert.ok(g.slot.bottom<=g.nav.top-1,'Native banner lane must end before bottom nav');
-  assert.ok(g.content.bottom<=g.fab.top-3,'Scroll viewport ends BEFORE FAB');
-  assert.ok(g.fab.bottom<=g.slot.top-4,'FAB must end BEFORE native banner lane');
+  assert.ok(g.content.bottom<=g.slot.top-3,'Scroll viewport must end before reserved native banner lane');
   if(width===393)await page.screenshot({path:out+'/393x852-native-lane-SAMPLE-NO-GOOGLE-AD.png'});
   await page.evaluate(()=>{
    document.body.classList.remove('rivo-native-android','rivo-ad-reserved');
@@ -57,7 +55,7 @@ try{
   // Independently navigate the actual app surfaces.
   await page.locator('[data-open-library]:visible').first().click();
   await page.locator('#library-list').waitFor();
-  assert.ok(await page.locator('#app button.rivo-camera-fab').count()===1);
+  assert.equal(await page.locator('#app button.rivo-camera-fab').count(),0);
   if(width===393)await page.screenshot({path:out+'/393x852-documents-SAMPLE.png'});
   await page.locator('[data-tab="tools"]:visible').first().click();
   await page.locator('.rivo-tools-hub').waitFor();
@@ -90,22 +88,23 @@ try{
   assert.ok(await page.locator('.rivo-code-overlay .rivo-workspace-bottom button').isVisible());
   if(width===393)await page.screenshot({path:out+'/393x852-formula-empty-SAMPLE.png'});
   await page.evaluate(()=>document.querySelector('.rivo-code-overlay')?.remove());
-  // Distinct modal states share the same controller: do not start a real camera.
+  // All scanner overlays must preserve the one real camera button in the nav;
+  // no second floating camera is allowed, even after opening an editor.
   for(const name of ['rivo-code-overlay','rivo-plate-overlay','rivo-id-overlay']){
    await page.evaluate(name=>{
      const e=document.createElement('div');e.className=name;e.id='qa-overlay';
      e.style.cssText='position:fixed;inset:0;background:#fff;z-index:1000';
      document.body.append(e);
    },name);
-   await page.waitForFunction(()=>document.querySelector('#app .rivo-camera-fab')?.hidden===true);
+   assert.equal(await page.locator('#app button.rivo-camera-fab').count(),0);
+   assert.equal(await page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]').count(),1);
    await page.evaluate(()=>document.querySelector('#qa-overlay')?.remove());
-   await page.waitForFunction(()=>document.querySelector('#app .rivo-camera-fab')?.hidden===false);
   }
-  results.push({width,cameraGlyph:'photo_camera',nativeBannerLane:'GEOMETRY ONLY',
+  results.push({width,primaryCamera:'photo_camera',duplicateFloatingCamera:false,nativeBannerLane:'GEOMETRY ONLY',
     home:true,documents:true,tools:true,formulaSave:true,
     qrBarcodePlate:'MODAL VISIBILITY ONLY',nativeAdImpression:'NOT TESTED'});
   await context.close();
  }
  writeFileSync(out+'/rivo-04590-layout-qa.json',JSON.stringify(results,null,2)+'\n');
- console.log('RivoScan 0.45.90 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
+ console.log('RivoScan 0.45.91 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
 }finally{await browser.close()}
