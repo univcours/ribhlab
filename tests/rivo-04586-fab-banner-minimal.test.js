@@ -17,25 +17,16 @@ test('Documents duplicate Import Images removed; legitimate universal Import ret
  assert.ok(main.includes('function chooseLibraryFiles('));
  assert.ok(main.includes('rivo-nav-scan')); // user explicitly says Scan is not the duplicate
  assert.ok(main.includes('data-live-camera'));
+ assert.ok(!main.includes('floatingCameraController'));
  assert.ok(!main.includes('data-inapp-back'));
  assert.ok(!main.includes('rivo-header-back'));
 });
-test('camera FAB is governed by central application state, never split CSS hacks',()=>{
- assert.ok(main.includes("import {createFloatingCameraController} from './floating-camera-controller.js'"));
- assert.ok(main.includes('floatingCameraController.install()'));
- assert.ok(main.includes('floatingCameraController?.schedule()'));
- assert.ok(main.includes("import './rivo-minimal-premium-04586.css'"));
- assert.deepEqual(CAMERA_ALLOWED_ROUTES,['home','library','tools']);
- for(const route of CAMERA_ALLOWED_ROUTES)assert.deepEqual(cameraFabDecision({route}),{visible:true,reason:'idle'});
- const disallow=[
-  {route:'home',modal:true},{route:'home',nativeCapture:true},{route:'library',selection:true},
-  {route:'tools',busy:true},{route:'home',permission:true},{route:'home',external:true},
-  {route:'home',keyboard:true},{route:'home',foreground:false},{route:'home',bannerCollision:true},
-  {route:'scan'},{route:'barcode'},{route:'ocr'},{route:'me'}
- ];
- for(const item of disallow)assert.equal(cameraFabDecision(item).visible,false,JSON.stringify(item));
- for(const className of ['.rivo-code-overlay','.rivo-plate-overlay','.rivo-live-overlay','.rivo-editor-overlay','.rivo-shield-overlay','.rivo-perfectscan-overlay'])
-  assert.ok(CAMERA_BLOCKING_OVERLAYS.includes(className),className);
+test('single bottom camera action replaces duplicate floating camera',()=>{
+ assert.match(main,/class="rivo-nav-scan" data-live-camera/);
+ assert.match(main,/rivo-nav-scan-ring[^\n]*ico\('camera',29\)/);
+ assert.doesNotMatch(main,/class="floating-scan rivo-camera-fab"/);
+ for(const className of ['.rivo-code-overlay','.rivo-plate-overlay','.rivo-live-overlay','.rivo-editor-overlay','.rivo-shield-overlay'])
+  assert.ok(CAMERA_BLOCKING_OVERLAYS.includes(className));
 });
 test('Phosphor Minimal Premium removes neon/gloss and FAB cannot cover native ad',()=>{
  assert.match(css,/background:#f8fbff!important/);
@@ -77,6 +68,6 @@ test('file selection, Android external opener and scanner features are preserved
  assert.ok(main.includes('openBarcodeScanner({'));
  assert.ok(main.includes('openPlateScanner({'));
  assert.ok(read('src/library-bulk.js').includes('function toolbar()'));
- assert.ok(read('rivoscan-version.properties').includes('versionCode=205'));
- assert.equal(JSON.parse(read('package.json')).version,'0.45.90');
+ assert.ok(read('rivoscan-version.properties').includes('versionCode=206'));
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.91');
 });

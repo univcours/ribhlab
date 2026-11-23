@@ -5,7 +5,6 @@ import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {materialSymbol} from './material-symbols.js';
 import {installMaterialAutoIcons} from './material3-auto-icons.js';
-import {createFloatingCameraController} from './floating-camera-controller.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -339,7 +338,6 @@ const uiText={
  it:{home:'Home',documents:'Documenti',tools:'Strumenti',me:'Profilo',search:'Cerca documenti',recent:'Documenti recenti',seeAll:'Vedi tutti',quick:'Strumenti rapidi',safe:'Salvati sul telefono',scan:'Scansiona',pdf:'Strumenti PDF',import:'Importa file',merge:'Unisci documenti',welcome:'Scansiona. Trova. Condividi.',myFiles:'I miei file',settings:'Impostazioni',device:'Documents/RivoScan',privacy:'I documenti rimangono sul telefono',noAccount:'Nessun account richiesto',general:'Generale',language:'Lingua',about:'Informazioni',help:'Aiuto',storage:'Memoria',openDocuments:'Apri documenti',allFiles:'Tutti',pdfFiles:'PDF',images:'Immagini',sort:'Ordina',newest:'Recenti',oldest:'Meno recenti',name:'Nome',size:'Dimensione',list:'Elenco',grid:'Griglia',noRecent:'Le tue scansioni appariranno qui.'}
 };
 const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
-const cameraFabText=()=>({en:'Open camera',ar:'فتح الكاميرا',fr:'Ouvrir la caméra',es:'Abrir cámara',de:'Kamera öffnen',pt:'Abrir câmara',it:'Apri fotocamera'})[language]||'Open camera';
 const tn=t=>toolText(language,t.id,'name');
 const td=t=>toolText(language,t.id,'desc');
 const lt=key=>L(language,key);
@@ -351,7 +349,6 @@ const hv=key=>(homeVisualText[language]||homeVisualText.en)[key]||key;
 let homeSearchQuery='';
 let homeExpandedUri=null;
 const app = document.getElementById('app');
-let floatingCameraController=null;
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fname = (name) => String(name).replace(/\.[^.]+$/,'').replace(/[^\w\- .]/g,'_').slice(0,60) || 'document';
@@ -401,14 +398,13 @@ function render(){
   const mobile = `<nav class="mobilebar rivo-nav-five" style="display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important" aria-label="Main navigation">
     <button type="button" data-go="home" class="${isHome?'active':''}"><span class="rivo-nav-icon">${ico('home')}</span>${ut('home')}</button>
     <button type="button" data-open-library class="${isDocs?'active':''}"><span class="rivo-nav-icon">${ico('folder')}</span>${ut('documents')}</button>
-    <button type="button" class="rivo-nav-scan" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}"><span class="rivo-nav-scan-ring">${ico('scan',27)}</span><span class="rivo-nav-scan-label">${ut('scan')}</span></button>
+    <button type="button" class="rivo-nav-scan" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}"><span class="rivo-nav-scan-ring">${ico('camera',29)}</span><span class="rivo-nav-scan-label">${ut('scan')}</span></button>
     <button type="button" data-tab="tools" class="${isTools?'active':''}"><span class="rivo-nav-icon">${ico('grid')}</span>${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}"><span class="rivo-nav-icon">${ico('user')}</span>${ut('me')}</button></nav>`;
-  const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${cameraFabText()}" title="${cameraFabText()}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
-  floatingCameraController?.schedule();
+  
   observeDocumentThumbnails();
   refreshBannerPosition();
   refreshToolHelp();
@@ -1096,7 +1092,7 @@ function pickHubFile(accept,cb){
  document.body.appendChild(input);input.click();
 }
 async function captureMlkitDocumentPhoto(){
- nativeCaptureDepth++;floatingCameraController?.schedule();
+ nativeCaptureDepth++;
  try{
   if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     const scan=await DocumentScanner.scanDocument({galleryImportAllowed:false,
@@ -1109,7 +1105,7 @@ async function captureMlkitDocumentPhoto(){
   const photo=await Camera.getPhoto({quality:92,allowEditing:false,
     resultType:CameraResultType.Uri,source:CameraSource.Camera});
   return photo.webPath||photo.path;
- }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
+ }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 async function openHubAction(id){
  const spec=hubSpecial[id];
@@ -1278,12 +1274,8 @@ function addSelectedFiles(picked){
 
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
-// One central camera FAB controller. Bottom Scan nav is NOT a duplicate to remove.
-floatingCameraController=createFloatingCameraController({getState:()=>({
- route:activeTool?.id||'home',selection:bulkUI.mode(),busy,
- nativeCapture:nativeCaptureDepth>0,external:document.visibilityState==='hidden'
-})});
-floatingCameraController.install();
+// Single primary camera action lives in bottom navigation; no duplicate floating FAB.
+
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
   if(COMPACT_BUILD){
     toast(language==='ar'?'يستخدم الإصدار الخفيف Google Scanner: اختر الصورة من المعرض':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
@@ -1300,7 +1292,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
     await openSmartScanner({mode,allowNativeFallback:false});
     return;
   }
-  nativeCaptureDepth++;floatingCameraController?.schedule();
+  nativeCaptureDepth++;
   try{
     const prefs=readScanPrefs(localStorage);
     const useAutoCapture=typeof autoCapture==='boolean'?autoCapture:prefs.autoCapture;
@@ -1315,7 +1307,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
       console.error('Rivo live scanner:',err);
       toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
     }
-  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
+  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 async function editUploadedScanPhotos(selected){
   if(COMPACT_BUILD){
@@ -1443,7 +1435,7 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Google Document Scanner requires Android with Google Play services.',true);return;
   }
-  nativeCaptureDepth++;floatingCameraController?.schedule();
+  nativeCaptureDepth++;
   localStorage.setItem(MLKIT_MODE_KEY,mode);
   try{
     const result=await DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit));
@@ -1456,7 +1448,7 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
     toast('Google scanner could not open: '+message,true);
   }finally{
     localStorage.removeItem(MLKIT_MODE_KEY);
-    nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();
+    nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);
   }
 }
 CapacitorApp.addListener('appRestoredResult',async event=>{
@@ -1473,7 +1465,7 @@ async function openCamera(){
   if(COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     await openSmartScanner();return;
   }
-  if(Capacitor.isNativePlatform())nativeCaptureDepth++;floatingCameraController?.schedule();
+  if(Capacitor.isNativePlatform())nativeCaptureDepth++;
   try{
     if(Capacitor.isNativePlatform()){
       // Even basic capture is assembled into a single public PDF; source JPEGs stay temporary.
@@ -1497,7 +1489,7 @@ async function openCamera(){
     el.onchange=()=>{const f=el.files?.[0];if(f)addSelectedFiles([f])};
     el.click();
   }catch(err){if(!/cancel|SCAN_CANCELLED/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
-  finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
+  finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
 }
 function toast(text,error=false,compact=false){
  document.querySelector('.toast')?.remove();
@@ -1522,9 +1514,9 @@ function saveToast(text='Saved ✓'){
 function shortSavedLabel(){
  return ({ar:'تم حفظ الملف ✓',fr:'Enregistré ✓',es:'Guardado ✓',de:'Gespeichert ✓',pt:'Guardado ✓',it:'Salvato ✓'})[language]||'Saved ✓';
 }
-function showBusy(message='Processing document…'){busy=true;floatingCameraController?.schedule();const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
+function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
 function progress(message){const el=document.getElementById('busytext');if(el)el.textContent=translateStatus(language,message)}
-function clearBusy(){busy=false;document.querySelector('.busy')?.remove();floatingCameraController?.schedule()}
+function clearBusy(){busy=false;document.querySelector('.busy')?.remove();}
 function setting(name){return document.querySelector(`[name="${name}"]`)?.value?.trim()||''}
 function requireFiles(min=1){if(files.length<min)throw Error(`Select at least ${min} file${min===1?'':'s'} first.`)}
 const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());

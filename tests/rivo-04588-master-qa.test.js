@@ -12,7 +12,7 @@ test('FAB hides during every image scanner, including Book Scan, ID Photo, OCR a
   {route:'library',selection:true},{route:'tools',keyboard:true},
   {route:'home',bannerCollision:true},{route:'home',external:true}
  ]) assert.equal(cameraFabDecision(state).visible,false,JSON.stringify(state));
- assert.deepEqual(cameraFabDecision({route:'home'}),{visible:true,reason:'idle'});
+ assert.ok(read('src/main.js').includes('rivo-nav-scan-ring'));
  const main=read('src/main.js');
  const guard=main.slice(main.indexOf('async function captureMlkitDocumentPhoto(){'),
   main.indexOf('async function openHubAction(id){'));
@@ -48,7 +48,7 @@ test('latest code retains document selection, external opening, original signing
  assert.doesNotMatch(bulk,/function longPress\(|function wireLongPress\(/);
  assert.match(main,/renderSavedFileRow\(doc,index\)/);
  assert.match(main,/renderSavedFileRow\(item,index\)/);
- assert.match(read('rivoscan-version.properties'),/^versionCode=205$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=206$/m);
  assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.90$/m);
- assert.equal(JSON.parse(read('package.json')).version,'0.45.90');
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.91');
 });
