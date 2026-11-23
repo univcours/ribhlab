@@ -46,6 +46,8 @@ try{
     return {
       rowBox:{left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height},
       thumbBox:{left:t.left,right:t.right,top:t.top,bottom:t.bottom,height:t.height},
+      bounds:{row:[r.left,r.top,r.right,r.bottom],thumbnail:[t.left,t.top,t.right,t.bottom],rowHeight:r.height},
+      style:{rowMinHeight:getComputedStyle(row).minHeight,rowPadding:getComputedStyle(row).padding,rowTransform:getComputedStyle(row).transform,thumbTransform:getComputedStyle(row.querySelector('.rivo-file-thumb')).transform},
       rowWithinScreen:r.left>=-pad&&r.right<=innerWidth+pad,
       thumbWithinRow:t.left>=r.left-pad&&t.right<=r.right+pad&&t.top>=r.top-pad&&t.bottom<=r.bottom+pad,
       imageWithinThumb:img.left>=t.left-pad&&img.right<=t.right+pad&&img.top>=t.top-pad&&img.bottom<=t.bottom+pad,
