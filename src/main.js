@@ -80,6 +80,7 @@ import './rivo-list-04578.css';
 import './rivo-thumbnail-restore-04580.css';
 // Exact 0.45.44 My Documents flex rows; thumbnail stays current size and clipped.
 import './rivo-mydocs-04544-layout-04580.css';
+import './rivo-phosphor-unified-04581.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -507,6 +508,23 @@ function edgeAdjustLabel(){
  es:'Ajustar bordes',de:'Kanten korrigieren',pt:'Ajustar limites',
  it:'Regola bordi'})[language]||'Readjust edges';
 }
+// Home and My Documents MUST render the same file, thumbnail, checkbox and actions.
+function renderSavedFileRow(item,index){
+ const single=bulkUI.chosen(item)&&bulkUI.count()===1;
+  const file=visualFileType(item);
+  return `<article class="document-entry recent-entry rivo-recent-card ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+   ${bulkUI.checkbox(item,index)}
+   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
+   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
+   ${single?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="${bulkUI.t('menuActions')}">
+    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
+    ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
+    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
+    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
+    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
+   </div>`:''} </article>`;
+}
 function recentDocuments(limit=12,query=homeSearchQuery){
  const needle=String(query||'').trim().toLocaleLowerCase();
  const matched=libraryItems.map((doc,index)=>({doc,index}))
@@ -519,23 +537,7 @@ function recentDocuments(limit=12,query=homeSearchQuery){
   return `<div class="recent-empty rivo-onboarding">${ico('folder',28)} <span>${message}</span>
    <button type="button" class="rivo-empty-scan" data-empty-scan>${ico('scan',19)} ${escapeHTML(scanLabel)}</button></div>`;
  }
- return matched.map(({doc,index})=>{
-  const file=visualFileType(doc),chosen=bulkUI.chosen(doc),single=chosen&&bulkUI.count()===1;
-  return `<article class="recent-entry rivo-recent-card ${chosen?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${chosen}" aria-label="${hv('view')} ${escapeHTML(doc.name)}">
-   <input type="checkbox" class="doc-select-box rivo-recent-check" data-doc-select="${index}" aria-label="${hv('select')} ${escapeHTML(doc.name)}" ${chosen?'checked':''}>
-   <span class="recent-file-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(doc.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span><span class="rivo-file-kind-badge">${escapeHTML(file.code)}</span></span>
-   <div class="recent-file-meta"><strong title="${escapeHTML(doc.name)}">${escapeHTML(doc.name)}</strong><small>${documentMeta(doc)}</small></div>
-   ${single?`<div class="rivo-file-quick-actions">
-    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
-    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
-    ${edgeAdjustableDocument(doc)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
-    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
-    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
-    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''}
-   <span class="rivo-list-open-glyph" aria-hidden="true">${ico('eye',18)}</span>
-  </article>`;
- }).join('');
+ return matched.map(({doc,index})=>renderSavedFileRow(doc,index)).join('');
 }
 const RIVO_FEATURE_TEXT={
  en:{hero:'Scan smarter, keep it private.',subtitle:'Four powerful tools. One clean workspace.',auto:'Smart AutoCapture',autoSub:'Stable paper · automatic photo',qr:'QR / Barcode UltraScan',qrSub:'One camera · auto-detect',plates:'Plate Scanner',plateSub:'Live license-plate reading',privacy:'Privacy Shield',privacySub:'Permanently hide sensitive data',short:'Quick actions'},
@@ -708,22 +710,7 @@ function renderLibraryRows(needle=''){
  if(libraryLoading)return `<div class="doc-empty">${lt('loading')}</div>`;
  if(libraryError)return `<div class="doc-empty doc-error">${escapeHTML(libraryError)}</div>`;
  if(!matched.length)return `<div class="doc-empty">${ico('file',24)} ${dl('empty')}</div>`;
- return matched.map(({item,index})=>{
-  const single=bulkUI.chosen(item)&&bulkUI.count()===1;
-  const file=visualFileType(item);
-  return `<article class="document-entry ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
-   ${bulkUI.checkbox(item,index)}
-   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
-   <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
-   ${single?`<div class="document-buttons rivo-file-quick-actions">
-    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
-    ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
-    ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
-    <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
-    <button type="button" data-doc-rename="${index}" title="${lt('rename')}" aria-label="${lt('rename')}">${ico('pencil',17)}</button>
-    <button type="button" data-doc-delete="${index}" title="${dl('remove')}" aria-label="${dl('remove')}">${ico('trash',17)}</button>
-   </div>`:''} </article>`;
- }).join('');
+ return matched.map(({item,index})=>renderSavedFileRow(item,index)).join('');
 }
 function libraryWorkspace(){
   return `<section class="workspace library-workspace">
