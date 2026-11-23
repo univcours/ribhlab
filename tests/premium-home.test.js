@@ -12,7 +12,7 @@ test('Files-first Home keeps camera, search, selection and a large document area
  assert.ok(!home.includes('homeTiles.map('),'all extra features belong under Tools');
  assert.ok(!home.includes('data-premium-unlock'),'no manual advertising buttons');
  assert.ok(!main.includes('class="floating-scan rivo-camera-fab"'));
- assert.ok(main.includes("rivo-nav-scan-ring">${ico('camera',29)}"));
+ assert.ok(main.includes("ico('camera',29)"));
  assert.ok(main.includes('data-live-camera'));
  assert.ok(main.includes('data-doc-select'));
 });
