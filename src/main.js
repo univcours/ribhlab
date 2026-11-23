@@ -1085,6 +1085,8 @@ function pickHubFile(accept,cb){
  document.body.appendChild(input);input.click();
 }
 async function captureMlkitDocumentPhoto(){
+ nativeCaptureDepth++;floatingCameraController?.schedule();
+ try{
   if(Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     const scan=await DocumentScanner.scanDocument({galleryImportAllowed:false,
       pageLimit:1,resultFormats:'JPEG',scannerMode:'FULL'});
@@ -1096,6 +1098,7 @@ async function captureMlkitDocumentPhoto(){
   const photo=await Camera.getPhoto({quality:92,allowEditing:false,
     resultType:CameraResultType.Uri,source:CameraSource.Camera});
   return photo.webPath||photo.path;
+ }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
 }
 async function openHubAction(id){
  const spec=hubSpecial[id];
