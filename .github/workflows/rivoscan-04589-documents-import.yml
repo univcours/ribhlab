@@ -31,7 +31,7 @@ jobs:
       - name: Validate version and real AdMob configuration
         run: |
           set -euo pipefail
-          grep -Fx 'versionCode=203' rivoscan-version.properties
+          grep -Fx 'versionCode=204' rivoscan-version.properties
           grep -Fx 'versionName=0.45.89' rivoscan-version.properties
           node scripts/prepare-rivoscan-admob-release.mjs --check-only
       - name: Install and run source checks
@@ -113,7 +113,7 @@ jobs:
           for ABI in universal arm64-v8a armeabi-v7a x86 x86_64; do
             APK="$OUTPUT/app-$ABI-release.apk"
             test -s "$APK"
-            "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='203' versionName='0.45.89'"
+            "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.rivoscan' versionCode='204' versionName='0.45.89'"
             "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -E 'android:screenOrientation.*0x1([[:space:]]|$)'
             "$APKSIGNER" verify --verbose "$APK"
             "$APKSIGNER" verify --print-certs "$APK" | grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e'
