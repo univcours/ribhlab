@@ -7,7 +7,7 @@ test('audited tester release increments Android version and keeps original banne
  const meta=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
  assert.equal(pkg.version,'0.45.84');
  assert.match(meta,/^versionCode=199$/m);assert.match(meta,/^versionName=0\.45\.84$/m);
- assert.match(flow,/branches: \[fix\/rivoscan-04582-abi-light-preserve-features\]/);
+ assert.match(flow,/branches: \[fix\/rivoscan-04584-phosphor-all-icons\]/);
  assert.match(flow,/versionCode='199' versionName='0\.45\.84'/);
  assert.match(flow,/4841809191/);
  assert.doesNotMatch(flow,/4841819191/);
