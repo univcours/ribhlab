@@ -57,8 +57,8 @@ test('Deliberate pull down closes modals; normal scroll, quick taps and sideways
  const input={closest:selector=>selector.includes('button,a,input')?{}:null};
  assert.equal(canStartModalSwipe(input),false);
 });
-test('Android version metadata matches 0.45.91 (206)',()=>{
- assert.match(read('rivoscan-version.properties'),/^versionCode=206$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.91$/m);
- assert.equal(JSON.parse(read('package.json')).version,'0.45.91');
+test('Android version metadata matches 0.45.92 (206)',()=>{
+ assert.match(read('rivoscan-version.properties'),/^versionCode=207$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.92$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.92');
 });
