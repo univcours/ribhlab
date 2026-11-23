@@ -3,11 +3,13 @@
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {phosphorIcon} from '../src/phosphor-icons.js';
 const url=process.env.RIVO_URL||'http://127.0.0.1:4173';
 const out=process.env.RIVO_QA_DIR||'/tmp/rivo-04581-qa';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const findings=[];
+const officialActionIcons=['eye','shield','share','pencil','trash'].map(name=>phosphorIcon(name,18));
 try{
  for(const width of [320,393]){
   const ctx=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,locale:'en-US'});
@@ -22,19 +24,18 @@ try{
     await page.locator('#library-list').waitFor({timeout:12000});
    }
    const selector=surface==='home'?'#home-recents':'#library-list';
-   await page.evaluate(selector=>{
+   await page.evaluate(({selector,actionIcons})=>{
     const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="160"><rect x="0" y="0" width="120" height="160" rx="3" fill="#fcfdff" stroke="#a7bdd0"/><text x="9" y="26" font-size="11" font-family="sans-serif" fill="#174467">SAMPLE PDF</text><path stroke="#afbed0" d="M10 43h98 M10 56h93 M10 69h98 M10 82h88 M10 95h93 M10 108h92 M10 121h98"/></svg>';
     const thumb='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
-    const eye='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
     document.querySelector(selector).innerHTML=['SAMPLE – First Scan.pdf','SAMPLE – Selected File.pdf'].map((name,i)=>`
      <article class="document-entry recent-entry rivo-recent-card ${i?'doc-selected':''}" data-doc-open="${i}" role="button" tabindex="0">
       <input type="checkbox" class="doc-select-box" aria-label="Select sample" ${i?'checked':''}/>
       <span class="document-icon rivo-file-thumb rivo-file-pdf"><img src="${thumb}" alt=""/></span>
       <div class="document-description"><strong title="${name}">${name}</strong><small>PDF · 4.4 MB · SAMPLE</small></div>
-      ${i?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="Actions">${Array.from({length:5},(_,n)=>`<button type="button" title="Action ${n+1}" aria-label="Action ${n+1}">${eye}</button>`).join('')}</div>`:''}
+      ${i?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="Actions">${Array.from({length:5},(_,n)=>`<button type="button" title="Action ${n+1}" aria-label="Action ${n+1}">${actionIcons[n]}</button>`).join('')}</div>`:''}
      </article>`).join('');
     document.querySelector(selector).scrollIntoView({block:'center'});
-   },selector);
+   },{selector,actionIcons:officialActionIcons});
    await page.waitForTimeout(120);
    const values=await page.evaluate(selector=>[...document.querySelectorAll(selector+'>.document-entry')].map(row=>{
     const r=row.getBoundingClientRect(),t=row.querySelector('.rivo-file-thumb').getBoundingClientRect();
