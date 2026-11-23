@@ -44,10 +44,13 @@ try{
     const choice=cameraFabDecision({route:'home',bannerCollision:overlaps});
     return {overlaps,visibility:choice.visible,margin,ad,position:{left:f.left,right:f.right,top:f.top,bottom:f.bottom}};
   });
-  assert.ok(bannerPolicy.overlaps,'Test rectangle must overlap actual FAB at '+width+'px');
-  assert.equal(bannerPolicy.visibility,false,'Native ad collision decision must suppress FAB at '+width+'px');
+  // On wide screens the FAB may already be outside the centred native 320dp
+  // banner. Never suppress a safe action merely to make a test pass.
+  assert.equal(bannerPolicy.visibility,!bannerPolicy.overlaps,
+    'FAB visibility must be the exact inverse of overlap with native banner at '+width+'px');
   report.push({width,idle:true,idModalHidden:true,restored:true,
-    nativeBannerCollisionPolicy:'PASS_GEOMETRY_ONLY',adDelivery:'NOT TESTED ON BROWSER'});
+    nativeBannerCollisionPolicy:bannerPolicy.overlaps?'SUPPRESS_ON_COLLISION':'KEEP_WHEN_SEPARATE',
+    adDelivery:'NOT TESTED ON BROWSER'});
 
   await context.close();
  }
