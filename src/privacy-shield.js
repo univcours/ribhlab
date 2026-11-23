@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import * as pdfjs from 'pdfjs-dist';
 import {PDFDocument} from 'pdf-lib';
 import {normalizeRedaction,redactCanvas} from './privacy-shield-core.js';
@@ -33,15 +33,15 @@ export async function openPrivacyShield({doc=null,bridge=null,language='en',onSa
  const root=document.createElement('div');root.className='rivo-shield-overlay';
  root.dir=language==='ar'?'rtl':'ltr';
  root.innerHTML='<section class="rivo-shield-dialog" role="dialog" aria-modal="true">'+
- '<header class="rivo-shield-head"><div><strong>'+t.title+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-shield="close" aria-label="'+t.close+'">'+phosphorIcon('close',19)+'</button></header>'+
- '<div class="rivo-shield-toolbar"><button type="button" data-shield="pick">'+phosphorIcon('file',17)+' '+t.pick+'</button>'+
- '<button type="button" data-shield="undo" disabled>'+phosphorIcon('undo',17)+' '+t.undo+'</button>'+
+ '<header class="rivo-shield-head"><div><strong>'+t.title+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-shield="close" aria-label="'+t.close+'">'+materialSymbol('close',19)+'</button></header>'+
+ '<div class="rivo-shield-toolbar"><button type="button" data-shield="pick">'+materialSymbol('file',17)+' '+t.pick+'</button>'+
+ '<button type="button" data-shield="undo" disabled>'+materialSymbol('undo',17)+' '+t.undo+'</button>'+
  '<button type="button" data-shield="clear" disabled>'+t.clear+'</button></div>'+
  '<input type="file" accept=".pdf,application/pdf,image/*" class="rivo-shield-file" hidden>'+
  '<p class="rivo-shield-hint">'+t.hint+'</p>'+
  '<div class="rivo-shield-stage"><canvas aria-label="'+t.hint+'"></canvas><div class="rivo-shield-empty">'+t.pending+'</div></div>'+
- '<div class="rivo-shield-pages"><button type="button" data-shield="prev" disabled>'+phosphorIcon('previous',17)+' '+t.previous+'</button><span role="status" data-shield-status></span><button type="button" data-shield="next" disabled>'+phosphorIcon('next',17)+' '+t.next+'</button></div>'+
- '<p class="rivo-shield-note">'+t.access+'</p><button class="rivo-shield-save" type="button" data-shield="save" disabled>'+phosphorIcon('save',17)+' '+t.save+'</button></section>';
+ '<div class="rivo-shield-pages"><button type="button" data-shield="prev" disabled>'+materialSymbol('previous',17)+' '+t.previous+'</button><span role="status" data-shield-status></span><button type="button" data-shield="next" disabled>'+materialSymbol('next',17)+' '+t.next+'</button></div>'+
+ '<p class="rivo-shield-note">'+t.access+'</p><button class="rivo-shield-save" type="button" data-shield="save" disabled>'+materialSymbol('save',17)+' '+t.save+'</button></section>';
  document.body.append(root);
  const canvas=root.querySelector('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
  const stage=root.querySelector('.rivo-shield-stage'),empty=root.querySelector('.rivo-shield-empty');
