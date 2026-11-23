@@ -38,6 +38,13 @@ function overlap(a,b){
  if(!a||!b||a.width<=0||a.height<=0||b.width<=0||b.height<=0)return false;
  return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
 }
+// AdMob's Banner is a NATIVE Android view, not the blue WebView placeholder.
+// Check the exact 320x50 dp rectangle based on the margin used by monetization.
+export function nativeBannerBounds({viewportWidth,viewportHeight,margin,width=320,height=50}={}){
+ const w=Number(viewportWidth),h=Number(viewportHeight),m=Number(margin);
+ if(![w,h,m].every(Number.isFinite)||w<=0||h<=0||m<0)return null;
+ return {left:(w-width)/2,top:h-m-height,right:(w+width)/2,bottom:h-m,width,height};
+}
 export function createFloatingCameraController({getState}={}){
  if(typeof getState!=='function')throw new TypeError('Floating camera requires application state');
  let observer=null,scheduled=false,disposed=false,lastReason='';
@@ -55,8 +62,14 @@ export function createFloatingCameraController({getState}={}){
   if(button.hidden===prelim.visible)button.hidden=!prelim.visible;
   let collision=false;
   if(prelim.visible&&document.body.classList.contains('rivo-has-ad-banner')){
-   const ad=document.querySelector('#app .rivo-ad-banner-slot');
-   if(ad&&elementIsVisible(ad))collision=overlap(button.getBoundingClientRect(),ad.getBoundingClientRect());
+   const rootStyle=getComputedStyle(document.documentElement);
+   const margin=parseFloat(rootStyle.getPropertyValue('--rivo-banner-bottom'));
+   const nativeAd=nativeBannerBounds({
+     viewportWidth:document.documentElement.clientWidth,
+     viewportHeight:window.innerHeight,margin
+   });
+   if(nativeAd)collision=overlap(button.getBoundingClientRect(),nativeAd);
+   else collision=true; // fail closed if the native banner geometry is unknown
   }
   const next=cameraFabDecision({...app,modal,keyboard,foreground,bannerCollision:collision});
   if(button.hidden===next.visible)button.hidden=!next.visible;
