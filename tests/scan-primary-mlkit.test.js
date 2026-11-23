@@ -11,7 +11,7 @@ test('All primary Android Scan buttons launch Google ML Kit FULL with built-in c
  assert.ok(main.includes("if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android') await openSmartScanner()"));
  assert.ok(main.includes("if(spec.type==='scan'){await openSmartScanner();return}"));
  assert.ok(main.includes("if(spec.type==='idcard'){await openSmartScanner({mode:'ID Card',pageLimit:2});return}"));
- assert.ok(main.includes("onRetake:()=>openSmartScanner()"));
+ assert.ok(main.includes("onRetake:openCamera"));
 });
 test('Google cancellation never saves; no automatic CameraX fallback',()=>{
  const main=get('src/main.js');
