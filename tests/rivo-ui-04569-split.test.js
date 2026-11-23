@@ -36,9 +36,9 @@ test('Home and Documents row grows around complete 66px file preview and type la
  assert.match(css,/\.rivo-file-thumb>\.rivo-file-type-icon\{/);
  const main=read('src/main.js');
  assert.match(main,/import '\.\/rivo-ui-04569\.css';/);
- // 0.45.44 My Documents hides the badge while Home retains its typed file badge.
- assert.equal(main.split('class="rivo-file-kind-badge"').length-1,1);
- const myDocs=main.slice(main.indexOf('function renderLibraryRows('),main.indexOf('function libraryWorkspace('));
+ // Both Home and My Documents share a badge-free real PDF/photo thumbnail row.
+ assert.equal(main.split('class="rivo-file-kind-badge"').length-1,0);
+ const myDocs=main.slice(main.indexOf('function renderSavedFileRow('),main.indexOf('function recentDocuments('));
  assert.doesNotMatch(myDocs,/rivo-file-kind-badge/);
  assert.match(myDocs,/data-thumb-uri=/);
 });
