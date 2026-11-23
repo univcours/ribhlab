@@ -1,5 +1,21 @@
 # RivoScan — Persistent project handoff
 
+## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.88 (2026-11-23)
+
+**This section supersedes the older 0.45.86 / 0.45.87 branch-status references below. Do not read those historical statuses as current.**
+
+- Active source branch: `fix/rivoscan-04588-master-qa-camera-banner`; verified commit `6e5be687977e84283585a12c0565a98f8a9686d6`; app `0.45.88`, versionCode `203`.
+- CI: https://github.com/univcours/ribhlab/actions/runs/45267424630 . Verified successful in this run: npm source checks and tests, browser UI QA at 320/360/393/480/768, signed Android APK assembly, ABI feature-parity check, APK version/original-signer verification, signed AAB assembly and verification. **Inspect run conclusion again**: native emulator screenshot job was still in progress at this checkpoint.
+- Verified GitHub **pre-release** (NOT Google Play): https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.88-master-audit-camera-banner . Three signed tester APKs (ARM64, ARM32 and Universal) plus an all-ABI signed AAB exist as release assets; exact artifact names/sizes are on that release.
+- Earlier failed CI jobs were blocked by Maven Central HTTP 429; the 0.45.88 branch adds a Google-hosted Maven Central mirror and Gradle caching, and the above run passed the actual Android signing, APK and AAB stages.
+- Latest UI directive is **Material 3 Expressive + self-hosted Material Symbols Rounded**, not older Phosphor. Preserve original `com.ribhlab.rivoscan`, signer, document thumbnails, ML Kit and all PDF/editor features.
+- Correct user-specific UI requirements: remove only duplicate **Import Images** in Documents; preserve generic Import, Scan entry in bottom nav, and central camera FAB, which must hide during QR/barcode/active scanner/permissions/dialogs/selection/processing.
+- **Open QA, do not falsely mark done:** Android emulator screenshots/interactions must be reviewed; actual Android physical-device AdMob banner display/impression/consent and UI-safe inset are NOT verified; exhaustive feature-by-feature device regression and accessibility/RTL remain pending. Browser SAMPLE screenshots are not physical Android proof.
+- Next concrete action: read latest Actions conclusion and signed Release, inspect authentic emulator screenshot artifacts/logcat, test real AdMob on a test device if available, fix any discovered failures on a new versioned branch, and update this checkpoint. No Google Play publishing without explicit request.
+
+---
+
+
 > READ THIS FILE AT THE START OF EVERY NEW CHAT. The full user-approved master specification is [RIVOSCAN_MASTER_SPEC.md](./RIVOSCAN_MASTER_SPEC.md) (419 original user-provided lines; preserved verbatim). Check GitHub branch, CI and Releases again before acting. This document is a checkpoint, not evidence that any test passed.
 
 > **LATEST USER OVERRIDE (2026-11-23): Use Material 3 Expressive with Material Symbols Rounded, NOT Phosphor. Read [RIVOSCAN_DESIGN_OVERRIDE.md](./RIVOSCAN_DESIGN_OVERRIDE.md) BEFORE applying the older spec. Current development branch is `fix/rivoscan-04587-material3-expressive-rounded`, planned app `0.45.87` / versionCode `202`. Verify GitHub Actions and signed Release assets before claiming readiness.**
