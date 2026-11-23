@@ -2,6 +2,7 @@ import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { tt, toolTitle } from './i18n-extra.js';
 import { createViewerZoom } from './viewer-zoom.js';
+import {phosphorIcon} from './phosphor-icons.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc=pdfWorkerUrl;
 const pdfType=(doc)=>/pdf/i.test(doc.mimeType||'')||/\.pdf$/i.test(doc.name||'');
@@ -10,6 +11,17 @@ function button(label,cls,fn){
   const el=document.createElement('button');
   el.type='button';el.className=cls;el.textContent=label;
   el.addEventListener('click',fn);return el;
+}
+function iconButton(icon,label,cls,fn,{iconOnly=false}={}){
+ const el=button('',cls,fn);
+ el.innerHTML=phosphorIcon(icon,19);
+ if(!iconOnly&&label){
+  const caption=document.createElement('span');
+  caption.className='doc-button-label';caption.textContent=label;el.appendChild(caption);
+ }
+ el.setAttribute('aria-label',label||icon);
+ el.setAttribute('title',label||icon);
+ return el;
 }
 function tag(tagName,cls,content){
   const node=document.createElement(tagName);
@@ -73,7 +85,8 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
   };
   const placeholder=(label)=>{
     if(!content)return;
-    content.replaceChildren(tag('div','doc-blank-symbol','▤'),tag('p','doc-blank-caption',label));
+    const glyph=tag('div','doc-blank-symbol');glyph.innerHTML=phosphorIcon('file',36);
+     content.replaceChildren(glyph,tag('p','doc-blank-caption',label));
   };
   const highlightThumbnail=()=>{
     const strip=root?.querySelector('.doc-page-thumbnails');
@@ -126,7 +139,8 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       });
       thumb.dataset.page=String(i);
       thumb.setAttribute('aria-label',word('page')+' '+i);
-      thumb.appendChild(tag('span','doc-thumb-sheet','▤'));
+      const emptySheet=tag('span','doc-thumb-sheet');emptySheet.innerHTML=phosphorIcon('file',18);
+       thumb.appendChild(emptySheet);
       thumb.appendChild(tag('small','doc-thumb-number',String(i)));
       fragment.appendChild(thumb);
     }
@@ -249,6 +263,18 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     chooser.appendChild(grid);
     root.querySelector('.doc-detail-actions').after(chooser);
   };
+  const externalOpen=async()=>{if(!current)return;
+   try{
+    if(typeof bridge?.openFile!=='function')throw Error('Opening in another app requires the installed Android version.');
+    await bridge.openFile({uri:current.uri});
+   }catch(error){feedback(error)}
+  };
+  const printExternal=async()=>{if(!current)return;
+   try{
+    if(typeof bridge?.printFile!=='function')throw Error('Printing requires the installed Android version.');
+    await bridge.printFile({uri:current.uri});
+   }catch(error){feedback(error)}
+  };
   const open=async(doc)=>{
     close();
     current={...doc};
@@ -256,12 +282,16 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
     root.setAttribute('aria-label',word('preview'));
     const header=tag('header','doc-viewer-header');
-    header.appendChild(button('‹','doc-viewer-back',close));
+    header.appendChild(iconButton('back',word('back')||'Back','doc-viewer-back',close,{iconOnly:true}));
     const title=tag('div','doc-viewer-title',current.name);header.appendChild(title);
-    header.appendChild(button('⋯','doc-viewer-menu',()=>{
-      if(imageType(current))edit();
-      else root.querySelector('.doc-detail-actions').scrollIntoView({block:'end',behavior:'smooth'});
-    }));
+    const moreButton=iconButton('more','More document options','doc-viewer-menu',()=>{
+      const panel=root?.querySelector('.doc-viewer-menu-panel');
+      if(!panel)return;
+      panel.hidden=!panel.hidden;moreButton.setAttribute('aria-expanded',String(!panel.hidden));
+    },{iconOnly:true});
+    moreButton.setAttribute('aria-haspopup','menu');
+    moreButton.setAttribute('aria-expanded','false');
+    header.appendChild(moreButton);
     root.appendChild(header);
     root.appendChild(tag('p','doc-viewer-subtitle',word('storage')+' · '+Math.round((doc.size||0)/1024)+' KB'));
     const body=tag('div','doc-detail-preview');
@@ -269,22 +299,20 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     const zoomControls=tag('div','doc-zoom-actions');
     zoomControls.setAttribute('role','toolbar');
     zoomControls.setAttribute('aria-label','Document zoom and navigation');
-    const zoomButton=(text,cls,label,handler)=>{
-      const b=button(text,cls,handler);b.setAttribute('aria-label',label);return b;
-    };
-    zoomControls.appendChild(zoomButton('−','doc-zoom-out','Zoom out',()=>zoom?.zoomOut()));
+    const zoomButton=(icon,cls,label,handler)=>iconButton(icon,label,cls,handler,{iconOnly:true});
+    zoomControls.appendChild(zoomButton('minus','doc-zoom-out','Zoom out',()=>zoom?.zoomOut()));
     zoomControls.appendChild(tag('span','doc-zoom-label','100%'));
-    zoomControls.appendChild(zoomButton('+','doc-zoom-in','Zoom in',()=>zoom?.zoomIn()));
-    zoomControls.appendChild(zoomButton('⤢','doc-zoom-reset','Fit to screen',()=>zoom?.reset()));
+    zoomControls.appendChild(zoomButton('plus','doc-zoom-in','Zoom in',()=>zoom?.zoomIn()));
+    zoomControls.appendChild(zoomButton('maximize','doc-zoom-reset','Fit to screen',()=>zoom?.reset()));
     if(imageType(current)){
-      zoomControls.appendChild(zoomButton('‹','doc-image-previous','Previous image',()=>navigateImage(-1)));
-      zoomControls.appendChild(zoomButton('›','doc-image-next','Next image',()=>navigateImage(1)));
+      zoomControls.appendChild(zoomButton('back','doc-image-previous','Previous image',()=>navigateImage(-1)));
+      zoomControls.appendChild(zoomButton('back','doc-image-next','Next image',()=>navigateImage(1)));
     }
     body.appendChild(zoomControls);
     const pages=tag('div','doc-page-navigation');pages.hidden=true;
-    pages.appendChild(button('‹','doc-page-previous',()=>{page--;showPage();}));
+    pages.appendChild(iconButton('back','Previous page','doc-page-previous',()=>{page--;showPage();},{iconOnly:true}));
     pages.appendChild(tag('span','doc-page-label',''));
-    pages.appendChild(button('›','doc-page-next',()=>{page++;showPage();}));
+    pages.appendChild(iconButton('back','Next page','doc-page-next',()=>{page++;showPage();},{iconOnly:true}));
     body.appendChild(pages);
     const thumbnails=tag('div','doc-page-thumbnails');
     thumbnails.hidden=true;thumbnails.setAttribute('role','navigation');
@@ -293,33 +321,49 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     const actionRow=tag('div','doc-detail-actions');
     actionRow.setAttribute('role','toolbar');
     actionRow.setAttribute('aria-label','Document actions');
-    actionRow.appendChild(button('⊞ '+(({ar:'مسح جديد',fr:'Nouveau scan',en:'New Scan',es:'Nuevo escaneo',de:'Neuer Scan',pt:'Nova digitalização',it:'Nuova scansione'})[lang()]||'New Scan'),'doc-action doc-action-scan',()=>{
+    actionRow.appendChild(iconButton('scan',(({ar:'مسح جديد',fr:'Nouveau scan',en:'New Scan',es:'Nuevo escaneo',de:'Neuer Scan',pt:'Nova digitalização',it:'Nuova scansione'})[lang()]||'New Scan'),'doc-action doc-action-scan',()=>{
       close();void onAddScan();
     }));
     const convertTool=pdfType(current)?'pdftoimages':imageType(current)?'images':null;
     if(convertTool){
-      actionRow.appendChild(button('⇄ '+(({ar:'تحويل',fr:'Convertir',en:'Convert',es:'Convertir',de:'Konvertieren',pt:'Converter',it:'Converti'})[lang()]||'Convert'),'doc-action doc-action-convert',async()=>{
+      actionRow.appendChild(iconButton('convert',(({ar:'تحويل',fr:'Convertir',en:'Convert',es:'Convertir',de:'Konvertieren',pt:'Converter',it:'Converti'})[lang()]||'Convert'),'doc-action doc-action-convert',async()=>{
         if(!bytes){feedback(word('tooLarge'));return;}
         const selected={...current},copy=bytes.slice();
         close();try{await onEdit(convertTool,selected,copy);}catch(error){feedback(error);}
       }));
     }
-    actionRow.appendChild(button('✎ '+word('edit'),'doc-action doc-edit',imageType(current)?async()=>{
+    actionRow.appendChild(iconButton('pencil',word('edit'),'doc-action doc-edit',imageType(current)?async()=>{
       if(!bytes){feedback(word('tooLarge'));return;}
       const selected={...current},copy=bytes.slice();close();
       try{await onEdit('enhance',selected,copy);}catch(error){feedback(error)}
     }:edit));
-    actionRow.appendChild(button('↗ '+word('share'),'doc-action',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
-    actionRow.appendChild(button('⌫ '+word('delete'),'doc-action doc-action-danger',async()=>{
+    actionRow.appendChild(iconButton('share',word('share'),'doc-action doc-action-share',async()=>{try{if(onShare)await onShare(current);else await bridge.shareFile({uri:current.uri});}catch(e){feedback(e);}}));
+    actionRow.appendChild(iconButton('trash',word('delete'),'doc-action doc-action-danger',async()=>{
       if(!window.confirm(word('confirm')))return;
       try{
         await bridge.deleteFile({uri:current.uri});
         close();await onChanged();
       }catch(e){feedback(e);}
     }));
-    actionRow.appendChild(button('▤ '+word('rename'),'doc-action',rename));
+    actionRow.appendChild(iconButton('pencil',word('rename'),'doc-action',rename));
     root.appendChild(actionRow);
-    root.appendChild(button('↗ '+word('external'),'doc-external-open',async()=>{try{await bridge.openFile({uri:current.uri});}catch(e){feedback(e);}}));
+    // Fully functional More menu. Each item invokes the same real operation
+    // as the visible toolbar or the Android ACTION_VIEW document chooser.
+    const menu=tag('div','doc-viewer-menu-panel');menu.hidden=true;menu.setAttribute('role','menu');
+    const menuItem=(icon,label,fn)=>{
+      const b=iconButton(icon,label,'doc-viewer-menu-choice',()=>{
+        menu.hidden=true;moreButton.setAttribute('aria-expanded','false');void fn();
+      });
+      b.setAttribute('role','menuitem');menu.appendChild(b);
+    };
+    menuItem('external',word('external'),externalOpen);
+    menuItem('share',word('share'),()=>actionRow.querySelector('.doc-action-share')?.click());
+    menuItem('pencil',word('rename'),rename);
+    menuItem('pencil',word('edit'),edit);
+    menuItem('printer',({ar:'طباعة',fr:'Imprimer',en:'Print',es:'Imprimir',de:'Drucken',pt:'Imprimir',it:'Stampa'})[lang()]||'Print',printExternal);
+    menuItem('trash',word('delete'),()=>actionRow.querySelector('.doc-action-danger')?.click());
+    header.after(menu);
+    root.appendChild(iconButton('external',word('external'),'doc-external-open',externalOpen));
     document.body.appendChild(root);
     document.body.classList.add('document-sheet-active');
     window.addEventListener('keydown',onKeyDown);
