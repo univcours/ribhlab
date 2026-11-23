@@ -42,8 +42,8 @@ test('AdMob still uses original 320x50 native view; no content-overlay replaceme
  assert.match(native,/AD_WIDTH=320,AD_HEIGHT=50/);
  assert.match(ui,/rivo-banner-frame-height,63px/);
 });
-test('Release version 0.45.89 versionCode 204',()=>{
- assert.match(read('rivoscan-version.properties'),/^versionCode=204$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.89$/m);
- assert.equal(JSON.parse(read('package.json')).version,'0.45.89');
+test('Release version 0.45.90 versionCode 205',()=>{
+ assert.match(read('rivoscan-version.properties'),/^versionCode=205$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.90$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.90');
 });
