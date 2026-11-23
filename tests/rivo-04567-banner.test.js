@@ -6,8 +6,10 @@ test('Native banner is paused for fullscreen dialogs but never by ordinary savin
  const ads=get('src/monetization.js');
  const fn=ads.match(/function bannerObstructed\(\)\{([\s\S]*?)\n\}/)?.[1];
  assert.ok(fn,'banner visibility policy exists');
- assert.match(fn,/return false;/);
- assert.doesNotMatch(fn,/state\.busy|document\.activeElement|querySelectorAll/);
+ assert.match(fn,/querySelectorAll/);
+ assert.match(fn,/rivo-code-overlay/);
+ assert.match(fn,/rivo-id-overlay/);
+ assert.doesNotMatch(fn,/state\.busy|document\.activeElement/);
  assert.ok(ads.includes('pauseBannerForFullscreen()'),'full-screen ads explicitly pause banner');
  assert.ok(ads.includes('restoreBannerAfterFullscreen()'),'full-screen ads restore banner');
 });
