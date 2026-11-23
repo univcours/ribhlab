@@ -4,6 +4,7 @@ import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {phosphorIcon} from './phosphor-icons.js';
 import {installPhosphorAutoIcons} from './phosphor-auto-icons.js';
+import {createFloatingCameraController} from './floating-camera-controller.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -87,6 +88,7 @@ import './rivo-selection-04544-04583.css';
 import './rivo-phosphor-global-04584.css';
 // Final selection layout: all external-open, edit and document icons fit without clipping.
 import './rivo-file-actions-unclipped-04585.css';
+import './rivo-minimal-premium-04586.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -335,6 +337,7 @@ const hv=key=>(homeVisualText[language]||homeVisualText.en)[key]||key;
 let homeSearchQuery='';
 let homeExpandedUri=null;
 const app = document.getElementById('app');
+let floatingCameraController=null;
 const tr = (key) => translations[language]?.[key] || translations.en[key] || key;
 const escapeHTML = (s) => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fname = (name) => String(name).replace(/\.[^.]+$/,'').replace(/[^\w\- .]/g,'_').slice(0,60) || 'document';
@@ -391,6 +394,7 @@ function render(){
   app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
+  floatingCameraController?.schedule();
   observeDocumentThumbnails();
   refreshBannerPosition();
   refreshToolHelp();
@@ -1247,6 +1251,12 @@ function addSelectedFiles(picked){
 
 /** Android native: live green edge outline and manual four-corner editor. */
 let nativeCaptureDepth=0;
+// One central camera FAB controller. Bottom Scan nav is NOT a duplicate to remove.
+floatingCameraController=createFloatingCameraController({getState:()=>({
+ route:activeTool?.id||'home',selection:bulkUI.mode(),busy,
+ nativeCapture:nativeCaptureDepth>0,external:document.visibilityState==='hidden'
+})});
+floatingCameraController.install();
 async function openLiveScanner({gallery=false,imageUri=null,mode='Document',autoCapture=null}={}){
   if(COMPACT_BUILD){
     toast(language==='ar'?'يستخدم الإصدار الخفيف Google Scanner: اختر الصورة من المعرض':language==='fr'?'La version compacte utilise Google Scanner : choisissez la photo dans la galerie':'Compact uses Google Scanner; select the photo in its gallery.');
@@ -1263,7 +1273,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
     await openSmartScanner({mode,allowNativeFallback:false});
     return;
   }
-  nativeCaptureDepth++;
+  nativeCaptureDepth++;floatingCameraController?.schedule();
   try{
     const prefs=readScanPrefs(localStorage);
     const useAutoCapture=typeof autoCapture==='boolean'?autoCapture:prefs.autoCapture;
@@ -1278,7 +1288,7 @@ async function openLiveScanner({gallery=false,imageUri=null,mode='Document',auto
       console.error('Rivo live scanner:',err);
       toast('Live scanner could not open: '+(err?.message||'Check camera permission, sync and rebuild Android.'),true);
     }
-  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
+  }finally{nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
 }
 async function editUploadedScanPhotos(selected){
   if(COMPACT_BUILD){
@@ -1406,7 +1416,7 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
   if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
     toast('Google Document Scanner requires Android with Google Play services.',true);return;
   }
-  nativeCaptureDepth++;
+  nativeCaptureDepth++;floatingCameraController?.schedule();
   localStorage.setItem(MLKIT_MODE_KEY,mode);
   try{
     const result=await DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit));
@@ -1419,7 +1429,7 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
     toast('Google scanner could not open: '+message,true);
   }finally{
     localStorage.removeItem(MLKIT_MODE_KEY);
-    nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);
+    nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();
   }
 }
 CapacitorApp.addListener('appRestoredResult',async event=>{
@@ -1436,7 +1446,7 @@ async function openCamera(){
   if(COMPACT_BUILD&&Capacitor.isNativePlatform()&&Capacitor.getPlatform()==='android'){
     await openSmartScanner();return;
   }
-  if(Capacitor.isNativePlatform())nativeCaptureDepth++;
+  if(Capacitor.isNativePlatform())nativeCaptureDepth++;floatingCameraController?.schedule();
   try{
     if(Capacitor.isNativePlatform()){
       // Even basic capture is assembled into a single public PDF; source JPEGs stay temporary.
@@ -1460,7 +1470,7 @@ async function openCamera(){
     el.onchange=()=>{const f=el.files?.[0];if(f)addSelectedFiles([f])};
     el.click();
   }catch(err){if(!/cancel|SCAN_CANCELLED/i.test(String(err)))toast('Could not open camera: '+err.message,true)}
-  finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);}
+  finally{if(Capacitor.isNativePlatform())nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);floatingCameraController?.schedule();}
 }
 function toast(text,error=false,compact=false){
  document.querySelector('.toast')?.remove();
@@ -1485,9 +1495,9 @@ function saveToast(text='Saved ✓'){
 function shortSavedLabel(){
  return ({ar:'تم حفظ الملف ✓',fr:'Enregistré ✓',es:'Guardado ✓',de:'Gespeichert ✓',pt:'Guardado ✓',it:'Salvato ✓'})[language]||'Saved ✓';
 }
-function showBusy(message='Processing document…'){busy=true;const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
+function showBusy(message='Processing document…'){busy=true;floatingCameraController?.schedule();const el=document.createElement('div');el.className='busy';el.innerHTML=`<div class="busy-inner"><div class="spinner"></div><strong id="busytext">${escapeHTML(translateStatus(language,message))}</strong><p>${translateStatus(language,'Processing locally. Please keep this app open.')}</p></div>`;document.body.appendChild(el)}
 function progress(message){const el=document.getElementById('busytext');if(el)el.textContent=translateStatus(language,message)}
-function clearBusy(){busy=false;document.querySelector('.busy')?.remove()}
+function clearBusy(){busy=false;document.querySelector('.busy')?.remove();floatingCameraController?.schedule()}
 function setting(name){return document.querySelector(`[name="${name}"]`)?.value?.trim()||''}
 function requireFiles(min=1){if(files.length<min)throw Error(`Select at least ${min} file${min===1?'':'s'} first.`)}
 const pdfFromFile=async f=>PDFDocument.load(await f.arrayBuffer());
