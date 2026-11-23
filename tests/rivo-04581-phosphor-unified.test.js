@@ -42,10 +42,10 @@ test('no in-app document preview, More, zoom or PDF viewer; external Android ope
  const main=file('src/main.js'),native=file('native/android/RivoDocumentsPlugin.java');
  assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|doc-detail-overlay/);
  assert.match(main,/data-doc-external/);
- assert.match(main,/ico\\('external',17\\)/);
+ assert.match(main,/ico\('external',17\)/);
  assert.match(main,/openSavedDocumentExternally/);
- assert.match(native,/Intent\\.ACTION_VIEW/);
- assert.match(native,/Intent\\.createChooser\\(open/);
+ assert.match(native,/Intent\.ACTION_VIEW/);
+ assert.match(native,/Intent\.createChooser\(open/);
 });
 
 test('Android remains portrait and 0.45.85 has unique version code',()=>{
