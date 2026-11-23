@@ -94,6 +94,8 @@ import './rivo-minimal-premium-04586.css';
 import './rivo-material3-expressive-04587.css';
 // Last: system insets, true camera glyph, native banner lane, safe modal footer.
 import './rivo-android-surface-04590.css';
+// Final file-type fallbacks: large Material symbols; never replace real thumbnails.
+import './rivo-file-icons-04590.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -452,7 +454,7 @@ function observeDocumentThumbnails(){
 }
 function visualFileType(doc){
  const mime=(doc.mimeType||'').toLowerCase(),name=(doc.name||'').toLowerCase();
- if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',symbol:'filelines'};
+ if(/pdf/.test(mime)||name.endsWith('.pdf'))return {code:'PDF',klass:'pdf',symbol:'pdf'};
  if(/^image\//.test(mime)||/\.(jpe?g|png|webp|heic|gif)$/.test(name))return {code:'IMG',klass:'image',symbol:'image'};
  if(/^(?:rs|rivoscan)_qr(?:\s*\(\d+\))?(?:[._-]|$)/.test(name))return {code:'QR',klass:'qr',symbol:'qr'};
  if(/^(?:rs_bar(?:\s*\(\d+\))?(?:[._-]|$)|rivoscan_barcode(?:\s*\(\d+\))?(?:[._-]|$))/.test(name))return {code:'BAR',klass:'barcode',symbol:'barcode'};
@@ -460,7 +462,7 @@ function visualFileType(doc){
  if(/\.(xlsx?|csv|ods)$/.test(name))return {code:'XLS',klass:'xls',symbol:'sheet'};
  if(/\.(docx?|odt|rtf)$/.test(name))return {code:'DOC',klass:'doc',symbol:'filelines'};
  if(/\.(zip|rar|7z)$/.test(name))return {code:'ZIP',klass:'zip',symbol:'archive'};
- if(/\.(txt|md)$/.test(name))return {code:'TXT',klass:'txt',symbol:'filelines'};
+ if(/^(text\/plain|text\/markdown)$/.test(mime)||/\.(txt|md)$/.test(name))return {code:name.endsWith('.md')?'MD':'TXT',klass:'txt',symbol:'filelines'};
  return {code:'FILE',klass:'generic',symbol:'file'};
 }
 function documentMeta(doc){
@@ -487,7 +489,7 @@ function renderSavedFileRow(item,index){
   const file=visualFileType(item);
   return `<article class="document-entry recent-entry rivo-recent-card ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${escapeHTML(externalOpenLabel())} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
-   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
+   <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,38)}</span><span class="rivo-file-extension">${escapeHTML(file.code)}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-external="${index}" title="${escapeHTML(externalOpenLabel())}" aria-label="${escapeHTML(externalOpenLabel())}">${ico('external',17)}</button>

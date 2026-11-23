@@ -1,0 +1,94 @@
+/* RivoScan 0.45.90 — clear, expressive file-type fallbacks.
+   Real PDF/photo page thumbnails are NEVER replaced by generic artwork.
+   These rules only apply before an actual thumbnail is available, or to
+   non-previewable files such as TXT/Word/Excel/ZIP/QR exports. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img)){
+ --rivo-type-ink:#3c618a;--rivo-type-soft:#e7f0fc;--rivo-type-border:#bdcfe3;
+ display:block!important;position:relative!important;isolation:isolate!important;
+ box-sizing:border-box!important;
+ background:linear-gradient(150deg,#ffffff 0%,var(--rivo-type-soft) 96%)!important;
+ border:1.5px solid var(--rivo-type-border)!important;
+ border-radius:10px!important;overflow:hidden!important;
+ color:var(--rivo-type-ink)!important;
+ box-shadow:0 2px 7px rgba(24,67,112,.09)!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-pdf:not(:has(img)){
+ --rivo-type-ink:#c9434a;--rivo-type-soft:#ffe8eb;--rivo-type-border:#f1c5cb;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-txt:not(:has(img)){
+ --rivo-type-ink:#6549b6;--rivo-type-soft:#efebff;--rivo-type-border:#d7caf4;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-doc:not(:has(img)){
+ --rivo-type-ink:#195eae;--rivo-type-soft:#e6f0ff;--rivo-type-border:#b9d2f1;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-xls:not(:has(img)){
+ --rivo-type-ink:#117f55;--rivo-type-soft:#e2f6eb;--rivo-type-border:#b8e5ce;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-zip:not(:has(img)){
+ --rivo-type-ink:#b56c2b;--rivo-type-soft:#fff1dd;--rivo-type-border:#f1d8b7;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-image:not(:has(img)){
+ --rivo-type-ink:#1684b7;--rivo-type-soft:#e3f6ff;--rivo-type-border:#bee3f4;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-qr:not(:has(img)){
+ --rivo-type-ink:#7045b4;--rivo-type-soft:#f1e9ff;--rivo-type-border:#d9c5f2;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-barcode:not(:has(img)){
+ --rivo-type-ink:#977015;--rivo-type-soft:#fff5df;--rivo-type-border:#ead6a4;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb.rivo-file-plate:not(:has(img)){
+ --rivo-type-ink:#235d94;--rivo-type-soft:#e9f3ff;--rivo-type-border:#c4dafa;
+}
+/* Large self-hosted Material Symbols Rounded with weighted, filled glyphs:
+   no 24px minimalist icon lost inside a 58x72 document preview frame. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img)) > .rivo-file-type-icon{
+ position:absolute!important;top:5px!important;bottom:19px!important;left:3px!important;right:3px!important;
+ width:auto!important;height:auto!important;min-height:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ z-index:1!important;line-height:1!important;color:var(--rivo-type-ink)!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img))
+ > .rivo-file-type-icon > .rivo-material-symbol{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:40px!important;height:40px!important;max-width:100%!important;max-height:100%!important;
+ font-size:38px!important;line-height:1!important;white-space:nowrap!important;
+ font-variation-settings:'FILL' 1,'wght' 550,'GRAD' 0,'opsz' 40!important;
+ color:var(--rivo-type-ink)!important;-webkit-text-fill-color:var(--rivo-type-ink)!important;
+ opacity:1!important;transform:none!important;filter:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img)) > .rivo-file-extension{
+ position:absolute!important;left:4px!important;right:4px!important;bottom:4px!important;z-index:2!important;
+ display:block!important;box-sizing:border-box!important;height:16px!important;min-height:16px!important;
+ border-radius:5px!important;background:var(--rivo-type-ink)!important;color:#fff!important;
+ -webkit-text-fill-color:#fff!important;text-align:center!important;
+ font:800 9px/16px system-ui,-apple-system,'Segoe UI',sans-serif!important;
+ letter-spacing:.3px!important;white-space:nowrap!important;overflow:hidden!important;
+ text-overflow:clip!important;box-shadow:0 1px 2px rgba(0,0,0,.08)!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ .rivo-file-thumb:has(img) > :is(.rivo-file-type-icon,.rivo-file-extension){
+ display:none!important;
+}
+/* Small phones keep the complete glyph and format mark, not a clipped glyph. */
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img))
+  > .rivo-file-type-icon > .rivo-material-symbol{
+  width:34px!important;height:34px!important;font-size:33px!important;
+ }
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list) .rivo-file-thumb:not(:has(img)) > .rivo-file-extension{
+  left:3px!important;right:3px!important;bottom:3px!important;font-size:8px!important;
+ }
+}
+/* Short landscape screen: do not allow the fixed nav to strand My Files
+   search below a clipped Home. Its content must have an independent scroller. */
+@media(max-height:430px) and (orientation:landscape){
+ html body #app .shell.rivo-dark-ui .app-home.rivo-home.rivo-compact-home{
+  height:100%!important;max-height:100%!important;min-height:0!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  overscroll-behavior-y:contain!important;scroll-padding-bottom:14px!important;
+ }
+ html body #app .shell.rivo-dark-ui .rivo-home-search-title-row{
+  position:relative!important;flex-shrink:0!important;
+  scroll-margin-bottom:10px!important;
+ }
+}
