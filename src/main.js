@@ -1,9 +1,10 @@
+import '@fontsource-variable/material-symbols-rounded/full.css';
 import './style.css';
 import './theme-brand.css';
 import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
-import {phosphorIcon} from './phosphor-icons.js';
-import {installPhosphorAutoIcons} from './phosphor-auto-icons.js';
+import {materialSymbol} from './material-symbols.js';
+import {installMaterialAutoIcons} from './material3-auto-icons.js';
 import {createFloatingCameraController} from './floating-camera-controller.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
@@ -89,6 +90,8 @@ import './rivo-phosphor-global-04584.css';
 // Final selection layout: all external-open, edit and document icons fit without clipping.
 import './rivo-file-actions-unclipped-04585.css';
 import './rivo-minimal-premium-04586.css';
+// Final expressive palette and self-hosted rounded symbol system.
+import './rivo-material3-expressive-04587.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -107,7 +110,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 installToolHelp();
-installPhosphorAutoIcons();
+installMaterialAutoIcons();
 // The Compact APK keeps Google's document capture and PerfectClean, but
 // deliberately omits experimental 3D/ONNX and the legacy CameraX pipeline.
 const COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1';
@@ -178,7 +181,7 @@ const icons = {
   user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
   more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'
 };
-const ico = (name,size=20) => phosphorIcon(name,size);
+const ico = (name,size=20) => materialSymbol(name,size);
 const tools = [
  {id:'scan',category:'create',icon:'scan',color:'green',name:'Document Scanner',desc:'Capture, AI flatten, correct shadows and wrinkles, review and save PDFs',accept:'image/*',multiple:true},
  {id:'bundle',category:'create',icon:'merge',color:'sky',name:'Combine Documents',desc:'Mix scanned photos and PDF files in a single PDF',accept:'.pdf,application/pdf,image/*',multiple:true},
@@ -592,7 +595,7 @@ function settingsWorkspace(){
    <summary class="rivo-scan-pref-summary"><span class="rivo-pref-summary-icon">${ico('check',18)}</span>
     <span class="rivo-pref-summary-copy"><strong>${scanPrefsText(language).title}</strong>
      <small>${scanPrefsText(language).sub}</small></span>
-    <span class="rivo-pref-summary-chevron" aria-hidden="true">${phosphorIcon('chevron-down',16)}</span></summary>
+    <span class="rivo-pref-summary-chevron" aria-hidden="true">${materialSymbol('chevron-down',16)}</span></summary>
    <div class="rivo-scan-pref-body">
     ${scannerPreferenceRows()}
     <p class="rivo-pref-storage">${scanPrefsText(language).folder}</p>
