@@ -34,8 +34,8 @@ test('saved PDF and image open only via Android external-app chooser',()=>{
  assert.match(native,/FLAG_GRANT_READ_URI_PERMISSION/);
 });
 
-test('new signed tester build 0.45.86 code 197 is monotonic',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.86');
- assert.match(read('rivoscan-version.properties'),/^versionCode=201$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.86$/m);
+test('new signed tester build 0.45.87 code 197 is monotonic',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.87');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=202$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.87$/m);
 });
