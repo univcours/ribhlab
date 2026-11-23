@@ -49,6 +49,6 @@ test('latest code retains document selection, external opening, original signing
  assert.match(main,/renderSavedFileRow\(doc,index\)/);
  assert.match(main,/renderSavedFileRow\(item,index\)/);
  assert.match(read('rivoscan-version.properties'),/^versionCode=206$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.90$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.91$/m);
  assert.equal(JSON.parse(read('package.json')).version,'0.45.91');
 });
