@@ -603,6 +603,16 @@ function settingsWorkspace(){
  <label class="settings-row settings-sounds"><span class="settings-row-icon">${ico('check',22)}</span><span><strong>${soundWord(0)}</strong><small>${soundWord(1)}</small></span><input type="checkbox" id="sound-toggle" role="switch" aria-label="${soundWord(0)}" ${soundsEnabled?'checked':''}></label>
  <div class="rivo-settings-actions"><button type="button" class="settings-row" data-whats-new><span class="settings-row-icon">${ico('sparkle',22)}</span><span><strong>${({ar:'ما الجديد؟',fr:'Nouveautés',es:'Novedades',de:'Was ist neu?',pt:'Novidades',it:'Novità',en:"What's New"})[language]||"What's New"}</strong><small>RivoScan v${appVersion}</small></span></button>
  <button type="button" class="settings-row" data-ad-privacy><span class="settings-row-icon">${ico('shield',20)}</span><span><strong>${({ar:'خيارات الخصوصية',fr:'Choix de confidentialité',en:'Privacy choices'})[language]||'Privacy choices'}</strong></span></button></div>
+ <details class="settings-section rivo-banner-live-diagnostics" aria-label="${escapeHTML(adTitle)}">
+  <summary>${ico('info',18)} ${escapeHTML(adTitle)} · ${escapeHTML(ad.bannerDiagnostics.status)}</summary>
+  <div class="rivo-banner-diagnostic-body">
+   <p>Banner: ${escapeHTML(ad.bannerDiagnostics.status)}</p>
+   <p>${({ar:'الطلبات / التحميل / مرات الظهور',en:'Requests / Loads / impressions',fr:'Demandes / chargements / impressions'})[language]||'Requests / loads / impressions'}: ${ad.adStats.bannerRequests} / ${ad.adStats.bannerLoads} / ${ad.adStats.bannerImpressions}</p>
+   ${ad.bannerDiagnostics.layoutReason?'<p>'+escapeHTML(ad.bannerDiagnostics.layoutReason)+'</p>':''}
+   ${ad.bannerDiagnostics.error?'<p class="rivo-ad-error">'+escapeHTML(ad.bannerDiagnostics.error)+'</p>':''}
+   <small>${({ar:'حالة AdMob مبنية على SDK والتخطيط. خاص اختبار فعلي على الهاتف للتأكد من ظهور الإعلان.',fr:'Diagnostic SDK et mise en page ; visibilité à confirmer sur téléphone.',en:'SDK/layout status; physical banner visibility requires device confirmation.'})[language]||'SDK/layout status only.'}</small>
+  </div>
+ </details>
  ${import.meta.env.DEV ? `<div class="settings-section rivo-ad-diagnostics" role="region" aria-label="${escapeHTML(adTitle)}">
   <h2>${escapeHTML(adTitle)}</h2>
   <p role="status">${escapeHTML(adText)} · ${escapeHTML(ad.status)}</p>
