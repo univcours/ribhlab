@@ -4,7 +4,6 @@ import {readFileSync} from 'node:fs';
 const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ui=get('src/rivo-camscanner-static-04576.css');
 const main=get('src/main.js');
-const viewer=get('src/document-viewer.js');
 const id=get('src/id-photo-maker.js');
 
 test('latest user-approved static stylesheet wins over old animated icon layers',()=>{
@@ -38,26 +37,24 @@ test('Files screen imports any file and images with separate functional controls
  assert.match(main,/id="open-storage-folder"/);
  assert.match(ui,/\.library-heading-actions/);
 });
-test('Document preview has selected large page and actual lazy rendered PDF thumbnails',()=>{
- assert.match(viewer,/const renderThumbnails=\(\)=>/);
- assert.match(viewer,/IntersectionObserver/);
- assert.match(viewer,/pdfPage\.render/);
- assert.match(viewer,/dataset\.page/);
- assert.match(viewer,/doc-page-thumbnails/);
- assert.match(viewer,/doc-page-thumb/);
- assert.match(viewer,/highlightThumbnail/);
- assert.match(ui,/\.doc-page-thumb\.active/);
+test('obsolete PDF preview, internal page thumbnail window and eye menus have been removed',()=>{
+ assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|previewSavedDocument/);
+ assert.match(main,/getThumbnail\(\{uri,width:136,height:184\}\)/);
+ assert.match(main,/data-doc-external/);
+ assert.doesNotMatch(main,/ico\('eye',17\)/);
+ const native=get('native/android/RivoDocumentsPlugin.java');
+ assert.match(native,/Intent\.createChooser\(open/);
 });
-test('Document actions invoke working hooks rather than dummy buttons',()=>{
- assert.match(viewer,/onAddScan=\(\)=>\{\}/);
+test('external file opening and original document actions invoke real native hooks',()=>{
+ assert.match(main,/async function openSavedDocumentExternally\(doc\)/);
+ assert.match(main,/return RivoDocuments\.openFile\(\{uri:doc\.uri\}\)/);
  assert.match(main,/onAddScan:\(\)=>openSmartScanner\(\)/);
- assert.match(viewer,/onEdit\(convertTool,selected,copy\)/);
- assert.match(viewer,/onShare\(current\)/);
- assert.match(viewer,/bridge\.deleteFile/);
- assert.match(viewer,/bridge\.renameFile/);
+ for(const action of ['data-doc-share','data-doc-rename','data-doc-delete','data-doc-edges','data-doc-shield'])
+  assert.ok(main.includes(action),'Missing real document action '+action);
 });
-test('Signed release is monotonic 0.45.84 code 192',()=>{
- assert.equal(JSON.parse(get('package.json')).version,'0.45.84');
- assert.match(get('rivoscan-version.properties'),/^versionCode=199$/m);
- assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.84$/m);
+
+test('Signed release is monotonic 0.45.85 code 192',()=>{
+ assert.equal(JSON.parse(get('package.json')).version,'0.45.85');
+ assert.match(get('rivoscan-version.properties'),/^versionCode=200$/m);
+ assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.85$/m);
 });
