@@ -24,7 +24,6 @@ import {mlkitFullOptions,persistMlKitPdf,mlkitAutoCleanMode} from './mlkit-scan-
 import {initialLanguage,deviceLanguage,savedLanguagePreference,isAutoLanguage} from './locale-auto.js';
 import { initPeerTransfer } from './file-transfer.js';
 import { toolText, label as L, localizeOptions } from './rivo-i18n.js';
-import { createDocumentViewer } from './document-viewer.js';
 import { createLibraryBulk } from './library-bulk.js';
 import { openScanEditor } from './scan-editor.js';
 import {openEdgeAdjustment,edgeAdjustableDocument} from './edge-adjustment.js';
@@ -267,60 +266,12 @@ let previewURLs = [];
 let closeTransfer = null;
 let libraryItems = [], libraryLoading = false, libraryError = '';
 const recentPublishedDocuments=createRecentlySavedDocuments();
-const docViewerUI=createDocumentViewer({
-  bridge:RivoDocuments,
-  getLanguage:()=>language,
-  onChanged:async()=>{
-    await loadLibrary(false);
-    if(activeTool?.id==='library')refreshVisibleLibrary();
-    else if(!activeTool){
-      const home=document.getElementById('home-recents');
-      if(home)home.innerHTML=recentDocuments();
-    }
-  },
-  onEdit:async(tool,doc,bytes)=>{
-    if(tool==='managePages'&&(/\.pdf$/i.test(doc.name)||/pdf/.test(doc.mimeType||''))){
-      if(!bytes)throw Error('PDF too large for page editor');
-      await openPageManager({file:new File([bytes],doc.name,{type:'application/pdf'}),
-       getLanguage:()=>language,onSave:saveOut,onDone:async()=>{await loadLibrary(false);openLibrary()},
-       onError:message=>toast(message,true)});return;
-    }
-    if(tool==='enhance'&&/^image\//.test(doc.mimeType||'')){
-      await openScanEditor({
-        doc,bridge:RivoDocuments,getLanguage:()=>language,
-        onSave:saveOut,onCrop:d=>openLiveScanner({imageUri:d.uri}),
-        onRetake:()=>openSmartScanner(),
-        // The one native scanner has its own filters, including neural correction.
-        preset:'crease',
-        onRefresh:async()=>{
-          await loadLibrary(false);
-          if(activeTool?.id==='library')refreshVisibleLibrary();
-          else{const rows=document.getElementById('home-recents');if(rows)rows.innerHTML=recentDocuments();}
-        },
-        notify:toast
-      });
-      return;
-    }
-    if(tool==='scan'&&/^image\//.test(doc.mimeType||'')){
-      await openLiveScanner({imageUri:doc.uri});return;
-    }
-    if(!bytes)throw new Error(lt('error'));
-    openTool(tool);
-    files=[new File([bytes],doc.name,{type:doc.mimeType||'application/pdf'})];
-    scanRotations=[0];updateFileDisplay();
-  },
-  onError:message=>toast(message,true),
-  getImageItems:()=>libraryItems.filter(item=>/^image\//i.test(item.mimeType||'')||/\.(jpg|jpeg|png|webp)$/i.test(item.name||'')),
-  onShare:doc=>bulkUI.share([doc]),
-  onAddScan:()=>openSmartScanner()
-});
 const bulkUI=createLibraryBulk({
   bridge:RivoDocuments,getLanguage:()=>language,getItems:()=>libraryItems,
   onRefresh:async()=>{
     await loadLibrary(false);refreshVisibleLibrary();
     const recents=document.getElementById('home-recents');if(recents)recents.innerHTML=recentDocuments();
   },
-  onPreview:doc=>previewSavedDocument(doc),
   onDirectTransfer:async docs=>{
     openTool('peerTransfer');
     const chooser=document.getElementById('peer-files');
@@ -513,16 +464,21 @@ function edgeAdjustLabel(){
  es:'Ajustar bordes',de:'Kanten korrigieren',pt:'Ajustar limites',
  it:'Regola bordi'})[language]||'Readjust edges';
 }
+function externalOpenLabel(){
+ return ({ar:'فتح ببرنامج خارجي',en:'Open in another app',fr:'Ouvrir avec une autre application',
+  es:'Abrir en otra aplicación',de:'Mit anderer App öffnen',pt:'Abrir noutra aplicação',
+  it:'Apri con un’altra app'})[language]||'Open in another app';
+}
 // Home and My Documents MUST render the same file, thumbnail, checkbox and actions.
 function renderSavedFileRow(item,index){
  const single=bulkUI.chosen(item)&&bulkUI.count()===1;
   const file=visualFileType(item);
-  return `<article class="document-entry recent-entry rivo-recent-card ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${lt('preview')} ${escapeHTML(item.name)}">
+  return `<article class="document-entry recent-entry rivo-recent-card ${bulkUI.chosen(item)?'doc-selected':''}" data-doc-open="${index}" role="button" tabindex="0" aria-selected="${bulkUI.chosen(item)}" aria-label="${escapeHTML(externalOpenLabel())} ${escapeHTML(item.name)}">
    ${bulkUI.checkbox(item,index)}
    <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
    ${single?`<div class="document-buttons rivo-file-quick-actions">
-    <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
+    <button type="button" data-doc-external="${index}" title="${escapeHTML(externalOpenLabel())}" aria-label="${escapeHTML(externalOpenLabel())}">${ico('external',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
     ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
     <button type="button" data-doc-share="${index}" title="${dl('share')}" aria-label="${dl('share')}">${ico('share',17)}</button>
@@ -800,7 +756,6 @@ async function chooseLibraryFiles(kind='file'){
   input.click();
 }
 function openTab(tab){
-  docViewerUI.close();
   if(tab==='library'){openLibrary();return;}
   bulkUI.clear();
   files=[];scanRotations=[];
@@ -826,7 +781,6 @@ function launchPrivacyShield(doc=null){
   }});
 }
 function openLibrary(){
-  docViewerUI.close();
   activeTool={id:'library',name:dl('documents')};files=[];scanRotations=[];bulkUI.clear();
   window.scrollTo({top:0,behavior:'instant'});render();loadLibrary();
 }
@@ -850,12 +804,13 @@ async function launchReadjustEdges(doc){
   });
  }catch(error){console.error('Readjust document edges:',error);toast(error?.message||'Could not adjust document edges',true)}
 }
-/** Preview saved PDFs and images inside RivoScan; other formats use Android. */
-async function previewSavedDocument(doc){
-  const type=String(doc?.mimeType||'').toLowerCase();
-  const name=String(doc?.name||'');
-  if(type.includes('pdf')||type.startsWith('image/')||/\.(pdf|png|jpe?g|webp)$/i.test(name))
-    return docViewerUI.open(doc);
+/** All saved files open exclusively with another Android app. */
+async function openSavedDocumentExternally(doc){
+  if(!doc?.uri)throw Error('A saved document is required');
+  if(!Capacitor.isNativePlatform()||Capacitor.getPlatform()!=='android'){
+    toast(({en:'Choose an external viewer in the installed Android app.',ar:'فتح الملف ببرنامج خارجي متاح في نسخة أندرويد.',fr:'Ouvrez le fichier sur Android avec une autre application.'})[language]||'External opening requires Android.',true);
+    return;
+  }
   return RivoDocuments.openFile({uri:doc.uri});
 }
 
@@ -866,7 +821,7 @@ async function handleLibraryAction(type,index){
       if(!window.confirm(lt('confirmDelete')))return;
       await RivoDocuments.deleteFile({uri:selected.uri});await loadLibrary();
       toast((({ar:'تم حذف الملف',en:'File deleted',fr:'Fichier supprimé',es:'Archivo eliminado',de:'Datei gelöscht',pt:'Ficheiro eliminado',it:'File eliminato'})[language]||'File deleted')+' ✓');
-    } else if(type==='open')await previewSavedDocument(selected);
+    } else if(type==='open')await openSavedDocumentExternally(selected);
     else if(type==='share')bulkUI.share([selected]);
   }catch(error){console.error(error);toast(error.message||'Could not open document',true)}
 }
@@ -976,7 +931,7 @@ function wire(){
   for(const list of ['library-list','home-recents']){
     const el=document.getElementById(list);
     const activate=e=>{
-      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
+      const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-external],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
       if(e.type==='keydown')e.preventDefault();
@@ -1022,12 +977,16 @@ function wire(){
         return;
       }
       const type=target.hasAttribute('data-doc-share')?'share':target.hasAttribute('data-doc-delete')?'delete':'open';
-      const index=Number(target.getAttribute('data-doc-'+type));
+      const index=Number(type==='open'?(target.dataset.docExternal??target.dataset.docOpen):target.getAttribute('data-doc-'+type));
       if(type==='open'&&bulkUI.mode()&&target.tagName!=='BUTTON'){bulkUI.toggle(libraryItems[index]);if(list==='home-recents')el.innerHTML=recentDocuments(14);else refreshVisibleLibrary();return;}
       handleLibraryAction(type,index);
     };
     el?.addEventListener('click',activate);
     el?.addEventListener('keydown',activate);
+    // No long-press file interaction or native text/image context menu.
+    el?.addEventListener('contextmenu',e=>{
+      if(e.target.closest('.document-entry'))e.preventDefault();
+    });
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>{void openTool(el.dataset.tool)}));
   document.getElementById('tools-query')?.addEventListener('input',event=>{
@@ -1103,7 +1062,7 @@ function wire(){
   document.getElementById('process')?.addEventListener('click',process);
   if(activeTool?.id==='sign')initSignature();
 }
-async function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;if(!(await requestPremium(id)))return;docViewerUI.close();activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
+async function openTool(id){const t=tools.find(item=>item.id===id);if(!t)return;if(!(await requestPremium(id)))return;activeTool=t;files=[];scanRotations=[];window.scrollTo({top:0,behavior:'instant'});render()}
 function pickHubFile(accept,cb){
  const input=document.createElement('input');input.type='file';input.accept=accept;
  input.onchange=()=>{const file=input.files?.[0];input.remove();if(file)Promise.resolve(cb(file)).catch(e=>{console.error(e);toast(e?.message||String(e),true)});};
@@ -1837,9 +1796,7 @@ function navigateRivoBack(){
  if(managed.length){managed.at(-1).querySelector('[data-rivo-modal-close]')?.click();lastBackHandled=now;return true;}
  const sheet=document.querySelector('.bulk-overlay');
  if(sheet){sheet.querySelector('[data-close-sheet]')?.click();lastBackHandled=now;return true;}
- if(document.querySelector('.doc-detail-overlay')){
-  docViewerUI.close();lastBackHandled=now;return true;
- }
+
  if(document.querySelector('.rivo-release-overlay')){
   document.querySelector('.rivo-release-dialog button')?.click();lastBackHandled=now;return true;
  }
