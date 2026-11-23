@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {mountDialogControls} from './modal-shell.js';
 import {Camera,CameraResultType,CameraSource} from '@capacitor/camera';
 import {mountPreviewFirstWorkspace} from './preview-workspace.js';
@@ -198,7 +198,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  const railButton=(rail,icon,label,fn)=>{
   const b=document.createElement('button');b.type='button';b.className='rivo-id-side-action';
   b.title=label;b.setAttribute('aria-label',label);
-  b.innerHTML=phosphorIcon(icon,23);
+  b.innerHTML=materialSymbol(icon,23);
   b.addEventListener('click',fn);rail.append(b);return b;
  };
  // Keep exactly one camera and one Import/Change Photo control together.
