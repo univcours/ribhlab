@@ -3,7 +3,7 @@
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
-import {describeBanner} from './banner-diagnostics.js';
+import {describeBanner,formatBannerError} from './banner-diagnostics.js';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -85,7 +85,7 @@ async function trackNativeAdEvents(){
   for(const [event,handle] of [
    [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;state.onChange()}],
    [InterstitialAdPluginEvents.AdImpression,()=>{adStats.interstitialImpressions++;state.onChange()}],
-   [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=String(e?.message||e||'No fill');state.onChange()}],
+   [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=formatBannerError(e);state.onChange()}],
    [InterstitialAdPluginEvents.FailedToLoad,e=>{adStats.lastInterstitialError=String(e?.message||e||'No fill');state.onChange()}]
   ]) await AdMob.addListener(event,handle);
   impressionListenersAttached=true;
@@ -279,7 +279,7 @@ async function loadBanner(){
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
     state.bannerReady=false;state.bannerHidden=false;
-    state.bannerError=String(error?.message||error||'No fill');
+    state.bannerError=formatBannerError(error);
     setBannerSpace(false);scheduleAdRetry('banner');state.onChange();
    });
    state.bannerListenersAttached=true;
@@ -293,7 +293,7 @@ async function loadBanner(){
   // The reserved viewport is activated ONLY by Loaded, not an empty placeholder.
   return true;
  }catch(error){
-  state.bannerReady=false;state.bannerError=String(error?.message||error);
+  state.bannerReady=false;state.bannerError=formatBannerError(error);
   setBannerSpace(false);status('Banner unavailable',state.bannerError);
   scheduleAdRetry('banner');return false;
  }finally{state.bannerLoading=false;}
