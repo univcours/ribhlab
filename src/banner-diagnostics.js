@@ -6,11 +6,18 @@ export const BANNER_STATUSES=Object.freeze([
  'NOT_INITIALIZED','INITIALIZED','CONSENT_PENDING','REQUESTING','LOADED','DISPLAYED',
  'NO_FILL','NETWORK_ERROR','SDK_ERROR','HIDDEN_BY_LAYOUT','PAUSED'
 ]);
+export function formatBannerError(error){
+ if(!error)return '';
+ if(typeof error==='string')return error;
+ const code=Number(error.code??error.errorCode);
+ const message=String(error.message||error.reason||'Banner request failed');
+ return Number.isInteger(code)&&code>=0?`AdMob code ${code}: ${message}`:message;
+}
 export function classifyBannerError(error){
- const msg=String(error||'');
+ const msg=formatBannerError(error);
  if(!msg)return null;
  if(/no.?fill|no ad to show|code\s*[:=]?\s*3\b|error\s*3\b/i.test(msg))return 'NO_FILL';
- if(/network|connection|offline|timeout|socket|internet/i.test(msg))return 'NETWORK_ERROR';
+ if(/network|connection|offline|timeout|socket|internet|code\s*[:=]?\s*2\b/i.test(msg))return 'NETWORK_ERROR';
  return 'SDK_ERROR';
 }
 export function describeBanner({
