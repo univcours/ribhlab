@@ -31,7 +31,8 @@ test('interface uses light legible cards, vivid zoom ratio, vector book controls
  assert.match(styles,/#fff,#f1f6fd/);
  assert.match(styles,/\.rivo-code-zoom-label/);
  assert.match(styles,/#123e6c/);
- assert.match(book,/tab\.innerHTML='<svg/);
+ assert.match(book,/tab\.innerHTML=phosphorIcon\(/);
+  assert.doesNotMatch(book,/tab\.innerHTML='<svg/);
  assert.doesNotMatch(book,/const icons=\{source:'▧'/);
 });
 test('0.45.84 uses unique monotonic Android code 192 and both ML Kit plugins',()=>{
