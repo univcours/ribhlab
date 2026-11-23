@@ -24,3 +24,10 @@ test('reject unsafe screens and oversized native creative',()=>{
 test('native layout source exists and both content and ad share the measured inset',()=>{
  assert.ok(true);
 });
+
+test('short landscape disables unsafe native 320x50 banner instead of obscuring My Files search',()=>{
+ const value=calculateAdLayout({viewportWidth:640,viewportHeight:360,navTop:274,navBottom:360,headerBottom:70});
+ assert.equal(value.valid,false);
+ assert.match(value.reason,/Landscape/);
+ assert.equal(calculateAdLayout({viewportWidth:393,viewportHeight:852,navTop:756,navBottom:852,headerBottom:70}).valid,true);
+});

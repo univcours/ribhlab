@@ -7,6 +7,9 @@ export function calculateAdLayout({viewportWidth,viewportHeight,navTop=null,navB
  const w=Number(viewportWidth),h=Number(viewportHeight),header=Number(headerBottom);
  if(!Number.isFinite(w)||w<AD_WIDTH||!Number.isFinite(h)||h<230||!Number.isFinite(header)||header<0)
   return {valid:false,reason:'Insufficient viewport'};
+ // A 320x50 native creative plus navigation steals most of a very short
+ // landscape WebView. Prioritize usable scanner/search controls instead.
+ if(w>h&&h<430)return {valid:false,reason:'Landscape too short for native banner'};
  let margin=AD_NAV_GAP,hasNav=false;
  if(navTop!==null&&navBottom!==null){
   const top=Number(navTop),bottom=Number(navBottom);

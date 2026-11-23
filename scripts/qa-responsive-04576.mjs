@@ -26,11 +26,16 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
   await page.locator('.rivo-compact-home').waitFor({timeout:25000});
-  // Emulate only native WebView's reserved-content CSS; not an Android screenshot.
+  // Emulate ONLY Android safe-content geometry, never real Google ad delivery.
+  // The production geometry rejects a 320x50 banner in short landscape,
+  // returning space for Home search and the bottom navigation instead.
   await page.evaluate(()=>{
-    document.body.classList.add('rivo-native-android','rivo-has-ad-banner');
+    const shortLandscape=innerWidth>innerHeight&&innerHeight<430;
+    document.body.classList.add('rivo-native-android');
+    document.body.classList.toggle('rivo-has-ad-banner',!shortLandscape);
+    document.body.classList.toggle('rivo-ad-reserved',!shortLandscape);
     document.documentElement.style.setProperty('--rivo-content-top','70px');
-    document.documentElement.style.setProperty('--rivo-content-bottom','175px');
+    document.documentElement.style.setProperty('--rivo-content-bottom',shortLandscape?'98px':'175px');
     document.documentElement.style.setProperty('--rivo-banner-bottom','104px');
   });
   await page.waitForTimeout(220);
