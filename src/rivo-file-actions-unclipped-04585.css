@@ -1,0 +1,163 @@
+/* RivoScan 0.45.85 — all file actions fully visible, never clipped.
+   Home and My Documents share the SAME card, thumbnail and action layout.
+   Six professional Phosphor buttons occupy a compact 3×2 grid BESIDE the
+   thumbnail (never under the image). No horizontal scrolling, no cropped ends.
+ */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected{
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:nowrap!important;
+ align-items:center!important;
+ justify-content:flex-start!important;
+ gap:clamp(4px,1.3vw,8px)!important;
+ width:100%!important;
+ max-width:100%!important;
+ box-sizing:border-box!important;
+ padding:7px!important;
+ overflow:hidden!important;
+ -webkit-touch-callout:none!important;
+ -webkit-user-select:none!important;
+ user-select:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .document-description{
+ display:flex!important;
+ flex-direction:column!important;
+ flex:1 1 0!important;
+ width:auto!important;
+ min-width:0!important;
+ max-width:none!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .rivo-file-quick-actions{
+ display:grid!important;
+ flex:0 0 100px!important;
+ grid-template-columns:repeat(3,30px)!important;
+ grid-template-rows:repeat(2,31px)!important;
+ grid-auto-flow:row!important;
+ align-content:center!important;
+ align-items:center!important;
+ justify-content:center!important;
+ justify-items:center!important;
+ gap:4px 4px!important;
+ align-self:center!important;
+ box-sizing:border-box!important;
+ position:static!important;
+ width:100px!important;
+ min-width:100px!important;
+ max-width:100px!important;
+ height:66px!important;
+ min-height:66px!important;
+ max-height:66px!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ overflow:visible!important;
+ overflow-x:visible!important;
+ overflow-y:visible!important;
+ touch-action:manipulation!important;
+ scroll-snap-type:none!important;
+ white-space:normal!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .rivo-file-quick-actions > button{
+ display:inline-grid!important;
+ place-items:center!important;
+ flex:none!important;
+ box-sizing:border-box!important;
+ width:30px!important;
+ min-width:30px!important;
+ max-width:30px!important;
+ height:31px!important;
+ min-height:31px!important;
+ max-height:31px!important;
+ padding:5px!important;
+ margin:0!important;
+ border:1px solid #cde0ee!important;
+ border-radius:9px!important;
+ overflow:hidden!important;
+ background:#f4f9ff!important;
+ color:#1764af!important;
+ -webkit-text-fill-color:#1764af!important;
+ touch-action:manipulation!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .rivo-file-quick-actions > button svg,
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .rivo-file-quick-actions > button svg[data-phosphor-icon]{
+ display:block!important;
+ width:19px!important;
+ min-width:19px!important;
+ max-width:19px!important;
+ height:19px!important;
+ min-height:19px!important;
+ max-height:19px!important;
+ margin:0!important;
+ padding:0!important;
+ stroke:none!important;
+ pointer-events:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry.doc-selected > .rivo-file-quick-actions > button[data-doc-delete]{
+ color:#ce4252!important;
+ -webkit-text-fill-color:#ce4252!important;
+ background:#fff3f6!important;
+ border-color:#f2cdd5!important;
+}
+/* On narrow phones the same six buttons fit without cutting the file card. */
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected{
+  gap:4px!important;
+  padding:6px!important;
+ }
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected > .rivo-file-quick-actions{
+  flex:0 0 88px!important;
+  width:88px!important;min-width:88px!important;max-width:88px!important;
+  grid-template-columns:repeat(3,27px)!important;
+  grid-template-rows:repeat(2,30px)!important;
+  gap:3px 3px!important;
+  height:63px!important;min-height:63px!important;max-height:63px!important;
+ }
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected > .rivo-file-quick-actions > button{
+  width:27px!important;min-width:27px!important;max-width:27px!important;
+  height:30px!important;min-height:30px!important;max-height:30px!important;
+  padding:4px!important;
+ }
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected > .rivo-file-quick-actions > button svg,
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected > .rivo-file-quick-actions > button svg[data-phosphor-icon]{
+  width:18px!important;min-width:18px!important;max-width:18px!important;
+  height:18px!important;min-height:18px!important;max-height:18px!important;
+ }
+}
+@media(max-width:299px){
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected{min-height:111px!important}
+ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+  > article.document-entry.doc-selected > .rivo-file-quick-actions{
+  flex:0 0 59px!important;
+  width:59px!important;min-width:59px!important;max-width:59px!important;
+  grid-template-columns:repeat(2,27px)!important;
+  grid-template-rows:repeat(3,29px)!important;
+  gap:3px!important;
+  height:93px!important;min-height:93px!important;max-height:93px!important;
+ }
+}
+/* No press-and-hold file actions: normal single tap and checkbox still work. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry,
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry > .document-description,
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry > .rivo-file-thumb{
+ -webkit-touch-callout:none!important;
+ -webkit-user-select:none!important;
+ user-select:none!important;
+}
