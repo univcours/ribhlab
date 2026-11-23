@@ -1,0 +1,51 @@
+# RivoScan — Persistent project handoff
+
+> READ THIS FILE AT THE START OF EVERY NEW CHAT. The full user-approved master specification is [RIVOSCAN_MASTER_SPEC.md](./RIVOSCAN_MASTER_SPEC.md) (419 original user-provided lines; preserved verbatim). Check GitHub branch, CI and Releases again before acting. This document is a checkpoint, not evidence that any test passed.
+
+## Repository and source of truth
+
+- GitHub: `univcours/ribhlab`. Default branch: `main`, **not** necessarily latest app source.
+- Last verified published signed GitHub tester release: `rivoscan-0.45.85-external-open-unclipped-actions`; version `0.45.85`, code `200`; ARM64, ARM32, Universal APKs and Play-compatible AAB. Released Nov 23, 2026. **Not published on Google Play**.
+- CURRENT development branch: `fix/rivoscan-04586-comprehensive-ui-fab-banner-audit`.
+- Target version: **0.45.86**, versionCode **201**. CI workflow: `.github/workflows/rivoscan-04586-comprehensive-ui-audit.yml`. Signed release tag planned: `rivoscan-0.45.86-minimal-premium-fab-banner`.
+- As of this handoff checkpoint, 0.45.86 is **IN DEVELOPMENT**, not independently verified as successful. Check latest Actions run before reporting a release.
+
+## Most important user clarification (DO NOT MISINTERPRET)
+
+**The duplicate button is `Import Images` in My Documents, NOT Scan. The user explicitly corrected this.** Only remove redundant `data-import-images` from the Documents heading and its duplicate listener; PRESERVE generic `data-import="file"` (any files) and all other legitimate image import routes (Scan gallery and Tools). PRESERVE bottom navigation Scan button `rivo-nav-scan`; do not delete it as a guessed duplicate. The user wants the separate camera FAB floating, with centralized intelligent visibility.
+
+## Current modifications on the 0.45.86 branch (inspect current code)
+
+- `src/main.js`: redundant Documents `Import Images` button and handler removed; generic Import retained; redundant visible header Back removed but Android system Back / edge swipe preserved; preserved Scan navigation; installed `createFloatingCameraController` with app state and native-capture/processing updates; imported final `rivo-minimal-premium-04586.css`. User's 0.45.85 no-eye/external-viewer changes remain.
+- `src/floating-camera-controller.js`: central state-driven FAB decisions for Home/Documents/Tools, QR/barcode/live/plate/editor/dialog overlays, active capture, busy, selection, keyboard, external app/background, and native banner collision. Bottom Scan navigation is deliberately untouched.
+- `src/rivo-minimal-premium-04586.css`: minimal Phosphor Duotone tiles, less neon/glow, restrained RivoScan blue identity, ad-safe FAB positioning and hide behavior. Old CSS still exists but final layer overrides it.
+- `src/banner-diagnostics.js` and `src/monetization.js`: SDK-backed diagnostic states (`NOT_INITIALIZED`, `CONSENT_PENDING`, `REQUESTING`, `DISPLAYED` [SDK expected only], `NO_FILL`, `NETWORK_ERROR`, `SDK_ERROR`, `HIDDEN_BY_LAYOUT`, `PAUSED`); no fake ad inventory. Settings exposes diagnostic status. Banner visibility on a physical device remains UNCONFIRMED.
+- Current release workflow provides original signing key, real AdMob ID configuration, Play-compatible AAB and signed APKs. Do NOT upload to app stores without explicit user request.
+- Tests: `tests/rivo-04586-fab-banner-minimal.test.js`; release-version and removed UI expectations updated in previous test files.
+
+## Features to preserve unconditionally
+
+- ML Kit FULL document scanner, native live scanner where available, ID card, QR/barcode, license plate, OCR, translation, PDF tools, image editing, Privacy Shield, import/export, sharing, print, file management, localization (EN/AR/FR/ES/DE/PT/IT), portrait orientation, original package `com.ribhlab.rivoscan` and original signing certificate.
+- Home and My Documents use the same actual image/PDF thumbnails and file rows, six Phosphor actions fully visible in a compact grid by the thumbnail; remove long-press file menu, keep checkbox multi-select; eye and internal saved-PDF viewer removed, external Android ACTION_VIEW chooser with read URI permissions used instead.
+- ARM64, ARM32 and Universal variants retain feature parity, plus AAB for supported Android architectures. Do not claim support for every device if OS, permissions or Play Services are incompatible.
+
+## Important AdMob warning
+
+Actual real IDs were found in the GitHub signing/build workflow; however **banner disappeared on the user's device and no root cause has yet been proven from Android logs**. A loaded SDK event is not proof of actual physical visibility, and `NO_FILL` is not a CSS bug. Diagnose live on device/emulator, consent, showBanner events, geometry/margin, safe areas, bottom nav, SDK errors, native `SizeChanged`, resume after external apps, and actual impressions; never make synthetic ad views/clicks or assert it is fixed solely from static tests.
+
+## Last known QA state
+
+- Early 0.45.86 Actions run had 19 failed tests, predominantly stale assertions for version 0.45.85 and obsolete Import Images / topbar Back. Tests were reconciled to current 0.45.86 behavior. **The newer run must still finish and be checked.**
+- Existing browser screenshot tests use SAMPLE fixtures; DO NOT confuse with genuine Android emulator/device captures. Native scanner and real AdMob monetization are not fully validated by browser QA.
+- Failures should be fixed at their cause; do not disable tests or weaken feature checks. Mark unresolved device-specific issues honestly.
+
+## Next-chat exact continuation instructions
+
+1. Read this file and `RIVOSCAN_MASTER_SPEC.md` from **main**.
+2. Inspect latest branch `fix/rivoscan-04586-comprehensive-ui-fab-banner-audit`, current version, Actions results, GitHub release assets and screenshots.
+3. Correct all actual failing tests and code regressions, especially FAB visibility on QR/barcode, banner geometry and duplicated controls.
+4. Audit all windows/buttons per 419-line spec, capture real Android emulator/device screenshots where tooling permits. Confirm native AdMob only from actual SDK/logcat/device evidence.
+5. Validate original signer, all ABI packages, no feature loss; publish **GitHub tester release** only after signed tests. Do not publish to Google Play without an explicit new user request.
+6. Update this handoff and `RIVOSCAN_MASTER_CHECKLIST.md` on main after each milestone. Never say a release/test succeeded unless independently verified.
+
+Prompt for a fresh chat: **“كمل RivoScan من آخر نقطة؛ قرا RIVOSCAN_HANDOFF.md وRIVOSCAN_MASTER_SPEC.md وRIVOSCAN_MASTER_CHECKLIST.md من main، وشوف آخر GitHub branch/Actions، وكمل الخدمة بلا ما تعاود البداية.”**
