@@ -17,7 +17,8 @@ test('compact Home and Tools shrink tiles without sacrificing four readable quic
 
 test('real file rows take priority and keep the user documents large enough to read',()=>{
  assert.match(css,/min-height:calc\(100dvh - 350px\)!important/);
- assert.match(css,/height:57px!important;min-height:57px!important;max-height:57px!important/);
+ assert.match(css,/min-height:92px!important;max-height:none!important/);
+ assert.match(css,/height:auto!important;min-height:85px!important;max-height:none!important/);
  assert.match(css,/font-size:13px!important;line-height:1\.2!important/);
  assert.match(css,/height:39px!important/);
 });
