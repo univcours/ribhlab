@@ -1,5 +1,19 @@
 # RivoScan Master Checklist — persistent, evidence-driven
 
+## Signed 0.45.91 single-camera milestone — 2026-11-23
+
+- [x] Single centered `Smart Scan` camera button uses Material Symbols Rounded `photo_camera`; floating duplicate FAB fully removed from render tree.
+- [x] Smart Scan main navigation still calls `openSmartScanner()` on Android; no scanner features deliberately removed.
+- [x] RivoScan 0.45.91 / Android 206 source + responsive browser tests passed; five signed ABI APKs and signed all-supported-ABI AAB verified, original package/signature retained.
+- [x] GitHub tester pre-release: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.91-single-camera ; successful build https://github.com/univcours/ribhlab/actions/runs/45284073142 . **Not a Google Play rollout.**
+- [x] Native Android emulator screenshot of Home shows one centered camera and no duplicate floating camera.
+- [~] Independent real signed-APK QR/Plate/button navigation smoke re-test in workflow `rivoscan-04591-native-qa.yml` — inspect final outcome and actual screenshots, because original named QR/Plate captures actually displayed Home.
+- [ ] Physical device AdMob SDK filled-and-displayed banner/impressions with consent and safe insets verified.
+- [ ] Complete phone camera, barcode/QR, ML Kit OCR, export/PDF, rotation, accessibility and RTL regression.
+
+---
+
+
 ## RivoScan 0.45.90 — signed tester milestone (2026-11-23)
 
 - [x] Modern large file-type icons and extension chips shared by Home and Documents; original PDF/photo thumbnails untouched.
