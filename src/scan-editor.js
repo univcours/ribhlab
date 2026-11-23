@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {recognize} from 'tesseract.js';
 import {inpaintMaskedPixels} from './smart-erase.js';
 import {restorePhotoPixels} from './photo-restore.js';
@@ -32,7 +32,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  const originalContext=original.getContext('2d',{willReadFrequently:true});originalContext.fillStyle='#fff';originalContext.fillRect(0,0,original.width,original.height);originalContext.drawImage(image,0,0,original.width,original.height);
  const shell=document.createElement('div');shell.className='rivo-editor-overlay';shell.dir=getLanguage()==='ar'?'rtl':'ltr';
  shell.innerHTML=`<div class="rivo-editor-window" role="dialog" aria-modal="true" aria-label="${tr(0)}">
-   <header class="rivo-editor-header"><button data-edit="cancel" aria-label="${tr(18)}">${phosphorIcon('close',20)}</button>
+   <header class="rivo-editor-header"><button data-edit="cancel" aria-label="${tr(18)}">${materialSymbol('close',20)}</button>
      <strong title="${String(doc.name).replace(/[&<>"]/g,'')}">${tr(0)}</strong><button class="rivo-editor-retake" data-edit="retake">${tr(1)}</button></header>
    <div class="rivo-editor-picture"><canvas id="rivo-editor-preview" aria-label="${tr(0)}"></canvas>
      <div class="rivo-compare-note">${tr(17)}</div></div>
@@ -48,17 +48,17 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
 <option value="red">Red ink</option><option value="green">Green ink</option>
 <option value="light-gray">Light-gray watermark</option></select></label>
 <small data-erase-help></small>
-<button type="button" data-edit="undoErase">${phosphorIcon('undo',17)} Undo brush</button></div>
+<button type="button" data-edit="undoErase">${materialSymbol('undo',17)} Undo brush</button></div>
    <p class="rivo-editor-tip">${tr(20)}</p>
    <nav class="rivo-editor-actions">
-     ${onPerfectScan?`<button data-edit="perfectScan" class="rivo-editor-perfectscan">${phosphorIcon('magic',17)} PerfectScan · multi-shot</button>` :''}
-     ${onDeepClean?`<button data-edit="deepClean" class="rivo-editor-deep-clean">${phosphorIcon('magic',17)} ${({en:'AI Deep Clean · choose photo',ar:'تنقية متقدمة بالذكاء الاصطناعي · اختر الصورة',fr:'Nettoyage IA · choisir photo',es:'Limpieza IA · elegir foto',de:'KI-Reinigung · Foto wählen',pt:'Limpeza IA · escolher foto',it:'Pulizia IA · scegli foto'})[getLanguage()]||'AI Deep Clean · choose photo'}</button>` :''}
-     <button data-edit="compare">${phosphorIcon('compare',17)} ${tr(9)}</button><button data-edit="left">${phosphorIcon('rotate-left',17)} ${tr(10)}</button>
-     <button data-edit="right">${phosphorIcon('rotate-right',17)} ${tr(11)}</button><button data-edit="crop">${phosphorIcon('crop',17)} ${tr(12)}</button>
-     <button data-edit="ocr">${phosphorIcon('ocr',17)} ${tr(13)}</button>
-     <button data-edit="eraser">${phosphorIcon('eraser',17)} ${({ar:'ممحاة ذكية (تحديد يدوي)',fr:'Gomme intelligente (sélection manuelle)',es:'Borrador inteligente (manual)',de:'Smart-Radierer (manuell)',pt:'Apagador inteligente (manual)',it:'Gomma intelligente (manuale)',en:'Smart Erase (select area)'})[getLanguage()]||'Smart Erase'}</button>
-     <button data-edit="date">${phosphorIcon('date',17)} ${({ar:'تاريخ',fr:'Date',es:'Fecha',de:'Datum',pt:'Data',it:'Data',en:'Date'})[getLanguage()]||'Date'}</button>
-     <button data-edit="save" class="rivo-editor-save">${phosphorIcon('save',17)} ${tr(14)}</button>
+     ${onPerfectScan?`<button data-edit="perfectScan" class="rivo-editor-perfectscan">${materialSymbol('magic',17)} PerfectScan · multi-shot</button>` :''}
+     ${onDeepClean?`<button data-edit="deepClean" class="rivo-editor-deep-clean">${materialSymbol('magic',17)} ${({en:'AI Deep Clean · choose photo',ar:'تنقية متقدمة بالذكاء الاصطناعي · اختر الصورة',fr:'Nettoyage IA · choisir photo',es:'Limpieza IA · elegir foto',de:'KI-Reinigung · Foto wählen',pt:'Limpeza IA · escolher foto',it:'Pulizia IA · scegli foto'})[getLanguage()]||'AI Deep Clean · choose photo'}</button>` :''}
+     <button data-edit="compare">${materialSymbol('compare',17)} ${tr(9)}</button><button data-edit="left">${materialSymbol('rotate-left',17)} ${tr(10)}</button>
+     <button data-edit="right">${materialSymbol('rotate-right',17)} ${tr(11)}</button><button data-edit="crop">${materialSymbol('crop',17)} ${tr(12)}</button>
+     <button data-edit="ocr">${materialSymbol('ocr',17)} ${tr(13)}</button>
+     <button data-edit="eraser">${materialSymbol('eraser',17)} ${({ar:'ممحاة ذكية (تحديد يدوي)',fr:'Gomme intelligente (sélection manuelle)',es:'Borrador inteligente (manual)',de:'Smart-Radierer (manuell)',pt:'Apagador inteligente (manual)',it:'Gomma intelligente (manuale)',en:'Smart Erase (select area)'})[getLanguage()]||'Smart Erase'}</button>
+     <button data-edit="date">${materialSymbol('date',17)} ${({ar:'تاريخ',fr:'Date',es:'Fecha',de:'Datum',pt:'Data',it:'Data',en:'Date'})[getLanguage()]||'Date'}</button>
+     <button data-edit="save" class="rivo-editor-save">${materialSymbol('save',17)} ${tr(14)}</button>
    </nav>
  </div>`;
  // Context-sensitive settings: show only filters, adjustments or tools.
@@ -66,7 +66,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  editorWindow.classList.add('rivo-preview-first-dialog');
  const editorHeader=shell.querySelector('.rivo-editor-header');
  const gear=document.createElement('button');gear.type='button';
- gear.className='rivo-workspace-settings-toggle';gear.innerHTML=phosphorIcon('settings',20);
+ gear.className='rivo-workspace-settings-toggle';gear.innerHTML=materialSymbol('settings',20);
  gear.setAttribute('aria-label',({ar:'إعدادات التعديل',fr:'Réglages',en:'Edit settings'})[getLanguage()]||'Settings');
  gear.setAttribute('aria-expanded','false');
  editorHeader.insertBefore(gear,editorHeader.lastElementChild);
@@ -81,7 +81,7 @@ export async function openScanEditor({doc,bridge,getLanguage,onSave,onCrop,onRet
  };
  for(const name of ['filters','adjust','tools']){
   const tab=document.createElement('button');tab.type='button';
-  tab.className='rivo-workspace-task';tab.innerHTML=phosphorIcon(({filters:'filters',adjust:'adjust',tools:'tools'})[name],19)+'<span>'+names[name]+'</span>';
+  tab.className='rivo-workspace-task';tab.innerHTML=materialSymbol(({filters:'filters',adjust:'adjust',tools:'tools'})[name],19)+'<span>'+names[name]+'</span>';
   tab.dataset.editorTask=name;tabs.append(tab);
   const group=document.createElement('div');group.className='rivo-workspace-task-panel';
   group.hidden=true;controls[name]={tab,group};
