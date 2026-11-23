@@ -30,21 +30,25 @@ try{
   if(width===393)await page.screenshot({path:out+'/393x852-fab-hidden-id-modal-SAMPLE.png'});
   await page.evaluate(()=>document.querySelector('#qa-mocked-id-modal').remove());
   await page.waitForFunction(()=>document.querySelector('button.rivo-camera-fab')?.hidden===false);
-  // A synthetic CSS rectangle stands for the *geometry* of the native banner.
-  // It is not a fake ad, test inventory, or evidence that an AdMob ad was served.
-  await page.evaluate(()=>{
-   const fab=document.querySelector('#app .rivo-camera-fab').getBoundingClientRect();
-   const margin=window.innerHeight-(fab.top+40+50);
-   document.documentElement.style.setProperty('--rivo-banner-bottom',margin+'px');
-   document.body.classList.add('rivo-has-ad-banner');
+  // On a browser, AdMob is NOT initialized; the monetization lifecycle
+  // correctly removes synthetic 'rivo-has-ad-banner' classes. Never spoof a
+  // loaded ad. Validate native 320x50 rectangle + state decision against the
+  // actual visible FAB geometry instead; device-banner delivery remains unverified.
+  const bannerPolicy=await page.evaluate(async()=>{
+    const {nativeBannerBounds,cameraFabDecision}=await import('/src/floating-camera-controller.js');
+    const f=document.querySelector('#app .rivo-camera-fab').getBoundingClientRect();
+    const margin=innerHeight-(f.top+40+50);
+    const ad=nativeBannerBounds({viewportWidth:document.documentElement.clientWidth,
+      viewportHeight:innerHeight,margin});
+    const overlaps=!!ad&&f.left<ad.right&&f.right>ad.left&&f.top<ad.bottom&&f.bottom>ad.top;
+    const choice=cameraFabDecision({route:'home',bannerCollision:overlaps});
+    return {overlaps,visibility:choice.visible,margin,ad,position:{left:f.left,right:f.right,top:f.top,bottom:f.bottom}};
   });
-  await page.waitForFunction(()=>document.querySelector('button.rivo-camera-fab')?.hidden===true);
-  await page.evaluate(()=>{
-   document.body.classList.remove('rivo-has-ad-banner');
-   document.documentElement.style.removeProperty('--rivo-banner-bottom');
-  });
-  await page.waitForFunction(()=>document.querySelector('button.rivo-camera-fab')?.hidden===false);
-  report.push({width,idle:true,idModalHidden:true,restored:true,nativeBannerCollisionHidden:true,adDelivery:'NOT TESTED'});
+  assert.ok(bannerPolicy.overlaps,'Test rectangle must overlap actual FAB at '+width+'px');
+  assert.equal(bannerPolicy.visibility,false,'Native ad collision decision must suppress FAB at '+width+'px');
+  report.push({width,idle:true,idModalHidden:true,restored:true,
+    nativeBannerCollisionPolicy:'PASS_GEOMETRY_ONLY',adDelivery:'NOT TESTED ON BROWSER'});
+
   await context.close();
  }
  writeFileSync(out+'/fab-banner-04588-qa-results.json',JSON.stringify(report,null,2)+'\n');
