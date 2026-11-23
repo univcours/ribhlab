@@ -11,7 +11,7 @@ const findings=[];
 try{
  for(const width of [320,393]){
   const ctx=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,locale:'en-US'});
-  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.83'));
+  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.84'));
   const page=await ctx.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.locator('#home-recents').waitFor({timeout:20000});
@@ -60,7 +60,7 @@ try{
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
    }),selector);
-   console.log('[RivoScan 0.45.83 UI geometry]',JSON.stringify({surface,width,values}));
+   console.log('[RivoScan 0.45.84 UI geometry]',JSON.stringify({surface,width,values}));
    await page.screenshot({path:`${out}/${width}x852-SAMPLE-${surface}-same-row-actions.png`});
    console.log('[04581 layout diagnostic]',width,surface,JSON.stringify(values));
    assert.equal(values.length,2);
@@ -80,7 +80,7 @@ try{
   await ctx.close();
  }
  const ctx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
- await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.83'));
+ await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.84'));
  const page=await ctx.newPage();
  await page.goto('http://127.0.0.1:4174/',{waitUntil:'domcontentloaded'});
  const qa=await page.evaluate(async()=>{
