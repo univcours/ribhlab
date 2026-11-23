@@ -52,7 +52,7 @@ jobs:
           emulator-boot-timeout: 900
           disable-animations: true
           script: bash scripts/qa-04591-native-actions.sh
-      - name: Upload genuine Android screenshots, accessibility trees and comparison metrics
+      - name: Upload genuine Android screenshots and pixel-difference verification
         if: always()
         uses: actions/upload-artifact@v4
         with:
