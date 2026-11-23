@@ -82,7 +82,7 @@ try{
  const ctx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.81'));
  const page=await ctx.newPage();
- await page.goto(url,{waitUntil:'domcontentloaded'});
+ await page.goto('http://127.0.0.1:4174/',{waitUntil:'domcontentloaded'});
  const qa=await page.evaluate(async()=>{
   const {createDocumentViewer}=await import('/src/document-viewer.js');
   const tiny='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLZ/QAAAABJRU5ErkJggg==';
