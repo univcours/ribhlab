@@ -1,6 +1,8 @@
 # RivoScan — Persistent project handoff
 
 ## CURRENT VERIFIED RIVОSCAN CHECKPOINT — 0.45.91 (2026-11-23)
+**Native signed-APK follow-up (verified):** https://github.com/univcours/ribhlab/actions/runs/45291128570 confirms QR/Barcode and Plate Scanner overlays actually open in the Android emulator; screenshots differed from Home by 52.643% and 42.233%. Main center Smart Scan button was tapped, but its screenshot remained visually Home (0.004% changed), so actual ML Kit Document Scanner execution is **NOT verified**. Do not claim it is fixed based on source-only checks. Native AdMob impressions and real phone capture/PDF save are also unverified. Branch-local `docs/agent/TASKS.md` records next steps.
+
 
 - Source branch: `fix/rivoscan-04591-single-scan-action`, code 206, versionName 0.45.91, original package `com.ribhlab.rivoscan`.
 - Signed GitHub tester **pre-release**, not Google Play: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.91-single-camera . Signed ARM64, ARM32, Universal APK plus all-supported-ABI AAB were verified and published.
