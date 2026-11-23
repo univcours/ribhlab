@@ -1,5 +1,23 @@
 # RivoScan Master Checklist — persistent, evidence-driven
 
+## RivoScan 0.45.90 — signed tester milestone (2026-11-23)
+
+- [x] Modern large file-type icons and extension chips shared by Home and Documents; original PDF/photo thumbnails untouched.
+- [x] Actual camera glyph on floating FAB and original central Smart Scan icon retained.
+- [x] Banner has its own native 320x50 placement above bottom navigation on eligible safe screens; no fake creative and no impression simulation.
+- [x] Safe-area and Formula OCR preview/save/footer CSS integrated with status bar non-overlay setting.
+- [x] Short landscape disables unsafe native AdMob banner, retains scrollable Home and Tools.
+- [x] npm tests, source checks, Vite build and browser responsive UI QA passed in run 45280092598.
+- [x] Five signed ABI-specific/universal APK builds, original Android signer, version 0.45.90/code205, model/feature parity, signed all-ABI AAB verified in run 45280092598.
+- [x] Tester pre-release assets: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.90-fab-banner-safearea . **No Play Store upload**.
+- [~] Android emulator screenshot: inspect final Actions result/artifacts; still in progress when this milestone was recorded.
+- [ ] Physically verify AdMob banner load/impression/fill/visibility and placement with real SDK/logcat; correct layout alone cannot guarantee ad inventory.
+- [ ] Physical Android regression for camera, QR/barcode, plate, Formula OCR save, PDF exports, keyboard/insets, RTL and accessible fonts.
+- [ ] Only publish to Google Play after explicit user authorization and satisfactory device tests.
+
+---
+
+
 ## RivoScan 0.45.89 — verified evidence and open issues (2026-11-23)
 
 - [x] User directive enforced: Material 3 Expressive + bundled Material Symbols Rounded and original RivoScan blue identity.
