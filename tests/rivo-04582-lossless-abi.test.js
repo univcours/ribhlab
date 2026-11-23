@@ -24,7 +24,7 @@ test('proof compares every APK DEX class, ML Kit model, app asset and same-ABI .
  assert.match(s,/size<universal_size\*0\.75/);
 });
 test('signed APK release validates all variants, original signing cert and portrait',()=>{
- const workflow=read('.github/workflows/rivoscan-04588-master-audit.yml');
+ const workflow=read('.github/workflows/rivoscan-04589-documents-import.yml');
  assert.match(workflow,/scripts\/configure-rivoscan-abi-splits\.py/);
  assert.match(workflow,/scripts\/verify-rivoscan-abi-content\.py/);
  assert.match(workflow,/for ABI in universal arm64-v8a armeabi-v7a x86 x86_64/);
