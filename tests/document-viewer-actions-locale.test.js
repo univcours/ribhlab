@@ -1,16 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-
 const viewer=readFileSync(new URL('../src/document-viewer.js',import.meta.url),'utf8');
-
-test('Document viewer Scan and Convert buttons are fully localized',()=>{
-  const scan=viewer.match(/'⊞ '\+\(\(\{([^\n]+)\}\)\[lang\(\)\]\|\|'New Scan'\)/);
-  const convert=viewer.match(/'⇄ '\+\(\(\{([^\n]+)\}\)\[lang\(\)\]\|\|'Convert'\)/);
-  assert.ok(scan,'New Scan needs a fallback inside the parenthesized label expression');
-  assert.ok(convert,'Convert needs a fallback inside the parenthesized label expression');
+test('Phosphor Scan and Convert buttons remain fully localized',()=>{
+ for(const [name,localeLabel,fallback] of [['scan','New Scan','New Scan'],['convert','Convert','Convert']]){
+  const line=viewer.split('\n').find(x=>x.includes("actionRow.appendChild(iconButton('"+name+"'"));
+  assert.ok(line,'Missing Phosphor '+name+' button');
+  assert.ok(line.includes("||'"+fallback+"'"),'Missing fallback '+fallback);
   for(const locale of ['en','ar','fr','es','de','pt','it']){
-    assert.match(scan[1],new RegExp('(?:^|,)'+locale+':\\x27[^\\x27]+\\x27'),'Scan '+locale);
-    assert.match(convert[1],new RegExp('(?:^|,)'+locale+':\\x27[^\\x27]+\\x27'),'Convert '+locale);
+   assert.ok(line.includes(locale+":'"),'Missing '+locale+' on '+name);
   }
+ }
 });
