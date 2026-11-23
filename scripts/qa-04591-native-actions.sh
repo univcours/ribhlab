@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Real Android emulator navigation smoke test for the signed RivoScan 0.45.91 APK.
 # Every image is produced by adb screencap, never from Playwright/browser SAMPLE.
+# Avoid uiautomator XML dumps: they triggered emulator stalls in the first run.
 # No assertion about AdMob filled inventory or physical device camera availability.
 set -euo pipefail
 APP="com.ribhlab.rivoscan"
@@ -10,8 +11,6 @@ capture(){
  local name="$1"
  adb shell screencap -p "/sdcard/rivo-$name.png"
  adb pull "/sdcard/rivo-$name.png" "$OUT/$name.png" >/dev/null
- adb shell uiautomator dump "/sdcard/rivo-$name.xml" >/dev/null 2>&1 || true
- adb pull "/sdcard/rivo-$name.xml" "$OUT/$name.xml" >/dev/null 2>&1 || true
 }
 home(){
  adb shell input keyevent KEYCODE_BACK || true
@@ -24,10 +23,10 @@ adb shell wm density 160
 adb install -r "${RIVO_SIGNED_APK:?Path to official signed APK required}"
 adb shell pm grant "$APP" android.permission.CAMERA || true
 adb shell monkey -p "$APP" -c android.intent.category.LAUNCHER 1
-sleep 14
+sleep 12
 # Dismiss first-launch release notes when present. If absent this tap is harmless.
-adb shell input tap 188 710
-sleep 4
+adb shell input tap 188 730
+sleep 3
 capture 01-home
 # Main screen QR / Barcode button, actual tile center at 393x852.
 adb shell input tap 278 200
