@@ -24,13 +24,13 @@ test('real first-page native PDF thumbnails remain, preserving 58x72 / 50x66',()
  assert.match(sharedCss,/object-fit:contain!important/);
 });
 test('saved PDF and image open only via Android external-app chooser',()=>{
- assert.match(main,/async function openSavedDocumentExternally\\(doc\\)/);
- assert.match(main,/RivoDocuments\\.openFile\\(\\{uri:doc\\.uri\\}\\)/);
+ assert.match(main,/async function openSavedDocumentExternally\(doc\)/);
+ assert.match(main,/RivoDocuments\.openFile\(\{uri:doc\.uri\}\)/);
  assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|doc-detail-overlay/);
  assert.match(main,/data-doc-external/);
  const native=read('native/android/RivoDocumentsPlugin.java');
- assert.match(native,/Intent\\.ACTION_VIEW/);
- assert.match(native,/Intent\\.createChooser\\(open/);
+ assert.match(native,/Intent\.ACTION_VIEW/);
+ assert.match(native,/Intent\.createChooser\(open/);
  assert.match(native,/FLAG_GRANT_READ_URI_PERMISSION/);
 });
 
