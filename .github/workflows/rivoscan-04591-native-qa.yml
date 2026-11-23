@@ -15,14 +15,12 @@ jobs:
   native-navigation-smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
-    env:
-      RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04591-apk/RivoScan-0.45.91-UNIVERSAL-SIGNED.apk
-      RIVO_NATIVE_QA_DIR: ${{ runner.temp }}/rivo-native-navigation
     steps:
       - uses: actions/checkout@v4
       - name: Download and verify exact signed GitHub pre-release APK
         env:
           GH_TOKEN: ${{ github.token }}
+          RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04591-apk/RivoScan-0.45.91-UNIVERSAL-SIGNED.apk
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/rivoscan-04591-apk"
@@ -44,6 +42,8 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         env:
           ANDROID_I_WANT_MY_TCG: 'yes'
+          RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04591-apk/RivoScan-0.45.91-UNIVERSAL-SIGNED.apk
+          RIVO_NATIVE_QA_DIR: ${{ runner.temp }}/rivo-native-navigation
         with:
           api-level: 34
           arch: x86_64
