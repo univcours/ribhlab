@@ -33,7 +33,8 @@ test('ID Photo Maker has only ONE camera and ONE image import button on the same
 test('Documents keeps general Import, removes duplicate Import Images, preserves scanner gallery',()=>{
  assert.match(main,/data-import="file"/);
  assert.doesNotMatch(main,/data-import-images/); // user removed duplicate Import Images
- assert.match(main,/chooseLibraryFiles\('image'\)/);
+ assert.match(main,/chooseLibraryFiles\(el.dataset.import\)/); // universal Import stays functional
+ assert.match(main,/id="scanner-gallery"/); // distinct Scan gallery remains available
  assert.match(main,/id="open-storage-folder"/);
  assert.match(ui,/\.library-heading-actions/);
 });
