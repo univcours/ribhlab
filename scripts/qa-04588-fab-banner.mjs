@@ -11,7 +11,7 @@ const report=[];
 try{
  for(const width of [320,360,393,480,768]){
   const context=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1});
-  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.89'));
+  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.90'));
   const page=await context.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.locator('button.rivo-camera-fab').waitFor();
