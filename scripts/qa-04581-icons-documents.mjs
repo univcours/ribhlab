@@ -1,4 +1,4 @@
-/* Browser QA for responsive Home/Documents parity and functional PDF viewer buttons.
+/* Browser QA of all six fully-visible actions and no embedded document viewer.
  * Sample documents are explicit fixtures, not real user files or Android camera proof. */
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -9,9 +9,9 @@ const out=process.env.RIVO_QA_DIR||'/tmp/rivo-04581-qa';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const findings=[];
-const officialActionIcons=['eye','shield','share','pencil','trash'].map(name=>phosphorIcon(name,18));
+const officialActionIcons=['external','shield','edges','share','pencil','trash'].map(name=>phosphorIcon(name,18));
 try{
- for(const width of [320,393]){
+ for(const width of [320,360,393,480]){
   const ctx=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,locale:'en-US'});
   await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.85'));
   const page=await ctx.newPage();
@@ -32,7 +32,7 @@ try{
       <input type="checkbox" class="doc-select-box" aria-label="Select sample" ${i?'checked':''}/>
       <span class="document-icon rivo-file-thumb rivo-file-pdf"><img src="${thumb}" alt=""/></span>
       <div class="document-description"><strong title="${name}">${name}</strong><small>PDF · 4.4 MB · SAMPLE</small></div>
-      ${i?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="Actions">${Array.from({length:5},(_,n)=>`<button type="button" title="Action ${n+1}" aria-label="Action ${n+1}">${actionIcons[n]}</button>`).join('')}</div>`:''}
+      ${i?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="Actions">${Array.from({length:6},(_,n)=>`<button type="button" title="Action ${n+1}" aria-label="Action ${n+1}">${actionIcons[n]}</button>`).join('')}</div>`:''}
      </article>`).join('');
     document.querySelector(selector).scrollIntoView({block:'center'});
    },{selector,actionIcons:officialActionIcons});
@@ -57,6 +57,17 @@ try{
       actionsWithinRow:!a||(a.left>=r.left-pad&&a.right<=r.right+pad&&a.top>=r.top-pad&&a.bottom<=r.bottom+pad),
       actionsScrollable:!a||actions.scrollWidth>actions.clientWidth,
       actionsCount:actions?.querySelectorAll('button').length||0,
+       everyButtonWithinRow:!actions||[...actions.querySelectorAll('button')].every(button=>{
+         const b=button.getBoundingClientRect();
+         return b.left>=r.left-pad&&b.right<=r.right+pad&&b.top>=r.top-pad&&b.bottom<=r.bottom+pad;
+       }),
+       everyIconInsideButton:!actions||[...actions.querySelectorAll('button')].every(button=>{
+         const b=button.getBoundingClientRect(),icon=button.querySelector('svg[data-phosphor-icon]');
+         if(!icon)return false;
+         const p=icon.getBoundingClientRect();
+         return p.left>=b.left-pad&&p.right<=b.right+pad&&p.top>=b.top-pad&&p.bottom<=b.bottom+pad;
+       }),
+       allButtonsVisible:!actions||actions.scrollWidth<=actions.clientWidth+2,
       width:Math.round(t.width),height:Math.round(t.height),
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
@@ -66,13 +77,13 @@ try{
    console.log('[04581 layout diagnostic]',width,surface,JSON.stringify(values));
    assert.equal(values.length,2);
    for(const v of values){
-    for(const property of ['rowWithinScreen','thumbWithinRow','imageWithinThumb','textWithinRow','actionsOnSameLine','actionsWithinRow','flex'])
+    for(const property of ['rowWithinScreen','thumbWithinRow','imageWithinThumb','textWithinRow','actionsOnSameLine','actionsWithinRow','everyButtonWithinRow','everyIconInsideButton','allButtonsVisible','flex'])
      assert.ok(v[property],surface+' '+width+'px '+property);
     assert.equal(v.width,width<=360?50:58,surface+' thumb width');
     assert.equal(v.height,width<=360?66:72,surface+' thumb height');
    }
-   assert.equal(values[1].actionsCount,5);
-   assert.ok(values[1].actionsScrollable||width>=380,'Actions either fit on the same row or scroll horizontally when narrow');
+   assert.equal(values[1].actionsCount,6);
+   assert.ok(values[1].allButtonsVisible,'All six icons must be visible and never clipped');
    await page.screenshot({path:`${out}/${width}x852-SAMPLE-${surface}-same-row-actions.png`});
    layouts[surface]=values;
   }
@@ -83,46 +94,10 @@ try{
  const ctx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.85'));
  const page=await ctx.newPage();
- await page.goto('http://127.0.0.1:4174/',{waitUntil:'domcontentloaded'});
- const qa=await page.evaluate(async()=>{
-  const {createDocumentViewer}=await import('/src/document-viewer.js');
-  const tiny='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLZ/QAAAABJRU5ErkJggg==';
-  const calls={external:0,print:0,share:0,scan:0,edit:0,errors:[]};
-  const bridge={
-    readFile:async()=>({base64:tiny}),
-    openFile:async()=>{calls.external++},
-    printFile:async()=>{calls.print++},
-    shareFile:async()=>{calls.share++},
-    renameFile:async({name})=>({name}),
-    deleteFile:async()=>{}
-  };
-  const viewer=createDocumentViewer({bridge,getLanguage:()=> 'en',onChanged:async()=>{},
-    onEdit:async()=>{calls.edit++},onError:e=>calls.errors.push(e),
-    onShare:async()=>{calls.share++},onAddScan:()=>{calls.scan++},getImageItems:()=>[]});
-  await viewer.open({uri:'content://sample/document/1',name:'SAMPLE Document.png',mimeType:'image/png',size:512});
-  const root=document.querySelector('.doc-detail-overlay');
-  if(!root)throw Error('Viewer was not opened');
-  if(!root.querySelector('.doc-zoom-in svg[data-phosphor-icon]'))throw Error('Zoom icon is not Phosphor');
-  const more=root.querySelector('.doc-viewer-menu');
-  more.click();
-  const menu=root.querySelector('.doc-viewer-menu-panel');
-  if(menu.hidden)throw Error('More menu did not open');
-  const count=menu.querySelectorAll('button').length;
-  if(count<5)throw Error('More menu missing real actions');
-  menu.querySelector('button').click();
-  await Promise.resolve();
-  root.querySelector('.doc-external-open').click();await Promise.resolve();
-  root.querySelector('.doc-zoom-in').click();
-  more.click();
-  const print=[...menu.querySelectorAll('button')].find(b=>b.textContent.includes('Print'));
-  if(!print)throw Error('Print missing from More menu');
-  print.click();await Promise.resolve();
-  if(calls.external!==2||calls.print!==1)throw Error('Android external / print handlers did not execute');
-  return {...calls,menuActions:count,phosphorIcons:root.querySelectorAll('svg[data-phosphor-icon]').length};
- });
- assert.ok(qa.phosphorIcons>=8);
- await page.screenshot({path:out+'/393x852-SAMPLE-document-preview-phosphor.png'});
- findings.push({viewer:qa});
+ await page.goto(url,{waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('.doc-detail-overlay, .doc-viewer-menu-panel').count(),0,
+   'Obsolete in-app document viewer and its More/Zoom windows must not appear');
+ findings.push({externalViewerOnly:true,embeddedViewerCount:0});
  await ctx.close();
 }finally{await browser.close()}
 await writeFile(out+'/qa-04581-results.json',JSON.stringify(findings,null,2));
