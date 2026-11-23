@@ -24,7 +24,8 @@ with ZipFile(apk) as src, ZipFile(aab) as bundle:
             "Native library changed in AAB: "+name)
     actual_abis={name.split("/")[1] for name in libnames}
     assert actual_abis==abis,f"AAB does not cover all supported CPU ABIs: {actual_abis}"
-    assets={x for x in srcnames if x.startswith("assets/")}
+    # Android generates dexopt baseline.prof only when making APK; it is not an app feature/model.
+    assets={x for x in srcnames if x.startswith("assets/") and not x.startswith("assets/dexopt/")}
     assert assets and any("mlkit" in x for x in assets),"Required ML Kit asset(s) not found"
     for name in sorted(assets):
         equivalent="base/"+name
