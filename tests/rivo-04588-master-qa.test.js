@@ -48,7 +48,7 @@ test('latest code retains document selection, external opening, original signing
  assert.doesNotMatch(bulk,/function longPress\(|function wireLongPress\(/);
  assert.match(main,/renderSavedFileRow\(doc,index\)/);
  assert.match(main,/renderSavedFileRow\(item,index\)/);
- assert.match(read('rivoscan-version.properties'),/^versionCode=204$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.89$/m);
- assert.equal(JSON.parse(read('package.json')).version,'0.45.89');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=205$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.90$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.90');
 });
