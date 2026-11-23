@@ -13,7 +13,10 @@ const glyphs=new Map([
  ['⊞','scan'],['▤','file'],['▧','book'],['◫','split'],['⌁','refresh'],
  ['⤢','maximize'],['⤡','maximize'],['＋','plus'],['+','plus'],['−','minus'],['-','minus'],
  ['✓','check'],['✔','check'],['✔️','check'],['☑','all'],['✚','plus'],
- ['⚡','sparkle'],['⚡️','sparkle'],['🔍','search'],['📷','camera'],
+ ['⚡','flash'],['⚡️','flash'],['✦','magic'],['✨','magic'],['◈','filter'],['☷','adjust'],
+ ['◷','date'],['↶','undo'],['↷','redo'],['↩','undo'],['↑','up'],['↓','down'],
+ ['▣','file'],['▢','scan'],['▾','chevron-down'],['⌄','chevron-down'],['⌃','chevron-up'],
+ ['⚙','settings'],['⚙️','settings'],['🔍','search'],['📷','camera'],
  ['📁','folder'],['📄','file'],['🔒','lock'],['🔗','share']
 ]);
 const ordered=[...glyphs.keys()].sort((a,b)=>b.length-a.length);
@@ -40,8 +43,8 @@ function upgrade(button){
 export function installPhosphorAutoIcons(root=document){
  const walk=node=>{
   if(!node||node.nodeType!==1)return;
-  if(node.matches?.('button'))upgrade(node);
-  node.querySelectorAll?.('button').forEach(upgrade);
+  if(node.matches?.('button, [role="button"]'))upgrade(node);
+  node.querySelectorAll?.('button, [role="button"]').forEach(upgrade);
  };
  walk(root===document?document.documentElement:root);
  if(root!==document)return()=>{};
