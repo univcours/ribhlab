@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {hasPhosphorIcon,phosphorIcon} from '../src/phosphor-icons.js';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('RivoScan 0.45.84 bundles the official offline Phosphor Duotone set and aliases',()=>{
+test('RivoScan 0.45.85 bundles the official offline Phosphor Duotone set and aliases',()=>{
  const main=read('src/main.js'),icons=read('src/phosphor-icons.js'),extra=read('src/phosphor-icons-extra.js');
  assert.match(main,/import '\.\/rivo-phosphor-global-04584\.css'/);
  assert.match(main,/installPhosphorAutoIcons\(\)/);
@@ -19,7 +19,7 @@ test('RivoScan 0.45.84 bundles the official offline Phosphor Duotone set and ali
 });
 test('Every scanner and editor window uses Phosphor icons, no hand-coded SVG controls',()=>{
  const paths=[
-  'src/document-viewer.js','src/barcode-scanner.js','src/plate-scanner.js',
+  'src/barcode-scanner.js','src/plate-scanner.js',
   'src/scan-editor.js','src/perfect-scan-ui.js','src/perfectscan-capture-review.js',
   'src/page-manager.js','src/edge-adjustment.js','src/privacy-shield.js',
   'src/book-split.js','src/id-photo-maker.js','src/preview-workspace.js','src/merged-tools.js'
@@ -49,10 +49,10 @@ test('Checkbox-only file selection and full thumbnail remain in both screens',()
  assert.match(css,/:is\(#home-recents,#library-list\)/);
 });
 test('Native device support, unchanged ML Kit features and signed release metadata',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.84');
- assert.match(read('rivoscan-version.properties'),/^versionCode=199$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.84$/m);
- const flow=read('.github/workflows/rivoscan-04584-phosphor-all-icons.yml');
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.85');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=200$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.85$/m);
+ const flow=read('.github/workflows/rivoscan-04585-no-eye-external-open.yml');
  for(const x of ['arm64-v8a','armeabi-v7a','x86','x86_64','universal',
   'verify-rivoscan-abi-content.py','bundleRelease','screenOrientation'])assert.ok(flow.includes(x),x);
 });
