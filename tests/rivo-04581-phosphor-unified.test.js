@@ -41,8 +41,8 @@ test('expressive user interface preserves icon sizing, action row and Android ex
  assert.match(file('native/android/RivoDocumentsPlugin.java'),/Intent\.ACTION_VIEW/);
 });
 test('Android package keeps portrait, ML Kit and same signing identity with monotonic version',()=>{
- assert.equal(JSON.parse(file('package.json')).version,'0.45.87');
- assert.match(file('rivoscan-version.properties'),/^versionCode=202$/m);
+ assert.equal(JSON.parse(file('package.json')).version,'0.45.88');
+ assert.match(file('rivoscan-version.properties'),/^versionCode=203$/m);
  assert.match(file('scripts/prepare-rivoscan-compact.py'),/screenOrientation="portrait"/);
  assert.match(file('scripts/verify-rivoscan-portrait.py'),/direction!="portrait"/);
 });
