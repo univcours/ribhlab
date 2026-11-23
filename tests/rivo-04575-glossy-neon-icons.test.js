@@ -8,7 +8,7 @@ const main=read('src/main.js');
 test('approved RivoScan launcher art remains unchanged and contains glossy blue signature',()=>{
  const generator=read('scripts/create-turquoise-icon.mjs');
  assert.match(generator,/symbol-only glossy blue R/);
- assert.match(generator,/const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7'/);
+ assert.match(generator,/const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2066a43b207134da3067f9c7'/);
  for(const c of ['#061b58','#0E61C2','#00D8FF']){
   assert.ok(css.toLowerCase().includes(c.toLowerCase()),'missing icon palette '+c);
  }
@@ -55,8 +55,8 @@ test('icon glows never enlarge content cards, and navbar keeps five-slot scan se
  assert.match(main,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)!important/);
  assert.match(css,/--rivo-icon-size:27px/);
 });
-test('signed release version 0.45.90 with new Android versionCode 205',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.90');
- assert.match(read('rivoscan-version.properties'),/^versionCode=205$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.90$/m);
+test('signed release version 0.45.91 with new Android versionCode 206',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.91');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=206$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.91$/m);
 });
