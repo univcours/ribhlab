@@ -867,6 +867,10 @@ public class RivoDocumentsPlugin extends Plugin {
         try {
             Intent open = new Intent(Intent.ACTION_VIEW);
             open.setDataAndType(uri, mimeOf(uri));
+            // Attach the URI as ClipData so Android's chooser forwards temporary
+            // read access to the selected external PDF/image/document viewer.
+            open.setClipData(android.content.ClipData.newUri(
+                    getContext().getContentResolver(), "RivoScan document", uri));
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             getContext().startActivity(Intent.createChooser(open, localized("openDocument"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
