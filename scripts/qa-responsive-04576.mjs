@@ -18,7 +18,7 @@ try{
   const id=width+'x'+height+'-'+lang;
   const context=await browser.newContext({viewport:{width,height},locale:lang==='fr'?'fr-FR':'en-US',isMobile:width<768,hasTouch:width<768,permissions:['camera']});
   await context.addInitScript(language=>{
-   localStorage.setItem('rivo-release-notes-read','0.45.87');
+   localStorage.setItem('rivo-release-notes-read','0.45.88');
    if(language==='auto')localStorage.removeItem('rivo-language');
    else localStorage.setItem('rivo-language',language);
   },lang);
