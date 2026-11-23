@@ -139,6 +139,6 @@ html body.rivo-native-android #app .shell.rivo-dark-ui .main{
  html body.rivo-native-android #app .shell.rivo-dark-ui .app-tools.rivo-tools-hub > .rivo-tools-scroll{
   display:block!important;flex:1 1 0!important;min-height:0!important;
   height:auto!important;max-height:none!important;overflow-y:auto!important;
-  overflow-x:hidden!important;scroll-padding-bottom:16px!important;
+  overflow-x:hidden!important;scroll-padding-bottom:0px!important;
  }
 }
