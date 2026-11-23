@@ -14,14 +14,14 @@ test('Home and My Documents render EXACT same original 0.45.44 single-file actio
  const rows=main.split('function renderSavedFileRow(item,index)')[1].split('function recentDocuments(')[0];
  assert.match(rows,/const single=bulkUI\.chosen\(item\)&&bulkUI\.count\(\)===1/);
  const expected=[
-  'data-doc-open','data-doc-shield','data-doc-edges',
+  'data-doc-external','data-doc-shield','data-doc-edges',
   'data-doc-share','data-doc-rename','data-doc-delete'
  ];
  const actionSection=rows.slice(rows.indexOf('class="document-buttons rivo-file-quick-actions"'));
  let last=-1;
  for(const x of expected){
   const current=actionSection.indexOf(x);
-  assert.ok(current>last,'0.45.44 action/order missing or changed: '+x);
+  assert.ok(current>last,'Selection action/order missing: '+x);
   last=current;
  }
  assert.equal((rows.match(/class="document-buttons rivo-file-quick-actions"/g)||[]).length,1);
