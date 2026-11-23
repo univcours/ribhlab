@@ -177,13 +177,29 @@ jobs:
           cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.89-ALL-SUPPORTED-ANDROID-PLAY.aab
           gh release upload "$TAG" /tmp/RivoScan-0.45.89-ALL-SUPPORTED-ANDROID-PLAY.aab --repo "$GITHUB_REPOSITORY" --clobber
 
+      - name: Configure Android emulator KVM permissions
+        run: |
+          set -euo pipefail
+          if test -e /dev/kvm; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm
+            sudo chmod a+rw /dev/kvm
+            test -r /dev/kvm && test -w /dev/kvm
+            echo 'KVM hardware acceleration ready.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'KVM unavailable: Android emulator will try explicitly authorized software emulation.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       # Native emulator verification is deliberately after signed APK release.
       # Emulator failure must not revoke a verified downloadable APK.
       - name: Capture actual Android app UI on an emulator
         id: android_capture
         continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_I_WANT_MY_TCG: 'yes'
         with:
+          emulator-boot-timeout: 900
           api-level: 34
           arch: x86_64
           target: google_apis
