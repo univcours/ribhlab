@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {PDFDocument,degrees} from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
@@ -35,16 +35,16 @@ export async function openPageManager({file,getLanguage,onSave,onDone,onError}){
  async function close(){if(closed)return;closed=true;overlay.remove();document.body.classList.remove('rivo-pages-open');try{await pdf?.destroy()}catch{}}
  function draw(){
   if(closed)return;
-  panel.innerHTML=`<header class="rivo-pages-top"><button data-page-action="close" aria-label="${t(10)}">${phosphorIcon('close',20)}</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">${phosphorIcon('save',17)} ${t(9)}</button></header>
+  panel.innerHTML=`<header class="rivo-pages-top"><button data-page-action="close" aria-label="${t(10)}">${materialSymbol('close',20)}</button><strong>${t(0)}</strong><button class="rivo-pages-save" data-page-action="save">${materialSymbol('save',17)} ${t(9)}</button></header>
   <div class="rivo-pages-count"><strong>${selected().length} ${t(1)}</strong><button data-page-action="all">${t(2)}</button><button data-page-action="none">${t(3)}</button></div>
   <p class="rivo-pages-tip">${t(4)}</p><div class="rivo-pages-grid">${pages.map((p,i)=>`<div class="rivo-page-item ${p.selected?'selected':''} ${p.removed?'removed':''}" draggable="true" data-id="${p.id}">
-    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}">${p.preview?`<img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)">`:`<span class="rivo-page-preview-loading" role="status">${loading}</span>`}<span class="rivo-page-check">${p.selected?phosphorIcon('check',15):p.removed?phosphorIcon('close',15):''}</span></button>
-    <div class="rivo-page-row"><button data-page-action="up" data-id="${p.id}" aria-label="${t(4)}">${phosphorIcon('up',18)}</button><b>${i+1}</b><button data-page-action="down" data-id="${p.id}" aria-label="${t(4)}">${phosphorIcon('down',18)}</button></div>
+    <button class="rivo-page-tile" data-page-action="select" data-id="${p.id}" aria-pressed="${p.selected}">${p.preview?`<img src="${p.preview}" alt="Page ${i+1}" style="transform:rotate(${p.turn}deg)">`:`<span class="rivo-page-preview-loading" role="status">${loading}</span>`}<span class="rivo-page-check">${p.selected?materialSymbol('check',15):p.removed?materialSymbol('close',15):''}</span></button>
+    <div class="rivo-page-row"><button data-page-action="up" data-id="${p.id}" aria-label="${t(4)}">${materialSymbol('up',18)}</button><b>${i+1}</b><button data-page-action="down" data-id="${p.id}" aria-label="${t(4)}">${materialSymbol('down',18)}</button></div>
   </div>`).join('')}</div>
-  <footer class="rivo-pages-bottom"><div class="rivo-page-operations"><button data-page-action="left" ${selected().length?'':'disabled'}>${phosphorIcon('rotate-left',18)} ${t(5)}</button>
-   <button data-page-action="right" ${selected().length?'':'disabled'}>${phosphorIcon('rotate-right',18)} ${t(6)}</button>
-   <button data-page-action="delete" ${selected().length?'':'disabled'}>${phosphorIcon('trash',18)} ${t(7)}</button>
-   <button data-page-action="restore">${phosphorIcon('restore',18)} ${t(8)}</button><button data-page-action="undo" ${history.length?'':'disabled'}>${phosphorIcon('undo',18)} ${t(13)}</button></div><small>${t(12)}</small></footer>`;
+  <footer class="rivo-pages-bottom"><div class="rivo-page-operations"><button data-page-action="left" ${selected().length?'':'disabled'}>${materialSymbol('rotate-left',18)} ${t(5)}</button>
+   <button data-page-action="right" ${selected().length?'':'disabled'}>${materialSymbol('rotate-right',18)} ${t(6)}</button>
+   <button data-page-action="delete" ${selected().length?'':'disabled'}>${materialSymbol('trash',18)} ${t(7)}</button>
+   <button data-page-action="restore">${materialSymbol('restore',18)} ${t(8)}</button><button data-page-action="undo" ${history.length?'':'disabled'}>${materialSymbol('undo',18)} ${t(13)}</button></div><small>${t(12)}</small></footer>`;
  }
  overlay.addEventListener('dragstart',e=>{const row=e.target.closest('.rivo-page-item');if(!row)return;dragged=Number(row.dataset.id);e.dataTransfer.effectAllowed='move'});
  overlay.addEventListener('dragover',e=>{if(e.target.closest('.rivo-page-item'))e.preventDefault()});
