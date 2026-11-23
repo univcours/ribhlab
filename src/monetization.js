@@ -162,18 +162,28 @@ export function getPremiumStatus(){
 // routes; CSS cannot clip the plugin's separate native View.
 let bannerObserver=null,bannerTimer=null,bannerObserved=false;
 let bannerLastMargin=-1,bannerWrongSize=false,bannerReconciling=false;
+// AdMob draws in a separate native view ABOVE WebView dialogs. Pause it for
+// fullscreen scanner/editor/permission overlays; resume when they close.
 function bannerObstructed(){
- // A normal editor, popup, book window, keyboard focus or PDF save MUST NOT
- // hide the native banner. All WebView overlays are clipped above its area.
- // Native full-screen interstitials explicitly call pauseBannerForFullscreen;
- // background visibility is separately checked by reconcileNativeBanner.
- return false;
+ if(typeof document==='undefined')return true;
+ return [...document.querySelectorAll([
+  '.rivo-code-overlay','.rivo-id-overlay','.rivo-live-overlay','.rivo-plate-overlay',
+  '.rivo-editor-overlay','.rivo-shield-overlay','.rivo-perfectscan-overlay',
+  '.rivo-edge-adjust-overlay','.rivo-pages-overlay','.rivo-release-overlay',
+  '[role="dialog"][aria-modal="true"]'
+ ].join(','))].some(el=>{
+  if(el.hidden||el.closest('[hidden]'))return false;
+  const style=getComputedStyle(el);
+  return style.display!=='none'&&style.visibility!=='hidden'&&el.getClientRects().length>0;
+ });
 }
 function currentBannerLayout(){
  if(typeof document==='undefined'||typeof window==='undefined')return {valid:false};
  const nav=document.querySelector('#app nav.mobilebar.rivo-nav-five');
- const shown=nav&&getComputedStyle(nav).display!=='none'&&getComputedStyle(nav).position==='fixed';
+ const shown=nav&&getComputedStyle(nav).display!=='none'&&getComputedStyle(nav).visibility!=='hidden'&&nav.getClientRects().length>0;
  const rect=shown?nav.getBoundingClientRect():null;
+ // In Android, never guess a bottom margin while native nav has not laid out.
+ if(isAndroid&&!rect)return {valid:false,reason:'Bottom navigation not laid out'};
  const head=document.querySelector('#app .shell.rivo-dark-ui .topbar');
  const headerBottom=head?.getBoundingClientRect().bottom||70;
  return calculateAdLayout({
@@ -184,26 +194,31 @@ function currentBannerLayout(){
  });
 }
 function setBannerSpace(visible){
- if(typeof document==='undefined')return;
- const layout=currentBannerLayout();
- const show=!!(visible&&layout.valid&&!bannerWrongSize);
- const root=document.documentElement;
+ if(typeof document==='undefined'||!document.body)return;
+ const layout=currentBannerLayout(),root=document.documentElement;
+ // Reserved UI slot is distinct from an actual Google banner impression.
+ // Do not create fake creative. Keep its 50dp lane even on NO_FILL.
+ const reserved=!!(isAndroid&&AD_CONFIG.bannerEnabled&&state.ready&&state.consent&&
+  layout.valid&&!bannerWrongSize&&document.visibilityState!=='hidden'&&!bannerObstructed());
+ const displayed=!!(reserved&&visible&&state.bannerReady&&!state.bannerHidden);
  root.style.setProperty('--rivo-banner-height','50px');
-   root.style.setProperty('--rivo-banner-frame-height','63px');
  root.style.setProperty('--rivo-banner-width','320px');
  root.style.setProperty('--rivo-content-top',(layout.valid?layout.contentTop:70)+'px');
  root.style.setProperty('--rivo-content-bottom',(layout.valid?(
-  show?layout.contentBottom:layout.bottomWithoutAd+8
+  reserved?layout.contentBottom:layout.bottomWithoutAd+8
  ):98)+'px');
  if(layout.valid)root.style.setProperty('--rivo-banner-bottom',layout.margin+'px');
- const oldVisible=document.body.classList.contains('rivo-has-ad-banner');
-  document.body.classList.toggle('rivo-has-ad-banner',show);
-  if(oldVisible!==show&&typeof window!=='undefined')window.dispatchEvent(new Event('rivo:banner-layout'));
+ const oldReserved=document.body.classList.contains('rivo-ad-reserved');
+ const oldDisplayed=document.body.classList.contains('rivo-has-ad-banner');
+ document.body.classList.toggle('rivo-ad-reserved',reserved);
+ document.body.classList.toggle('rivo-has-ad-banner',displayed);
+ if((oldReserved!==reserved||oldDisplayed!==displayed)&&typeof window!=='undefined')
+  window.dispatchEvent(new Event('rivo:banner-layout'));
 }
 function observeBannerOverlays(){
  if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;
  bannerObserver=new MutationObserver(()=>scheduleBannerRelayout());
- bannerObserver.observe(document.body,{childList:true,subtree:true});
+ bannerObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','open','class']});
  if(!bannerObserved){
   bannerObserved=true;
   window.addEventListener('resize',scheduleBannerRelayout,{passive:true});
@@ -334,8 +349,10 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    await AdMob.initialize();
    state.ready=true;
    installAdVisibilityRecovery();
+   observeBannerOverlays();
    void trackNativeAdEvents();
    status('AdMob initialized');
+   setBannerSpace(false);
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
    void loadInterstitial();
    if(!deferBanner)void loadBanner();

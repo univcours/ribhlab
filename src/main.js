@@ -92,6 +92,8 @@ import './rivo-file-actions-unclipped-04585.css';
 import './rivo-minimal-premium-04586.css';
 // Final expressive palette and self-hosted rounded symbol system.
 import './rivo-material3-expressive-04587.css';
+// Last: system insets, true camera glyph, native banner lane, safe modal footer.
+import './rivo-android-surface-04590.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -329,6 +331,7 @@ const uiText={
  it:{home:'Home',documents:'Documenti',tools:'Strumenti',me:'Profilo',search:'Cerca documenti',recent:'Documenti recenti',seeAll:'Vedi tutti',quick:'Strumenti rapidi',safe:'Salvati sul telefono',scan:'Scansiona',pdf:'Strumenti PDF',import:'Importa file',merge:'Unisci documenti',welcome:'Scansiona. Trova. Condividi.',myFiles:'I miei file',settings:'Impostazioni',device:'Documents/RivoScan',privacy:'I documenti rimangono sul telefono',noAccount:'Nessun account richiesto',general:'Generale',language:'Lingua',about:'Informazioni',help:'Aiuto',storage:'Memoria',openDocuments:'Apri documenti',allFiles:'Tutti',pdfFiles:'PDF',images:'Immagini',sort:'Ordina',newest:'Recenti',oldest:'Meno recenti',name:'Nome',size:'Dimensione',list:'Elenco',grid:'Griglia',noRecent:'Le tue scansioni appariranno qui.'}
 };
 const ut=key=>uiText[language]?.[key]||uiText.en[key]||key;
+const cameraFabText=()=>({en:'Open camera',ar:'فتح الكاميرا',fr:'Ouvrir la caméra',es:'Abrir cámara',de:'Kamera öffnen',pt:'Abrir câmara',it:'Apri fotocamera'})[language]||'Open camera';
 const tn=t=>toolText(language,t.id,'name');
 const td=t=>toolText(language,t.id,'desc');
 const lt=key=>L(language,key);
@@ -394,7 +397,7 @@ function render(){
     <button type="button" data-tab="tools" class="${isTools?'active':''}"><span class="rivo-nav-icon">${ico('grid')}</span>${ut('tools')}</button>
     <button type="button" data-tab="me" class="${isMe?'active':''}"><span class="rivo-nav-icon">${ico('user')}</span>${ut('me')}</button></nav>`;
   const showFab=(isHome||isDocs||isTools);
-  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${ut('scan')}" title="${ut('scan')}">${ico('scan',32)}</button>`:''}${mobile}</div>`;
+  app.innerHTML=`<div class="shell rivo-dark-ui"><div class="desktop-wrap">${aside}</div><main class="main">${header}${bannerSlot}<div class="content">${isDocs?libraryWorkspace():isTools?toolsWorkspace():isMe?settingsWorkspace():activeTool?workspace():home()}</div></main>${showFab?`<button type="button" class="floating-scan rivo-camera-fab" data-live-camera aria-label="${cameraFabText()}" title="${cameraFabText()}">${ico('camera',32)}</button>`:''}${mobile}</div>`;
   localizeStaticUI(app,language);
   wire();
   floatingCameraController?.schedule();

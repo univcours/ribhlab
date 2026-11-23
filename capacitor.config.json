@@ -2,6 +2,17 @@
   "appId": "com.ribhlab.rivoscan",
   "appName": "RivoScan",
   "webDir": "dist",
-  "server": { "androidScheme": "https" },
-  "plugins": { "SplashScreen": { "launchShowDuration": 0 } }
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "backgroundColor": "#E9F5FB",
+      "style": "LIGHT"
+    }
+  }
 }
