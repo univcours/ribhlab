@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const get=x=>readFileSync(new URL('../'+x,import.meta.url),'utf8');
 test('audited tester release increments Android version and keeps original banner + signing',()=>{
- const flow=get('.github/workflows/rivoscan-04581-phosphor-icon-system.yml');
+ const flow=get('.github/workflows/rivoscan-04581-phosphor-unified.yml');
  const meta=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
  assert.equal(pkg.version,'0.45.81');
  assert.match(meta,/^versionCode=196$/m);assert.match(meta,/^versionName=0\.45\.81$/m);
