@@ -2,6 +2,7 @@ import './style.css';
 import './theme-brand.css';
 import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
+import {phosphorIcon} from './phosphor-icons.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -167,7 +168,7 @@ const icons = {
   user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3c0-5 16-5 16 0v3"/>',
   more:'<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>'
 };
-const ico = (name,size=20) => `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]||icons.file}</svg>`;
+const ico = (name,size=20) => phosphorIcon(name,size);
 const tools = [
  {id:'scan',category:'create',icon:'scan',color:'green',name:'Document Scanner',desc:'Capture, AI flatten, correct shadows and wrinkles, review and save PDFs',accept:'image/*',multiple:true},
  {id:'bundle',category:'create',icon:'merge',color:'sky',name:'Combine Documents',desc:'Mix scanned photos and PDF files in a single PDF',accept:'.pdf,application/pdf,image/*',multiple:true},
