@@ -251,7 +251,8 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
       ['rotate','rotate'],['sign','sign'],['text','text'],['watermark','watermark'],['reorder','reorder'],['split','extract']
     ]:imageType(current)?[['enhance','enhance'],['scan','crop'],['images','imagePdf']]:[];
     for(const [toolId,label] of options){
-      grid.appendChild(button(label==='managePages'?({en:'Manage Pages',ar:'إدارة الصفحات',fr:'Gérer les pages',es:'Gestionar páginas',de:'Seiten verwalten',pt:'Gerir páginas',it:'Gestisci pagine'})[getLanguage()]||'Manage Pages':word(label),'doc-edit-choice',async()=>{
+      const visual=({managePages:'file',rotate:'rotate',sign:'sign',text:'text',watermark:'watermark',reorder:'reorder',split:'split',enhance:'sparkle',scan:'scan',images:'image'})[toolId]||'pencil';
+      grid.appendChild(iconButton(visual,label==='managePages'?({en:'Manage Pages',ar:'إدارة الصفحات',fr:'Gérer les pages',es:'Gestionar páginas',de:'Seiten verwalten',pt:'Gerir páginas',it:'Gestisci pagine'})[getLanguage()]||'Manage Pages':word(label),'doc-edit-choice',async()=>{
         if(!current)return;
         if(!bytes && toolId!=='scan'){feedback(word('tooLarge'));return;}
         const selected={...current};
@@ -306,13 +307,13 @@ export function createDocumentViewer({bridge,getLanguage,onChanged,onEdit,onErro
     zoomControls.appendChild(zoomButton('maximize','doc-zoom-reset','Fit to screen',()=>zoom?.reset()));
     if(imageType(current)){
       zoomControls.appendChild(zoomButton('back','doc-image-previous','Previous image',()=>navigateImage(-1)));
-      zoomControls.appendChild(zoomButton('back','doc-image-next','Next image',()=>navigateImage(1)));
+      zoomControls.appendChild(zoomButton('next','doc-image-next','Next image',()=>navigateImage(1)));
     }
     body.appendChild(zoomControls);
     const pages=tag('div','doc-page-navigation');pages.hidden=true;
     pages.appendChild(iconButton('back','Previous page','doc-page-previous',()=>{page--;showPage();},{iconOnly:true}));
     pages.appendChild(tag('span','doc-page-label',''));
-    pages.appendChild(iconButton('back','Next page','doc-page-next',()=>{page++;showPage();},{iconOnly:true}));
+    pages.appendChild(iconButton('next','Next page','doc-page-next',()=>{page++;showPage();},{iconOnly:true}));
     body.appendChild(pages);
     const thumbnails=tag('div','doc-page-thumbnails');
     thumbnails.hidden=true;thumbnails.setAttribute('role','navigation');
