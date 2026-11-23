@@ -319,7 +319,6 @@ const bulkUI=createLibraryBulk({
     const recents=document.getElementById('home-recents');if(recents)recents.innerHTML=recentDocuments();
   },
   onPreview:doc=>previewSavedDocument(doc),
-  onOpenLibrary:()=>openLibrary(),
   onDirectTransfer:async docs=>{
     openTool('peerTransfer');
     const chooser=document.getElementById('peer-files');
@@ -975,7 +974,6 @@ function wire(){
   for(const list of ['library-list','home-recents']){
     const el=document.getElementById(list);
     const activate=e=>{
-      if(e.type==='click'&&bulkUI.suppressClick()){e.preventDefault();return;}
       const target=e.target.closest('[data-doc-select],[data-doc-savepdf],[data-expand-doc],[data-doc-open],[data-doc-share],[data-doc-shield],[data-doc-edges],[data-doc-delete],[data-doc-print],[data-doc-rename]');
       if(!target || !el?.contains(target))return;
       if(e.type==='keydown' && !['Enter',' '].includes(e.key))return;
@@ -1028,7 +1026,6 @@ function wire(){
     };
     el?.addEventListener('click',activate);
     el?.addEventListener('keydown',activate);
-    bulkUI.wireLongPress(el);
   }
   document.querySelectorAll('[data-tool]').forEach(el=>el.addEventListener('click',()=>{void openTool(el.dataset.tool)}));
   document.getElementById('tools-query')?.addEventListener('input',event=>{
