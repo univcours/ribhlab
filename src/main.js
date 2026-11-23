@@ -369,7 +369,7 @@ function render(){
   const aside = `<aside class="sidebar"><div class="brand"><img src="/rivoscan-icon.png" alt="RivoScan scanner icon"><div><strong>RivoScan</strong><small>BY RIBHLAB</small></div></div><div class="nav-label">WORKSPACE</div><button class="nav-button ${!activeTool?'active':''}" data-go="home">${ico('home')} ${tr('home')}</button><button class="nav-button ${activeTool?.id==='library'?'active':''}" data-open-library>${ico('file')} ${dl('documents')}</button><div class="nav-label">PDF TOOLS</div>${Object.keys(groupTitle).map(g=>`<button class="nav-button" data-category="${g}">${ico(g==='create'?'scan':g==='organize'?'merge':g==='edit'?'sign':'convert')} ${tr(g)}</button>`).join('')}<button class="nav-button ${activeTool?.id==='tools'?'active':''}" data-tab="tools">${ico('convert')} ${ut('tools')}</button><button class="nav-button ${activeTool?.id==='me'?'active':''}" data-tab="me">${ico('info')} ${ut('me')}</button><div class="sidebar-bottom"><div class="secure-mark">${ico('shield')} ${tr('secure')}</div><p>${tr('privacy')}</p></div></aside>`;
   const isHome=!activeTool, isDocs=activeTool?.id==='library', isTools=activeTool?.id==='tools', isMe=activeTool?.id==='me';
   const visibleLocaleChoice=isAutoLanguage(localStorage)?'AUTO':language.toUpperCase();
-  const header = `<header class="topbar">${!isHome?`<button class="rivo-header-back" data-inapp-back aria-label="Back">${ico('back',20)}</button>`:''}
+  const header = `<header class="topbar">
     <span class="crumb"><img class="topbar-brand-icon" src="/rivoscan-header-mark.png" alt="RivoScan blue scan icon"><strong>RivoScan</strong><small class="rivo-build-version">v${appVersion}</small></span>
     <div class="rivo-top-controls" role="group" aria-label="Language and sound">
       <label class="rivo-top-locale" aria-label="Language" dir="ltr">${ico('globe',15)}
@@ -687,7 +687,6 @@ function libraryWorkspace(){
       </div>
       <div class="library-heading-actions" role="group" aria-label="Document actions">
         <button type="button" class="btn btn-outline" data-import="file" title="${escapeHTML(ut('import'))}" aria-label="${escapeHTML(ut('import'))}">${ico('image',16)}<span class="rivo-action-full">${ut('import')}</span><span class="rivo-action-compact">${({en:'Import',fr:'Importer',ar:'استيراد',es:'Importar',de:'Import',pt:'Importar',it:'Importa'})[language]||'Import'}</span></button>
-        <button type="button" class="btn btn-outline rivo-import-images" data-import-images title="${escapeHTML(({en:'Import Images',fr:'Importer des images',ar:'استيراد الصور'})[language]||'Import Images')}" aria-label="${escapeHTML(({en:'Import Images',fr:'Importer des images',ar:'استيراد الصور'})[language]||'Import Images')}">${ico('image',17)}<span class="rivo-action-full">${({en:'Import Images',fr:'Importer images',ar:'استيراد الصور'})[language]||'Import Images'}</span></button>
         <button id="open-storage-folder" type="button" class="btn btn-outline" title="${escapeHTML(vivoFolderLabel())}" aria-label="${escapeHTML(vivoFolderLabel())}">${ico('folder',16)}<span class="rivo-action-full">${vivoFolderLabel()}</span><span class="rivo-action-compact">${({en:'Folder',fr:'Dossier',ar:'مجلد',es:'Carpeta',de:'Ordner',pt:'Pasta',it:'Cartella'})[language]||'Folder'}</span></button>
         <button id="refresh-documents" class="btn btn-outline" type="button" aria-label="${escapeHTML(lt('refresh'))}" title="${escapeHTML(lt('refresh'))}">${ico('rotate',17)}</button>
       </div>
@@ -854,7 +853,6 @@ function wire(){
     if(busy)return;
     openTab(el.dataset.tab);
   }));
-  document.querySelectorAll('[data-inapp-back]').forEach(button=>button.addEventListener('click',()=>navigateRivoBack()));
   document.querySelectorAll('[data-ad-settings-toggle]').forEach(button=>button.addEventListener('click',()=>{
     const details=document.getElementById('rivo-ai-details');
     if(!details)return;
@@ -883,7 +881,6 @@ function wire(){
     else openTool('scan');
   }));
   document.querySelectorAll('[data-import]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles(el.dataset.import)));
-  document.querySelectorAll('[data-import-images]').forEach(el=>el.addEventListener('click',()=>chooseLibraryFiles('image')));
   document.getElementById('refresh-documents')?.addEventListener('click',()=>loadLibrary());
   document.getElementById('open-storage-folder')?.addEventListener('click',async()=>{
     if(!Capacitor.isNativePlatform()||!Capacitor.isPluginAvailable('RivoDocuments')){toast(dl('folder'),true);return;}
