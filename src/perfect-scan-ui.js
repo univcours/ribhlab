@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {perfectScanRGBA,assessDocumentQualityRGBA,inspectInkChanges} from './perfect-scan-core.js';
 import {PDFDocument} from 'pdf-lib';
 import {reviewPerfectScanCapture} from './perfectscan-capture-review.js';
@@ -69,7 +69,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const root=document.createElement('div');root.className='rivo-perfectscan-overlay';
  root.dir=lang==='ar'?'rtl':'ltr';
  root.innerHTML='<section class="rivo-perfectscan-modal" role="dialog" aria-modal="true" aria-label="'+modeTitle+'">'+
- '<header><div><strong>'+modeTitle+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-perfect="close" aria-label="'+t.cancel+'">'+phosphorIcon('close',20)+'</button></header>'+
+ '<header><div><strong>'+modeTitle+'</strong><small>'+t.subtitle+'</small></div><button type="button" data-perfect="close" aria-label="'+t.cancel+'">'+materialSymbol('close',20)+'</button></header>'+
  '<div class="rivo-perfectscan-toolbar">'+
  '<button type="button" data-perfect="base">'+t.choosing+'</button>'+
  '<button type="button" data-perfect="add" hidden disabled>'+t.add+'</button>'+
@@ -79,7 +79,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  '<input class="rivo-perfect-extras" type="file" accept="image/*" multiple hidden>'+
  '<input class="rivo-perfect-camera" type="file" accept="image/*" capture="environment" hidden>'+
  '<p class="rivo-perfectscan-tip" hidden>'+t.tip+'</p>'+
- '<div class="rivo-perfectscan-empty" role="status"><span aria-hidden="true" class="rivo-perfectscan-empty-icon">'+phosphorIcon('file',28)+'</span><p>'+onboarding.hint+'</p></div>'+
+ '<div class="rivo-perfectscan-empty" role="status"><span aria-hidden="true" class="rivo-perfectscan-empty-icon">'+materialSymbol('file',28)+'</span><p>'+onboarding.hint+'</p></div>'+
  '<div class="rivo-perfectscan-preview" hidden role="group" aria-label="'+t.original+'"><canvas role="img" aria-label="'+t.original+'"></canvas><span class="rivo-perfectscan-tag">'+t.original+'</span>'+'<input type="range" class="rivo-perfect-compare-range" min="0" max="100" value="52" hidden aria-label="Before/after comparison"></div>'+
  '<div class="rivo-perfectscan-control" hidden>'+
  '<label class="rivo-scan-method"><span>'+({en:'Correction method',ar:'طريقة التصحيح',fr:'Méthode de correction',
@@ -110,7 +110,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  modal.classList.add('rivo-preview-first-dialog');
  const header=modal.querySelector('header');
  const gear=document.createElement('button');gear.type='button';
- gear.className='rivo-workspace-settings-toggle';gear.innerHTML=phosphorIcon('settings',21);
+ gear.className='rivo-workspace-settings-toggle';gear.innerHTML=materialSymbol('settings',21);
  gear.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[lang]||'Settings');
  gear.setAttribute('aria-expanded','false');
  header.insertBefore(gear,header.lastElementChild);
@@ -126,7 +126,7 @@ export async function openPerfectScan({doc=null,bridge,getLanguage=()=> 'en',onS
  const buttons={};
  for(const name of ['source','correction']){
   const button=document.createElement('button');button.type='button';
-  button.className='rivo-workspace-task';button.innerHTML=phosphorIcon(name==='source'?'source':'magic',18)+'<span>'+names[name]+'</span>';
+  button.className='rivo-workspace-task';button.innerHTML=materialSymbol(name==='source'?'source':'magic',18)+'<span>'+names[name]+'</span>';
   button.addEventListener('click',()=>chooseTask(name));
   button.dataset.perfectTask=name;tabs.append(button);buttons[name]=button;
   const group=document.createElement('div');group.className='rivo-workspace-task-panel';
