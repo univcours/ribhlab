@@ -2,6 +2,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
 import {generatedRsName} from './rs-file-names.js';
+import {phosphorIcon} from './phosphor-icons.js';
 
 export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPreview,onEdit,onOpenLibrary,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
@@ -33,17 +34,9 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
   const size=bytes=>bytes<1024?bytes+' B':bytes<1048576?(bytes/1024).toFixed(1)+' KB':(bytes/1048576).toFixed(1)+' MB';
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
-  const compactIcon=name=>{
-    const shapes={
-      share:'<path d="M12 16V3m-5 5 5-5 5 5M4 16v4h16v-4"/>',
-      merge:'<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M9 9h11v11H9z"/>',
-      move:'<path d="M3 7h6l2 2h10v11H3z"/><path d="m12 12 3 3-3 3m-4-3h7"/>',
-      trash:'<path d="M3 6h18M8 6V4h8v2m-11 0 1 15h12l1-15M10 10v7m4-7v7"/>',
-      all:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3.5 3.5L17 9"/>',
-      close:'<path d="M5 5l14 14M19 5 5 19"/>'
-    };
-    return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+shapes[name]+'</svg>';
-  };
+  // Shared Phosphor Duotone controls, consistent with Home, Documents and PDF viewer.
+  const compactIcon=name=>phosphorIcon(
+    ({share:'share',merge:'merge',move:'move',trash:'trash',all:'all',close:'close'})[name]||'file',18);
   const compactAction=(action,label,shape,disabled=false)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'"'+(disabled?' disabled aria-disabled="true"':'')+'>'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
   // Single selection uses the file's own actions, not the bulk toolbar.
   // Only two or more selected items show one compact bar immediately above
@@ -161,7 +154,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       startX=e.clientX;startY=e.clientY;stop();
       timer=setTimeout(()=>{
         timer=null;suppressUntil=Date.now()+900;
-        if(root.id==='home-recents')onOpenLibrary?.();
+        // Selection stays in Home and exposes the same actions as My Documents.
         longPress(pressed);
         try{navigator.vibrate?.(25)}catch{}
       },550);
@@ -173,7 +166,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onPrevi
       if(row&&root.contains(row)){
         e.preventDefault();suppressUntil=Date.now()+900;
         const doc=getItems()[Number(row.dataset.docOpen)];
-        if(root.id==='home-recents')onOpenLibrary?.();
+        // Selection stays in Home and exposes the same actions as My Documents.
         longPress(doc);
       }
     });
