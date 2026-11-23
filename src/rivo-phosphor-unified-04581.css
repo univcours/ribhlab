@@ -174,3 +174,24 @@ html body .doc-detail-overlay button:disabled{
   flex-basis:104px!important;min-width:88px!important;max-width:34%!important;
  }
 }
+
+/* Final specificity guard: older compact-home rules forced 57px rows and
+ * 3px padding at 320px, clipping real 66px document thumbnails.
+ * Never shrink a document card below its page thumbnail + inner padding. */
+html body #app .shell.rivo-dark-ui #home-recents.rivo-premium-recent >
+ article.document-entry.recent-entry.rivo-recent-card,
+html body #app .shell.rivo-dark-ui #library-list.library-list >
+ article.document-entry.recent-entry.rivo-recent-card{
+ min-height:92px!important;height:auto!important;max-height:none!important;
+ padding:8px!important;box-sizing:border-box!important;
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:center!important;overflow:hidden!important;flex-shrink:0!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui #home-recents.rivo-premium-recent >
+ article.document-entry.recent-entry.rivo-recent-card,
+ html body #app .shell.rivo-dark-ui #library-list.library-list >
+ article.document-entry.recent-entry.rivo-recent-card{
+  min-height:85px!important;padding:6px!important;
+ }
+}
