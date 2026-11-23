@@ -8,7 +8,7 @@ test('Remove Scan/Convert/Edit/Utilities tabs; keep actual Tools as a three-colu
  assert.ok(!toolUI.includes('rivo-tool-pills'));
  assert.ok(!main.includes("document.querySelectorAll('[data-hub-section]')"));
  assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important'));
- assert.ok(main.includes("ico('camera',32)"),'FAB must use an actual camera, not the Smart Scan document icon');
+ assert.ok(main.includes("ico('camera',29)"),'Main Smart Scan navigation must use a real camera icon');
 });
 test('Live scanner uses real four corners and stable sharpness with no counterfeit bounding rectangle',()=>{
  const activity=read('native/android/RivoLiveScannerActivity.java'),edge=read('native/android/RivoEdgeDetector.java');
