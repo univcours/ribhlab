@@ -1,0 +1,65 @@
+# RivoScan Master Checklist — persistent, evidence-driven
+_Read [RIVOSCAN_MASTER_SPEC.md](./RIVOSCAN_MASTER_SPEC.md) for **all** 419 lines of the original user instructions; read [RIVOSCAN_HANDOFF.md](./RIVOSCAN_HANDOFF.md) for branch and CI pointers. This list is not a substitute for the full spec._
+
+Status legend: [x] code change confirmed, [ ] pending, [~] partly done / real-device verification missing. An unchecked requirement MUST NOT be reported as completed.
+
+## Release, backup and provenance
+- [x] Verify latest original signed GitHub tester release 0.45.85 code 200, not a Play update.
+- [x] Isolate new work on branch `fix/rivoscan-04586-comprehensive-ui-fab-banner-audit`.
+- [x] Set code 201, version 0.45.86, preserve original APK signing workflow and package.
+- [x] Keep user's original 419-line prompt verbatim in GitHub default branch.
+- [ ] Final CI fully green for 0.45.86 and signed artifacts verified.
+- [ ] Actual Android emulator and physical device workflows audited.
+- [ ] All Android ABI variants and Play-compatible AAB byte-level and signature checks passed.
+- [ ] No Google Play or other store publication without new explicit permission.
+
+## Correct duplicate and Back controls (USER-CLARIFIED)
+- [x] Remove **duplicate Import Images in Documents** only; keep generic file Import and Scan's image/gallery import.
+- [x] Keep Scan entry in bottom navigation; user explicitly says Scan is **NOT** duplicate.
+- [x] Remove redundant visible in-app header Back.
+- [~] Preserve Android Back and edge-swipe navigation; native smoke verification still needed.
+- [ ] Audit all other genuinely redundant Back buttons without removing necessary Close/Cancel or navigation.
+
+## UI: Minimal Premium, Phosphor Duotone, file rows
+- [x] New final `rivo-minimal-premium-04586.css` reduces strong glow/rotating neon around Home/Tools cards.
+- [x] Preserve RivoScan blue identity/logo, reuse offline official Phosphor SVG library.
+- [~] All screens use one icon visual system; full exhaustive per-window icon inventory still pending.
+- [~] Home and Documents use same row and true PDF/photo thumbnails; native display not verified on device.
+- [~] Six inline file action icons visible in 3×2 grid; current responsive QA is browser-based with SAMPLE fixtures.
+- [x] No eye button or in-app saved-file preview; Android external ACTION_VIEW file chooser present.
+- [x] File long-press action and menu removed; checkbox selection retained.
+- [ ] Audit every tooltip, overlay, dialog, tool card, icon clipping, keyboard, RTL/large fonts and 320/360/393/480/768 px layouts on actual emulator.
+
+## Floating camera (FAB)
+- [x] Central `floating-camera-controller.js`, activated from app state; existing bottom Scan button not removed.
+- [x] Hide FAB on modal, code/QR/barcode/plate/live scanner overlays, busy/capture/permission/selection/external app.
+- [x] Handle ad banner geometry, keyboard focus, re-render and app lifecycle.
+- [~] Position FAB above native AdMob reserved slot using content-bottom variable; actual device positioning needs check.
+- [ ] Test open/close transitions, fast navigation, scanner permission, restoration after cancellation, single FAB and no flashes.
+- [ ] Test FAB and Banner together on Android with real SDK/ad placements and safe areas.
+
+## AdMob Banner
+- [x] Verify existing real AdMob App ID, Banner and Interstitial IDs in signed workflow (no fake traffic).
+- [x] Add SDK-derived `banner-diagnostics.js` to distinguish NO_FILL, network, SDK, consent, layout, loading and paused.
+- [x] Expose status and error in Me/Settings without forcing fake ad visibility.
+- [~] Existing native banner geometry and fit check reviewed; may require device-specific DPI/unit investigation.
+- [ ] **UNKNOWN ROOT CAUSE of user's missing banner.** Capture actual logcat, SDK events, consent, layout and impressions. Do not claim resolved from source checks.
+- [ ] Test in foreground, background/re-entry, returning from external applications, network/consent/no fill and multiple screen sizes.
+- [ ] Confirm no native ad overlays on important controls or FAB and no policy-violating fake requests.
+
+## Feature-by-feature regression
+- [ ] Native camera/X/ML Kit document scanner, first-scan save, cancel, orientation.
+- [ ] QR, barcode and plate scanning, torch, zoom, alert, scan logs.
+- [ ] OCR and translation, online/offline and language variants.
+- [ ] PDF merge/split/reorder/rotate/lock/compress/print/export.
+- [ ] Photo editor, smart-clean, edges, book split, ID-photo, Privacy Shield.
+- [ ] Saved documents persistent storage, permissions, import/share/rename/delete/multiselect and external chooser.
+- [ ] No code duplicates, memory leaks, dead click handlers, CSS conflicts or performance degradation.
+- [ ] Screen-reader focus, high contrast, RTL, all translations.
+
+## Required QA and handoff discipline
+- [~] Added `tests/rivo-04586-fab-banner-minimal.test.js` including duplicate Import Images correctness and FAB state transitions.
+- [~] Reconciled stale version/UI assumptions in legacy tests. Last check was running; verify current GitHub Actions after any change.
+- [ ] Inspect Android emulator screenshot artifacts; mark SAMPLE browser screenshots accurately.
+- [ ] Save signed APK download links and actual sizes only after verifying GitHub Release assets.
+- [ ] Update `RIVOSCAN_HANDOFF.md` and this checklist on main at every major milestone.
