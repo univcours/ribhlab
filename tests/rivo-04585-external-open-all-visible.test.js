@@ -47,7 +47,7 @@ test('long-hold action listeners absent, native context menus suppressed without
  assert.ok(css.includes('-webkit-touch-callout:none!important'));
 });
 test('release version is monotonic with intact native portrait lock',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.85');
- assert.ok(read('rivoscan-version.properties').includes('versionCode=200'));
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.86');
+ assert.ok(read('rivoscan-version.properties').includes('versionCode=201'));
  assert.ok(read('scripts/prepare-rivoscan-compact.py').includes('android:screenOrientation="portrait"'));
 });
