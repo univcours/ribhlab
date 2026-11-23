@@ -117,7 +117,7 @@ try{
   // Verify content scroll makes search/recents reachable regardless of height.
   const reachable=await page.evaluate(()=>{
    const home=document.querySelector('.rivo-compact-home'),target=document.querySelector('.rivo-home-search-title-row');
-   target.scrollIntoView({block:'end'});
+   target.scrollIntoView({block:'end',behavior:'instant'});
    const b=target.getBoundingClientRect(),h=home.getBoundingClientRect();
    return b.top>=h.top-2&&b.bottom<=h.bottom+2;
   });
