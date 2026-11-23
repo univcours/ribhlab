@@ -1,5 +1,17 @@
 # RivoScan — Persistent project handoff
 
+## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.90 (2026-11-23)
+
+- **Signed tester pre-release available, NOT uploaded to Play:** https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.90-fab-banner-safearea . Signed ARM64, ARM32, Universal APK and all-ABI AAB present (package `com.ribhlab.rivoscan`, versionName `0.45.90`, code `205`, original signing identity checked).
+- **CI evidence:** https://github.com/univcours/ribhlab/actions/runs/45280092598 . Verified passing: npm check + all Node tests + bundle, responsive browser QA in portrait and 640x360 landscape, signed multi-ABI APK build, APK feature/class parity, original signer/version checks, AAB all-ABI signature checks and GitHub pre-release publication. Native Android emulator screenshot job was still running at this checkpoint; its completion and actual native AdMob delivery are NOT verified.
+- **Primary source branch:** `fix/rivoscan-04590-fab-banner-safearea`. Icon commit `63aa5d4f`; signed built source includes later viewport QA corrections through `a0c06fe1`.
+- **New file-type icons:** In both Home and Documents, non-previewable TXT/MD/DOC/XLS/ZIP/QR/Barcode/other file placeholders now use 38px self-hosted Material Symbols Rounded, distinct colors and a visible file-extension chip; actual PDF/photo page thumbnail images are preserved. Code: `src/main.js` + `src/rivo-file-icons-04590.css`. Current user specifically objected that TXT/file glyphs were too small and primitive; this is the implemented correction.
+- **Other 0.45.90 improvements:** FAB icon is `photo_camera` (bottom Scan keeps document scanner icon); native AdMob 320x50 UI lane is reserved after consent/initialization even on NO_FILL, separate from bottom nav; banner hides behind full-screen tools. Formula OCR empty preview collapses, status bar/footer boundaries protected, native WebView viewport uses `window.innerHeight`. Short landscape suppresses unsafe ad and restores Home/Tools scrolling.
+- **Remaining real-device QA:** actual AdMob SDK Loaded/Impression + screenshot and banner fill, scanner/QR/plate/Formula save interaction and camera permissions on physical device; authentic emulator screenshots. Browser screenshot QA is SAMPLE, not native phone proof. Do not claim 0.45.90 already Play-published.
+
+---
+
+
 ## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.89 (2026-11-23)
 
 **Current target Android source:** `fix/rivoscan-04589-documents-import-clarity` (not the website `main`). Signed GitHub tester pre-release [RivoScan 0.45.89](https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity) now has signed ARM64, ARM32 and Universal APKs plus signed all-ABI AAB; Android `versionCode=204`, `versionName=0.45.89`, unchanged app package and signing. It was **not** uploaded to Google Play. 
