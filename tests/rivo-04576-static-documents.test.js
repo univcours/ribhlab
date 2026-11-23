@@ -56,8 +56,8 @@ test('Document actions invoke working hooks rather than dummy buttons',()=>{
  assert.match(viewer,/bridge\.deleteFile/);
  assert.match(viewer,/bridge\.renameFile/);
 });
-test('Signed release is monotonic 0.45.82 code 192',()=>{
- assert.equal(JSON.parse(get('package.json')).version,'0.45.82');
- assert.match(get('rivoscan-version.properties'),/^versionCode=197$/m);
- assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.82$/m);
+test('Signed release is monotonic 0.45.84 code 192',()=>{
+ assert.equal(JSON.parse(get('package.json')).version,'0.45.84');
+ assert.match(get('rivoscan-version.properties'),/^versionCode=199$/m);
+ assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.84$/m);
 });
