@@ -1,14 +1,18 @@
-# RivoScan signed release acceptance
+# RivoScan 0.45.89 — release readiness checks
 
-- [ ] Source branch versionCode 204 / versionName 0.45.89 / package.json 0.45.89 / exact GitHub tag agree.
-- [ ] `npm run check`, `npm test`, `npm run build` all green.
-- [ ] Responsive browser tests with 320 / 360 / 393 / 480 / 768, RTL, keyboard and M3 symbols pass. SAMPLE captures correctly labeled.
-- [ ] Verify generic Documents import says Import files, uses Material upload glyph and is fully functional.
-- [ ] Android APK assembly and native ABI parity checks pass; original signing fingerprint, permissions and portrait confirmed.
-- [ ] Full-ABI signed AAB pass; downloadable ARM64/ARM32/Universal signed APKs exist on GitHub prerelease.
-- [ ] Genuine Android emulator screenshots captured and inspected for app launch, Home, Documents, Tools, QR and FAB.
-- [ ] Physical device checks for camera, QR, ML Kit, gallery, PDF save and external opener.
-- [ ] Real AdMob SDK consent, load/error code, size, display and impression checked on device; no policy violations.
-- [ ] No Play Store deployment until explicitly authorized by user.
+- [x] Target versionName 0.45.89, versionCode 204, package com.ribhlab.rivoscan.
+- [x] Original signing identity verified for ABI-specific APKs and AAB.
+- [x] Node source check, all regression tests and Vite build.
+- [x] Responsive browser QA, including 320/360/393/480/768 and localized layout.
+- [x] All six document action glyphs fully visible in browser SAMPLE fixtures.
+- [x] Documents "Import files" text/icon corrected in seven languages.
+- [x] All five ABI APKs built and model/class/resource parity checked.
+- [x] Universal ARM64/ARM32 tester APKs plus all-ABI AAB are on verified GitHub pre-release.
+- [ ] Genuine Android emulator capture **validated** (an overall green CI run with skipped/error-ignored emulator is NOT enough).
+- [ ] Native AdMob banner SDK loaded and physically visible, safe inset and real impressions.
+- [ ] Device-level QR, barcode, ML Kit, PDF save/export, back stack, permission flows.
+- [ ] Real Android accessibility/RTL verification.
+- [ ] Google Play publication, only after explicit user permission and completion of the above.
 
-Do not represent a skipped, failing or unrun test as passed.
+Verified release: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity
+Verified CI stages: https://github.com/univcours/ribhlab/actions/runs/45271464848

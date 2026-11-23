@@ -1,19 +1,11 @@
-# RivoScan cross-chat handoff
+# RivoScan verified handoff — 0.45.89 (23 Nov 2026)
 
-## Important user instructions
-- Latest instruction supersedes old Phosphor spec: Material 3 Expressive with Google Material Symbols Rounded everywhere.
-- The duplicate control was **Import Images in My Documents**, not bottom Scan; preserve generic file Import and gallery import routes. One floating camera FAB must hide intelligently.
-- Ads must be genuine native AdMob via SDK; 'loaded' is not proven visibly displayed.
-- Keep original signing and app package, all Android ABIs and ML Kit/PDF functions.
-- Only publish signed GitHub tester build after CI verifies, not Google Play without a new request.
+**Current artifact:** [RivoScan 0.45.89 signed GitHub pre-release](https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity). Contains signed ARM64, ARM32, Universal APKs and all-ABI AAB. No Google Play publication. Version 0.45.89 code 204, original RivoScan app ID/signing.
 
-## 0.45.89 development checkpoint
-- Starting code was 0.45.88 branch commit 6e5be687, signed GitHub prerelease verified.
-- 0.45.89 new file import label/icon and multilingual browser QA; version 0.45.89 code 204.
-- Initial 0.45.89 CI 45269812886 failed due stale workflow versionCode=203. The workflow was patched to expect 204 in 431cfff7. After this checkpoint, confirm the newest run actually passed.
-- 0.45.88 signed release link: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.88-master-audit-camera-banner
-- 0.45.89 working branch: https://github.com/univcours/ribhlab/tree/fix/rivoscan-04589-documents-import-clarity
-- Current checklists on main: `RIVOSCAN_HANDOFF.md` and `RIVOSCAN_MASTER_CHECKLIST.md`; this folder contains branch-local continuation data.
+**Verified CI:** https://github.com/univcours/ribhlab/actions/runs/45271464848; browser QA and all Android packaging verification successful. Emulator check remains uncertain until actual screenshots/logs inspected. 0.45.88 emulator failed because -accel off unsupported; 0.45.89 KVM fix and TCG fallback are now present.
 
-## Remaining hard limits
-Android emulator success and real physical AdMob render require independent evidence; the two Windows Desktop Commander devices were offline at this checkpoint. Don't assert native confirmation until logs/screenshots exist.
+**User decisions:** keep Material 3 Expressive and Material Symbols Rounded; keep complete icons uncut, one smart floating camera FAB hidden in barcode/QR/camera/modal/processing; keep Google AdMob banner without overlap; remove useless back/duplicate buttons. Duplicate **Import Images** in Documents was not the bottom Scan button. Generic Import files button now uses upload icon and localized text.
+
+**Open acceptance gates:** actual native Android screenshots, SDK AdMob banner visibility/impression and real phone camera/ML Kit/PDF regression. No unsupported assertion of physical device success.
+
+**Next exact step:** check newest Actions state and assets, read actual emulator failure or capture, identify any native defects, then fix/test/commit. Continue from `docs/agent/RESUME.md`; never recreate repository or publish Play without request.

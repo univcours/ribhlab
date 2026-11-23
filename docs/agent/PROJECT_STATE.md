@@ -1,12 +1,11 @@
-# RivoScan project state
+# RivoScan 0.45.89 — latest verified state (23 Nov 2026)
 
-- Source of truth: GitHub repository `univcours/ribhlab`, branch `fix/rivoscan-04589-documents-import-clarity`.
-- Target app version: 0.45.89; Android versionCode 204.
-- Latest confirmed signed tester GitHub prerelease: [0.45.88](https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.88-master-audit-camera-banner) (signed ARM64/ARM32/Universal APK plus all-ABI AAB, not Play published).
-- Latest verified 0.45.88 CI: https://github.com/univcours/ribhlab/actions/runs/45267424630 — JS tests, browser UI QA, APK assembly, ABI parity, signing and AAB verification passed; real Android emulator screenshot job was still running when the checkpoint was written. Re-check conclusion.
-- 0.45.89 source fix: generic Documents file importer correctly labeled in seven languages with Material upload icon; automated test added.
-- 0.45.89 first CI failed at version gate because workflow expected code 203; workflow corrected to 204 in commit `431cfff7`; new CI MUST be verified. No signed 0.45.89 release claimed yet.
-- New release must not reuse 0.45.88 versionName/code/tag.
-- Last verified original source state before 0.45.89: 0.45.88 `6e5be687`.
-- Important blocker: actual AdMob banner physical display / impressions, Android device-specific FAB and full feature regression are unverified. No fake ad inventory or impression simulation.
-- Next exact action: check the newest Actions run for 0.45.89, inspect errors, fix until source QA + signed APK/AAB pass. Then inspect emulator screenshot artifacts and real-device banner diagnostics, update this file with final run/commit.
+- **Repository:** univcours/ribhlab. RivoScan Android branch `fix/rivoscan-04589-documents-import-clarity`, source implementation commit `c498001aab2a285850ded759bf1e9ae79742056b`. Later documentation-only commits must not be mistaken for new Android binaries.
+- **Signed release:** https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity — published as GitHub **pre-release**, NOT Google Play. Signed ARM64/ARM32/Universal APK and all-ABI AAB assets verified on GitHub.
+- **versionName:** `0.45.89`, **versionCode:** `204`, **package:** `com.ribhlab.rivoscan`. Same original signing identity was checked in CI.
+- **CI:** https://github.com/univcours/ribhlab/actions/runs/45271464848. Successfully passed source checks/npm tests/build, responsive/browser QA 320/360/393/480/768, all five signed ABI APK builds, feature/class/model parity, manifest original signer verification, AAB build and all-ABI signature verification. Android emulator capture step was still running at this documentation checkpoint. Inspect its outcome and artifacts, not just overall job conclusion (the capture step is configured continue-on-error).
+- **Resolved:** Documents generic import mislabeled "Import images" fixed to "Import files" across 7 languages, with Material Symbols Rounded upload icon, no deletion of import handler, Scan nav or camera FAB. 19 legacy test assertions fixed to current release metadata and CI workflow branch.
+- **Design:** Material 3 Expressive + Material Symbols Rounded, bundled locally, is the latest instruction; ignore superseded Phosphor text.
+- **Android emulator:** 0.45.88 screenshot attempt failed with `Software CPU emulation (-accel off) is not supported`, no actual emulator screenshots were produced. In 0.45.89 workflow, new KVM permissions and TCG fallback attempt was added. Verify actual emulator results.
+- **Unverified:** real native AdMob banner display/impression, exact SDK no-fill error on physical device, ML Kit/camera/QR/PDF end-to-end on phone, accessibility/RTL native screenshots. Don't assert these are solved.
+- **Next action:** read current 0.45.89 emulator logs/artifacts, fix emulator if no genuine screenshots, inspect true Android screens, verify banner on physical authorized device, then re-run only needed QA. Never publish Google Play absent explicit instruction.

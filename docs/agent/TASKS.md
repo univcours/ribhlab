@@ -1,16 +1,19 @@
-# RivoScan QA tasks
+# RivoScan 0.45.89 — verification tasks
 
-| Task | Priority | Status | Acceptance |
-|---|---|---|---|
-| DOC-001 remove duplicate Documents image-specific import without deleting generic file import | P0 | IMPLEMENTED | Single real `data-import="file"` remains and no duplicate `data-import-images`; no lost gallery import |
-| DOC-002 label generic Documents import correctly in all 7 languages | P0 | IMPLEMENTED | `Import files` translation and rounded upload icon; browser test verifies |
-| UI-001 use Material 3 Expressive + offline Material Symbols Rounded everywhere | P0 | IMPLEMENTED, device QA pending | Real icon glyphs legible and unclipped in all screens |
-| FAB-001 hide floating camera in QR/Barcode/Book/ID/permission/dialog/selection/processing states | P0 | IMPLEMENTED, device QA pending | No overlaps, flashes or obstructed scanner controls |
-| ADS-001 guarantee native banner placement and recover from NO_FILL/network errors | P0 | BLOCKED on device evidence | Real SDK/logcat and screenshot/impression proof; no fake ad requests |
-| CI-001 0.45.89 source checks, tests, responsive layout QA | P0 | TODO | New workflow run passes after version gate repair |
-| CI-002 signed ABI-specific APKs plus all-ABI AAB with original signer | P0 | TODO | Real 0.45.89 build and verifier logs; GitHub prerelease assets |
-| QA-001 genuine Android emulator screenshots and navigation | P1 | IN_PROGRESS | Screens inspected as Android, not browser SAMPLE |
-| QA-002 physical-device full feature, PDF/ML Kit/QR and RTL/accessibility regression | P1 | BLOCKED | Test device available and result logged |
-| PUBLISH-001 Google Play release | P2 | BLOCKED | Explicit user request plus validated release checks |
+| Item | State | Evidence/criterion |
+|---|---|---|
+| Preserve original package, signing, portrait and all features | VERIFIED in CI/static, runtime QA outstanding | 0.45.89 workflow signed APK and AAB verify |
+| Material 3 Expressive + rounded symbols across UI | VERIFIED in browser tests, native QA outstanding | Responsive screenshots, icon box tests |
+| Remove misleading Documents generic Import Images label | VERIFIED in browser tests | Localized Import files and upload icon across 7 languages |
+| Preserve generic importer and bottom Scan navigation | VERIFIED in JS/static; native QA outstanding | Tests confirm handlers and navigation remain |
+| Smart FAB hide during scanning/modal/processing | VERIFIED in browser/source; device QA outstanding | Browser overlay tests, native remains untested |
+| Source/npm/test/build and responsive snapshots | VERIFIED | GitHub Actions 45271464848 |
+| Five APK and AAB signed, feature ABI parity | VERIFIED | GitHub Actions 45271464848 |
+| GitHub signed tester pre-release | VERIFIED | https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity |
+| Native Android emulator screenshots | IN_PROGRESS / must re-check | GitHub Actions 45271464848, 0.45.88 attempt failed boot |
+| Native AdMob Banner actually visible and impressions | BLOCKED without device evidence | SDK loaded+screen+layout and logcat/event proof |
+| QR/ML Kit/PDF/native back full phone regressions | BLOCKED until real Android runtime testing | Actual device/emulator captures and functions |
+| RTL, large fonts and accessibility on device | TODO | Real native UI inspection |
+| Publish Google Play | NOT AUTHORIZED | Explicit user request required |
 
-Statuses TODO / IN_PROGRESS / BLOCKED / IMPLEMENTED / VERIFIED reflect evidence, not optimism.
+Statuses represent evidence, not confidence. Keep exact run/commit references in future handoffs.
