@@ -1,5 +1,18 @@
 # RivoScan — Persistent project handoff
 
+## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.89 (2026-11-23)
+
+**Current target Android source:** `fix/rivoscan-04589-documents-import-clarity` (not the website `main`). Signed GitHub tester pre-release [RivoScan 0.45.89](https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity) now has signed ARM64, ARM32 and Universal APKs plus signed all-ABI AAB; Android `versionCode=204`, `versionName=0.45.89`, unchanged app package and signing. It was **not** uploaded to Google Play. 
+
+CI run: https://github.com/univcours/ribhlab/actions/runs/45271464848 — source checks/tests, browser responsive layout QA, five APK assemblies/ABI model parity/original signing checks and signed AAB verification passed. Android emulator capture was in progress at checkpoint; verify its final outcome and screenshots separately, as browser SAMPLE screenshots do not constitute native proof. Earlier 0.45.88 emulator failed to boot because KVM acceleration was unavailable and software emulation was disabled; 0.45.89 adds KVM permission setup and explicit TCG fallback.
+
+RivoScan 0.45.89 fixes misleading generic `Import images` button in Documents to localized **Import files** and Material Symbols Rounded upload icon (seven languages), without deleting Scan, file import or other features. Source version expectations in 17 existing test suites were updated to code 204, and all source checks and browser UI verification passed. Design is **Material 3 Expressive + Material Symbols Rounded**, never restore historical Phosphor directive. Real AdMob loaded/displayed/impression evidence and full on-device scanning/PDF/RTL accessibility QA remain unverified: do not claim a launch-ready production release.
+
+**For continuation:** read `docs/agent/RESUME.md`, `docs/agent/TASKS.md`, `docs/agent/PROJECT_STATE.md` on branch `fix/rivoscan-04589-documents-import-clarity`; check latest Actions/Release first. 
+
+---
+
+
 ## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.88 (2026-11-23)
 
 **This section supersedes the older 0.45.86 / 0.45.87 branch-status references below. Do not read those historical statuses as current.**
