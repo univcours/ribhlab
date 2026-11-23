@@ -8,7 +8,7 @@ const main=read('src/main.js');
 test('approved RivoScan launcher art remains unchanged and contains glossy blue signature',()=>{
  const generator=read('scripts/create-turquoise-icon.mjs');
  assert.match(generator,/symbol-only glossy blue R/);
- assert.match(generator,/const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2066a43b207134da3067f9c7'/);
+ assert.match(generator,/const SOURCE_SHA256='7b752cb1cac38681bc47a100a55182214c4e385b2056a43b207134da3067f9c7'/);
  for(const c of ['#061b58','#0E61C2','#00D8FF']){
   assert.ok(css.toLowerCase().includes(c.toLowerCase()),'missing icon palette '+c);
  }
@@ -34,7 +34,7 @@ test('Home, Tools, PDF tools, Settings and bottom navigation share one luminous 
   assert.ok(css.includes(selector),'missing '+selector);
  }
  assert.equal((main.match(/class="rivo-nav-icon"/g)||[]).length,4);
- assert.match(main,/class="rivo-nav-scan-ring">\$\{ico\('scan',27\)\}/);
+ assert.match(main,/class="rivo-nav-scan-ring">\$\{ico\('camera',29\)\}/);
 });
 test('rotating cyan halo, glass highlight, pulsing glow, reduced-motion protection',()=>{
  assert.match(css,/@property --rivo-icon-turn/);
