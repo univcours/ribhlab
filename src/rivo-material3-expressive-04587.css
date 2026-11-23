@@ -233,3 +233,136 @@ html body.rivo-native-android:not(.rivo-has-ad-banner)
   transition-duration:.01ms!important;
  }
 }
+
+/* RivoScan 0.45.88: Material 3 Expressive COLOR and GLYPH clarity.
+ * Legacy glossy 0.45.75 used -webkit-text-fill-color:#ECFBFF !important.
+ * That inherited WebKit property made Material glyphs almost white on pale
+ * tonal Material 3 containers. Reset BOTH text-fill and the old glass layers.
+ * Leave the logo / photo thumbnails untouched.
+ */
+html body #app .shell.rivo-dark-ui .rivo-material-symbol[data-material-symbol]{
+ color:inherit!important;
+ -webkit-text-fill-color:currentColor!important;
+ text-shadow:none!important;
+ opacity:1!important;
+ visibility:visible!important;
+ filter:none!important;
+ mix-blend-mode:normal!important;
+ -webkit-mask:none!important;
+ mask:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+){
+ background:#d6e4ff!important;
+ background-image:none!important;
+ color:#165db3!important;
+ -webkit-text-fill-color:#165db3!important;
+ border:1px solid #c3d9f5!important;
+ border-radius:12px!important;
+ box-shadow:none!important;
+ filter:none!important;
+ text-shadow:none!important;
+ opacity:1!important;
+ padding:3px!important;
+ animation:none!important;
+ overflow:visible!important;
+ clip-path:none!important;
+ -webkit-mask:none!important;
+ mask:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+)::before,
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+)::after{
+ content:none!important;
+ display:none!important;
+ background:none!important;
+ box-shadow:none!important;
+ animation:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile>.rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile>.tool-icon,
+ .workspace .work-title>.tool-icon,
+ .library-workspace .library-heading .tool-icon,
+ .tool-card .tool-icon,
+ .settings-row>.settings-row-icon,
+ .rivo-scan-pref-summary>.rivo-pref-summary-icon,
+ .mobilebar.rivo-nav-five .rivo-nav-icon
+)>.rivo-material-symbol[data-material-symbol]{
+ color:#165db3!important;
+ -webkit-text-fill-color:#165db3!important;
+ font-size:21px!important;
+ opacity:1!important;
+ filter:none!important;
+ text-shadow:none!important;
+ max-width:100%!important;
+ max-height:100%!important;
+}
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail>
+.rivo-feature-tile[data-rivo-feature="plateScanner"]>.rivo-feature-icon{
+ background:#d6e4ff!important;
+ background-image:none!important;
+ color:#165db3!important;
+ -webkit-text-fill-color:#165db3!important;
+ border:1px solid #c3d9f5!important;
+ box-shadow:none!important;
+ animation:none!important;
+}
+/* Legacy CSS sets extra-white icon strokes and animated overlays. Never
+ * let those decorative SVG layers substitute for the actual Material glyph.
+ */
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five .rivo-nav-icon{
+ width:32px!important;height:32px!important;
+ min-width:32px!important;min-height:32px!important;
+ max-width:32px!important;max-height:32px!important;
+ background:#d6e4ff!important;
+ background-image:none!important;
+ box-shadow:none!important;
+ animation:none!important;
+ overflow:visible!important;
+}
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five
+ .rivo-nav-icon>.rivo-material-symbol[data-material-symbol]{
+ font-size:21px!important;
+ color:#165db3!important;
+ -webkit-text-fill-color:#165db3!important;
+}
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five .rivo-nav-scan-ring{
+ background:#165db3!important;
+ background-image:none!important;
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ border:2px solid #83c6f0!important;
+ box-shadow:none!important;
+}
+html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five
+ .rivo-nav-scan-ring .rivo-material-symbol[data-material-symbol]{
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ font-size:28px!important;
+}
