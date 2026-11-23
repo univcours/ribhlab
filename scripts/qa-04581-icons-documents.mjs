@@ -56,6 +56,8 @@ try{
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
    }),selector);
+   console.log('[RivoScan 0.45.81 UI geometry]',JSON.stringify({surface,width,values}));
+   await page.screenshot({path:`${out}/${width}x852-SAMPLE-${surface}-same-row-actions.png`});
    assert.equal(values.length,2);
    for(const v of values){
     for(const property of ['rowWithinScreen','thumbWithinRow','imageWithinThumb','textWithinRow','actionsOnSameLine','actionsWithinRow','flex'])
