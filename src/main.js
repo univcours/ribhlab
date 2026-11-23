@@ -3,6 +3,7 @@ import './theme-brand.css';
 import './premium-home.css';
 import {homeTiles,premiumCopy} from './premium-home-model.js';
 import {phosphorIcon} from './phosphor-icons.js';
+import {installPhosphorAutoIcons} from './phosphor-auto-icons.js';
 import { version as appVersion } from '../package.json';
 import {readScanPrefs,updateScanPref,scanPrefsText,SCAN_PREF_FIELDS,formatScanSettingValue} from './scanner-settings.js';
 import { parsePages } from './pdf-utils.js';
@@ -99,6 +100,7 @@ import { localizeStaticUI, translateStatus } from './i18n-extra.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 installToolHelp();
+installPhosphorAutoIcons();
 // The Compact APK keeps Google's document capture and PerfectClean, but
 // deliberately omits experimental 3D/ONNX and the legacy CameraX pipeline.
 const COMPACT_BUILD=import.meta.env.VITE_RIVO_COMPACT==='1';
