@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 /**
  * PerfectScan Pro's OWN post-capture document review.
  * This runs only AFTER a photo has been taken, BEFORE PerfectScan processing or saving.
@@ -102,13 +102,13 @@ export async function reviewPerfectScanCapture(file,{language='en'}={}){
   overlay=document.createElement('div');overlay.className='rivo-perfect-capture-overlay';
   overlay.dir=language==='ar'?'rtl':'ltr';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',tr.title);
-  overlay.innerHTML='<section class="rivo-perfect-capture-panel"><header><strong>'+tr.title+'</strong><button data-capture-action="cancel" type="button" aria-label="'+tr.cancel+'">'+phosphorIcon('close',19)+'</button></header>'+
+  overlay.innerHTML='<section class="rivo-perfect-capture-panel"><header><strong>'+tr.title+'</strong><button data-capture-action="cancel" type="button" aria-label="'+tr.cancel+'">'+materialSymbol('close',19)+'</button></header>'+
    '<p class="rivo-perfect-capture-hint">'+tr.description+'</p>'+
    '<div class="rivo-corner-loupe-dock" data-side="right" data-active="false" aria-hidden="true"><canvas class="rivo-corner-loupe-preview" width="320" height="320"></canvas><span class="rivo-corner-loupe-hint">×6</span></div>'+
    '<div class="rivo-perfect-capture-stage"><canvas class="rivo-perfect-capture-canvas" aria-label="'+tr.description+'"></canvas></div>'+
    '<small class="rivo-perfect-capture-message" role="status"></small>'+
-   '<nav class="rivo-perfect-capture-controls"><button type="button" data-capture-action="manual">'+tr.manual+'</button><button type="button" data-capture-action="reset">'+phosphorIcon('reset',17)+' '+tr.reset+'</button><button type="button" data-capture-action="original">'+tr.original+'</button></nav>'+
-   '<footer><button type="button" data-capture-action="cancel">'+tr.cancel+'</button><button type="button" data-capture-action="continue">'+phosphorIcon('check',17)+' '+tr.continue+'</button></footer></section>';
+   '<nav class="rivo-perfect-capture-controls"><button type="button" data-capture-action="manual">'+tr.manual+'</button><button type="button" data-capture-action="reset">'+materialSymbol('reset',17)+' '+tr.reset+'</button><button type="button" data-capture-action="original">'+tr.original+'</button></nav>'+
+   '<footer><button type="button" data-capture-action="cancel">'+tr.cancel+'</button><button type="button" data-capture-action="continue">'+materialSymbol('check',17)+' '+tr.continue+'</button></footer></section>';
   document.body.appendChild(overlay);
   const canvas=overlay.querySelector('.rivo-perfect-capture-canvas'),status=overlay.querySelector('.rivo-perfect-capture-message');
   const dock=overlay.querySelector('.rivo-corner-loupe-dock'),loupeCanvas=dock.querySelector('canvas');
