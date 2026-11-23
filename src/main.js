@@ -82,6 +82,8 @@ import './rivo-thumbnail-restore-04580.css';
 // Exact 0.45.44 My Documents flex rows; thumbnail stays current size and clipped.
 import './rivo-mydocs-04544-layout-04580.css';
 import './rivo-phosphor-unified-04581.css';
+// Exact 0.45.44 selected-file action layout and ordering in both file lists.
+import './rivo-selection-04544-04583.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
@@ -518,7 +520,7 @@ function renderSavedFileRow(item,index){
    ${bulkUI.checkbox(item,index)}
    <span class="document-icon rivo-file-thumb rivo-file-${file.klass}" ${['pdf','image'].includes(file.klass)?`data-thumb-uri="${escapeHTML(item.uri)}"`:''} aria-hidden="true"><span class="rivo-file-type-icon">${ico(file.symbol,24)}</span></span>
    <div class="document-description"><strong title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</strong><small>${documentMeta(item)}</small></div>
-   ${single?`<div class="document-buttons rivo-file-quick-actions" role="group" aria-label="${bulkUI.t('menuActions')}">
+   ${single?`<div class="document-buttons rivo-file-quick-actions">
     <button type="button" data-doc-open="${index}" title="${hv('view')}" aria-label="${hv('view')}">${ico('eye',17)}</button>
     ${['pdf','image'].includes(file.klass)?`<button type="button" data-doc-shield="${index}" title="Privacy Shield" aria-label="Privacy Shield">${ico('shield',17)}</button>`:''}
     ${edgeAdjustableDocument(item)?`<button type="button" data-doc-edges="${index}" title="${escapeHTML(edgeAdjustLabel())}" aria-label="${escapeHTML(edgeAdjustLabel())}">${ico('edges',17)}</button>`:''}
