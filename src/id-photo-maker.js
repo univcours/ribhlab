@@ -1,3 +1,4 @@
+import {phosphorIcon} from './phosphor-icons.js';
 import {mountDialogControls} from './modal-shell.js';
 import {Camera,CameraResultType,CameraSource} from '@capacitor/camera';
 import {mountPreviewFirstWorkspace} from './preview-workspace.js';
@@ -184,15 +185,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  workspace.show(false); // Only the preview is initially visible; settings open on demand.
  // Use the empty margins on BOTH sides of the actual photo, not a second
  // row of controls below it. Keep every icon wholly inside its button.
- const icons={
-  photo:'<rect x="3" y="6" width="18" height="15" rx="2"/><circle cx="12" cy="13" r="3.3"/><path d="M8 6l1.5-3h5L16 6"/>',
-  crop:'<path d="M7 3v14a3 3 0 0 0 3 3h11M3 7h14a3 3 0 0 1 3 3v11"/>',
-  background:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M4 16l5-5 4 3 3-4 4 5"/>',
-  up:'<path d="m6 14 6-6 6 6"/>',down:'<path d="m6 10 6 6 6-6"/>',
-  left:'<path d="m14 6-6 6 6 6"/>',right:'<path d="m10 6 6 6-6 6"/>',
-  gallery:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 3 3-4 4 5"/>',
-  reset:'<path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/>'
- };
+
  const railNames={
   en:['Photo','Size & crop','Background','Move up','Move down','Move left','Move right','Reset position'],
   ar:['الصورة','المقاس والتأطير','الخلفية','فوق','تحت','يسار','يمين','إرجاع الوسط'],
@@ -205,7 +198,7 @@ export async function openIDPhotoMaker({language='en',save,notify=()=>{},onClose
  const railButton=(rail,icon,label,fn)=>{
   const b=document.createElement('button');b.type='button';b.className='rivo-id-side-action';
   b.title=label;b.setAttribute('aria-label',label);
-  b.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
+  b.innerHTML=phosphorIcon(icon,23);
   b.addEventListener('click',fn);rail.append(b);return b;
  };
  // Keep exactly one camera and one Import/Change Photo control together.
