@@ -14,10 +14,11 @@ export const CAMERA_BLOCKING_OVERLAYS=Object.freeze([
 export const CAMERA_ALLOWED_ROUTES=Object.freeze(['home','library','tools']);
 export function cameraFabDecision({
  route='home',selection=false,busy=false,nativeCapture=false,modal=false,
- permission=false,external=false,bannerCollision=false,foreground=true
+ permission=false,external=false,bannerCollision=false,foreground=true,keyboard=false
 }={}){
  if(!CAMERA_ALLOWED_ROUTES.includes(route))return {visible:false,reason:'route'};
  if(!foreground||external)return {visible:false,reason:'external-app'};
+ if(keyboard)return {visible:false,reason:'keyboard'};
  if(nativeCapture||permission)return {visible:false,reason:'camera-or-permission'};
  if(busy)return {visible:false,reason:'processing'};
  if(modal)return {visible:false,reason:'modal-or-other-scanner'};
@@ -42,17 +43,19 @@ export function createFloatingCameraController({getState}={}){
   const button=document.querySelector('#app .rivo-camera-fab');
   if(!button)return {visible:false,reason:'not-rendered'};
   const app=getState()||{};
+  const focused=document.activeElement;
+  const keyboard=!!focused&&/^(INPUT|TEXTAREA|SELECT)$/.test(focused.tagName);
   const modal=CAMERA_BLOCKING_OVERLAYS.some(selector=>
    [...document.querySelectorAll(selector)].some(elementIsVisible));
   const foreground=document.visibilityState!=='hidden';
-  const prelim=cameraFabDecision({...app,modal,foreground,bannerCollision:false});
+  const prelim=cameraFabDecision({...app,modal,keyboard,foreground,bannerCollision:false});
   if(button.hidden===prelim.visible)button.hidden=!prelim.visible;
   let collision=false;
   if(prelim.visible&&document.body.classList.contains('rivo-has-ad-banner')){
    const ad=document.querySelector('#app .rivo-ad-banner-slot');
    if(ad&&elementIsVisible(ad))collision=overlap(button.getBoundingClientRect(),ad.getBoundingClientRect());
   }
-  const next=cameraFabDecision({...app,modal,foreground,bannerCollision:collision});
+  const next=cameraFabDecision({...app,modal,keyboard,foreground,bannerCollision:collision});
   if(button.hidden===next.visible)button.hidden=!next.visible;
   if(button.dataset.cameraVisibilityReason!==next.reason)button.dataset.cameraVisibilityReason=next.reason;
   lastReason=next.reason;
@@ -67,11 +70,12 @@ export function createFloatingCameraController({getState}={}){
  const install=()=>{
   if(disposed||observer||typeof document==='undefined'||!document.body)return;
   observer=new MutationObserver(schedule);
-  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','open']});
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','open','class']});
   document.addEventListener('visibilitychange',onVisibility);
   document.addEventListener('focusin',onVisibility);
   document.addEventListener('focusout',onVisibility);
   window.addEventListener('resize',onVisibility,{passive:true});
+  window.addEventListener('rivo:banner-layout',onVisibility);
   schedule();
  };
  const dispose=()=>{
@@ -80,6 +84,7 @@ export function createFloatingCameraController({getState}={}){
   document.removeEventListener('focusin',onVisibility);
   document.removeEventListener('focusout',onVisibility);
   window.removeEventListener('resize',onVisibility);
+  window.removeEventListener('rivo:banner-layout',onVisibility);
  };
  return {sync,schedule,install,dispose,getReason:()=>lastReason};
 }
