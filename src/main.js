@@ -1445,7 +1445,30 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
     const message=String(err?.message||err);
     if(/cancel|user dismissed|aborted/i.test(message))return;
     console.error('Google ML Kit FULL scan:',err);
-    toast('Google scanner could not open: '+message,true);
+    toast(({en:'Google scanner unavailable. Opening the phone camera…',ar:'ماسح Google غير متاح. غادي نفتح كاميرا الهاتف…',fr:'Scanner Google indisponible. Ouverture de la caméra…',es:'Escáner Google no disponible. Abriendo cámara…',de:'Google-Scanner nicht verfügbar. Kamera wird geöffnet…',pt:'Scanner Google indisponível. A abrir câmara…',it:'Scanner Google non disponibile. Apro la fotocamera…'})[language]||'Opening phone camera…');
+    // Keep Google ML Kit as first choice. Fall back only after a technical
+    // failure, NEVER after a user cancellation. The camera result follows
+    // the same reviewed, permanent PDF storage path as ordinary scans.
+    try{
+      const photo=await Camera.getPhoto({
+        quality:90,allowEditing:false,source:CameraSource.Prompt,
+        resultType:CameraResultType.DataUrl,correctOrientation:true
+      });
+      if(!photo?.dataUrl)throw Error('Camera returned no photo');
+      const response=await fetch(photo.dataUrl);
+      if(!response.ok)throw Error('Cannot read camera image');
+      const original=new File([await response.blob()],
+        'RivoScan_Camera_'+Date.now()+'.jpg',{type:'image/jpeg'});
+      const pdf=await imagesToPdf('color',[original]);
+      await saveOut(pdf,'RivoScan_Scan_'+Date.now()+'.pdf');
+      openLibrary();
+    }catch(cameraErr){
+      const cameraMessage=String(cameraErr?.message||cameraErr);
+      if(!/cancel|user dismissed|aborted/i.test(cameraMessage)){
+        console.error('Native camera fallback:',cameraErr);
+        toast('Camera unavailable: '+cameraMessage,true);
+      }
+    }
   }finally{
     localStorage.removeItem(MLKIT_MODE_KEY);
     nativeCaptureDepth=Math.max(0,nativeCaptureDepth-1);
