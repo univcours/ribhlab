@@ -17,7 +17,7 @@ test('Home card icons are crisp and file list types readable',()=>{
 });
 test('Translation and Math get separate identifiable symbols, not generic T',()=>{
  const main=get('src/main.js'),tools=get('src/tools-hub.js');
- assert.match(main,/const ico = \(name,size=20\) => phosphorIcon\(name,size\)/);
+ assert.match(main,/const ico = \(name,size=20\) => materialSymbol\(name,size\)/);
  assert.match(get('src/material-symbols.js'),/"translate": "translate"/);
  assert.match(get('src/material-symbols.js'),/"math": "functions"/);
  assert.ok(tools.includes("photoTranslation:{icon:'translate'"));
