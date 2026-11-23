@@ -28,15 +28,15 @@ test('Home and My Documents render EXACT same original 0.45.44 single-file actio
  assert.match(rows,/data-thumb-uri/);
  assert.match(rows,/bulkUI\.checkbox\(item,index\)/);
 });
-test('0.45.44 multi-select options and long-press menu keep original operations',()=>{
+test('0.45.44 multi-select options remain without long-press actions',()=>{
  const section=bulk.split('function toolbar()')[1].split('const isImage=')[0];
  const actions=['cancel','all','delete','organize','merge','share'];
  let prev=-1;
  for(const x of actions){const idx=section.indexOf("compactAction('"+x+"'");assert.ok(idx>prev,x);prev=idx}
  assert.match(bulk,/if\(!mode\|\|selected\.size<2\)return ''/);
- const long=bulk.split('function longPress(doc)')[1].split('function wireLongPress(')[0];
- for(const x of ['preview','edit','share','delete','rename','copy','select'])
-  assert.ok(long.includes('data-menu="'+x+'"'),x);
+ assert.doesNotMatch(bulk,/function longPress\(|function wireLongPress\(|setTimeout\(\(\)=>|contextmenu|suppressUntil/);
+ assert.doesNotMatch(main,/bulkUI\.wireLongPress\(|bulkUI\.suppressClick\(/);
+ assert.match(main,/bulkUI\.toggle\(libraryItems\[Number\(target\.dataset\.docSelect\)\]\)/);
 });
 test('0.45.44 selection options remain next to current thumbnail in BOTH lists',()=>{
  assert.match(main,/import '\.\/rivo-selection-04544-04583\.css'/);
@@ -48,4 +48,15 @@ test('0.45.44 selection options remain next to current thumbnail in BOTH lists',
  assert.match(css,/height:34px!important/);
  assert.match(css,/height:72px!important/);
  assert.match(css,/height:66px!important/);
+});
+
+test('thumbnail fills entire frame with no padding and no letterboxing',()=>{
+ const box=css.split('/* Exact thumbnail bounds, both selected and normal file cards.')[1];
+ assert.ok(box,'Missing fill-frame thumbnail layout');
+ assert.match(box,/padding:0!important/);
+ assert.match(box,/object-fit:cover!important/);
+ assert.match(box,/overflow:hidden!important/);
+ assert.match(box,/width:100%!important/);
+ assert.match(box,/height:100%!important/);
+ assert.match(box,/:is\(#home-recents,#library-list\)/);
 });
