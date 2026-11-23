@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {PHOSPHOR_MAP,phosphorIcon} from '../src/phosphor-icons.js';
+import {PHOSPHOR_MAP,phosphorIcon,hasPhosphorIcon} from '../src/phosphor-icons.js';
 const file=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 test('all shared app icons are actual offline Phosphor Duotone SVGs',()=>{
  for(const key of Object.keys(PHOSPHOR_MAP)){
   const svg=phosphorIcon(key,21);
   assert.match(svg,/<svg[^>]*data-phosphor-icon=/);
-  assert.match(svg,/<path\b/);
+  assert.ok(hasPhosphorIcon(key),'Missing official SVG asset '+key);
+  assert.match(svg,/<(?:path|circle|rect|line)\b/);
   assert.match(svg,/viewBox="0 0 256 256"/);
   assert.ok(!svg.includes('undefined'));
  }
