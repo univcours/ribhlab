@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {mountDialogControls} from './modal-shell.js';
 import {PDFDocument} from 'pdf-lib';
 import {dewarpBookCanvas,estimateBookCurvature} from './document-dewarp.js';
@@ -367,7 +367,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
  title.classList.add('rivo-workspace-title');
  const toggle=document.createElement('button');toggle.type='button';
  toggle.className='rivo-workspace-settings-toggle';
- toggle.innerHTML=phosphorIcon('settings',23);toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
+ toggle.innerHTML=materialSymbol('settings',23);toggle.setAttribute('aria-label',({ar:'إعدادات الصورة',fr:'Réglages',en:'Image settings'})[language]||'Settings');
  toggle.setAttribute('aria-expanded','false');
  header.insertBefore(toggle,header.lastElementChild);
  const previewDock=document.createElement('div');
@@ -385,7 +385,7 @@ export function openBookSplitter({language='en',save,capture,cleanPage,singlePag
 
  for(const task of ['source',...(!singlePage?['split']:[]),'flatten']){
   const tab=document.createElement('button');tab.type='button';
-  tab.className='rivo-workspace-task';tab.innerHTML=phosphorIcon(({source:'source',split:'split',flatten:'flatten'})[task],20)+'<span>'+labels[task]+'</span>';
+  tab.className='rivo-workspace-task';tab.innerHTML=materialSymbol(({source:'source',split:'split',flatten:'flatten'})[task],20)+'<span>'+labels[task]+'</span>';
   tab.dataset.bookTask=task;
   tab.addEventListener('click',()=>setBookTask(task));
   taskBar.append(tab);
