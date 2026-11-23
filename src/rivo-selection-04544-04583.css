@@ -99,5 +99,47 @@ html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
   flex-basis:27px!important;width:27px!important;min-width:27px!important;max-width:27px!important;
  }
 }
-/* Original v0.45.44 bulk operations are shown only when 2+ docs selected.
-   Leave the original compact selection toolbar and long-press sheet untouched. */
+/* Original v0.45.44 multiple-checkbox selection remains, while file long-press menus are removed. */
+
+/* Exact thumbnail bounds, both selected and normal file cards.
+   The PDF/photo fills its own rectangle, without internal padding or
+   letterboxing. Overflow remains clipped inside the radius of the preview. */
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry > .rivo-file-thumb{
+ display:block!important;
+ box-sizing:border-box!important;
+ padding:0!important;
+ margin:0!important;
+ background:transparent!important;
+ border:0!important;
+ border-radius:5px!important;
+ overflow:hidden!important;
+ line-height:0!important;
+ isolation:isolate!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry > .rivo-file-thumb:has(img){
+ display:block!important;
+}
+html body #app .shell.rivo-dark-ui :is(#home-recents,#library-list)
+ > article.document-entry > .rivo-file-thumb > img{
+ display:block!important;
+ box-sizing:border-box!important;
+ position:static!important;
+ inset:auto!important;
+ width:100%!important;
+ height:100%!important;
+ min-width:100%!important;
+ min-height:100%!important;
+ max-width:100%!important;
+ max-height:100%!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:5px!important;
+ object-fit:cover!important;
+ object-position:center!important;
+ transform:none!important;
+ filter:none!important;
+ opacity:1!important;
+}
