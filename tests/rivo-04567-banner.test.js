@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const get=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('Native banner is not hidden by an ordinary document popup or save progress',()=>{
+test('Native banner is paused for fullscreen dialogs but never by ordinary saving alone',()=>{
  const ads=get('src/monetization.js');
  const fn=ads.match(/function bannerObstructed\(\)\{([\s\S]*?)\n\}/)?.[1];
  assert.ok(fn,'banner visibility policy exists');

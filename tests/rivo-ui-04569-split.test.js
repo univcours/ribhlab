@@ -58,6 +58,8 @@ test('Real banner remains 320x50, exactly 3dp above nav with 18dp protected cont
  assert.equal(layout.bannerTop-(873-layout.contentBottom),18);
  const native=read('src/rivo-ui-04567.css'),ads=read('src/monetization.js');
  assert.match(native,/bottom:var\(--rivo-content-bottom,98px\)!important/);
- assert.ok(ads.includes('const show=!!(visible&&layout.valid&&!bannerWrongSize);'));
+ assert.ok(ads.includes('const reserved=!!('));
+ assert.ok(ads.includes('const displayed=!!('));
+ assert.ok(ads.includes("document.body.classList.toggle('rivo-ad-reserved',reserved)"));
  assert.doesNotMatch(ads,/RewardedAd|PRO bonus|Watch ad/);
 });
