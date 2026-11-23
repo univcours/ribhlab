@@ -1,5 +1,18 @@
 # RivoScan — Persistent project handoff
 
+## CURRENT VERIFIED RIVОSCAN CHECKPOINT — 0.45.91 (2026-11-23)
+
+- Source branch: `fix/rivoscan-04591-single-scan-action`, code 206, versionName 0.45.91, original package `com.ribhlab.rivoscan`.
+- Signed GitHub tester **pre-release**, not Google Play: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.91-single-camera . Signed ARM64, ARM32, Universal APK plus all-supported-ABI AAB were verified and published.
+- Fully successful Android packaging/browser native emulator screenshots workflow: https://github.com/univcours/ribhlab/actions/runs/45284073142 . Node tests, responsive UI, 5 ABI APK signatures/content parity, all-ABI AAB and emulator screenshot step passed.
+- Explicit user UI instruction: **ONE** camera button in the center of bottom navigation, with real Google Material Symbols Rounded `photo_camera` glyph. The old overlaid/floating camera FAB is REMOVED from actual markup; bottom Smart Scan retains native `openSmartScanner()` click handler. Do NOT restore duplicate FAB merely because archived 0.45.88 tests/docs expected it.
+- Earlier 0.45.90 and 0.45.91 Android emulator screenshots named `03-qr.png` and `04-plate.png` looked like Home due stale hard-coded tap coordinates. A separate genuine signed-APK navigation QA test was added on the active branch; check its current run/artifacts before claiming QR/Plate navigation was verified. Browser SAMPLE screenshots are not proof of native scan execution.
+- Real physical-device AdMob impression and end-to-end QR, ML Kit, document/PDF/camera tests remain open unless separately evidenced. Material 3 Expressive/Material Symbols Rounded remain required. Do not upload any release to Google Play without user's explicit permission.
+- Continuation: inspect latest active branch Actions, GitHub pre-release and branch-local `docs/agent/` checklist. This checkpoint supersedes historical versions as a STATUS marker only.
+
+---
+
+
 ## LATEST VERIFIED CHECKPOINT — RivoScan 0.45.90 (2026-11-23)
 
 - **Signed tester pre-release available, NOT uploaded to Play:** https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.90-fab-banner-safearea . Signed ARM64, ARM32, Universal APK and all-ABI AAB present (package `com.ribhlab.rivoscan`, versionName `0.45.90`, code `205`, original signing identity checked).
