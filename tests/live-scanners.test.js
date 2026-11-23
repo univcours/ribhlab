@@ -155,9 +155,9 @@ test('Native scanner accepts only permanent TXT appends and never creates scanne
  assert.ok(!java.includes('RivoScan_Plates.xlsx'));
  assert.ok(main.includes("onSuccess:()=>soundFeedback('codeSuccess')"));
  assert.ok(sounds.includes('"codeSuccess".equals(event)'));
- assert.ok(main.includes("onPreview:doc=>previewSavedDocument(doc)"));
+ assert.ok(main.includes("async function openSavedDocumentExternally(doc)"));
  assert.ok(main.includes("onEdit:doc=>RivoDocuments.openFile({uri:doc.uri})"));
- assert.ok(main.includes("} else if(type==='open')await previewSavedDocument(selected);"));
+ assert.ok(main.includes("} else if(type==='open')await openSavedDocumentExternally(selected);"));
 });
 test('Tools are wired and camera overlays stop streaming on close or Android Back',()=>{
  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
