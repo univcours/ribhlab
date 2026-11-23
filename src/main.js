@@ -84,6 +84,8 @@ import './rivo-mydocs-04544-layout-04580.css';
 import './rivo-phosphor-unified-04581.css';
 // Exact 0.45.44 selected-file action layout and ordering in both file lists.
 import './rivo-selection-04544-04583.css';
+// LAST icon layer: Phosphor Duotone across every feature and modal.
+import './rivo-phosphor-global-04584.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
