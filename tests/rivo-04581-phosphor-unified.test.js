@@ -48,9 +48,9 @@ test('no in-app document preview, More, zoom or PDF viewer; external Android ope
  assert.match(native,/Intent\.createChooser\(open/);
 });
 
-test('Android remains portrait and 0.45.85 has unique version code',()=>{
- assert.equal(JSON.parse(file('package.json')).version,'0.45.85');
- assert.match(file('rivoscan-version.properties'),/^versionCode=200$/m);
+test('Android remains portrait and 0.45.86 has unique version code',()=>{
+ assert.equal(JSON.parse(file('package.json')).version,'0.45.86');
+ assert.match(file('rivoscan-version.properties'),/^versionCode=201$/m);
  assert.match(file('scripts/prepare-rivoscan-compact.py'),/screenOrientation="portrait"/);
  assert.match(file('scripts/verify-rivoscan-portrait.py'),/direction!="portrait"/);
 });
