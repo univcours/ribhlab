@@ -85,6 +85,8 @@ import './rivo-phosphor-unified-04581.css';
 import './rivo-selection-04544-04583.css';
 // LAST icon layer: Phosphor Duotone across every feature and modal.
 import './rivo-phosphor-global-04584.css';
+// Final selection layout: all external-open, edit and document icons fit without clipping.
+import './rivo-file-actions-unclipped-04585.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
