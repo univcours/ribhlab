@@ -72,11 +72,12 @@ test('Screenshots navigate actual four slots and reject duplicate documents/tool
  assert.ok(script.includes('did not navigate on the first tap'));
  assert.ok(script.includes('duplicate navigation screenshot'));
 });
-test('No redundant Home/All Tools link inside Documents; native topbar handles Back',()=>{
+test('No redundant Home/All Tools link in Documents; Android Back works without topbar Back',()=>{
  const main=file('src/main.js');
  const library=main.slice(main.indexOf('function libraryWorkspace(){'),main.indexOf('async function loadLibrary(',main.indexOf('function libraryWorkspace(){')));
  assert.ok(!library.includes('class="back"'));
- assert.ok(main.includes('data-inapp-back'));
+ assert.ok(!main.includes('data-inapp-back')); // redundant in-app Back removed
+ assert.ok(main.includes("CapacitorApp.addListener('backButton'")); // system back preserved
 });
 test('Right-edge Android Back closes page manager, editor and every supported full-screen tool first',()=>{
  const main=file('src/main.js');
@@ -110,7 +111,7 @@ test('Settings switches, language selector and search icons follow teal system',
 test('Tools/Settings navigation never waits for an ad or asynchronous promise',()=>{
  const main=file('src/main.js');
  const start=main.indexOf("document.querySelectorAll('[data-tab]').forEach(");
- const end=main.indexOf("document.querySelectorAll('[data-inapp-back]')",start);
+ const end=main.indexOf("document.querySelectorAll('[data-ad-settings-toggle]')",start);
  const click=main.slice(start,end);
  assert.ok(click.includes('openTab(el.dataset.tab)'));
  assert.ok(!click.includes('await atNaturalNavigation'), 'Tabs must not wait on ads');
