@@ -52,6 +52,13 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
             sleep 1
           done
+          # Built preview verifies final layout; Vite development port additionally
+          # exposes source modules for real PDF viewer click-handler tests.
+          npm run dev -- --host 127.0.0.1 --port 4174 > "$RUNNER_TEMP/rivo-dev.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null; then break; fi
+            sleep 1
+          done
           node scripts/qa-responsive-04576.mjs
           node scripts/qa-04581-icons-documents.mjs
       - name: Upload responsive browser screenshots and checks
