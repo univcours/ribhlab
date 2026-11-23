@@ -23,15 +23,19 @@ test('real first-page native PDF thumbnails remain, preserving 58x72 / 50x66',()
  assert.match(sharedCss,/height:66px!important/);
  assert.match(sharedCss,/object-fit:contain!important/);
 });
-test('PDF and image preview stays in RivoScan, with explicit Android chooser',()=>{
- const viewer=read('src/document-viewer.js');
- assert.match(main,/return docViewerUI\.open\(doc\)/);
- assert.match(main,/onPreview:doc=>previewSavedDocument\(doc\)/);
- assert.match(viewer,/bridge\.openFile\(\{uri:current\.uri\}\)/);
- assert.match(viewer,/doc-viewer-menu-panel/);
+test('saved PDF and image open only via Android external-app chooser',()=>{
+ assert.match(main,/async function openSavedDocumentExternally\\(doc\\)/);
+ assert.match(main,/RivoDocuments\\.openFile\\(\\{uri:doc\\.uri\\}\\)/);
+ assert.doesNotMatch(main,/createDocumentViewer|docViewerUI|doc-detail-overlay/);
+ assert.match(main,/data-doc-external/);
+ const native=read('native/android/RivoDocumentsPlugin.java');
+ assert.match(native,/Intent\\.ACTION_VIEW/);
+ assert.match(native,/Intent\\.createChooser\\(open/);
+ assert.match(native,/FLAG_GRANT_READ_URI_PERMISSION/);
 });
-test('new signed tester build 0.45.84 code 197 is monotonic',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.84');
- assert.match(read('rivoscan-version.properties'),/^versionCode=199$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.84$/m);
+
+test('new signed tester build 0.45.85 code 197 is monotonic',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.85');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=200$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.85$/m);
 });
