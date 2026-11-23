@@ -366,3 +366,21 @@ html body #app .shell.rivo-dark-ui .mobilebar.rivo-nav-five
  -webkit-text-fill-color:#fff!important;
  font-size:28px!important;
 }
+
+/* 0.45.88 — The old blue-theme mobile rule hid this exact FAB selector with
+ * display:none!important. Override it with higher specificity only when the
+ * CENTRAL camera controller has NOT set [hidden]. Never force it visible
+ * during QR, barcode, native scanner, image tools, modal dialogs or selection.
+ */
+html body #app .shell.rivo-dark-ui button.floating-scan.rivo-camera-fab:not([hidden]){
+ display:grid!important;
+ visibility:visible!important;
+ opacity:1!important;
+ pointer-events:auto!important;
+}
+html body #app .shell.rivo-dark-ui button.floating-scan.rivo-camera-fab[hidden]{
+ display:none!important;
+ visibility:hidden!important;
+ opacity:0!important;
+ pointer-events:none!important;
+}
