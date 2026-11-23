@@ -2,7 +2,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import {makeLongImage,makeWordText} from './share-exports.js';
 import {generatedRsName} from './rs-file-names.js';
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 
 export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onEdit,onDirectTransfer,onRename,showBusy,progress,clearBusy,saveOut,toast}){
   let mode=false;
@@ -34,7 +34,7 @@ export function createLibraryBulk({bridge,getLanguage,getItems,onRefresh,onEdit,
   const selectedDocs=()=>[...selected].map(uri=>getItems().find(doc=>doc.uri===uri)).filter(Boolean);
   const chosen=doc=>selected.has(doc.uri);
   // Shared Phosphor Duotone controls, consistent with Home, Documents and PDF viewer.
-  const compactIcon=name=>phosphorIcon(
+  const compactIcon=name=>materialSymbol(
     ({share:'share',merge:'merge',move:'move',trash:'trash',all:'all',close:'close'})[name]||'file',18);
   const compactAction=(action,label,shape,disabled=false)=>'<button type="button" data-bulk="'+action+'" title="'+label+'" aria-label="'+label+'"'+(disabled?' disabled aria-disabled="true"':'')+'>'+compactIcon(shape)+'<span class="rivo-action-label">'+label+'</span></button>';
   // Single selection uses the file's own actions, not the bulk toolbar.
