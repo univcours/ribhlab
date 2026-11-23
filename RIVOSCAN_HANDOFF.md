@@ -9,7 +9,7 @@
 ## User's non-negotiable requirements
 
 - Professional, consistent, **clear and complete** icons, no clipped icons or pale low-contrast labels.
-- Prefer the most recent user-approved expressive Material 3 UI, while the earlier attached master brief specified Phosphor Duotone. **This is a specification conflict to resolve explicitly; never silently reverse a newer change.**
+- **FINAL USER DESIGN CHOICE (explicit, latest): Material 3 Expressive UI + Google Material Symbols Rounded, self-hosted/offline, on every screen. Do not switch back to Phosphor.** Preserve clear, unclipped icon spacing, consistent geometry and colors.
 - Keep original RivoScan identity, all Google ML Kit capabilities, OCR, QR/barcode and PDF features.
 - Both Home and My Documents use the **same row renderer** and the current full-frame thumbnail dimensions; selection actions remain entirely visible within the row beside the thumbnail.
 - File **long press and associated menu are removed**. Eye/in-app PDF viewer is removed. Opening saved files uses a native Android external app chooser with read permission.
@@ -35,7 +35,7 @@
 - Added structured native AdMob error formatting: error code 3 → NO_FILL, code 2 → NETWORK_ERROR; retain the real error text.
 - Added `tests/rivo-04588-master-qa.test.js` and updated version assertions/legacy Book Scan icon expectation.
 - Reviewed main navigation, Home/Documents shared renderer, scanner functions and native banner lifecycle.
-- **PENDING VALIDATION:** source unit tests, responsive UI screenshots, Android APK/AAB build and native emulator; no success claim until the run completes.
+- **VALIDATION:** 460/460 Node tests passed on GitHub Actions run 45262965953. The production postbuild safety check failed because live AdMob diagnostics text leaked into production. A subsequent commit gated full diagnostics to development; browser QA, Android APK/AAB and native emulator are still pending CI proof.
 
 ## Continue safely in a fresh ChatGPT conversation
 
