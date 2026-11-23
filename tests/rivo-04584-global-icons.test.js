@@ -9,7 +9,7 @@ test('RivoScan 0.45.84 bundles the official offline Phosphor Duotone set and ali
  assert.match(main,/import '\.\/rivo-phosphor-global-04584\.css'/);
  assert.match(main,/installPhosphorAutoIcons\(\)/);
  assert.match(icons,/\.\.\.pExtra/);
- assert.match(extra,/Official Phosphor Duotone/);
+ assert.match(extra,/ORIGINAL Phosphor Duotone/);
  for(const key of ['flash','torch','undo','redo','rotate-left','rotate-right','up','down','chevron-down',
    'eraser','calendar','brightness','gallery','background','magic','compare','copy','close',
    'share','trash','scan','camera','pdf','save','settings','crop','merge','qr','barcode']){
@@ -34,7 +34,7 @@ test('Every scanner and editor window uses Phosphor icons, no hand-coded SVG con
  const scan=read('src/plate-scanner.js'),qr=read('src/barcode-scanner.js');
  assert.doesNotMatch(scan,/btn\('✕'|btn\('⚡'|guide\.textContent='▢'/);
  assert.doesNotMatch(qr,/iconButton\('✕'|iconButton\('⚡/);
- assert.match(qr,/phosphorIcon\('copy'/);
+ assert.match(qr,/phosphorIcon\(kind==='copy'\?'copy'/);
  assert.match(scan,/phosphorIcon\('copy'/);
 });
 test('Checkbox-only file selection and full thumbnail remain in both screens',()=>{
