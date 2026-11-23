@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 /**
  * Preview-first editing pattern for RivoScan image tools.
  * Move existing DOM nodes, never clone them, so existing handlers keep working.
@@ -18,7 +18,7 @@ export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],
  header.classList.add('rivo-workspace-header');
  const gear=document.createElement('button');gear.type='button';
  gear.className='rivo-workspace-settings-toggle';
- gear.innerHTML=phosphorIcon('settings',20);gear.setAttribute('aria-label',lang.settings);
+ gear.innerHTML=materialSymbol('settings',20);gear.setAttribute('aria-label',lang.settings);
  gear.setAttribute('aria-expanded','false');
  header.insertBefore(gear,header.lastElementChild);
  const dock=document.createElement('div');
@@ -34,7 +34,7 @@ export function mountPreviewFirstWorkspace({panel,preview,sections=[],footer=[],
   if(!id||panels.has(id))throw Error('Duplicate or missing settings category');
   const tab=document.createElement('button');tab.type='button';
   tab.className='rivo-workspace-task';tab.dataset.previewTask=id;
-  tab.innerHTML=phosphorIcon(({source:'source',photo:'photo',adjust:'adjust',result:'check-circle',advanced:'settings',background:'background',crop:'crop',filters:'filter',tools:'tools'})[id]||'settings',18)+'<span>'+(label||lang[id]||id)+'</span>';nav.append(tab);
+  tab.innerHTML=materialSymbol(({source:'source',photo:'photo',adjust:'adjust',result:'check-circle',advanced:'settings',background:'background',crop:'crop',filters:'filter',tools:'tools'})[id]||'settings',18)+'<span>'+(label||lang[id]||id)+'</span>';nav.append(tab);
   const group=document.createElement('div');group.className='rivo-workspace-task-panel';
   group.dataset.previewPanel=id;group.hidden=true;
   nodes.filter(Boolean).forEach(node=>group.append(node));
