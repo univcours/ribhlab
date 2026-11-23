@@ -3,6 +3,7 @@
 import { Capacitor } from '@capacitor/core';
 import { AdMob, AdmobConsentStatus, InterstitialAdPluginEvents, BannerAdPluginEvents, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import {calculateAdLayout,nativeAdFits} from './rivo-native-ad-geometry.js';
+import {describeBanner} from './banner-diagnostics.js';
 
 const adEnv=import.meta.env||{};
 const liveAds=adEnv.VITE_RIVO_ADMOB_MODE==='live';
@@ -135,13 +136,26 @@ export function configureAds({getLanguage,notify,onChange}={}){
  if(typeof notify==='function')state.notify=notify;
  if(typeof onChange==='function')state.onChange=onChange;
 }
+export function getBannerDiagnostics(){
+ const layout=typeof document!=='undefined'?currentBannerLayout():{valid:false,reason:'No browser layout'};
+ return describeBanner({
+  android:isAndroid,enabled:AD_CONFIG.bannerEnabled,initialized:state.ready,
+  consent:state.consent,loading:state.bannerLoading,loaded:state.bannerReady,
+  hidden:state.bannerHidden,foreground:typeof document==='undefined'||document.visibilityState!=='hidden',
+  layoutValid:!!layout.valid&&!bannerWrongSize,
+  layoutReason:bannerWrongSize?'Native banner size rejected':layout.reason||'',
+  bannerError:state.bannerError||adStats.lastBannerError,
+  impressions:adStats.bannerImpressions
+ });
+}
 export function getPremiumStatus(){
  return {native:isAndroid,ready:state.ready,consent:state.consent,testMode:AD_CONFIG.testMode,bannerEnabled:AD_CONFIG.bannerEnabled,status:state.status,
  lastError:state.lastError,
  interstitialReady:state.interstitialReady,
  premiumUses:state.premiumUses,bannerReady:state.bannerReady,bannerError:state.bannerError,
  shownCount:state.shownCount,launchCount:state.launchCount,startLaunch:FULLSCREEN_START_LAUNCH,
-  adStats:{...adStats},liveAds};
+  adStats:{...adStats},liveAds,
+  bannerDiagnostics:getBannerDiagnostics()};
 }
 // A real 320x50 native Google banner, with a SEPARATELY SCROLLABLE WebView.
 // The native view owns all taps. The WebView content ends ABOVE the ad on ALL
@@ -182,7 +196,9 @@ function setBannerSpace(visible){
   show?layout.contentBottom:layout.bottomWithoutAd+8
  ):98)+'px');
  if(layout.valid)root.style.setProperty('--rivo-banner-bottom',layout.margin+'px');
- document.body.classList.toggle('rivo-has-ad-banner',show);
+ const oldVisible=document.body.classList.contains('rivo-has-ad-banner');
+  document.body.classList.toggle('rivo-has-ad-banner',show);
+  if(oldVisible!==show&&typeof window!=='undefined')window.dispatchEvent(new Event('rivo:banner-layout'));
 }
 function observeBannerOverlays(){
  if(typeof document==='undefined'||bannerObserver||typeof MutationObserver==='undefined')return;
