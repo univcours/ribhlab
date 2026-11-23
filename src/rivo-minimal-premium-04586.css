@@ -1,0 +1,143 @@
+/* RivoScan 0.45.86 | Minimal Premium: ONE Phosphor visual language.
+   No changing feature handlers or file thumbnail geometry. */
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+){
+ background:#f8fbff!important;
+ background-image:none!important;
+ color:#194d82!important;
+ border:1px solid #d9e6f2!important;
+ border-radius:14px!important;
+ box-shadow:0 2px 7px rgba(17,64,127,.06)!important;
+ transform:none!important;
+ animation:none!important;
+ text-shadow:none!important;
+ transition:background-color .15s ease, border-color .15s ease!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+)::before,html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+)::after{
+ content:none!important;
+ display:none!important;
+ animation:none!important;
+ background:none!important;
+ box-shadow:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+) strong{
+ color:#194d82!important;
+ -webkit-text-fill-color:#194d82!important;
+ text-shadow:none!important;
+ font-weight:750!important;
+ font-size:clamp(11px,2.8vw,13px)!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile .tool-icon
+){
+ width:32px!important;height:32px!important;
+ min-width:32px!important;min-height:32px!important;
+ max-width:32px!important;max-height:32px!important;
+ border-radius:10px!important;
+ display:grid!important;place-items:center!important;
+ background:#e9f3fd!important;
+ border:1px solid #d7e8f7!important;
+ color:#1866b3!important;
+ box-shadow:none!important;
+ padding:4px!important;
+ filter:none!important;
+ transform:none!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile .rivo-feature-icon,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile .tool-icon
+) svg[data-phosphor-icon]{
+ width:22px!important;height:22px!important;
+ max-width:100%!important;max-height:100%!important;
+ fill:currentColor!important;
+ color:#1866b3!important;
+ filter:none!important;
+ transform:none!important;
+ opacity:1!important;
+}
+html body #app .shell.rivo-dark-ui :is(
+ .rivo-home .rivo-feature-rail>.rivo-feature-tile,
+ .rivo-tools-scroll .rivo-hub-grid>.rivo-hub-tile
+):active{
+ background:#eaf4ff!important;
+}
+/* FAB is a real floating overlay, centrally managed by JS. Its baseline
+   is the bottom of the *content viewport* calculated from native AdMob/nav. */
+html body #app .shell.rivo-dark-ui button.rivo-camera-fab{
+ display:grid!important;place-items:center!important;
+ position:fixed!important;
+ width:58px!important;height:58px!important;
+ min-width:58px!important;min-height:58px!important;
+ max-width:58px!important;max-height:58px!important;
+ border-radius:18px!important;
+ inset-inline-end:max(16px,env(safe-area-inset-right,0px))!important;
+ left:auto!important;right:18px!important;
+ bottom:calc(var(--rivo-content-bottom,95px) + 13px)!important;
+ z-index:24!important;
+ padding:13px!important;margin:0!important;
+ background:#116ac2!important;color:#fff!important;
+ border:1px solid #348ee1!important;
+ box-shadow:0 5px 16px rgba(17,83,152,.22)!important;
+ animation:none!important;filter:none!important;transform:none!important;
+ touch-action:manipulation!important;
+}
+html[dir="rtl"] body #app .shell.rivo-dark-ui button.rivo-camera-fab{
+ right:auto!important;left:18px!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-camera-fab svg[data-phosphor-icon]{
+ width:28px!important;height:28px!important;
+ fill:currentColor!important;color:#fff!important;
+ min-width:28px!important;min-height:28px!important;
+ filter:none!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-camera-fab[hidden]{
+ display:none!important;pointer-events:none!important;
+}
+html body #app .shell.rivo-dark-ui button.rivo-camera-fab:focus-visible{
+ outline:3px solid #8bc3ff!important;outline-offset:2px!important;
+}
+@media(max-width:360px){
+ html body #app .shell.rivo-dark-ui button.rivo-camera-fab{
+  right:12px!important;width:52px!important;height:52px!important;
+  min-width:52px!important;min-height:52px!important;
+  max-width:52px!important;max-height:52px!important;
+  border-radius:16px!important;
+ }
+ html[dir="rtl"] body #app .shell.rivo-dark-ui button.rivo-camera-fab{
+  right:auto!important;left:12px!important;
+ }
+}
+/* Never put a fake/empty banner in place of AdMob's actual native view. */
+html body.rivo-native-android:not(.rivo-has-ad-banner)
+ #app .shell.rivo-dark-ui .rivo-ad-banner-slot{
+ visibility:hidden!important;pointer-events:none!important;
+}
+html body.rivo-native-android.rivo-has-ad-banner
+ #app .shell.rivo-dark-ui .rivo-ad-banner-slot{
+ visibility:visible!important;
+}
+/* Phone media safe to overflow without clipping SVGs, unlike old icon
+   gradients and masks. File list rows keep their verified 0.45.85 geometry. */
+html body #app .shell.rivo-dark-ui .rivo-home .rivo-feature-rail
+ svg[data-phosphor-icon],
+html body #app .shell.rivo-dark-ui .rivo-tools-scroll
+ svg[data-phosphor-icon]{
+ overflow:visible!important;
+ clip-path:none!important;
+ mask:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app .shell.rivo-dark-ui button.rivo-camera-fab{transition:none!important}
+}
