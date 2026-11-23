@@ -54,8 +54,8 @@ test('external file opening and original document actions invoke real native hoo
   assert.ok(main.includes(action),'Missing real document action '+action);
 });
 
-test('Signed release is monotonic 0.45.87 code 192',()=>{
- assert.equal(JSON.parse(get('package.json')).version,'0.45.87');
- assert.match(get('rivoscan-version.properties'),/^versionCode=202$/m);
- assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.87$/m);
+test('Signed release is monotonic 0.45.88 code 192',()=>{
+ assert.equal(JSON.parse(get('package.json')).version,'0.45.88');
+ assert.match(get('rivoscan-version.properties'),/^versionCode=203$/m);
+ assert.match(get('rivoscan-version.properties'),/^versionName=0\.45\.88$/m);
 });
