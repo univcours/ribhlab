@@ -3,17 +3,17 @@
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {phosphorIcon} from '../src/phosphor-icons.js';
+import {materialSymbol} from '../src/material-symbols.js';
 const url=process.env.RIVO_URL||'http://127.0.0.1:4173';
 const out=process.env.RIVO_QA_DIR||'/tmp/rivo-04581-qa';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const findings=[];
-const officialActionIcons=['external','shield','edges','share','pencil','trash'].map(name=>phosphorIcon(name,18));
+const officialActionIcons=['external','shield','edges','share','pencil','trash'].map(name=>materialSymbol(name,18));
 try{
  for(const width of [320,360,393,480]){
   const ctx=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,locale:'en-US'});
-  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.86'));
+  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.87'));
   const page=await ctx.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.locator('#home-recents').waitFor({timeout:20000});
@@ -62,7 +62,7 @@ try{
          return b.left>=r.left-pad&&b.right<=r.right+pad&&b.top>=r.top-pad&&b.bottom<=r.bottom+pad;
        }),
        everyIconInsideButton:!actions||[...actions.querySelectorAll('button')].every(button=>{
-         const b=button.getBoundingClientRect(),icon=button.querySelector('svg[data-phosphor-icon]');
+         const b=button.getBoundingClientRect(),icon=button.querySelector('.rivo-material-symbol[data-material-symbol]');
          if(!icon)return false;
          const p=icon.getBoundingClientRect();
          return p.left>=b.left-pad&&p.right<=b.right+pad&&p.top>=b.top-pad&&p.bottom<=b.bottom+pad;
@@ -72,7 +72,7 @@ try{
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
    }),selector);
-   console.log('[RivoScan 0.45.86 UI geometry]',JSON.stringify({surface,width,values}));
+   console.log('[RivoScan 0.45.87 UI geometry]',JSON.stringify({surface,width,values}));
    await page.screenshot({path:`${out}/${width}x852-SAMPLE-${surface}-same-row-actions.png`});
    console.log('[04581 layout diagnostic]',width,surface,JSON.stringify(values));
    assert.equal(values.length,2);
@@ -92,7 +92,7 @@ try{
   await ctx.close();
  }
  const ctx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
- await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.86'));
+ await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.87'));
  const page=await ctx.newPage();
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('.doc-detail-overlay, .doc-viewer-menu-panel').count(),0,
