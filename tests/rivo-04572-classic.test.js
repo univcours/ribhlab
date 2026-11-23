@@ -63,8 +63,8 @@ test('No rewarded prompt, original Google Play upload signature preserved',()=>{
  const ads=read('src/monetization.js');
  assert.doesNotMatch(ads,/PRO bonus|RewardedAd|showRewardVideoAd/);
  assert.match(ads,/AdMob\.showInterstitial/);
- assert.match(read('rivoscan-version.properties'),/^versionCode=201$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.86$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=202$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.87$/m);
 });
 test('Reduced motion is respected',()=>{
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
