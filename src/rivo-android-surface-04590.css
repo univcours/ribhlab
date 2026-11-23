@@ -115,3 +115,15 @@ html body.rivo-native-android .rivo-code-overlay .rivo-code-dialog.rivo-shared-p
   flex-basis:105px!important;min-height:105px!important;max-height:105px!important;
  }
 }
+
+/* Coordinate CSS shell sizing with the viewport measured in JS for AdMob.
+   On some mobile/landscape Chrome/WebView configurations 100dvh is smaller
+   than innerHeight, stranding file Search/Tools in the invisible bottom gap. */
+html body.rivo-native-android,
+html body.rivo-native-android #app,
+html body.rivo-native-android #app .shell.rivo-dark-ui,
+html body.rivo-native-android #app .shell.rivo-dark-ui .main{
+ height:var(--rivo-webview-height,100dvh)!important;
+ max-height:var(--rivo-webview-height,100dvh)!important;
+ min-height:0!important;
+}

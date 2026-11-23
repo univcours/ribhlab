@@ -125,6 +125,12 @@ const RivoUVDoc = registerPlugin('RivoUVDoc');
 const RivoSurface3D = registerPlugin('RivoSurface3D');
 if(Capacitor.isNativePlatform() && Capacitor.getPlatform()==='android'){
   document.body.classList.add('rivo-native-android');
+  // Explicitly synchronize CSS viewport with the same Android WebView px height
+  // used by native AdMob geometry. Mobile 100dvh can differ from innerHeight.
+  const updateNativeHeight=()=>document.documentElement.style.setProperty('--rivo-webview-height',Math.round(window.innerHeight)+'px');
+  updateNativeHeight();
+  window.addEventListener('resize',updateNativeHeight,{passive:true});
+  window.visualViewport?.addEventListener('resize',updateNativeHeight,{passive:true});
   // Keep the separate pale Android status bar with DARK, high-contrast clock/network/battery glyphs.
   StatusBar.show().then(()=>StatusBar.setOverlaysWebView({overlay:false}))
     .then(()=>StatusBar.setBackgroundColor({color:'#E9F5FB'}))

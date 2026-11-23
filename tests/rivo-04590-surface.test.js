@@ -44,3 +44,11 @@ test('320dp banner is anchored exactly between scroll viewport and app navigatio
   assert.ok(852-v.contentBottom<=v.bannerTop-5);
  }
 });
+
+test('Android shell and native banner use the identical measured WebView viewport',()=>{
+ const js=read('src/main.js'),css=read('src/rivo-android-surface-04590.css');
+ assert.match(js,/--rivo-webview-height/);
+ assert.match(js,/window\.innerHeight/);
+ assert.match(js,/visualViewport\?\.addEventListener\('resize'/);
+ assert.match(css,/height:var\(--rivo-webview-height,100dvh\)!important/);
+});

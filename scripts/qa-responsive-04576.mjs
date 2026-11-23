@@ -32,6 +32,8 @@ try{
   await page.evaluate(()=>{
     const shortLandscape=innerWidth>innerHeight&&innerHeight<430;
     document.body.classList.add('rivo-native-android');
+    // Match production's innerHeight-based native AdMob and shell geometry.
+    document.documentElement.style.setProperty('--rivo-webview-height',innerHeight+'px');
     document.body.classList.toggle('rivo-has-ad-banner',!shortLandscape);
     document.body.classList.toggle('rivo-ad-reserved',!shortLandscape);
     document.documentElement.style.setProperty('--rivo-content-top','70px');
