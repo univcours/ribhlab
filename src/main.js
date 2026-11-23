@@ -1810,7 +1810,7 @@ function navigateRivoBack(){
   lastBackHandled=now;
   backNavigationPending=true;
   const safeToShow=!busy&&nativeCaptureDepth===0&&
-    !document.querySelector('.doc-detail-overlay,.busy');
+    !document.querySelector('.busy');
   // Only internal tool -> Home transitions can display an ad; on Home,
   // Android Back still exits/minimizes normally, without any advertisement.
   void (async()=>{
