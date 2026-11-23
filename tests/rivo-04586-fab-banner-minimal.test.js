@@ -9,6 +9,9 @@ const ads=read('src/monetization.js');
 
 test('Documents duplicate Import Images removed; legitimate universal Import retained',()=>{
  assert.ok(main.includes('data-import="file"'));
+ assert.ok(main.includes("import:'Import files'"),'Generic import label must describe all accepted files');
+ assert.ok(!main.includes("import:'Import images'"));
+ assert.match(main,/data-import="file"[^\n]*ico\('upload',16\)/,'Documents generic import uses a Material upload glyph');
  assert.ok(!main.includes('data-import-images'));
  assert.ok(main.includes('chooseLibraryFiles(el.dataset.import)'));
  assert.ok(main.includes('function chooseLibraryFiles('));
@@ -74,6 +77,6 @@ test('file selection, Android external opener and scanner features are preserved
  assert.ok(main.includes('openBarcodeScanner({'));
  assert.ok(main.includes('openPlateScanner({'));
  assert.ok(read('src/library-bulk.js').includes('function toolbar()'));
- assert.ok(read('rivoscan-version.properties').includes('versionCode=203'));
- assert.equal(JSON.parse(read('package.json')).version,'0.45.88');
+ assert.ok(read('rivoscan-version.properties').includes('versionCode=204'));
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.89');
 });

@@ -13,7 +13,7 @@ const officialActionIcons=['external','shield','edges','share','pencil','trash']
 try{
  for(const width of [320,360,393,480]){
   const ctx=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,locale:'en-US'});
-  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.88'));
+  await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.89'));
   const page=await ctx.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
   await page.locator('#home-recents').waitFor({timeout:20000});
@@ -22,6 +22,10 @@ try{
    if(surface==='documents'){
     await page.locator('[data-open-library]:visible').first().click({timeout:12000});
     await page.locator('#library-list').waitFor({timeout:12000});
+    const importButton=page.locator('#app button[data-import="file"]');
+    assert.equal(await importButton.count(),1,'Only one generic import control should remain');
+    assert.equal(await importButton.getAttribute('aria-label'),'Import files','Generic import must not say Import images');
+    assert.equal(await importButton.locator('.rivo-material-symbol[data-material-symbol="upload"]').count(),1,'Use Material upload icon');
    }
    const selector=surface==='home'?'#home-recents':'#library-list';
    await page.evaluate(({selector,actionIcons})=>{
@@ -85,7 +89,7 @@ try{
       flex:getComputedStyle(row).display==='flex'&&getComputedStyle(row).flexWrap==='nowrap'
     };
    }),selector);
-   console.log('[RivoScan 0.45.88 UI geometry]',JSON.stringify({surface,width,values}));
+   console.log('[RivoScan 0.45.89 UI geometry]',JSON.stringify({surface,width,values}));
    await page.screenshot({path:`${out}/${width}x852-SAMPLE-${surface}-same-row-actions.png`});
    console.log('[04581 layout diagnostic]',width,surface,JSON.stringify(values));
    assert.equal(values.length,2);
@@ -105,7 +109,7 @@ try{
   await ctx.close();
  }
  const ctx=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true});
- await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.88'));
+ await ctx.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.89'));
  const page=await ctx.newPage();
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('.doc-detail-overlay, .doc-viewer-menu-panel').count(),0,

@@ -1,6 +1,6 @@
 {
   "name": "rivoscan",
-  "version": "0.45.88",
+  "version": "0.45.89",
   "private": true,
   "type": "module",
   "scripts": {
