@@ -1,4 +1,4 @@
-import {phosphorIcon} from './phosphor-icons.js';
+import {materialSymbol} from './material-symbols.js';
 import {createWorker} from 'tesseract.js';
 import {readPlateZoomRange,planPlateAutoZoom,plateSearchRoi,applyPlateZoom} from './plate-distance.js';
 
@@ -140,7 +140,7 @@ async function jpegBytes(canvas){
 }
 function plateCopyGlyph(){
  const holder=document.createElement('span');
- holder.innerHTML=phosphorIcon('copy',18);
+ holder.innerHTML=materialSymbol('copy',18);
  return holder.firstElementChild;
 }
 export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>({saved:false}),onMatchPhoto=async()=>null,onMatchAlert=async()=>false,onClose=()=>{}}={}){
@@ -150,7 +150,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',L[0]);
  const header=document.createElement('header');header.className='rivo-live-head';
  const title=document.createElement('strong');title.textContent=L[0];
- const close=btn('Close',()=>stop());close.innerHTML=phosphorIcon('close',21);close.setAttribute('aria-label','Close');close.dataset.scanOverlayClose='true';
+ const close=btn('Close',()=>stop());close.innerHTML=materialSymbol('close',21);close.setAttribute('aria-label','Close');close.dataset.scanOverlayClose='true';
  const searchRow=document.createElement('div');searchRow.className='rivo-plate-search-row';
  const search=document.createElement('input');search.type='search';search.className='rivo-plate-search';
  search.placeholder=L[1];search.autocomplete='off';search.spellcheck=false;search.setAttribute('aria-label',L[1]);
@@ -164,7 +164,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  const renderWatch=()=>{
   pinned.replaceChildren();pinned.hidden=!watch.length;
   for(const [i,number] of watch.entries()){
-   const chip=btn(number,()=>{watch.splice(i,1);persistWatch();renderWatch();});chip.innerHTML='<span>'+number+'</span>'+phosphorIcon('close',14);
+   const chip=btn(number,()=>{watch.splice(i,1);persistWatch();renderWatch();});chip.innerHTML='<span>'+number+'</span>'+materialSymbol('close',14);
    chip.className='rivo-plate-watch-chip';
    chip.title=number;pinned.append(chip);
   }
@@ -175,7 +175,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
   if(!watch.includes(value)&&watch.length<20){watch.push(value);persistWatch();renderWatch();}
   search.value='';search.focus();
  });
- addTarget.innerHTML=phosphorIcon('plus',19);
+ addTarget.innerHTML=materialSymbol('plus',19);
  addTarget.title=({en:'Add watch target',ar:'إضافة لوحة للمراقبة',fr:'Ajouter une plaque suivie',es:'Añadir matrícula vigilada',de:'Kennzeichen zur Suche hinzufügen',pt:'Adicionar matrícula à pesquisa',it:'Aggiungi targa da monitorare'})[language]||'Add watch target';
  search.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();addTarget.click();}
@@ -183,7 +183,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  searchRow.append(search,addTarget);renderWatch();header.append(title,searchRow,close);
  const view=document.createElement('div');view.className='rivo-live-preview';
  const video=document.createElement('video');video.autoplay=true;video.playsInline=true;video.muted=true;
- const guide=document.createElement('div');guide.className='rivo-plate-guide';guide.innerHTML=phosphorIcon('scan',62);
+ const guide=document.createElement('div');guide.className='rivo-plate-guide';guide.innerHTML=materialSymbol('scan',62);
  const detection=document.createElement('div');
  detection.className='rivo-plate-detection';detection.hidden=true;
  detection.setAttribute('aria-hidden','true');
@@ -228,7 +228,7 @@ export function openPlateScanner({language='en',notify=()=>{},onPlate=async()=>(
  });
  zoomButton.className='rivo-plate-auto-zoom';
  zoomButton.setAttribute('aria-pressed','true');
- const torch=btn('Torch',()=>toggleTorch());torch.innerHTML=phosphorIcon('flash',20);torch.setAttribute('aria-label','Torch');foot.append(count,zoomButton,torch);
+ const torch=btn('Torch',()=>toggleTorch());torch.innerHTML=materialSymbol('flash',20);torch.setAttribute('aria-label','Torch');foot.append(count,zoomButton,torch);
  const hint=document.createElement('p');hint.className='rivo-live-help';hint.textContent=L[6]+' · '+Z.hint;
    const currentLine=document.createElement('div');currentLine.className='rivo-plate-current-line';currentLine.hidden=true;currentLine.append(last,lastCopy);
    resultsPane.append(resultsHeading,status,resultsEmpty,currentLine,lastTime,plateHistory);
