@@ -1,5 +1,24 @@
 # RivoScan Master Checklist — persistent, evidence-driven
 
+## RivoScan 0.45.89 — verified evidence and open issues (2026-11-23)
+
+- [x] User directive enforced: Material 3 Expressive + bundled Material Symbols Rounded and original RivoScan blue identity.
+- [x] Documents generic Import files label in seven languages, new rounded upload icon, original handler preserved; verified in responsive browser screenshot and test.
+- [x] Legacy release test suite aligned with Android code 204 and version 0.45.89: npm checks/tests/build and browser QA passed in current GitHub Actions.
+- [x] All five signed APK variants built with feature and model parity, package/version/portrait/original signer verified.
+- [x] Signed all-ABI Google Play AAB built and original signer verified; **only saved to GitHub tester prerelease, not uploaded to Play**.
+- [x] Signed release published: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.89-documents-import-clarity
+- [~] Android emulator genuine screenshot attempt: KVM and TCG fallback added. Inspect final Actions run https://github.com/univcours/ribhlab/actions/runs/45271464848 and actual screenshot artifact; do not use browser SAMPLE as Android proof.
+- [ ] Real-device SDK evidence of AdMob Banner fill/load/impression, safe inset and visibility, including consent states and no-fill recovery.
+- [ ] Device-level QR, ML Kit, document/PDF export, camera FAB and Android back navigation regressions.
+- [ ] RTL, accessibility font sizes, and app native UX physical QA.
+- [ ] Explicit user approval before any Play Store publication.
+
+Persistent branch-local next actions: `docs/agent/TASKS.md` on `fix/rivoscan-04589-documents-import-clarity`. 
+
+---
+
+
 ## Verified 0.45.88 milestone and outstanding QA — 2026-11-23
 
 - [x] Build 0.45.88 / code 203 with Material 3 Expressive and bundled Material Symbols Rounded source.
