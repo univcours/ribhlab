@@ -31,14 +31,14 @@ test('interface uses light legible cards, vivid zoom ratio, vector book controls
  assert.match(styles,/#fff,#f1f6fd/);
  assert.match(styles,/\.rivo-code-zoom-label/);
  assert.match(styles,/#123e6c/);
- assert.match(book,/tab\.innerHTML=phosphorIcon\(/);
+ assert.match(book,/tab\.innerHTML=materialSymbol\(/);
   assert.doesNotMatch(book,/tab\.innerHTML='<svg/);
  assert.doesNotMatch(book,/const icons=\{source:'▧'/);
 });
-test('0.45.87 uses unique monotonic Android code 192 and both ML Kit plugins',()=>{
+test('0.45.88 uses unique monotonic Android code 203 and both ML Kit plugins',()=>{
  const pkg=JSON.parse(read('package.json'));
- assert.equal(pkg.version,'0.45.87');
+ assert.equal(pkg.version,'0.45.88');
  assert.equal(pkg.dependencies['@capacitor-mlkit/barcode-scanning'],'8.2.1');
  assert.equal(pkg.dependencies['@capacitor-mlkit/text-recognition'],'8.2.1');
- assert.match(read('rivoscan-version.properties'),/^versionCode=202$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionCode=203$/m);
 });
