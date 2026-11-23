@@ -114,6 +114,28 @@ jobs:
             ls -lh "$APK"
           done
           echo 'Five architecture-compatible RivoScan packages signed with original key. Same DEX, all ML Kit model data and same-ABI libraries. No Play upload.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Build signed all-architecture Android App Bundle for Google Play
+        env:
+          RIVO_UPLOAD_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          RIVO_UPLOAD_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd android
+          ./gradlew bundleRelease --no-daemon
+      - name: Verify the AAB has all ABIs, unchanged models and original signing
+        run: |
+          set -euo pipefail
+          python3 scripts/verify-rivoscan-aab-parity.py
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify "$AAB" | grep -F 'jar verified'
+          keytool -printcert -jarfile "$AAB" | grep -Fi 'E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          echo 'Play-compatible signed AAB verified. Do not upload to Play without a publishing request.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Save signed device-optimized Google Play AAB for future publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.82-ALL-SUPPORTED-ANDROID-GOOGLE-PLAY-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
       - name: Save signed ARM64/ARM32/x86/x86_64/Universal APKs as workflow artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -145,6 +167,9 @@ jobs:
               --title 'RivoScan 0.45.82 - Same Features, Much Smaller APK per Device' \
               --notes 'Signed trial APKs: ONLY native ABI duplicates separated; source features, Java/DEX, all Google ML Kit OCR/barcode/translation models and same-ABI native libraries verified byte-for-byte against the universal build. ARM64 for modern compatible phones, ARM32 for compatible older phones, UNIVERSAL for all supported architectures. Original signing certificate, portrait mode and Phosphor UI retained. NOT published to Google Play.'
           fi
+          # Keep the original APKs; attach the verified AAB for Play per-device delivery.
+          cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.82-ALL-SUPPORTED-ANDROID-PLAY.aab
+          gh release upload "$TAG" /tmp/RivoScan-0.45.82-ALL-SUPPORTED-ANDROID-PLAY.aab --repo "$GITHUB_REPOSITORY" --clobber
 
       # Native emulator verification is deliberately after signed APK release.
       # Emulator failure must not revoke a verified downloadable APK.
