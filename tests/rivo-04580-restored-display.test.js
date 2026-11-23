@@ -30,8 +30,8 @@ test('PDF and image preview stays in RivoScan, with explicit Android chooser',()
  assert.match(viewer,/bridge\.openFile\(\{uri:current\.uri\}\)/);
  assert.match(viewer,/doc-viewer-menu-panel/);
 });
-test('new signed tester build 0.45.81 code 196 is monotonic',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.81');
- assert.match(read('rivoscan-version.properties'),/^versionCode=196$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.81$/m);
+test('new signed tester build 0.45.82 code 197 is monotonic',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.82');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=197$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.82$/m);
 });
