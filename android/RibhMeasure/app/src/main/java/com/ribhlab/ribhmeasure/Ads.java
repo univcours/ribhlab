@@ -26,6 +26,7 @@ final class Ads {
     private static long lastShownElapsed=0;
     private static int completed=0;
     static void setup(Activity a){
+        if(BuildConfig.DEMO_ADS)return;
         if(consent==null)consent=UserMessagingPlatform.getConsentInformation(a);
         ConsentRequestParameters parameters=new ConsentRequestParameters.Builder().build();
         consent.requestConsentInfoUpdate(a,parameters,()->{
@@ -38,6 +39,7 @@ final class Ads {
         initializeIfAllowed(a);
     }
     static void initializeIfAllowed(Activity a){
+        if(BuildConfig.DEMO_ADS)return;
         if(consent==null||!consent.canRequestAds()||initialized)return;
         initialized=true;
         if(a instanceof MainActivity){
@@ -48,7 +50,7 @@ final class Ads {
         MobileAds.initialize(a,unused->{});
         preloadInterstitial(a);
     }
-    static boolean permitted(){return consent!=null&&consent.canRequestAds()&&initialized;}
+    static boolean permitted(){return !BuildConfig.DEMO_ADS&&consent!=null&&consent.canRequestAds()&&initialized;}
     static void addBanner(Activity a,LinearLayout parent){
         if(!permitted())return;
         AdView ad=new AdView(a);

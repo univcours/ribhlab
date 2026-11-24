@@ -1,7 +1,7 @@
 name: RibhMeasure isolated emulator smoke
 on:
   workflow_run:
-    workflows: ["Sign RibhMeasure 1.3.1 with original RivoScan upload key"]
+    workflows: ["Sign RibhMeasure 1.3.2 with original RivoScan upload key"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -25,7 +25,7 @@ jobs:
           java-version: '17'
       - uses: actions/download-artifact@v4
         with:
-          name: RibhMeasure-v1.3.1-RivoScan-key-SIGNED-TEST-ADS
+          name: RibhMeasure-v1.3.2-RivoScan-key-SIGNED-TEST-ADS
           path: signed-artifacts
           run-id: ${{ github.event.workflow_run.id || inputs.run_id }}
           github-token: ${{ github.token }}
@@ -48,7 +48,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: RibhMeasure-1.3.1-emulator-evidence
+          name: RibhMeasure-1.3.2-emulator-evidence
           path: qa-output/
           retention-days: 14
           if-no-files-found: warn
