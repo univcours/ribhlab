@@ -14,6 +14,7 @@
         <meta-data android:name="com.google.ar.core" android:value="optional" />
         <activity android:name=".RoomManualActivity" android:exported="false" />
         <activity android:name=".RoomPlanActivity" android:exported="false" />
+        <activity android:name=".Room3dActivity" android:exported="false" />
         <activity android:name=".RoomProjectsActivity" android:exported="false" />
         <activity android:name=".RoomArActivity" android:exported="false" />
         <activity android:name=".HistoryActivity" android:exported="false" />

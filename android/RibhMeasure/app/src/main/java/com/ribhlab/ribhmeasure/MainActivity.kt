@@ -39,7 +39,6 @@ class MainActivity : ComponentActivity() {
     private fun open(type: Class<*>, gpsArea: Boolean? = null) {
         startActivity(Intent(this, type).apply { gpsArea?.let { putExtra("area",it) } })
     }
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable private fun MeasureTheme(content: @Composable () -> Unit) {
         val context = LocalContext.current
         val dark = isSystemInDarkTheme()
@@ -49,7 +48,7 @@ class MainActivity : ComponentActivity() {
             dark -> darkColorScheme(primary = Color(0xFF8AE4D3), primaryContainer = Color(0xFF164941), background = Color(0xFF101B20))
             else -> lightColorScheme(primary = Color(0xFF00695F), primaryContainer = Color(0xFF9CF2DE), background = Color(0xFFF2FAF8))
         }
-        MaterialExpressiveTheme(colorScheme = colors, content = content)
+        MaterialTheme(colorScheme = colors, shapes = Shapes(extraSmall = RoundedCornerShape(12.dp), small = RoundedCornerShape(16.dp), medium = RoundedCornerShape(22.dp), large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(36.dp)), content = content)
     }
     private data class Tool(val title:Int, val subtitle:Int,val icon:Int,val activity:Class<*>,val area:Boolean?=null)
     @Composable private fun HomeScreen(open:(Class<*>,Boolean?)->Unit) {
