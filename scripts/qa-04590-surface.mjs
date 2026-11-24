@@ -11,7 +11,7 @@ const results=[];
 try{
  for(const width of [320,360,393,480,768]){
   const context=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1});
-  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.92'));
+  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.93'));
   const page=await context.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded'});
   const camera=page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]');
@@ -20,6 +20,49 @@ try{
   assert.equal(await camera.locator('[data-material-symbol="photo_camera"]').count(),1,
    'Primary Scan action must have a real Material Symbols Rounded camera icon');
   assert.equal(await page.locator('#app .rivo-camera-fab').count(),0,'Floating duplicate must be absent');
+  // Header visual centers: logo, title, version, language and speaker MUST
+  // lie on the actual vertical midline of the 68dp toolbar, including native.
+  const checkCenteredHeader=async(native)=>{
+    const info=await page.evaluate(native=>{
+      document.body.classList.toggle('rivo-native-android',native);
+      const selectors=[
+        '.topbar-brand-icon',
+        '.crumb strong',
+        '.rivo-build-version',
+        '.rivo-top-locale',
+        '.rivo-top-sound'
+      ];
+      const rect=element=>{
+        const r=element.getBoundingClientRect();
+        return {cx:r.left+r.width/2,cy:r.top+r.height/2,left:r.left,right:r.right,
+                top:r.top,bottom:r.bottom,width:r.width,height:r.height};
+      };
+      const bar=rect(document.querySelector('#app .topbar'));
+      const items=selectors.map(selector=>{
+        const el=document.querySelector('#app .topbar '+selector);
+        if(!el||getComputedStyle(el).display==='none')return null;
+        return {selector,...rect(el)};
+      }).filter(Boolean);
+      return {bar,items,paddingTop:getComputedStyle(document.querySelector('#app .topbar')).paddingTop,
+              viewport:innerWidth};
+    },native);
+    assert.ok(Math.abs(info.bar.height-68)<1.5,'Header height must be a stable 68dp');
+    assert.equal(info.paddingTop,'0px','Android status-bar ownership forbids extra top padding in header');
+    for(const item of info.items){
+      assert.ok(Math.abs(item.cy-info.bar.cy)<=2.25,
+        'Header item not vertically centered: '+JSON.stringify({native,...info,item}));
+      assert.ok(item.left>=-0.5&&item.right<=width+0.5,
+        'Header item clipped horizontally: '+JSON.stringify({native,item,width}));
+    }
+    const brand=info.items.find(x=>x.selector==='.crumb strong');
+    const locale=info.items.find(x=>x.selector==='.rivo-top-locale');
+    assert.ok(brand&&locale&&brand.right<locale.left+1,
+      'Logo/title must not overlap language control');
+    return info;
+  };
+  const browserHeader=await checkCenteredHeader(false);
+  const nativeHeader=await checkCenteredHeader(true);
+  if(width===393)await page.screenshot({path:out+'/393x852-centered-header-SAMPLE.png'});
   // Only simulate native screen geometry; never simulate actual Google ads.
   const geometry=await page.evaluate(async()=>{
    const {calculateAdLayout}=await import('/src/rivo-native-ad-geometry.js');
@@ -100,11 +143,11 @@ try{
    assert.equal(await page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]').count(),1);
    await page.evaluate(()=>document.querySelector('#qa-overlay')?.remove());
   }
-  results.push({width,primaryCamera:'photo_camera',duplicateFloatingCamera:false,nativeBannerLane:'GEOMETRY ONLY',
+  results.push({width,headerCenterAligned:true,primaryCamera:'photo_camera',duplicateFloatingCamera:false,nativeBannerLane:'GEOMETRY ONLY',
     home:true,documents:true,tools:true,formulaSave:true,
     qrBarcodePlate:'MODAL VISIBILITY ONLY',nativeAdImpression:'NOT TESTED'});
   await context.close();
  }
  writeFileSync(out+'/rivo-04590-layout-qa.json',JSON.stringify(results,null,2)+'\n');
- console.log('RivoScan 0.45.92 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
+ console.log('RivoScan 0.45.93 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
 }finally{await browser.close()}
