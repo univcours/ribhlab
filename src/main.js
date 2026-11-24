@@ -1437,13 +1437,22 @@ async function openSmartScanner({mode='Document',pageLimit=null}={}){
   }
   nativeCaptureDepth++;
   localStorage.setItem(MLKIT_MODE_KEY,mode);
+  let scannerStage='launch';
   try{
     const result=await DocumentScanner.scanDocument(mlkitFullOptions(mode,pageLimit));
+    scannerStage='process';
     if(!result?.pdf?.uri && !result?.scannedImages?.length){await consumeSmartScan(result,{mlkitFull:true});return;}
     await consumeSmartScan(mode==='ID Card'?{...result,scanMode:'ID Card'}:result,{mlkitFull:true});
   }catch(err){
     const message=String(err?.message||err);
     if(/cancel|user dismissed|aborted/i.test(message))return;
+    if(scannerStage==='process'){
+      // Once ML Kit has returned image/PDF data, do NOT recapture the page
+      // just because saving, conversion or OCR failed.
+      console.error('Document scan processing:',err);
+      toast('Could not process scan: '+message,true);
+      return;
+    }
     console.error('Google ML Kit FULL scan:',err);
     toast(({en:'Google scanner unavailable. Opening the phone camera…',ar:'ماسح Google غير متاح. غادي نفتح كاميرا الهاتف…',fr:'Scanner Google indisponible. Ouverture de la caméra…',es:'Escáner Google no disponible. Abriendo cámara…',de:'Google-Scanner nicht verfügbar. Kamera wird geöffnet…',pt:'Scanner Google indisponível. A abrir câmara…',it:'Scanner Google non disponibile. Apro la fotocamera…'})[language]||'Opening phone camera…');
     // Keep Google ML Kit as first choice. Fall back only after a technical
