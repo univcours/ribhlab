@@ -18,11 +18,44 @@ adb shell wm density 160
 adb install -r "$APK"
 adb shell pm grant "$APP" android.permission.CAMERA || true
 adb shell monkey -p "$APP" -c android.intent.category.LAUNCHER 1
-sleep 13
-# Dismiss first-launch release notes. The modal's "Got it" is near (190,780).
-adb shell input tap 190 780
-sleep 3
+sleep 12
+# Cold Pixel 6 emulators can throw "Pixel Launcher isn't responding" (system ANR)
+# *before* the app receives touch. Detect a dimmed background before tapping,
+# dismiss system "Wait", then close RivoScan release notes at their real location.
+for retry in 1 2 3; do
+  adb shell screencap -p /sdcard/rivo-preflight.png
+  adb pull /sdcard/rivo-preflight.png "$OUT/00-preflight.png" >/dev/null
+  if python3 - "$OUT/00-preflight.png" <<'PY'
+from PIL import Image
+import sys
+a=Image.open(sys.argv[1]).convert('RGB')
+r,g,b=a.getpixel((10,175))
+print('Preflight background RGB:',r,g,b)
+sys.exit(0 if min(r,g,b)>=150 else 1)
+PY
+  then
+    echo 'App foreground is not dimmed: preflight ready.'
+    break
+  fi
+  # The launcher ANR uses a "Wait" button near (100,485). If there is only
+  # a release note sheet, this is a harmless tap on its body.
+  adb shell input tap 104 485
+  sleep 2
+  adb shell input tap 353 87
+  adb shell input tap 193 690
+  sleep 3
+done
+# Make sure release notes are closed even when no ANR occurred.
+adb shell input tap 353 87
+sleep 2
 capture 01-home
+python3 - "$OUT/01-home.png" <<'PY'
+from PIL import Image
+import sys
+im=Image.open(sys.argv[1]).convert('RGB')
+assert min(im.getpixel((10,175)))>=150, (
+  'Android system ANR/release modal still covers the app: do not label a tap smoke as a scanner failure')
+PY
 # The unique Material photo_camera action is centered in the persistent bottom nav.
 adb shell input tap 195 745
 sleep 7
