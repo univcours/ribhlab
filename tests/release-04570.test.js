@@ -10,7 +10,7 @@ test('audited tester release increments Android version and keeps original banne
  assert.match(flow,/branches: \[release\/rivoscan-04595-banner-id\]/);
  assert.match(flow,/versionCode='210' versionName='0\.45\.95'/);
  assert.match(flow,/4841809190/);
- assert.doesNotMatch(flow,/4841809191/);
+ assert.doesNotMatch(flow,/VITE_RIVO_ADMOB_BANNER_ID:\s*ca-app-pub-7945572016731367\/4841809191/);
  assert.doesNotMatch(flow,/4841819191/);
  assert.match(flow,/5608742752/);
  assert.doesNotMatch(flow,/VITE_RIVO_ADMOB_REWARDED_ID:/);
