@@ -15,4 +15,5 @@
     <string name="hm_distance_desc">مسافة المسار أو المسافة المباشرة</string>
     <string name="hm_history_desc">راجع القياسات المحفوظة</string>
     <string name="hm_note">قياسات الواقع المعزز وGPS تقديرية. تحقق من الأبعاد قبل الأشغال.</string>
+    <string name="hm_camera_permission">خاص السماح باستعمال الكاميرا من إعدادات الهاتف.</string>
 </resources>

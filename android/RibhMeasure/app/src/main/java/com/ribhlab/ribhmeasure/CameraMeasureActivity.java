@@ -16,14 +16,14 @@ import java.io.File;
 import java.util.Locale;
 
 public final class CameraMeasureActivity extends BaseActivity {
-    private static final int CAPTURE=11;
+    private static final int CAPTURE=11, CAMERA_PERMISSION=45;
     private PhotoMeasureView photo;
     private TextView step,result;
     private EditText known;
     private File photoFile;
     private double measuredCm=Double.NaN;
     @Override protected void onCreate(Bundle b){super.onCreate(b);
-        photoFile=new File(getExternalCacheDir(),"ribhmeasure_camera.jpg");render();
+        File cache=getExternalCacheDir();if(cache==null)cache=getCacheDir();photoFile=new File(cache,"ribhmeasure_camera.jpg");render();
         if(photoFile.exists())loadImage();
     }
     private void render(){
@@ -48,15 +48,20 @@ public final class CameraMeasureActivity extends BaseActivity {
         root.addView(Ui.scroll(this,body),new LinearLayout.LayoutParams(-1,0,1));setContentView(root);refresh();
     }
     private void capture(){
+        if(checkSelfPermission(android.Manifest.permission.CAMERA)!=android.content.pm.PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{android.Manifest.permission.CAMERA},CAMERA_PERMISSION);return;
+        }
         Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if(intent.resolveActivity(getPackageManager())==null){Ui.toast(this,R.string.camera_unavailable);return;}
         try{
             Uri uri=FileProvider.getUriForFile(this,getPackageName()+".files",photoFile);
             intent.putExtra(MediaStore.EXTRA_OUTPUT,uri);
+            intent.setClipData(android.content.ClipData.newRawUri("camera output",uri));
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             startActivityForResult(intent,CAPTURE);
-        }catch(Exception e){Ui.toast(this,R.string.generic_error);}
+        }catch(Exception e){android.util.Log.e("MeasurePhoto","Camera launch",e);new android.app.AlertDialog.Builder(this).setMessage(getString(R.string.camera_unavailable)+" ("+e.getClass().getSimpleName()+")").setPositiveButton(android.R.string.ok,null).show();}
     }
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);if(request!=CAMERA_PERMISSION)return;if(grants.length>0&&grants[0]==android.content.pm.PackageManager.PERMISSION_GRANTED){capture();}else{new android.app.AlertDialog.Builder(this).setMessage(R.string.hm_camera_permission).setPositiveButton(R.string.settings,(dialog,which)->startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName())))).setNegativeButton(android.R.string.cancel,null).show();}}
     @Override protected void onActivityResult(int req,int res,Intent data){super.onActivityResult(req,res,data);
         if(req==CAPTURE&&res==RESULT_OK)loadImage();
     }

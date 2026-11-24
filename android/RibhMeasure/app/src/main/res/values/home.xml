@@ -15,4 +15,5 @@
     <string name="hm_distance_desc">Route or direct distance</string>
     <string name="hm_history_desc">Review measurements</string>
     <string name="hm_note">AR and GPS measurements are estimates. Verify dimensions independently before construction.</string>
+    <string name="hm_camera_permission">Camera permission is required. Open Android settings to allow access.</string>
 </resources>

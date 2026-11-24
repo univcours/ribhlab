@@ -15,4 +15,5 @@
     <string name="hm_distance_desc">Trajet ou distance directe</string>
     <string name="hm_history_desc">Consultez les mesures</string>
     <string name="hm_note">Les mesures AR et GPS sont indicatives. Vérifiez les dimensions avant les travaux.</string>
+    <string name="hm_camera_permission">Autorisez la caméra dans les paramètres Android.</string>
 </resources>
