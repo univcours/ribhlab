@@ -1,0 +1,101 @@
+/* RivoScan 0.45.93 — CENTER the logo, product title, version, locale and
+   sound control on the same true vertical axis of the entire mobile header.
+   The original Android rule padded only the TOP (8px), visually lowering
+   everything. Fix the container's optical center without changing features,
+   colors, status-bar ownership, or the separate native AdMob banner lane. */
+@media (max-width: 780px){
+  html body #app .shell.rivo-dark-ui .topbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+    gap:clamp(5px,1.8vw,12px)!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:68px!important;
+    min-height:68px!important;
+    max-height:68px!important;
+    padding-block:0!important;
+    padding-inline:clamp(8px,2.5vw,17px)!important;
+  }
+  html body.rivo-native-android #app .shell.rivo-dark-ui .topbar{
+    /* Remove asymmetric top padding introduced by native safe-area CSS.
+       Android StatusBar.overlaysWebView is false: its inset is NOT in this bar. */
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .crumb,
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-controls{
+    display:flex!important;
+    align-items:center!important;
+    align-self:center!important;
+    min-width:0!important;
+    margin-block:0!important;
+    padding-block:0!important;
+    height:auto!important;
+    transform:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .crumb{
+    justify-content:flex-start!important;
+    flex:initial!important;
+    width:100%!important;
+    max-width:100%!important;
+    gap:clamp(4px,1.7vw,9px)!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-controls{
+    justify-content:flex-end!important;
+    flex:none!important;
+    gap:clamp(4px,1.3vw,9px)!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .topbar-brand-icon{
+    display:block!important;
+    flex:0 0 auto!important;
+    align-self:center!important;
+    width:clamp(32px,9vw,43px)!important;
+    height:clamp(32px,9vw,43px)!important;
+    margin:0!important;
+    object-fit:contain!important;
+    object-position:center!important;
+    transform:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .crumb strong,
+  html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{
+    align-self:center!important;
+    flex:0 1 auto;
+    line-height:1.2!important;
+    margin-block:0!important;
+    transform:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-height:29px!important;
+    padding-block:3px!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale,
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-sound{
+    box-sizing:border-box!important;
+    height:44px!important;
+    min-height:44px!important;
+    max-height:44px!important;
+    align-self:center!important;
+    align-items:center!important;
+    justify-content:center!important;
+    margin:0!important;
+    transform:none!important;
+  }
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-locale .rivo-material-symbol,
+  html body #app .shell.rivo-dark-ui .topbar .rivo-top-sound .rivo-material-symbol{
+    vertical-align:middle!important;
+    align-self:center!important;
+    line-height:1!important;
+  }
+  /* Older 0.45.92 rules hide the version below 380px: keep that behavior
+     instead of making 320px navigation overlap the locale and audio controls. */
+}
+@media (max-width:380px){
+  html body #app .shell.rivo-dark-ui .topbar .rivo-build-version{
+    display:none!important;
+  }
+}
