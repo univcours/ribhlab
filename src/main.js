@@ -95,6 +95,8 @@ import './rivo-material3-expressive-04587.css';
 import './rivo-android-surface-04590.css';
 // Final file-type fallbacks: large Material symbols; never replace real thumbnails.
 import './rivo-file-icons-04590.css';
+// Final 0.45.93 mobile toolbar correction: true optical centering for all five header items.
+import './rivo-centered-header-04593.css';
 import {isDismissSwipe,canStartModalSwipe} from './swipe-dismiss.js';
 import {installToolHelp,refreshToolHelp} from './tool-help.js';
 import {checkPlayUpdate} from './play-updates.js';
