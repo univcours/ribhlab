@@ -87,14 +87,22 @@ adb shell input tap 196 743
 sleep 5
 capture 04-after-shutter
 adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|ResumedActivity' | tail -12 > "$OUT/04-resumed-activity.txt" || true
-adb logcat -d -t 4500 > "$OUT/04-camera-logcat.txt" || true
+# AOSP Camera2 review screen has a centered ✓ at (196,744). Accept captured image.
+adb shell input tap 195 744
+sleep 12
+capture 05-after-accept
+adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|ResumedActivity' | tail -12 > "$OUT/05-resumed-activity.txt" || true
+# The app's native RivoDocuments.saveFile publishes a PDF under Documents/RivoScan.
+adb shell find /sdcard/Documents/RivoScan -maxdepth 2 -type f -iname '*.pdf' 2>/dev/null | tr -d '\r' > "$OUT/05-saved-pdfs.txt" || true
+adb shell ls -lah /sdcard/Documents/RivoScan > "$OUT/05-public-documents-listing.txt" 2>&1 || true
+adb logcat -d -t 5500 > "$OUT/05-camera-pdf-logcat.txt" || true
 
 python3 - "$OUT" <<'PY'
 from pathlib import Path
 from PIL import Image,ImageChops
 import json,sys
 out=Path(sys.argv[1])
-names=['01-home','02-system-photo-chooser','03-after-take-picture','04-after-shutter']
+names=['01-home','02-system-photo-chooser','03-after-take-picture','04-after-shutter','05-after-accept']
 ims={name:Image.open(out/(name+'.png')).convert('RGB') for name in names}
 assert len({im.size for im in ims.values()})==1, 'Camera screenshot dimensions inconsistent'
 def changed(base,new):
@@ -106,7 +114,9 @@ report={
  'opening_system_photo_chooser':changed(ims[names[0]],ims[names[1]]),
  'take_picture_transition':changed(ims[names[1]],ims[names[2]]),
  'native_camera_shutter_transition':changed(ims[names[2]],ims[names[3]]),
- 'photo_accepted_and_pdf_saved':'NOT VERIFIED',
+ 'accepted_photo_transition':changed(ims[names[3]],ims[names[4]]),
+ 'public_saved_pdfs':(out/'05-saved-pdfs.txt').read_text().splitlines(),
+ 'photo_accepted_and_pdf_saved':bool((out/'05-saved-pdfs.txt').read_text().strip()),
  'admob_impression':'NOT VERIFIED'
 }
 (out/'fallback-observation.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -117,4 +127,8 @@ if report['take_picture_transition']<0.09:
  raise SystemExit('Take Picture did not transition away from the chooser. Inspect 03 screenshot and logcat.')
 if report['native_camera_shutter_transition']<0.06:
  raise SystemExit('Camera shutter did not change its UI. Inspect 04 screenshot before assuming a capture occurred.')
+if report['accepted_photo_transition']<0.08:
+ raise SystemExit('Photo confirmation did not close camera review. Inspect 05 screenshot.')
+if not report['photo_accepted_and_pdf_saved']:
+ raise SystemExit('Camera confirmed but no PDF found in public Documents/RivoScan. Inspect app screenshot/logcat.')
 PY
