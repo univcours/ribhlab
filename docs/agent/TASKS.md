@@ -1,3 +1,22 @@
+# RivoScan 0.45.92 current release QA (24 November 2026)
+
+| Task | State | Evidence |
+|---|---|---|
+| Duplicate floating camera removed, single center photo_camera | VERIFIED source/browser/native UI | CI 45293517830 |
+| ML Kit Document Scanner remains primary | VERIFIED source, actual success on updated phone UNTESTED | source `openSmartScanner` first awaits `DocumentScanner.scanDocument` |
+| On launch failure fallback offers Camera/Photos, not on cancel | VERIFIED native emulator | 05-smartscan-open.png and https://github.com/univcours/ribhlab/actions/runs/45298720342 |
+| From system chooser "Take Picture" opens actual Android Camera2 | VERIFIED signed APK on AOSP emulator | `com.android.camera2/com.android.camera.CaptureActivity` resumed; CI 45298720342 |
+| Camera2 shutter, photo approval and native PDF save | IN PROGRESS, not claimed successful | `rivoscan-04592-native-fallback-qa.yml` shutter smoke + physical device |
+| Real AdMob banner display/impression | NOT VERIFIED | Emulator code 3 NO_FILL, physical consent/ad fill required |
+| QR/Plate scanner native launch | VERIFIED on signed 0.45.91 emulator | CI 45291128570 |
+| Formula OCR safe areas / Save not overlapped | Browser QA PASSED, physical phone pending | 45293517830 |
+| Full phone ML Kit, OCR, image/PDF export, RTL/accessibility regression | TODO | Device evidence |
+| Deploy Google Play | NOT AUTHORIZED | user explicitly asks first |
+
+Signed GitHub release: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.92-smartscan-fallback . Earlier status below historical, not current.
+
+---
+
 # Current 0.45.91 tasks (supersedes historical 0.45.89 checklist below)
 
 | Work | State | Evidence |
