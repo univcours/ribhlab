@@ -92,7 +92,7 @@ jobs:
            private static FloatBuffer buf(float[] a){FloatBuffer b=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(a).position(0);return b;}
            private String tr(String en,String fr,String ar){String l=Locale.getDefault().getLanguage();return l.equals("ar")?ar:l.equals("fr")?fr:en;}
            @Override public void onCreate(Bundle b){super.onCreate(b);
-             LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setBackgroundColor(0xff07111e);
+             LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(0xff07111e);
              status=new TextView(this);status.setTextColor(0xffe1f5f4);status.setTextSize(15);status.setPadding(20,16,20,12);root.addView(status);
              FrameLayout frame=new FrameLayout(this);gl=new GLSurfaceView(this);gl.setEGLContextClientVersion(2);gl.setPreserveEGLContextOnPause(true);gl.setRenderer(this);frame.addView(gl);
              View cross=new View(this){final Paint p=new Paint(3);@Override protected void onDraw(Canvas c){float x=getWidth()/2f,y=getHeight()/2f;p.setColor(0xff21e0c2);p.setStrokeWidth(4);c.drawCircle(x,y,15,p);c.drawLine(x-28,y,x-7,y,p);c.drawLine(x+7,y,x+28,y,p);c.drawLine(x,y-28,x,y-7,p);c.drawLine(x,y+7,x,y+28,p);}};frame.addView(cross,new FrameLayout.LayoutParams(-1,-1));root.addView(frame,new LinearLayout.LayoutParams(-1,0,1));
