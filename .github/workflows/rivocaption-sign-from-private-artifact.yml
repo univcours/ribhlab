@@ -1,0 +1,90 @@
+name: RivoCaption 0.3.4 original RivoScan signed release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rivocaption-sign-from-private-artifact.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      ZIP_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-8168-81f4-bafd-77066eec9b8e/raw?se=2026-11-24T15%3A58%3A29Z&sp=r&sv=2026-06-06&sr=b&scid=28123bb6-b18f-56bc-a260-844c21924ed8&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-24T05%3A09%3A02Z&ske=2026-11-25T05%3A09%3A02Z&sks=b&skv=2026-06-06&sig=R6TN6eccNiLRbPsPAgzI8iNNZMxaarCfMQiisHcHLOg%3D'
+      ORIGINAL_SHA1: 'E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      RIVO_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Restore original signing key and confirm certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_KEY_B64" && test -n "$RIVO_KEY_PASS"
+          umask 077
+          printf '%s' "$RIVO_KEY_B64" | base64 -d > "$RUNNER_TEMP/rivoscan-original.p12"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$RUNNER_TEMP/rivoscan-original.p12" -storepass:env RIVO_KEY_PASS -alias key0)"
+          ACTUAL="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:" {print $2;exit}')"
+          test "$ACTUAL" = "$ORIGINAL_SHA1"
+          echo 'Original RivoScan signing SHA1 verified.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Download private-repo unsigned release binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 4 --connect-timeout 25 "$ZIP_URL" -o "$RUNNER_TEMP/rivocaption-unsigned.zip"
+          mkdir -p in out
+          unzip -q "$RUNNER_TEMP/rivocaption-unsigned.zip" -d in
+          find in -maxdepth 2 -type f -printf '%p %s bytes\n'
+          test -s in/RivoCaption-0.3.4-UNSIGNED.aab
+          test -s in/RivoCaption-0.3.4-UNSIGNED.apk
+          (cd in && sha256sum -c UNSIGNED-SHA256SUMS.txt)
+      - name: Prepare Android signing tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -r | head -n1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+      - name: Sign release AAB and APK with original certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools/36.0.0"
+          "$TOOLS/zipalign" -P 16 -f 4 in/RivoCaption-0.3.4-UNSIGNED.apk "$RUNNER_TEMP/rc-aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$RUNNER_TEMP/rivoscan-original.p12" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:RIVO_KEY_PASS --key-pass env:RIVO_KEY_PASS --out out/RivoCaption-0.3.4-RivoScan-SIGNED.apk "$RUNNER_TEMP/rc-aligned.apk"
+          cp in/RivoCaption-0.3.4-UNSIGNED.aab out/RivoCaption-0.3.4-RivoScan-SIGNED.aab
+          jarsigner -keystore "$RUNNER_TEMP/rivoscan-original.p12" -storetype PKCS12 -storepass:env RIVO_KEY_PASS -keypass:env RIVO_KEY_PASS -sigalg SHA256withRSA -digestalg SHA-256 out/RivoCaption-0.3.4-RivoScan-SIGNED.aab key0
+          "$TOOLS/aapt" dump badging out/RivoCaption-0.3.4-RivoScan-SIGNED.apk | grep -F "package: name='com.rivocaption.editor' versionCode='8' versionName='0.3.4'"
+          "$TOOLS/apksigner" verify --verbose --print-certs out/RivoCaption-0.3.4-RivoScan-SIGNED.apk > "$RUNNER_TEMP/verify-apk.txt"
+          grep -iq 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/verify-apk.txt"
+          jarsigner -verify out/RivoCaption-0.3.4-RivoScan-SIGNED.aab > "$RUNNER_TEMP/verify-aab.txt" 2>&1
+          grep -Fq 'jar verified' "$RUNNER_TEMP/verify-aab.txt"
+          keytool -printcert -jarfile out/RivoCaption-0.3.4-RivoScan-SIGNED.aab | grep -F "SHA1: $ORIGINAL_SHA1"
+          (cd out && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          echo 'Original-key signed verified RivoCaption APK and AAB; still requires Play Console upload and review.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RivoCaption-0.3.4-Original-RivoScan-SIGNED
+          path: out/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish binary-only signed prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivocaption-v0.3.4-original-rivoscan
+          name: RivoCaption 0.3.4 signed Android release
+          prerelease: true
+          body: 'RivoCaption 0.3.4 app com.rivocaption.editor, code 8, signed with the verified original RivoScan upload certificate. Google Play publishing is a separate step.'
+          files: |
+            out/RivoCaption-0.3.4-RivoScan-SIGNED.apk
+            out/RivoCaption-0.3.4-RivoScan-SIGNED.aab
+            out/SHA256SUMS.txt
+      - name: Remove temporary private signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rivoscan-original.p12"
