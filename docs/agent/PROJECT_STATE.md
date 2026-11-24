@@ -1,3 +1,7 @@
+> **LATEST 0.45.95 CHECKPOINT — 24 November 2026.** Production versionCode 210 and new en-US screenshots were COMMITTED by original Android Publisher workflow 45481179896, after successful original-signed APK/AAB build 45481094710. This older document's 0.45.92 text is historical; read root `PROJECT_STATE.md` on this docs branch. Banner ID fixed to `...9190`; physical AdMob fill/impression and final scan-to-PDF remain unverified.
+
+---
+
 # RivoScan current verified checkpoint — 0.45.92 (24 November 2026)
 
 **Current Android branch:** `fix/rivoscan-04592-smartscan-native-fallback`. Latest signed app **versionName 0.45.92, code 207**, package `com.ribhlab.rivoscan` with original signing certificate. Tested release source commit `7fc2763306c86f7bdce7e2c3e55761e404fca877`; later commits on the branch modify *test harness/documentation* and do not imply a different binary.

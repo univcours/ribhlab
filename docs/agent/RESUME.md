@@ -1,3 +1,7 @@
+> **LATEST 24 Nov 2026:** Resume from `AGENTS.md`, `PROJECT_STATE.md`, `TODO.md` on `docs/rivoscan-04595-play-banner-checkpoint-20261124`. Signed release 0.45.95/code 210 and original publisher's Play production plus genuine en-US screenshot replacement already succeeded. Remaining real AdMob device impression and end-to-end scan/PDF tests are not verified. Avoid re-uploading 210.
+
+---
+
 # Resume RivoScan from another ChatGPT conversation
 
 ## Current resume instructions — 24 November 2026

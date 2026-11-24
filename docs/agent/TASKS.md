@@ -1,3 +1,7 @@
+> **LATEST 0.45.95 CHECKPOINT:** Play production code 210 and new native screenshots 7/6/6 committed successfully (workflow 45481179896). See root `TODO.md` for remaining actual banner impression, scan-to-PDF and Play review verification. Historical 0.45.92 entries below are NOT current release status.
+
+---
+
 # RivoScan 0.45.92 current release QA (24 November 2026)
 
 | Task | State | Evidence |
