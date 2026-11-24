@@ -82,14 +82,19 @@ adb shell input tap 77 "$TAKE_PICTURE_Y"
 sleep 6
 capture 03-after-take-picture
 adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|ResumedActivity' | tail -12 > "$OUT/03-resumed-activity.txt" || true
-adb logcat -d -t 4500 > "$OUT/03-fallback-logcat.txt" || true
+# Actual native Camera2 is foreground: tap its bottom-center shutter.
+adb shell input tap 196 743
+sleep 5
+capture 04-after-shutter
+adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|ResumedActivity' | tail -12 > "$OUT/04-resumed-activity.txt" || true
+adb logcat -d -t 4500 > "$OUT/04-camera-logcat.txt" || true
 
 python3 - "$OUT" <<'PY'
 from pathlib import Path
 from PIL import Image,ImageChops
 import json,sys
 out=Path(sys.argv[1])
-names=['01-home','02-system-photo-chooser','03-after-take-picture']
+names=['01-home','02-system-photo-chooser','03-after-take-picture','04-after-shutter']
 ims={name:Image.open(out/(name+'.png')).convert('RGB') for name in names}
 assert len({im.size for im in ims.values()})==1, 'Camera screenshot dimensions inconsistent'
 def changed(base,new):
@@ -100,7 +105,8 @@ report={
  'signed_package':'RivoScan 0.45.92 universal',
  'opening_system_photo_chooser':changed(ims[names[0]],ims[names[1]]),
  'take_picture_transition':changed(ims[names[1]],ims[names[2]]),
- 'physical_camera_or_pdf_saved':'NOT VERIFIED',
+ 'native_camera_shutter_transition':changed(ims[names[2]],ims[names[3]]),
+ 'photo_accepted_and_pdf_saved':'NOT VERIFIED',
  'admob_impression':'NOT VERIFIED'
 }
 (out/'fallback-observation.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -109,4 +115,6 @@ if report['opening_system_photo_chooser']<0.09:
  raise SystemExit('Smart Scan did not display a distinct fallback chooser screen')
 if report['take_picture_transition']<0.09:
  raise SystemExit('Take Picture did not transition away from the chooser. Inspect 03 screenshot and logcat.')
+if report['native_camera_shutter_transition']<0.06:
+ raise SystemExit('Camera shutter did not change its UI. Inspect 04 screenshot before assuming a capture occurred.')
 PY
