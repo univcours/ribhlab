@@ -16,9 +16,6 @@ jobs:
       RIVO_COMPACT_BUILD: '1'
       VITE_RIVO_COMPACT: '1'
       VITE_RIVO_ADMOB_MODE: test
-      VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
-      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809191
-      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,7 +44,7 @@ jobs:
           python3 scripts/configure-rivoscan-maven-mirror.py
           python3 scripts/verify-rivoscan-portrait.py
           # UMP uses the real app registration, but ad requests use Google demo units only.
-          VITE_RIVO_ADMOB_MODE=live node scripts/prepare-rivoscan-admob-release.mjs
+          VITE_RIVO_ADMOB_MODE=live VITE_RIVO_ADMOB_APP_ID=ca-app-pub-7945572016731367~1509328607 VITE_RIVO_ADMOB_BANNER_ID=ca-app-pub-7945572016731367/4841809191 VITE_RIVO_ADMOB_INTERSTITIAL_ID=ca-app-pub-7945572016731367/5608742752 node scripts/prepare-rivoscan-admob-release.mjs
       - uses: gradle/actions/setup-gradle@v4
       - name: Assemble emulator QA APK
         run: |
