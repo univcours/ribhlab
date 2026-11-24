@@ -1,3 +1,14 @@
+# RivoScan current verified checkpoint — 0.45.92 (24 November 2026)
+
+**Current Android branch:** `fix/rivoscan-04592-smartscan-native-fallback`. Latest signed app **versionName 0.45.92, code 207**, package `com.ribhlab.rivoscan` with original signing certificate. Tested release source commit `7fc2763306c86f7bdce7e2c3e55761e404fca877`; later commits on the branch modify *test harness/documentation* and do not imply a different binary.
+**GitHub TESTER PRE-RELEASE, not Google Play:** https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.92-smartscan-fallback . Original-signed ARM64 / ARM32 / Universal APK and all-ABI AAB verified. Production build CI https://github.com/univcours/ribhlab/actions/runs/45293517830 passed source checks, responsive UI, ABI parity, signing, AAB and Android emulator screenshot capture.
+**User UI mandate:** One centered bottom navigation camera with real Material Symbols Rounded `photo_camera`; no overlapping floating duplicate; Material 3 Expressive and other scanning/PDF features retained.
+**Native fallback evidence:** 0.45.92 screenshot `05-smartscan-open.png` shows real Android system Photo chooser with From Photos/Take Picture after Google ML Kit scanner failed. Independent verified **signed APK** workflow https://github.com/univcours/ribhlab/actions/runs/45298720342 PASSED real emulator taps and Android resumed activity `com.android.camera2/com.android.camera.CaptureActivity` (chooser diff 94.555%; camera transition 99.548%). **Camera opens**; final shutter, confirmation, PDF saved to Documents, physical handset still require separate proof. New shutter QA workflow is `rivoscan-04592-native-fallback-qa.yml` and may still be running; inspect its conclusion.
+**Native AdMob diagnostics:** emulator log observed `Ad failed to load: 3` = NO_FILL; this does not prove a UI overlay bug. GMS log also said Google Play services outdated on this emulator. Physical device ad fill, consent/impression remain unverified. No fake ads.
+**Next step:** finish actual Camera2 shutter and PDF save end-to-end on emulator or authorized phone, verify native ad and update this checkpoint with evidence. No Google Play publication unless user explicitly authorizes.
+
+---
+
 # CURRENT: RivoScan 0.45.91 native verified checkpoint (2026-11-23)
 
 - Release: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.91-single-camera ; original-signed ARM64/ARM32/Universal APKs and AAB; Android code 206. No Google Play publication.
