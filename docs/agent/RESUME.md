@@ -1,7 +1,12 @@
 # Resume RivoScan from another ChatGPT conversation
 
+## Current resume instructions — 24 November 2026
+
+The latest verified signed tester is **RivoScan 0.45.92 / code 207**, not 0.45.89: https://github.com/univcours/ribhlab/releases/tag/rivoscan-0.45.92-smartscan-fallback . One real `photo_camera` centered in bottom navigation, without duplicate floating button; real system Photo chooser and Android Camera2 activity opening confirmed with signed-APK emulator QA. **Shutter/PDF save still requires proof.** Read current `docs/agent/PROJECT_STATE.md` and `docs/agent/TASKS.md` before editing. Do not upload Google Play without request.
+
+
 Repository: univcours/ribhlab (multiple products; never mistake main site for the latest Android app).
-Active RivoScan branch: `fix/rivoscan-04589-documents-import-clarity`.
+Active RivoScan branch: `fix/rivoscan-04592-smartscan-native-fallback`.
 Before editing, independently verify current branch head and GitHub Actions.
 
 1. Read `RIVOSCAN_MASTER_SPEC.md`, `RIVOSCAN_DESIGN_OVERRIDE.md`, `RIVOSCAN_HANDOFF.md` on main.
