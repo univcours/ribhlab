@@ -46,6 +46,122 @@ jobs:
           unzip -q source/public/downloads/RibhMeasure-Android-Source-v1.0.0.zip -d "$RUNNER_TEMP"
           test -s "$RUNNER_TEMP/RibhMeasure/app/build.gradle"
           grep -F "applicationId 'com.ribhlab.ribhmeasure'" "$RUNNER_TEMP/RibhMeasure/app/build.gradle"
+      - name: Add real AR room measurement and repair API 26 theme
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/RibhMeasure"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/res/values/styles.xml')
+          p.write_text(p.read_text().replace('        <item name="android:windowLightNavigationBar">false</item>',''))
+          p=Path('app/build.gradle')
+          p.write_text(p.read_text().replace('dependencies {', "dependencies {\n    implementation 'com.google.ar:core:1.48.0'"))
+          p=Path('app/src/main/AndroidManifest.xml')
+          t=p.read_text().replace('<uses-permission android:name="android.permission.INTERNET" />','<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.INTERNET" />')
+          t=t.replace('<activity android:name=".HistoryActivity"', '<meta-data android:name="com.google.ar.core" android:value="optional" />\n        <activity android:name=".RoomArActivity" android:exported="false" />\n        <activity android:name=".HistoryActivity"')
+          p.write_text(t)
+          p=Path('app/src/main/java/com/ribhlab/ribhmeasure/MainActivity.java')
+          t=p.read_text().replace('Ui.gap(this,body,21);','Ui.gap(this,body,21);\n        android.widget.Button ar=new android.widget.Button(this); ar.setText("AR Room Measure / Mesure 3D"); ar.setOnClickListener(v->open(RoomArActivity.class)); body.addView(ar,Ui.lp(this,58)); Ui.gap(this,body,12);')
+          p.write_text(t)
+          PY
+          cat > app/src/main/java/com/ribhlab/ribhmeasure/RoomArActivity.java <<'JAVA'
+          package com.ribhlab.ribhmeasure;
+          import android.Manifest;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.content.pm.PackageManager;
+          import android.graphics.*;
+          import android.opengl.*;
+          import android.view.*;
+          import android.widget.*;
+          import com.google.ar.core.*;
+          import java.nio.*;
+          import java.util.*;
+          import javax.microedition.khronos.egl.EGLConfig;
+          import javax.microedition.khronos.opengles.GL10;
+          
+          public final class RoomArActivity extends Activity implements GLSurfaceView.Renderer {
+           private GLSurfaceView gl; private TextView status, result; private Sketch sketch;
+           private Session session; private boolean installRequested=false, active=false, depth=false;
+           private volatile boolean add=false, undo=false, reset=false, ceiling=false;
+           private final ArrayList<Anchor> points=new ArrayList<>();
+           private Anchor top; private int tex, program, width=1,height=1;
+           private final FloatBuffer quad=buf(new float[]{-1,-1,1,-1,-1,1,1,1});
+           private final FloatBuffer uv=buf(new float[8]);
+           private long lastUpdate; private volatile float[][] outline=new float[0][];
+           private static FloatBuffer buf(float[] a){FloatBuffer b=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(a).position(0);return b;}
+           private String tr(String en,String fr,String ar){String l=Locale.getDefault().getLanguage();return l.equals("ar")?ar:l.equals("fr")?fr:en;}
+           @Override public void onCreate(Bundle b){super.onCreate(b);
+             LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setBackgroundColor(0xff07111e);
+             status=new TextView(this);status.setTextColor(0xffe1f5f4);status.setTextSize(15);status.setPadding(20,16,20,12);root.addView(status);
+             FrameLayout frame=new FrameLayout(this);gl=new GLSurfaceView(this);gl.setEGLContextClientVersion(2);gl.setPreserveEGLContextOnPause(true);gl.setRenderer(this);frame.addView(gl);
+             View cross=new View(this){final Paint p=new Paint(3);@Override protected void onDraw(Canvas c){float x=getWidth()/2f,y=getHeight()/2f;p.setColor(0xff21e0c2);p.setStrokeWidth(4);c.drawCircle(x,y,15,p);c.drawLine(x-28,y,x-7,y,p);c.drawLine(x+7,y,x+28,y,p);c.drawLine(x,y-28,x,y-7,p);c.drawLine(x,y+7,x,y+28,p);}};frame.addView(cross,new FrameLayout.LayoutParams(-1,-1));root.addView(frame,new LinearLayout.LayoutParams(-1,0,1));
+             result=new TextView(this);result.setTextColor(0xffa7f9e8);result.setTextSize(17);result.setPadding(20,12,20,8);root.addView(result);
+             sketch=new Sketch();root.addView(sketch,new LinearLayout.LayoutParams(-1,110));
+             LinearLayout buttons=new LinearLayout(this);root.addView(buttons);button(buttons,tr("Corner","Coin","زاوية"),()->{ceiling=false;add=true;});button(buttons,tr("Ceiling","Plafond","السقف"),()->{ceiling=true;add=true;});button(buttons,tr("Undo","Annuler","تراجع"),()->undo=true);button(buttons,tr("Reset","Effacer","مسح"),()->reset=true);
+             setContentView(root);msg(tr("Move slowly and aim at floor corners in order.","Bougez lentement et visez les coins du sol dans l'ordre.","حرك الهاتف ببطء وحدد زوايا الأرضية بالترتيب."));
+           }
+           private void button(LinearLayout l,String t,Runnable r){Button b=new Button(this);b.setText(t);b.setAllCaps(false);b.setTextSize(12);b.setOnClickListener(v->r.run());l.addView(b,new LinearLayout.LayoutParams(0,54,1));}
+           private void msg(String s){runOnUiThread(()->status.setText(s));}
+           @Override protected void onResume(){super.onResume();startAr();}
+           private void startAr(){try{
+            if(session==null){
+             ArCoreApk.Availability av=ArCoreApk.getInstance().checkAvailability(this);
+             if(av.isTransient()){status.postDelayed(()->{if(!isFinishing()&&hasWindowFocus())startAr();},500);return;}
+             if(!av.isSupported()){msg(tr("ARCore is not supported on this device.","ARCore non compatible.","الهاتف لا يدعم ARCore."));return;}
+             if(ArCoreApk.getInstance().requestInstall(this,!installRequested)==ArCoreApk.InstallStatus.INSTALL_REQUESTED){installRequested=true;return;}
+             if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.CAMERA},44);return;}
+             session=new Session(this);Config c=new Config(session);c.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);depth=session.isDepthModeSupported(Config.DepthMode.AUTOMATIC);if(depth)c.setDepthMode(Config.DepthMode.AUTOMATIC);session.configure(c);
+            }
+            if(!active){session.resume();active=true;gl.onResume();}
+           }catch(Exception e){msg(tr("AR unavailable: ","AR indisponible : ","الواقع المعزز غير متاح: ")+e.getClass().getSimpleName());}}
+           @Override public void onRequestPermissionsResult(int req,String[] p,int[] g){super.onRequestPermissionsResult(req,p,g);if(req==44&&g.length>0&&g[0]==PackageManager.PERMISSION_GRANTED)startAr();else if(req==44)msg(tr("Camera permission is required.","Permission caméra requise.","خاص السماح بالكاميرا."));}
+           @Override protected void onPause(){if(active){gl.onPause();session.pause();active=false;}super.onPause();}
+           @Override protected void onDestroy(){if(session!=null){session.close();session=null;}super.onDestroy();}
+           @Override public void onSurfaceCreated(GL10 x,EGLConfig y){int[] t=new int[1];GLES20.glGenTextures(1,t,0);tex=t[0];GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,tex);GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_LINEAR);GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_CLAMP_TO_EDGE);GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_CLAMP_TO_EDGE);
+            int v=shader(GLES20.GL_VERTEX_SHADER,"attribute vec2 p;attribute vec2 u;varying vec2 v;void main(){gl_Position=vec4(p,0.,1.);v=u;}");
+            int f=shader(GLES20.GL_FRAGMENT_SHADER,"#extension GL_OES_EGL_image_external : require\nprecision mediump float;uniform samplerExternalOES s;varying vec2 v;void main(){gl_FragColor=texture2D(s,v);}");
+            program=GLES20.glCreateProgram();GLES20.glAttachShader(program,v);GLES20.glAttachShader(program,f);GLES20.glLinkProgram(program);
+           }
+           private int shader(int type,String src){int s=GLES20.glCreateShader(type);GLES20.glShaderSource(s,src);GLES20.glCompileShader(s);return s;}
+           @Override public void onSurfaceChanged(GL10 g,int w,int h){width=w;height=h;GLES20.glViewport(0,0,w,h);}
+           @Override public void onDrawFrame(GL10 g){GLES20.glClearColor(0,0,0,1);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);Session s=session;if(s==null||!active)return;
+            try{s.setCameraTextureName(tex);s.setDisplayGeometry(getWindowManager().getDefaultDisplay().getRotation(),width,height);Frame f=s.update();
+             quad.position(0);uv.position(0);f.transformCoordinates2d(Coordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES,quad,Coordinates2d.TEXTURE_NORMALIZED,uv);quad.position(0);uv.position(0);
+             GLES20.glUseProgram(program);GLES20.glActiveTexture(GLES20.GL_TEXTURE0);GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,tex);GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"s"),0);
+             int p=GLES20.glGetAttribLocation(program,"p"),u=GLES20.glGetAttribLocation(program,"u");GLES20.glEnableVertexAttribArray(p);GLES20.glEnableVertexAttribArray(u);GLES20.glVertexAttribPointer(p,2,GLES20.GL_FLOAT,false,0,quad);GLES20.glVertexAttribPointer(u,2,GLES20.GL_FLOAT,false,0,uv);if(f.getTimestamp()!=0)GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);GLES20.glDisableVertexAttribArray(p);GLES20.glDisableVertexAttribArray(u);
+             if(reset){reset=false;for(Anchor a:points)a.detach();points.clear();if(top!=null)top.detach();top=null;}
+             if(undo){undo=false;if(top!=null){top.detach();top=null;}else if(!points.isEmpty())points.remove(points.size()-1).detach();}
+             if(add){add=false;if(f.getCamera().getTrackingState()!=TrackingState.TRACKING){msg(tr("Tracking not ready. Move slowly.","Suivi non prêt.","حرك الهاتف ببطء."));}else place(f);}
+             long now=android.os.SystemClock.uptimeMillis();if(now-lastUpdate>300){lastUpdate=now;refresh(f.getCamera().getTrackingState()==TrackingState.TRACKING);}
+            }catch(Exception e){msg(tr("Tracking interrupted","Suivi interrompu","توقف التتبع"));}
+           }
+           private void place(Frame f){
+            boolean wantTop=ceiling; if(wantTop&&points.size()<3){msg(tr("Mark floor first.","Marquez d'abord le sol.","حدد الأرضية أولاً."));return;}
+            for(HitResult h:f.hitTest(width/2f,height/2f)){Trackable t=h.getTrackable();Pose pose=h.getHitPose();boolean match=false;
+             if(t instanceof Plane){Plane pl=(Plane)t;match=pl.isPoseInPolygon(pose)&&(wantTop?pl.getType()==Plane.Type.HORIZONTAL_DOWNWARD_FACING:pl.getType()==Plane.Type.HORIZONTAL_UPWARD_FACING);}
+             if(!match&&t instanceof DepthPoint&&depth&&!points.isEmpty()){float y=pose.ty(),base=points.get(0).getPose().ty();match=wantTop?y-base>1.2f:Math.abs(y-base)<0.12f;}
+             if(!match)continue;
+             if(!wantTop&&!points.isEmpty()){Pose first=points.get(0).getPose();if(Math.abs(pose.ty()-first.ty())>0.15f)continue;Pose last=points.get(points.size()-1).getPose();if(Math.hypot(pose.tx()-last.tx(),pose.tz()-last.tz())<0.08)continue;}
+             if(wantTop){if(pose.ty()-points.get(0).getPose().ty()<1.2f)continue;if(top!=null)top.detach();top=h.createAnchor();}
+             else if(points.size()<30)points.add(h.createAnchor());return;
+            }
+            msg(tr("No reliable surface. Aim again at visible floor or ceiling.","Surface non détectée. Réessayez.","السطح غير واضح، وجه الهاتف مرة أخرى."));
+           }
+           private void refresh(boolean tracking){float[][] a=new float[points.size()][2];float floor=0;for(int i=0;i<points.size();i++){Pose p=points.get(i).getPose();a[i][0]=p.tx();a[i][1]=p.tz();floor+=p.ty();}
+            double area=0,per=0;for(int i=0;i<a.length;i++){float[] p=a[i],q=a[(i+1)%a.length];area+=p[0]*q[1]-q[0]*p[1];per+=Math.hypot(p[0]-q[0],p[1]-q[1]);}
+            area=Math.abs(area)/2;double h=top!=null&&a.length>0?top.getPose().ty()-floor/a.length:Double.NaN;
+            String text=String.format(Locale.US,"%s: %d",tr("Corners","Coins","الزوايا"),a.length);
+            if(a.length>=2)text+=String.format(Locale.US,"  |  %.2f m",Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]));
+            if(a.length>=3)text+=String.format(Locale.US,"\n%.2f m²  •  %.2f m %s",area,per,tr("perimeter","périmètre","المحيط"));
+            if(a.length>=4)text+=String.format(Locale.US,"  |  %.2f × %.2f m",Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),Math.hypot(a[1][0]-a[2][0],a[1][1]-a[2][1]));
+            if(Double.isFinite(h)&&h>0&&a.length>=3)text+=String.format(Locale.US,"\n%s %.2f m  •  %.2f m³",tr("Height","Hauteur","الارتفاع"),h,area*h);
+            final String val=text;outline=a;runOnUiThread(()->{result.setText(val);sketch.invalidate();if(!tracking)status.setText(tr("Move slowly to recover tracking.","Bougez lentement.","حرك الهاتف ببطء."));});
+           }
+           private final class Sketch extends View {final Paint p=new Paint(3);Sketch(){super(RoomArActivity.this);} @Override protected void onDraw(Canvas c){float[][] a=outline;if(a.length<2)return;float minX=a[0][0],maxX=minX,minY=a[0][1],maxY=minY;for(float[] x:a){minX=Math.min(minX,x[0]);maxX=Math.max(maxX,x[0]);minY=Math.min(minY,x[1]);maxY=Math.max(maxY,x[1]);}float scale=Math.min((getWidth()-40f)/Math.max(.1f,maxX-minX),(getHeight()-20f)/Math.max(.1f,maxY-minY));Path path=new Path();for(int i=0;i<a.length;i++){float x=20+(a[i][0]-minX)*scale,y=10+(a[i][1]-minY)*scale;if(i==0)path.moveTo(x,y);else path.lineTo(x,y);}if(a.length>=3)path.close();p.setColor(0xff21e0c2);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(3);c.drawPath(path,p);}}
+          }
+          
+          JAVA
       - name: Import existing RivoScan original upload key privately and verify Play certificate
         shell: bash
         env:
