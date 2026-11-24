@@ -95,6 +95,11 @@ adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActi
 # The app's native RivoDocuments.saveFile publishes a PDF under Documents/RivoScan.
 adb shell find /sdcard/Documents/RivoScan -maxdepth 2 -type f -iname '*.pdf' 2>/dev/null | tr -d '\r' > "$OUT/05-saved-pdfs.txt" || true
 adb shell ls -lah /sdcard/Documents/RivoScan > "$OUT/05-public-documents-listing.txt" 2>&1 || true
+# Pull the actual public Android PDF back into the CI artifact; verify its bytes.
+PDF_PATH=$(head -n 1 "$OUT/05-saved-pdfs.txt" || true)
+if test -n "$PDF_PATH"; then
+  adb pull "$PDF_PATH" "$OUT/05-android-saved-document.pdf" >/dev/null
+fi
 adb logcat -d -t 5500 > "$OUT/05-camera-pdf-logcat.txt" || true
 
 python3 - "$OUT" <<'PY'
@@ -117,6 +122,10 @@ report={
  'accepted_photo_transition':changed(ims[names[3]],ims[names[4]]),
  'public_saved_pdfs':(out/'05-saved-pdfs.txt').read_text().splitlines(),
  'photo_accepted_and_pdf_saved':bool((out/'05-saved-pdfs.txt').read_text().strip()),
+ 'pdf_bytes_valid':(out/'05-android-saved-document.pdf').is_file() and
+   (out/'05-android-saved-document.pdf').stat().st_size>4096 and
+   (out/'05-android-saved-document.pdf').read_bytes().startswith(b'%PDF-') and
+   b'%%EOF' in (out/'05-android-saved-document.pdf').read_bytes()[-2048:],
  'admob_impression':'NOT VERIFIED'
 }
 (out/'fallback-observation.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -125,10 +134,13 @@ if report['opening_system_photo_chooser']<0.09:
  raise SystemExit('Smart Scan did not display a distinct fallback chooser screen')
 if report['take_picture_transition']<0.09:
  raise SystemExit('Take Picture did not transition away from the chooser. Inspect 03 screenshot and logcat.')
-if report['native_camera_shutter_transition']<0.06:
- raise SystemExit('Camera shutter did not change its UI. Inspect 04 screenshot before assuming a capture occurred.')
+# Emulators display a static camera scene; successful shutter may change only 2.7% of pixels.
+# The definitive acceptance gate is a distinct confirmation screen followed by a valid
+# *publicly saved PDF* extracted from Android, not a fragile shutter pixel threshold.
 if report['accepted_photo_transition']<0.08:
  raise SystemExit('Photo confirmation did not close camera review. Inspect 05 screenshot.')
 if not report['photo_accepted_and_pdf_saved']:
  raise SystemExit('Camera confirmed but no PDF found in public Documents/RivoScan. Inspect app screenshot/logcat.')
+if not report['pdf_bytes_valid']:
+ raise SystemExit('Published PDF was not retrievable or failed %PDF/%%EOF byte validation.')
 PY
