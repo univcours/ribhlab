@@ -172,7 +172,7 @@ jobs:
               /tmp/RivoScan-0.45.93-UNIVERSAL-SIGNED.apk \
               --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title 'RivoScan 0.45.93 - Vertically Centered Header' \
-               --notes 'Signed RivoScan 0.45.93 tester. Logo, name, version, language and sound now share one true vertical centerline of the mobile blue header. The native Android extra top padding is removed; responsive visual centering was checked at 320/360/393/480/768px. Original Material 3 Expressive, bundled Material Symbols Rounded, central photo_camera with no duplicate floating FAB, Google ML Kit first with native camera fallback, QR/Plate, PDF tools and AdMob SDK behavior preserved. All Android ABIs signed with the original key. GitHub tester pre-release only, not uploaded to Play.''
+               --notes 'Signed RivoScan 0.45.93 tester. Logo, name, version, language and sound now share one true vertical centerline of the mobile blue header. The native Android extra top padding is removed; responsive visual centering was checked at 320/360/393/480/768px. Original Material 3 Expressive, bundled Material Symbols Rounded, central photo_camera with no duplicate floating FAB, Google ML Kit first with native camera fallback, QR/Plate, PDF tools and AdMob SDK behavior preserved. All Android ABIs signed with the original key. GitHub tester pre-release only, not uploaded to Play.'
           fi
           # Keep the original APKs; attach the verified AAB for Play per-device delivery.
           cp android/app/build/outputs/bundle/release/app-release.aab /tmp/RivoScan-0.45.93-ALL-SUPPORTED-ANDROID-PLAY.aab
