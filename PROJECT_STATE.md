@@ -19,3 +19,8 @@ Updated: 2026-11-24 after GitHub Actions run 45481179896, before any new on-devi
 ## Source-of-truth distinction
 - `univcours/ribhlab` is the Android app source (its default `main` is a multi-product website); `ribhlab/ribhlab.github.io` hosts the **original** working production and screenshot publisher. Do not redo uploads that workflow already committed.
 - This docs branch is based on the exact signed 0.45.95 source and contains documentation only.
+
+## Actual visual review of downloaded Play screenshot artifacts
+- Downloaded all three original GitHub Actions artifacts from run 45481179896 and inspected contact sheets (7 phone / 6 tablet7 / 6 tablet10). Screens are real, distinct captures of 0.45.95 and show Material 3 blue UI.
+- **Quality caveat:** Home/Documents show empty fresh-install document lists; Formula OCR, Book Scan, Photo Translation and ID Photo are unpopulated tool states. Tablet10 has extensive unused white space and a narrow left-oriented content column. These pass authenticity checks but do not yet demonstrate processed documents. Treat populated screenshots/tablet UX enhancement as an optional future **new improvement**, not as a reason to re-upload the already-committed identical assets.
+- Ads are intentionally not visible in screenshot artifacts because the capture script enabled airplane mode; screenshots cannot validate actual AdMob banners.
