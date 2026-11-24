@@ -1,0 +1,61 @@
+name: RivoScan 0.45.92 - Signed native camera fallback verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/rivoscan-04592-smartscan-native-fallback]
+    paths:
+      - .github/workflows/rivoscan-04592-native-fallback-qa.yml
+      - scripts/qa-04592-native-fallback.sh
+permissions:
+  contents: read
+concurrency:
+  group: rivoscan-04592-native-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-fallback-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download actual original-signed universal tester APK from verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04592/RivoScan-0.45.92-UNIVERSAL-SIGNED.apk
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/rivoscan-04592"
+          gh release download rivoscan-0.45.92-smartscan-fallback --repo "${GITHUB_REPOSITORY}" --pattern 'RivoScan-0.45.92-UNIVERSAL-SIGNED.apk' --dir "${RUNNER_TEMP}/rivoscan-04592"
+          test -s "${RIVO_SIGNED_APK}"
+          sha256sum "${RIVO_SIGNED_APK}" > "${RUNNER_TEMP}/rivoscan-04592/sha256.txt"
+      - name: Install screenshot comparison dependency
+        run: python3 -m pip install --break-system-packages --disable-pip-version-check --quiet pillow
+      - name: Configure Android emulator KVM
+        run: |
+          if test -e /dev/kvm; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm
+            sudo chmod a+rw /dev/kvm
+          fi
+      - name: Verify actual Smart Scan ML Kit failure fallback opens system camera
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_I_WANT_MY_TCG: 'yes'
+          RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04592/RivoScan-0.45.92-UNIVERSAL-SIGNED.apk
+          RIVO_NATIVE_QA_DIR: ${{ runner.temp }}/rivo-04592-fallback
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: bash scripts/qa-04592-native-fallback.sh
+      - name: Archive genuine screenshots, pixel comparison and Android logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-0.45.92-REAL-Android-Camera-Fallback-Evidence
+          path: ${{ runner.temp }}/rivo-04592-fallback/
+          retention-days: 30
+          if-no-files-found: warn
