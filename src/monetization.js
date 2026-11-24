@@ -83,7 +83,7 @@ async function trackNativeAdEvents(){
  if(impressionListenersAttached)return;
  try{
   for(const [event,handle] of [
-   [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;state.onChange()}],
+   [BannerAdPluginEvents.AdImpression,()=>{adStats.bannerImpressions++;bannerLog('IMPRESSION',{count:adStats.bannerImpressions});state.onChange()}],
    [InterstitialAdPluginEvents.AdImpression,()=>{adStats.interstitialImpressions++;state.onChange()}],
    [BannerAdPluginEvents.FailedToLoad,e=>{adStats.lastBannerError=formatBannerError(e);state.onChange()}],
    [InterstitialAdPluginEvents.FailedToLoad,e=>{adStats.lastInterstitialError=String(e?.message||e||'No fill');state.onChange()}]
@@ -103,6 +103,17 @@ const state={startedAt:Date.now(),initializing:null,ready:false,consent:false,
 const retryCounts={banner:0,interstitial:0};
 const retryTimers={banner:null,interstitial:null};
 let adVisibilityRecoveryAttached=false;
+let bannerNextAttemptAt=0,bannerRequestWatchdog=null,bannerRetryDue=false;
+const bannerLog=(event,detail={})=>console.info('[RIVO_BANNER] '+event+' '+JSON.stringify(detail));
+function clearBannerWatchdog(){if(bannerRequestWatchdog){clearTimeout(bannerRequestWatchdog);bannerRequestWatchdog=null;}}
+function bannerRequestAllowed(now=Date.now()){return !retryTimers.banner&&now>=bannerNextAttemptAt&&(retryCounts.banner===0||bannerRetryDue);}
+function resetBannerRetry(){if(retryTimers.banner)clearTimeout(retryTimers.banner);retryTimers.banner=null;retryCounts.banner=0;bannerNextAttemptAt=0;bannerRetryDue=false;}
+function bannerFailed(error){
+ clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=false;state.bannerHidden=false;
+ state.bannerError=formatBannerError(error)||'Banner request failed';adStats.lastBannerError=state.bannerError;
+ bannerLog('FAILED',{error:state.bannerError,requests:adStats.bannerRequests});
+ setBannerSpace(false);scheduleAdRetry('banner');state.onChange();
+}
 function installAdVisibilityRecovery(){
  if(adVisibilityRecoveryAttached||typeof document==='undefined')return;
  adVisibilityRecoveryAttached=true;
@@ -110,7 +121,6 @@ function installAdVisibilityRecovery(){
  document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible'||!state.ready||!state.consent)return;
   if(!retryTimers.banner&&!state.bannerReady&&!state.bannerLoading&&AD_CONFIG.bannerEnabled){
-   retryCounts.banner=0;
    scheduleBannerRelayout();
   }
   if(!retryTimers.interstitial&&!state.interstitialReady&&!state.busy){
@@ -123,11 +133,13 @@ function scheduleAdRetry(type){
  if(!isAndroid||!state.ready||!state.consent||retryTimers[type])return;
  if(retryCounts[type]>=4)return; // bounded no-fill retries
  const delay=[60000,120000,240000,480000][retryCounts[type]++];
+ if(type==='banner')bannerNextAttemptAt=Date.now()+delay;
  retryTimers[type]=setTimeout(()=>{
   retryTimers[type]=null;
+  // The scheduled attempt may be made on the next visible, safe route.
+  if(type==='banner'){bannerNextAttemptAt=0;bannerRetryDue=true;if(document.visibilityState!=='hidden')scheduleBannerRelayout();return;}
   if(document.visibilityState==='hidden'){retryCounts[type]=Math.max(0,retryCounts[type]-1);return;}
-  if(type==='banner')void loadBanner();
-  else if(type==='interstitial')void loadInterstitial();
+  if(type==='interstitial')void loadInterstitial();
  },delay);
 }
 const status=(value,error='')=>{state.status=value;state.lastError=error;state.onChange();};
@@ -210,8 +222,8 @@ function setBannerSpace(visible){
  if(layout.valid)root.style.setProperty('--rivo-banner-bottom',layout.margin+'px');
  const oldReserved=document.body.classList.contains('rivo-ad-reserved');
  const oldDisplayed=document.body.classList.contains('rivo-has-ad-banner');
- document.body.classList.toggle('rivo-ad-reserved',reserved);
- document.body.classList.toggle('rivo-has-ad-banner',displayed);
+ if(oldReserved!==reserved)document.body.classList.toggle('rivo-ad-reserved',reserved);
+ if(oldDisplayed!==displayed)document.body.classList.toggle('rivo-has-ad-banner',displayed);
  if((oldReserved!==reserved||oldDisplayed!==displayed)&&typeof window!=='undefined')
   window.dispatchEvent(new Event('rivo:banner-layout'));
 }
@@ -244,7 +256,7 @@ async function reconcileNativeBanner(){
  if(bannerReconciling){scheduleBannerRelayout();return;}
  bannerReconciling=true;
  try{
-  const layout=currentBannerLayout(),blocked=bannerObstructed()||document.visibilityState==='hidden';
+  const layout=currentBannerLayout(),blocked=state.busy||bannerObstructed()||document.visibilityState==='hidden';
   if(!layout.valid||blocked){
    setBannerSpace(false);
    if(state.bannerReady&&!state.bannerHidden){
@@ -264,27 +276,30 @@ async function reconcileNativeBanner(){
    if(state.bannerHidden){
     await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>setBannerSpace(false));
    }else setBannerSpace(true);
-  }else if(!bannerWrongSize)void loadBanner();
+  }else if(!bannerWrongSize&&bannerRequestAllowed())void loadBanner();
  }finally{bannerReconciling=false;}
 }
 async function loadBanner(){
- if(!state.ready||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading||bannerWrongSize)return false;
+ if(!state.ready||!state.consent||!AD_CONFIG.bannerEnabled||state.bannerReady||state.bannerLoading||bannerWrongSize||!bannerRequestAllowed())return false;
  const layout=currentBannerLayout();
  if(!layout.valid){state.bannerError=layout.reason||'No safe banner room';setBannerSpace(false);return false;}
- if(bannerObstructed()||document.visibilityState==='hidden'){setBannerSpace(false);return false;}
- state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(false);
+ if(state.busy||bannerObstructed()||document.visibilityState==='hidden'){setBannerSpace(false);return false;}
+ bannerRetryDue=false;state.bannerLoading=true;adStats.bannerRequests++;setBannerSpace(false);
+ bannerLog('REQUEST',{count:adStats.bannerRequests,margin:layout.margin,test:AD_CONFIG.testMode});
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
-    state.bannerReady=true;retryCounts.banner=0;adStats.bannerLoads++;state.bannerError='';
+    clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=true;resetBannerRetry();adStats.bannerLoads++;state.bannerError='';adStats.lastBannerError='';
+    bannerLog('LOADED',{count:adStats.bannerLoads,margin:bannerLastMargin});
     observeBannerOverlays();
-    if(bannerObstructed()){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
+    if(state.busy||document.visibilityState==='hidden'||bannerObstructed()||!currentBannerLayout().valid){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
     else {state.bannerHidden=false;setBannerSpace(true);}
     state.onChange();
    });
    await AdMob.addListener(BannerAdPluginEvents.SizeChanged,size=>{
+    bannerLog('SIZE',{width:size?.width,height:size?.height});
     if(!nativeAdFits(size)){
-     bannerWrongSize=true;state.bannerReady=false;state.bannerHidden=true;
+     bannerWrongSize=true;clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=false;state.bannerHidden=true;
      state.bannerError='Native ad is larger than its reserved 320x50 viewport';
      setBannerSpace(false);
      void AdMob.hideBanner().then(()=>AdMob.removeBanner()).catch(()=>{});
@@ -293,13 +308,14 @@ async function loadBanner(){
     if(state.bannerReady&&!state.bannerHidden)setBannerSpace(true);
    });
    await AdMob.addListener(BannerAdPluginEvents.FailedToLoad,error=>{
-    state.bannerReady=false;state.bannerHidden=false;
-    state.bannerError=formatBannerError(error);
-    setBannerSpace(false);scheduleAdRetry('banner');state.onChange();
+    bannerFailed(error);
    });
    state.bannerListenersAttached=true;
   }
   bannerLastMargin=layout.margin;
+  // showBanner may resolve after creating the native view, before SDK load/failure.
+  // Only callbacks or this watchdog finish an in-flight request.
+  bannerRequestWatchdog=setTimeout(()=>{if(state.bannerLoading){bannerFailed('SDK banner load callback timed out');void AdMob.removeBanner().catch(()=>{});}},45000);
   await AdMob.showBanner({
    adId:AD_CONFIG.banner,adSize:BannerAdSize.BANNER,
    position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin,
@@ -308,10 +324,9 @@ async function loadBanner(){
   // The reserved viewport is activated ONLY by Loaded, not an empty placeholder.
   return true;
  }catch(error){
-  state.bannerReady=false;state.bannerError=formatBannerError(error);
-  setBannerSpace(false);status('Banner unavailable',state.bannerError);
-  scheduleAdRetry('banner');return false;
- }finally{state.bannerLoading=false;}
+  if(state.bannerLoading)bannerFailed(error);
+  return false;
+ }
 }
 async function loadInterstitial(){
  if(!state.ready||state.interstitialReady||state.busy)return false;
@@ -327,7 +342,9 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
  if(state.ready){
   installAdVisibilityRecovery();
   if(retry){
-   retryCounts.banner=0;retryCounts.interstitial=0;
+   // A foreground event must not bypass an active no-fill cooldown.
+   if(!retryTimers.banner&&retryCounts.banner>=4&&!bannerRetryDue){bannerRetryDue=true;bannerNextAttemptAt=Date.now()+60000;setTimeout(scheduleBannerRelayout,60000);}
+   retryCounts.interstitial=0;
    if(!state.interstitialReady&&!state.busy)void loadInterstitial();
    if(!deferBanner){bannerWrongSize=false;void reconcileNativeBanner();}
   }
@@ -405,6 +422,7 @@ async function pauseBannerForFullscreen(){
 async function restoreBannerAfterFullscreen(){
  if(!state.bannerReady||bannerObstructed())return;
  await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>{});
+ scheduleBannerRelayout();
 }
 // App Open inventory has been removed. Never show an interstitial on launch.
 // Prepare the SDK and pre-load the next natural-break interstitial silently.
