@@ -1,0 +1,85 @@
+name: RivoScan - banner SDK regression and genuine Android test impression
+on:
+  push:
+    branches: [fix/rivoscan-04594-banner-recovery]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rivoscan-banner-qa
+  cancel-in-progress: true
+jobs:
+  native-test-banner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      RIVO_COMPACT_BUILD: '1'
+      VITE_RIVO_COMPACT: '1'
+      VITE_RIVO_ADMOB_MODE: test
+      VITE_RIVO_ADMOB_APP_ID: ca-app-pub-7945572016731367~1509328607
+      VITE_RIVO_ADMOB_BANNER_ID: ca-app-pub-7945572016731367/4841809191
+      VITE_RIVO_ADMOB_INTERSTITIAL_ID: ca-app-pub-7945572016731367/5608742752
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Test exact production banner logic without real ad requests
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          node --test tests/rivo-banner-recovery.test.js tests/monetization.test.js tests/rivo-native-ad-geometry.test.js
+          npm run check
+          npm test
+      - name: Build isolated demo-ad QA application (not for Play)
+        run: |
+          set -euo pipefail
+          npm run build
+          grep -R -F -l '6300978111' dist/assets --include='*.js'
+          if grep -R -F -q '4841809191' dist/assets --include='*.js'; then echo 'Live banner ID in QA build; abort'; exit 1; fi
+          npx cap add android
+          npx cap sync android
+          python3 scripts/prepare-rivoscan-compact.py
+          python3 scripts/configure-rivoscan-maven-mirror.py
+          python3 scripts/verify-rivoscan-portrait.py
+          # UMP uses the real app registration, but ad requests use Google demo units only.
+          VITE_RIVO_ADMOB_MODE=live node scripts/prepare-rivoscan-admob-release.mjs
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Assemble emulator QA APK
+        run: |
+          cd android
+          chmod +x gradlew
+          sed -i 's/-all[.]zip/-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
+          ./gradlew assembleDebug --no-daemon --max-workers=2
+      - name: Configure KVM
+        run: |
+          if test -e /dev/kvm; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm
+            sudo chmod a+rw /dev/kvm
+          fi
+      - name: Require actual Google demo banner load and impression, never click ads
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_I_WANT_MY_TCG: 'yes'
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          emulator-boot-timeout: 900
+          disable-animations: true
+          script: bash scripts/qa-rivoscan-banner-native.sh
+      - name: Save genuine emulator screen and SDK logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Banner-Native-Demo-Evidence
+          path: ${{ runner.temp }}/rivo-banner-evidence/
+          if-no-files-found: warn
+          retention-days: 30
