@@ -54,6 +54,7 @@ test('banner awaits SDK callback, backs off after no-fill and resumes safely',as
  t.mock.timers.tick(55000);await flush();
  assert.equal(requests,1,'first retry cannot be earlier than one minute');
  t.mock.timers.tick(6000);await flush();
+ t.mock.timers.tick(200);await flush();
  assert.equal(requests,2,'exactly one scheduled retry');
  emit('size',{width:320,height:50});emit('loaded');emit('impression');await flush();
  assert.equal(m.getBannerDiagnostics().status,'DISPLAYED');
