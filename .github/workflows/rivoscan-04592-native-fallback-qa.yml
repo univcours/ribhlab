@@ -44,10 +44,10 @@ jobs:
           RIVO_SIGNED_APK: ${{ runner.temp }}/rivoscan-04592/RivoScan-0.45.92-UNIVERSAL-SIGNED.apk
           RIVO_NATIVE_QA_DIR: ${{ runner.temp }}/rivo-04592-fallback
         with:
-          api-level: 34
+          api-level: 33
           arch: x86_64
-          target: google_apis
-          profile: pixel_6
+          target: default
+          profile: pixel_2
           emulator-boot-timeout: 900
           disable-animations: true
           script: bash scripts/qa-04592-native-fallback.sh
