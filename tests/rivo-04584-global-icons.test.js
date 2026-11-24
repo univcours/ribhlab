@@ -45,9 +45,9 @@ test('file selection preserves checkbox and photo/PDF thumbnails on Home and Doc
  assert.match(css,/padding:0!important/);
 });
 test('unchanged ML Kit, signed release and original Android ABI compatibility',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.92');
- assert.match(read('rivoscan-version.properties'),/^versionCode=207$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.92$/m);
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.93');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=208$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.93$/m);
  const flow=read('.github/workflows/rivoscan-04588-master-audit.yml');
  for(const x of ['arm64-v8a','armeabi-v7a','x86','x86_64','universal',
   'verify-rivoscan-abi-content.py','bundleRelease','screenOrientation'])
