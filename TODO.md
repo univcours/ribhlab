@@ -14,3 +14,7 @@
 
 ## Safety
 - No developer secrets, signing passwords, keystores or service-account JSON in source/docs/logs. New release only after evidence, versionCode increase and verified original signing identity.
+
+## Visual QA finding after screenshot review
+- [ ] Before a **future** screenshot refresh, create real in-app demo documents/scan outputs, improve tablet 10-inch responsive presentation if needed, and capture feature-rich native frames. Do NOT replace already committed shots simply to re-run the previous workflow; require better evidenced content first.
+- [x] Downloaded and manually reviewed all three 0.45.95 native screenshot artifact sets; currently published images are authentic but largely empty-state presentations. AdMob is untestable from these offline screenshots.
