@@ -1,4 +1,4 @@
-// RivoScan 0.45.94: regression for a SINGLE centrally located real camera action.
+// RivoScan 0.45.95: regression for a SINGLE centrally located real camera action.
 // Browser tests validate layout only; never pretend that an AdMob impression was served.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
@@ -11,7 +11,7 @@ const report=[];
 try{
  for(const width of [320,360,393,480,768]){
   const context=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1});
-  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.94'));
+  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.95'));
   const page=await context.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded'});
   const camera=page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]');
@@ -29,5 +29,5 @@ try{
   await context.close();
  }
  writeFileSync(out+'/single-camera-04591-results.json',JSON.stringify(report,null,2)+'\n');
- console.log('RivoScan 0.45.94 one-camera UI check PASS:',JSON.stringify(report));
+ console.log('RivoScan 0.45.95 one-camera UI check PASS:',JSON.stringify(report));
 }finally{await browser.close()}

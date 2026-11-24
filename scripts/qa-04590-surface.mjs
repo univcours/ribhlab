@@ -11,7 +11,7 @@ const results=[];
 try{
  for(const width of [320,360,393,480,768]){
   const context=await browser.newContext({viewport:{width,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1});
-  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.94'));
+  await context.addInitScript(()=>localStorage.setItem('rivo-release-notes-read','0.45.95'));
   const page=await context.newPage();
   await page.goto(url,{waitUntil:'domcontentloaded'});
   const camera=page.locator('#app nav.mobilebar button.rivo-nav-scan[data-live-camera]');
@@ -149,5 +149,5 @@ try{
   await context.close();
  }
  writeFileSync(out+'/rivo-04590-layout-qa.json',JSON.stringify(results,null,2)+'\n');
- console.log('RivoScan 0.45.94 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
+ console.log('RivoScan 0.45.95 SAMPLE native lane/formula/FAB responsive QA:',JSON.stringify(results));
 }finally{await browser.close()}
