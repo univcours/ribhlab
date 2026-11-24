@@ -1,0 +1,18 @@
+<resources>
+    <string name="hm_subtitle">Spatial measurement studio</string>
+    <string name="hm_scan">Scan a room automatically</string>
+    <string name="hm_scan_desc">Detect walls, capture corners and generate a measured room plan with ARCore.</string>
+    <string name="hm_start">Start room scan</string>
+    <string name="hm_tools">Measurement tools</string>
+    <string name="hm_manual">Room plan</string>
+    <string name="hm_manual_desc">Enter known dimensions</string>
+    <string name="hm_projects">My projects</string>
+    <string name="hm_projects_desc">Open saved rooms and plans</string>
+    <string name="hm_photo_desc">Calibrated photo measurement</string>
+    <string name="hm_ruler_desc">Calibrated screen ruler</string>
+    <string name="hm_level_desc">Surface tilt and alignment</string>
+    <string name="hm_area_desc">Outdoor land area</string>
+    <string name="hm_distance_desc">Route or direct distance</string>
+    <string name="hm_history_desc">Review measurements</string>
+    <string name="hm_note">AR and GPS measurements are estimates. Verify dimensions independently before construction.</string>
+</resources>

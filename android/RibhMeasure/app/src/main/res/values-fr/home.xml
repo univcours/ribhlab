@@ -1,0 +1,18 @@
+<resources>
+    <string name="hm_subtitle">Studio de mesure spatiale</string>
+    <string name="hm_scan">Scanner une pièce automatiquement</string>
+    <string name="hm_scan_desc">Détectez les murs et créez un plan coté avec ARCore.</string>
+    <string name="hm_start">Démarrer le scan</string>
+    <string name="hm_tools">Outils de mesure</string>
+    <string name="hm_manual">Plan de pièce</string>
+    <string name="hm_manual_desc">Saisissez les dimensions</string>
+    <string name="hm_projects">Mes projets</string>
+    <string name="hm_projects_desc">Ouvrez les plans enregistrés</string>
+    <string name="hm_photo_desc">Mesure photo avec référence</string>
+    <string name="hm_ruler_desc">Règle écran calibrée</string>
+    <string name="hm_level_desc">Inclinaison et nivellement</string>
+    <string name="hm_area_desc">Surface de terrain</string>
+    <string name="hm_distance_desc">Trajet ou distance directe</string>
+    <string name="hm_history_desc">Consultez les mesures</string>
+    <string name="hm_note">Les mesures AR et GPS sont indicatives. Vérifiez les dimensions avant les travaux.</string>
+</resources>

@@ -1,0 +1,18 @@
+<resources>
+    <string name="hm_subtitle">استوديو القياس المكاني</string>
+    <string name="hm_scan">مسح الغرفة تلقائياً</string>
+    <string name="hm_scan_desc">اكتشف الجدران والزوايا وأنشئ مخططاً بالأبعاد باستخدام ARCore.</string>
+    <string name="hm_start">ابدأ مسح الغرفة</string>
+    <string name="hm_tools">أدوات القياس</string>
+    <string name="hm_manual">مخطط الغرفة</string>
+    <string name="hm_manual_desc">أدخل الأبعاد المعروفة</string>
+    <string name="hm_projects">مشاريعي</string>
+    <string name="hm_projects_desc">افتح الغرف والمخططات المحفوظة</string>
+    <string name="hm_photo_desc">القياس بالصورة مع مرجع</string>
+    <string name="hm_ruler_desc">مسطرة شاشة قابلة للمعايرة</string>
+    <string name="hm_level_desc">قياس الميل والاستواء</string>
+    <string name="hm_area_desc">مساحة الأراضي الخارجية</string>
+    <string name="hm_distance_desc">مسافة المسار أو المسافة المباشرة</string>
+    <string name="hm_history_desc">راجع القياسات المحفوظة</string>
+    <string name="hm_note">قياسات الواقع المعزز وGPS تقديرية. تحقق من الأبعاد قبل الأشغال.</string>
+</resources>
