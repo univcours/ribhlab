@@ -109,6 +109,7 @@ function clearBannerWatchdog(){if(bannerRequestWatchdog){clearTimeout(bannerRequ
 function bannerRequestAllowed(now=Date.now()){return !retryTimers.banner&&now>=bannerNextAttemptAt&&(retryCounts.banner===0||bannerRetryDue);}
 function resetBannerRetry(){if(retryTimers.banner)clearTimeout(retryTimers.banner);retryTimers.banner=null;retryCounts.banner=0;bannerNextAttemptAt=0;bannerRetryDue=false;}
 function bannerFailed(error){
+ // A failed SDK refresh/initial request must never start a new request on render.
  clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=false;state.bannerHidden=false;
  state.bannerError=formatBannerError(error)||'Banner request failed';adStats.lastBannerError=state.bannerError;
  bannerLog('FAILED',{error:state.bannerError,requests:adStats.bannerRequests});
@@ -211,7 +212,7 @@ function setBannerSpace(visible){
  // Reserved UI slot is distinct from an actual Google banner impression.
  // Do not create fake creative. Keep its 50dp lane even on NO_FILL.
  const reserved=!!(isAndroid&&AD_CONFIG.bannerEnabled&&state.ready&&state.consent&&
-  layout.valid&&!bannerWrongSize&&document.visibilityState!=='hidden'&&!bannerObstructed());
+  layout.valid&&!bannerWrongSize&&!state.busy&&document.visibilityState!=='hidden'&&!bannerObstructed());
  const displayed=!!(reserved&&visible&&state.bannerReady&&!state.bannerHidden);
  root.style.setProperty('--rivo-banner-height','50px');
  root.style.setProperty('--rivo-banner-width','320px');
@@ -274,7 +275,8 @@ async function reconcileNativeBanner(){
   }
   if(state.bannerReady){
    if(state.bannerHidden){
-    await AdMob.resumeBanner().then(()=>{state.bannerHidden=false;setBannerSpace(true)}).catch(()=>setBannerSpace(false));
+    try{await AdMob.resumeBanner();state.bannerHidden=false;setBannerSpace(true);}
+    catch(error){bannerFailed(error);await AdMob.removeBanner().catch(()=>{});}
    }else setBannerSpace(true);
   }else if(!bannerWrongSize&&bannerRequestAllowed())void loadBanner();
  }finally{bannerReconciling=false;}
@@ -289,6 +291,7 @@ async function loadBanner(){
  try{
   if(!state.bannerListenersAttached){
    await AdMob.addListener(BannerAdPluginEvents.Loaded,()=>{
+    if(bannerWrongSize)return;
     clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=true;resetBannerRetry();adStats.bannerLoads++;state.bannerError='';adStats.lastBannerError='';
     bannerLog('LOADED',{count:adStats.bannerLoads,margin:bannerLastMargin});
     observeBannerOverlays();
@@ -301,6 +304,7 @@ async function loadBanner(){
     if(!nativeAdFits(size)){
      bannerWrongSize=true;clearBannerWatchdog();state.bannerLoading=false;state.bannerReady=false;state.bannerHidden=true;
      state.bannerError='Native ad is larger than its reserved 320x50 viewport';
+     bannerLog('UNSAFE_SIZE',{width:size?.width,height:size?.height});
      setBannerSpace(false);
      void AdMob.hideBanner().then(()=>AdMob.removeBanner()).catch(()=>{});
      state.onChange();return;
@@ -321,7 +325,7 @@ async function loadBanner(){
    position:BannerAdPosition.BOTTOM_CENTER,margin:bannerLastMargin,
    isTesting:AD_CONFIG.testMode
   });
-  // The reserved viewport is activated ONLY by Loaded, not an empty placeholder.
+  // The native impression is confirmed ONLY by the SDK event, never a placeholder.
   return true;
  }catch(error){
   if(state.bannerLoading)bannerFailed(error);
@@ -361,13 +365,15 @@ export async function initializeAds({retry=false,deferBanner=false}={}){
    if(consent.isConsentFormAvailable&&consent.status===AdmobConsentStatus.REQUIRED)
     consent=await AdMob.showConsentForm();
    state.consent=consent.canRequestAds===true;
+   bannerLog('CONSENT',{canRequestAds:state.consent});
    if(!state.consent){status('Ads unavailable: privacy choice / consent not ready');return false;}
    sdkInitializationStarted=true;
    await AdMob.initialize();
    state.ready=true;
+   bannerLog('INITIALIZED',{test:AD_CONFIG.testMode});
    installAdVisibilityRecovery();
    observeBannerOverlays();
-   void trackNativeAdEvents();
+   await trackNativeAdEvents();
    status('AdMob initialized');
    setBannerSpace(false);
    // Never wait for an ad or pop a fullscreen ad at launch. Preload for later.
