@@ -68,6 +68,6 @@ test('file selection, Android external opener and scanner features are preserved
  assert.ok(main.includes('openBarcodeScanner({'));
  assert.ok(main.includes('openPlateScanner({'));
  assert.ok(read('src/library-bulk.js').includes('function toolbar()'));
- assert.ok(read('rivoscan-version.properties').includes('versionCode=208'));
- assert.equal(JSON.parse(read('package.json')).version,'0.45.93');
+ assert.ok(read('rivoscan-version.properties').includes('versionCode=209'));
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.94');
 });
