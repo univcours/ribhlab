@@ -60,10 +60,28 @@ PY
 adb shell input tap 195 745
 sleep 7
 capture 02-system-photo-chooser
-# The stock Android Photo chooser is a sheet with "Take Picture" at y~790.
-adb shell input tap 77 790
+# The stock Photo chooser bottom-sheet varies in height across Google/API33
+# AOSP (Take Picture y~766) and Google API34 (y~790). Derive row center from
+# the LAST white background row, which is always 37px BELOW Take Picture.
+TAKE_PICTURE_Y=$(python3 - "$OUT/02-system-photo-chooser.png" <<'PY'
+from PIL import Image
+import sys
+im=Image.open(sys.argv[1]).convert('RGB')
+white=[y for y in range(im.height-250,im.height-8)
+       if min(im.getpixel((5,y)))>=235 and min(im.getpixel((im.width-8,y)))>=235]
+if not white: raise SystemExit('Native photo chooser white sheet not visible')
+sheet_bottom=max(white)
+click=sheet_bottom-37
+if not (680<=click<=im.height-40):
+ raise SystemExit(f'Unexpected Photo chooser row y={click}, bottom={sheet_bottom}')
+print(click)
+PY
+)
+echo "Selecting Take Picture at y=$TAKE_PICTURE_Y"
+adb shell input tap 77 "$TAKE_PICTURE_Y"
 sleep 6
 capture 03-after-take-picture
+adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|ResumedActivity' | tail -12 > "$OUT/03-resumed-activity.txt" || true
 adb logcat -d -t 4500 > "$OUT/03-fallback-logcat.txt" || true
 
 python3 - "$OUT" <<'PY'
