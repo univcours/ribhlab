@@ -30,7 +30,7 @@ test('Google ML Kit FULL remains first choice; fallback opens system native came
 });
 
 test('Fallback version is a new build, not a replacement of the signed 0.45.91 APK',()=>{
- assert.equal(pkg.version,'0.45.94');
- assert.match(version,/^versionCode=209$/m);
- assert.match(version,/^versionName=0\.45\.94$/m);
+ assert.equal(pkg.version,'0.45.95');
+ assert.match(version,/^versionCode=210$/m);
+ assert.match(version,/^versionName=0\.45\.95$/m);
 });
