@@ -49,14 +49,14 @@ test('Native TXT append reuses existing aliases or rejects generated duplicate n
  assert.match(read('src/scan-ledger.js'),/RS_QR\.txt/);
  assert.match(read('src/scan-ledger.js'),/RS_Bar\.txt/);
 });
-test('Native 320 x 50 banner uses a separate 13dp upper artwork guard',()=>{
+test('Native 320 x 50 banner fits with 5dp content protection',()=>{
  assert.equal(AD_WIDTH,320);assert.equal(AD_HEIGHT,50);
  assert.equal(nativeAdFits({width:320,height:50}),true);
  assert.equal(nativeAdFits({width:320,height:51}),false);
  const l=calculateAdLayout({viewportWidth:393,viewportHeight:852,navTop:748,navBottom:852,headerBottom:65});
  assert.equal(l.valid,true);assert.equal(l.bannerTop,695);assert.equal(l.bannerBottom,745);
- assert.equal(l.contentBottom,175);
- assert.equal(l.bannerTop-(852-l.contentBottom),18);
+ assert.equal(l.contentBottom,162);
+ assert.equal(l.bannerTop-(852-l.contentBottom),5);
  assert.match(css,/rivo-banner-frame-height,63px/);
 });
 test('No rewarded prompt, original Google Play upload signature preserved',()=>{

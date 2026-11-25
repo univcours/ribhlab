@@ -49,13 +49,13 @@ test('Plate Scanner retains icon improvements while final palette restores 0.45.
  assert.match(css,/font-weight:900!important/);
  assert.match(css,/stroke-width:2\.65!important/);
 });
-test('Real banner remains 320x50, exactly 3dp above nav with 18dp protected content',()=>{
+test('Real banner remains 320x50, exactly 3dp above nav with 5dp protected content',()=>{
  const layout=calculateAdLayout({viewportWidth:393,viewportHeight:873,navTop:774,navBottom:873,headerBottom:68});
  assert.equal(layout.valid,true);
  assert.equal(layout.width,320);assert.equal(layout.height,50);
- assert.equal(layout.margin,102);assert.equal(layout.contentBottom,170);
+ assert.equal(layout.margin,102);assert.equal(layout.contentBottom,157);
  assert.equal(layout.bannerTop,721);assert.equal(774-layout.bannerBottom,3);
- assert.equal(layout.bannerTop-(873-layout.contentBottom),18);
+ assert.equal(layout.bannerTop-(873-layout.contentBottom),5);
  const native=read('src/rivo-ui-04567.css'),ads=read('src/monetization.js');
  assert.match(native,/bottom:var\(--rivo-content-bottom,98px\)!important/);
  assert.ok(ads.includes('const reserved=!!('));

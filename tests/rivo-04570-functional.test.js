@@ -61,7 +61,7 @@ test('Banner stays native 320 x 50 with 3dp navigation gap and 5dp content prote
  assert.equal(layout.width,320);assert.equal(layout.height,50);
  assert.equal(layout.bannerTop,721);
  assert.equal(774-layout.bannerBottom,3);
- assert.equal(layout.bannerTop-(873-layout.contentBottom),18);
+ assert.equal(layout.bannerTop-(873-layout.contentBottom),5);
  const ads=source('src/monetization.js');
  assert.doesNotMatch(ads,/showRewardVideoAd|showRewardInterstitialAd|PRO bonus/);
  assert.match(ads,/AdMob\.showInterstitial/);
