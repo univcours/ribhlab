@@ -21,10 +21,10 @@ test('header uses the new last-layer optical alignment and original five interac
 });
 test('versioned release is new, with original package and no duplicate scanner',()=>{
   const pkg=JSON.parse(read('package.json'));
-  assert.equal(pkg.version,'0.45.95');
+  assert.equal(pkg.version,'0.45.96');
   const code=read('rivoscan-version.properties');
-  assert.match(code,/^versionName=0\.45\.95$/m);
-  assert.match(code,/^versionCode=210$/m);
+  assert.match(code,/^versionName=0\.45\.96$/m);
+  assert.match(code,/^versionCode=211$/m);
   const cfg=JSON.parse(read('capacitor.config.json'));
   assert.equal(cfg.appId,'com.ribhlab.rivoscan');
   const main=read('src/main.js');
