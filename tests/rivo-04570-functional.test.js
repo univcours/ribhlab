@@ -5,12 +5,12 @@ import {calculateAdLayout} from '../src/rivo-native-ad-geometry.js';
 
 const source=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
 
-test('0.45.95 source and Android release metadata agree',()=>{
+test('0.45.96 source and Android release metadata agree',()=>{
  const meta=source('rivoscan-version.properties');
  const pkg=JSON.parse(source('package.json'));
- assert.match(meta,/^versionCode=210$/m);
- assert.match(meta,/^versionName=0\.45\.95$/m);
- assert.equal(pkg.version,'0.45.95');
+ assert.match(meta,/^versionCode=211$/m);
+ assert.match(meta,/^versionName=0\.45\.96$/m);
+ assert.equal(pkg.version,'0.45.96');
 });
 test('QR and barcode keep vertically stacked camera/result layout, save state and timestamps',()=>{
  const js=source('src/barcode-scanner.js');

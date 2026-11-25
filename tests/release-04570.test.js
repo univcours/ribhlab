@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const get=x=>readFileSync(new URL('../'+x,import.meta.url),'utf8');
 test('audited tester release increments Android version and keeps original banner + signing',()=>{
- const flow=get('.github/workflows/rivoscan-04595-banner-id-release.yml');
+ const flow=get('.github/workflows/rivoscan-04596-contained-banner.yml');
  const meta=get('rivoscan-version.properties'),pkg=JSON.parse(get('package.json'));
- assert.equal(pkg.version,'0.45.95');
- assert.match(meta,/^versionCode=210$/m);assert.match(meta,/^versionName=0\.45\.95$/m);
- assert.match(flow,/branches: \[release\/rivoscan-04595-banner-id\]/);
- assert.match(flow,/versionCode='210' versionName='0\.45\.95'/);
+ assert.equal(pkg.version,'0.45.96');
+ assert.match(meta,/^versionCode=211$/m);assert.match(meta,/^versionName=0\.45\.96$/m);
+ assert.match(flow,/branches: \[release\/rivoscan-04596-contained-banner\]/);
+ assert.match(flow,/versionCode='211' versionName='0\.45\.96'/);
  assert.match(flow,/4841809190/);
  assert.doesNotMatch(flow,/VITE_RIVO_ADMOB_BANNER_ID:\s*ca-app-pub-7945572016731367\/4841809191/);
  assert.doesNotMatch(flow,/4841819191/);

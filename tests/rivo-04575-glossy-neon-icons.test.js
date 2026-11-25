@@ -55,8 +55,8 @@ test('icon glows never enlarge content cards, and navbar keeps five-slot scan se
  assert.match(main,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)!important/);
  assert.match(css,/--rivo-icon-size:27px/);
 });
-test('signed release version 0.45.95 with new Android versionCode 210',()=>{
- assert.equal(JSON.parse(read('package.json')).version,'0.45.95');
- assert.match(read('rivoscan-version.properties'),/^versionCode=210$/m);
- assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.95$/m);
+test('signed release version 0.45.96 with new Android versionCode 210',()=>{
+ assert.equal(JSON.parse(read('package.json')).version,'0.45.96');
+ assert.match(read('rivoscan-version.properties'),/^versionCode=211$/m);
+ assert.match(read('rivoscan-version.properties'),/^versionName=0\.45\.96$/m);
 });
