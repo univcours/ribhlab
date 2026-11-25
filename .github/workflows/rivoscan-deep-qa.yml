@@ -1,0 +1,86 @@
+name: RivoScan Deep QA
+on:
+  push:
+    branches: ['qa/rivoscan-deep-qa','release/rivoscan-*','fix/rivoscan-*']
+    paths: ['src/**','tests/**','scripts/qa-deep-*','package.json','rivoscan-version.properties','.github/workflows/rivoscan-deep-qa.yml']
+  pull_request:
+    paths: ['src/**','tests/**','scripts/qa-deep-*','package.json','rivoscan-version.properties','.github/workflows/rivoscan-deep-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rivoscan-deep-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web-functional-and-design:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and verify existing source tests
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Run actual compiled Web UI and fixture output checks
+        env:
+          VITE_RIVO_ADMOB_MODE: test
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/rivo-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          node scripts/qa-deep-browser.mjs
+      - name: Upload controls, JSON, PDF output and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Deep-QA-Browser
+          path: qa-results/browser/
+          if-no-files-found: warn
+  signed-android-baseline:
+    # Baseline artifact is pinned. Do not present it as verification of future binaries.
+    if: github.ref == 'refs/heads/qa/rivoscan-deep-qa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact published baseline APK
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o /tmp/rivoscan.apk https://github.com/univcours/ribhlab/releases/download/rivoscan-0.45.95-banner-id/RivoScan-0.45.95-UNIVERSAL-SIGNED.apk
+          echo '8d5cdcd48b609682bb9b229d84852b73ca7f37f4c2deaa08f32106f13994f183  /tmp/rivoscan.apk' | sha256sum -c -
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo chmod a+rw /dev/kvm
+      - name: Audit actual installed Android routes, no live ad traffic
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 900
+          script: |
+            adb shell wm size 393x852
+            adb shell wm density 160
+            adb shell svc wifi disable
+            adb shell svc data disable
+            adb install -r /tmp/rivoscan.apk
+            python3 scripts/qa-deep-native.py
+      - name: Upload Android evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoScan-Deep-QA-Android
+          path: qa-results/native/
+          if-no-files-found: warn
