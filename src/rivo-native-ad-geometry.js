@@ -2,7 +2,7 @@
  * Native banners draw above WebView; the WebView must be clipped and scrolled
  * within a content viewport ending BEFORE the native Google creative.
  */
-export const AD_WIDTH=320,AD_HEIGHT=50,AD_NAV_GAP=3,AD_CONTENT_GAP=5,AD_NATIVE_TOP_GUARD=13;
+export const AD_WIDTH=320,AD_HEIGHT=50,AD_NAV_GAP=3,AD_CONTENT_GAP=5,AD_NATIVE_TOP_GUARD=0;
 export function calculateAdLayout({viewportWidth,viewportHeight,navTop=null,navBottom=null,headerBottom=70}={}){
  const w=Number(viewportWidth),h=Number(viewportHeight),header=Number(headerBottom);
  if(!Number.isFinite(w)||w<AD_WIDTH||!Number.isFinite(h)||h<230||!Number.isFinite(header)||header<0)

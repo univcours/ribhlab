@@ -16,7 +16,7 @@ html body.rivo-native-android.rivo-ad-reserved #app .shell.rivo-dark-ui .rivo-ad
  width:100%!important;max-width:100%!important;height:50px!important;
  transform:none!important;margin:0!important;padding:0!important;
  align-items:center!important;justify-content:center!important;
- background:#eaf4ff!important;border-block:1px solid #cfdfed!important;
+ background:#eaf4ff!important;border:0!important;box-shadow:none!important;
  z-index:44!important;box-sizing:border-box!important;pointer-events:none!important;
 }
 html body.rivo-native-android.rivo-ad-reserved #app .shell.rivo-dark-ui .rivo-ad-banner-frame{

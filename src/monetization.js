@@ -296,7 +296,7 @@ async function loadBanner(){
     bannerLog('LOADED',{count:adStats.bannerLoads,margin:bannerLastMargin});
     observeBannerOverlays();
     if(state.busy||document.visibilityState==='hidden'||bannerObstructed()||!currentBannerLayout().valid){state.bannerHidden=true;setBannerSpace(false);void AdMob.hideBanner().catch(()=>{});}
-    else {state.bannerHidden=false;setBannerSpace(true);}
+    else {state.bannerHidden=false;setBannerSpace(true);scheduleBannerRelayout();}
     state.onChange();
    });
    await AdMob.addListener(BannerAdPluginEvents.SizeChanged,size=>{
