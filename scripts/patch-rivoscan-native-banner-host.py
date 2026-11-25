@@ -67,7 +67,7 @@ helper="""
             final int margin = Math.round(marginDp * contextSupplier.get().getResources().getDisplayMetrics().density);
             final android.graphics.Rect visible = new android.graphics.Rect();
             final int[] wp = new int[2], hp = new int[2], pp = new int[2];
-            if (web == null || !web.isShown() || !web.getGlobalVisibleRect(visible)
+            if (web == null || !web.isShown() || !web.getLocalVisibleRect(visible)
                 || web.getWidth() < w || web.getHeight() < h + margin
                 || host.getWidth() != w || host.getHeight() != h
                 || ad.getWidth() != w || ad.getHeight() != h) {
@@ -81,7 +81,9 @@ helper="""
             final int y = wp[1] + web.getHeight() - margin - h;
             // Compare in the same coordinate system, with a full-size host.
             // Never show any partly clipped or out-of-parent advertisement.
-            if (x < pp[0] || y < pp[1] || x + w > pp[0] + parent.getWidth()
+            if (x - wp[0] < visible.left || y - wp[1] < visible.top
+                || x - wp[0] + w > visible.right || y - wp[1] + h > visible.bottom
+                || x < pp[0] || y < pp[1] || x + w > pp[0] + parent.getWidth()
                 || y + h > pp[1] + parent.getHeight()) {
                 host.setVisibility(View.INVISIBLE);
                 return true;
