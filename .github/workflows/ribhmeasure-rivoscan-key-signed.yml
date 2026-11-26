@@ -1,4 +1,4 @@
-name: Sign RibhMeasure 1.3.2 with original RivoScan upload key
+name: Sign RibhMeasure 1.3.3 with original RivoScan upload key
 on:
   push:
     branches: [main]
@@ -79,7 +79,7 @@ jobs:
           AAB="$GITHUB_WORKSPACE/android/RibhMeasure/app/build/outputs/bundle/release/app-release.aab"
           test -s "$APK" && test -s "$AAB"
           AAPT="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt -type f | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.ribhmeasure' versionCode='6' versionName='1.3.2'"
+          "$AAPT" dump badging "$APK" | grep -F "name='com.ribhlab.ribhmeasure' versionCode='7' versionName='1.3.3'"
           APKSIGNER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name apksigner -type f | sort -V | tail -1)"
           "$APKSIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/ribhmeasure-apk-certificate.txt"
           EXPECTED_HEX="$(printf '%s' "$RIBHMEASURE_SIGNER_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
@@ -89,15 +89,15 @@ jobs:
           grep -F 'jar verified' "$RUNNER_TEMP/ribhmeasure-aab-check.txt"
           keytool -printcert -jarfile "$AAB" | grep -F "SHA256: $RIBHMEASURE_SIGNER_SHA256"
           mkdir -p signed-artifacts
-          cp "$APK" signed-artifacts/RibhMeasure-v1.3.2-RivoScan-key-signed.apk
-          cp "$AAB" signed-artifacts/RibhMeasure-v1.3.2-RivoScan-key-signed.aab
+          cp "$APK" signed-artifacts/RibhMeasure-v1.3.3-RivoScan-key-signed.apk
+          cp "$AAB" signed-artifacts/RibhMeasure-v1.3.3-RivoScan-key-signed.aab
           (cd signed-artifacts && sha256sum *.apk *.aab > SHA256SUMS.txt)
           echo 'APK and AAB signed using original RivoScan Play upload key.' >> "$GITHUB_STEP_SUMMARY"
           echo 'NOT YET for Play release: default AdMob test IDs until app-specific live ad units are configured.' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload signed app binaries only (never signing material)
         uses: actions/upload-artifact@v4
         with:
-          name: RibhMeasure-v1.3.2-RivoScan-key-SIGNED-TEST-ADS
+          name: RibhMeasure-v1.3.3-RivoScan-key-SIGNED-TEST-ADS
           path: signed-artifacts/
           retention-days: 14
           if-no-files-found: error
