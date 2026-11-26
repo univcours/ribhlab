@@ -10,10 +10,19 @@ adb shell pm grant com.ribhlab.rivotalk android.permission.BLUETOOTH_CONNECT
 adb shell pm grant com.ribhlab.rivotalk android.permission.POST_NOTIFICATIONS || true
 adb shell svc wifi disable
 adb shell svc data disable
-adb shell am start -n com.ribhlab.rivotalk/.MainActivity
-sleep 7
-adb shell uiautomator dump /sdcard/rivo.xml
-adb pull /sdcard/rivo.xml "$RUNNER_TEMP/rivo-home.xml"
+adb shell settings put global show_first_crash_dialog 0
+adb shell settings put global anr_show_background 0
+adb shell am force-stop com.google.android.apps.nexuslauncher || true
+for attempt in 1 2 3 4 5; do
+  adb shell am start -W -n com.ribhlab.rivotalk/.MainActivity || true
+  sleep 8
+  adb shell uiautomator dump /sdcard/rivo.xml || continue
+  adb pull /sdcard/rivo.xml "$RUNNER_TEMP/rivo-home.xml" || continue
+  if grep -q 'Ready to connect' "$RUNNER_TEMP/rivo-home.xml"; then break; fi
+  # Close a system launcher ANR dialog if it appears; never capture it.
+  adb shell input keyevent 4 || true
+  adb shell am force-stop com.google.android.apps.nexuslauncher || true
+done
 python3 - "$RUNNER_TEMP/rivo-home.xml" <<'PY'
 import sys,xml.etree.ElementTree as ET
 root=ET.parse(sys.argv[1])
