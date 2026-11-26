@@ -1,20 +1,20 @@
 # Draft Google Play listing — not submitted
 
-**App**: RibhMeasure: GPS & Camera Ruler
+**App**: RivoMeasure: GPS & Camera Ruler
 
 **Package**: `com.ribhlab.ribhmeasure`
 
 **English short**: Measure land area, GPS distance, object size, height and level.
 
 **English full**:
-RibhMeasure combines useful everyday measuring tools on one Android phone. Mark GPS locations or walk around a property to estimate its area and perimeter. Record route distance and direct distance, take a photo with a known-size reference to estimate the height of a person or another object's size, measure small items with an on-screen ruler, and check whether a surface is level.
+RivoMeasure combines useful everyday measuring tools on one Android phone. Mark GPS locations or walk around a property to estimate its area and perimeter. Record route distance and direct distance, take a photo with a known-size reference to estimate the height of a person or another object's size, measure small items with an on-screen ruler, and check whether a surface is level.
 
 Works in Arabic and English, with metric or imperial units. Save measurements and export history to CSV. GPS and photographic measurements are approximate and are not substitutes for a qualified surveyor or professional instruments.
 
 **Arabic short**: قياس المساحات والمسافات والأطوال بالـGPS والكاميرا ومسطرة الهاتف.
 
 **Arabic full**:
-RibhMeasure تطبيق قياس متعدد الأدوات بالعربية والإنجليزية. قِس مساحة الأرض ومحيطها بإضافة نقاط GPS أو بالمشي على حدودها. قِس المسافة المباشرة وطول المسار، وقدّر طول شخص أو حجم جسم بالصورة عبر مقارنة مرجع معروف الطول على نفس البعد عن الكاميرا. استعمل مسطرة الشاشة القابلة للمعايرة وميزان الاستواء، واحفظ نتائجك وصدّرها إلى CSV.
+RivoMeasure تطبيق قياس متعدد الأدوات بالعربية والإنجليزية. قِس مساحة الأرض ومحيطها بإضافة نقاط GPS أو بالمشي على حدودها. قِس المسافة المباشرة وطول المسار، وقدّر طول شخص أو حجم جسم بالصورة عبر مقارنة مرجع معروف الطول على نفس البعد عن الكاميرا. استعمل مسطرة الشاشة القابلة للمعايرة وميزان الاستواء، واحفظ نتائجك وصدّرها إلى CSV.
 
 تنبيه: قياسات GPS والكاميرا تقريبية، ولا تصلح لتعويض المسح الطبوغرافي أو الأجهزة المهنية.
 
