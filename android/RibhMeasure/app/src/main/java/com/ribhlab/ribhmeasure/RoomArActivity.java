@@ -15,7 +15,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 public final class RoomArActivity extends Activity implements GLSurfaceView.Renderer {
  private GLSurfaceView gl; private TextView status, result; private Sketch sketch;
- private volatile Session session; private boolean installRequested=false, depth=false, resumed=false; private volatile boolean active=false, trackingReady=false; private volatile float[][] projected=new float[0][]; private View overlay; private Button mark; private volatile float measuredHeight=Float.NaN; private volatile double measuredArea=0, measuredPerimeter=0; private volatile String detail=""; private boolean requestedPermission=false; private int availabilityAttempts=0; private int boundTexture=-1; private long lastFrameError=0; private boolean retryScheduled=false; private TextView cameraProblem; private Button retryCamera,photoFallback; private volatile boolean autoMode=false, autoAccept=false, autoStart=true; private Button autoButton; private float autoX,autoZ,autoFloor=Float.NaN,autoHeight=Float.NaN; private float[][] autoPolygon=new float[0][]; private int autoStable=0,wallCount=0; private long autoLast=0; private boolean autoOrigin=false,autoConfirmed=false; private final DepthEvidence depthEvidence=new DepthEvidence(); private int scanDirections=0,floorVotes=0; private float floorCandidate=Float.NaN; private float confirmedHeight=Float.NaN;
+ private volatile Session session; private boolean installRequested=false, depth=false, resumed=false; private volatile boolean active=false, trackingReady=false; private volatile float[][] projected=new float[0][], projectedCeiling=new float[0][]; private volatile boolean projectedClosed=false; private volatile float projectedHeight=Float.NaN; private View overlay; private Button mark; private volatile float measuredHeight=Float.NaN; private volatile double measuredArea=0, measuredPerimeter=0; private volatile String detail=""; private boolean requestedPermission=false; private int availabilityAttempts=0; private int boundTexture=-1; private long lastFrameError=0; private boolean retryScheduled=false; private TextView cameraProblem; private Button retryCamera,photoFallback; private volatile boolean autoMode=false, autoAccept=false, autoStart=true; private Button autoButton; private float autoX,autoZ,autoFloor=Float.NaN,autoHeight=Float.NaN; private float[][] autoPolygon=new float[0][]; private int autoStable=0,wallCount=0; private long autoLast=0; private boolean autoOrigin=false,autoConfirmed=false; private final DepthEvidence depthEvidence=new DepthEvidence(); private int scanDirections=0,floorVotes=0; private float floorCandidate=Float.NaN; private float confirmedHeight=Float.NaN;
  private volatile boolean add=false, undo=false, reset=false, ceiling=false; private volatile boolean tapeMode=false,tapeReset=false,tapeAdd=false; private Anchor tapeA,tapeB; private TextView live; private Button tapeButton; private volatile float liveDistance=Float.NaN; private volatile boolean targetReady=false; private long lastLive=0; private volatile double tapeMeasured=Double.NaN; private float manualFloor=Float.NaN;
  private final ArrayList<Anchor> points=new ArrayList<>();
  private Anchor top; private int tex, program, width=1,height=1;
@@ -34,18 +34,49 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
    Button manual=new Button(this);manual.setText(tr("Manual","Manuel","يدوي"));manual.setOnClickListener(v->startActivity(new android.content.Intent(this,RoomManualActivity.class)));heading.addView(manual);
    status=label("",14,0xffa6d7d5);status.setPadding(dp(16),dp(8),dp(16),dp(8));root.addView(status);
    FrameLayout frame=new FrameLayout(this);gl=new GLSurfaceView(this);gl.setEGLContextClientVersion(2);gl.setPreserveEGLContextOnPause(true);gl.setRenderer(this);frame.addView(gl,new FrameLayout.LayoutParams(-1,-1));
-   overlay=new View(this){final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);@Override protected void onDraw(Canvas c){float x=getWidth()/2f,y=getHeight()/2f;int col=targetReady?0xff21e0c2:0xffffcc80;p.setColor(col);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(2));c.drawCircle(x,y,dp(18),p);c.drawLine(x-dp(29),y,x-dp(8),y,p);c.drawLine(x+dp(8),y,x+dp(29),y,p);c.drawLine(x,y-dp(29),x,y-dp(8),p);c.drawLine(x,y+dp(8),x,y+dp(29),p);
-    float[][] a=projected;p.setStyle(Paint.Style.FILL);p.setTextSize(dp(14));for(int j=0;j<a.length;j++){float[] q=a[j];if(q[2]<=0)continue;float sx=q[0]*getWidth(),sy=q[1]*getHeight();if(j>0&&a[j-1][2]>0){p.setColor(0xff21e0c2);p.setStrokeWidth(dp(3));c.drawLine(a[j-1][0]*getWidth(),a[j-1][1]*getHeight(),sx,sy,p);float mx=(a[j-1][0]+q[0])*getWidth()/2,my=(a[j-1][1]+q[1])*getHeight()/2;String len=String.format(Locale.US,"%.2f m",q[3]);p.setColor(0xdd07111e);c.drawRoundRect(mx-dp(4),my-dp(18),mx+p.measureText(len)+dp(4),my+dp(5),dp(5),dp(5),p);p.setColor(0xffffffff);c.drawText(len,mx,my,p);}
-    p.setColor(0xff21e0c2);c.drawCircle(sx,sy,dp(7),p);p.setColor(0xff07111e);c.drawCircle(sx,sy,dp(3),p);p.setColor(0xffffffff);c.drawText(Integer.toString(j+1),sx+dp(10),sy-dp(8),p);}
-   }};frame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
+   overlay=new View(this){final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+    boolean visible(float[] q){return q!=null&&q.length>=4&&q[2]>0&&Float.isFinite(q[0])&&Float.isFinite(q[1]);}
+    boolean onScreen(float[] q){return visible(q)&&q[0]>=0&&q[0]<=1&&q[1]>=0&&q[1]<=1;}
+    void tag(Canvas c,String t,float x,float y){
+      p.setStyle(Paint.Style.FILL);p.setTextSize(dp(14));p.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));float tw=p.measureText(t);
+      x=Math.max(dp(6)+tw/2,Math.min(getWidth()-dp(6)-tw/2,x));y=Math.max(dp(24),Math.min(getHeight()-dp(10),y));
+      RectF r=new RectF(x-tw/2-dp(8),y-dp(19),x+tw/2+dp(8),y+dp(6));
+      p.setColor(0xea10232b);c.drawRoundRect(r,dp(8),dp(8),p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1));p.setColor(0xff65edc7);c.drawRoundRect(r,dp(8),dp(8),p);
+      p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setTextAlign(Paint.Align.CENTER);c.drawText(t,x,y,p);p.setTextAlign(Paint.Align.LEFT);
+    }
+    void edge(Canvas c,float[] a,float[] b,float metres,boolean show){
+      if(!visible(a)||!visible(b))return;
+      float ax=a[0]*getWidth(),ay=a[1]*getHeight(),bx=b[0]*getWidth(),by=b[1]*getHeight();
+      p.setColor(0xff65edc7);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(2.5f));c.drawLine(ax,ay,bx,by,p);
+      if(show&&Float.isFinite(metres)&&metres>0&&Math.hypot(ax-bx,ay-by)>dp(35)&&(onScreen(a)||onScreen(b))){
+       float mx=(ax+bx)/2,my=(ay+by)/2;if(mx>=0&&mx<=getWidth()&&my>=0&&my<=getHeight())tag(c,String.format(Locale.US,"%.2f m",metres),mx,my-dp(7));
+      }
+    }
+    @Override protected void onDraw(Canvas c){
+      float x=getWidth()/2f,y=getHeight()/2f;float[][] a=projected,b=projectedCeiling;
+      if(trackingReady&&a.length>0){
+       boolean closed=projectedClosed&&a.length>=3,all=closed;
+       for(float[] q:a)all&=visible(q);
+       if(all){Path path=new Path();for(int j=0;j<a.length;j++){float sx=a[j][0]*getWidth(),sy=a[j][1]*getHeight();if(j==0)path.moveTo(sx,sy);else path.lineTo(sx,sy);}path.close();p.setStyle(Paint.Style.FILL);p.setColor(0x3065edc7);c.drawPath(path,p);}
+       for(int j=1;j<a.length;j++)edge(c,a[j-1],a[j],a[j][3],true);
+       if(closed)edge(c,a[a.length-1],a[0],a[0][3],true);
+       if(closed&&b.length==a.length&&Float.isFinite(projectedHeight)){
+        int best=-1;float score=Float.MAX_VALUE;for(int j=0;j<a.length;j++)if(onScreen(a[j])&&onScreen(b[j])){float d=Math.abs(a[j][0]-.18f);if(d<score){score=d;best=j;}}
+        if(best>=0){edge(c,a[best],b[best],projectedHeight,true);p.setStyle(Paint.Style.FILL);p.setColor(0xff65edc7);c.drawCircle(b[best][0]*getWidth(),b[best][1]*getHeight(),dp(4),p);}
+       }
+       for(float[] q:a)if(onScreen(q)){float sx=q[0]*getWidth(),sy=q[1]*getHeight();p.setStyle(Paint.Style.FILL);p.setColor(0xff65edc7);c.drawCircle(sx,sy,dp(6),p);p.setColor(Color.WHITE);c.drawCircle(sx,sy,dp(2.5f),p);}
+      }
+      p.setColor(targetReady&&trackingReady?0xff65edc7:0xffffcc80);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(dp(1.6f));c.drawCircle(x,y,dp(12),p);c.drawLine(x-dp(21),y,x-dp(6),y,p);c.drawLine(x+dp(6),y,x+dp(21),y,p);c.drawLine(x,y-dp(21),x,y-dp(6),p);c.drawLine(x,y+dp(6),x,y+dp(21),p);
+    }
+   };frame.addView(overlay,new FrameLayout.LayoutParams(-1,-1));
    LinearLayout recovery=new LinearLayout(this);recovery.setOrientation(LinearLayout.VERTICAL);recovery.setGravity(Gravity.CENTER);recovery.setPadding(dp(18),dp(12),dp(18),dp(12));recovery.setBackgroundColor(0xff10232b);
    cameraProblem=label("",15,0xffe1f5f4);cameraProblem.setGravity(Gravity.CENTER);recovery.addView(cameraProblem);
    retryCamera=new Button(this);retryCamera.setText(tr("Retry AR camera","Réessayer la caméra AR","إعادة تشغيل كاميرا AR"));retryCamera.setOnClickListener(v->{requestedPermission=false;availabilityAttempts=0;installRequested=false;restartCamera();});recovery.addView(retryCamera,new LinearLayout.LayoutParams(-1,-2));
    photoFallback=new Button(this);photoFallback.setText(tr("Photo measurement (without AR)","Mesure photo (sans AR)","القياس بالصورة بدون AR"));photoFallback.setOnClickListener(v->startActivity(new android.content.Intent(this,CameraMeasureActivity.class)));recovery.addView(photoFallback,new LinearLayout.LayoutParams(-1,-2));
    Button arServices=new Button(this);arServices.setText(tr("Get / update AR services","Installer / mettre à jour AR","تثبيت أو تحديث خدمات AR"));arServices.setOnClickListener(v->{try{startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("market://details?id=com.google.ar.core")));}catch(Exception e){startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.google.ar.core")));}});recovery.addView(arServices,new LinearLayout.LayoutParams(-1,-2));
    recovery.setVisibility(View.GONE);frame.addView(recovery,new FrameLayout.LayoutParams(-1,-1));root.addView(frame,new LinearLayout.LayoutParams(-1,0,1));
-   LinearLayout panel=new LinearLayout(this);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(14),dp(8),dp(14),dp(8));root.addView(panel);
-   live=label("",16,0xffe1f5f4);panel.addView(live);result=label("",17,0xffa7f9e8);panel.addView(result);sketch=new Sketch();panel.addView(sketch,new LinearLayout.LayoutParams(-1,dp(88)));
+   LinearLayout panel=new LinearLayout(this);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(dp(10),dp(4),dp(10),dp(4));root.addView(panel);
+   live=label("",16,0xffe1f5f4);panel.addView(live);result=label("",17,0xffa7f9e8);panel.addView(result);sketch=new Sketch();panel.addView(sketch,new LinearLayout.LayoutParams(-1,dp(42)));sketch.setVisibility(View.GONE);
    LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER_VERTICAL);panel.addView(controls);
    mark=button(controls,tr("Add point","Ajouter","إضافة نقطة"),()->{if(tapeMode)tapeAdd=true;else{ceiling=false;add=true;}});mark.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xff21bda9));mark.setTextColor(0xff07111e);
    button(controls,tr("Ceiling","Plafond","السقف"),()->{tapeMode=false;ceiling=true;add=true;});button(controls,tr("Undo","Annuler","تراجع"),()->undo=true);
@@ -55,14 +86,14 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
  }
  private int dp(float v){return Math.round(v*getResources().getDisplayMetrics().density);}
  private TextView label(String t,int size,int color){TextView v=new TextView(this);v.setText(t);v.setTextSize(size);v.setTextColor(color);return v;}
- private Button button(LinearLayout l,String t,Runnable r){Button b=new Button(this);b.setText(t);b.setAllCaps(false);b.setTextSize(12);b.setOnClickListener(v->r.run());l.addView(b,new LinearLayout.LayoutParams(0,dp(52),1));return b;}
+ private Button button(LinearLayout l,String t,Runnable r){Button b=new Button(this);b.setText(t);b.setAllCaps(false);b.setTextSize(11);b.setMinHeight(0);b.setMinimumHeight(0);b.setPadding(dp(4),0,dp(4),0);b.setOnClickListener(v->r.run());l.addView(b,new LinearLayout.LayoutParams(0,dp(44),1));return b;}
  private void msg(String s){runOnUiThread(()->status.setText(s));}
  private void saveRoom(){if(tapeMode){if(!Double.isFinite(tapeMeasured)){msg(tr("Mark two tracked points first.","Marquez deux points suivis.","حدد نقطتين متتبعتين أولاً."));return;}Measurements.add(this,"AR tape",tapeMeasured,"m","Two tracked points");msg(tr("Distance saved.","Distance enregistrée.","تم حفظ المسافة."));return;}if(autoMode){msg(tr("Confirm the automatic outline first.","Validez le contour automatique.","أكد المخطط التلقائي أولاً."));return;}if(outline.length<3||!RoomMath.valid(outline)){msg(tr("Add at least three non-crossing corners first.","Ajoutez au moins trois coins sans croisement.","حدد ثلاث زوايا على الأقل دون تقاطع."));return;}Measurements.add(this,"AR room area",measuredArea,"m²",detail);msg(tr("Saved to history.","Enregistré dans l'historique.","تم الحفظ في السجل."));}
  private void shareRoom(){if(tapeMode){if(!Double.isFinite(tapeMeasured)){msg(tr("Mark two points first.","Marquez deux points.","حدد نقطتين أولاً."));return;}android.content.Intent i=new android.content.Intent(android.content.Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(android.content.Intent.EXTRA_TEXT,String.format(Locale.US,"AR A–B: %.2f m",tapeMeasured));startActivity(android.content.Intent.createChooser(i,tr("Share","Partager","مشاركة")));return;}if(autoMode){msg(tr("Confirm the automatic outline first.","Validez le contour automatique.","أكد المخطط التلقائي أولاً."));return;}if(outline.length<3||!RoomMath.valid(outline)){msg(tr("Finish the room outline first.","Terminez le contour.","أكمل مخطط الغرفة أولاً."));return;}android.content.Intent i=new android.content.Intent(android.content.Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(android.content.Intent.EXTRA_TEXT,detail);startActivity(android.content.Intent.createChooser(i,tr("Share room","Partager la pièce","مشاركة الغرفة")));}
  @Override protected void onResume(){super.onResume();resumed=true;startAr();}
  private void showProblem(String text){runOnUiThread(()->{if(isFinishing()||isDestroyed())return;status.setText(text);cameraProblem.setText(text);((View)cameraProblem.getParent()).setVisibility(View.VISIBLE);});}
  private void clearProblem(){runOnUiThread(()->((View)cameraProblem.getParent()).setVisibility(View.GONE));}
- private void restartCamera(){if(!resumed||isFinishing())return;stopCamera();Session old=session;session=null;if(old!=null){try{old.close();}catch(RuntimeException ignored){}}boundTexture=-1;startAr();}
+ private void restartCamera(){if(!resumed||isFinishing())return;stopCamera();trackingReady=false;targetReady=false;for(Anchor a:points)a.detach();points.clear();if(top!=null){top.detach();top=null;}if(tapeA!=null){tapeA.detach();tapeA=null;}if(tapeB!=null){tapeB.detach();tapeB=null;}autoPolygon=new float[0][];outline=new float[0][];projected=new float[0][];projectedCeiling=new float[0][];autoStart=!tapeMode;manualFloor=Float.NaN;confirmedHeight=Float.NaN;measuredArea=0;measuredPerimeter=0;measuredHeight=Float.NaN;tapeMeasured=Double.NaN;Session old=session;session=null;if(old!=null){try{old.close();}catch(RuntimeException ignored){}}boundTexture=-1;startAr();}
  private void stopCamera(){if(active){active=false;gl.onPause();Session s=session;if(s!=null){try{s.pause();}catch(RuntimeException e){android.util.Log.w("RoomAR","Pause",e);}}}}
  private void startAr(){if(!resumed||isFinishing()||active)return;try{
   if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){
@@ -116,8 +147,7 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
    else{tapeB=hit.createAnchor();}
   }
   tapeMeasured=Double.NaN; final String label=Float.isFinite(liveDistance)?String.format(Locale.US,"%s %.2f m",tr("Camera → surface (estimate)","Caméra → surface (estimation)","الكاميرا ← السطح (تقدير)"),liveDistance):tr("No surface yet — move slowly","Surface non détectée — bougez lentement","لم يكتشف سطح بعد — تحرك ببطء");
-  String state=label;
-  if(!trackingReady)state=tr("Tracking: ","Suivi : ","التتبع: ")+f.getCamera().getTrackingFailureReason().name();
+  String state=trackingReady?tr("Tracking: OK · ","Suivi : OK · ","التتبع: جاهز · ")+label:tr("Tracking not ready: ","Suivi non prêt : ","التتبع غير جاهز: ")+f.getCamera().getTrackingFailureReason().name();
   if(tapeMode&&tapeA!=null&&tapeA.getTrackingState()==TrackingState.TRACKING){Pose a=tapeA.getPose(),b=tapeB!=null&&tapeB.getTrackingState()==TrackingState.TRACKING?tapeB.getPose():hit!=null?hit.getHitPose():null;
    if(b!=null){double d=Math.sqrt(Math.pow(a.tx()-b.tx(),2)+Math.pow(a.ty()-b.ty(),2)+Math.pow(a.tz()-b.tz(),2));if(tapeB!=null&&tapeB.getTrackingState()==TrackingState.TRACKING)tapeMeasured=d;state+="\n"+String.format(Locale.US,"%s %.2f m",tapeB!=null?tr("A–B","A–B","أ–ب"):tr("A → target (preview)","A → cible (aperçu)","أ ← الهدف (معاينة)"),d);}
   }
@@ -148,11 +178,25 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
   msg(String.format(Locale.US,tr("AUTO · %d wall planes · %s","AUTO · %d plans de murs · %s","تلقائي · %d سطح جدار · %s"),wallCount,autoStable>=2?tr("Stable — review then Use plan","Stable — vérifiez puis validez","مستقر — راجع ثم اعتمد"):tr("Slowly scan all walls; avoid furniture","Balayez tous les murs, évitez les meubles","امسح كل الجدران ببطء وتجنب الأثاث"))+String.format(Locale.US,"\n%s %d/12 · %s %d · %s %d",tr("Directions","Directions","الاتجاهات"),Integer.bitCount(scanDirections),tr("Depth points","Points profondeur","نقاط العمق"),depthEvidence.size(),tr("Walls with depth support","Murs confirmés par profondeur","جدران مدعومة بالعمق"),observedDepthWalls));
  }
  private void openPlan(){if(tapeMode){msg(tr("Switch to room scan to view a plan.","Passez au scan de pièce.","انتقل إلى مسح الغرفة لعرض المخطط."));return;}float[][] a=outline;if(!RoomMath.valid(a)){msg(tr("A valid room outline is needed.","Un contour valide est requis.","خاص مخطط غرفة صالح."));return;}android.content.Intent i=new android.content.Intent(this,RoomPlanActivity.class);float[] flat=new float[a.length*2];for(int j=0;j<a.length;j++){flat[j*2]=a[j][0];flat[j*2+1]=a[j][1];}i.putExtra("outline",flat);i.putExtra("height",measuredHeight);i.putExtra("preview",autoMode);startActivity(i);}
+ private float[] screenPoint(float[] vp,Pose pose){
+  float[] v=new float[4],r=new float[4];android.opengl.Matrix.multiplyMV(v,0,vp,0,new float[]{pose.tx(),pose.ty(),pose.tz(),1},0);
+  if(v[3]>.05f&&Float.isFinite(v[3])){r[0]=.5f+.5f*v[0]/v[3];r[1]=.5f-.5f*v[1]/v[3];r[2]=v[3];}return r;
+ }
  private void project(Frame f){
-  float[] view=new float[16],proj=new float[16],vp=new float[16];f.getCamera().getViewMatrix(view,0);f.getCamera().getProjectionMatrix(proj,0,0.05f,100f);android.opengl.Matrix.multiplyMM(vp,0,proj,0,view,0);
-  int count=tapeMode?(tapeA==null?0:tapeB==null?1:2):autoMode?autoPolygon.length:points.size();float[][] a=new float[count][4];
-  for(int j=0;j<count;j++){Pose p=tapeMode?(j==0?tapeA:tapeB).getPose():autoMode?Pose.makeTranslation(autoPolygon[j][0],autoFloor,autoPolygon[j][1]):points.get(j).getPose();float[] z=new float[4];android.opengl.Matrix.multiplyMV(z,0,vp,0,new float[]{p.tx(),p.ty(),p.tz(),1},0);if(z[3]>0){a[j][0]=.5f+.5f*z[0]/z[3];a[j][1]=.5f-.5f*z[1]/z[3];a[j][2]=z[3];if(j>0){Pose prev=tapeMode?tapeA.getPose():autoMode?Pose.makeTranslation(autoPolygon[j-1][0],autoFloor,autoPolygon[j-1][1]):points.get(j-1).getPose();a[j][3]=(float)Math.sqrt(Math.pow(p.tx()-prev.tx(),2)+Math.pow(p.tz()-prev.tz(),2)+(tapeMode?Math.pow(p.ty()-prev.ty(),2):0));}}}
-  projected=a;runOnUiThread(()->overlay.invalidate());
+  if(!trackingReady){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;runOnUiThread(()->overlay.invalidate());return;}
+  float[] view=new float[16],proj=new float[16],vp=new float[16];f.getCamera().getViewMatrix(view,0);f.getCamera().getProjectionMatrix(proj,0,.05f,100f);android.opengl.Matrix.multiplyMM(vp,0,proj,0,view,0);
+  int count=tapeMode?(tapeA==null?0:tapeB==null?1:2):autoMode?autoPolygon.length:points.size();
+  Pose[] poses=new Pose[count];float[][] floor=new float[count][4];float[][] world=new float[count][2];float meanY=0;
+  for(int j=0;j<count;j++){
+   Anchor anchor=tapeMode?(j==0?tapeA:tapeB):autoMode?null:points.get(j);
+   if(anchor!=null&&anchor.getTrackingState()!=TrackingState.TRACKING){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;runOnUiThread(()->overlay.invalidate());return;}
+   Pose p=anchor!=null?anchor.getPose():Pose.makeTranslation(autoPolygon[j][0],autoFloor,autoPolygon[j][1]);poses[j]=p;world[j][0]=p.tx();world[j][1]=p.tz();meanY+=p.ty();floor[j]=screenPoint(vp,p);
+  }
+  boolean closed=!tapeMode&&count>=3&&RoomMath.valid(world);
+  for(int j=0;j<count;j++){if(j==0&&!closed)continue;Pose a=poses[(j+count-1)%count],b=poses[j];floor[j][3]=(float)Math.sqrt(Math.pow(a.tx()-b.tx(),2)+Math.pow(a.tz()-b.tz(),2)+(tapeMode?Math.pow(a.ty()-b.ty(),2):0));}
+  float h=autoMode?autoHeight:top!=null&&count>0&&top.getTrackingState()==TrackingState.TRACKING?top.getPose().ty()-meanY/count:confirmedHeight;
+  float[][] upper=new float[0][];if(closed&&Float.isFinite(h)&&h>0){upper=new float[count][4];for(int j=0;j<count;j++)upper[j]=screenPoint(vp,Pose.makeTranslation(poses[j].tx(),poses[j].ty()+h,poses[j].tz()));}
+  projectedHeight=h;projectedClosed=closed;projectedCeiling=upper;projected=floor;runOnUiThread(()->overlay.invalidate());
  }
  private Pose floorRay(Frame f,float y){float[] v=new float[16],p=new float[16],vp=new float[16],inv=new float[16],q=new float[4];f.getCamera().getViewMatrix(v,0);f.getCamera().getProjectionMatrix(p,0,0.05f,100f);android.opengl.Matrix.multiplyMM(vp,0,p,0,v,0);if(!android.opengl.Matrix.invertM(inv,0,vp,0))return null;android.opengl.Matrix.multiplyMV(q,0,inv,0,new float[]{0,0,1,1},0);if(Math.abs(q[3])<1e-6)return null;Pose c=f.getCamera().getPose();float dx=q[0]/q[3]-c.tx(),dy=q[1]/q[3]-c.ty(),dz=q[2]/q[3]-c.tz();if(Math.abs(dy)<1e-5)return null;float t=(y-c.ty())/dy;float distance=(float)(t*Math.sqrt(dx*dx+dy*dy+dz*dz));if(t<=0||distance<0.15||distance>15)return null;return Pose.makeTranslation(c.tx()+t*dx,y,c.tz()+t*dz);}
  private void place(Frame f){
@@ -177,8 +221,9 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
   if(a.length>=3)text+=valid?String.format(Locale.US,"  |  %.2f m²  •  %.2f m",area,per):tr("  |  Crossed or invalid outline","  |  Contour invalide","  |  مخطط متقاطع أو غير صالح");
   if(valid&&Double.isFinite(h)&&h>0)text+=String.format(Locale.US,"\n%s %.2f m  •  %.2f m³",tr("Height","Hauteur","الارتفاع"),h,area*h);
   final String val=(autoMode?tr("AUTO PREVIEW · ","APERÇU AUTO · ","معاينة تلقائية · "):"")+text;StringBuilder edges=new StringBuilder(val);if(valid)for(int i=0;i<a.length;i++){float[] p=a[i],q=a[(i+1)%a.length];edges.append(String.format(Locale.US,"\n%d–%d: %.2f m",i+1,(i+1)%a.length+1,Math.hypot(p[0]-q[0],p[1]-q[1])));}detail=edges.toString();outline=a;
-  runOnUiThread(()->{result.setText(val);sketch.invalidate();autoButton.setText(autoMode?tr("Use plan","Valider plan","اعتماد المخطط"):tr("Auto scan","Scan auto","مسح تلقائي"));if(!tapeMode)mark.setText(outline.length==0?tr("Lock floor","Fixer le sol","تثبيت الأرضية"):tr("Add corner","Coin suivant","زاوية جديدة"));if(!tracking)status.setText(tr("Move slowly to recover tracking.","Bougez lentement.","حرك الهاتف ببطء."));});
+  runOnUiThread(()->{result.setText(val);sketch.invalidate();autoButton.setText(autoMode?tr("Use plan","Valider plan","اعتماد المخطط"):tr("Auto scan","Scan auto","مسح تلقائي"));if(!tapeMode)mark.setText(outline.length==0?tr("Lock floor","Fixer le sol","تثبيت الأرضية"):tr("Add corner","Coin suivant","زاوية جديدة"));sketch.setVisibility(validOutlineForDisplay()?View.VISIBLE:View.GONE);if(!tracking)status.setText(tr("Move slowly to recover tracking. Measurements unavailable until tracking resumes.","Bougez lentement. Mesures indisponibles sans suivi.","حرك الهاتف ببطء. القياسات غير متاحة حتى يعود التتبع."));});
  }
+ private boolean validOutlineForDisplay(){return trackingReady&&RoomMath.valid(outline);}
  private final class Sketch extends View {final Paint p=new Paint(3);Sketch(){super(RoomArActivity.this);} @Override protected void onDraw(Canvas c){float[][] a=outline;if(a.length<2)return;float minX=a[0][0],maxX=minX,minY=a[0][1],maxY=minY;for(float[] x:a){minX=Math.min(minX,x[0]);maxX=Math.max(maxX,x[0]);minY=Math.min(minY,x[1]);maxY=Math.max(maxY,x[1]);}float scale=Math.min((getWidth()-40f)/Math.max(.1f,maxX-minX),(getHeight()-20f)/Math.max(.1f,maxY-minY));Path path=new Path();for(int i=0;i<a.length;i++){float x=20+(a[i][0]-minX)*scale,y=10+(a[i][1]-minY)*scale;if(i==0)path.moveTo(x,y);else path.lineTo(x,y);}if(a.length>=3)path.close();p.setColor(0xff21e0c2);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(3);c.drawPath(path,p);}}
 }
 
