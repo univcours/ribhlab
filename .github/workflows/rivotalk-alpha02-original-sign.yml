@@ -1,0 +1,59 @@
+name: RivoTalk alpha02 original RivoScan signing
+on:
+  push:
+    branches: [build/rivotalk-alpha02-original-sign-20261126]
+    paths: ['.github/workflows/rivotalk-alpha02-original-sign.yml']
+permissions:
+  contents: read
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Retrieve the pinned RivoTalk build
+        env:
+          STAGING_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-12dc-81f4-9008-5620c1e7996f/raw?se=2026-11-26T11%3A44%3A43Z&sp=r&sv=2026-06-06&sr=b&scid=d7adc122-76e6-5620-9237-cfdc3382ccc6&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-26T05%3A41%3A47Z&ske=2026-11-27T05%3A41%3A47Z&sks=b&skv=2026-06-06&sig=IsulcDNr2PbdywpP2%2BRFcI0gx/TSnr6Pguik2w8kt5A%3D'
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --output "$RUNNER_TEMP/staging.zip" "$STAGING_URL"
+          echo "fe2774fa468ff826a4c6293f5dfdc635ac0f0a21ffdd92ca7691e62cc55addd2  $RUNNER_TEMP/staging.zip" | sha256sum -c
+          mkdir -p "$RUNNER_TEMP/staging"
+          unzip -q "$RUNNER_TEMP/staging.zip" -d "$RUNNER_TEMP/staging"
+          test -s "$RUNNER_TEMP/staging/app-release-unsigned.apk"
+          test -s "$RUNNER_TEMP/staging/app-release.aab"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install build tools and verify app identity
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'build-tools;36.0.0'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$RUNNER_TEMP/staging/app-release-unsigned.apk" | grep -F "name='com.ribhlab.rivotalk'"
+      - name: Sign using existing original RivoScan key and verify certificate
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEY_B64" && test -n "$SIGN_PASS"
+          umask 077
+          KEY="$RUNNER_TEMP/rivotalk-original.p12"
+          trap 'rm -f "$KEY"' EXIT
+          printf '%s' "$KEY_B64" | base64 -d > "$KEY"
+          keytool -list -v -alias key0 -storetype PKCS12 -keystore "$KEY" -storepass:env SIGN_PASS | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          mkdir -p signed
+          SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$SIGNER" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:SIGN_PASS --key-pass env:SIGN_PASS --out signed/RivoTalk-0.1.0-alpha02-RivoScan-SIGNED.apk "$RUNNER_TEMP/staging/app-release-unsigned.apk"
+          "$SIGNER" verify --verbose --print-certs signed/*.apk | grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e'
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env SIGN_PASS -keypass:env SIGN_PASS -signedjar signed/RivoTalk-0.1.0-alpha02-RivoScan-SIGNED.aab "$RUNNER_TEMP/staging/app-release.aab" key0
+          jarsigner -verify signed/*.aab
+          keytool -printcert -jarfile signed/*.aab | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RivoTalk-alpha02-RivoScan-original-key-SIGNED
+          path: signed/
+          if-no-files-found: error
+          retention-days: 1
