@@ -1,0 +1,131 @@
+name: RivoCaption 0.3.5 QA signed release using original RivoScan key
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rivocaption-035-original-rivoscan-key.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivocaption-035-original-rivoscan-key
+  cancel-in-progress: false
+jobs:
+  signed-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      EXPECTED_SHA1: 'E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+      EXPECTED_SOURCE_SHA: '9aae549c4a4c5abbc58c0e213aeb1c6ceb50bbc4'
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      RIVO_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+    steps:
+      - name: Checkout only pinned private RivoCaption source
+        uses: actions/checkout@v4
+        with:
+          repository: univcours/RivoCaption
+          ref: 9aae549c4a4c5abbc58c0e213aeb1c6ceb50bbc4
+          token: ${{ secrets.RIVOCAPTION_REPO_TOKEN || secrets.GH_PAT || github.token }}
+          path: caption-src
+          persist-credentials: false
+      - name: Check source identity; never print private source or credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C caption-src rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
+          grep -Fq 'applicationId = "com.rivocaption.editor"' caption-src/app/build.gradle.kts
+          grep -Fq 'versionCode = 9' caption-src/app/build.gradle.kts
+          grep -Fq 'versionName = "0.3.5"' caption-src/app/build.gradle.kts
+          echo 'Verified pinned private RivoCaption 0.3.5 source identity.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK 37 and build-tools 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -r | head -n1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-37' 'build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+      - name: Restore ONLY the existing original RivoScan upload key
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_KEY_B64" || { echo '::error::Original RivoScan keystore secret missing'; exit 1; }
+          test -n "$RIVO_STORE_PASSWORD" || { echo '::error::Original RivoScan keystore password secret missing'; exit 1; }
+          umask 077
+          KEYFILE="$RUNNER_TEMP/rivocaption-rivoscan-original.p12"
+          printf '%s' "$RIVO_KEY_B64" | base64 --decode > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$KEYFILE" -storepass:env RIVO_STORE_PASSWORD -alias key0)"
+          ACTUAL_SHA1="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:" {print $2; exit}')"
+          test "$ACTUAL_SHA1" = "$EXPECTED_SHA1" || { echo '::error::Wrong signing certificate; refusing to sign'; exit 1; }
+          echo "ANDROID_KEYSTORE_FILE=$KEYFILE" >> "$GITHUB_ENV"
+          echo 'Original RivoScan signing certificate SHA-1 matched expected Google Play upload certificate.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Test and build signed release APK and AAB
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: key0
+          ANDROID_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p caption-src :app:testDebugUnitTest :app:assembleRelease :app:bundleRelease
+          test -s caption-src/app/build/outputs/apk/release/app-release.apk
+          test -s caption-src/app/build/outputs/bundle/release/app-release.aab
+      - name: Verify package, version and original RivoScan signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=caption-src/app/build/outputs/apk/release/app-release.apk
+          AAB=caption-src/app/build/outputs/bundle/release/app-release.aab
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.rivocaption.editor' versionCode='9' versionName='0.3.5'"
+          if "$AAPT" dump badging "$APK" | grep -q application-debuggable; then
+            echo '::error::Refusing to publish debuggable APK'; exit 1
+          fi
+          "$SIGNER" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signature.txt"
+          ACTUAL_HEX="$(sed -nE 's/^Signer #[0-9]+ certificate SHA-1 digest: ([0-9a-fA-F]+).*$/\1/p' "$RUNNER_TEMP/signature.txt" | head -n 1 | tr '[:upper:]' '[:lower:]')"
+          EXPECTED_HEX="$(printf '%s' "$EXPECTED_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL_HEX" = "$EXPECTED_HEX"
+          jarsigner -verify "$AAB" > "$RUNNER_TEMP/aabcheck.txt" 2>&1
+          grep -Fq 'jar verified' "$RUNNER_TEMP/aabcheck.txt"
+          keytool -printcert -jarfile "$AAB" | grep -F "SHA1: $EXPECTED_SHA1"
+          mkdir -p signed
+          cp "$APK" signed/RivoCaption-0.3.5-RivoScan-SIGNED.apk
+          cp "$AAB" signed/RivoCaption-0.3.5-RivoScan-SIGNED.aab
+          (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          echo 'APK and AAB are verified signed RivoCaption 0.3.5 release candidates; NOT yet published on Google Play.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload ONLY signed release artifacts; never upload the keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoCaption-0.3.5-RivoScan-original-key-SIGNED
+          path: signed/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish binary-only GitHub prerelease for Google Play staging
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivocaption-v0.3.5-qa-rivoscan-key
+          name: RivoCaption 0.3.5 - RivoScan original key signed
+          prerelease: true
+          body: |
+            Signed release APK and Google Play AAB for com.rivocaption.editor (versionCode 9).
+            Signed with the original RivoScan upload certificate SHA-1 E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E.
+            No signing keys or passwords are distributed.
+            QA prerelease only; speech accuracy, dialect benchmarks, device playback and export require physical-device validation. Not published to Google Play.
+          files: |
+            signed/RivoCaption-0.3.5-RivoScan-SIGNED.apk
+            signed/RivoCaption-0.3.5-RivoScan-SIGNED.aab
+            signed/SHA256SUMS.txt
+      - name: Destroy temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/rivocaption-rivoscan-original.p12"
