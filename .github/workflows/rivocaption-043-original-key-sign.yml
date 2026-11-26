@@ -21,19 +21,42 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Download exact checked unsigned 0.4.3 binaries
+      - name: Download and reconstruct exact checksum-pinned 0.4.3 binaries
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p in signed
+          mkdir -p handoff in signed
           gh release download rivocaption-v0.4.3-unsigned-handoff \
-            --repo univcours/ribhlab --dir in
-          test -s in/RivoCaption-0.4.3-UNSIGNED.aab
-          test -s in/RivoCaption-0.4.3-UNSIGNED.apk
-          test -s in/RivoCaption-PlayStore-512.png
-          echo '54685e83b893ce6f3e5734dee92fc430cf8be69bf6d6f72654348ea5cb8df7c1  in/RivoCaption-0.4.3-UNSIGNED.aab' | sha256sum -c -
-          echo 'aed9eadae79ff87490c60accd7474960dcb35ef5ea252d7fd983149372e113a6  in/RivoCaption-0.4.3-UNSIGNED.apk' | sha256sum -c -
-          (cd in && sha256sum -c UNSIGNED-SHA256SUMS.txt)
+            --repo univcours/ribhlab --dir handoff
+          test -s handoff/HANDOFF-MANIFEST.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, hashlib
+          root=Path("handoff")
+          manifest=json.loads((root/"HANDOFF-MANIFEST.json").read_text("utf-8"))
+          assert manifest["version"]=="0.4.3" and manifest["versionCode"]==17
+          expected={
+            "RivoCaption-0.4.3-UNSIGNED.aab":"54685e83b893ce6f3e5734dee92fc430cf8be69bf6d6f72654348ea5cb8df7c1",
+            "RivoCaption-0.4.3-UNSIGNED.apk":"aed9eadae79ff87490c60accd7474960dcb35ef5ea252d7fd983149372e113a6",
+          }
+          assert set(manifest["files"])==set(expected),"Unexpected unsigned source files"
+          for filename, info in manifest["files"].items():
+              assert info["sha256"]==expected[filename],"Manifest hash not pinned"
+              result=Path("in")/filename
+              full=hashlib.sha256()
+              with result.open("wb") as out:
+                  for i,part in enumerate(info["parts"]):
+                      assert part["name"]==f"{filename}.part{i:03}"
+                      b=(root/part["name"]).read_bytes()
+                      assert len(b)==part["size"]
+                      assert hashlib.sha256(b).hexdigest()==part["sha256"]
+                      out.write(b)
+                      full.update(b)
+              assert result.stat().st_size==info["size"]
+              assert full.hexdigest()==expected[filename],"Reassembled binary checksum mismatch"
+              print("REASSEMBLED_AND_VERIFIED",filename,result.stat().st_size,flush=True)
+          PY
+          cp handoff/RivoCaption-PlayStore-512.png in/RivoCaption-PlayStore-512.png
       - name: Restore and verify existing ORIGINAL RivoScan upload certificate
         shell: bash
         run: |
