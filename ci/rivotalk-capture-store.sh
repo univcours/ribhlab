@@ -111,3 +111,25 @@ adb shell pm clear com.ribhlab.rivotalk
 adb shell am start -n com.ribhlab.rivotalk/.MainActivity
 sleep 4
 capture_verified '08-permissions' 'Grant permissions' || true
+
+# Real tablet layouts: emulate tablet-sized Android configurations, not resized phone PNGs.
+mkdir -p store-assets/rivotalk/tablet7 store-assets/rivotalk/tablet10
+for spec in 'tablet7 1440x2560 320' 'tablet10 1440x2560 240'; do
+  read -r folder dims density <<< "$spec"
+  adb shell am force-stop com.ribhlab.rivotalk
+  adb shell wm size "$dims"
+  adb shell wm density "$density"
+  adb shell pm grant com.ribhlab.rivotalk android.permission.RECORD_AUDIO
+  adb shell pm grant com.ribhlab.rivotalk android.permission.BLUETOOTH_CONNECT
+  adb shell pm grant com.ribhlab.rivotalk android.permission.POST_NOTIFICATIONS || true
+  adb shell am start -W -n com.ribhlab.rivotalk/.MainActivity
+  sleep 6
+  capture_verified "$folder/01-home" 'Ready to connect'
+  tap_text 'Diagnostics'
+  capture_verified "$folder/02-diagnostics" 'Payload bytes sent'
+  tap_text 'Close'
+  if tap_text 'Privacy'; then
+    capture_verified "$folder/03-privacy" 'Audio and messages travel through encrypted local Bluetooth links'
+    tap_text 'Close'
+  fi
+done
