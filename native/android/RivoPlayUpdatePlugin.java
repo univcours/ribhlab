@@ -25,6 +25,33 @@ public class RivoPlayUpdatePlugin extends Plugin {
         manager=AppUpdateManagerFactory.create(getContext());
     }
 
+    @PluginMethod public void requestOrganicReview(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            try {
+                com.google.android.play.core.review.ReviewManager reviews =
+                    com.google.android.play.core.review.ReviewManagerFactory.create(getContext());
+                reviews.requestReviewFlow().addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) { call.resolve(); return; }
+                    reviews.launchReviewFlow(getActivity(), task.getResult())
+                        .addOnCompleteListener(ignored -> call.resolve());
+                });
+            } catch (RuntimeException error) { call.resolve(); }
+        });
+    }
+
+    @PluginMethod public void openGrowthLink(PluginCall call) {
+        String kind=call.getString("kind","");
+        if (!"apps".equals(kind) && !"store".equals(kind)) { call.reject("Unsupported link"); return; }
+        String url="apps".equals(kind)?"https://ribhlab.github.io/apps/":
+            "https://play.google.com/store/apps/details?id=com.ribhlab.rivoscan";
+        getActivity().runOnUiThread(() -> {
+            try {
+                getActivity().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse(url)));
+                call.resolve();
+            } catch (RuntimeException error) { call.reject("Unable to open link",error); }
+        });
+    }
     @PluginMethod public void check(PluginCall call) {
         manager.getAppUpdateInfo().addOnSuccessListener(info -> {
             final int state=info.updateAvailability();

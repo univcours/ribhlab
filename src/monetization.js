@@ -437,6 +437,13 @@ export async function startAdsAtLaunch(){
  await initializeAds();
  return false;
 }
+// Native Play review is separate from monetization: no ads displayed over it.
+export async function withAdFreeReview(run){
+ if(state.busy)return false;
+ state.busy=true;
+ try{await pauseBannerForFullscreen();return await run();}
+ finally{state.busy=false;await restoreBannerAfterFullscreen();scheduleBannerRelayout();}
+}
 export function onDocumentSaved(){if(isAndroid)state.savedCount++;}
 export async function atNaturalNavigation({working=false,trigger='regular'}={}){
  if(state.busy||working)return false;

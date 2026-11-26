@@ -18,6 +18,8 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import {growthCopy,recordGrowthSave,maybeRequestOrganicReview,shareRivoApp,openGrowthLink} from './organic-growth.js';
+import {withAdFreeReview} from './monetization.js';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { App as CapacitorApp } from '@capacitor/app';
 import { DocumentScanner } from '@capacitor-mlkit/document-scanner';
@@ -640,6 +642,10 @@ function settingsWorkspace(){
   <button type="button" class="btn" data-ad-retry>${({ar:'إعادة فحص الإعلانات',fr:'Réessayer les annonces',en:'Retry ads'})[language]||'Retry ads'}</button>
   <small>${({ar:'الإعلان الشريطي معطّل. تظهر الإعلانات بملء الشاشة بين العمليات وبعد الموافقة فقط.',fr:'Bannières désactivées; annonces plein écran après consentement entre les tâches.',en:'Banner appears centered under the toolbar when loaded; full-screen ads only after consent between tasks.'})[language]||'Banner disabled.'}</small>
  </div>` : ''}
+ <div class="settings-section rivo-growth-actions"><h2>RivoScan</h2>
+ <button type="button" class="settings-row" data-growth="share"><span class="settings-row-icon">${ico('share',22)}</span><span><strong>${growthCopy(language)[0]}</strong></span></button>
+ <button type="button" class="settings-row" data-growth="apps"><span class="settings-row-icon">${ico('grid',22)}</span><span><strong>${growthCopy(language)[1]}</strong></span></button>
+ <button type="button" class="settings-row" data-growth="store"><span class="settings-row-icon">${ico('external',22)}</span><span><strong>${growthCopy(language)[2]}</strong></span></button></div>
  <div class="settings-row settings-about"><span class="settings-row-icon">${ico('shield',22)}</span><span><strong>${ut('about')}</strong><small>${ut('privacy')} · ${ut('noAccount')}</small></span></div></div>
  </div></section>`;
 }
@@ -1029,7 +1035,13 @@ function wire(){
    void openHubAction(el.dataset.rivoFeature);
   }));
 
-  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('home')}));
+  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',async()=>{
+    if(busy)return;
+    const safe=()=>!busy&&!nativeCaptureDepth&&document.visibilityState==='visible'&&!document.querySelector('[aria-modal="true"],.rivo-release-overlay,.rivo-live-overlay');
+    if(safe()&&await maybeRequestOrganicReview({canShow:safe,runWithoutAds:withAdFreeReview})){openTab('home');return;}
+    await atNaturalNavigation({working:busy});openTab('home');
+  }));
+  document.querySelectorAll('[data-growth]').forEach(el=>el.addEventListener('click',async()=>{try{if(el.dataset.growth==='share')await shareRivoApp(language);else await openGrowthLink(el.dataset.growth);}catch(error){if(error?.name!=='AbortError')console.warn('Growth action unavailable',error);}}));
   document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',async()=>{if(!busy)await atNaturalNavigation({working:busy});openTab('tools');document.getElementById('section-'+el.dataset.category)?.scrollIntoView({behavior:'smooth',block:'start'})}));
   document.querySelectorAll('[data-whats-new]').forEach(el=>el.addEventListener('click',()=>openWhatsNew({language,version:appVersion})));
   document.querySelectorAll('[data-ad-privacy]').forEach(el=>el.addEventListener('click',()=>{void openAdPrivacyOptions()}));
@@ -1565,6 +1577,7 @@ async function saveOut(bytes,name,mime='application/pdf'){
       // Genuine permanent public storage. MediaStore exposes Documents/RivoScan in Samsung My Files.
       const saved=await RivoDocuments.saveFile({name:safe,base64:toBase64(data),mimeType:mime});
       if(!recentPublishedDocuments.remember(saved))throw Error('Saved document was not committed to public storage.');
+      recordGrowthSave();
       record(activeTool?.name||'Saved document');
       await loadLibrary(false);
       saveToast(shortSavedLabel());

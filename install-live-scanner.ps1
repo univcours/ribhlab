@@ -93,6 +93,10 @@ if($gradleText -notmatch 'com\.google\.android\.play:app-update:') {
   $playUpdate="    implementation 'com.google.android.play:app-update:2.1.0'"
   $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$playUpdate",1)
 }
+if($gradleText -notmatch 'com\.google\.android\.play:review:') {
+  $playReview="    implementation 'com.google.android.play:review:2.0.2'"
+  $gradleText=[regex]::Replace($gradleText,'dependencies\s*\{',"dependencies {`r`n$playReview",1)
+}
 # Official PaddlePaddle UVDoc ONNX mobile CPU backend (verified source + SHA-256).
 # Kept separate from CameraX dependencies: upgrades of existing Android projects
 # must receive ONNX Runtime even if the CameraX block already exists.
