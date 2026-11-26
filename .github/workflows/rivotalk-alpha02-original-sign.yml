@@ -1,18 +1,19 @@
 name: RivoTalk alpha02 original RivoScan signing
 on:
-  push:
-    branches: [build/rivotalk-alpha02-original-sign-20261126]
+  pull_request:
+    branches: [main]
     paths: ['.github/workflows/rivotalk-alpha02-original-sign.yml']
 permissions:
   contents: read
 jobs:
   sign:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Retrieve the pinned RivoTalk build
         env:
-          STAGING_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-12dc-81f4-9008-5620c1e7996f/raw?se=2026-11-26T11%3A44%3A43Z&sp=r&sv=2026-06-06&sr=b&scid=d7adc122-76e6-5620-9237-cfdc3382ccc6&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-26T05%3A41%3A47Z&ske=2026-11-27T05%3A41%3A47Z&sks=b&skv=2026-06-06&sig=IsulcDNr2PbdywpP2%2BRFcI0gx/TSnr6Pguik2w8kt5A%3D'
+          STAGING_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-d858-8210-a1f5-eeb99e8145a3/raw?se=2026-11-26T11%3A45%3A13Z&sp=r&sv=2026-06-06&sr=b&scid=181be586-08b7-50e1-8c44-a1d7c21b36b0&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-26T08%3A46%3A27Z&ske=2026-11-27T08%3A46%3A27Z&sks=b&skv=2026-06-06&sig=w%2BTElw95lhtLV2GkkCEv4IEbkSX5hAFjqxaMyYOz0SQ%3D'
         run: |
           set -euo pipefail
           curl --fail --location --retry 2 --output "$RUNNER_TEMP/staging.zip" "$STAGING_URL"
