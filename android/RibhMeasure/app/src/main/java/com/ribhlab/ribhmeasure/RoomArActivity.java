@@ -21,7 +21,7 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
  private Anchor top; private int tex, program, width=1,height=1;
  private final FloatBuffer quad=buf(new float[]{-1,-1,1,-1,-1,1,1,1});
  private final FloatBuffer uv=buf(new float[8]);
- private long lastUpdate; private volatile float[][] outline=new float[0][];
+ private long lastUpdate, lastCameraTimestamp=0, statsStart=0; private int cameraFrames=0,lastDisplayRotation=-1,lastDisplayWidth=-1,lastDisplayHeight=-1; private volatile float inputFps=0; private volatile float[][] outline=new float[0][];
  private static FloatBuffer buf(float[] a){FloatBuffer b=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();b.put(a).position(0);return b;}
  private String tr(String en,String fr,String ar){String l=getResources().getConfiguration().getLocales().get(0).getLanguage();return l.equals("ar")?ar:l.equals("fr")?fr:en;}
  @Override protected void attachBaseContext(android.content.Context base){super.attachBaseContext(Prefs.locale(base));}
@@ -106,9 +106,9 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
    if(av.isTransient()&&availabilityAttempts++<10){if(!retryScheduled){retryScheduled=true;status.postDelayed(()->{retryScheduled=false;startAr();},600);}msg(tr("Checking AR compatibility…","Vérification AR…","جاري التحقق من دعم الواقع المعزز…"));return;}
    if(av==ArCoreApk.Availability.UNSUPPORTED_DEVICE_NOT_CAPABLE){showProblem(tr("This device is not ARCore compatible. Photo and manual measurements still work.","Cet appareil ne prend pas en charge ARCore. Les mesures photo et manuelles restent disponibles.","هذا الهاتف لا يدعم ARCore. القياس بالصورة واليدوي متاحان."));return;}
    if(ArCoreApk.getInstance().requestInstall(this,!installRequested)==ArCoreApk.InstallStatus.INSTALL_REQUESTED){installRequested=true;showProblem(tr("Install or update Google Play Services for AR, then return.","Installez ou mettez à jour Google Play Services for AR, puis revenez.","ثبت أو حدث خدمات الواقع المعزز ثم عد للتطبيق."));return;}
-   Session fresh=new Session(this);try{Config c=new Config(fresh);c.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);depth=fresh.isDepthModeSupported(Config.DepthMode.AUTOMATIC);if(depth)c.setDepthMode(Config.DepthMode.AUTOMATIC);try{fresh.configure(c);}catch(IllegalArgumentException ex){depth=false;c.setDepthMode(Config.DepthMode.DISABLED);fresh.configure(c);}session=fresh;}catch(Exception e){fresh.close();throw e;}
+   Session fresh=new Session(this);try{selectLightweightCamera(fresh);Config c=new Config(fresh);c.setLightEstimationMode(Config.LightEstimationMode.DISABLED);c.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);depth=fresh.isDepthModeSupported(Config.DepthMode.AUTOMATIC);if(depth)c.setDepthMode(Config.DepthMode.AUTOMATIC);try{fresh.configure(c);}catch(IllegalArgumentException ex){depth=false;c.setDepthMode(Config.DepthMode.DISABLED);fresh.configure(c);}session=fresh;}catch(Exception e){fresh.close();throw e;}
   }
-  session.resume();boundTexture=-1;active=true;gl.onResume();clearProblem();msg(tr("Move slowly to detect the floor.","Balayez le sol lentement.","حرك الهاتف ببطء لاكتشاف الأرضية."));
+  session.resume();boundTexture=-1;lastCameraTimestamp=0;statsStart=0;cameraFrames=0;inputFps=0;lastDisplayRotation=-1;lastDisplayWidth=-1;lastDisplayHeight=-1;active=true;gl.onResume();clearProblem();msg(tr("Move slowly to detect the floor.","Balayez le sol lentement.","حرك الهاتف ببطء لاكتشاف الأرضية."));
  }catch(Exception e){android.util.Log.e("RoomAR","Session setup",e);showProblem(tr("AR camera could not start. Close other camera apps and retry. ","La caméra AR ne démarre pas. Fermez les autres apps caméra et réessayez. ","تعذر تشغيل كاميرا AR. أغلق التطبيقات الأخرى التي تستعمل الكاميرا وأعد المحاولة. ")+e.getClass().getSimpleName());}}
  @Override public void onRequestPermissionsResult(int req,String[] p,int[] g){super.onRequestPermissionsResult(req,p,g);if(req==44&&g.length>0&&g[0]==PackageManager.PERMISSION_GRANTED)startAr();else if(req==44)showProblem(tr("Camera permission denied. Enable it in Android Settings or retry.","Caméra refusée. Autorisez-la dans les paramètres.","لم يتم السماح بالكاميرا. فعّلها في الإعدادات أو أعد المحاولة."));}
  @Override protected void onPause(){resumed=false;stopCamera();super.onPause();}
@@ -121,7 +121,7 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
  private int shader(int type,String src){int s=GLES20.glCreateShader(type);GLES20.glShaderSource(s,src);GLES20.glCompileShader(s);return s;}
  @Override public void onSurfaceChanged(GL10 g,int w,int h){width=w;height=h;GLES20.glViewport(0,0,w,h);}
  @Override public void onDrawFrame(GL10 g){GLES20.glClearColor(0,0,0,1);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);Session s=session;if(s==null||!active)return;
-  try{if(tex<=0||program<=0||width<2||height<2)return;if(boundTexture!=tex){s.setCameraTextureName(tex);boundTexture=tex;}s.setDisplayGeometry(getWindowManager().getDefaultDisplay().getRotation(),width,height);Frame f=s.update();
+  try{if(tex<=0||program<=0||width<2||height<2)return;if(boundTexture!=tex){s.setCameraTextureName(tex);boundTexture=tex;}int rotation=getWindowManager().getDefaultDisplay().getRotation();if(rotation!=lastDisplayRotation||width!=lastDisplayWidth||height!=lastDisplayHeight){s.setDisplayGeometry(rotation,width,height);lastDisplayRotation=rotation;lastDisplayWidth=width;lastDisplayHeight=height;}Frame f=s.update();long stamp=f.getTimestamp();if(stamp!=0&&stamp!=lastCameraTimestamp){long now=android.os.SystemClock.uptimeMillis();if(statsStart==0)statsStart=now;cameraFrames++;if(now-statsStart>=3000){inputFps=cameraFrames*1000f/(now-statsStart);android.util.Log.i("RoomAR","Input FPS="+inputFps+" state="+f.getCamera().getTrackingState()+" reason="+f.getCamera().getTrackingFailureReason());cameraFrames=0;statsStart=now;}lastCameraTimestamp=stamp;}
    quad.position(0);uv.position(0);f.transformCoordinates2d(Coordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES,quad,Coordinates2d.TEXTURE_NORMALIZED,uv);quad.position(0);uv.position(0);
    GLES20.glUseProgram(program);GLES20.glActiveTexture(GLES20.GL_TEXTURE0);GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,tex);GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"s"),0);
    int p=GLES20.glGetAttribLocation(program,"p"),u=GLES20.glGetAttribLocation(program,"u");GLES20.glEnableVertexAttribArray(p);GLES20.glEnableVertexAttribArray(u);GLES20.glVertexAttribPointer(p,2,GLES20.GL_FLOAT,false,0,quad);GLES20.glVertexAttribPointer(u,2,GLES20.GL_FLOAT,false,0,uv);if(f.getTimestamp()!=0)GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);GLES20.glDisableVertexAttribArray(p);GLES20.glDisableVertexAttribArray(u);
@@ -131,6 +131,13 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
    long now=android.os.SystemClock.uptimeMillis();if(now-lastUpdate>300){lastUpdate=now;refresh(f.getCamera().getTrackingState()==TrackingState.TRACKING);}
   }catch(com.google.ar.core.exceptions.CameraNotAvailableException e){trackingReady=false;android.util.Log.e("RoomAR","Camera disconnected",e);runOnUiThread(()->{stopCamera();showProblem(tr("Camera is busy or disconnected. Retry.","Caméra occupée ou déconnectée. Réessayez.","الكاميرا مشغولة أو متوقفة. أعد المحاولة."));});}
   catch(Exception e){trackingReady=false;long now=android.os.SystemClock.uptimeMillis();if(now-lastFrameError>2000){lastFrameError=now;android.util.Log.e("RoomAR","Frame update",e);msg(tr("Tracking interrupted: ","Suivi interrompu : ","توقف التتبع: ")+e.getClass().getSimpleName());}}
+ }
+ private void selectLightweightCamera(Session s){
+  // Preserve the standard camera selection on physical phones. The emulator is
+  // CPU constrained and benefits from a smaller CPU image and 30 fps configuration.
+  String model=(android.os.Build.FINGERPRINT+" "+android.os.Build.MODEL+" "+android.os.Build.HARDWARE).toLowerCase(Locale.ROOT);
+  if(!model.contains("generic")&&!model.contains("sdk_gphone")&&!model.contains("ranchu")&&!model.contains("goldfish"))return;
+  try{CameraConfigFilter filter=new CameraConfigFilter(s);filter.setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30));java.util.List<CameraConfig> configs=s.getSupportedCameraConfigs(filter);CameraConfig best=null;long pixels=Long.MAX_VALUE;for(CameraConfig config:configs){android.util.Size size=config.getImageSize();long n=(long)size.getWidth()*size.getHeight();if(n<pixels){pixels=n;best=config;}}if(best!=null){s.setCameraConfig(best);android.util.Log.i("RoomAR","Emulator camera CPU="+best.getImageSize()+" GPU="+best.getTextureSize()+" fps="+best.getFpsRange());}}catch(RuntimeException ex){android.util.Log.w("RoomAR","Default camera config retained",ex);}
  }
  private HitResult surfaceHit(Frame f){
   if(!trackingReady)return null;
@@ -184,20 +191,20 @@ public final class RoomArActivity extends Activity implements GLSurfaceView.Rend
   if(v[3]>.05f&&Float.isFinite(v[3])){r[0]=.5f+.5f*v[0]/v[3];r[1]=.5f-.5f*v[1]/v[3];r[2]=v[3];}return r;
  }
  private void project(Frame f){
-  if(!trackingReady){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;runOnUiThread(()->overlay.invalidate());return;}
+  if(!trackingReady){if(projected.length>0||projectedCeiling.length>0){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;}overlay.postInvalidateOnAnimation();return;}
+  int count=tapeMode?(tapeA==null?0:tapeB==null?1:2):autoMode?autoPolygon.length:points.size();if(count==0){if(projected.length>0){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;}overlay.postInvalidateOnAnimation();return;}
   float[] view=new float[16],proj=new float[16],vp=new float[16];f.getCamera().getViewMatrix(view,0);f.getCamera().getProjectionMatrix(proj,0,.05f,100f);android.opengl.Matrix.multiplyMM(vp,0,proj,0,view,0);
-  int count=tapeMode?(tapeA==null?0:tapeB==null?1:2):autoMode?autoPolygon.length:points.size();
   Pose[] poses=new Pose[count];float[][] floor=new float[count][4];float[][] world=new float[count][2];float meanY=0;
   for(int j=0;j<count;j++){
    Anchor anchor=tapeMode?(j==0?tapeA:tapeB):autoMode?null:points.get(j);
-   if(anchor!=null&&anchor.getTrackingState()!=TrackingState.TRACKING){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;runOnUiThread(()->overlay.invalidate());return;}
+   if(anchor!=null&&anchor.getTrackingState()!=TrackingState.TRACKING){projected=new float[0][];projectedCeiling=new float[0][];projectedClosed=false;overlay.postInvalidateOnAnimation();return;}
    Pose p=anchor!=null?anchor.getPose():Pose.makeTranslation(autoPolygon[j][0],autoFloor,autoPolygon[j][1]);poses[j]=p;world[j][0]=p.tx();world[j][1]=p.tz();meanY+=p.ty();floor[j]=screenPoint(vp,p);
   }
   boolean closed=!tapeMode&&count>=3&&RoomMath.valid(world);
   for(int j=0;j<count;j++){if(j==0&&!closed)continue;Pose a=poses[(j+count-1)%count],b=poses[j];floor[j][3]=(float)Math.sqrt(Math.pow(a.tx()-b.tx(),2)+Math.pow(a.tz()-b.tz(),2)+(tapeMode?Math.pow(a.ty()-b.ty(),2):0));}
   float h=autoMode?autoHeight:top!=null&&count>0&&top.getTrackingState()==TrackingState.TRACKING?top.getPose().ty()-meanY/count:confirmedHeight;
   float[][] upper=new float[0][];if(closed&&Float.isFinite(h)&&h>0){upper=new float[count][4];for(int j=0;j<count;j++)upper[j]=screenPoint(vp,Pose.makeTranslation(poses[j].tx(),poses[j].ty()+h,poses[j].tz()));}
-  projectedHeight=h;projectedClosed=closed;projectedCeiling=upper;projected=floor;runOnUiThread(()->overlay.invalidate());
+  projectedHeight=h;projectedClosed=closed;projectedCeiling=upper;projected=floor;overlay.postInvalidateOnAnimation();
  }
  private Pose floorRay(Frame f,float y){float[] v=new float[16],p=new float[16],vp=new float[16],inv=new float[16],q=new float[4];f.getCamera().getViewMatrix(v,0);f.getCamera().getProjectionMatrix(p,0,0.05f,100f);android.opengl.Matrix.multiplyMM(vp,0,p,0,v,0);if(!android.opengl.Matrix.invertM(inv,0,vp,0))return null;android.opengl.Matrix.multiplyMV(q,0,inv,0,new float[]{0,0,1,1},0);if(Math.abs(q[3])<1e-6)return null;Pose c=f.getCamera().getPose();float dx=q[0]/q[3]-c.tx(),dy=q[1]/q[3]-c.ty(),dz=q[2]/q[3]-c.tz();if(Math.abs(dy)<1e-5)return null;float t=(y-c.ty())/dy;float distance=(float)(t*Math.sqrt(dx*dx+dy*dy+dz*dz));if(t<=0||distance<0.15||distance>15)return null;return Pose.makeTranslation(c.tx()+t*dx,y,c.tz()+t*dz);}
  private void place(Frame f){
