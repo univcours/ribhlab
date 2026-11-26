@@ -2,7 +2,7 @@ name: RivoTalk verified store assets
 on:
   pull_request:
     branches: [main]
-    paths: ['.github/workflows/rivotalk-store-assets.yml']
+    paths: ['.github/workflows/rivotalk-store-assets.yml', 'ci/rivotalk-capture-store.sh']
 permissions:
   contents: write
 jobs:
@@ -62,7 +62,15 @@ jobs:
               f=p/name
               assert Image.open(f).size==size, name
               assert 0<f.stat().st_size<=limit, name
-          assert (p/'01-home.png').read_bytes()!=(p/'02-diagnostics.png').read_bytes()
+          shots=sorted(p.glob('[0-9][0-9]-*.png'))
+          assert 2<=len(shots)<=8
+          seen=set()
+          for f in shots:
+              assert Image.open(f).size==(1080,1920) and 0<f.stat().st_size<=8000000, f
+              data=f.read_bytes()
+              assert data not in seen, f
+              seen.add(data)
+          print('Validated actual screenshots:', len(shots))
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
