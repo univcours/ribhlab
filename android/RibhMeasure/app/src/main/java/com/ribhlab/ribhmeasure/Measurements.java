@@ -19,7 +19,7 @@ final class Measurements {
             for(int i=0;i<Math.min(199,orig.length());i++)out.put(orig.get(i));
             Prefs.db(c).edit().putString(KEY,out.toString()).apply();
             Ui.toast(c,R.string.measurement_saved);
-            Ads.measurementCompleted((BaseActivity)c);
+            if(c instanceof android.app.Activity) Ads.measurementCompleted((android.app.Activity)c);
         }catch(Exception ignored){Ui.toast(c,R.string.generic_error);}
     }
     static void deleteAll(Context c){Prefs.db(c).edit().remove(KEY).apply();}
