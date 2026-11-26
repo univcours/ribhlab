@@ -1,0 +1,17 @@
+{
+  "name": "RivoCaption Studio",
+  "short_name": "RivoCaption",
+  "description": "Local-first video caption editor",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120f19",
+  "theme_color": "#17131f",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

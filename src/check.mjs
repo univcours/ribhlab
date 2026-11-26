@@ -16,8 +16,8 @@ for(const p of pages){const h=fs.readFileSync(p,'utf8');const pathName='/'+path.
  if(!h.includes('<title>'))errors.push(`${pathName}: missing title`);
  if(!pathName.includes('/admin/') && !['/index.html','/404.html'].includes(pathName)){
   if(!h.includes('name="description"'))errors.push(`${pathName}: missing meta description`);
-  if(!h.includes('id="main"'))errors.push(`${pathName}: missing main landmark`);
-  const expected=pathName.startsWith('/ar/')?'ar':pathName.startsWith('/en/')?'en':'fr';
+  if(!h.includes('id="main"') && !(pathName.startsWith('/rivocaption/') && h.includes('<main id="studio"')))errors.push(`${pathName}: missing main landmark`);
+  const expected=pathName.startsWith('/rivocaption/')?'en':pathName.startsWith('/ar/')?'ar':pathName.startsWith('/en/')?'en':'fr';
   if(!h.includes(`lang="${expected}"`)) errors.push(`${pathName}: incorrect page language`);
  }
  for(const m of h.matchAll(/(?:href|src)="(\/[^"?#]*)/g)){
