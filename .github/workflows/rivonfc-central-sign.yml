@@ -1,0 +1,79 @@
+name: RivoNFC central verified signing
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: 'Private RivoNFC unsigned staging artifact ID'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: rivonfc-central-sign
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+    steps:
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Get verified private staging artifact
+        env:
+          GH_TOKEN: ${{ secrets.RIVONFC_ARTIFACT_READ_TOKEN }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo '::error::Configure read-only Actions access to the private source repository'; exit 1; }
+          [[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          REPO=univcours/RivoSticker
+          gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID" > "$RUNNER_TEMP/meta.json"
+          jq -e '.name=="RivoNFC-0.4.0-unsigned-staging" and .expired==false and .workflow_run.id==45843827255' "$RUNNER_TEMP/meta.json" >/dev/null
+          gh api "repos/$REPO/actions/runs/45843827255" | jq -e '.conclusion=="success" and .head_sha=="bdc4edd39be1b5ed39dd499a74c7c9f5767a7364"' >/dev/null
+          gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip" > "$RUNNER_TEMP/staging.zip"
+          DIGEST="$(jq -er '.digest | select(startswith("sha256:")) | sub("^sha256:";"")' "$RUNNER_TEMP/meta.json")"
+          printf '%s  %s\n' "$DIGEST" "$RUNNER_TEMP/staging.zip" | sha256sum -c
+          mkdir -p staging
+          for name in RivoNFC-0.4.0-UNSIGNED.apk RivoNFC-0.4.0-UNSIGNED.aab SHA256SUMS.txt; do
+            unzip -p "$RUNNER_TEMP/staging.zip" "$name" > "staging/$name"
+            test -s "staging/$name"
+          done
+          (cd staging && sha256sum -c SHA256SUMS.txt)
+      - name: Install signing tools
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
+      - name: Sign with existing central RivoScan key and verify
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEY_B64" && test -n "$SIGN_PASS"
+          umask 077
+          KEY="$RUNNER_TEMP/rivonfc-original.p12"
+          printf '%s' "$KEY_B64" | base64 -d > "$KEY"
+          ACTUAL="$(keytool -list -v -storetype PKCS12 -keystore "$KEY" -storepass:env SIGN_PASS -alias key0 | awk '$1=="SHA1:" {print $2;exit}')"
+          test "$ACTUAL" = "$EXPECTED_SHA1"
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging staging/RivoNFC-0.4.0-UNSIGNED.apk | grep -F "package: name='com.ribhlab.rivonfc' versionCode='5' versionName='0.4.0'"
+          if "$TOOLS/aapt" dump badging staging/RivoNFC-0.4.0-UNSIGNED.apk | grep -q application-debuggable; then exit 1; fi
+          mkdir -p signed
+          "$TOOLS/zipalign" -P 16 -f 4 staging/RivoNFC-0.4.0-UNSIGNED.apk "$RUNNER_TEMP/aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:SIGN_PASS --key-pass env:SIGN_PASS --out signed/RivoNFC-0.4.0-RivoScan-SIGNED.apk "$RUNNER_TEMP/aligned.apk"
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env SIGN_PASS -keypass:env SIGN_PASS -signedjar signed/RivoNFC-0.4.0-RivoScan-SIGNED.aab staging/RivoNFC-0.4.0-UNSIGNED.aab key0
+          "$TOOLS/apksigner" verify --verbose --print-certs signed/RivoNFC-0.4.0-RivoScan-SIGNED.apk > "$RUNNER_TEMP/apk-verified.txt"
+          grep -iq 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/apk-verified.txt"
+          jarsigner -verify signed/RivoNFC-0.4.0-RivoScan-SIGNED.aab | grep -F 'jar verified'
+          keytool -printcert -jarfile signed/RivoNFC-0.4.0-RivoScan-SIGNED.aab | grep -F "SHA1: $EXPECTED_SHA1"
+          (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RivoNFC-0.4.0-original-RivoScan-SIGNED
+          path: signed/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rivonfc-original.p12"
