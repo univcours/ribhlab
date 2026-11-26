@@ -19,7 +19,11 @@ jobs:
           gradle-version: '8.13'
       - name: Build exact version with official test ad IDs
         run: |
-          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -r | head -n1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
           gradle --no-daemon -p android/RibhMeasure :app:assembleDebug -PADMOB_APP_ID=ca-app-pub-3940256099942544~3347511713 -PADMOB_BANNER_ID=ca-app-pub-3940256099942544/6300978111 -PADMOB_INTERSTITIAL_ID=ca-app-pub-3940256099942544/1033173712
       - name: Enable KVM
         run: |
