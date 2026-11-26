@@ -17,7 +17,18 @@ def cap(name):
  except Exception as e:
   print("UI dump",type(e).__name__,flush=True);return []
 def tap(n):
- x1,y1,x2,y2=map(int,re.findall(r"\d+",n.get("bounds","")));adb("shell","input","tap",str((x1+x2)//2),str((y1+y2)//2));time.sleep(.6)
+ x1,y1,x2,y2=map(int,re.findall(r"\d+",n.get("bounds","")));adb("shell","input","tap",str((x1+x2)//2),str((y1+y2)//2));time.sleep(1.3)
+def open_scan():
+ for i in range(4):
+  ns=cap("scan-launch-"+str(i))
+  if any("Room scanner" in n.get("text","") for n in ns):return
+  raw=(O/("scan-launch-"+str(i)+".xml")).read_text()
+  root=ET.fromstring(raw);parents={c:p for p in root.iter() for c in p}
+  target=next((n for n in root.iter("node") if n.get("text")=="Start room scan"),None)
+  if target is None:time.sleep(2);continue
+  while target.get("clickable")!="true" and target in parents:target=parents[target]
+  tap(target)
+ raise AssertionError("Room scanner did not open after tapping its clickable container")
 def find(label,tag,scroll=False):
  for i in range(6):
   ns=cap(tag+"-"+str(i))
@@ -58,11 +69,11 @@ try:
  adb("shell","am","force-stop","com.google.android.apps.nexuslauncher",check=False)
  adb("shell","am","force-stop","com.android.launcher3",check=False)
  adb("shell","input","keyevent","82",check=False)
- adb("shell","wm","size","720x1280");adb("shell","wm","density","280")
+ adb("shell","wm","size","reset");adb("shell","wm","density","reset")
  apk=next(Path("signed-artifacts").glob("*.apk"))
  status(adb("install","-r","-g",str(apk)))
  status(adb("install","-r","arcore-emulator.apk"))
- status(adb("shell","dumpsys","package","com.google.ar.core").split("versionName=")[-1].splitlines()[0])
+ status(adb("shell","dumpsys","package","com.google.ar.core").split("versionName=")[-1].splitlines()[0]); camera=adb("shell","dumpsys","media.camera");(O/"camera-topology.txt").write_text(camera,encoding="utf-8");status("CAMERA TOPOLOGY "+str([l.strip() for l in camera.splitlines() if "maps to" in l or "Number of camera devices" in l]))
  adb("logcat","-c");status("PASS: signed APK and official ARCore installed")
  try:
   launch();find("RivoMeasure","home");find("Start room scan","scan-entry");status("PASS: home and scan entry")
@@ -71,7 +82,8 @@ try:
   tap(find("2D / 3D / PDF","plan",scroll=True));find("20.00","plan-area");tap(find("3D","3d-entry"));find("3D room","3d");status("PASS: 3D screen")
  except Exception as e:fail.append("UI: "+str(e));status("FAIL: "+fail[-1])
  try:
-  launch();tap(find("Start room scan","ar-entry",scroll=True));find("Room scanner","ar-screen");time.sleep(5)
+  launch();open_scan();find("Room scanner","ar-screen");time.sleep(5); nodes=cap("ar-preflight"); labels=[n.get("text","") for n in nodes];status("AR PRECHECK "+str(labels));
+  if any("AR camera could not start" in t or "FatalException" in t for t in labels):raise AssertionError("ARCore session failed before movement; see camera topology and log")
   status("PASS: AR activity opened")
   virtual_motion()
   texts=[]
