@@ -103,8 +103,8 @@ adb shell pkill -2 screenrecord || true
 wait "$record_pid" || true
 trap - EXIT
 adb pull /sdcard/rivotalk-fgs.mp4 "$RUNNER_TEMP/rivotalk-fgs-raw.mp4"
-ffmpeg -v error -y -i "$RUNNER_TEMP/rivotalk-fgs-raw.mp4" -c:v libx264 -crf 25 -preset fast -movflags +faststart -an store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
-ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
+cp "$RUNNER_TEMP/rivotalk-fgs-raw.mp4" store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
+test -s store-assets/rivotalk/review/rivotalk-fgs-demo.mp4; ls -l store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
 if grep -Ei 'isForeground=true|foregroundId=[1-9]' "$RUNNER_TEMP/rivo-fgs-stopped.txt"; then
   echo 'Foreground service remains active after attempted user exit' >&2; exit 1
 fi
