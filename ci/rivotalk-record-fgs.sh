@@ -86,52 +86,26 @@ texts=[n.attrib.get('text','') for n in E.parse(sys.argv[1]).iter('node')]
 assert any('RivoTalk' in t for t in texts), texts
 print('Verified RivoTalk notification visible')
 PY
-# Stop from the actual foreground notification action. Expand it if necessary.
-if ! tap '^Leave session
-sleep 3
-adb shell dumpsys activity services com.ribhlab.rivotalk > "$RUNNER_TEMP/rivo-fgs-stopped.txt"
-if grep -Ei 'isForeground=true|foregroundId=[1-9]' "$RUNNER_TEMP/rivo-fgs-stopped.txt"; then
-  echo 'Foreground service remains active after user left session' >&2; exit 1
-fi
-adb shell pkill -2 screenrecord || true
-wait "$record_pid" || true
-trap - EXIT
-adb pull /sdcard/rivotalk-fgs.mp4 "$RUNNER_TEMP/rivotalk-fgs-raw.mp4"
-ffmpeg -v error -y -i "$RUNNER_TEMP/rivotalk-fgs-raw.mp4" -c:v libx264 -crf 25 -preset fast -movflags +faststart -an store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
-ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
-echo 'Actual single-emulator demonstration; no second physical device or remote audio transfer verified.'
-; then
+# Stop from the actual foreground notification action, or scroll to Leave.
+if ! tap '^Leave session$'; then
   adb shell cmd statusbar collapse
   adb shell am start -W -n com.ribhlab.rivotalk/.MainActivity
   sleep 4
   for i in 1 2 3 4; do
-    if tap '^Leave session
-sleep 3
-adb shell dumpsys activity services com.ribhlab.rivotalk > "$RUNNER_TEMP/rivo-fgs-stopped.txt"
-if grep -Ei 'isForeground=true|foregroundId=[1-9]' "$RUNNER_TEMP/rivo-fgs-stopped.txt"; then
-  echo 'Foreground service remains active after user left session' >&2; exit 1
-fi
-adb shell pkill -2 screenrecord || true
-wait "$record_pid" || true
-trap - EXIT
-adb pull /sdcard/rivotalk-fgs.mp4 "$RUNNER_TEMP/rivotalk-fgs-raw.mp4"
-ffmpeg -v error -y -i "$RUNNER_TEMP/rivotalk-fgs-raw.mp4" -c:v libx264 -crf 25 -preset fast -movflags +faststart -an store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
-ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
-echo 'Actual single-emulator demonstration; no second physical device or remote audio transfer verified.'
-; then break; fi
+    if tap '^Leave session$'; then break; fi
     adb shell input swipe 540 1510 540 470 450
     sleep 1
   done
 fi
 sleep 3
 adb shell dumpsys activity services com.ribhlab.rivotalk > "$RUNNER_TEMP/rivo-fgs-stopped.txt"
-if grep -Ei 'isForeground=true|foregroundId=[1-9]' "$RUNNER_TEMP/rivo-fgs-stopped.txt"; then
-  echo 'Foreground service remains active after user left session' >&2; exit 1
-fi
 adb shell pkill -2 screenrecord || true
 wait "$record_pid" || true
 trap - EXIT
 adb pull /sdcard/rivotalk-fgs.mp4 "$RUNNER_TEMP/rivotalk-fgs-raw.mp4"
 ffmpeg -v error -y -i "$RUNNER_TEMP/rivotalk-fgs-raw.mp4" -c:v libx264 -crf 25 -preset fast -movflags +faststart -an store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
 ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 store-assets/rivotalk/review/rivotalk-fgs-demo.mp4
+if grep -Ei 'isForeground=true|foregroundId=[1-9]' "$RUNNER_TEMP/rivo-fgs-stopped.txt"; then
+  echo 'Foreground service remains active after attempted user exit' >&2; exit 1
+fi
 echo 'Actual single-emulator demonstration; no second physical device or remote audio transfer verified.'
