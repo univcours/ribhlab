@@ -1,0 +1,26 @@
+name: RivoMeasure 1.3.8 signed release package
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivomeasure-138-production-download.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RivoMeasure-v1.3.8-RivoScan-key-SIGNED-LIVE-ADS
+          run-id: 45893349897
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Package verified signed bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum -c SHA256SUMS.txt)
+          gh release create rivomeasure-v1.3.8-qa dist/*.apk dist/*.aab dist/SHA256SUMS.txt --target 64f5ad71857e3d21f3c1132c8652ba0d71cfabb9 --prerelease --title "RivoMeasure 1.3.8 signed release candidate" --notes "Live AdMob banner and interstitial configuration. Signed release candidate; Google Play publication and AR accuracy not verified."
