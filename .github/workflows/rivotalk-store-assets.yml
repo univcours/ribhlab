@@ -75,9 +75,15 @@ jobs:
               seen.add(data)
           assert len(seen)>=2
           print('Validated distinct actual screenshots:', len(seen))
+          for folder in ['tablet7','tablet10']:
+              files=sorted((p/folder).glob('*.png'))
+              assert len(files)>=2, folder
+              for f in files:
+                  assert Image.open(f).size==(1440,2560) and 0<f.stat().st_size<=8000000, f
+              print(folder, len(files), 'verified screenshots')
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add store-assets/rivotalk/*.png
-          git commit -m 'Store verified RivoTalk alpha03 store graphics'
+          git add -A store-assets/rivotalk
+          git diff --cached --quiet || git commit -m 'Store verified RivoTalk alpha03 store graphics'
           git push origin HEAD:build/rivotalk-alpha02-original-sign-20261126
