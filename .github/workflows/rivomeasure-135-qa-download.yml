@@ -1,0 +1,28 @@
+name: RivoMeasure 1.3.5 signed QA download
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivomeasure-135-qa-download.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RivoMeasure-v1.3.5-RivoScan-key-SIGNED-TEST-ADS
+          run-id: 45833597739
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Make the already signed test APK available to the authorized QA workstation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          APK=dist/RivoMeasure-v1.3.5-RivoScan-key-signed.apk
+          test -s "$APK"
+          sha256sum "$APK" > dist/RivoMeasure-v1.3.5-RivoScan-key-signed.apk.sha256
+          gh release create rivomeasure-v1.3.5-qa "$APK" dist/RivoMeasure-v1.3.5-RivoScan-key-signed.apk.sha256 --target acfa3d6cd764568684653c597bf14e1b82bcfa69 --prerelease --title "RivoMeasure 1.3.5 QA build" --notes "Signed test APK for QA. Real-world AR measurement not yet validated; not a Google Play release."
