@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
                     Row(Modifier.fillMaxWidth(), verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("RibhLab",style=MaterialTheme.typography.labelLarge,color=MaterialTheme.colorScheme.primary)
-                            Text("RibhMeasure",style=MaterialTheme.typography.headlineMedium)
+                            Text(stringResource(R.string.app_name),style=MaterialTheme.typography.headlineMedium)
                             Text(stringResource(R.string.hm_subtitle),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         FilledTonalIconButton(onClick={open(SettingsActivity::class.java,null)}) {
