@@ -1,0 +1,26 @@
+name: RivoMeasure 1.3.9 signed release package
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivomeasure-139-release-package.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RivoMeasure-v1.3.9-RivoScan-key-SIGNED-LIVE-ADS
+          run-id: 45896953996
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Package exact verified build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum -c SHA256SUMS.txt)
+          gh release create rivomeasure-v1.3.9-qa dist/*.apk dist/*.aab dist/SHA256SUMS.txt --target 4eec3d4e4e1d4e78ca4a715591b45256b713c9c6 --prerelease --title "RivoMeasure 1.3.9 signed release candidate" --notes "Approved adaptive launcher icon and live AdMob settings. Signed APK/AAB. Google Play publication and real-world AR accuracy remain unverified."
