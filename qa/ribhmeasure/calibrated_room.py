@@ -21,7 +21,8 @@ faces=[("floor",(x0,0,z0),(x1,0,z0),(x1,0,z1),(x0,0,z1)),
 candidates=sorted(res.rglob("Toren1BD.obj"))
 if not candidates:raise SystemExit("Cannot locate default Toren1BD.obj; no calibrated camera run")
 for obj in candidates:
- folder=obj.parent;obj.with_suffix(".original.obj").write_bytes(obj.read_bytes())
+ folder=obj.parent;backup=obj.with_suffix(".original.obj");
+ if not backup.exists():backup.write_bytes(obj.read_bytes())
  lines=["mtllib calibration.mtl","o CalibrationRoom"]
  mtl=[]
  for j,(name,*verts) in enumerate(faces):
@@ -36,6 +37,34 @@ for obj in candidates:
    u,v=rng.randrange(40,950),rng.randrange(40,950);w,h=rng.randrange(14,72),rng.randrange(14,72)
    d.rectangle((u,v,u+w,v+h),outline=(52,62,77),width=3)
    d.line((u,v,u+w,v+h),fill=(110,93,76),width=2)
+  # Add physically plausible, larger features across multiple spatial scales:
+  # broad tile joints on the floor, window/picture-like patterns on walls,
+  # and an asymmetric ceiling pattern. Nothing encodes dimensions numerically.
+  if name=="floor":
+   for k in range(0,1024,128):
+    d.line((k,0,k,1024),fill=(84,91,96),width=5)
+    d.line((0,k,1024,k),fill=(84,91,96),width=5)
+   for q in range(10):
+    u,v=rng.randrange(60,840),rng.randrange(60,840)
+    d.rectangle((u,v,u+65,v+48),outline=(41,54,68),width=5)
+  elif name=="ceiling":
+   for k in (120,440,760):
+    d.rectangle((k,180,k+144,310),fill=(82,92,105),outline=(35,46,57),width=5)
+    d.rectangle((k+12,192,k+132,298),fill=(245,239,211))
+   d.line((80,800,930,800),fill=(90,95,99),width=9)
+  else:
+   # Different locations and colours on each face for relocalisation.
+   for q in range(4):
+    u=70+q*225;v=rng.randrange(110,340);w=rng.randrange(125,175);h=rng.randrange(150,230)
+    d.rectangle((u,v,u+w,v+h),fill=(63,79,93),outline=(28,38,46),width=6)
+    d.rectangle((u+10,v+10,u+w-10,v+h-10),fill=(187-j*8,208-q*17,214-j*7))
+    for k in range(12):
+     x=rng.randrange(u+15,u+w-15);y=rng.randrange(v+15,v+h-15)
+     d.ellipse((x-5,y-5,x+5,y+5),fill=(40+q*22,62+j*20,90+k*8))
+    d.line((u+w//2,v+10,u+w//2,v+h-10),fill=(38,55,70),width=4)
+    d.line((u+10,v+h//2,u+w-10,v+h//2),fill=(38,55,70),width=4)
+   d.rectangle((0,0,1023,42),fill=(89,100,110))
+   d.line((0,510,1023,510),fill=(102,112,116),width=5)
   img.save(folder/(name+".png"))
   mtl.extend(["newmtl "+name,"Ka 1 1 1","Kd 1 1 1","Ks 0 0 0","d 1","illum 1","map_Kd "+name+".png",""])
   lines+=["v %.6f %.6f %.6f"%(v[0],v[1]+y0,v[2]) for v in verts]
