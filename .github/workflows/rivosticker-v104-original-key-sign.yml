@@ -1,0 +1,109 @@
+name: RivoSticker v1.0.4 signed with original RivoScan upload certificate
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivosticker-v104-original-key-sign.yml']
+permissions:
+  contents: write
+jobs:
+  sign-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STAGING_ZIP_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-2434-81f4-bf78-b2ddd69a80c6/raw?se=2026-11-26T12%3A07%3A49Z&sp=r&sv=2026-06-06&sr=b&scid=e47e8774-9f57-5ec5-aa9c-37dc2c2245d3&skoid=56822d8b-6cfd-42ed-a00d-1452dca42036&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-11-26T06%3A10%3A39Z&ske=2026-11-27T06%3A10%3A39Z&sks=b&skv=2026-06-06&sig=h6hM8ue4IqZDcQxPmGDwTeLnmZIiIoprQ2efqePOoCA%3D'
+      STAGING_SHA256: a19f92e0cef92940381938888dfae58a85485f75a9803fad0915829b30ef79c8
+      EXPECTED_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+      RIVO_STORE_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+    steps:
+      - name: Download privately built unsigned release and verify SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --connect-timeout 20 --output "$RUNNER_TEMP/staging.zip" "$STAGING_ZIP_URL"
+          printf '%s  %s\n' "$STAGING_SHA256" "$RUNNER_TEMP/staging.zip" | sha256sum --check --status
+          mkdir -p "$RUNNER_TEMP/staging"
+          unzip -q "$RUNNER_TEMP/staging.zip" -d "$RUNNER_TEMP/staging"
+          APK="$(find "$RUNNER_TEMP/staging" -type f -name 'app-release-unsigned.apk' -print -quit)"
+          AAB="$(find "$RUNNER_TEMP/staging" -type f -name 'app-release.aab' -print -quit)"
+          test -n "$APK" && test -s "$APK"
+          test -n "$AAB" && test -s "$AAB"
+          echo "UNSIGNED_APK=$APK" >> "$GITHUB_ENV"
+          echo "UNSIGNED_AAB=$AAB" >> "$GITHUB_ENV"
+          echo 'Pinned RivoSticker unsigned release artifacts validated.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - name: Install Android build tools
+        shell: bash
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'build-tools;36.0.0'
+      - name: Restore original RivoScan key and prove SHA-1 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_KEY_B64" || { echo '::error::Original RivoScan signing key secret is missing'; exit 1; }
+          test -n "$RIVO_STORE_PASSWORD" || { echo '::error::Original RivoScan signing password is missing'; exit 1; }
+          umask 077
+          KEYFILE="$RUNNER_TEMP/rivosticker-rivoscan-original.p12"
+          printf '%s' "$RIVO_KEY_B64" | base64 --decode > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$KEYFILE" -storepass:env RIVO_STORE_PASSWORD -alias key0)"
+          ACTUAL_SHA1="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:" {print $2; exit}')"
+          if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
+            echo "::error::Wrong signing certificate (RivoScan original SHA-1 did not match). Refusing to sign."
+            exit 1
+          fi
+          echo 'Original RivoScan upload certificate SHA-1 matched Google Play reference.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign release APK and AAB then independently verify signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          KEYFILE="$RUNNER_TEMP/rivosticker-rivoscan-original.p12"
+          test -x "$APK_SIGNER" && test -x "$AAPT"
+          "$AAPT" dump badging "$UNSIGNED_APK" | grep -F "package: name='com.ribhlab.rivosticker' versionCode='5' versionName='1.0.4'"
+          if "$AAPT" dump badging "$UNSIGNED_APK" | grep -q 'application-debuggable'; then
+            echo '::error::Refusing to publish a debuggable APK'
+            exit 1
+          fi
+          mkdir -p signed
+          "$APK_SIGNER" sign --ks "$KEYFILE" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:RIVO_STORE_PASSWORD --key-pass env:RIVO_STORE_PASSWORD --out signed/RivoSticker-1.0.4-RivoScan-SIGNED.apk "$UNSIGNED_APK"
+          jarsigner -keystore "$KEYFILE" -storetype PKCS12 -storepass:env RIVO_STORE_PASSWORD -keypass:env RIVO_STORE_PASSWORD -signedjar signed/RivoSticker-1.0.4-RivoScan-SIGNED.aab "$UNSIGNED_AAB" key0
+          "$APK_SIGNER" verify --verbose --print-certs signed/RivoSticker-1.0.4-RivoScan-SIGNED.apk > "$RUNNER_TEMP/apk-verified.txt"
+          EXPECTED_HEX="$(printf '%s' "$EXPECTED_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          ACTUAL_HEX="$(sed -nE 's/^Signer #[0-9]+ certificate SHA-1 digest: ([0-9a-fA-F]+).*$/\1/p' "$RUNNER_TEMP/apk-verified.txt" | head -n 1 | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL_HEX" = "$EXPECTED_HEX" || { echo '::error::Signed APK certificate mismatch'; exit 1; }
+          jarsigner -verify signed/RivoSticker-1.0.4-RivoScan-SIGNED.aab > "$RUNNER_TEMP/aab-verified.txt" 2>&1
+          grep -F 'jar verified' "$RUNNER_TEMP/aab-verified.txt"
+          keytool -printcert -jarfile signed/RivoSticker-1.0.4-RivoScan-SIGNED.aab | grep -F "SHA1: $EXPECTED_SHA1"
+          (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          echo 'Both APK and AAB signed and verified using the original RivoScan upload key.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload signed release packages without any keystore material
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoSticker-1.0.4-RivoScan-original-key-SIGNED
+          path: signed/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish signed binaries to GitHub pre-release (not Google Play)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivosticker-v1.0.4
+          name: RivoSticker v1.0.4 - original RivoScan signed
+          prerelease: true
+          body: |
+            RivoSticker Android v1.0.4 (com.ribhlab.rivosticker, versionCode 4).
+            Signed APK and AAB with the original RivoScan Google Play upload certificate.
+            Certificate SHA-1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E.
+            GitHub pre-release only: publishing through Google Play Console is a separate step.
+          files: |
+            signed/RivoSticker-1.0.4-RivoScan-SIGNED.apk
+            signed/RivoSticker-1.0.4-RivoScan-SIGNED.aab
+            signed/SHA256SUMS.txt
+      - name: Destroy temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/rivosticker-rivoscan-original.p12"
