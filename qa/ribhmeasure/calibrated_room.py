@@ -7,6 +7,8 @@ res=Path(a.resources);out=Path(a.truth);out.parent.mkdir(parents=True,exist_ok=T
 # Keep the camera origin inside the room. Coordinates are metres, Y up.
 L,W,H=5.0,4.0,2.8
 x0,x1=-L/2,L/2;z0,z1=-W/2,W/2
+# Translate the room around the physical-model origin: device starts at eye height.
+y0,y1=-1.4,H-1.4
 # Unique non-repeating natural-looking high contrast visual features per face.
 faces=[("floor",(x0,0,z0),(x1,0,z0),(x1,0,z1),(x0,0,z1)),
 ("ceiling",(x0,H,z1),(x1,H,z1),(x1,H,z0),(x0,H,z0)),
@@ -24,9 +26,9 @@ for obj in candidates:
  mtl=[]
  for j,(name,*verts) in enumerate(faces):
   rng=random.Random(7300+j)
-  img=Image.new("RGB",(1024,1024),(214-j*7,207-j*4,193+j*4));d=ImageDraw.Draw(img)
+  img=Image.new("RGB",(1024,1024),(239-j*5,235-j*3,224+j*2));d=ImageDraw.Draw(img)
   # Distinct nonperiodic points, patches, and lines allow visual odometry.
-  for i in range(1550):
+  for i in range(850):
    u,v=rng.randrange(1024),rng.randrange(1024);r=rng.randrange(2,13)
    c=tuple(rng.randrange(55,200) for _ in range(3))
    d.rectangle((u,v,u+r,v+r),fill=c)
@@ -36,7 +38,7 @@ for obj in candidates:
    d.line((u,v,u+w,v+h),fill=(110,93,76),width=2)
   img.save(folder/(name+".png"))
   mtl.extend(["newmtl "+name,"Ka 1 1 1","Kd 1 1 1","Ks 0 0 0","d 1","illum 1","map_Kd "+name+".png",""])
-  lines+=["v %.6f %.6f %.6f"%v for v in verts]
+  lines+=["v %.6f %.6f %.6f"%(v[0],v[1]+y0,v[2]) for v in verts]
   lines+=["vt 0 0","vt 1 0","vt 1 1","vt 0 1"]
   # Explicit inward normals; OBJ winding selected to face the interior.
   u=[verts[1][k]-verts[0][k] for k in range(3)];v=[verts[2][k]-verts[0][k] for k in range(3)]
@@ -55,5 +57,5 @@ for obj in candidates:
  # No default furniture or posters inside the calibrated mesh.
  for post in folder.glob("Toren1BD.posters"):post.write_text("")
  print("CALIBRATED SCENE",obj,flush=True)
-truth={"length_m":L,"width_m":W,"height_m":H,"area_m2":L*W,"perimeter_m":2*(L+W),"volume_m3":L*W*H,"coordinates":"metres, y up","scene_min":[x0,0,z0],"scene_max":[x1,H,z1],"scene_files":[str(x) for x in candidates]}
+truth={"length_m":L,"width_m":W,"height_m":H,"area_m2":L*W,"perimeter_m":2*(L+W),"volume_m3":L*W*H,"coordinates":"metres, y up","scene_min":[x0,y0,z0],"scene_max":[x1,y1,z1],"scene_files":[str(x) for x in candidates]}
 out.write_text(json.dumps(truth,indent=2));print("GROUND TRUTH",truth,flush=True)
