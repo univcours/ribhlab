@@ -1,0 +1,110 @@
+name: RivoCaption 0.4.3 original upload-key AAB signer
+on:
+  workflow_dispatch:
+    inputs:
+      asset_url:
+        description: Temporary authenticated GitHub release-asset redirect URL (never logged)
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: rivocaption-043-original-aab
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ASSET_URL: ${{ inputs.asset_url }}
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      RIVO_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      ORIGINAL_SHA1: 'E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+      EXPECTED_AAB_SHA256: '7d7ab65063c61a261bb5748eb63fa49122fa6e043c52fadafaea6d3a31e47b4b'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download exactly vetted 0.4.3 private build through temporary URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ASSET_URL" && test -n "$RIVO_KEY_B64" && test -n "$RIVO_KEY_PASS"
+          python3 - <<'PY'
+          import os,urllib.parse,datetime
+          link=urllib.parse.urlparse(os.environ["ASSET_URL"])
+          assert link.scheme=="https" and link.hostname=="release-assets.githubusercontent.com", "Untrusted asset domain"
+          assert "se=" in link.query, "Not an expiring signed URL"
+          print("AUTHORIZED_TEMPORARY_GITHUB_ASSET_URL=TRUE")
+          PY
+          mkdir -p in signed
+          curl --fail --location --silent --show-error --retry 4 --connect-timeout 25 --max-time 600 \
+            "$ASSET_URL" -o in/RivoCaption-0.4.3-UNSIGNED.aab
+          echo "$EXPECTED_AAB_SHA256  in/RivoCaption-0.4.3-UNSIGNED.aab" | sha256sum --check
+          unzip -t in/RivoCaption-0.4.3-UNSIGNED.aab | tail -n 2
+          unzip -Z -1 in/RivoCaption-0.4.3-UNSIGNED.aab | grep -Fx 'base/manifest/AndroidManifest.xml'
+      - name: Restore key in temporary runner and confirm original upload SHA1
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$RIVO_KEY_B64" | base64 --decode > "$RUNNER_TEMP/original-rivo.p12"
+          CERT="$(keytool -list -v -storetype PKCS12 \
+            -keystore "$RUNNER_TEMP/original-rivo.p12" \
+            -storepass:env RIVO_KEY_PASS -alias key0)"
+          ACTUAL="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:"{print $2;exit}')"
+          test "$ACTUAL" = "$ORIGINAL_SHA1"
+          echo "ORIGINAL_RIVOSCAN_UPLOAD_KEY_VERIFIED=TRUE" >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign Android App Bundle with original upload key
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp in/RivoCaption-0.4.3-UNSIGNED.aab signed/RivoCaption-0.4.3-RivoScan-SIGNED.aab
+          jarsigner -keystore "$RUNNER_TEMP/original-rivo.p12" \
+            -storetype PKCS12 -storepass:env RIVO_KEY_PASS -keypass:env RIVO_KEY_PASS \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            signed/RivoCaption-0.4.3-RivoScan-SIGNED.aab key0
+          jarsigner -verify signed/RivoCaption-0.4.3-RivoScan-SIGNED.aab > "$RUNNER_TEMP/verify043.txt" 2>&1
+          grep -Fq 'jar verified' "$RUNNER_TEMP/verify043.txt"
+          keytool -printcert -jarfile signed/RivoCaption-0.4.3-RivoScan-SIGNED.aab \
+            | grep -F "SHA1: $ORIGINAL_SHA1"
+          (cd signed && sha256sum *.aab > SHA256SUMS.txt)
+      - name: Add approved 512px RivoCaption store icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release download rivocaption-v0.4.3-unsigned-handoff \
+            --repo univcours/ribhlab --pattern 'RivoCaption-PlayStore-512.png' \
+            --dir signed
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          p=Path("signed/RivoCaption-PlayStore-512.png")
+          data=p.read_bytes()
+          assert data[:8]==b"\x89PNG\r\n\x1a\n"
+          assert struct.unpack_from(">II",data,16)==(512,512)
+          PY
+      - name: Publish signed, verified Google Play upload candidate
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivocaption-v0.4.3-original-rivoscan-aab
+          name: RivoCaption 0.4.3 — original-key signed Play AAB
+          prerelease: true
+          body: |
+            RivoCaption 0.4.3, code 17, com.rivocaption.editor.
+            Exact private GitHub source AAB verified against SHA256
+            7d7ab65063c61a261bb5748eb63fa49122fa6e043c52fadafaea6d3a31e47b4b,
+            signed with original RivoScan upload certificate
+            SHA1 E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E.
+            Production publishing and actual Google Play store media are separate actions.
+          files: |
+            signed/RivoCaption-0.4.3-RivoScan-SIGNED.aab
+            signed/RivoCaption-PlayStore-512.png
+            signed/SHA256SUMS.txt
+      - name: Delete ephemeral upload private key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/original-rivo.p12"
