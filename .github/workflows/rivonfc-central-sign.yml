@@ -2,8 +2,8 @@ name: RivoNFC central verified signing
 on:
   workflow_dispatch:
     inputs:
-      artifact_id:
-        description: 'Private RivoNFC unsigned staging artifact ID'
+      staging_tag:
+        description: 'Private RivoNFC unsigned staging release tag'
         required: true
         type: string
 permissions:
@@ -20,26 +20,19 @@ jobs:
     steps:
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
-      - name: Get verified private staging artifact
+      - name: Get verified private staging release
         env:
           GH_TOKEN: ${{ secrets.RIVONFC_ARTIFACT_READ_TOKEN }}
-          ARTIFACT_ID: ${{ inputs.artifact_id }}
+          STAGING_TAG: ${{ inputs.staging_tag }}
         run: |
           set -euo pipefail
-          test -n "$GH_TOKEN" || { echo '::error::Configure read-only Actions access to the private source repository'; exit 1; }
-          [[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          test -n "$GH_TOKEN" || { echo '::error::Configure read-only Contents and Actions access to the private source repository'; exit 1; }
+          [[ "$STAGING_TAG" =~ ^rivonfc-staging-0\.4\.0-[0-9]+$ ]]
           REPO=univcours/RivoSticker
-          gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID" > "$RUNNER_TEMP/meta.json"
-          jq -e '.name=="RivoNFC-0.4.0-unsigned-staging" and .expired==false and .workflow_run.id==45843827255' "$RUNNER_TEMP/meta.json" >/dev/null
-          gh api "repos/$REPO/actions/runs/45843827255" | jq -e '.conclusion=="success" and .head_sha=="bdc4edd39be1b5ed39dd499a74c7c9f5767a7364"' >/dev/null
-          gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip" > "$RUNNER_TEMP/staging.zip"
-          DIGEST="$(jq -er '.digest | select(startswith("sha256:")) | sub("^sha256:";"")' "$RUNNER_TEMP/meta.json")"
-          printf '%s  %s\n' "$DIGEST" "$RUNNER_TEMP/staging.zip" | sha256sum -c
+          RUN_ID="${STAGING_TAG##*-}"
+          gh api "repos/$REPO/actions/runs/$RUN_ID" | jq -e '.conclusion=="success" and .head_sha=="c188e41a6999c036d86ad12ed8d7c95996c8ad65"' >/dev/null
           mkdir -p staging
-          for name in RivoNFC-0.4.0-UNSIGNED.apk RivoNFC-0.4.0-UNSIGNED.aab SHA256SUMS.txt; do
-            unzip -p "$RUNNER_TEMP/staging.zip" "$name" > "staging/$name"
-            test -s "staging/$name"
-          done
+          gh release download "$STAGING_TAG" --repo "$REPO" --dir staging --pattern 'RivoNFC-0.4.0-UNSIGNED.*' --pattern 'SHA256SUMS.txt'
           (cd staging && sha256sum -c SHA256SUMS.txt)
       - name: Install signing tools
         run: |
