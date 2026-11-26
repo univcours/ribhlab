@@ -1,0 +1,51 @@
+name: RivoTalk real foreground service demo recording
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/rivotalk-fgs-video.yml','ci/rivotalk-record-fgs.sh']
+permissions:
+  contents: write
+jobs:
+  record:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: build/rivotalk-alpha02-original-sign-20261126
+      - name: Retrieve and verify original signed APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/rivotalk-apk"
+          gh release download rivotalk-alpha03-build-45896598160 --pattern '*.apk' --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP/rivotalk-apk"
+          cd "$RUNNER_TEMP/rivotalk-apk"
+          grep '\.apk$' SHA256SUMS.txt | sha256sum -c
+          signer="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          "$signer" verify --print-certs *.apk | grep -Fi e9b3e2779575ba08a91372fc3885eba01dd3e73e
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Record real signed app UI and verify foreground service lifecycle
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash ci/rivotalk-record-fgs.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rivotalk-foreground-service-recording
+          path: |
+            store-assets/rivotalk/review/*.mp4
+            ${{ runner.temp }}/rivo-fgs-*.txt
+            ${{ runner.temp }}/rivo-audio*.txt
+          retention-days: 3
+          if-no-files-found: warn
