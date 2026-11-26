@@ -1,0 +1,46 @@
+name: RivoMeasure API 33 real virtual-camera motion QA
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivomeasure-api33-motion.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: RivoMeasure-v1.3.5-RivoScan-key-SIGNED-TEST-ADS
+          path: signed-artifacts
+          run-id: 45833597739
+          github-token: ${{ github.token }}
+      - name: Official ARCore and motion client
+        run: |
+          curl -fL --retry 3 https://github.com/google-ar/arcore-android-sdk/releases/download/1.57.0/Google_Play_Services_for_AR_1.57.0_x86_for_emulator.apk -o arcore-emulator.apk
+          python3 -m pip install grpcio
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Measure with Android 13 and actual camera motion
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back virtualscene -camera-front emulated -grpc 8554
+          script: python3 qa/ribhmeasure/api33_motion.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RivoMeasure-api33-motion-evidence
+          path: qa-output/
+          if-no-files-found: warn
