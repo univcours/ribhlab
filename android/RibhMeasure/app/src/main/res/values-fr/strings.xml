@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RibhMeasure</string>
+    <string name="app_name">RivoMeasure</string>
     <string name="tagline">Mesurez le monde réel</string>
     <string name="home_subtitle">Outils de mesure pour terrains, personnes et objets</string>
     <string name="gps_area">Surface GPS</string>
