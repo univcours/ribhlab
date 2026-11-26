@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,10 +23,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.gms.ads.AdView
 
 class MainActivity : ComponentActivity() {
     private var adAllowed by mutableStateOf(false)
+    private var returningFromTool = false
     override fun attachBaseContext(base: Context) { super.attachBaseContext(Prefs.locale(base)) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,8 +36,12 @@ class MainActivity : ComponentActivity() {
         render()
     }
     public fun render() { adAllowed = Ads.permitted() }
-    override fun onResume() { super.onResume(); Ads.initializeIfAllowed(this); render() }
+    override fun onResume() {
+        super.onResume(); Ads.initializeIfAllowed(this); render()
+        if(returningFromTool) { returningFromTool = false; Ads.returnedHome(this) }
+    }
     private fun open(type: Class<*>, gpsArea: Boolean? = null) {
+        returningFromTool = type != SettingsActivity::class.java && type != HistoryActivity::class.java && type != RoomProjectsActivity::class.java
         startActivity(Intent(this, type).apply { gpsArea?.let { putExtra("area",it) } })
     }
     @Composable private fun MeasureTheme(content: @Composable () -> Unit) {
@@ -65,10 +70,12 @@ class MainActivity : ComponentActivity() {
         Scaffold(containerColor=MaterialTheme.colorScheme.background,
             bottomBar = {
                 if(adAllowed) {
-                    val ctx=LocalContext.current
-                    val holder=remember{LinearLayout(ctx).apply{orientation=LinearLayout.VERTICAL;Ads.addBanner(this@MainActivity,this)}}
-                    DisposableEffect(holder){ onDispose{for(i in 0 until holder.childCount)(holder.getChildAt(i) as? AdView)?.destroy()} }
-                    AndroidView(factory={holder},modifier=Modifier.fillMaxWidth().navigationBarsPadding())
+                    Surface(color=MaterialTheme.colorScheme.surfaceContainer, modifier=Modifier.fillMaxWidth().navigationBarsPadding().clipToBounds()) {
+                        Column(Modifier.fillMaxWidth().clipToBounds()) {
+                            HorizontalDivider()
+                            AndroidView(factory={ LinearLayout(it).apply { orientation=LinearLayout.VERTICAL; clipChildren=true; clipToPadding=true; Ads.addBanner(this@MainActivity,this) } }, modifier=Modifier.fillMaxWidth().clipToBounds())
+                        }
+                    }
                 }
             }
         ) { padding ->
