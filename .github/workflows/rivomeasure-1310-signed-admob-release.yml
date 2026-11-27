@@ -51,6 +51,13 @@ jobs:
           for s in ('bottomBar = {','navigationBarsPadding()', 'clipToBounds()',
                     'Ads.addBanner(this@MainActivity,this)'):
               assert s in main,s
+          for locale,expected in (
+              ('values/strings.xml','after 3 saved measurements, no more than once every 3 minutes'),
+              ('values-fr/strings.xml','après 3 mesures enregistrées, au maximum une fois toutes les 3 minutes'),
+              ('values-ar/strings.xml','بعد كل 3 قياسات محفوظة، وبفاصل لا يقل عن 3 دقائق'),
+          ):
+              path=Path('android/RibhMeasure/app/src/main/res')/locale
+              assert expected in path.read_text(),f'Ads policy text differs from frequency logic: {path}'
           print('RIVOMEASURE_1310_RELEASE_SOURCE_AND_ADMOB_GUARDS=PASS')
           PY
       - name: Install Android SDK API36 and build Android unit, lint, debug and unsigned release
@@ -97,7 +104,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG=rivomeasure-v1.3.10-code14-original-key-signed
+          TAG=rivomeasure-v1.3.10-code14-admob-policy-correct-signed
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo 'Existing release with this exact tag; refusing to overwrite signed assets'; exit 1
           fi
