@@ -50,7 +50,10 @@ final class Ads {
         slot.setClipChildren(true);slot.setClipToPadding(true);
         parent.setClipChildren(true);parent.setClipToPadding(true);
         int gap=Math.round(8*a.getResources().getDisplayMetrics().density);
-        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,0);
+        // Reserve a real dock height before measuring the first native ad. A zero-height
+        // AndroidView inside Compose Scaffold may never receive a visible layout pass.
+        int fallbackHeight=Math.round(50*a.getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams outer=new LinearLayout.LayoutParams(-1,fallbackHeight);
         outer.topMargin=gap;parent.addView(slot,outer);
         slot.addOnLayoutChangeListener(new View.OnLayoutChangeListener(){
             private AdView current;
@@ -60,12 +63,12 @@ final class Ads {
                 float density=a.getResources().getDisplayMetrics().density;
                 int px=slot.getWidth()-slot.getPaddingLeft()-slot.getPaddingRight();
                 int dp=(int)Math.floor(px/density);
-                if(dp<120||dp==lastWidth)return;
+                if(dp<320||dp==lastWidth)return;
                 lastWidth=dp;
                 if(current!=null){current.destroy();slot.removeView(current);}
                 AdSize size=AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(a,dp);
                 int height=size.getHeightInPixels(a),width=size.getWidthInPixels(a);
-                if(height<=0||width>px)return;
+                if(height<=0||height>Math.round(90*density)||width<=0||width>px)return;
                 AdView ad=new AdView(a);current=ad;
                 ad.setAdUnitId(BuildConfig.ADMOB_BANNER_ID);ad.setAdSize(size);
                 FrameLayout.LayoutParams child=new FrameLayout.LayoutParams(width,height,Gravity.CENTER);
@@ -94,7 +97,7 @@ final class Ads {
     static void returnedHome(MainActivity a){
         if(!permitted()||a.isFinishing()||a.isDestroyed()||showing)return;
         long now=SystemClock.elapsedRealtime();
-        if(completed<4||interstitial==null||(lastShownElapsed!=0&&now-lastShownElapsed<180000)){
+        if(completed<3||interstitial==null||(lastShownElapsed!=0&&now-lastShownElapsed<180000)){
             preloadInterstitial(a);return;
         }
         InterstitialAd ad=interstitial;interstitial=null;showing=true;
