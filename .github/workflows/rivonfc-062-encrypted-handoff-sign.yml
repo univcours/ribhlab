@@ -1,0 +1,106 @@
+name: RivoNFC 0.6.2 isolated original-key signing
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivonfc-062-encrypted-handoff-sign.yml']
+permissions:
+  contents: write
+concurrency:
+  group: rivonfc-062-encrypted-handoff
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HANDOFF_BRANCH: staging/rivonfc-062-sealed-handoff
+      SOURCE_SHA256: 739e9d91a7deea97650ad911e6a4b101399ee2dad4e1c0f789fc823ccdbccb44
+      EXPECTED_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+    steps:
+      - name: Create one-time encrypted handoff (public certificate only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+          openssl req -x509 -newkey rsa:3072 -nodes -days 1 -subj '/CN=RivoNFC 0.6.2 ephemeral handoff' -keyout "$RUNNER_TEMP/handoff.key" -out "$RUNNER_TEMP/handoff.crt" >/dev/null 2>&1
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$HANDOFF_BRANCH" -f sha="$GITHUB_SHA" >/dev/null
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-062.crt" -f message='One-time public encryption certificate' -f branch="$HANDOFF_BRANCH" -f content="$(base64 -w0 "$RUNNER_TEMP/handoff.crt")" >/dev/null
+          echo "One-time handoff public certificate ready." >> "$GITHUB_STEP_SUMMARY"
+      - name: Receive and authenticate encrypted source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+          for i in $(seq 1 120); do
+            if gh api "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-062.cms?ref=$HANDOFF_BRANCH" --jq .content > "$RUNNER_TEMP/payload.b64" 2>/dev/null; then
+              base64 -d "$RUNNER_TEMP/payload.b64" > "$RUNNER_TEMP/payload.cms"
+              break
+            fi
+            test "$i" -lt 120
+            sleep 5
+          done
+          openssl cms -decrypt -binary -inform DER -in "$RUNNER_TEMP/payload.cms" -recip "$RUNNER_TEMP/handoff.crt" -inkey "$RUNNER_TEMP/handoff.key" -out "$RUNNER_TEMP/source.zip"
+          printf '%s  %s\n' "$SOURCE_SHA256" "$RUNNER_TEMP/source.zip" | sha256sum -c
+          mkdir -p "$RUNNER_TEMP/rivonfc"
+          unzip -q "$RUNNER_TEMP/source.zip" -d "$RUNNER_TEMP/rivonfc"
+          rm -f "$RUNNER_TEMP/handoff.key" "$RUNNER_TEMP/source.zip" "$RUNNER_TEMP/payload.cms" "$RUNNER_TEMP/payload.b64"
+          gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$HANDOFF_BRANCH" >/dev/null
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+          cache-disabled: true
+      - name: Build and test authenticated source privately
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' >/dev/null
+          cd "$RUNNER_TEMP/rivonfc"
+          if ! gradle --no-daemon :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:bundleRelease > "$RUNNER_TEMP/build.log" 2>&1; then
+            echo '::error::Private source build or tests failed'
+            exit 1
+          fi
+          echo 'Unit tests, release lint, APK and AAB build passed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify package and sign with the existing original upload key
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$KEY_B64" && test -n "$SIGN_PASS"
+          KEY="$RUNNER_TEMP/rivonfc-original.p12"
+          printf '%s' "$KEY_B64" | base64 -d > "$KEY"
+          ACTUAL="$(keytool -list -v -storetype PKCS12 -keystore "$KEY" -storepass:env SIGN_PASS -alias key0 | awk '$1=="SHA1:" {print $2;exit}')"
+          test "$ACTUAL" = "$EXPECTED_SHA1"
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          APK="$RUNNER_TEMP/rivonfc/app/build/outputs/apk/release/app-release-unsigned.apk"
+          AAB="$RUNNER_TEMP/rivonfc/app/build/outputs/bundle/release/app-release.aab"
+          "$TOOLS/aapt" dump badging "$APK" | grep -F "package: name='com.ribhlab.rivonfc' versionCode='9' versionName='0.6.2'"
+          if "$TOOLS/aapt" dump badging "$APK" | grep -q application-debuggable; then exit 1; fi
+          mkdir -p "$RUNNER_TEMP/signed"
+          "$TOOLS/zipalign" -P 16 -f 4 "$APK" "$RUNNER_TEMP/aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:SIGN_PASS --key-pass env:SIGN_PASS --out "$RUNNER_TEMP/signed/RivoNFC-0.6.2-RivoScan-SIGNED.apk" "$RUNNER_TEMP/aligned.apk"
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env SIGN_PASS -keypass:env SIGN_PASS -signedjar "$RUNNER_TEMP/signed/RivoNFC-0.6.2-RivoScan-SIGNED.aab" "$AAB" key0
+          "$TOOLS/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/signed/RivoNFC-0.6.2-RivoScan-SIGNED.apk" > "$RUNNER_TEMP/apk-verified.txt"
+          grep -iq 'e9b3e2779575ba08a91372fc3885eba01dd3e73e' "$RUNNER_TEMP/apk-verified.txt"
+          jarsigner -verify "$RUNNER_TEMP/signed/RivoNFC-0.6.2-RivoScan-SIGNED.aab" | grep -F 'jar verified'
+          keytool -printcert -jarfile "$RUNNER_TEMP/signed/RivoNFC-0.6.2-RivoScan-SIGNED.aab" | grep -F "SHA1: $EXPECTED_SHA1"
+          (cd "$RUNNER_TEMP/signed" && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          rm -f "$KEY"
+          echo 'Both binaries verified with the original RivoScan upload certificate.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish verified signed binaries only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create rivonfc-v0.6.2-rivoscan-signed --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title 'RivoNFC 0.6.2 — original RivoScan signed' --notes 'Signed APK/AAB, package com.ribhlab.rivonfc, versionCode 9. New adaptive icon. Google Play publication is separate.' "$RUNNER_TEMP/signed/"*
+      - name: Remove all temporary private materials
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf "$RUNNER_TEMP/rivonfc" "$RUNNER_TEMP/signed"
+          rm -f "$RUNNER_TEMP/handoff.key" "$RUNNER_TEMP/handoff.crt" "$RUNNER_TEMP/source.zip" "$RUNNER_TEMP/payload.cms" "$RUNNER_TEMP/payload.b64" "$RUNNER_TEMP/rivonfc-original.p12" "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/aligned.apk"
+          gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$HANDOFF_BRANCH" >/dev/null 2>&1 || true
