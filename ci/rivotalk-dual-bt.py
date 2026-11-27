@@ -1,6 +1,6 @@
 import subprocess as sp,time,re,xml.etree.ElementTree as ET
 from pathlib import Path
-import os
+import os,atexit
 A,B="emulator-5554","emulator-5556"
 out=Path("rivotalk-dual-evidence");out.mkdir(exist_ok=True)
 pkg="com.ribhlab.rivotalk"
@@ -9,12 +9,27 @@ def adb(d,*args,timeout=30,check=True):
     if check and r.returncode: raise RuntimeError(str((d,args,r.stdout,r.stderr)))
     return r.stdout
 def ui(d):
-    adb(d,"shell","uiautomator","dump","/sdcard/rivo-dual.xml")
-    return list(ET.fromstring(adb(d,"shell","cat","/sdcard/rivo-dual.xml")).iter("node"))
+    last=None
+    for attempt in range(6):
+        try:
+            adb(d,"shell","uiautomator","dump","/sdcard/rivo-dual.xml",timeout=45)
+            xml=adb(d,"shell","cat","/sdcard/rivo-dual.xml")
+            return list(ET.fromstring(xml).iter("node"))
+        except Exception as e:
+            last=e
+            print("UIAUTOMATOR_RETRY",d,attempt,str(e)[:280],flush=True)
+            time.sleep(2+attempt)
+    raise RuntimeError(f"{d}: Android UI unavailable after retries: {last}")
 def labels(d):
     return [(n.get("text",""),n.get("content-desc","")) for n in ui(d)]
 def tap(d,pattern,optional=False):
-    for n in ui(d):
+    try: nodes=ui(d)
+    except Exception as e:
+        if optional:
+            print("OPTIONAL_UI_UNAVAILABLE",d,pattern,str(e)[:200],flush=True)
+            return False
+        raise
+    for n in nodes:
         if any(re.search(pattern,n.get(k,""),re.I) for k in ("text","content-desc")):
             x,y,X,Y=map(int,re.findall(r"\d+",n.get("bounds","")))
             if X>x and Y>y:
@@ -49,6 +64,18 @@ for d,name in [(A,"RivoHost"),(B,"RivoGuest")]:
         adb(d,"shell","pm","grant",pkg,"android.permission."+p)
     adb(d,"shell","am","start","-a","android.settings.BLUETOOTH_SETTINGS")
     time.sleep(3)
+# Start recording actual screens before pairing, to preserve evidence when an OS pairing UI fails.
+records=[]
+def stop_capture():
+    for d,p in records:
+        adb(d,"shell","pkill","-2","screenrecord",check=False)
+        try: p.wait(timeout=12)
+        except sp.TimeoutExpired: p.terminate()
+        adb(d,"pull","/sdcard/rivotalk-peer.mp4",str(out/f"{d}.mp4"),timeout=90,check=False)
+atexit.register(stop_capture)
+for d in (A,B):
+    records.append((d,sp.Popen(["adb","-s",d,"shell","screenrecord","--time-limit","180","--size","720x1280","--bit-rate","2400000","/sdcard/rivotalk-peer.mp4"])))
+time.sleep(2)
 # Settings discovery makes the phones discoverable. Use ordinary OS pairing controls.
 for d in [A,B]:
     tap(d,"Pair new device",optional=True)
@@ -68,11 +95,7 @@ for _ in range(8):
 for d in (A,B):
     (out/f"{d}-bluetooth.txt").write_text(adb(d,"shell","dumpsys","bluetooth_manager"))
     launch(d)
-records=[]
 try:
-    for d in (A,B):
-        records.append((d,sp.Popen(["adb","-s",d,"shell","screenrecord","--time-limit","180","--size","720x1280","--bit-rate","2400000","/sdcard/rivotalk-peer.mp4"])))
-    time.sleep(2)
     tap(A,r"^Create group$")
     wait_label(A,"Channel available")
     # The client selects the bonded host in the genuine app.
@@ -111,8 +134,5 @@ try:
         assert vals and max(vals)>0,"No real data exchange measured"
     print("DUAL_DEVICE_VERIFIED: both endpoints showed 2 members and nonzero payload counters",flush=True)
 finally:
-    for d,p in records:
-        adb(d,"shell","pkill","-2","screenrecord",check=False)
-        try:p.wait(timeout=15)
-        except sp.TimeoutExpired:p.terminate()
-        adb(d,"pull","/sdcard/rivotalk-peer.mp4",str(out/f"{d}.mp4"),timeout=90,check=False)
+    stop_capture()
+    records.clear()
