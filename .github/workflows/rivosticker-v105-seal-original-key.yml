@@ -1,0 +1,39 @@
+name: RivoSticker 1.0.5 - one-time encrypted original key handoff
+on:
+  push:
+    branches: [main]
+    paths: ['handoff/rivosticker-v105/recipient.crt']
+permissions:
+  contents: read
+jobs:
+  encrypt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate recipient and encrypt original key with AES-256 CMS
+        shell: bash
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "${KEY_B64:-}" && test -n "${KEY_PASS:-}" || { echo '::error::Missing existing original RivoScan secrets'; exit 1; }
+          CERT=handoff/rivosticker-v105/recipient.crt
+          openssl x509 -in "$CERT" -noout -subject -dates | grep -F RivoSticker-1.0.5
+          openssl x509 -in "$CERT" -pubkey -noout | openssl pkey -pubin -text -noout | grep -E 'RSA Public-Key: \(3072 bit\)|Public-Key: \(3072 bit\)'
+          mkdir -p "$RUNNER_TEMP/sealed-key"
+          printf '%s' "$KEY_B64" | base64 -d > "$RUNNER_TEMP/sealed-key/original-rivoscan.p12"
+          printf '%s' "$KEY_PASS" > "$RUNNER_TEMP/sealed-key/signing-pass.txt"
+          (cd "$RUNNER_TEMP/sealed-key" && zip -q "$RUNNER_TEMP/signing-handoff.zip" original-rivoscan.p12 signing-pass.txt)
+          openssl cms -encrypt -binary -aes256 -in "$RUNNER_TEMP/signing-handoff.zip" -recip "$CERT" -outform DER -out "$RUNNER_TEMP/key.cms"
+          echo 'RIVOSTICKER_V105_ENCRYPTED_KEY_CMS_B64_START'
+          base64 -w0 "$RUNNER_TEMP/key.cms"
+          echo
+          echo 'RIVOSTICKER_V105_ENCRYPTED_KEY_CMS_B64_END'
+          echo 'Original upload key and password encrypted for the exact one-time certificate. Nothing signed/committed here.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Destroy plaintext temporary key and password
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/sealed-key" "$RUNNER_TEMP/signing-handoff.zip" "$RUNNER_TEMP/key.cms"
