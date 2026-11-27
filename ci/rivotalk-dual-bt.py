@@ -58,7 +58,7 @@ for d,name in [(A,"RivoHost"),(B,"RivoGuest")]:
     adb(d,"shell","settings","put","global","anr_show_background","0")
     adb(d,"shell","svc","bluetooth","enable")
     adb(d,"shell","svc","wifi","disable")
-    adb(d,"shell","svc","data","disable")
+    # Wi-Fi is disabled above. Emulator system images may have no telephony service.\n    adb(d,"shell","svc","data","disable",check=False)
     adb(d,"install","-r",os.environ["RIVO_APK"],timeout=120)
     for p in ["RECORD_AUDIO","BLUETOOTH_CONNECT","POST_NOTIFICATIONS"]:
         adb(d,"shell","pm","grant",pkg,"android.permission."+p)
