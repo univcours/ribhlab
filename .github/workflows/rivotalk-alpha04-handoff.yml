@@ -1,0 +1,33 @@
+name: RivoTalk alpha04 verified Play and emulator handoff
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/rivotalk-alpha04-handoff.yml']
+permissions:
+  contents: write
+jobs:
+  handoff:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download signed alpha04 assets from authorized draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: univcours/ribhlab
+        run: |
+          set -euo pipefail
+          mkdir -p signed
+          gh release download rivotalk-alpha04-build-45912882650 --pattern '*.aab' --pattern '*.apk' --pattern SHA256SUMS.txt --dir signed
+          cd signed
+          sha256sum -c SHA256SUMS.txt
+          jarsigner -verify *.aab
+          keytool -printcert -jarfile *.aab | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          signer="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          "$signer" verify --print-certs *.apk | grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rivotalk-alpha04-original-key-verified
+          path: signed/
+          retention-days: 2
+          if-no-files-found: error
