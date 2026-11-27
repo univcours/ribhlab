@@ -74,11 +74,8 @@ jobs:
           cp "$STORE_ICON" signed/RivoSticker-1.0.5-Play-Icon-512.png
           (cd signed && sha256sum *.aab *.apk *.png > SHA256SUMS.txt)
           echo 'Both signed releases verified with original RivoScan upload key.' >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: RivoSticker-1.0.5-Original-RivoScan-SIGNED
-          path: signed/
-          retention-days: 30
+      # Signed deliverables go directly to the GitHub Release, not Actions Artifacts
+      # (the account-wide Actions Artifacts storage quota is currently full).
       - name: Publish signed binaries and 512px Play Store icon to GitHub release
         uses: softprops/action-gh-release@v2
         with:
