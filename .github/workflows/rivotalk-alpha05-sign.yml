@@ -74,6 +74,15 @@ jobs:
           jarsigner -verify signed/*.aab
           keytool -printcert -jarfile signed/*.aab | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
           (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - name: Provide downloadable signed alpha05 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoTalk-alpha05-APK-SIGNED
+          path: |
+            signed/RivoTalk-0.1.0-alpha05-RivoScan-SIGNED.apk
+            signed/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
       - name: Store verified binaries in a draft GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
