@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      HANDOFF_BRANCH: staging/rivonfc-063-sealed-handoff
-      EXPECTED_SOURCE_COMMIT: cefed7c4150d28b164ebcd45eb57964206f728b0
+      HANDOFF_BRANCH: staging/rivonfc-063-banner-verified
+      EXPECTED_SOURCE_COMMIT: abfa805014439e669a083e6bdfd93b6e43fe7dd3
       EXPECTED_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
     steps:
       - name: Create one-time encrypted handoff (public certificate only)
@@ -25,7 +25,7 @@ jobs:
           umask 077
           openssl req -x509 -newkey rsa:3072 -nodes -days 1 -subj '/CN=RivoNFC 0.6.3 ephemeral handoff' -keyout "$RUNNER_TEMP/handoff.key" -out "$RUNNER_TEMP/handoff.crt" >/dev/null 2>&1
           gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$HANDOFF_BRANCH" -f sha="$GITHUB_SHA" >/dev/null
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063.crt" -f message='One-time public encryption certificate' -f branch="$HANDOFF_BRANCH" -f content="$(base64 -w0 "$RUNNER_TEMP/handoff.crt")" >/dev/null
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063-banner.crt" -f message='One-time public encryption certificate' -f branch="$HANDOFF_BRANCH" -f content="$(base64 -w0 "$RUNNER_TEMP/handoff.crt")" >/dev/null
           echo "One-time handoff public certificate ready." >> "$GITHUB_STEP_SUMMARY"
       - name: Receive and authenticate encrypted source and exact pinned revision
         env:
@@ -34,8 +34,8 @@ jobs:
           set -euo pipefail
           umask 077
           for i in $(seq 1 120); do
-            if gh api "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063.cms.b64?ref=$HANDOFF_BRANCH" --jq .content > "$RUNNER_TEMP/payload.transport" 2>/dev/null && \
-               gh api "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063.sha256?ref=$HANDOFF_BRANCH" --jq .content > "$RUNNER_TEMP/hash.transport" 2>/dev/null; then
+            if gh api "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063-banner.cms.b64?ref=$HANDOFF_BRANCH" --jq .content > "$RUNNER_TEMP/payload.transport" 2>/dev/null && \
+               gh api "repos/$GITHUB_REPOSITORY/contents/handoff/rivonfc-063-banner.sha256?ref=$HANDOFF_BRANCH" --jq .content > "$RUNNER_TEMP/hash.transport" 2>/dev/null; then
               break
             fi
             test "$i" -lt 120
@@ -104,7 +104,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create rivonfc-v0.6.3-rivoscan-signed --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title 'RivoNFC 0.6.3 — original RivoScan signed' --notes 'Signed APK/AAB, package com.ribhlab.rivonfc, versionCode 10. New adaptive icon. Google Play publication is separate.' "$RUNNER_TEMP/signed/"*
+          gh release create rivonfc-v0.6.3-rivoscan-signed --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title 'RivoNFC 0.6.3 — original RivoScan signed' --notes 'Signed APK/AAB, package com.ribhlab.rivonfc, versionCode 10. New NFC icon and consent-gated AdMob with a separate bottom banner container. Google Play publication is separate.' "$RUNNER_TEMP/signed/"*
       - name: Remove all temporary private materials
         if: always()
         env:
