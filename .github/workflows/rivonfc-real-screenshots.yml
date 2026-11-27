@@ -1,0 +1,49 @@
+name: RivoNFC authentic Android screens
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivonfc-real-screenshots.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivonfc-real-device-screenshots
+  cancel-in-progress: false
+jobs:
+  real-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact original-RivoScan signed release
+        run: |
+          set -euo pipefail
+          mkdir -p signed
+          curl --fail --location --retry 3 --connect-timeout 20 \
+            --output signed/RivoNFC-0.6.1-RivoScan-SIGNED.apk \
+            https://github.com/univcours/ribhlab/releases/download/rivonfc-v0.6.1-rivoscan-signed/RivoNFC-0.6.1-RivoScan-SIGNED.apk
+          echo '6ad6fa32ab3d9006b8bb563a77992aec615b95530435c6c8fd138ea89609610a  signed/RivoNFC-0.6.1-RivoScan-SIGNED.apk' | sha256sum -c
+      - name: Enable Android emulator KVM acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+      - name: Install and capture running app (not marketing mockups)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash .github/scripts/rivonfc-capture-screens.sh
+      - name: Publish genuine screenshots in signed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(find rivonfc-real-screens -maxdepth 1 -name '*.png' | wc -l)" -eq 4
+          gh release upload rivonfc-v0.6.1-rivoscan-signed \
+            --repo "$GITHUB_REPOSITORY" rivonfc-real-screens/*.png
+          echo 'Four native Android screenshots captured from the original-key signed RivoNFC 0.6.1 APK (emulator without NFC hardware).' >> "$GITHUB_STEP_SUMMARY"
