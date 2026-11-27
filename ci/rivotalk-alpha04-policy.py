@@ -38,4 +38,13 @@ exact(talk,'        thread(name="RivoJoin",isDaemon=true){',
           '        thread(name="RivoJoin",isDaemon=true){\n            runCatching { adapter?.cancelDiscovery() }')
 exact(talk,'catch(e:Exception){socket?.let{closeSocket(it)}}',
           'catch(e:Exception){\n                    if(live(g))status("Bluetooth channel ${slot+1} failed: ${e.message?:e.javaClass.simpleName}")\n                    socket?.let{closeSocket(it)}\n                }')
-print('v4: privacy, foreground, microphone guard and RFCOMM discovery cancellation/diagnostics')
+# If the first Create group tap requested permissions, resume hosting only
+# after the user has granted them. Previously the first tap did nothing else.
+exact(activity,'var error by remember{mutableStateOf("")};var granted by remember{mutableStateOf(false)}',
+      'var error by remember{mutableStateOf("")};var granted by remember{mutableStateOf(false)};var pendingHostAfterPermissions by remember{mutableStateOf(false)}')
+exact(activity,'if(!essential()){ask.launch(perms);return}',
+      'if(!essential()){if(host)pendingHostAfterPermissions=true;ask.launch(perms);return}')
+exact(activity,
+      '    fun leave(){engine.leave();context.stopService(Intent(context,TalkService::class.java))}',
+      '    LaunchedEffect(granted,pendingHostAfterPermissions){if(granted&&pendingHostAfterPermissions){pendingHostAfterPermissions=false;start(true)}}\\n    fun leave(){engine.leave();context.stopService(Intent(context,TalkService::class.java))}'.replace('\\n','\\n'))
+print('v4: privacy, Bluetooth, microphone guard, RFCOMM and permission-flow retry')
