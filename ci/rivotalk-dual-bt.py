@@ -102,7 +102,23 @@ try:
     tap(B,r"^Refresh paired devices$",optional=True)
     tap(B,r"RivoHost|sdk_gphone64_x86_64|Android Emulator")
     tap(B,r"^Join selected phone$")
-    for d in (A,B): wait_label(d,"Verify connection|Codes match")
+    # Never count pairing as a success until BOTH apps display the same SAS.
+    # Preserve both endpoints' evidence if the secure handshake stalls.
+    try:
+        for d in (A,B): wait_label(d,"Verify connection|Codes match",tries=8)
+    except Exception:
+        for d in (A,B):
+            try:
+                print("HANDSHAKE_FAILED_UI",d,labels(d),flush=True)
+                capture(d,d+"-handshake-failure")
+                (out/f"{d}-handshake-bluetooth.txt").write_text(
+                    adb(d,"shell","dumpsys","bluetooth_manager",timeout=45))
+                (out/f"{d}-handshake-logcat.txt").write_text(
+                    adb(d,"logcat","-d","-t","3000",timeout=45,check=False))
+                dump(d,"handshake-failure")
+            except Exception as evidence_error:
+                print("HANDSHAKE_EVIDENCE_ERROR",d,repr(evidence_error),flush=True)
+        raise
     for d in (A,B): capture(d,d+"-verify")
     # Check the actual displayed SAS before accepting it, not a fabricated verification.
     def code(d):
