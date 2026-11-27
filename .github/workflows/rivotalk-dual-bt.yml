@@ -40,10 +40,12 @@ jobs:
           done
           mkdir -p rivotalk-dual-evidence
           export ANDROID_EMULATOR_USE_SYSTEM_LIBS=1
+          export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          command -v adb
           adb start-server
-          "$ANDROID_HOME/emulator/emulator" -avd RivoHost -port 5554 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 -packet-streamer-endpoint default >rivotalk-dual-evidence/host-emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd RivoHost -port 5554 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 >rivotalk-dual-evidence/host-emulator.log 2>&1 &
           sleep 12
-          "$ANDROID_HOME/emulator/emulator" -avd RivoGuest -port 5556 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 -packet-streamer-endpoint default >rivotalk-dual-evidence/guest-emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd RivoGuest -port 5556 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 >rivotalk-dual-evidence/guest-emulator.log 2>&1 &
           trap 'adb -s emulator-5554 emu kill || true; adb -s emulator-5556 emu kill || true' EXIT
           for serial in emulator-5554 emulator-5556; do
             timeout 300 adb -s "$serial" wait-for-device
