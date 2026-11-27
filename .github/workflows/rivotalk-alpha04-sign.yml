@@ -1,0 +1,80 @@
+name: RivoTalk alpha04 build and original-key signing
+on:
+  pull_request:
+    branches: [main]
+    paths: ['ci/rivotalk-alpha04-policy.py', '.github/workflows/rivotalk-alpha04-sign.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore and verify isolated RivoTalk project
+        run: |
+          base64 -d ci/rivotalk-alpha02-source.zip.b64 > "$RUNNER_TEMP/rivotalk.zip"
+          echo "3a045cfea773c29cf413d9d49baac30ee41836281631e44543badac87a2603db  $RUNNER_TEMP/rivotalk.zip" | sha256sum -c
+          unzip -q "$RUNNER_TEMP/rivotalk.zip" -d "$RUNNER_TEMP"
+          test -f "$RUNNER_TEMP/RivoTalk/app/build.gradle.kts"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install SDK
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0'
+          python3 ci/rivotalk-ads-patch.py "$RUNNER_TEMP/RivoTalk"
+          python3 ci/rivotalk-alpha04-policy.py "$RUNNER_TEMP/RivoTalk"
+          cp ci/RivoAds.kt "$RUNNER_TEMP/RivoTalk/app/src/main/java/com/ribhlab/rivotalk/RivoAds.kt"
+          sed -i '/^dependencies {/a\    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")' "$RUNNER_TEMP/RivoTalk/app/build.gradle.kts"
+          cat "$RUNNER_TEMP/RivoTalk/app/build.gradle.kts"
+          grep -F 'RivoBanner(ads)' "$RUNNER_TEMP/RivoTalk/app/src/main/java/com/ribhlab/rivotalk/MainActivity.kt"
+          grep -F 'ads.onSessionFinished' "$RUNNER_TEMP/RivoTalk/app/src/main/java/com/ribhlab/rivotalk/MainActivity.kt"
+          grep -F 'ca-app-pub-7945572016731367~4681891048' "$RUNNER_TEMP/RivoTalk/app/src/main/AndroidManifest.xml"
+          ! grep -q 'FOREGROUND_SERVICE_MICROPHONE' "$RUNNER_TEMP/RivoTalk/app/src/main/AndroidManifest.xml"
+          grep -F 'privacy_policy_link' "$RUNNER_TEMP/RivoTalk/app/src/main/java/com/ribhlab/rivotalk/MainActivity.kt"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+      - name: Compile and test isolated Android project
+        run: |
+          cd "$RUNNER_TEMP/RivoTalk"
+          gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleRelease :app:bundleRelease
+      - name: Stage unsigned APK and AAB
+        run: |
+          mkdir -p rivotalk-staging
+          cp "$RUNNER_TEMP/RivoTalk/app/build/outputs/apk/release/app-release-unsigned.apk" rivotalk-staging/
+          cp "$RUNNER_TEMP/RivoTalk/app/build/outputs/bundle/release/app-release.aab" rivotalk-staging/
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging rivotalk-staging/app-release-unsigned.apk | grep -F "name='com.ribhlab.rivotalk' versionCode='4' versionName='0.1.0-alpha04'"
+      - name: Sign only if authorized RivoScan original key is available
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          SIGN_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEY_B64" && test -n "$SIGN_PASS"
+          umask 077
+          KEY="$RUNNER_TEMP/rivotalk-original.p12"
+          trap 'rm -f "$KEY"' EXIT
+          printf '%s' "$KEY_B64" | base64 -d > "$KEY"
+          keytool -list -v -alias key0 -storetype PKCS12 -keystore "$KEY" -storepass:env SIGN_PASS | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          mkdir -p signed
+          SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$SIGNER" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:SIGN_PASS --key-pass env:SIGN_PASS --out signed/RivoTalk-0.1.0-alpha04-RivoScan-SIGNED.apk rivotalk-staging/app-release-unsigned.apk
+          "$SIGNER" verify --print-certs signed/*.apk | grep -Fi 'e9b3e2779575ba08a91372fc3885eba01dd3e73e'
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env SIGN_PASS -keypass:env SIGN_PASS -signedjar signed/RivoTalk-0.1.0-alpha04-RivoScan-SIGNED.aab rivotalk-staging/app-release.aab key0
+          jarsigner -verify signed/*.aab
+          keytool -printcert -jarfile signed/*.aab | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
+          (cd signed && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - name: Store verified binaries in a draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          gh release create "rivotalk-alpha04-build-${GITHUB_RUN_ID}" signed/*.aab signed/*.apk signed/SHA256SUMS.txt --draft --target "$HEAD_SHA" --title "RivoTalk alpha04 signed build" --notes "Private draft build for Play Console submission; not a public release."

@@ -1,0 +1,73 @@
+name: RivoTalk alpha04 dual emulator Bluetooth video
+on:
+  pull_request:
+    branches: [main]
+    paths: ['ci/rivotalk-dual-bt.py','.github/workflows/rivotalk-dual-bt.yml']
+permissions:
+  contents: write
+jobs:
+  dual:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve original-key-signed alpha04 APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: univcours/ribhlab
+        run: |
+          mkdir -p "$RUNNER_TEMP/rivo4"
+          gh release download rivotalk-alpha04-build-45997152617 --pattern '*.apk' --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP/rivo4"
+          cd "$RUNNER_TEMP/rivo4"
+          grep '\.apk$' SHA256SUMS.txt | sha256sum -c
+          signer="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          "$signer" verify --print-certs *.apk | grep -Fi e9b3e2779575ba08a91372fc3885eba01dd3e73e
+          echo "RIVO_APK=$(find "$RUNNER_TEMP/rivo4" -name '*.apk' | head -1)" >> "$GITHUB_ENV"
+      - name: Configure and run two emulators on shared Netsim
+        run: |
+          set -euo pipefail
+          python3 -m py_compile ci/rivotalk-dual-bt.py
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          avdmanager="$(find "$ANDROID_HOME/cmdline-tools" -name avdmanager | sort -V | tail -1)"
+          yes | "$sdkmanager" --licenses >/dev/null || true
+          "$sdkmanager" 'emulator' 'system-images;android-36;google_apis;x86_64'
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/rivotalk-avd-home"
+          export ANDROID_USER_HOME="$RUNNER_TEMP/rivotalk-android-user"
+          mkdir -p "$ANDROID_AVD_HOME" "$ANDROID_USER_HOME"
+          for name in RivoHost RivoGuest; do
+            echo no | "$avdmanager" create avd -n "$name" -k 'system-images;android-36;google_apis;x86_64' --device pixel_6 --force
+          done
+          echo 'Available AVDs:'
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          "$ANDROID_HOME/emulator/emulator" -list-avds | grep -Fx 'RivoHost'
+          "$ANDROID_HOME/emulator/emulator" -list-avds | grep -Fx 'RivoGuest'
+          find "$ANDROID_AVD_HOME" -maxdepth 2 -name '*.ini' -o -name 'config.ini' | head -30
+          mkdir -p rivotalk-dual-evidence
+          export ANDROID_EMULATOR_USE_SYSTEM_LIBS=1
+          export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          command -v adb
+          adb start-server
+          "$ANDROID_HOME/emulator/emulator" -avd RivoHost -port 5554 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 >rivotalk-dual-evidence/host-emulator.log 2>&1 &
+          sleep 12
+          "$ANDROID_HOME/emulator/emulator" -avd RivoGuest -port 5556 -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -memory 2048 -cores 2 >rivotalk-dual-evidence/guest-emulator.log 2>&1 &
+          trap 'adb -s emulator-5554 emu kill || true; adb -s emulator-5556 emu kill || true' EXIT
+          for serial in emulator-5554 emulator-5556; do
+            timeout 300 adb -s "$serial" wait-for-device
+            for i in $(seq 1 90); do
+              if [ "$(adb -s "$serial" shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; then break; fi
+              sleep 3
+            done
+            test "$(adb -s "$serial" shell getprop sys.boot_completed | tr -d '\r')" = 1
+            adb -s "$serial" shell input keyevent 82
+          done
+          python3 ci/rivotalk-dual-bt.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rivotalk-dual-emulator-recordings
+          path: rivotalk-dual-evidence/
+          retention-days: 3

@@ -1,0 +1,89 @@
+name: RivoTalk verified store assets
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/rivotalk-store-assets.yml', 'ci/rivotalk-capture-store.sh']
+permissions:
+  contents: write
+jobs:
+  store-assets:
+    if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: build/rivotalk-alpha02-original-sign-20261126
+      - name: Fetch original signed APK from private draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAY_CREDENTIAL_PRESENT: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        run: |
+          set -euo pipefail
+          echo "Publisher credential configured in signing repo: $PLAY_CREDENTIAL_PRESENT"
+          mkdir -p "$RUNNER_TEMP/rivotalk-apk"
+          gh release download rivotalk-alpha04-build-45997152617 --pattern '*.apk' --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP/rivotalk-apk"
+          cd "$RUNNER_TEMP/rivotalk-apk"
+          grep '\.apk$' SHA256SUMS.txt | sha256sum -c
+          signer="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          "$signer" verify --print-certs *.apk | grep -Fi e9b3e2779575ba08a91372fc3885eba01dd3e73e
+      - name: Enable emulator hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Capture actual signed app UI offline
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash ci/rivotalk-capture-store.sh
+      - name: Render original vector icon and feature graphic
+        run: |
+          python3 -m pip install --quiet pillow cairosvg
+          base64 -d ci/rivotalk-alpha02-source.zip.b64 > "$RUNNER_TEMP/source.zip"
+          python3 ci/rivotalk-render-store.py "$RUNNER_TEMP/source.zip"
+      - name: Store only validated public store graphics in isolated branch
+        run: |
+          set -euo pipefail
+          test -s store-assets/rivotalk/icon.png
+          test -s store-assets/rivotalk/feature.png
+          test -s store-assets/rivotalk/01-home.png
+          test -s store-assets/rivotalk/02-diagnostics.png
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          p=Path('store-assets/rivotalk')
+          for name,size,limit in [('icon.png',(512,512),1000000),('feature.png',(1024,500),15000000),('01-home.png',(1080,1920),8000000),('02-diagnostics.png',(1080,1920),8000000)]:
+              f=p/name
+              assert Image.open(f).size==size, name
+              assert 0<f.stat().st_size<=limit, name
+          shots=sorted(p.glob('[0-9][0-9]-*.png'))
+          assert 2<=len(shots)<=8
+          seen=set()
+          for f in shots:
+              assert Image.open(f).size==(1080,1920) and 0<f.stat().st_size<=8000000, f
+              data=f.read_bytes()
+              if data in seen:
+                  print('Removing identical screenshot:', f.name)
+                  f.unlink()
+                  continue
+              seen.add(data)
+          assert len(seen)>=2
+          print('Validated distinct actual screenshots:', len(seen))
+          for folder in ['tablet7','tablet10']:
+              files=sorted((p/folder).glob('*.png'))
+              assert len(files)>=2, folder
+              for f in files:
+                  assert Image.open(f).size==(1440,2560) and 0<f.stat().st_size<=8000000, f
+              print(folder, len(files), 'verified screenshots')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A store-assets/rivotalk
+          git diff --cached --quiet || git commit -m 'Store verified RivoTalk alpha03 store graphics'
+          git push origin HEAD:build/rivotalk-alpha02-original-sign-20261126
