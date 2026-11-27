@@ -31,4 +31,11 @@ exact(audio,'class AudioEngine(private val error: (String)->Unit) {','class Audi
 exact(audio,'        try {\n            val min = AudioRecord.getMinBufferSize(','        if(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){\n            error("Microphone permission required")\n            return\n        }\n        try {\n            val min = AudioRecord.getMinBufferSize(')
 exact(src/'TalkEngine.kt','private val audio=AudioEngine{message->scheduler.execute{release();audioError(message)}}','private val audio=AudioEngine(context){message->scheduler.execute{release();audioError(message)}}')
 
-print('v4: privacy policy, connected-device foreground and microphone permission guard')
+# Bluetooth Classic RFCOMM: active discovery competes with connection setup.
+# A best-effort cancellation is safe when BLUETOOTH_SCAN is unavailable.
+talk=src/'TalkEngine.kt'
+exact(talk,'        thread(name="RivoJoin",isDaemon=true){',
+          '        thread(name="RivoJoin",isDaemon=true){\n            runCatching { adapter?.cancelDiscovery() }')
+exact(talk,'catch(e:Exception){socket?.let{closeSocket(it)}}',
+          'catch(e:Exception){\n                    if(live(g))status("Bluetooth channel ${slot+1} failed: ${e.message?:e.javaClass.simpleName}")\n                    socket?.let{closeSocket(it)}\n                }')
+print('v4: privacy, foreground, microphone guard and RFCOMM discovery cancellation/diagnostics')
