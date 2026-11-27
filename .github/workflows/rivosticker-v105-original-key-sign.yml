@@ -1,0 +1,95 @@
+name: RivoSticker 1.0.5 - sign original RivoScan upload key
+on:
+  workflow_dispatch:
+    inputs:
+      staging_sha256:
+        description: Pinned SHA-256 of staged unsigned ZIP
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: rivosticker-v105-signing
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STAGING_SHA256: \${{ inputs.staging_sha256 }}
+      STAGING_URL: https://github.com/univcours/ribhlab/releases/download/rivosticker-v1.0.5-unsigned/RivoSticker-v1.0.5-UNSIGNED-staging.zip
+      EXPECTED_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+      RIVO_STORE_PASSWORD: \${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      RIVO_KEY_B64: \${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - name: Install Android 36 build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
+      - name: Verify SHA-256, package, version and Play icon of unsigned staging ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$STAGING_SHA256" =~ ^[a-f0-9]{64}$ ]] || { echo "::error::Malformed pinned staging digest"; exit 1; }
+          curl -fLSs --retry 3 --connect-timeout 25 --output "$RUNNER_TEMP/staging.zip" "$STAGING_URL"
+          printf '%s  %s\n' "$STAGING_SHA256" "$RUNNER_TEMP/staging.zip" | sha256sum --check --status
+          mkdir -p "$RUNNER_TEMP/staging"
+          unzip -q "$RUNNER_TEMP/staging.zip" -d "$RUNNER_TEMP/staging"
+          APK="$(find "$RUNNER_TEMP/staging" -type f -name 'app-release-unsigned.apk' -print -quit)"
+          AAB="$(find "$RUNNER_TEMP/staging" -type f -name 'app-release.aab' -print -quit)"
+          STORE_ICON="$(find "$RUNNER_TEMP/staging" -type f -name 'play-icon-512.png' -print -quit)"
+          test -s "$APK" && test -s "$AAB" && test -s "$STORE_ICON"
+          printf 'UNSIGNED_APK=%s\nUNSIGNED_AAB=%s\nSTORE_ICON=%s\n' "$APK" "$AAB" "$STORE_ICON" >> "$GITHUB_ENV"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.ribhlab.rivosticker' versionCode='6' versionName='1.0.5'"
+          ! "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q 'application-debuggable'
+          echo 'Pinned SHA, versionCode 6, package and icon verified.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Validate original RivoScan upload certificate before signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RIVO_STORE_PASSWORD" && test -n "$RIVO_KEY_B64"
+          umask 077
+          KEYFILE="$RUNNER_TEMP/original-rivoscan-keystore.p12"
+          printf '%s' "$RIVO_KEY_B64" | base64 --decode > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$KEYFILE" -storepass:env RIVO_STORE_PASSWORD -alias key0)"
+          ACTUAL_SHA1="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:" {print $2; exit}')"
+          test "$ACTUAL_SHA1" = "$EXPECTED_SHA1" || { echo "::error::Wrong upload certificate"; exit 1; }
+          echo 'Original RivoScan upload certificate verified.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign APK and AAB and verify certificate independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signed
+          KEYFILE="$RUNNER_TEMP/original-rivoscan-keystore.p12"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$KEYFILE" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:RIVO_STORE_PASSWORD --key-pass env:RIVO_STORE_PASSWORD --out signed/RivoSticker-1.0.5-RivoScan-SIGNED.apk "$UNSIGNED_APK"
+          jarsigner -keystore "$KEYFILE" -storetype PKCS12 -storepass:env RIVO_STORE_PASSWORD -keypass:env RIVO_STORE_PASSWORD -signedjar signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab "$UNSIGNED_AAB" key0
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs signed/RivoSticker-1.0.5-RivoScan-SIGNED.apk | grep -F "$(printf '%s' "$EXPECTED_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          jarsigner -verify signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab 2>&1 | grep -F 'jar verified'
+          keytool -printcert -jarfile signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab | grep -F "SHA1: $EXPECTED_SHA1"
+          cp "$STORE_ICON" signed/RivoSticker-1.0.5-Play-Icon-512.png
+          (cd signed && sha256sum *.aab *.apk *.png > SHA256SUMS.txt)
+          echo 'Both signed releases verified with original RivoScan upload key.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RivoSticker-1.0.5-Original-RivoScan-SIGNED
+          path: signed/
+          retention-days: 30
+      - name: Publish signed binaries and 512px Play Store icon to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivosticker-v1.0.5
+          name: RivoSticker v1.0.5 - safe icon and AdMob
+          prerelease: true
+          body: |
+            com.ribhlab.rivosticker / versionCode 6 / versionName 1.0.5.
+            Signed with the ORIGINAL RivoScan upload certificate.
+            Android launcher and Play Store icons updated; Google Play publishing is a separate step.
+          files: signed/*
+      - name: Remove temporary private signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/original-rivoscan-keystore.p12"
