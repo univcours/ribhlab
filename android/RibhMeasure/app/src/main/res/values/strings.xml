@@ -67,7 +67,7 @@
 <string name="nothing_saved">No measurements saved yet.</string>
 <string name="history_cleared">History cleared</string>
 <string name="ads_demo">Test ads are enabled until the new app\'s own AdMob IDs are configured.</string>
-<string name="ad_placement">Ads: banner on home and results; interstitial no more than once per 4 completed measurements and every 2 minutes. No ads while taking a measurement.</string>
+<string name="ad_placement">Ads: banner on home and results; interstitial after 3 saved measurements, no more than once every 3 minutes. No ads during measurement.</string>
 <string name="consent_options">Advertising privacy options</string>
 <string name="consent_unavailable">Privacy options are not currently required or available.</string>
 <string name="privacy_note">Location points, photos, and saved results remain on your device. This app does not upload them to our servers. AdMob may process data under Google\'s privacy terms with applicable consent.</string>
