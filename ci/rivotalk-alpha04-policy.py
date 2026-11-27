@@ -23,4 +23,12 @@ for locale,label in [('values','Open privacy policy'),('values-fr','Ouvrir la po
     exact(root/'src/main/res'/locale/'strings.xml','</resources>',f'<string name="privacy_policy_link">{label}</string></resources>')
 assert 'FOREGROUND_SERVICE_MICROPHONE' not in manifest.read_text()
 assert 'FOREGROUND_SERVICE_TYPE_MICROPHONE' not in (src/'TalkService.kt').read_text()
-print('v4: connected-device-only service; foreground-only PTT and clickable privacy policy')
+
+# Runtime RECORD_AUDIO may be denied/revoked after screen permission prompts.
+audio=src/'AudioEngine.kt'
+exact(audio,'import android.media.*','import android.Manifest\nimport android.content.Context\nimport android.content.pm.PackageManager\nimport androidx.core.content.ContextCompat\nimport android.media.*')
+exact(audio,'class AudioEngine(private val error: (String)->Unit) {','class AudioEngine(private val context: Context, private val error: (String)->Unit) {')
+exact(audio,'        try {\n            val min = AudioRecord.getMinBufferSize(','        if(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){\n            error("Microphone permission required")\n            return\n        }\n        try {\n            val min = AudioRecord.getMinBufferSize(')
+exact(src/'TalkEngine.kt','private val audio=AudioEngine{message->scheduler.execute{release();audioError(message)}}','private val audio=AudioEngine(context){message->scheduler.execute{release();audioError(message)}}')
+
+print('v4: privacy policy, connected-device foreground and microphone permission guard')
