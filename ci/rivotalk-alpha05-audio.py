@@ -47,8 +47,8 @@ engine=src/'TalkEngine.kt'
 exact(engine,'    private fun audioError(message:String){status(message)}',
       '    private fun audioError(message:String){status(message)}\n    fun testSpeaker(){if(stateMutable.value.speaker==null)audio.testSpeaker()}')
 main=src/'MainActivity.kt'
-exact(main,'super.onCreate(savedInstanceState);setContent{',
-      'super.onCreate(savedInstanceState);volumeControlStream=android.media.AudioManager.STREAM_MUSIC;setContent{')
+exact(main,'        super.onCreate(savedInstanceState)\\n        ads=RivoAds(this)'.replace('\\n',chr(10)),
+      '        super.onCreate(savedInstanceState)\\n        volumeControlStream=android.media.AudioManager.STREAM_MUSIC\\n        ads=RivoAds(this)'.replace('\\n',chr(10)))
 exact(main,'                Text(stringResource(R.string.members),style=MaterialTheme.typography.titleLarge)',
 '''                OutlinedButton(onClick={engine.testSpeaker()},enabled=s.speaker==null,modifier=Modifier.fillMaxWidth()){
                     Text(stringResource(R.string.test_speaker))
