@@ -1,0 +1,112 @@
+name: RivoMeasure 1.3.10 code14 - original-key signed AdMob release QA
+on:
+  push:
+    branches: [release/rivomeasure-1310-admob-safe-20261127]
+    paths:
+      - 'android/RibhMeasure/**'
+      - '.github/workflows/rivomeasure-1310-signed-admob-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivomeasure-code14-isolated-build-original-key
+  cancel-in-progress: false
+jobs:
+  verify-build-and-sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ORIGINAL_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      ORIGINAL_KEY_PASSWORD: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      ORIGINAL_KEY_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.13'}
+      - name: Verify latest distinct package, code14, per-app live AdMob IDs and safe frequency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          gradle=Path('android/RibhMeasure/app/build.gradle').read_text()
+          ads=Path('android/RibhMeasure/app/src/main/java/com/ribhlab/ribhmeasure/Ads.java').read_text()
+          main=Path('android/RibhMeasure/app/src/main/java/com/ribhlab/ribhmeasure/MainActivity.kt').read_text()
+          for s in ("applicationId 'com.ribhlab.ribhmeasure'","versionCode 14","versionName '1.3.10'",
+                    'ca-app-pub-7945572016731367~6026375264',
+                    'ca-app-pub-7945572016731367/4893644032',
+                    'ca-app-pub-7945572016731367/9867089916'):
+              assert s in gradle,s
+          for s in ('if(completed<3||interstitial==null||',
+                    'now-lastShownElapsed<180000','!permitted()',
+                    'getCurrentOrientationAnchoredAdaptiveBannerAdSize',
+                    'slot.setClipChildren(true);slot.setClipToPadding(true);',
+                    'outer=new LinearLayout.LayoutParams(-1,fallbackHeight);',
+                    'if(dp<320||dp==lastWidth)return;',
+                    'if(height<=0||height>Math.round(90*density)||width<=0||width>px)return;'):
+              assert s in ads,s
+          for s in ('bottomBar = {','navigationBarsPadding()', 'clipToBounds()',
+                    'Ads.addBanner(this@MainActivity,this)'):
+              assert s in main,s
+          print('RIVOMEASURE_1310_RELEASE_SOURCE_AND_ADMOB_GUARDS=PASS')
+          PY
+      - name: Install Android SDK API36 and build Android unit, lint, debug and unsigned release
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -r | head -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          gradle --no-daemon -p android/RibhMeasure \
+            :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Restore original upload key temporarily; verify exact registered signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${ORIGINAL_KEY_B64:-}" && test -n "${ORIGINAL_KEY_PASSWORD:-}"
+          umask 077
+          KEYFILE="$RUNNER_TEMP/rivomeasure-code14-original.p12"
+          printf '%s' "$ORIGINAL_KEY_B64" | base64 -d > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          keytool -list -v -storetype PKCS12 -keystore "$KEYFILE" \
+            -storepass:env ORIGINAL_KEY_PASSWORD -alias key0 | grep -F "SHA1: $ORIGINAL_KEY_SHA1"
+          echo "RIBHMEASURE_SIGNING_KEYSTORE=$KEYFILE" >> "$GITHUB_ENV"
+          echo "RIBHMEASURE_SIGNING_PASSWORD=$ORIGINAL_KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build original-key signed RivoMeasure code14 APK + AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p android/RibhMeasure :app:assembleRelease :app:bundleRelease
+          mkdir -p signed-1310
+          APK=android/RibhMeasure/app/build/outputs/apk/release/app-release.apk
+          AAB=android/RibhMeasure/app/build/outputs/bundle/release/app-release.aab
+          test -s "$APK" && test -s "$AAB"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | \
+            grep -F "package: name='com.ribhlab.ribhmeasure' versionCode='14' versionName='1.3.10'"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK" > "$RUNNER_TEMP/measure-apk-signature.txt"
+          grep -Fi "$(echo "$ORIGINAL_KEY_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')" "$RUNNER_TEMP/measure-apk-signature.txt"
+          jarsigner -verify "$AAB" > "$RUNNER_TEMP/measure-aab-signature.txt" 2>&1
+          grep -F 'jar verified' "$RUNNER_TEMP/measure-aab-signature.txt"
+          keytool -printcert -jarfile "$AAB" | grep -F "SHA1: $ORIGINAL_KEY_SHA1"
+          cp "$APK" signed-1310/RivoMeasure-v1.3.10-code14-original-SIGNED.apk
+          cp "$AAB" signed-1310/RivoMeasure-v1.3.10-code14-original-SIGNED.aab
+          (cd signed-1310 && sha256sum *.apk *.aab > SHA256SUMS.txt)
+      - name: Preserve verified signed latest code14 release as immutable prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=rivomeasure-v1.3.10-code14-original-key-signed
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Existing release with this exact tag; refusing to overwrite signed assets'; exit 1
+          fi
+          gh release create "$TAG" signed-1310/*.apk signed-1310/*.aab signed-1310/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'RivoMeasure 1.3.10 code14 — original-key signed AdMob fix' \
+            --notes 'Original app com.ribhlab.ribhmeasure code14 from isolated source. Bottom banner reserved in clipped Scaffold ad container; only sized native ad fits screen. Interstitial after three saved measurements, 180-second cooldown, natural return-to-home only, UMP consent respected. Build, lint, unit tests, package, original signer and AAB checksums verified. Google Play submission and store-version screenshots are NOT inferred by this GitHub Release.'
+          echo 'RIVOMEASURE_1310_ORIGINAL_SIGNED_APK_AAB=VERIFIED' >> "$GITHUB_STEP_SUMMARY"
+      - name: Always remove ephemeral upload key and password
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/rivomeasure-code14-original.p12"
