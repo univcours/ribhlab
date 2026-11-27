@@ -68,7 +68,7 @@
     <string name="nothing_saved">Aucune mesure enregistrée.</string>
     <string name="history_cleared">Historique effacé</string>
     <string name="ads_demo">Publicités de test activées jusqu’à la configuration des identifiants AdMob propres à l’application.</string>
-    <string name="ad_placement">Bannière à l’accueil et dans les résultats ; publicité plein écran au plus une fois toutes les quatre mesures et toutes les deux minutes. Aucune publicité pendant les mesures.</string>
+    <string name="ad_placement">Bannière à l’accueil et dans les résultats ; publicité plein écran après 3 mesures enregistrées, au maximum une fois toutes les 3 minutes. Aucune publicité pendant une mesure.</string>
     <string name="consent_options">Options de confidentialité publicitaire</string>
     <string name="consent_unavailable">Options de confidentialité indisponibles ou non requises actuellement.</string>
     <string name="privacy_note">Les points GPS, photos et résultats restent sur votre appareil. Nous ne les envoyons pas à nos serveurs. AdMob peut traiter des données selon les conditions de Google et le consentement applicable.</string>
