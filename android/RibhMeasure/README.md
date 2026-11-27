@@ -10,7 +10,7 @@ A native Android application written in Java for RibhLab. Arabic/English UI. Pac
 - **Screen ruler**: drag endpoints, use display DPI and calibrate with an 85.60 mm ID-1 card.
 - **Bubble level**: accelerometer-based tilt estimate.
 - English/Arabic locale, metric/imperial display, local history and CSV export.
-- AdMob **test mode by default**, UMP consent before requesting ads; ad banner on home and results, interstitial capped to one per four saved measures with a two-minute cooldown. No ad in an in-progress measurement. No children's targeting configured.
+- AdMob **test mode by default**, UMP consent before requesting ads; ad banner on home and results, interstitial after three saved measurements with at least a three-minute cooldown. No ad in an in-progress measurement. No children's targeting configured.
 
 ## Build
 
