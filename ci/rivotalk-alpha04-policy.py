@@ -46,5 +46,5 @@ exact(activity,'if(!essential()){ask.launch(perms);return}',
       'if(!essential()){if(host)pendingHostAfterPermissions=true;ask.launch(perms);return}')
 exact(activity,
       '    fun leave(){engine.leave();context.stopService(Intent(context,TalkService::class.java))}',
-      '    LaunchedEffect(granted,pendingHostAfterPermissions){if(granted&&pendingHostAfterPermissions){pendingHostAfterPermissions=false;start(true)}}\\n    fun leave(){engine.leave();context.stopService(Intent(context,TalkService::class.java))}'.replace('\\n','\\n'))
+      '    LaunchedEffect(granted,pendingHostAfterPermissions){if(granted&&pendingHostAfterPermissions){pendingHostAfterPermissions=false;start(true)}}' + chr(10) + '    fun leave(){engine.leave();context.stopService(Intent(context,TalkService::class.java))}')
 print('v4: privacy, Bluetooth, microphone guard, RFCOMM and permission-flow retry')
