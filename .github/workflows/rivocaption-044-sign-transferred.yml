@@ -1,0 +1,110 @@
+name: RivoCaption 0.4.4 - original-key sign verified transferred latest code18 bundle
+on:
+  push:
+    branches: [handoff/rivocaption-044-original-sign-20261127]
+    paths:
+      - handoff/rivocaption-044/MANIFEST.json
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivocaption-044-transferred-aab-original-key-sign
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      RIVO_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      EXPECTED_KEY_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+      EXPECTED_SOURCE_COMMIT: abf45a0f19691c51ce0d59f3e45906a36c8af469
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Verify full handoff is sourced from latest correct RivoCaption 0.4.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${RIVO_KEY_B64:-}" && test -n "${RIVO_KEY_PASS:-}"
+          mkdir -p handoff-verified signed-044
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          m=json.loads(Path('handoff/rivocaption-044/MANIFEST.json').read_text())
+          assert m['applicationId']=='com.rivocaption.editor'
+          assert m['versionName']=='0.4.4' and m['versionCode']==18
+          assert m['sourceCommit']==os.environ['EXPECTED_SOURCE_COMMIT']
+          assert m['playIconSha256']=='952c49aaf96c9494f45403029ebc976a7cf938335531189789d78a87ab03f32a'
+          assert 1<=len(m['parts'])<=25
+          full=hashlib.sha256()
+          out=Path('handoff-verified/RivoCaption-0.4.4-UNSIGNED.aab')
+          with out.open('wb') as f:
+              for idx,p in enumerate(m['parts']):
+                  assert p['name']==f'handoff/rivocaption-044/RivoCaption-0.4.4-UNSIGNED.aab.part{idx:03}'
+                  data=Path(p['name']).read_bytes()
+                  assert len(data)==p['bytes'] and len(data)<=4*1024*1024
+                  assert hashlib.sha256(data).hexdigest()==p['sha256']
+                  f.write(data);full.update(data)
+          assert out.stat().st_size==m['unsignedAabBytes']
+          assert full.hexdigest()==m['unsignedAabSha256']
+          assert out.stat().st_size>1_000_000
+          print('RIVOCAPTION_044_EXACT_SOURCE_HANDOFF_SHA256_VERIFIED='+full.hexdigest(),flush=True)
+          print('RIVOCAPTION_044_PARTS='+str(len(m['parts'])),flush=True)
+          PY
+          unzip -t handoff-verified/RivoCaption-0.4.4-UNSIGNED.aab | tail -n 2
+          unzip -Z -1 handoff-verified/RivoCaption-0.4.4-UNSIGNED.aab | grep -Fx 'base/manifest/AndroidManifest.xml'
+      - name: Verify original existing upload-key certificate, no key reuse shortcuts
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          KEY="$RUNNER_TEMP/rivocaption-original.p12"
+          printf '%s' "$RIVO_KEY_B64" | base64 -d > "$KEY"
+          chmod 600 "$KEY"
+          keytool -list -v -alias key0 -storetype PKCS12 -keystore "$KEY" \
+            -storepass:env RIVO_KEY_PASS | grep -F "SHA1: $EXPECTED_KEY_SHA1"
+          echo 'RIVOCAPTION_ORIGINAL_UPLOAD_CERTIFICATE=VERIFIED' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign exact latest code18 Android App Bundle with verified original key
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp handoff-verified/RivoCaption-0.4.4-UNSIGNED.aab \
+            signed-044/RivoCaption-0.4.4-RivoScan-SIGNED.aab
+          jarsigner -keystore "$RUNNER_TEMP/rivocaption-original.p12" \
+            -storetype PKCS12 -storepass:env RIVO_KEY_PASS -keypass:env RIVO_KEY_PASS \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            signed-044/RivoCaption-0.4.4-RivoScan-SIGNED.aab key0
+          jarsigner -verify signed-044/RivoCaption-0.4.4-RivoScan-SIGNED.aab \
+            > "$RUNNER_TEMP/verified044.txt" 2>&1
+          grep -F 'jar verified' "$RUNNER_TEMP/verified044.txt"
+          keytool -printcert -jarfile signed-044/RivoCaption-0.4.4-RivoScan-SIGNED.aab | \
+            grep -F "SHA1: $EXPECTED_KEY_SHA1"
+          (cd signed-044 && sha256sum *.aab > SHA256SUMS.txt)
+      - name: Verify previously approved store icon is byte-exact same as the installed launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release download rivocaption-v0.4.3-original-rivoscan-aab \
+            --repo "$GITHUB_REPOSITORY" --dir signed-044 \
+            --pattern 'RivoCaption-PlayStore-512.png'
+          echo '952c49aaf96c9494f45403029ebc976a7cf938335531189789d78a87ab03f32a  signed-044/RivoCaption-PlayStore-512.png' | sha256sum --check
+      - name: Preserve original-key signed v0.4.4 candidate for native Play publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=rivocaption-v0.4.4-code18-original-key-signed
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo '::error::Signed version18 tag already exists, refusing overwrite'; exit 1
+          fi
+          gh release create "$TAG" signed-044/RivoCaption-0.4.4-RivoScan-SIGNED.aab \
+            signed-044/RivoCaption-PlayStore-512.png signed-044/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'RivoCaption 0.4.4 code18 — original-key signed AdMob bundle' \
+            --notes 'Latest source RivoCaption 0.4.4 code18 from abf45a0f19691c51ce0d59f3e45906a36c8af469. SHA256-verified source bundle, official approved Play/launcher icon, bounded adaptive bottom Banner, post-three-export interstitial and app-specific real AdMob IDs. Signed with exact original upload key certificate. This is a signed candidate; Google Play policy declarations and publication are separate.'
+          echo 'ORIGINAL_KEY_SIGNED_LATEST_RIVOCAPTION_044_CODE18_AAB_READY=TRUE' >> "$GITHUB_STEP_SUMMARY"
+      - name: Always destroy temporary signing keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rivocaption-original.p12"
