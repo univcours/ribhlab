@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths: ['ci/rivotalk-dual-bt.py','.github/workflows/rivotalk-dual-bt.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
   dual:
     if: github.head_ref == 'build/rivotalk-alpha02-original-sign-20261126'
@@ -15,6 +15,7 @@ jobs:
       - name: Retrieve original-key-signed alpha04 APK
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: univcours/ribhlab
         run: |
           mkdir -p "$RUNNER_TEMP/rivo4"
           gh release download rivotalk-alpha04-build-45912882650 --pattern '*.apk' --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP/rivo4"
