@@ -67,7 +67,7 @@
 <string name="nothing_saved">مازال ما حفظتي حتى قياس.</string>
 <string name="history_cleared">تم مسح السجل</string>
 <string name="ads_demo">الإعلانات تجريبية حتى تدخل معرّفات AdMob الخاصة بهذا التطبيق الجديد.</string>
-<string name="ad_placement">الإعلانات: بانر في الرئيسية والنتائج؛ إعلان بيني بعد كل 4 قياسات مكتملة على الأكثر ومع فاصل دقيقتين. بلا إعلانات وسط القياس.</string>
+<string name="ad_placement">الإعلانات: بانر في الصفحة الرئيسية والنتائج؛ إعلان بيني بعد كل 3 قياسات محفوظة، وبفاصل لا يقل عن 3 دقائق. لا إعلانات أثناء القياس.</string>
 <string name="consent_options">خيارات خصوصية الإعلانات</string>
 <string name="consent_unavailable">خيارات الخصوصية غير مطلوبة أو غير متاحة الآن.</string>
 <string name="privacy_note">نقط GPS والصور والقياسات المحفوظة كيبقاو في هاتفك وما كنرفعوهمش لخادم خاص بنا. AdMob قد يعالج بيانات وفق سياسة Google وبموافقتك عند الاقتضاء.</string>
