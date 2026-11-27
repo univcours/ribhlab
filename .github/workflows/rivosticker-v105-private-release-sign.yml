@@ -1,0 +1,114 @@
+name: RivoSticker 1.0.5 - secure private source RivoScan key signer
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rivosticker-v105-private-release-sign.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rivosticker-v105-private-sign
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      SOURCE: univcours/RivoSticker
+      SOURCE_RUN: '46047521315'
+      SOURCE_SHA: '06819752b674a5251d1a27f461938059b8a27222'
+      STAGING_TAG: rivosticker-v1.0.5-unsigned-build
+      SHA1_ORIGINAL: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+    steps:
+      - name: Access original private repo using existing read-only handoff credential
+        env:
+          GH_TOKEN: ${{ secrets.RIVONFC_ARTIFACT_READ_TOKEN || secrets.RIVOSTICKER_ARTIFACT_READ_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${GH_TOKEN:-}" || { echo '::error::No private source read token is configured in original-key signer'; exit 1; }
+          gh api "repos/$SOURCE" --jq '.full_name' | grep -Fx "$SOURCE"
+      - name: Wait for exact source build; retrieve source release and Play icon
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RIVONFC_ARTIFACT_READ_TOKEN || secrets.RIVOSTICKER_ARTIFACT_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 90); do
+            ACTUAL="$(gh api "repos/$SOURCE/actions/runs/$SOURCE_RUN" --jq '.status + "|" + (.conclusion // "pending") + "|" + .head_sha')"
+            [[ "$ACTUAL" == *"|$SOURCE_SHA" ]] || { echo "::error::Untrusted source run SHA"; exit 1; }
+            if [[ "$ACTUAL" == "completed|success|$SOURCE_SHA" ]]; then break; fi
+            if [[ "$ACTUAL" == completed* ]]; then echo "::error::Source staging failed"; exit 1; fi
+            if [[ "$attempt" -eq 90 ]]; then echo '::error::Source build not completed'; exit 1; fi
+            sleep 10
+          done
+          mkdir -p source
+          gh release download "$STAGING_TAG" --repo "$SOURCE" --dir source \
+            --pattern 'app-release.aab' --pattern 'app-release-unsigned.apk' --pattern 'play-icon-512.png'
+          test -s source/app-release.aab && test -s source/app-release-unsigned.apk && test -s source/play-icon-512.png
+          python3 - <<'PY'
+          import struct
+          p='source/play-icon-512.png'
+          with open(p,'rb') as f: b=f.read(24)
+          assert b[:8] == bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(512,512)
+          print('Icon: true 512x512 PNG, source commit verified')
+          PY
+          sha256sum source/app-release.aab source/app-release-unsigned.apk source/play-icon-512.png
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - name: Install build tools, inspect package and release artifacts
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging source/app-release-unsigned.apk | grep -F "package: name='com.ribhlab.rivosticker' versionCode='6' versionName='1.0.5'"
+          ! "$TOOLS/aapt" dump badging source/app-release-unsigned.apk | grep -q application-debuggable
+          unzip -tqq source/app-release.aab
+      - name: Sign APK/AAB using ONLY original RivoScan upload certificate
+        shell: bash
+        env:
+          KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+          KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "${KEY_B64:-}" && test -n "${KEY_PASS:-}" || { echo '::error::Original RivoScan keystore secret unavailable'; exit 1; }
+          umask 077
+          KEY="$RUNNER_TEMP/rivosticker-original.p12"
+          printf '%s' "$KEY_B64" | base64 --decode > "$KEY"
+          CERT="$(keytool -list -v -storetype PKCS12 -keystore "$KEY" -storepass:env KEY_PASS -alias key0)"
+          ACTUAL_SHA1="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:" {print $2; exit}')"
+          test "$ACTUAL_SHA1" = "$SHA1_ORIGINAL" || { echo '::error::Original key identity mismatch'; exit 1; }
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          mkdir -p signed
+          "$TOOLS/zipalign" -P 16 -f 4 source/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$TOOLS/apksigner" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 --ks-pass env:KEY_PASS --key-pass env:KEY_PASS --out signed/RivoSticker-1.0.5-RivoScan-SIGNED.apk "$RUNNER_TEMP/aligned.apk"
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env KEY_PASS -keypass:env KEY_PASS -signedjar signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab source/app-release.aab key0
+          "$TOOLS/apksigner" verify --verbose --print-certs signed/RivoSticker-1.0.5-RivoScan-SIGNED.apk > "$RUNNER_TEMP/check.txt"
+          EXPECTED_HEX="$(printf %s "$SHA1_ORIGINAL" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          grep -iq "$EXPECTED_HEX" "$RUNNER_TEMP/check.txt"
+          jarsigner -verify signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab > "$RUNNER_TEMP/aab.txt" 2>&1
+          grep -F 'jar verified' "$RUNNER_TEMP/aab.txt"
+          keytool -printcert -jarfile signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab | grep -F "SHA1: $SHA1_ORIGINAL"
+          cp source/play-icon-512.png signed/RivoSticker-Play-Icon-512.png
+          (cd signed && sha256sum *.apk *.aab *.png > SHA256SUMS.txt)
+          cat signed/SHA256SUMS.txt
+          echo 'Exact staged source, versionCode 6, Play icon, APK and AAB signing all verified.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish verified signed release, with no Actions artifact quota usage
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivosticker-v1.0.5
+          name: RivoSticker 1.0.5 - original RivoScan signed
+          prerelease: true
+          body: |
+            RivoSticker 1.0.5, versionCode 6, com.ribhlab.rivosticker.
+            Pinned successful source build; original RivoScan upload certificate.
+            Includes safe Play Store 512px icon. Google Play deployment separate.
+          files: |
+            signed/RivoSticker-1.0.5-RivoScan-SIGNED.apk
+            signed/RivoSticker-1.0.5-RivoScan-SIGNED.aab
+            signed/RivoSticker-Play-Icon-512.png
+            signed/SHA256SUMS.txt
+      - name: Destroy ephemeral signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rivosticker-original.p12"
