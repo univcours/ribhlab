@@ -17,14 +17,14 @@ jobs:
           GH_REPO: univcours/ribhlab
         run: |
           mkdir -p signed
-          gh release download rivotalk-alpha03-build-45896598160 --pattern '*.aab' --pattern SHA256SUMS.txt --dir signed
+          gh release download rivotalk-alpha04-build-45997152617 --pattern '*.aab' --pattern SHA256SUMS.txt --dir signed
           cd signed
           grep '\.aab$' SHA256SUMS.txt | sha256sum -c
           jarsigner -verify *.aab
           keytool -printcert -jarfile *.aab | grep -F 'SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E'
       - uses: actions/upload-artifact@v4
         with:
-          name: rivotalk-alpha03-verified-aab
+          name: rivotalk-alpha04-mic-guard-verified-aab
           path: signed/*.aab
           retention-days: 1
           if-no-files-found: error
