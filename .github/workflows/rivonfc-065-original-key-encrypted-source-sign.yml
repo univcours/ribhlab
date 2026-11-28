@@ -1,0 +1,152 @@
+name: RivoNFC 0.6.5 code12 - original RivoScan key sign after encrypted source handoff
+on:
+  push:
+    branches: [sign/rivonfc-065-original-key-20261128]
+    paths: [.github/workflows/rivonfc-065-original-key-encrypted-source-sign.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: original-signer-rivonfc-065-icon-safe
+  cancel-in-progress: false
+jobs:
+  verify-private-source-build-sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      HANDOFF_SECRET: ${{ secrets.RIVONFC_065_HANDOFF_PASSPHRASE }}
+      EXPECTED_SIGNER_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+      SOURCE_COMMIT: 031dd16384c943144706534ee384b8bf1bd2de1b
+      SOURCE_ZIP_SHA256: ce63828c84159445a7d9a198c6e6fe517906f59cfd27c678007c07c433d56965
+      ENCRYPTED_SHA256: e1b02ac0dc95a2fc828d2468aa90fc8cd20b0d108bffbfb8478fc881b828c9c6
+      HANDOFF_TAG: rivonfc-065-private-source-encrypted-20261128
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve only source ciphertext and independently check pinned signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "${HANDOFF_SECRET:-}" && test -n "${KEY_B64:-}" && test -n "${KEY_PASS:-}"
+          gh release download "$HANDOFF_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'RivoNFC-0.6.5-private-source.zip.aes' \
+            --dir "$RUNNER_TEMP"
+          FILE="$RUNNER_TEMP/RivoNFC-0.6.5-private-source.zip.aes"
+          echo "$ENCRYPTED_SHA256  $FILE" | sha256sum -c
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 250000 -salt -md sha256 \
+            -in "$FILE" -out "$RUNNER_TEMP/rivonfc-source.zip" \
+            -pass env:HANDOFF_SECRET
+          echo "$SOURCE_ZIP_SHA256  $RUNNER_TEMP/rivonfc-source.zip" | sha256sum -c
+          mkdir -p "$RUNNER_TEMP/rivonfc"
+          unzip -q "$RUNNER_TEMP/rivonfc-source.zip" -d "$RUNNER_TEMP/rivonfc"
+          test "$(tr -d '\r\n' < "$RUNNER_TEMP/rivonfc/SOURCE_COMMIT")" = "$SOURCE_COMMIT"
+          grep -F 'applicationId = "com.ribhlab.rivonfc"' "$RUNNER_TEMP/rivonfc/app/build.gradle.kts"
+          grep -F 'versionCode = 12' "$RUNNER_TEMP/rivonfc/app/build.gradle.kts"
+          grep -F 'versionName = "0.6.5"' "$RUNNER_TEMP/rivonfc/app/build.gradle.kts"
+          grep -F 'ca-app-pub-7945572016731367~3403190708' "$RUNNER_TEMP/rivonfc/app/src/main/AndroidManifest.xml"
+          (cd "$RUNNER_TEMP/rivonfc" && python3 qa/verify_rivonfc_065_icon_safe.py)
+          rm -f "$FILE" "$RUNNER_TEMP/rivonfc-source.zip"
+          echo 'RIVONFC_CODE12_ENCRYPTED_HANDOFF_AUTHENTICATED=PASS' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.13', cache-disabled: true}
+      - name: Android 36 release lint, unit tests and APK/AAB of privately authenticated code12
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort -r | head -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          gradle --no-daemon -p "$RUNNER_TEMP/rivonfc" \
+            :app:testDebugUnitTest :app:lintRelease :app:assembleRelease :app:bundleRelease
+          APK="$RUNNER_TEMP/rivonfc/app/build/outputs/apk/release/app-release-unsigned.apk"
+          AAB="$RUNNER_TEMP/rivonfc/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$APK" && test -s "$AAB"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | \
+            grep -F "package: name='com.ribhlab.rivonfc' versionCode='12' versionName='0.6.5'"
+          if "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q application-debuggable; then
+            echo 'RIVONFC_CODE12_DEBUGGABLE_RELEASE_BLOCKED'; exit 1
+          fi
+          echo 'RIVONFC_CODE12_RELEASE_BUILD_AND_LINT=PASS' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign exact code12 APK and AAB with original upload certificate only
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          KEY="$RUNNER_TEMP/rivonfc-original.p12"
+          printf '%s' "$KEY_B64" | base64 -d > "$KEY"
+          SHA1="$(keytool -list -v -storetype PKCS12 -keystore "$KEY" -storepass:env KEY_PASS -alias key0 | awk '$1=="SHA1:" {print $2;exit}')"
+          test "$SHA1" = "$EXPECTED_SIGNER_SHA1"
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          APK="$RUNNER_TEMP/rivonfc/app/build/outputs/apk/release/app-release-unsigned.apk"
+          AAB="$RUNNER_TEMP/rivonfc/app/build/outputs/bundle/release/app-release.aab"
+          mkdir -p signed-065
+          "$TOOLS/zipalign" -P 16 -f 4 "$APK" "$RUNNER_TEMP/aligned-065.apk"
+          "$TOOLS/apksigner" sign --ks "$KEY" --ks-type PKCS12 --ks-key-alias key0 \
+            --ks-pass env:KEY_PASS --key-pass env:KEY_PASS \
+            --out signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.apk "$RUNNER_TEMP/aligned-065.apk"
+          jarsigner -keystore "$KEY" -storetype PKCS12 -storepass:env KEY_PASS \
+            -keypass:env KEY_PASS -signedjar signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.aab "$AAB" key0
+          "$TOOLS/apksigner" verify --verbose --print-certs signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.apk > "$RUNNER_TEMP/rivonfc-065-apk-cert.txt"
+          grep -Fi "$(echo "$EXPECTED_SIGNER_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')" "$RUNNER_TEMP/rivonfc-065-apk-cert.txt"
+          jarsigner -verify signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.aab | grep -F 'jar verified'
+          keytool -printcert -jarfile signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.aab | grep -F "SHA1: $EXPECTED_SIGNER_SHA1"
+          "$TOOLS/aapt" dump badging signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.apk | \
+            grep -F "package: name='com.ribhlab.rivonfc' versionCode='12' versionName='0.6.5'"
+          (cd signed-065 && sha256sum *.apk *.aab > SHA256SUMS.txt)
+          rm -f "$KEY" "$RUNNER_TEMP/aligned-065.apk"
+          echo 'RIVONFC_CODE12_ORIGINAL_RIVOSCAN_KEY_SIGNING=PASS' >> "$GITHUB_STEP_SUMMARY"
+      - name: Render original icon artwork with newly protected margins for Play Store
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet 'cairosvg>=2.7,<3' 'Pillow>=11,<13'
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import cairosvg
+          from PIL import Image
+          src=Path(os.environ["RUNNER_TEMP"])/"rivonfc/store/RivoNFC-store-icon.svg"
+          out=Path("signed-065/RivoNFC-store-icon-065.png")
+          cairosvg.svg2png(url=str(src),write_to=str(out),output_width=512,output_height=512)
+          with Image.open(out) as img:
+              assert img.size==(512,512),"Play icon must be exactly 512x512"
+              assert img.mode in ("RGB","RGBA")
+          assert out.stat().st_size>15000
+          print("RIVONFC_065_REAL_STORE_ICON_512_SAFE=PASS",flush=True)
+          PY
+          (cd signed-065 && sha256sum *.apk *.aab *.png > SHA256SUMS.txt)
+      - name: Publish only original-signed code12 release (NOT Google Play rollout)
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=rivonfc-v0.6.5-code12-original-rivoscan-signed
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Code12 tag exists; immutable prior signer release must not be overwritten'; exit 1
+          fi
+          gh release create "$TAG" \
+            signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.apk \
+            signed-065/RivoNFC-0.6.5-RivoScan-SIGNED.aab \
+            signed-065/RivoNFC-store-icon-065.png signed-065/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'RivoNFC 0.6.5 code12 - adaptive icon fully visible and original-key signed' \
+            --notes 'Authenticated private RivoNFC source commit 031dd16384c943144706534ee384b8bf1bd2de1b, Android API 36. Distinct latest code12, original upload key identical to RivoScan. Fixed full icon safe zone (foreground/monochrome/legacy) and Play 512 icon while preserving AdMob SDK, UMP and responsive bottom banner. Signed APK/AAB, lint, tests and checksums verified. NOT YET PUBLISHED ON GOOGLE PLAY.'
+          echo "RIVONFC_065_SIGNED_RELEASE_TAG=$TAG" >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain signed code12 binaries even when release asset hosting is unavailable
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: RivoNFC-065-Code12-OriginalSigned-Certified
+          path: signed-065/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Remove all ephemeral decryption and signing materials
+        if: always()
+        shell: bash
+        run: |
+          rm -rf "$RUNNER_TEMP/rivonfc" "$RUNNER_TEMP/rivonfc-source.zip"
+          rm -f "$RUNNER_TEMP/RivoNFC-0.6.5-private-source.zip.aes" "$RUNNER_TEMP/rivonfc-original.p12" "$RUNNER_TEMP/aligned-065.apk"
