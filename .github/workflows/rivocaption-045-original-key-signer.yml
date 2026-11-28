@@ -1,0 +1,101 @@
+name: RivoCaption 0.4.5 code19 original upload-key signer
+on:
+  workflow_dispatch:
+    inputs:
+      asset_url:
+        description: Short-lived authenticated GitHub release-asset URL
+        required: true
+        type: string
+      expected_unsigned_sha256:
+        description: Exact SHA256 of unsigned code19 bundle
+        required: true
+        type: string
+      source_commit:
+        description: Exact 40-character commit of latest approved source
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: rivocaption-045-original-key-signer
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ASSET_URL: ${{ inputs.asset_url }}
+      EXPECTED_SHA256: ${{ inputs.expected_unsigned_sha256 }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      RIVO_KEY_B64: ${{ secrets.RIVO_CORRECT_KEYSTORE_BASE64 }}
+      RIVO_KEY_PASS: ${{ secrets.RIVO_CORRECT_KEY_PASSWORD }}
+      ORIGINAL_SHA1: E9:B3:E2:77:95:75:BA:08:A9:13:72:FC:38:85:EB:A0:1D:D3:E7:3E
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Validate authenticated temporary asset URL and exact source hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ASSET_URL" && test -n "$RIVO_KEY_B64" && test -n "$RIVO_KEY_PASS"
+          [[ "$EXPECTED_SHA256" =~ ^[0-9a-fA-F]{64}$ ]]
+          [[ "$SOURCE_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]]
+          python3 - <<'PY'
+          import os,urllib.parse
+          u=urllib.parse.urlparse(os.environ["ASSET_URL"])
+          assert u.scheme=="https" and u.hostname=="release-assets.githubusercontent.com"
+          assert "se" in urllib.parse.parse_qs(u.query)
+          print("TRUSTED_ONE_TIME_GITHUB_ASSET_URL=TRUE")
+          PY
+          mkdir -p signed
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 20 \
+            --max-time 600 "$ASSET_URL" -o signed/RivoCaption-0.4.5-UNSIGNED.aab
+          printf '%s  %s\n' "$EXPECTED_SHA256" signed/RivoCaption-0.4.5-UNSIGNED.aab | sha256sum --check
+          unzip -t signed/RivoCaption-0.4.5-UNSIGNED.aab | tail -n 2
+          unzip -Z -1 signed/RivoCaption-0.4.5-UNSIGNED.aab | grep -Fx 'base/manifest/AndroidManifest.xml'
+          printf 'SOURCE_COMMIT=%s\nVERSION_NAME=0.4.5\nVERSION_CODE=19\nPACKAGE=com.rivocaption.editor\nUNSIGNED_AAB_SHA256=%s\n' \
+            "$SOURCE_COMMIT" "$EXPECTED_SHA256" > signed/SOURCE-IDENTITY.txt
+      - name: Restore original key and validate upload certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$RIVO_KEY_B64" | base64 --decode > "$RUNNER_TEMP/rivocaption-original.p12"
+          CERT="$(keytool -list -v -storetype PKCS12 \
+            -keystore "$RUNNER_TEMP/rivocaption-original.p12" \
+            -storepass:env RIVO_KEY_PASS -alias key0)"
+          ACTUAL="$(printf '%s\n' "$CERT" | awk '$1=="SHA1:"{print $2;exit}')"
+          test "$ACTUAL" = "$ORIGINAL_SHA1"
+          echo 'RIVOCAPTION_UPLOAD_CERTIFICATE_VERIFIED=TRUE' >> "$GITHUB_STEP_SUMMARY"
+      - name: Sign and verify RivoCaption 0.4.5 AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp signed/RivoCaption-0.4.5-UNSIGNED.aab signed/RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab
+          jarsigner -keystore "$RUNNER_TEMP/rivocaption-original.p12" \
+            -storetype PKCS12 -storepass:env RIVO_KEY_PASS -keypass:env RIVO_KEY_PASS \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            signed/RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab key0
+          jarsigner -verify signed/RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab > "$RUNNER_TEMP/verify.txt" 2>&1
+          grep -Fq 'jar verified' "$RUNNER_TEMP/verify.txt"
+          keytool -printcert -jarfile signed/RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab \
+            | grep -F "SHA1: $ORIGINAL_SHA1"
+          (cd signed && sha256sum RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab > SHA256SUMS.txt)
+          rm -f signed/RivoCaption-0.4.5-UNSIGNED.aab
+      - name: Publish original-key signed candidate, never auto-upload to Play
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rivocaption-v0.4.5-original-key-aab
+          name: RivoCaption 0.4.5 code19 original-key signed AAB
+          prerelease: true
+          fail_on_unmatched_files: true
+          body: Verified RivoCaption code19 candidate. Actual Google Play publishing is a separate action.
+          files: |
+            signed/RivoCaption-0.4.5-ORIGINAL-KEY-SIGNED.aab
+            signed/SHA256SUMS.txt
+            signed/SOURCE-IDENTITY.txt
+      - name: Remove temporary private key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/rivocaption-original.p12"
